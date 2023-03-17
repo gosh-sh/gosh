@@ -84,18 +84,21 @@ export async function countGitObjects(github_id: string) {
         .eq('id', github.id)
 
     // cleanup
-    console.log('About to remove dir', workdir)
-    await Deno.remove(workdir, { recursive: true })
+    console.log('About to remove dir: ', workdir)
+    Deno.removeSync(workdir, { recursive: true })
     console.log('Dir removed', github_id)
 
     // EXPLANATION: we split repos to 3 buckets by size: small | medium | large
     // TODO: more logs
     let producer
     if (number_of_git_objects < SMALL_REPO_OBJECTS_LIMIT) {
+        console.log('Added to the queue of small repos')
         producer = createSmallGoshRepoProducer()
     } else if (number_of_git_objects < MEDIUM_REPO_OBJECTS_LIMIT) {
+        console.log('Added to the queue of medium repos')
         producer = createMediumGoshRepoProducer()
     } else {
+        console.log('Added to the queue of large repos')
         producer = createLargeGoshRepoProducer()
     }
 
