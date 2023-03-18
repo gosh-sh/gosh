@@ -289,6 +289,29 @@
 			]
 		},
 		{
+			"name": "daoMulti",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"wallet","type":"address"},
+				{"name":"number","type":"uint128"},
+				{"name":"proposals","type":"cell"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "doNothing",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "smvdeploytagin",
 			"inputs": [
 				{"name":"pub","type":"address"},

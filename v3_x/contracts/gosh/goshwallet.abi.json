@@ -159,6 +159,14 @@
 			]
 		},
 		{
+			"name": "getCellDelay",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "startProposalForUpgradeDao",
 			"inputs": [
 				{"name":"newversion","type":"string"},
@@ -1110,6 +1118,44 @@
 				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
+			]
+		},
+		{
+			"name": "startMultiProposalIn",
+			"inputs": [
+				{"name":"number","type":"uint128"},
+				{"name":"proposals","type":"cell"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startMultiProposalAsDao",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"number","type":"uint128"},
+				{"name":"proposals","type":"cell"},
+				{"name":"num_clients_base","type":"uint128"},
+				{"name":"reviewers_base","type":"address[]"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellTaskMultiAsDao",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"number","type":"uint128"},
+				{"name":"proposals","type":"cell"},
+				{"name":"num_clients_base","type":"uint128"},
+				{"name":"reviewers_base","type":"address[]"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
 			]
 		},
 		{

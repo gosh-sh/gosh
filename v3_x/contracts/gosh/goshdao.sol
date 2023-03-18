@@ -436,6 +436,16 @@ contract GoshDao is Modifiers, TokenRootOwner {
         GoshWallet(wallet).voteForIn{value:0.2 ton}(platform_id, choice, amount, num_clients_base, note);   	
     }
     
+    function daoMulti (address pub, uint128 index, address wallet, uint128 number, TvmCell proposals, uint128 num_clients, address[] reviewers) public view senderIs(getAddrWalletIn(pub, index))  accept {
+    	require(_tombstone == false, ERR_TOMBSTONE);
+        GoshWallet(wallet).startMultiProposalIn{value:0.2 ton}(number, proposals, num_clients, reviewers);   	
+    }
+        
+    function doNothing (address pub, uint128 index) public view senderIs(getAddrWalletIn(pub, index))  accept {
+    	require(_tombstone == false, ERR_TOMBSTONE);
+        return;   	
+    }
+    
     function smvdeploytagin (address pub, string[] tag) public senderIs(address(this))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
         require(tag.length + _counttag <= _limittag, ERR_TOO_MANY_TAGS);

@@ -246,6 +246,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return abi.encode(proposalKind, wallet, platform_id, choice, amount, num_clients_base, note, comment, now);
     }
     
+    function getCellDelay() external pure returns(TvmCell) {
+        uint256 proposalKind = DELAY_PROPOSAL_KIND;
+        return abi.encode(proposalKind, now);
+    }
+    
     function _daoVote(
         address wallet, uint256 platform_id, bool choice, uint128 amount, uint128 num_clients_base, string note
     ) private {
@@ -1842,7 +1847,70 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _startProposalForOperation(c, MULTI_PROPOSAL_START_AFTER, MULTI_PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
+    
+    function startMultiProposalIn(
+        uint128 number,
+        TvmCell proposals,
+        uint128 num_clients, 
+        address[] reviewers
+    ) public onlyOwnerAddress(_pubaddr)  {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        require(number <= 50, ERR_TOO_MANY_PROPOSALS);
+        require(number > 1, ERR_TOO_FEW_PROPOSALS);
+        tvm.accept();
+        _saveMsg();
 
+        uint256 proposalKind = MULTI_PROPOSAL_KIND;
+        TvmCell c = abi.encode(proposalKind, number, proposals, now);
+        _startProposalForOperation(c, MULTI_PROPOSAL_START_AFTER, MULTI_PROPOSAL_DURATION, num_clients, reviewers);
+        getMoney();
+    }
+    
+     function _daoMulti(
+        address wallet,
+        uint128 number,
+        TvmCell proposals,
+        uint128 num_clients, 
+        address[] reviewers
+    ) private {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        GoshDao(_goshdao).daoMulti{value: 0.1 ton}(_pubaddr, _index, wallet, number, proposals, num_clients, reviewers);
+        getMoney();
+    }
+    
+    function startMultiProposalAsDao(
+        address wallet,
+        uint128 number,
+        TvmCell proposals,
+        uint128 num_clients_base, 
+        address[] reviewers_base,
+        uint128 num_clients,
+        address[] reviewers
+    ) public onlyOwnerPubkeyOptional(_access)  {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        require(number <= 50, ERR_TOO_MANY_PROPOSALS);
+        require(number > 1, ERR_TOO_FEW_PROPOSALS);
+        tvm.accept();
+        _saveMsg();
+        uint256 proposalKind = MULTI_AS_DAO_PROPOSAL_KIND;
+        TvmCell c = abi.encode(proposalKind, wallet, number, proposals, num_clients_base, reviewers_base, now);
+        _startProposalForOperation(c, MULTI_AS_DAO_PROPOSAL_START_AFTER, MULTI_AS_DAO_PROPOSAL_DURATION, num_clients, reviewers);
+        getMoney();
+    }
+    
+    
+    function getCellTaskMultiAsDao(
+        address wallet,
+        uint128 number,
+        TvmCell proposals,
+        uint128 num_clients_base, 
+        address[] reviewers_base) external pure returns(TvmCell) {
+        uint256 proposalKind = MULTI_AS_DAO_PROPOSAL_KIND;
+        return abi.encode(proposalKind, wallet, number, proposals, num_clients_base, reviewers_base, now);
+    }
 
     function startProposalForTaskDeploy(
         string taskName,
@@ -2043,6 +2111,15 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == DAO_VOTE_PROPOSAL_KIND) {
                (, address wallet, uint256 platform_id, bool choice, uint128 amount, uint128 num_clients_base, string note,,) = abi.decode(propData, (uint256, address, uint256, bool, uint128, uint128, string, string, uint32));
                _daoVote(wallet, platform_id, choice, amount, num_clients_base, note);          
+            } else
+            if (kind == MULTI_AS_DAO_PROPOSAL_KIND) {
+               (, address wallet, uint128 number, TvmCell proposals, uint128 num_clients_base, address[] reviewers_base,) = abi.decode(propData, (uint256, address, uint128, TvmCell, uint128, address[], uint32));
+               _daoMulti(wallet, number, proposals, num_clients_base, reviewers_base);          
+            } else
+            if (kind == DELAY_PROPOSAL_KIND) {
+               (, uint32 _time) = abi.decode(propData, (uint256, uint32));
+               _time;
+               GoshDao(_goshdao).doNothing{value: 0.1 ton}(_pubaddr, _index);          
             }
         }
     }
@@ -2181,6 +2258,15 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == DAO_VOTE_PROPOSAL_KIND) {
                (, address wallet, uint256 platform_id, bool choice, uint128 amount, uint128 num_clients_base, string note,,) = abi.decode(propData, (uint256, address, uint256, bool, uint128, uint128, string, string, uint32));
                _daoVote(wallet, platform_id, choice, amount, num_clients_base, note);          
+            } else
+            if (kind == MULTI_AS_DAO_PROPOSAL_KIND) {
+               (, address wallet, uint128 number, TvmCell proposals, uint128 num_clients_base, address[] reviewers_base,) = abi.decode(propData, (uint256, address, uint128, TvmCell, uint128, address[], uint32));
+               _daoMulti(wallet, number, proposals, num_clients_base, reviewers_base);          
+            } else
+            if (kind == DELAY_PROPOSAL_KIND) {
+               (, uint32 _time) = abi.decode(propData, (uint256, uint32));
+               _time;
+               GoshDao(_goshdao).doNothing{value: 0.1 ton}(_pubaddr, _index);          
             }
         }
     }
