@@ -171,6 +171,7 @@ pipeline {
                                     sh """
                                         docker run -d --name localnode-${port} -p ${port}:80 -e USER_AGREEMENT=yes tonlabs/local-node:latest
                                     """
+                                    sh "mkdir -p v1_x/workspace_${i}"
                                     sh "cd v1_x && cp -R contracts git-remote-gosh workspace_${i}/"
                                     env.version = "v1_x"
                                     dir("${WORKSPACE}/${version}/workspace_${i}/contracts/multisig") {
