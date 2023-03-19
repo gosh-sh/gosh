@@ -312,9 +312,9 @@ function getGoshDeleteProtectedBranchProposalParams () external view
 }
 
 function getGoshDeployWalletDaoProposalParams () external view
-         returns( uint256  proposalKind, MemberToken[] pubaddr, string comment)
+         returns( uint256  proposalKind, MemberToken[] pubaddr, optional(string)[] dao, string comment)
 {
-    (proposalKind, pubaddr, comment,) = abi.decode(propData, (uint256, MemberToken[], string, uint32));
+    (proposalKind, pubaddr, dao, comment,) = abi.decode(propData, (uint256, MemberToken[], optional(string)[], string, uint32));
 }
 
 function getGoshDeleteWalletDaoProposalParams () external view
@@ -475,9 +475,9 @@ function getGoshDeleteProtectedBranchProposalParamsData (TvmCell Data) external 
 }
 
 function getGoshDeployWalletDaoProposalParamsData (TvmCell Data) external pure
-         returns( uint256  proposalKind, MemberToken[] pubaddr, string comment)
+         returns( uint256  proposalKind, MemberToken[] pubaddr, optional(string)[] dao, string comment)
 {
-    (proposalKind, pubaddr, comment,) = abi.decode(Data, (uint256, MemberToken[], string, uint32));
+    (proposalKind, pubaddr, dao, comment,) = abi.decode(Data, (uint256, MemberToken[], optional(string)[], string, uint32));
 }
 
 function getGoshDeleteWalletDaoProposalParamsData (TvmCell Data) external pure

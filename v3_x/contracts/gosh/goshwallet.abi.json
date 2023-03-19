@@ -508,6 +508,7 @@
 			"name": "startProposalForDeployWalletDao",
 			"inputs": [
 				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
+				{"name":"dao","type":"optional(string)[]"},
 				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"},
 				{"name":"reviewers","type":"address[]"}
@@ -519,6 +520,7 @@
 			"name": "startProposalForDeployWalletDao2",
 			"inputs": [
 				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
+				{"name":"dao","type":"optional(string)[]"},
 				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"},
 				{"name":"reviewers","type":"address[]"}
@@ -530,6 +532,7 @@
 			"name": "getCellDeployWalletDao",
 			"inputs": [
 				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
+				{"name":"dao","type":"optional(string)[]"},
 				{"name":"comment","type":"string"}
 			],
 			"outputs": [

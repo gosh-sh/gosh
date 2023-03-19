@@ -660,32 +660,36 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function startProposalForDeployWalletDao(
         MemberToken[] pubaddr,
+        optional(string)[] dao,
         string comment,
         uint128 num_clients , address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access) {
         require(_tombstone == false, ERR_TOMBSTONE);
+        require(dao.length == pubaddr.length, ERR_WRONG_NUMBER_MEMBER);
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);       
         tvm.accept();
         _saveMsg();
-        GoshDao(_goshdao).proposalForDeployWalletDao{value: 1.3 ton}(_pubaddr, _index, pubaddr, comment, num_clients, reviewers);
+        GoshDao(_goshdao).proposalForDeployWalletDao{value: 1.3 ton}(_pubaddr, _index, pubaddr, dao, comment, num_clients, reviewers);
     }
     
     
      function startProposalForDeployWalletDao2(
         MemberToken[] pubaddr,
+        optional(string)[] dao,
         string comment,
         uint128 num_clients , address[] reviewers
     ) public senderIs(_goshdao) accept saveMsg {
         uint256 proposalKind = DEPLOY_WALLET_DAO_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, pubaddr, comment, now);
+        TvmCell c = abi.encode(proposalKind, pubaddr, dao, comment, now);
         _startProposalForOperation(c, DEPLOY_WALLET_DAO_PROPOSAL_START_AFTER, DEPLOY_WALLET_DAO_PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
     
     function getCellDeployWalletDao(MemberToken[] pubaddr,
+        optional(string)[] dao,
         string comment) external pure returns(TvmCell) {
         uint256 proposalKind = DEPLOY_WALLET_DAO_PROPOSAL_KIND;
-        return abi.encode(proposalKind, pubaddr, comment, now);
+        return abi.encode(proposalKind, pubaddr, dao, comment, now);
     }
 
     function startProposalForDeleteWalletDao(
@@ -722,8 +726,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     	GoshDao(_goshdao).upgradeDao{value : 0.1 ton, flag : 1}(newversion, description, _pubaddr, _index);
     }
 
-    function _deployWalletDao(MemberToken[] pubaddr) private view {
-        GoshDao(_goshdao).deployWallet{value: 0.1 ton, flag : 1}(pubaddr, _pubaddr, _index);
+    function _deployWalletDao(MemberToken[] pubaddr, optional(string)[] dao) private view {
+        GoshDao(_goshdao).deployWallet{value: 0.1 ton, flag : 1}(pubaddr, dao, _pubaddr, _index);
     }
 
     function _deleteWalletDao(address[] pubaddr) private view {
@@ -2120,8 +2124,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == DEPLOY_WALLET_DAO_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
                 //_deployWalletDao(address[] pubaddr)
-                (, MemberToken[] pubaddr,) = abi.decode(propData,(uint256, MemberToken[], uint32));
-                _deployWalletDao(pubaddr);
+                (, MemberToken[] pubaddr, optional(string)[] dao,,) = abi.decode(propData,(uint256, MemberToken[], optional(string)[], string, uint32));
+                _deployWalletDao(pubaddr, dao);
             } else
             if (kind == DELETE_WALLET_DAO_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
@@ -2272,8 +2276,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == DEPLOY_WALLET_DAO_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
                 //_deployWalletDao(address[] pubaddr)
-                (, MemberToken[] pubaddr,) = abi.decode(propData,(uint256, MemberToken[], uint32));
-                _deployWalletDao(pubaddr);
+                (, MemberToken[] pubaddr, optional(string)[] dao,,) = abi.decode(propData,(uint256, MemberToken[], optional(string)[], string, uint32));
+                _deployWalletDao(pubaddr, dao);
             } else
             if (kind == DELETE_WALLET_DAO_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);

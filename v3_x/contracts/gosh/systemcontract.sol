@@ -162,6 +162,7 @@ contract SystemContract is Modifiers {
             name,
             pubmem,
             _limit_wallets,
+            _code[m_DaoCode],
             _code[m_CommitCode],
             _code[m_RepositoryCode],
             _code[m_WalletCode],

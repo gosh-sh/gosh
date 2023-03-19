@@ -12,6 +12,7 @@
 				{"name":"name","type":"string"},
 				{"name":"pubmem","type":"address[]"},
 				{"name":"limit_wallets","type":"uint128"},
+				{"name":"DaoCode","type":"cell"},
 				{"name":"CommitCode","type":"cell"},
 				{"name":"RepositoryCode","type":"cell"},
 				{"name":"WalletCode","type":"cell"},
@@ -31,6 +32,28 @@
 				{"name":"TokenRootCode","type":"cell"},
 				{"name":"TokenWalletCode","type":"cell"},
 				{"name":"previous","type":"optional(address)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployedWallet",
+			"inputs": [
+				{"name":"systemcontract","type":"address"},
+				{"name":"goshdao","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"ver","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyedWallet",
+			"inputs": [
+				{"name":"systemcontract","type":"address"},
+				{"name":"goshdao","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"ver","type":"string"}
 			],
 			"outputs": [
 			]
@@ -234,6 +257,7 @@
 				{"name":"pub","type":"address"},
 				{"name":"index","type":"uint128"},
 				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
+				{"name":"dao","type":"optional(string)[]"},
 				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"},
 				{"name":"reviewers","type":"address[]"}
@@ -400,6 +424,7 @@
 			"name": "deployWallet",
 			"inputs": [
 				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddrdeploy","type":"tuple[]"},
+				{"name":"dao","type":"optional(string)[]"},
 				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"}
 			],
@@ -544,6 +569,7 @@
 			"name": "deployWallets",
 			"inputs": [
 				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubmem","type":"tuple[]"},
+				{"name":"dao","type":"optional(string)[]"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -860,6 +886,8 @@
 				{"name":"allbalance","type":"uint128"},
 				{"name":"totalsupply","type":"uint128"},
 				{"name":"hashtag","type":"map(uint256,string)"},
+				{"name":"my_wallets","type":"map(uint256,address)"},
+				{"name":"daoMembers","type":"map(uint256,string)"},
 				{"name":"isCheck","type":"bool"}
 			]
 		},
@@ -1033,9 +1061,11 @@
 		{"name":"_nameDao","type":"string"},
 		{"name":"_previous","type":"optional(address)"},
 		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"_wallets","type":"map(uint256,tuple)"},
+		{"name":"_daoMembers","type":"map(uint256,string)"},
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_hashtag","type":"map(uint256,string)"},
 		{"name":"_versions","type":"map(uint256,string)"},
+		{"name":"_my_wallets","type":"map(uint256,address)"},
 		{"name":"_tokenforperson","type":"uint128"},
 		{"name":"_limit_wallets","type":"uint128"},
 		{"name":"m_TokenLockerCode","type":"cell"},
@@ -1051,6 +1081,7 @@
 		{"name":"_allow_discussion_on_proposals","type":"bool"},
 		{"name":"timeMoney","type":"uint128"},
 		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"saveaddr","type":"optional(tuple[])"},
+		{"name":"savedao","type":"optional(optional(string)[])"},
 		{"name":"saveind","type":"optional(uint128)"},
 		{"name":"_reserve","type":"uint128"},
 		{"name":"_allbalance","type":"uint128"},
