@@ -393,6 +393,7 @@ def deployContracts(version, port) {
     script {
         dir("${version}/contracts/multisig") {
             // Deploy msig giver for GOSH deployment
+            sh 'ls'
             env.port = "${port}"
             env.giverAddr = sh(returnStdout: true, script: 'cat Giver.addr').trim()
             sh "make build-contracts-docker"
