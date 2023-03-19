@@ -241,9 +241,11 @@ pipeline {
                         def script = files[i]
                         def port = basePort + i
                         def index = i
+                        sh "rm -rf tests_workspace_*"
                         containerStages["Container ${i}"] = {
                             stage("Container ${index}") {
-                                dir("${WORKSPACE}/${version}_workspace_${index}") {
+                                sh "cp -r tests tests_workspace_${index}"
+                                dir("${WORKSPACE}/tests_workspace_${index}") {
                                     sh """
                                         export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
                                         ./set-vars.sh ${version} http://localnode:${port}
