@@ -161,10 +161,13 @@ pipeline {
             steps {
                 script {
                     def containerStages = [:]
-                    def nodesCount = 20
                     def basePort = 9000
+                    def files
+                    dir("tests") {
+                        files = sh(script: 'ls upgrade_tests/*.test.sh | grep "[0-9][0-9]\\+"', returnStdout: true).trim().split('\n')
+                    }
                     sh "rm -rf v1_x_workspace_*"
-                    for (int i = 0; i < nodesCount; i++) {
+                    for (int i = 0; i < files.size(); i++) {
                         def port = basePort + i
                         def index = i
                         containerStages["Container ${i}"] = {
@@ -209,11 +212,30 @@ pipeline {
             steps {
                 script {
                     def containerStages = [:]
-                    def nodesCount = 20
                     def basePort = 9000
                     def files
                     dir("tests") {
                         files = sh(script: 'ls upgrade_tests/*.test.sh | grep "[0-9][0-9]\\+"', returnStdout: true).trim().split('\n')
+                        sh """
+                            #!/bin/bash
+                            set -e
+                            set -x
+                            cd ../tests
+                            mkdir -p /home/jenkins/bin
+
+                            # dispatcher
+                            cp -r /tmp/${JOB_NAME}/linux-amd64/git-remote-gosh /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
+
+                            # remote
+                            cd /tmp/${JOB_NAME}/linux-amd64/
+                            # REMOTE_VERSION=\$(find . -name "git-remote-gosh_*" | tr -d "./")
+                            cd -
+                            cp -r /tmp/${JOB_NAME}/linux-amd64/git-remote-gosh_* /home/jenkins/bin/ && chmod +x /home/jenkins/bin/git-remote-gosh_*
+                            mkdir -p /home/jenkins/.gosh/
+                            # echo \$REMOTE_VERSION > /home/jenkins/.gosh/dispatcher.ini
+                            cd /home/jenkins/bin/
+                            ls git-remote-gosh_* -1 > /home/jenkins/.gosh/dispatcher.ini
+                        """
                     }
                     for (int i = 0; i < files.size(); i++) {
                         def script = files[i]
@@ -223,28 +245,10 @@ pipeline {
                             stage("Container ${index}") {
                                 dir("${WORKSPACE}/${version}_workspace_${index}") {
                                     sh """
-                                        #!/bin/bash
-                                        set -e
-                                        set -x
-                                        cd ../tests
-                                        mkdir -p /home/jenkins/bin
-
-                                        # dispatcher
-                                        cp -r /tmp/${JOB_NAME}/linux-amd64/git-remote-gosh /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
-
-                                        # remote
-                                        cd /tmp/${JOB_NAME}/linux-amd64/
-                                        # REMOTE_VERSION=\$(find . -name "git-remote-gosh_*" | tr -d "./")
-                                        cd -
-                                        cp -r /tmp/${JOB_NAME}/linux-amd64/git-remote-gosh_* /home/jenkins/bin/ && chmod +x /home/jenkins/bin/git-remote-gosh_*
-                                        mkdir -p /home/jenkins/.gosh/
-                                        # echo \$REMOTE_VERSION > /home/jenkins/.gosh/dispatcher.ini
-                                        cd /home/jenkins/bin/
-                                        ls git-remote-gosh_* -1 > /home/jenkins/.gosh/dispatcher.ini
-                                        cd -
-                                        export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:\$PATH
+                                        export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
                                         ./set-vars.sh ${version} http://localnode:${port}
                                         ./upgrade_tests/set_up.sh
+                                        . ./env.env
                                         ./${script}
                                     """
                                 }
