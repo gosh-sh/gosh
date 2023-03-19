@@ -608,6 +608,19 @@
 			]
 		},
 		{
+			"name": "getRedeployTaskProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"name":"nameTask","type":"string"},
+				{"name":"hashtag","type":"string[]"},
+				{"name":"data","type":"cell"}
+			]
+		},
+		{
 			"name": "getGoshAddRegularTokenProposalParamsData",
 			"inputs": [
 				{"name":"Data","type":"cell"}
