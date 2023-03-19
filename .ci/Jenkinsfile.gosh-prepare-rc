@@ -391,7 +391,7 @@ def archiveAzureArtifacts() {
 
 def deployContracts(version, port) {
     script {
-        dir("${WORKSAPCE}/${version}/contracts/multisig") {
+        dir("${WORKSPACE}/${version}/contracts/multisig") {
             // Deploy msig giver for GOSH deployment
             sh 'ls'
             env.port = "${port}"
