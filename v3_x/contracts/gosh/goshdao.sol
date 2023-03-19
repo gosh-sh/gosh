@@ -531,23 +531,34 @@ contract GoshDao is Modifiers, TokenRootOwner {
     	}	
     }
     
-    function daoMulti (address pub, uint128 index, address wallet, uint128 number, TvmCell proposals, uint128 num_clients, address[] reviewers) public view senderIs(getAddrWalletIn(pub, index))  accept {
+    function daoMulti (address pub, uint128 index, address wallet, uint128 number, TvmCell proposals, uint128 num_clients, address[] reviewers) public senderIs(getAddrWalletIn(pub, index))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
-        GoshWallet(wallet).startMultiProposalIn{value:0.2 ton}(number, proposals, num_clients, reviewers);   	
+        GoshWallet(wallet).startMultiProposalIn{value:0.2 ton}(number, proposals, num_clients, reviewers);   
+    	getMoney();	
     }
     
-    function daoAskGrantFull (address pub, uint128 index, address wallet, string repoName, string nameTask) public view senderIs(getAddrWalletIn(pub, index))  accept {
+    function daoAskLock (address pub, uint128 index, address wallet, bool isLock, uint128 grant) public senderIs(getAddrWalletIn(pub, index))  accept {
+    	require(_tombstone == false, ERR_TOMBSTONE);
+    	if (isLock) {  GoshWallet(wallet).lockVotingInDao{value:0.2 ton}(grant); }
+    	else { GoshWallet(wallet).unlockVotingInDao{value:0.2 ton}(grant); }
+    	getMoney();
+    }
+    
+    function daoAskGrantFull (address pub, uint128 index, address wallet, string repoName, string nameTask) public senderIs(getAddrWalletIn(pub, index))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
         GoshWallet(wallet).askGrantTokenFullIn{value:0.2 ton}(repoName, nameTask);   	
+    	getMoney();
     }
     
-    function daoSendReview (address pub, uint128 index, address wallet, address propAddr, bool isAccept) public view senderIs(getAddrWalletIn(pub, index))  accept {
+    function daoSendReview (address pub, uint128 index, address wallet, address propAddr, bool isAccept) public senderIs(getAddrWalletIn(pub, index))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
-        GoshWallet(wallet).askReviewerIn{value:0.2 ton}(propAddr, isAccept);   	
+        GoshWallet(wallet).askReviewerIn{value:0.2 ton}(propAddr, isAccept);  
+    	getMoney(); 	
     }
         
-    function doNothing (address pub, uint128 index) public view senderIs(getAddrWalletIn(pub, index))  accept {
+    function doNothing (address pub, uint128 index) public senderIs(getAddrWalletIn(pub, index))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
+    	getMoney();
         return;   	
     }
     

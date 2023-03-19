@@ -1073,6 +1073,22 @@
 			]
 		},
 		{
+			"name": "lockVotingInDao",
+			"inputs": [
+				{"name":"amount","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "unlockVotingInDao",
+			"inputs": [
+				{"name":"amount","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "startProposalForSetCommit",
 			"inputs": [
 				{"name":"repoName","type":"string"},
@@ -1106,6 +1122,7 @@
 		{
 			"name": "startProposalForDaoAskGrant",
 			"inputs": [
+				{"name":"wallet","type":"address"},
 				{"name":"repoName","type":"string"},
 				{"name":"taskName","type":"string"},
 				{"name":"comment","type":"string"},
@@ -1118,8 +1135,34 @@
 		{
 			"name": "getCellForDaoAskGrant",
 			"inputs": [
+				{"name":"wallet","type":"address"},
 				{"name":"repoName","type":"string"},
 				{"name":"taskName","type":"string"},
+				{"name":"comment","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "startProposalForDaoLockVote",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"isLock","type":"bool"},
+				{"name":"grant","type":"uint128"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellForDaoLockVote",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"isLock","type":"bool"},
+				{"name":"grant","type":"uint128"},
 				{"name":"comment","type":"string"}
 			],
 			"outputs": [

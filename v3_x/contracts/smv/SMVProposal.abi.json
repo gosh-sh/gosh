@@ -260,6 +260,7 @@
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
+				{"name":"wallet","type":"address"},
 				{"name":"reponame","type":"string"},
 				{"name":"taskname","type":"string"},
 				{"name":"comment","type":"string"}
@@ -510,8 +511,35 @@
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
+				{"name":"wallet","type":"address"},
 				{"name":"reponame","type":"string"},
 				{"name":"taskname","type":"string"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getDaoLockVoteProposalParams",
+			"inputs": [
+				{"name":"value0","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"wallet","type":"address"},
+				{"name":"isLock","type":"bool"},
+				{"name":"grant","type":"uint128"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getDaoLockVoteProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"wallet","type":"address"},
+				{"name":"isLock","type":"bool"},
+				{"name":"grant","type":"uint128"},
 				{"name":"comment","type":"string"}
 			]
 		},

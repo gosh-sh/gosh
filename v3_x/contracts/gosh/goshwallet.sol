@@ -1761,6 +1761,54 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         ISMVTokenLocker(tip3VotingLocker).unlockVoting {value: 3*SMVConstants.ACTION_FEE, flag: 1}
                                                        (amount);
     }
+    
+    function lockVotingInDao (uint128 amount) public /* onlyOwnerPubkey(_access.get()) */
+    {
+        getMoney();
+    	if (msg.value == 0) {
+    	    require(msg.sender == _pubaddr, ERR_NOT_OWNER);
+    	    require(initialized, SMVErrors.error_not_initialized);
+    	    require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
+    	                                2*SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
+    	    tvm.accept();
+    	    _saveMsg();
+    	}
+    	else{
+    	    if (!initialized) return;
+    	    if (!(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
+    	                                  2*SMVConstants.ACTION_FEE)) return;
+    	    tvm.accept();
+    	}
+	
+    	if (amount == 0) {
+    	    amount = math.min(m_pseudoDAOBalance, m_pseudoDAOVoteBalance);
+    	}
+	
+    	if ((amount > 0) && (amount <= m_pseudoDAOBalance) && (amount <= m_pseudoDAOVoteBalance))
+    	{
+    	    /* TvmCell empty; */
+    	    /* ITokenWallet(m_tokenWallet).transfer {value: 2*SMVConstants.ACTION_FEE, flag: 1}
+    	                                         (amount, tip3VotingLocker, 0, address(this), true, empty) ; */
+    	    //ISMVTokenLocker(tip3VotingLocker).lockVoting{value: 2*SMVConstants.ACTION_FEE, flag: 1} (amount);
+    	    GoshDao(_goshdao).requestMint {value: SMVConstants.ACTION_FEE} (tip3VotingLocker, _pubaddr, amount, _index);
+    	    m_pseudoDAOBalance = m_pseudoDAOBalance - amount;
+    	    m_pseudoDAOVoteBalance -= amount;
+    	    _lockedBalance += amount;
+    	}
+    }
+    
+    function unlockVotingInDao (uint128 amount) external onlyOwnerAddress(_pubaddr)
+    {
+    	require(initialized, SMVErrors.error_not_initialized);
+    	require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
+                                    4*SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low);
+    	tvm.accept();
+    	_saveMsg();
+    	getMoney();
+
+    	ISMVTokenLocker(tip3VotingLocker).unlockVoting {value: 3*SMVConstants.ACTION_FEE, flag: 1}
+                                                   (amount);
+    }
 
     function _startProposalForOperation(TvmCell dataCell, uint32 startTimeAfter, uint32 durationTime, uint128 num_clients, address[] reviewers) internal view
     {
@@ -1818,6 +1866,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function startProposalForDaoAskGrant(
+        address wallet,
         string repoName,
         string taskName,
         string comment,
@@ -1830,17 +1879,47 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _saveMsg();
 
         uint256 proposalKind = ASK_TASK_GRANT_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, repoName, taskName, comment, now);
+        TvmCell c = abi.encode(proposalKind, wallet, repoName, taskName, comment, now);
 
         _startProposalForOperation(c, ASK_TASK_GRANT_PROPOSAL_START_AFTER, ASK_TASK_GRANT_PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
     
-    function getCellForDaoAskGrant(string repoName, string taskName,
+    function getCellForDaoAskGrant(address wallet, string repoName, string taskName,
         string comment) external pure returns(TvmCell) {
         uint256 proposalKind = ASK_TASK_GRANT_PROPOSAL_KIND;
-        return abi.encode(proposalKind, repoName, taskName, comment, now);  
+        return abi.encode(proposalKind, wallet, repoName, taskName, comment, now);  
+    }
+    
+    function startProposalForDaoLockVote(
+        address wallet,
+        bool isLock,
+        uint128 grant,
+        string comment,
+        uint128 num_clients,
+        address[] reviewers
+    ) public onlyOwnerPubkeyOptional(_access)  {
+        require(_tombstone == false, ERR_TOMBSTONE);       
+        require(_limited == false, ERR_WALLET_LIMITED);
+        tvm.accept();
+        _saveMsg();
+
+        uint256 proposalKind = DAO_LOCK_PROPOSAL_KIND;
+        TvmCell c = abi.encode(proposalKind, wallet, isLock, grant, comment, now);
+
+        _startProposalForOperation(c, DAO_LOCK_PROPOSAL_START_AFTER, DAO_LOCK_PROPOSAL_DURATION, num_clients, reviewers);
+
+        getMoney();
+    }
+    
+    function getCellForDaoLockVote(
+        address wallet,
+        bool isLock,
+        uint128 grant,
+        string comment) external pure returns(TvmCell) {
+        uint256 proposalKind = DAO_LOCK_PROPOSAL_KIND;
+        return abi.encode(proposalKind, wallet, isLock, grant, comment, now);
     }
     
     function startProposalForAddRepoTag(
@@ -2328,6 +2407,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == ASK_TASK_GRANT_PROPOSAL_KIND) {
                 (, address wallet, string repoName, string taskName,,) = abi.decode(propData, (uint256, address, string, string, string, uint32));
                 GoshDao(_goshdao).daoAskGrantFull{value: 0.1 ton}(_pubaddr, _index, wallet, repoName, taskName);   
+            } else
+            if (kind == DAO_LOCK_PROPOSAL_KIND) {
+                (, address wallet, bool isLock, uint128 grant,,) = abi.decode(propData, (uint256, address, bool, uint128, string, uint32));
+                GoshDao(_goshdao).daoAskLock{value: 0.1 ton}(_pubaddr, _index, wallet, isLock, grant);   
             }
         }
     }
@@ -2491,6 +2574,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == ASK_TASK_GRANT_PROPOSAL_KIND) {
                 (, address wallet, string repoName, string taskName,,) = abi.decode(propData, (uint256, address, string, string, string, uint32));
                 GoshDao(_goshdao).daoAskGrantFull{value: 0.1 ton}(_pubaddr, _index, wallet, repoName, taskName);   
+            } else
+            if (kind == DAO_LOCK_PROPOSAL_KIND) {
+                (, address wallet, bool isLock, uint128 grant,,) = abi.decode(propData, (uint256, address, bool, uint128, string, uint32));
+                GoshDao(_goshdao).daoAskLock{value: 0.1 ton}(_pubaddr, _index, wallet, isLock, grant);   
             }
         }
     }

@@ -378,9 +378,9 @@ function getGoshDaoTagProposalParams () external view
 }
 
 function getDaoAskGrantProposalParams () external view
-         returns( uint256  proposalKind, string reponame, string taskname, string comment)
+         returns( uint256  proposalKind, address wallet, string reponame, string taskname, string comment)
 {
-    (proposalKind, reponame, taskname, comment, ) = abi.decode(propData, (uint256, string, string, string, uint32));
+    (proposalKind, wallet, reponame, taskname, comment, ) = abi.decode(propData, (uint256, address, string, string, string, uint32));
 }
 
 function getNotAllowMintProposalParams () external view
@@ -511,9 +511,21 @@ function getGoshConfirmTaskProposalParamsData (TvmCell Data) external pure
 }
 
 function getDaoAskGrantProposalParamsData (TvmCell Data) external pure
-         returns( uint256  proposalKind, string reponame, string taskname, string comment)
+         returns( uint256  proposalKind, address wallet, string reponame, string taskname, string comment)
 {
-    (proposalKind, reponame, taskname, comment, ) = abi.decode(Data, (uint256, string, string, string, uint32));
+    (proposalKind, wallet, reponame, taskname, comment, ) = abi.decode(Data, (uint256, address, string, string, string, uint32));
+}
+
+function getDaoLockVoteProposalParams (TvmCell ) external view
+         returns( uint256  proposalKind, address wallet, bool isLock, uint128 grant, string comment)
+{
+    (proposalKind, wallet, isLock, grant, comment, ) = abi.decode(propData, (uint256, address, bool, uint128, string, uint32));
+}
+
+function getDaoLockVoteProposalParamsData (TvmCell Data) external pure
+         returns( uint256  proposalKind, address wallet, bool isLock, uint128 grant, string comment)
+{
+    (proposalKind, wallet, isLock, grant, comment, ) = abi.decode(Data, (uint256, address, bool, uint128, string, uint32));
 }
 
 function getGoshDestroyTaskProposalParamsData (TvmCell Data) external pure
