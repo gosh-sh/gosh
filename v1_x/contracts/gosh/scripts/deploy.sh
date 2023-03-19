@@ -77,7 +77,7 @@ echo $VERSIONCONTROLLER_ADDR > $GOSH_PATH/VersionController.addr
 echo "========== Send 2000 tons for deploy VersionController"
 everdev contract run $GIVER_ABI submitTransaction --input "{\"dest\": \"$VERSIONCONTROLLER_ADDR\", \"value\": 2000000000000, \"bounce\": false, \"allBalance\": false, \"payload\": \"\"}" --network $NETWORK --signer $GIVER_SIGNER --address $GIVER_ADDR > /dev/null || exit 1
 
-delay 40
+delay 60
 
 # Deploy VersionController
 echo "========== Deploy VersionController"
