@@ -145,11 +145,12 @@ contract GoshDao is Modifiers, TokenRootOwner {
         ProfileDao(_profiledao).deployedDao{value: 0.1 ton, flag: 1}(_nameDao, version);
     }
     
-    function deployedWallet(address systemcontract, address goshdao, uint128 index, string ver) public  {
+    function deployedWallet(address systemcontract, address goshdao, uint128 index, string ver) public   {
         systemcontract; goshdao; index; ver;
         if (index == 0) {
             (int8 _, uint256 keyaddr) = goshdao.unpack(); _;
             if (msg.sender != getAddrWalletOut(goshdao, address(this), index)) { return; }
+            tvm.accept();
             _my_wallets[keyaddr] = msg.sender;
         }
     }
@@ -159,6 +160,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (index == 0) {
             (int8 _, uint256 keyaddr) = goshdao.unpack(); _;
             if (msg.sender != getAddrWalletOut(goshdao, address(this), index)) { return; }
+            tvm.accept();
             delete _my_wallets[keyaddr];
         }
     }

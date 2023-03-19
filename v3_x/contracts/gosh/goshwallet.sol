@@ -119,7 +119,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         m_SMVProposalCode = proposalCode;
         m_lockerCode = lockerCode;
         Profile(_pubaddr).deployedWallet(_systemcontract, _goshdao, _index, version);
-        this.deployWalletIn{value: 0.1 ton, flag: 1}();
+        this.deployWalletIn{value: 0.3 ton, flag: 1}();
         getMoney();
     }
     
