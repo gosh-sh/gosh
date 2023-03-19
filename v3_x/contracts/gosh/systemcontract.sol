@@ -29,6 +29,7 @@ contract SystemContract is Modifiers {
     address _versionController;
     bool _flag = true;
     mapping(uint8 => TvmCell) _code;
+    mapping(uint128 => address) public _indexes;
 
     //Limits
     uint128 _limit_wallets = 64;
@@ -131,6 +132,18 @@ contract SystemContract is Modifiers {
         VersionController(_versionController).updateCodeDao{value : 0.3 ton, flag: 1}(newcode, cell, version);
     }
 
+    function askIndexAddr(string name, TvmCell Data, uint128 index, address sender) public accept saveMsg {
+        TvmCell s1 = _composeDaoStateInit(name);
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        if (_indexes.exists(index)) {
+            GoshWallet(sender).saveData(Data, index, _indexes[index]);
+        } 
+    }
+    
+    function deployIndexFactory() public accept saveMsg {
+        return;
+    }
     
     function deployDao(string name, address pubaddr, optional(address) previous, address[] pubmem) public accept saveMsg {
         require(_flag == false, ERR_GOSH_UPDATE);

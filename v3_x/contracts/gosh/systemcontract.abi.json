@@ -137,6 +137,24 @@
 			]
 		},
 		{
+			"name": "askIndexAddr",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"Data","type":"cell"},
+				{"name":"index","type":"uint128"},
+				{"name":"sender","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployIndexFactory",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployDao",
 			"inputs": [
 				{"name":"name","type":"string"},
@@ -615,6 +633,14 @@
 			]
 		},
 		{
+			"name": "_indexes",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_indexes","type":"map(uint128,address)"}
+			]
+		},
+		{
 			"name": "_lastGoshDao",
 			"inputs": [
 			],
@@ -636,6 +662,7 @@
 		{"name":"_versionController","type":"address"},
 		{"name":"_flag","type":"bool"},
 		{"name":"_code","type":"map(uint8,cell)"},
+		{"name":"_indexes","type":"map(uint128,address)"},
 		{"name":"_limit_wallets","type":"uint128"},
 		{"name":"m_TokenLockerCode","type":"cell"},
 		{"name":"m_SMVPlatformCode","type":"cell"},

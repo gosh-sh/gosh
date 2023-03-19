@@ -37,6 +37,25 @@
 			]
 		},
 		{
+			"name": "deployIndex",
+			"inputs": [
+				{"name":"data","type":"cell"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "saveData",
+			"inputs": [
+				{"name":"data","type":"cell"},
+				{"name":"index","type":"uint128"},
+				{"name":"factory","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployWallet",
 			"inputs": [
 			],
@@ -1710,6 +1729,14 @@
 			]
 		},
 		{
+			"name": "_indexes",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_indexes","type":"map(uint128,address)"}
+			]
+		},
+		{
 			"name": "_tombstone",
 			"inputs": [
 			],
@@ -1780,6 +1807,7 @@
 		{"name":"_walletcounter","type":"uint128"},
 		{"name":"_limit_wallets","type":"uint128"},
 		{"name":"_versions","type":"map(uint256,string)"},
+		{"name":"_indexes","type":"map(uint128,address)"},
 		{"name":"_tombstone","type":"bool"},
 		{"name":"_limited","type":"bool"},
 		{"name":"timeMoney","type":"uint128"}

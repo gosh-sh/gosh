@@ -54,6 +54,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     uint128 _walletcounter = 1;
     uint128 _limit_wallets;
     mapping(uint256 => string) public _versions;
+    mapping(uint128 => address) public _indexes;
 
     bool public _tombstone = false;
     bool public _limited = true;
@@ -120,6 +121,22 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         Profile(_pubaddr).deployedWallet(_systemcontract, _goshdao, _index, version);
         this.deployWalletIn{value: 0.1 ton, flag: 1}();
         getMoney();
+    }
+    
+    function deployIndex(TvmCell data, uint128 index) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        require(address(this).balance > 20 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        if (_indexes.exists(index) == false) {
+            GoshDao(_goshdao).askAddr(_pubaddr, _index, data, index);
+        } else {
+            IObject(_indexes[index]).deployIndex(_nameDao, _pubaddr, index, data);
+        }
+    }
+    
+    function saveData(TvmCell data, uint128 index, address factory) public senderIs(_systemcontract)  accept saveMsg {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        _indexes[index] = factory;
+        IObject(_indexes[index]).deployIndex(_nameDao, _pubaddr, index, data);
     }
 
     function deployWallet() public onlyOwnerPubkeyOptional(_access)  accept saveMsg {

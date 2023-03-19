@@ -274,6 +274,17 @@
 			]
 		},
 		{
+			"name": "askAddr",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"data","type":"cell"},
+				{"name":"index1","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "upgradeVersionCode",
 			"inputs": [
 				{"name":"pub","type":"address"},
