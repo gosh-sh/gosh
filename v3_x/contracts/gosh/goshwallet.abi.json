@@ -255,6 +255,40 @@
 			]
 		},
 		{
+			"name": "startProposalForDaoReview",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"propaddress","type":"address"},
+				{"name":"isAccept","type":"bool"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellForDaoReview",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"propaddress","type":"address"},
+				{"name":"isAccept","type":"bool"},
+				{"name":"comment","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "askReviewerIn",
+			"inputs": [
+				{"name":"propAddress","type":"address"},
+				{"name":"isAccept","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "startProposalForSetHideVotingResult",
 			"inputs": [
 				{"name":"res","type":"bool"},
@@ -894,6 +928,24 @@
 			]
 		},
 		{
+			"name": "askGrantTokenFull",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "askGrantTokenFullIn",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "grantToken",
 			"inputs": [
 				{"name":"nametask","type":"string"},
@@ -1056,6 +1108,29 @@
 				{"name":"numberCommits","type":"uint128"},
 				{"name":"comment","type":"string"},
 				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"}],"name":"task","type":"optional(tuple)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "startProposalForDaoAskGrant",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"taskName","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellForDaoAskGrant",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"taskName","type":"string"},
+				{"name":"comment","type":"string"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}

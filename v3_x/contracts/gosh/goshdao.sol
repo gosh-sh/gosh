@@ -533,6 +533,16 @@ contract GoshDao is Modifiers, TokenRootOwner {
     	require(_tombstone == false, ERR_TOMBSTONE);
         GoshWallet(wallet).startMultiProposalIn{value:0.2 ton}(number, proposals, num_clients, reviewers);   	
     }
+    
+    function daoAskGrantFull (address pub, uint128 index, address wallet, string repoName, string nameTask) public view senderIs(getAddrWalletIn(pub, index))  accept {
+    	require(_tombstone == false, ERR_TOMBSTONE);
+        GoshWallet(wallet).askGrantTokenFullIn{value:0.2 ton}(repoName, nameTask);   	
+    }
+    
+    function daoSendReview (address pub, uint128 index, address wallet, address propAddr, bool isAccept) public view senderIs(getAddrWalletIn(pub, index))  accept {
+    	require(_tombstone == false, ERR_TOMBSTONE);
+        GoshWallet(wallet).askReviewerIn{value:0.2 ton}(propAddr, isAccept);   	
+    }
         
     function doNothing (address pub, uint128 index) public view senderIs(getAddrWalletIn(pub, index))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
@@ -786,19 +796,18 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function deployWalletIn(MemberToken pubaddr) private {
         tvm.accept();
         require(_reserve >= pubaddr.count, ERR_LOW_TOKEN_RESERVE);
-        (int8 _, uint256 keyaddr) = pubaddr.member.unpack();
+        (, uint256 keyaddr) = pubaddr.member.unpack(); 
         if (_daoMembers[keyaddr] != "") { 
             pubaddr.member = _getDaoAddress(_daoMembers[keyaddr]);
-            (int8 _, uint256 addrkey) = pubaddr.member.unpack(); _;
+            (, uint256 addrkey) = pubaddr.member.unpack(); 
             _daoMembers[addrkey] = _daoMembers[keyaddr];
         }
-        (_, keyaddr) = pubaddr.member.unpack();
+        (, keyaddr) = pubaddr.member.unpack();
         require(_wallets.exists(keyaddr) == false, ERR_WALLET_EXIST);
         _reserve -= pubaddr.count;
         _allbalance += pubaddr.count;
         TvmCell s1 = _composeWalletStateInit(pubaddr.member, 0);
         _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));
-        _;
         _wallets[keyaddr] = MemberToken(_lastAccountAddress, pubaddr.count);
         new GoshWallet {
             stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0

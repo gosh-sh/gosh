@@ -255,6 +255,17 @@
 			]
 		},
 		{
+			"name": "getDaoAskGrantProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"reponame","type":"string"},
+				{"name":"taskname","type":"string"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
 			"name": "getNotAllowMintProposalParams",
 			"inputs": [
 			],
@@ -283,6 +294,18 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"result","type":"bool"}
+			]
+		},
+		{
+			"name": "getSendReviewProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"wallet","type":"address"},
+				{"name":"propAddr","type":"address"},
+				{"name":"result","type":"bool"},
+				{"name":"comment","type":"string"}
 			]
 		},
 		{
@@ -481,6 +504,18 @@
 			]
 		},
 		{
+			"name": "getDaoAskGrantProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"reponame","type":"string"},
+				{"name":"taskname","type":"string"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
 			"name": "getGoshDestroyTaskProposalParamsData",
 			"inputs": [
 				{"name":"Data","type":"cell"}
@@ -489,6 +524,19 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"reponame","type":"string"},
 				{"name":"taskname","type":"string"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getSendReviewProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"wallet","type":"address"},
+				{"name":"propAddr","type":"address"},
+				{"name":"result","type":"bool"},
 				{"name":"comment","type":"string"}
 			]
 		},
