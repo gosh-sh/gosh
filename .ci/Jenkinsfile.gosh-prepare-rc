@@ -165,7 +165,7 @@ pipeline {
                     def basePort = 9000
                     for (int i = 0; i < nodesCount; i++) {
                         def port = basePort + i
-                        def index = ${i}
+                        def index = i
                         containerStages["Container ${i}"] = {
                             stage("Container ${index}") {
                                 echo "Starting Docker container on port ${port}"
