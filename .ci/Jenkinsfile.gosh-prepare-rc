@@ -178,6 +178,7 @@ pipeline {
                                     env.version = "v1_x"
                                     dir("${WORKSPACE}/${version}_${i}/contracts/multisig") {
                                         env.port = "${port}"
+                                        sh 'pwd && ls'
                                         sh "make build-contracts-docker"
                                         sh "make generate-docker NETWORK=http://localnode:${env.port}"
                                         env.giverAddr = sh(returnStdout: true, script: 'cat Giver.addr').trim()
