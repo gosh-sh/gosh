@@ -436,6 +436,15 @@ contract GoshDao is Modifiers, TokenRootOwner {
         GoshWallet(wallet).voteForIn{value:0.2 ton}(platform_id, choice, amount, num_clients_base, note);   	
     }
     
+    function daoSendToken (address pub, uint128 index, address wallet, optional(address)  pubaddr, uint128 grant) public view senderIs(getAddrWalletIn(pub, index))  accept {
+    	require(_tombstone == false, ERR_TOMBSTONE);
+    	if (pubaddr.hasValue()) {
+    	    GoshWallet(wallet).sendTokenIn{value:0.2 ton}(pubaddr.get(), grant);   
+    	} else {
+    	    GoshWallet(wallet).sendTokenToDaoReserveIn{value:0.2 ton}(grant);
+    	}	
+    }
+    
     function daoMulti (address pub, uint128 index, address wallet, uint128 number, TvmCell proposals, uint128 num_clients, address[] reviewers) public view senderIs(getAddrWalletIn(pub, index))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
         GoshWallet(wallet).startMultiProposalIn{value:0.2 ton}(number, proposals, num_clients, reviewers);   	

@@ -842,6 +842,44 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
     
+    function startProposalForSendDaoToken(
+        address wallet,
+        optional(address) pubaddr,
+        uint128 grant,
+        string comment,
+        uint128 num_clients , address[] reviewers
+    ) public onlyOwnerPubkeyOptional(_access) accept {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        _saveMsg();
+
+        uint256 proposalKind = SEND_TOKEN_PROPOSAL_KIND;
+        TvmCell c = abi.encode(proposalKind, wallet, pubaddr, grant, comment, now);
+
+        _startProposalForOperation(c, SEND_TOKEN_PROPOSAL_START_AFTER, SEND_TOKEN_PROPOSAL_DURATION, num_clients, reviewers);
+
+        getMoney();
+    }
+
+    function getCellForSendDaoToken(address wallet,
+        optional(address) pubaddr,
+        uint128 grant,
+        string comment) external pure returns(TvmCell) {
+        uint256 proposalKind = SEND_TOKEN_PROPOSAL_KIND;
+        return abi.encode(proposalKind, wallet, pubaddr, grant, comment, now);      
+    }
+    
+    function _daoSendToken(
+        address wallet,
+        optional(address) pubaddr,
+        uint128 grant
+    ) public senderIs(address(this)) accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        GoshDao(_goshdao).daoSendToken{value: 0.1 ton}(_pubaddr, _index, wallet, pubaddr, grant);
+        getMoney();
+    }
+    
     function startProposalForDeployRepository(
         string nameRepo, 
         string descr,
@@ -1423,11 +1461,34 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshDao(_goshdao).receiveTokentoReserve{value: 0.1 ton}(_pubaddr, _index, grant);
         getMoney();
     }
+    
+    function sendTokenToDaoReserveIn(
+        uint128 grant
+    ) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(grant <= m_pseudoDAOBalance, ERR_TOO_LOW_BALANCE);
+        m_pseudoDAOBalance -= grant;
+        GoshDao(_goshdao).receiveTokentoReserve{value: 0.1 ton}(_pubaddr, _index, grant);
+        getMoney();
+    }
 
     function sendToken(
         address pubaddr,
         uint128 grant
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(grant <= m_pseudoDAOBalance, ERR_TOO_LOW_BALANCE);
+        m_pseudoDAOBalance -= grant;
+        GoshWallet(_getWalletAddrPub(pubaddr, 0)).receiveToken{value: 0.1 ton}(_pubaddr, _index, grant);
+        getMoney();
+    }
+    
+    function sendTokenIn(
+        address pubaddr,
+        uint128 grant
+    ) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(grant <= m_pseudoDAOBalance, ERR_TOO_LOW_BALANCE);
@@ -2120,6 +2181,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                (, uint32 _time) = abi.decode(propData, (uint256, uint32));
                _time;
                GoshDao(_goshdao).doNothing{value: 0.1 ton}(_pubaddr, _index);          
+            } else
+            if (kind == SEND_TOKEN_PROPOSAL_KIND) {
+                (, address wallet, optional(address) pubaddr, uint128 grant,,) = abi.decode(propData, (uint256, address, optional(address), uint128, string, uint32));
+                _daoSendToken(wallet, pubaddr, grant);
             }
         }
     }
@@ -2267,6 +2332,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                (, uint32 _time) = abi.decode(propData, (uint256, uint32));
                _time;
                GoshDao(_goshdao).doNothing{value: 0.1 ton}(_pubaddr, _index);          
+            } else
+            if (kind == SEND_TOKEN_PROPOSAL_KIND) {
+                (, address wallet, optional(address) pubaddr, uint128 grant,,) = abi.decode(propData, (uint256, address, optional(address), uint128, string, uint32));
+                _daoSendToken(wallet, pubaddr, grant);
             }
         }
     }

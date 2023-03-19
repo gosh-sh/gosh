@@ -338,6 +338,17 @@
 			]
 		},
 		{
+			"name": "getDaoSendTokenProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"wallet","type":"address"},
+				{"name":"pubaddr","type":"optional(address)"},
+				{"name":"grant","type":"uint128"}
+			]
+		},
+		{
 			"name": "getDaoVoteProposalParams",
 			"inputs": [
 			],
@@ -539,6 +550,18 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"daotag","type":"string[]"},
 				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getDaoSendTokenProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"wallet","type":"address"},
+				{"name":"pubaddr","type":"optional(address)"},
+				{"name":"grant","type":"uint128"}
 			]
 		},
 		{

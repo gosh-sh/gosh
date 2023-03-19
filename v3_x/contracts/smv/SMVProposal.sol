@@ -425,6 +425,12 @@ function getTagUpgradeProposalParams () external view
      (proposalKind, repoName, nametag, newversion, ,) = abi.decode(propData, (uint256, string[], string[], string, string, uint32));
 }
 
+function getDaoSendTokenProposalParams () external view
+         returns(uint256 proposalKind, address wallet, optional(address) pubaddr, uint128 grant)
+{
+    (proposalKind, wallet, pubaddr, grant,,) = abi.decode(propData, (uint256, address, optional(address), uint128, string, uint32));
+}
+
 function getDaoVoteProposalParams () external view
          returns(uint proposalKind, address wallet, uint256 platform_id, bool choice, uint128 amount, uint128 num_clients_base, string note) 
 {
@@ -526,6 +532,12 @@ function getGoshDaoTagProposalParamsData (TvmCell Data) external pure
          returns(uint256  proposalKind,  string[] daotag, string comment)
 {
     (proposalKind, daotag, comment, ) = abi.decode(Data, (uint256, string[], string, uint32));
+}
+
+function getDaoSendTokenProposalParamsData (TvmCell Data) external pure
+         returns(uint256 proposalKind, address wallet, optional(address) pubaddr, uint128 grant)
+{
+    (proposalKind, wallet, pubaddr, grant,,) = abi.decode(Data, (uint256, address, optional(address), uint128, string, uint32));
 }
 
 function getNotAllowMintProposalParamsData (TvmCell Data) external pure

@@ -590,6 +590,41 @@
 			]
 		},
 		{
+			"name": "startProposalForSendDaoToken",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"pubaddr","type":"optional(address)"},
+				{"name":"grant","type":"uint128"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellForSendDaoToken",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"pubaddr","type":"optional(address)"},
+				{"name":"grant","type":"uint128"},
+				{"name":"comment","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "_daoSendToken",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"pubaddr","type":"optional(address)"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "startProposalForDeployRepository",
 			"inputs": [
 				{"name":"nameRepo","type":"string"},
@@ -883,7 +918,24 @@
 			]
 		},
 		{
+			"name": "sendTokenToDaoReserveIn",
+			"inputs": [
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "sendToken",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokenIn",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
 				{"name":"grant","type":"uint128"}
