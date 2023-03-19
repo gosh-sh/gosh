@@ -171,9 +171,9 @@ pipeline {
                                     sh """
                                         docker run -d --name localnode-${port} -p ${port}:80 -e USER_AGREEMENT=yes tonlabs/local-node:latest
                                     """
-                                    sh "cp -r v1_x v1_x_${i}"
+                                    sh "cp -r v1_x v1_x/${i}"
                                     env.version = "v1_x"
-                                    dir("${WORKSPACE}/${version}_${i}/contracts/multisig") {
+                                    dir("${WORKSPACE}/${version}/${i}/contracts/multisig") {
                                         env.port = "${port}"
                                         sh 'pwd && ls'
                                         sh "make build-contracts-docker"
@@ -184,7 +184,7 @@ pipeline {
                                         """
                                         sh 'make deploy-docker EXTRA_DOCKER_ARGS="--network host --add-host localnode:127.0.0.1"'
                                     }
-                                    dir("${WORKSPACE}/${version}_${i}/contracts/gosh") {
+                                    dir("${WORKSPACE}/${version}/${i}/contracts/gosh") {
                                         sh 'make prepare-docker && make deploy-docker EXTRA_DOCKER_ARGS="--network host --add-host localnode:127.0.0.1"'
                                     }
                                 
