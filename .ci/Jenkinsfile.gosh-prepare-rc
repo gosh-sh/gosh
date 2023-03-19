@@ -190,10 +190,11 @@ pipeline {
                             }
                             
                         }
-
-                        parallel containerStages
                     }
+
+                    parallel containerStages
                 }
+                
             }
         }
         stage('Tests: Upgrade') {
