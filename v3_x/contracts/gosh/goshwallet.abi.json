@@ -671,16 +671,6 @@
 			]
 		},
 		{
-			"name": "_daoSendToken",
-			"inputs": [
-				{"name":"wallet","type":"address"},
-				{"name":"pubaddr","type":"optional(address)"},
-				{"name":"grant","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "startProposalForUpgradeVersionController",
 			"inputs": [
 				{"name":"UpgradeCode","type":"cell"},

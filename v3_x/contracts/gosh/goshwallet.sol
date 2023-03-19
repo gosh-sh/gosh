@@ -932,7 +932,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address wallet,
         optional(address) pubaddr,
         uint128 grant
-    ) public senderIs(address(this)) accept saveMsg {
+    ) private {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         GoshDao(_goshdao).daoSendToken{value: 0.1 ton}(_pubaddr, _index, wallet, pubaddr, grant);
