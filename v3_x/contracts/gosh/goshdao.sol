@@ -431,6 +431,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }
     }
     
+    function upgradeVersionCode (address pub, uint128 index, TvmCell UpgradeCode, TvmCell cell) public view senderIs(getAddrWalletIn(pub, index))  accept {
+    	require(_tombstone == false, ERR_TOMBSTONE);
+        SystemContract(_systemcontract).upgradeVersionCode{value : 0.2 ton}(UpgradeCode, cell);
+    }
+    
     function daoVote (address pub, uint128 index, address wallet, uint256 platform_id, bool choice, uint128 amount, uint128 num_clients_base, string note) public view senderIs(getAddrWalletIn(pub, index))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
         GoshWallet(wallet).voteForIn{value:0.2 ton}(platform_id, choice, amount, num_clients_base, note);   	

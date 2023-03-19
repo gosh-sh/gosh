@@ -93,6 +93,16 @@
 			]
 		},
 		{
+			"name": "updateCodeDao",
+			"inputs": [
+				{"name":"newcode","type":"cell"},
+				{"name":"cell","type":"cell"},
+				{"name":"version","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "updateCode",
 			"inputs": [
 				{"name":"newcode","type":"cell"},

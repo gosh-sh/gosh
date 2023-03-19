@@ -26,7 +26,7 @@ struct SystemContractAddr {
 }
 /* Version contract of SystemContract */
 contract VersionController is Modifiers {
-    string constant _version = "1.0.0";
+    string constant _version = "3.0.0";
 
     mapping(uint256 => SystemContractV) _SystemContractCode;
     mapping(uint8 => TvmCell) _code;
@@ -51,6 +51,74 @@ contract VersionController is Modifiers {
         require(_SystemContractCode.exists(tvm.hash(version)) == false, ERR_SYSTEM_CONTRACT_BAD_VERSION);
         _SystemContractCode[tvm.hash(version)] = SystemContractV(version, code);
     }
+    
+    function fromInitUpgrade4(string name, string namedao, string nameCommit, address commit, string version, string branch, address newcommit, string previousversion) public view {       
+        require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        require(_SystemContractCode.exists(tvm.hash(previousversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        TvmCell s1 = tvm.buildStateInit({
+            code: _SystemContractCode[tvm.hash(previousversion)].Value,
+            contr: SystemContract,
+            pubkey: tvm.pubkey(),
+            varInit: {}
+        });
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        s1 = tvm.buildStateInit({
+            code: _SystemContractCode[tvm.hash(version)].Value,
+            contr: SystemContract,
+            pubkey: tvm.pubkey(),
+            varInit: {}
+        });
+        addr = address.makeAddrStd(0, tvm.hash(s1));
+        tvm.accept();
+        SystemContract(addr).fromInitUpgrade5{value: 0.1 ton, flag : 1}(name, namedao, nameCommit, commit, branch, newcommit);  
+    }
+    
+    function upgradeTag2(string namedao, string namerepo, string nametag, string namecommit, address commit, string content, string version, string previousversion) public view {
+        require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        require(_SystemContractCode.exists(tvm.hash(previousversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        TvmCell s1 = tvm.buildStateInit({
+            code: _SystemContractCode[tvm.hash(previousversion)].Value,
+            contr: SystemContract,
+            pubkey: tvm.pubkey(),
+            varInit: {}
+        });
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        s1 = tvm.buildStateInit({
+            code: _SystemContractCode[tvm.hash(version)].Value,
+            contr: SystemContract,
+            pubkey: tvm.pubkey(),
+            varInit: {}
+        });
+        addr = address.makeAddrStd(0, tvm.hash(s1));
+        tvm.accept();
+        SystemContract(addr).upgradeTag3{value: 0.1 ton, flag : 1}(namedao, namerepo, nametag, namecommit, commit, content);
+    }
+
+    
+    function sendTokenToNewVersion3(uint128 grant, string version, string previousversion, address pubaddr, string namedao) public view {
+        require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        require(_SystemContractCode.exists(tvm.hash(previousversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        TvmCell s1 = tvm.buildStateInit({
+            code: _SystemContractCode[tvm.hash(previousversion)].Value,
+            contr: SystemContract,
+            pubkey: tvm.pubkey(),
+            varInit: {}
+        });
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        s1 = tvm.buildStateInit({
+            code: _SystemContractCode[tvm.hash(version)].Value,
+            contr: SystemContract,
+            pubkey: tvm.pubkey(),
+            varInit: {}
+        });
+        addr = address.makeAddrStd(0, tvm.hash(s1));
+        tvm.accept();
+        SystemContract(addr).sendTokenToNewVersion4(grant, pubaddr, namedao);
+    }
+
     
     function upgradeDao2(string namedao, string version, address previous, string previousversion) public view {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
@@ -103,6 +171,20 @@ contract VersionController is Modifiers {
         SystemContract(addr).checkUpdateRepo3{value : 0.15 ton, flag: 1}(name, namedao, prev, answer);
     }
     
+    function updateCodeDao(TvmCell newcode, TvmCell cell, string version) public accept saveMsg {
+        require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);TvmCell s1 = tvm.buildStateInit({
+            code: _SystemContractCode[tvm.hash(version)].Value,
+            contr: SystemContract,
+            pubkey: tvm.pubkey(),
+            varInit: {}
+        });
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.setcode(newcode);
+        tvm.setCurrentCode(newcode);
+        onCodeUpgrade(cell);
+    }
+    
     function updateCode(TvmCell newcode, TvmCell cell) public onlyOwner accept saveMsg {
         tvm.setcode(newcode);
         tvm.setCurrentCode(newcode);
@@ -138,7 +220,7 @@ contract VersionController is Modifiers {
     //Getters   
     function _getProfileIndexAddr(uint256 pubkey, string name) private view returns(address) {
         TvmCell s1 = tvm.buildStateInit({
-            code: GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, address(this), _version),
+            code: GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, address(this), "1.0.0"),
             contr: ProfileIndex,
             pubkey: tvm.pubkey(),
             varInit: { _name : name }
@@ -151,7 +233,7 @@ contract VersionController is Modifiers {
     }
     
     function getProfileIndexCode(uint256 pubkey) external view returns(TvmCell) {
-        return GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, address(this), _version);
+        return GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, address(this), "1.0.0");
     }
     
     function _getProfileAddr(string name) private view returns(address) {
@@ -226,3 +308,4 @@ contract VersionController is Modifiers {
         return ("versioncontroller", _version);
     }
 }
+

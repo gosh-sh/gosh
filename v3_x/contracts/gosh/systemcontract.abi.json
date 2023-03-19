@@ -128,6 +128,15 @@
 			]
 		},
 		{
+			"name": "upgradeVersionCode",
+			"inputs": [
+				{"name":"newcode","type":"cell"},
+				{"name":"cell","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployDao",
 			"inputs": [
 				{"name":"name","type":"string"},

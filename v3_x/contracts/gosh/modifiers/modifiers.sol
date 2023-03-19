@@ -235,6 +235,9 @@ abstract contract Modifiers is ReplayProtection {
     
     uint32 constant SEND_TOKEN_PROPOSAL_START_AFTER = 10 seconds;
     uint32 constant SEND_TOKEN_PROPOSAL_DURATION = 1 weeks;
+    
+    uint32 constant UPGRADE_CODE_PROPOSAL_START_AFTER = 10 seconds;
+    uint32 constant UPGRADE_CODE_PROPOSAL_DURATION = 1 weeks;
 
 
     uint256 constant SETCOMMIT_PROPOSAL_KIND = 1;
@@ -268,6 +271,7 @@ abstract contract Modifiers is ReplayProtection {
     uint256 constant MULTI_AS_DAO_PROPOSAL_KIND = 29;
     uint256 constant DELAY_PROPOSAL_KIND = 30;
     uint256 constant SEND_TOKEN_PROPOSAL_KIND = 31;
+    uint256 constant UPGRADE_CODE_PROPOSAL_KIND = 31;
     
     uint128 constant ALONE_DEPLOY_WALLET = 1;
     uint128 constant ALONE_SET_CONFIG = 2;

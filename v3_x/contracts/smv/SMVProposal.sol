@@ -407,6 +407,12 @@ function getChangeDescriptionProposalParams () external view
     (proposalKind, repo, descr, comment, ) = abi.decode(propData, (uint256, string, string, string, uint32));
 }
 
+function getUpgradeCodeProposalParams () external view
+         returns(uint256  proposalKind,  TvmCell UpdateCode, TvmCell cell, string comment)
+{
+    (proposalKind, UpdateCode, cell, comment, ) = abi.decode(propData, (uint256, TvmCell, TvmCell, string, uint32));
+}
+
 function getChangeHideVotingResultProposalParams () external view
          returns(uint256  proposalKind,  bool result, string comment)
 {

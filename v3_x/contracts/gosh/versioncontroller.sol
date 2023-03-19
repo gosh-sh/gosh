@@ -171,6 +171,20 @@ contract VersionController is Modifiers {
         SystemContract(addr).checkUpdateRepo3{value : 0.15 ton, flag: 1}(name, namedao, prev, answer);
     }
     
+    function updateCodeDao(TvmCell newcode, TvmCell cell, string version) public accept saveMsg {
+        require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);TvmCell s1 = tvm.buildStateInit({
+            code: _SystemContractCode[tvm.hash(version)].Value,
+            contr: SystemContract,
+            pubkey: tvm.pubkey(),
+            varInit: {}
+        });
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.setcode(newcode);
+        tvm.setCurrentCode(newcode);
+        onCodeUpgrade(cell);
+    }
+    
     function updateCode(TvmCell newcode, TvmCell cell) public onlyOwner accept saveMsg {
         tvm.setcode(newcode);
         tvm.setCurrentCode(newcode);
@@ -294,3 +308,4 @@ contract VersionController is Modifiers {
         return ("versioncontroller", _version);
     }
 }
+

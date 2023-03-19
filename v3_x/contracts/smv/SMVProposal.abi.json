@@ -307,6 +307,17 @@
 			]
 		},
 		{
+			"name": "getUpgradeCodeProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"UpdateCode","type":"cell"},
+				{"name":"cell","type":"cell"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
 			"name": "getChangeHideVotingResultProposalParams",
 			"inputs": [
 			],

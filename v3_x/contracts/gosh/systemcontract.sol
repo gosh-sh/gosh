@@ -123,6 +123,13 @@ contract SystemContract is Modifiers {
         });
         new Profile {stateInit: s1, value: FEE_DEPLOY_PROFILE, wid: 0, flag: 1}(_code[m_ProfileDaoCode], _code[m_ProfileCode], _code[m_ProfileIndexCode], pubkey);
     }
+    
+    function upgradeVersionCode(TvmCell newcode, TvmCell cell) public accept saveMsg {
+        TvmCell s1 = _composeDaoStateInit("gosh");
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        VersionController(_versionController).updateCodeDao{value : 0.3 ton, flag: 1}(newcode, cell, version);
+    }
 
     
     function deployDao(string name, address pubaddr, optional(address) previous, address[] pubmem) public accept saveMsg {

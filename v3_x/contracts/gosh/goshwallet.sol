@@ -880,6 +880,24 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
     
+    function startProposalForUpgradeVersionController(
+        TvmCell UpgradeCode,
+        TvmCell cell,
+        string comment,
+        uint128 num_clients , address[] reviewers
+    ) public onlyOwnerPubkeyOptional(_access) accept {
+        require(_nameDao == "gosh", ERR_WRONG_NAME);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        _saveMsg();
+
+        uint256 proposalKind = UPGRADE_CODE_PROPOSAL_KIND;
+        TvmCell c = abi.encode(proposalKind, UpgradeCode, cell, comment, now);
+        _startProposalForOperation(c, UPGRADE_CODE_PROPOSAL_START_AFTER, UPGRADE_CODE_PROPOSAL_DURATION, num_clients, reviewers);
+
+        getMoney();
+    }
+    
     function startProposalForDeployRepository(
         string nameRepo, 
         string descr,
@@ -2336,6 +2354,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == SEND_TOKEN_PROPOSAL_KIND) {
                 (, address wallet, optional(address) pubaddr, uint128 grant,,) = abi.decode(propData, (uint256, address, optional(address), uint128, string, uint32));
                 _daoSendToken(wallet, pubaddr, grant);
+            } else
+            if (kind == UPGRADE_CODE_PROPOSAL_KIND) {
+                (, TvmCell UpgradeCode, TvmCell cell,,) = abi.decode(propData, (uint256, TvmCell, TvmCell, string, uint32));
+                GoshDao(_goshdao).upgradeVersionCode{value: 0.1 ton}(_pubaddr, _index, UpgradeCode, cell);
             }
         }
     }
