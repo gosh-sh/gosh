@@ -174,7 +174,7 @@ pipeline {
                                     sh "mkdir -p workspace_${i}"
                                     sh "cp -R v1_x v1_x_workspace_${i}"
                                     env.version = "v1_x"
-                                    dir("${WORKSPACE}/${version}/${version}_workspace_${i}/contracts/multisig") {
+                                    dir("${WORKSPACE}/${version}_workspace_${i}/contracts/multisig") {
                                         env.port = "${port}"
                                         sh 'pwd && ls'
                                         sh "make build-contracts-docker"
@@ -185,7 +185,7 @@ pipeline {
                                         """
                                         sh 'make deploy-docker EXTRA_DOCKER_ARGS="--network host --add-host localnode:127.0.0.1"'
                                     }
-                                    dir("${WORKSPACE}/${version}/${version}_workspace_${i}/contracts/gosh") {
+                                    dir("${WORKSPACE}/${version}_workspace_${i}/contracts/gosh") {
                                         sh 'make prepare-docker && make deploy-docker EXTRA_DOCKER_ARGS="--network host --add-host localnode:127.0.0.1"'
                                     }
                                 
