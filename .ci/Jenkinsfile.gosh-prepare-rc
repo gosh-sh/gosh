@@ -150,6 +150,7 @@ pipeline {
                 }
             }
         }*/
+        
         stage('Run Docker Containers') {
             agent {
                 docker {
@@ -158,25 +159,37 @@ pipeline {
                 }
             }
             steps {
-                dir("tests/upgrade_tests/") {
-                    script {
-                        def containerStages = [:]
-
-                        // Count the number of files in the current directory
-                        def nodesCount = 20
-                        def basePort = 9000
-
-                        for (int i = 0; i < nodesCount; i++) {
-                            def port = basePort + i
-                            containerStages["Container ${i}"] = {
-                                stage("Container ${i}") {
-                                        echo "Starting Docker container on port ${port}"
+                script {
+                    def containerStages = [:]
+                    def nodesCount = 20
+                    def basePort = 9000
+                    for (int i = 1; i <= nodesCount; i++) {
+                        sh "mkdir -p v1_x_${i}"
+                        sh "cp -r v1_x/* v1_x_${i}"
+                    }
+                    for (int i = 0; i < nodesCount; i++) {
+                        def port = basePort + i
+                        containerStages["Container ${i}"] = {
+                            stage("Container ${i}") {
+                                    echo "Starting Docker container on port ${port}"
+                                    sh """
+                                        docker run -d --name localnode-${port} -p ${port}:80 -e USER_AGREEMENT=yes tonlabs/local-node:latest
+                                    """
+                                    env.version = "v1_x"
+                                    dir("${WORKSPACE}/${version}_${i}/contracts/multisig") {
+                                        env.port = "${port}"
+                                        sh "make build-contracts-docker"
+                                        sh "make generate-docker NETWORK=http://localnode:${env.port}"
+                                        env.giverAddr = sh(returnStdout: true, script: 'cat Giver.addr').trim()
                                         sh """
-                                            docker run -d --name localnode-${port} -p ${port}:80 -e USER_AGREEMENT=yes tonlabs/local-node:latest
+                                            tonos-cli -u http://localnode:${env.port} call 0:ece57bcc6c530283becbbd8a3b24d3c5987cdddc3c8b7b33be6e4a6312490415 sendTransaction '{"dest": "${env.giverAddr}", "value": 50000000000000000, "bounce": false}' --abi GiverV2.abi.json --sign GiverV2.keys.json
                                         """
-                                        deployContracts("v1_x", "${port}")
-                                    
-                                }
+                                        sh 'make deploy-docker EXTRA_DOCKER_ARGS="--network host --add-host localnode:127.0.0.1"'
+                                    }
+                                    dir("${WORKSPACE}/${version}_${i}/contracts/gosh") {
+                                        sh 'make prepare-docker && make deploy-docker EXTRA_DOCKER_ARGS="--network host --add-host localnode:127.0.0.1"'
+                                    }
+                                
                             }
                         }
 
