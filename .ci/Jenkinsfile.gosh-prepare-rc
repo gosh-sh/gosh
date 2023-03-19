@@ -163,6 +163,7 @@ pipeline {
                     def containerStages = [:]
                     def nodesCount = 20
                     def basePort = 9000
+                    sh "rm -rf workspace_*"
                     for (int i = 0; i < nodesCount; i++) {
                         def port = basePort + i
                         def index = i
@@ -173,7 +174,7 @@ pipeline {
                                     docker run -d --name localnode-${port} -p ${port}:80 -e USER_AGREEMENT=yes tonlabs/local-node:latest
                                 """
                                 sh "mkdir -p workspace_${index}"
-                                sh "cp -R v1_x v1_x_workspace_${index}"
+                                sh "cp -r v1_x v1_x_workspace_${index}"
                                 env.version = "v1_x"
                                 dir("${WORKSPACE}/${version}_workspace_${index}/contracts/multisig") {
                                     env.port = "${port}"
