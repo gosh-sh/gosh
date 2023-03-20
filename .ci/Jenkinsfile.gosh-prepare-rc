@@ -212,13 +212,13 @@ pipeline {
                             mkdir -p /home/jenkins/bin
 
                             # dispatcher
-                            cp -r ${WORKSPACE}/${JOB_NAME}/linux-amd64/git-remote-gosh /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
+                            cp -r ${WORKSPACE}/linux-amd64/git-remote-gosh /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
 
                             # remote
-                            cd ${WORKSPACE}/${JOB_NAME}/linux-amd64/
+                            cd ${WORKSPACE}/linux-amd64/
                             # REMOTE_VERSION=\$(find . -name "git-remote-gosh_*" | tr -d "./")
                             cd -
-                            cp -r ${WORKSPACE}/${JOB_NAME}/linux-amd64/git-remote-gosh_* /home/jenkins/bin/ && chmod +x /home/jenkins/bin/git-remote-gosh_*
+                            cp -r ${WORKSPACE}/linux-amd64/git-remote-gosh_* /home/jenkins/bin/ && chmod +x /home/jenkins/bin/git-remote-gosh_*
                             mkdir -p /home/jenkins/.gosh/
                             # echo \$REMOTE_VERSION > /home/jenkins/.gosh/dispatcher.ini
                             cd /home/jenkins/bin/
