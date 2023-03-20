@@ -2290,6 +2290,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 treepath,
                 content,
                 wallet,
+                true,
             )
             cb({ snapshotsWrite: { count: ++counter } })
         })
@@ -2536,7 +2537,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             await this.createCommitTag({
                 repository: await this.getName(),
                 commit: commitHash,
-                content: tag,
+                tag,
                 wallet,
             })
             cb({ tagsDeploy: { count: ++tagsCounter } })
@@ -2636,7 +2637,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     async createCommitTag(params: TRepositoryCreateCommitTagParams): Promise<void> {
-        const { repository, commit, content, wallet } = params
+        const { repository, commit, tag, wallet } = params
 
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
@@ -2646,9 +2647,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const _wallet = wallet || this.auth.wallet0
         await _wallet.run('deployTag', {
             repoName: repository,
-            nametag: sha1(content, 'tag', 'sha1'),
+            nametag: tag,
             nameCommit: commit,
-            content,
+            content: `tag ${tag}\nobject ${commit}\n`,
             commit: commitContract.address,
         })
     }
@@ -2803,9 +2804,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         address?: TAddress
     }): Promise<IGoshSnapshot> {
         const { address, fullpath } = options
-        if (address) return new GoshSnapshot(this.client, address)
+        if (address) {
+            return new GoshSnapshot(this.client, address)
+        }
 
-        if (!fullpath) throw new GoshError('Blob name is undefined')
+        if (!fullpath) {
+            throw new GoshError('Blob name is undefined')
+        }
         const [branch, ...path] = fullpath.split('/')
         const addr = await this._getSnapshotAddress(branch, path.join('/'))
         return new GoshSnapshot(this.client, addr)
@@ -2827,7 +2832,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         ) => {
             const { original, modified } = content
             const flagsOriginal = treeitem?.flags || 0
-            const isOriginalIpfs = (flagsOriginal & EBlobFlag.IPFS) === EBlobFlag.IPFS
+            const isOriginalIpfs =
+                (flagsOriginal & EBlobFlag.IPFS) === EBlobFlag.IPFS ||
+                Buffer.isBuffer(original)
 
             const compressed = await zstd.compress(modified)
             let patch = null
@@ -3173,12 +3180,21 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         treepath: string,
         content?: string | Buffer,
         wallet?: IGoshWallet,
+        forceDelete?: boolean,
     ): Promise<IGoshSnapshot> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
 
-        const addr = await this._getSnapshotAddress(branch, treepath)
-        const snapshot = new GoshSnapshot(this.client, addr)
-        if (await snapshot.isDeployed()) return snapshot
+        wallet = wallet || this.auth.wallet0
+        const snapshot = await this._getSnapshot({ fullpath: `${branch}/${treepath}` })
+        if (await snapshot.isDeployed()) {
+            if (forceDelete) {
+                await wallet.run('deleteSnapshot', { snap: snapshot.address })
+            } else {
+                return snapshot
+            }
+        }
 
         const data: { snapshotData: string; snapshotIpfs: string | null } = {
             snapshotData: '',
@@ -3196,7 +3212,6 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             }
         }
 
-        wallet = wallet || this.auth.wallet0
         await wallet.run('deployNewSnapshot', {
             branch,
             commit,
@@ -3985,7 +4000,11 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         if (await this._isLockerBusy()) {
             throw new GoshError(EGoshError.SMV_LOCKER_BUSY)
         }
-        await this.wallet.run('updateHead', {})
+
+        const balance = await this.wallet.account.getBalance()
+        if (parseInt(balance, 16) > 5000 * 10 ** 9) {
+            await this.wallet.run('updateHead', {})
+        }
     }
 
     async vote(

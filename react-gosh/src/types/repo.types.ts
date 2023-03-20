@@ -182,7 +182,7 @@ type TRepositoryTagDeleteResult = Promise<void | string>
 type TRepositoryCreateCommitTagParams = {
     repository: string
     commit: string
-    content: string
+    tag: string
     wallet?: IGoshWallet
 }
 
