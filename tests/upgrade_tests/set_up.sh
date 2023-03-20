@@ -7,7 +7,7 @@ set -o pipefail
 
 set -x
 TESTS_PATH=$PWD
-GOSH_PATH=../v2_x/contracts/gosh
+GOSH_PATH=../$2/contracts/gosh
 OLD_GOSH_PATH=../$1/contracts/gosh
 CUR_VERSION=$(grep -r 'string constant version' $OLD_GOSH_PATH/systemcontract.sol | sed 's/^.*[^0-9]\([0-9]*\.[0-9]*\.[0-9]*\).*$/\1/')
 TEST_VERSION1=$(grep -r 'string constant version' $GOSH_PATH/systemcontract.sol | sed 's/^.*[^0-9]\([0-9]*\.[0-9]*\.[0-9]*\).*$/\1/')
