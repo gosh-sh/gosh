@@ -198,6 +198,58 @@ pipeline {
 
                     parallel containerStages
                 }
+                script {
+                    def containerStages = [:]
+                    def basePort = 9000
+                    def files
+                    dir("tests") {
+                        files = sh(script: 'ls upgrade_tests/*.test.sh | grep "[0-9][0-9]\\+"', returnStdout: true).trim().split('\n')
+                        sh """
+                            #!/bin/bash
+                            set -e
+                            set -x
+                            cd ../tests
+                            mkdir -p /home/jenkins/bin
+
+                            # dispatcher
+                            cp -r /tmp/${JOB_NAME}/linux-amd64/git-remote-gosh /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
+
+                            # remote
+                            cd /tmp/${JOB_NAME}/linux-amd64/
+                            # REMOTE_VERSION=\$(find . -name "git-remote-gosh_*" | tr -d "./")
+                            cd -
+                            cp -r /tmp/${JOB_NAME}/linux-amd64/git-remote-gosh_* /home/jenkins/bin/ && chmod +x /home/jenkins/bin/git-remote-gosh_*
+                            mkdir -p /home/jenkins/.gosh/
+                            # echo \$REMOTE_VERSION > /home/jenkins/.gosh/dispatcher.ini
+                            cd /home/jenkins/bin/
+                            ls git-remote-gosh_* -1 > /home/jenkins/.gosh/dispatcher.ini
+                        """
+                    }
+                    for (int i = 0; i < files.size(); i++) {
+                        def script = files[i]
+                        def port = basePort + i
+                        def index = i
+                        sh "rm -rf tests_workspace_*"
+                        containerStages["Test Upgrade ${i}"] = {
+                            stage("Test Upgrade ${index}") {
+                                sh "cp -r tests tests_workspace_${index}"
+                                dir("${WORKSPACE}/tests_workspace_${index}") {
+                                    sh """
+                                        export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
+                                        ./set-vars.sh v1_x_${index} http://localnode:${port}
+                                        ./upgrade_tests/set_up.sh
+                                        #. ./env.env
+                                        ./${script}
+                                    """
+                                }
+                                
+                            }
+                            
+                        }
+                    }
+
+                    parallel containerStages
+                }
                 
             }
         }
@@ -242,8 +294,8 @@ pipeline {
                         def port = basePort + i
                         def index = i
                         sh "rm -rf tests_workspace_*"
-                        containerStages["Container ${i}"] = {
-                            stage("Container ${index}") {
+                        containerStages["Test Upgrade ${i}"] = {
+                            stage("Test Upgrade ${index}") {
                                 sh "cp -r tests tests_workspace_${index}"
                                 dir("${WORKSPACE}/tests_workspace_${index}") {
                                     sh """
