@@ -213,6 +213,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function setTombstoneWallet(string description) public senderIs(_goshdao)  accept saveMsg {
         _tombstone = true;
+        updateHeadIn();
         if (_index >= _walletcounter - 1) { return; }
         GoshWallet(_getWalletAddr(_index + 1)).askForTombstone{value : 0.1 ton, flag: 1}(_index, description);
     }
@@ -2559,7 +2560,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         //for tests
         lastVoteResult = res;
         ////////////////////
-
+        updateHeadIn();
         if (res.hasValue() && res.get()) {
             TvmSlice s = propData.toSlice();
             uint256 kind = s.decode(uint256);
@@ -2728,6 +2729,65 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
         GoshDao(_goshdao).redeployedTask{value: 0.2 ton}(_pubaddr, _index);  
+    }
+    
+    function voteFor (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platform_id, bool choice, uint128 amount, uint128 num_clients, string note) external  onlyOwnerPubkey(_access.get())
+    {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(initialized, SMVErrors.error_not_initialized);
+        require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
+                                    2*SMVConstants.VOTING_FEE + num_clients*SMVConstants.CLIENT_LIST_FEE +
+                                    SMVConstants.CLIENT_INIT_VALUE +
+                                    SMVConstants.PROP_INITIALIZE_FEE +
+                                    9*SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low+2000);
+        tvm.accept();
+        _saveMsg();
+        note;
+        TvmBuilder staticBuilder;
+        uint8 platformType = 0;
+        staticBuilder.store(platformType, tip3VotingLocker, platform_id, platformCodeHash, platformCodeDepth);
+
+        TvmBuilder inputBuilder;
+        inputBuilder.store(choice);
+
+        ISMVTokenLocker(tip3VotingLocker).startPlatform
+                    {value:  2*SMVConstants.VOTING_FEE  + num_clients*SMVConstants.CLIENT_LIST_FEE +
+                             SMVConstants.CLIENT_INIT_VALUE +
+                             SMVConstants.PROP_INITIALIZE_FEE +
+                             8*SMVConstants.ACTION_FEE, flag: 1 }
+                    (m_SMVPlatformCode, m_SMVClientCode, amount, staticBuilder.toCell(), inputBuilder.toCell(),
+                                    SMVConstants.CLIENT_INIT_VALUE +
+                                    SMVConstants.PROP_INITIALIZE_FEE + 5*SMVConstants.ACTION_FEE, _goshdao);
+    }
+
+    function voteForIn (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platform_id, bool choice, uint128 amount, uint128 num_clients, string note) external  onlyOwnerAddress(_pubaddr)
+    {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(initialized, SMVErrors.error_not_initialized);
+        require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
+                                    2*SMVConstants.VOTING_FEE + num_clients*SMVConstants.CLIENT_LIST_FEE +
+                                    SMVConstants.CLIENT_INIT_VALUE +
+                                    SMVConstants.PROP_INITIALIZE_FEE +
+                                    9*SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low+2000);
+
+        tvm.accept();
+        _saveMsg();
+        note;
+        TvmBuilder staticBuilder;
+        uint8 platformType = 0;
+        staticBuilder.store(platformType, tip3VotingLocker, platform_id, platformCodeHash, platformCodeDepth);
+
+        TvmBuilder inputBuilder;
+        inputBuilder.store(choice);
+
+        ISMVTokenLocker(tip3VotingLocker).startPlatform
+                        {value:  2*SMVConstants.VOTING_FEE  + num_clients*SMVConstants.CLIENT_LIST_FEE +
+                                 SMVConstants.CLIENT_INIT_VALUE +
+                                 SMVConstants.PROP_INITIALIZE_FEE +
+                                 8*SMVConstants.ACTION_FEE, flag: 1 }
+                        (m_SMVPlatformCode, m_SMVClientCode, amount, staticBuilder.toCell(), inputBuilder.toCell(),
+                                        SMVConstants.CLIENT_INIT_VALUE +
+                                        SMVConstants.PROP_INITIALIZE_FEE + 5*SMVConstants.ACTION_FEE, _goshdao);
     }
 
     //Fallback/Receive

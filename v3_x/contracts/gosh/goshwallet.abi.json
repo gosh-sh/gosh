@@ -1553,6 +1553,30 @@
 			]
 		},
 		{
+			"name": "voteFor",
+			"inputs": [
+				{"name":"platform_id","type":"uint256"},
+				{"name":"choice","type":"bool"},
+				{"name":"amount","type":"uint128"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"note","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "voteForIn",
+			"inputs": [
+				{"name":"platform_id","type":"uint256"},
+				{"name":"choice","type":"bool"},
+				{"name":"amount","type":"uint128"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"note","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "destroy",
 			"inputs": [
 			],
@@ -1886,30 +1910,6 @@
 			"name": "unlockVoting",
 			"inputs": [
 				{"name":"amount","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "voteFor",
-			"inputs": [
-				{"name":"platform_id","type":"uint256"},
-				{"name":"choice","type":"bool"},
-				{"name":"amount","type":"uint128"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"note","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "voteForIn",
-			"inputs": [
-				{"name":"platform_id","type":"uint256"},
-				{"name":"choice","type":"bool"},
-				{"name":"amount","type":"uint128"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"note","type":"string"}
 			],
 			"outputs": [
 			]
