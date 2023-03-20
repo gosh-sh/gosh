@@ -166,7 +166,6 @@ pipeline {
                         files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]\\+"', returnStdout: true).trim().split('\n')
                     }
                     sh "rm -rf v1_x_workspace_*"
-                    sh "rm -rf tests_workspace_*"
                     for (int i = 0; i < files.size(); i++) {
                         def port = basePort + i
                         def index = i
@@ -238,6 +237,7 @@ pipeline {
                     dir("tests") {
                         files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]\\+"', returnStdout: true).trim().split('\n')
                     }
+                    sh "rm -rf tests_workspace_*"
                     dir("tests") {
                         sh """
                             #!/bin/bash
@@ -264,8 +264,8 @@ pipeline {
                         def script = files[i]
                         def port = basePort + i
                         def index = i
-                        containerStages["Func ${script}"] = {
-                            stage("Func ${script}") {
+                        containerStages["Func v1 ${script}"] = {
+                            stage("Func v1 ${script}") {
                                 sh "cp -r tests tests_workspace_${index}"
                                 dir("${WORKSPACE}/tests_workspace_${index}") {
                                     sh """
@@ -287,12 +287,13 @@ pipeline {
                     dir("tests") {
                         files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]\\+"', returnStdout: true).trim().split('\n')
                     }
+                    sh "rm -rf tests_workspace_*"
                     for (int i = 0; i < files.size(); i++) {
                         def script = files[i]
                         def port = basePort + i
                         def index = i
-                        containerStages["Func ${script}"] = {
-                            stage("Func ${script}") {
+                        containerStages["Func v2 ${script}"] = {
+                            stage("Func v2 ${script}") {
                                 sh "cp -r tests tests_workspace_${index}"
                                 dir("${WORKSPACE}/tests_workspace_${index}") {
                                     sh """
