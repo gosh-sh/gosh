@@ -3,10 +3,12 @@ set -e
 set -o pipefail
 . ./util.sh
 
+# $1 - workspace with v1_x. EX v1_x_workspace_1
+
 set -x
 TESTS_PATH=$PWD
 GOSH_PATH=../v2_x/contracts/gosh
-OLD_GOSH_PATH=../v1_x/contracts/gosh
+OLD_GOSH_PATH=../$1/contracts/gosh
 CUR_VERSION=$(grep -r 'string constant version' $OLD_GOSH_PATH/systemcontract.sol | sed 's/^.*[^0-9]\([0-9]*\.[0-9]*\.[0-9]*\).*$/\1/')
 TEST_VERSION1=$(grep -r 'string constant version' $GOSH_PATH/systemcontract.sol | sed 's/^.*[^0-9]\([0-9]*\.[0-9]*\.[0-9]*\).*$/\1/')
 TEST_VERSION2=9999.0.0
