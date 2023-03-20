@@ -531,7 +531,7 @@
 			]
 		},
 		{
-			"name": "getDaoLockVoteProposalParams",
+			"name": "getDaoMultiProposalParams",
 			"inputs": [
 			],
 			"outputs": [
@@ -544,7 +544,7 @@
 			]
 		},
 		{
-			"name": "getDaoLockVoteProposalParamsData",
+			"name": "getDaoMultiProposalParamsData",
 			"inputs": [
 				{"name":"Data","type":"cell"}
 			],
@@ -558,7 +558,7 @@
 			]
 		},
 		{
-			"name": "getDaoMultiProposalParams",
+			"name": "getDaoLockVoteProposalParams",
 			"inputs": [
 			],
 			"outputs": [
@@ -570,7 +570,7 @@
 			]
 		},
 		{
-			"name": "getDaoMultiProposalParamsData",
+			"name": "getDaoLockVoteProposalParamsData",
 			"inputs": [
 				{"name":"Data","type":"cell"}
 			],
