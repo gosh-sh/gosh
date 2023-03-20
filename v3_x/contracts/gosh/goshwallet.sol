@@ -260,14 +260,16 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     function getCellDaoVote(
         address wallet, uint256 platform_id, bool choice, uint128 amount, uint128 num_clients_base, string note,
-        string comment) external pure returns(TvmCell) {
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = DAO_VOTE_PROPOSAL_KIND;
-        return abi.encode(proposalKind, wallet, platform_id, choice, amount, num_clients_base, note, comment, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, wallet, platform_id, choice, amount, num_clients_base, note, comment, time.get());
     }
     
-    function getCellDelay() external pure returns(TvmCell) {
+    function getCellDelay(optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = DELAY_PROPOSAL_KIND;
-        return abi.encode(proposalKind, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, time.get());
     }
     
     function _daoVote(
@@ -298,9 +300,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function getCellSetUpgrade(
         string newversion,
         string description,
-        string comment) external pure returns(TvmCell) {
+        string comment,
+        optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = SET_UPGRADE_PROPOSAL_KIND;
-        return abi.encode(proposalKind, newversion, description, comment, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, newversion, description, comment, time.get());
     }
 
     
@@ -328,9 +332,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address[] pubaddr,
         bool[] increase,
         uint128[] grant,
-        string comment) external pure returns(TvmCell) {
+        string comment,
+        optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = CHANGE_ALLOWANCE_PROPOSAL_KIND;
-        return abi.encode(proposalKind, pubaddr, increase, grant, comment, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, pubaddr, increase, grant, comment, time.get());
     }
 
     function startProposalForSetTombstoneDao(
@@ -350,9 +356,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function getCellSetTombstoneDao(string description,
-        string comment) external pure returns(TvmCell) {
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = SET_TOMBSTONE_PROPOSAL_KIND;
-        return abi.encode(proposalKind, description, comment, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, description, comment, time.get());
     }
     
     function startProposalForDaoReview(
@@ -376,9 +383,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function getCellForDaoReview(address wallet,
         address propaddress,
         bool isAccept,
-        string comment) external pure returns(TvmCell) {
+        string comment,
+        optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = REVIEW_CODE_PROPOSAL_KIND;
-        return abi.encode(proposalKind, wallet, propaddress, isAccept, comment, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, wallet, propaddress, isAccept, comment, time.get());
     }
     
     function askReviewerIn (address propAddress, bool isAccept) public onlyOwnerAddress(_pubaddr)
@@ -410,9 +419,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function getCellSetHideVotingResult(bool res,
-        string comment) external pure returns(TvmCell) {
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = CHANGE_HIDE_VOTING_PROPOSAL_KIND;
-        return abi.encode(proposalKind, res, comment, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, res, comment, time.get());
     }
     
     function startProposalForSetAllowDiscussion(
@@ -432,9 +442,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function getCellSetAllowDiscussion(bool res,
-        string comment) external pure returns(TvmCell) {
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = CHANGE_ALLOW_DISCUSSION_PROPOSAL_KIND;
-        return abi.encode(proposalKind, res, comment, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, res, comment, time.get());
     }
     
     function startProposalForTagUpgrade(
@@ -459,9 +470,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function getCellTagUpgrade(string[] repoName,
         string[] nametag,
         string newversion,
-        string comment) external pure returns(TvmCell) {
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = CHANGE_ALLOW_DISCUSSION_PROPOSAL_KIND;
-        return abi.encode(proposalKind, repoName, nametag, newversion, comment, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, repoName, nametag, newversion, comment, time.get());
     }
     
     function _tagUpgrade(
@@ -517,9 +529,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function getCellSetAbilityInvite(bool res,
-        string comment) external pure returns(TvmCell) {
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = ABILITY_INVITE_PROPOSAL_KIND;
-        return abi.encode(proposalKind, res, comment, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, res, comment, time.get());
     }
     
     function _setAbilityInvite(bool res) private view accept {
@@ -612,9 +625,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function getCellMintToken(uint128 token,
-        string comment) external pure returns(TvmCell) {
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = MINT_TOKEN_PROPOSAL_KIND;
-        return abi.encode(proposalKind, token, comment, now);       
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, token, comment, time.get());       
     }
     
     function startProposalForNotAllowMint(
@@ -636,9 +650,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function getCellAllowMint(
-        string comment) external pure returns(TvmCell) {
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = ALLOW_MINT_PROPOSAL_KIND;
-        return abi.encode(proposalKind, comment, now);     
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, comment, time.get());     
     }
     
     function _mintToken(uint128 grant) private view {
@@ -667,9 +682,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     function getCellAddVoteToken(address pubaddr,
         uint128 token,
-        string comment) external pure returns(TvmCell) {
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = ADD_VOTE_TOKEN_PROPOSAL_KIND;
-        return abi.encode(proposalKind, pubaddr, token, comment, now);       
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, pubaddr, token, comment, time.get());       
     }
     
     function startProposalForAddRegularToken(
@@ -693,9 +709,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     function getCellAddRegularToken(address pubaddr,
         uint128 token,
-        string comment) external pure returns(TvmCell) {
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = ADD_REGULAR_TOKEN_PROPOSAL_KIND;
-        return abi.encode(proposalKind, pubaddr, token, comment, now);       
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, pubaddr, token, comment, time.get());       
     }
 
     function startProposalForDeployWalletDao(
@@ -727,9 +744,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     function getCellDeployWalletDao(MemberToken[] pubaddr,
         optional(string)[] dao,
-        string comment) external pure returns(TvmCell) {
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = DEPLOY_WALLET_DAO_PROPOSAL_KIND;
-        return abi.encode(proposalKind, pubaddr, dao, comment, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, pubaddr, dao, comment, time.get());
     }
 
     function startProposalForDeleteWalletDao(
@@ -753,9 +771,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     function getCellDeleteWalletDao(
         address[] pubaddr,
-        string comment) external pure returns(TvmCell) {
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = DELETE_WALLET_DAO_PROPOSAL_KIND;
-        return abi.encode(proposalKind, pubaddr, comment, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, pubaddr, comment, time.get());
     }
 
     function _setTombstoneDao(string description) private view {
@@ -928,9 +947,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string oldversion,
         address oldtask,
         string[] hashtag,
-        string comment) external pure returns(TvmCell) {
+        string comment,
+        optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = TASK_UPGRADE_PROPOSAL_KIND;
-        return abi.encode(proposalKind, nametask, reponame, oldversion, oldtask, hashtag, comment, now);      
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, nametask, reponame, oldversion, oldtask, hashtag, comment, time.get());      
     }
     
     function startProposalForSendDaoToken(
@@ -955,9 +976,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function getCellForSendDaoToken(address wallet,
         optional(address) pubaddr,
         uint128 grant,
-        string comment) external pure returns(TvmCell) {
+        string comment,
+        optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = SEND_TOKEN_PROPOSAL_KIND;
-        return abi.encode(proposalKind, wallet, pubaddr, grant, comment, now);      
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, wallet, pubaddr, grant, comment, time.get());      
     }
     
     function _daoSendToken(
@@ -1012,9 +1035,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function getCellDeployRepo(string nameRepo, 
         string descr,
         optional(AddrVersion) previous,
-        string comment) external pure returns(TvmCell) {
+        string comment,
+        optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = DEPLOY_REPO_PROPOSAL_KIND;
-        return abi.encode(proposalKind, nameRepo, descr, previous, comment, now);       
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, nameRepo, descr, previous, comment, time.get());       
     }
 
     function _composeRepoStateInit(string name) internal view returns(TvmCell) {
@@ -1194,9 +1219,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     function getCellChangeDescription(string repoName,
         string descr,
-        string comment) external pure returns(TvmCell) {
+        string comment,
+        optional(uint32) time) external pure returns(TvmCell) {
     	uint256 proposalKind = CHANGE_DESCRIPTION_PROPOSAL_KIND;
-        return abi.encode(proposalKind, repoName, descr, comment, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, repoName, descr, comment, time.get());
     }
     
     function _changeDescription(
@@ -1892,9 +1919,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint128 numberChangedFiles,
         uint128 numberCommits,
         string comment,
-        optional(ConfigCommit) task) external pure returns(TvmCell) {
+        optional(ConfigCommit) task,
+        optional(uint32) time) external pure returns(TvmCell) {
     	uint256 proposalKind = SETCOMMIT_PROPOSAL_KIND;
-        return abi.encode(proposalKind, repoName, branchName, commit, numberChangedFiles, numberCommits, task, comment, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, repoName, branchName, commit, numberChangedFiles, numberCommits, task, comment, time.get());
     }
     
     function startProposalForDaoAskGrant(
@@ -1919,9 +1948,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function getCellForDaoAskGrant(address wallet, string repoName, string taskName,
-        string comment) external pure returns(TvmCell) {
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = ASK_TASK_GRANT_PROPOSAL_KIND;
-        return abi.encode(proposalKind, wallet, repoName, taskName, comment, now);  
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, wallet, repoName, taskName, comment, time.get());  
     }
     
     function startProposalForDaoLockVote(
@@ -1949,9 +1979,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address wallet,
         bool isLock,
         uint128 grant,
-        string comment) external pure returns(TvmCell) {
+        string comment,
+        optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = DAO_LOCK_PROPOSAL_KIND;
-        return abi.encode(proposalKind, wallet, isLock, grant, comment, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, wallet, isLock, grant, comment, time.get());
     }
     
     function startProposalForAddRepoTag(
@@ -1975,9 +2007,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function getCellAddRepoTag(string[] tag, string repo,
-        string comment) external pure returns(TvmCell) {
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = REPOTAG_PROPOSAL_KIND;
-        return abi.encode(proposalKind, tag, repo, comment, now);      
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, tag, repo, comment, time.get());      
     }
     
     function startProposalForDestroyRepoTag(
@@ -2000,9 +2033,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function getCellDestroyRepoTag(string[] tag, string repo,
-        string comment) external pure returns(TvmCell) {
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = REPOTAG_DESTROY_PROPOSAL_KIND;
-        return abi.encode(proposalKind, tag, repo, comment, now);      
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, tag, repo, comment, time.get());      
     }
     
     function startProposalForAddDaoTag(
@@ -2025,9 +2059,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function getCellAddDaoTag(string[] tag,
-        string comment) external pure returns(TvmCell) {
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = DAOTAG_PROPOSAL_KIND;
-        return abi.encode(proposalKind, tag, comment, now);      
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, tag, comment, time.get());      
     }
     
     function startProposalForDestroyDaoTag(
@@ -2049,9 +2084,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function getCellDestroyDaoTag(string[] tag,
-        string comment) external pure returns(TvmCell) {
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = DAOTAG_DESTROY_PROPOSAL_KIND;
-        return abi.encode(proposalKind, tag, comment, now);      
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, tag, comment, time.get());      
     }
 
     function startProposalForAddProtectedBranch(
@@ -2075,9 +2111,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         
     function getCellAddProtectedBranch(string repoName,
         string branchName,
-        string comment) external pure returns(TvmCell) {
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = ADD_PROTECTED_BRANCH_PROPOSAL_KIND;
-        return abi.encode(proposalKind, repoName, branchName, comment, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, repoName, branchName, comment, time.get());
         
     }
 
@@ -2105,9 +2142,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string taskName,
         string repoName,
         uint128 index,
-        string comment) external pure returns(TvmCell) {
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = TASK_PROPOSAL_KIND;
-        return abi.encode(proposalKind, repoName, taskName, index, comment, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, repoName, taskName, index, comment, time.get());
     }
 */
 
@@ -2131,9 +2169,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function getCellTaskDestroy(
         string taskName,
         string repoName,
-        string comment) external pure returns(TvmCell) {
+        string comment,
+        optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = TASK_DESTROY_PROPOSAL_KIND;
-        return abi.encode(proposalKind, repoName, taskName, comment, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, repoName, taskName, comment, time.get());
     }
     
     function startMultiProposal(
@@ -2214,9 +2254,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint128 number,
         TvmCell proposals,
         uint128 num_clients_base, 
-        address[] reviewers_base) external pure returns(TvmCell) {
+        address[] reviewers_base,
+        optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = MULTI_AS_DAO_PROPOSAL_KIND;
-        return abi.encode(proposalKind, wallet, number, proposals, num_clients_base, reviewers_base, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, wallet, number, proposals, num_clients_base, reviewers_base, time.get());
     }
 
     function startProposalForTaskDeploy(
@@ -2247,9 +2289,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string repoName,
         string[] tag,
         ConfigGrant grant,
-        string comment) external pure returns(TvmCell) {
+        string comment,
+        optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = TASK_DEPLOY_PROPOSAL_KIND;
-        return abi.encode(proposalKind, repoName, taskName, tag, grant, comment, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, repoName, taskName, tag, grant, comment, time.get());
     }
 
     function startProposalForDeleteProtectedBranch(
@@ -2273,9 +2317,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     function getCellDeleteProtectedBranch(string repoName,
         string branchName,
-        string comment) external pure returns(TvmCell) {
+        string comment,
+        optional(uint32) time) external pure returns(TvmCell) {
     	uint256 proposalKind = DELETE_PROTECTED_BRANCH_PROPOSAL_KIND;
-        return abi.encode(proposalKind, repoName, branchName, comment, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, repoName, branchName, comment, time.get());
     }
 
     function tryProposalResult(address proposal) public onlyOwnerPubkeyOptional(_access)  accept saveMsg{
@@ -2808,14 +2854,16 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return abi.encode(nametask, repo, repoName, ready, _systemcontract, _goshdao, code, candidates, grant, hashtag, indexFinal, indexFinal, locktime, fullAssign, fullReview, fullManager, assigners, reviewers, managers, assignfull, reviewfull, managerfull, assigncomplete, reviewcomplete, managercomplete, allassign, allreview, allmanager, lastassign, lastreview, lastmanager, balance);
     }
     
-    function getCellForRedeployTask(string reponame, string nametask,  string[] hashtag, TvmCell data) external pure returns(TvmCell) {
+    function getCellForRedeployTask(string reponame, string nametask,  string[] hashtag, TvmCell data, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = TASK_REDEPLOY_PROPOSAL_KIND;
-        return abi.encode(proposalKind, reponame, nametask, hashtag, data, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, reponame, nametask, hashtag, data, time.get());
     }
     
-    function getCellForRedeployedTask() external pure returns(TvmCell) {
+    function getCellForRedeployedTask(optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = TASK_REDEPLOYED_PROPOSAL_KIND;
-        return abi.encode(proposalKind, now);
+        if (time.hasValue() == false) { time = now; }
+        return abi.encode(proposalKind, time.get());
     }
     //
     // Internals
