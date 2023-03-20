@@ -175,7 +175,7 @@ pipeline {
                             stage("Deploy v1_x ${index}") {
                                 echo "Starting Docker container on port ${port}"
                                 sh """
-                                    docker run -d --name localnode-${port} -p ${port}:80 -e USER_AGREEMENT=yes tonlabs/local-node:latest
+                                    docker run -d --name localnode-${port} -p ${port}:80 -e USER_AGREEMENT=yes -v ${WORKSPACE}/.ci/blockchain.conf:/ton-node/blockchain.conf.json tonlabs/local-node:latest
                                 """
                                 sh "cp -r v1_x v1_x_workspace_${index}"
                                 env.version = "v1_x"
