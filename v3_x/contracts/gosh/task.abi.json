@@ -218,7 +218,6 @@
 		{"name":"_assigners","type":"map(address,uint128)"},
 		{"name":"_reviewers","type":"map(address,uint128)"},
 		{"name":"_managers","type":"map(address,uint128)"},
-		{"name":"_daoMember","type":"map(address,string)"},
 		{"name":"_assignfull","type":"uint128"},
 		{"name":"_reviewfull","type":"uint128"},
 		{"name":"_managerfull","type":"uint128"},
