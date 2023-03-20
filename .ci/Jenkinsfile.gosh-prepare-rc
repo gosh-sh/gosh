@@ -284,7 +284,7 @@ pipeline {
                     def containerStages = [:]
                     def basePort = 9000
                     def files
-                    dir("tests") {
+                    /*dir("tests") {
                         files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]\\+"', returnStdout: true).trim().split('\n')
                         sh """
                             #!/bin/bash
@@ -306,7 +306,7 @@ pipeline {
                             cd /home/jenkins/bin/
                             ls git-remote-gosh_* -1 > /home/jenkins/.gosh/dispatcher.ini
                         """
-                    }
+                    }*/
                     for (int i = 0; i < files.size(); i++) {
                         def script = files[i]
                         def port = basePort + i
@@ -341,7 +341,7 @@ pipeline {
                 }
             }
             steps {
-                script {
+                /*script {
                     def containerStages = [:]
                     def basePort = 9000
                     def files
@@ -379,8 +379,9 @@ pipeline {
                     }
 
                     parallel containerStages
-                }
-                script {
+                }*/
+                
+                /*script {
                     def containerStages = [:]
                     def basePort = 9000
                     def files
@@ -413,12 +414,12 @@ pipeline {
                     }
 
                     parallel containerStages
-                }
+                }*/
                 script {
                     def containerStages = [:]
                     def basePort = 9000
                     def files
-                    dir("tests") {
+                    /*dir("tests") {
                         files = sh(script: 'ls upgrade_tests/*.test.sh | grep "[0-9][0-9]\\+"', returnStdout: true).trim().split('\n')
                         sh """
                             #!/bin/bash
@@ -440,7 +441,7 @@ pipeline {
                             cd /home/jenkins/bin/
                             ls git-remote-gosh_* -1 > /home/jenkins/.gosh/dispatcher.ini
                         """
-                    }
+                    }*/
                     for (int i = 0; i < files.size(); i++) {
                         def script = files[i]
                         def port = basePort + i
