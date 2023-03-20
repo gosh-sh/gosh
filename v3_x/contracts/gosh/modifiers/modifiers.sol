@@ -256,7 +256,10 @@ abstract contract Modifiers is ReplayProtection {
     uint32 constant DAO_LOCK_PROPOSAL_DURATION = 1 weeks;
     
     uint32 constant TASK_UPGRADE_PROPOSAL_START_AFTER = 10 seconds;
-    uint32 constant TASK_UPGRADE_PROPOSAL_DURATION = 1 weeks;
+    uint32 constant TASK_UPGRADE_PROPOSAL_DURATION = 1 weeks;   
+     
+    uint32 constant TRANSFER_TO_NEW_VERSION_PROPOSAL_START_AFTER = 10 seconds;
+    uint32 constant TRANSFER_TO_NEW_VERSION_PROPOSAL_DURATION = 1 weeks;
 
 
 
@@ -298,6 +301,7 @@ abstract contract Modifiers is ReplayProtection {
     uint256 constant TASK_REDEPLOY_PROPOSAL_KIND = 36;
     uint256 constant TASK_REDEPLOYED_PROPOSAL_KIND = 37;
     uint256 constant TASK_UPGRADE_PROPOSAL_KIND = 38;
+    uint256 constant TRANSFER_TO_NEW_VERSION_PROPOSAL_KIND = 39;
     
     uint128 constant ALONE_DEPLOY_WALLET = 1;
     uint128 constant ALONE_SET_CONFIG = 2;

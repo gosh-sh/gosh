@@ -243,6 +243,30 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _limited = decision;
     }
     
+    function startProposalForDaoTransferTokens(
+        address wallet, uint128 grant, string oldversion, 
+        string comment,
+        uint128 num_clients , address[] reviewers
+
+    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        uint256 proposalKind = TRANSFER_TO_NEW_VERSION_PROPOSAL_KIND;
+        TvmCell c = abi.encode(proposalKind, wallet, grant, oldversion, comment, now);
+
+        _startProposalForOperation(c, TRANSFER_TO_NEW_VERSION_PROPOSAL_START_AFTER, TRANSFER_TO_NEW_VERSION_PROPOSAL_DURATION, num_clients, reviewers);
+
+        getMoney();
+    }
+    
+    function getCellDaoTransferTokens(
+        address wallet, uint128 grant, string oldversion,
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
+        if (time.hasValue() == false) { time = now; }
+        uint256 proposalKind = TRANSFER_TO_NEW_VERSION_PROPOSAL_KIND;
+        return abi.encode(proposalKind, wallet, grant, oldversion, comment, time.get());
+    }
+    
     function startProposalForDaoVote(
         address wallet, uint256 platform_id, bool choice, uint128 amount, uint128 num_clients_base, string note,
         string comment,
@@ -1691,7 +1715,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
-    function sendDaoTokenToNewVersion(address wallet, uint128 grant, string newversion) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+    function sendDaoTokenToNewVersion(address wallet, uint128 grant, string newversion) public senderIs(_systemcontract) accept saveMsg {
         require(_limited == false, ERR_WALLET_LIMITED);
         GoshDao(_goshdao).daoSendTokenToNewVersion{value : 0.2 ton}(_pubaddr, _index, wallet, grant, newversion);
         getMoney();
@@ -2517,6 +2541,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == TASK_UPGRADE_PROPOSAL_KIND) {
                 (, string taskname, string reponame, string oldversion, address oldtask, string[] hashtag,,) = abi.decode(propData, (uint256, string, string, string, address, string[], string, uint32));
                 GoshDao(_goshdao).upgradeTask{value: 0.1 ton}(_pubaddr, _index, taskname, reponame, oldversion, oldtask, hashtag);   
+            }  else
+            if (kind == TRANSFER_TO_NEW_VERSION_PROPOSAL_KIND) {
+                (, address wallet, uint128 grant, string oldversion,,) = abi.decode(propData,(uint256, address, uint128, string, string, uint32));
+                SystemContract(_systemcontract).DaoTransferToken2{value: 0.2 ton}(_pubaddr, _index, _nameDao, wallet, grant, oldversion, version);
             }
         }
     }
@@ -2688,6 +2716,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == TASK_UPGRADE_PROPOSAL_KIND) {
                 (, string taskname, string reponame, string oldversion, address oldtask, string[] hashtag,,) = abi.decode(propData, (uint256, string, string, string, address, string[], string, uint32));
                 GoshDao(_goshdao).upgradeTask{value: 0.1 ton}(_pubaddr, _index, taskname, reponame, oldversion, oldtask, hashtag);   
+            }  else
+            if (kind == TRANSFER_TO_NEW_VERSION_PROPOSAL_KIND) {
+                (, address wallet, uint128 grant, string oldversion,,) = abi.decode(propData,(uint256, address, uint128, string, string, uint32));
+                SystemContract(_systemcontract).DaoTransferToken2{value: 0.2 ton}(_pubaddr, _index, _nameDao, wallet, grant, oldversion, version);
             }
         }
     }
