@@ -155,7 +155,7 @@ pipeline {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network host --add-host localnode:127.0.0.1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network host -v /root/jenkins-main/workspace:/tmp'
                 }
             }
             steps {
@@ -212,13 +212,13 @@ pipeline {
                             mkdir -p /home/jenkins/bin
 
                             # dispatcher
-                            cp -r ${WORKSPACE}/linux-amd64/git-remote-gosh /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
+                            cp -r /tmp/linux-amd64/git-remote-gosh /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
 
                             # remote
-                            cd ${WORKSPACE}/linux-amd64/
+                            cd /tmp/linux-amd64/
                             # REMOTE_VERSION=\$(find . -name "git-remote-gosh_*" | tr -d "./")
                             cd -
-                            cp -r ${WORKSPACE}/linux-amd64/git-remote-gosh_* /home/jenkins/bin/ && chmod +x /home/jenkins/bin/git-remote-gosh_*
+                            cp -r /tmp/linux-amd64/git-remote-gosh_* /home/jenkins/bin/ && chmod +x /home/jenkins/bin/git-remote-gosh_*
                             mkdir -p /home/jenkins/.gosh/
                             # echo \$REMOTE_VERSION > /home/jenkins/.gosh/dispatcher.ini
                             cd /home/jenkins/bin/
