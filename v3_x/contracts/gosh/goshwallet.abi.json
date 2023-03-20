@@ -1729,7 +1729,6 @@
 			"name": "getCellForTask",
 			"inputs": [
 				{"name":"nametask","type":"string"},
-				{"name":"repo","type":"address"},
 				{"name":"repoName","type":"string"},
 				{"name":"ready","type":"bool"},
 				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"address"},{"name":"number_commit","type":"uint128"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"candidates","type":"tuple[]"},

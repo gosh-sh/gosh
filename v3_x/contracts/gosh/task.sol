@@ -14,6 +14,7 @@ import "./libraries/GoshLib.sol";
 import "goshwallet.sol";
 import "goshdao.sol";
 import "task.sol";
+import "repository.sol";
 
 /* Root contract of task */
 contract Task is Modifiers{
@@ -63,7 +64,8 @@ contract Task is Modifiers{
         require(_nametask != "", ERR_NO_DATA);
         tvm.accept();
         if (defaultData.hasValue()) { 
-            (_repoName, _repo, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _grant, _balance, _hashtag) = abi.decode(defaultData.get(),(string, address, address, TvmCell, TvmCell, ConfigGrant, uint128, string[]));
+            (_repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _grant, _balance, _hashtag) = abi.decode(defaultData.get(),(string, address, TvmCell, TvmCell, TvmCell, ConfigGrant, uint128, string[]));
+            _repo = _buildRepositoryAddr(_repoName);
             return;
         } 
         if (extraData.hasValue() == true) {
@@ -71,13 +73,15 @@ contract Task is Modifiers{
             (_code, extraData1) = abi.decode(extraData.get(),(mapping(uint8 => TvmCell), TvmCell));
             string name;
             address dao;
-            (name, _repo, _repoName, _ready, _systemcontract, dao, _candidates, _grant, _hashtag, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance) = abi.decode(extraData1, (string, address, string, bool, address, address, ConfigCommitBase[], ConfigGrant, string[], uint128, uint128, uint128, uint128, uint128, mapping(address => uint128), mapping(address => uint128), mapping(address => uint128), uint128, uint128, uint128, uint128, uint128, uint128, bool, bool, bool, uint128, uint128, uint128, uint128));
+            (name, _repoName, _ready, _systemcontract, dao, _candidates, _grant, _hashtag, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance) = abi.decode(extraData1, (string, string, bool, address, address, ConfigCommitBase[], ConfigGrant, string[], uint128, uint128, uint128, uint128, uint128, mapping(address => uint128), mapping(address => uint128), mapping(address => uint128), uint128, uint128, uint128, uint128, uint128, uint128, bool, bool, bool, uint128, uint128, uint128, uint128));
             require(name == _nametask, ERR_WRONG_DATA);
             require(dao == _goshdao, ERR_WRONG_DATA);   
+            _repo = _buildRepositoryAddr(_repoName);
             return;         
         }
         require(previousVersion.hasValue() == true, ERR_WRONG_DATA);
-        (_repo, _repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _previousVersion, _previousVersionAddr) = abi.decode(previousVersion.get(),(address, string, address, TvmCell, TvmCell, string, address));
+        (_repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _previousVersion, _previousVersionAddr) = abi.decode(previousVersion.get(),(string, address, TvmCell, TvmCell, TvmCell, string, address));
+        _repo = _buildRepositoryAddr(_repoName);
         GoshDao(_goshdao).checkOldTaskVersion(_nametask, _repoName, _previousVersion, _previousVersionAddr);
         _waitForUpdate = true;
     }
@@ -322,6 +326,17 @@ contract Task is Modifiers{
             contr: GoshDao,
             varInit: { _systemcontract : _systemcontract }
         });
+    }
+    
+    function _buildRepositoryAddr(string name) private view returns (address) {
+        TvmCell deployCode = GoshLib.buildRepositoryCode(
+            _code[m_RepositoryCode], _systemcontract, _goshdao, version
+        );
+        return address(tvm.hash(tvm.buildStateInit({
+            code: deployCode,
+            contr: Repository,
+            varInit: { _name: name }
+        })));
     }
     
     //Selfdestruct
