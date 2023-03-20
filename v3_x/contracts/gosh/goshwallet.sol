@@ -2761,6 +2761,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function getTombstone() external view returns(bool) {
         return _tombstone;
     }
+    
+    function getDetails() external view  returns(uint128, uint128, address, address, uint128, address, uint128, optional(uint256), bool) {
+        return (m_pseudoDAOBalance, m_pseudoDAOVoteBalance, _goshdao, _rootpubaddr, _limit_wallets, _pubaddr, _walletcounter, _access, _tombstone);
+    }
+    
+    function getWalletIn() public view minValue(0.2 ton) {
+        IObject(msg.sender).returnWallet{value: 0.1 ton}(m_pseudoDAOBalance, m_pseudoDAOVoteBalance, _goshdao, _rootpubaddr, _limit_wallets, _pubaddr, _walletcounter, _access, _tombstone);
+    }
 
     function AddCell(TvmCell data1, TvmCell data2) external pure returns(TvmCell) {
         return abi.encode(data1, data2);

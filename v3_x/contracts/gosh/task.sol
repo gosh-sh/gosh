@@ -332,7 +332,12 @@ contract Task is Modifiers{
         selfdestruct(giver);
     }
     
-    //Getters    
+    //Getters 
+    function getTaskIn() public view minValue(0.3 ton) {
+        TvmCell data = abi.encode (_nametask, _repoName, _repo, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance, _daoMember);
+        IObject(msg.sender).returnTask{value: 0.1 ton}(data);
+    }
+       
     function getStatus() external view returns(string nametask, address repo, ConfigCommitBase[] candidates, ConfigGrant grant, bool ready, uint128 indexFinal, string[] hashtag, uint128 locktime) {
         return (_nametask, _repo, _candidates, _grant, _ready, _indexFinal, _hashtag, _locktime);
     }

@@ -117,6 +117,13 @@
 			]
 		},
 		{
+			"name": "getTaskIn",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getStatus",
 			"inputs": [
 			],

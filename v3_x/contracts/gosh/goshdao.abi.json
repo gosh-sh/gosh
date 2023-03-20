@@ -986,6 +986,13 @@
 			]
 		},
 		{
+			"name": "getDaoIn",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "onAcceptTokensTransfer",
 			"inputs": [
 				{"name":"value0","type":"address"},
