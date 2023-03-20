@@ -522,7 +522,7 @@ function getDaoAskGrantProposalParamsData (TvmCell Data) external pure
     (proposalKind, wallet, reponame, taskname, comment, ) = abi.decode(Data, (uint256, address, string, string, string, uint32));
 }
 
-function getDaoLockVoteProposalParams (TvmCell ) external view
+function getDaoLockVoteProposalParams () external view
          returns( uint256  proposalKind, address wallet, bool isLock, uint128 grant, string comment)
 {
     (proposalKind, wallet, isLock, grant, comment, ) = abi.decode(propData, (uint256, address, bool, uint128, string, uint32));
