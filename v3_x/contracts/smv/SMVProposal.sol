@@ -590,9 +590,9 @@ function getTaskData (TvmCell Data) external pure
     	uint128 fullAssign,
     	uint128 fullReview,
     	uint128 fullManager,
-    	mapping(address => uint128) assigners,
-    	mapping(address => uint128) reviewers,
-    	mapping(address => uint128) managers,
+    	mapping(address => uint128) _assigners,
+    	mapping(address => uint128) _reviewers,
+    	mapping(address => uint128) _managers,
     	uint128 assignfull,
     	uint128 reviewfull,
     	uint128 managerfull,
@@ -607,7 +607,7 @@ function getTaskData (TvmCell Data) external pure
     	uint128 lastmanager,
     	uint128 balance)
 {
-    (nametask, repoName, ready, systemcontract, dao, candidates, grant, hashtag, indexFinal, locktime, fullAssign, fullReview, fullManager, assigners, reviewers, managers, assignfull, reviewfull, managerfull, assigncomplete, reviewcomplete, managercomplete, allassign, allreview, allmanager, lastassign, lastreview, lastmanager, balance) = abi.decode(Data, (string, string, bool, address, address, ConfigCommitBase[], ConfigGrant, string[], uint128, uint128, uint128, uint128, uint128, mapping(address => uint128), mapping(address => uint128), mapping(address => uint128), uint128, uint128, uint128, uint128, uint128, uint128, bool, bool, bool, uint128, uint128, uint128, uint128));
+    (nametask, repoName, ready, systemcontract, dao, candidates, grant, hashtag, indexFinal, locktime, fullAssign, fullReview, fullManager, _assigners, _reviewers, _managers, assignfull, reviewfull, managerfull, assigncomplete, reviewcomplete, managercomplete, allassign, allreview, allmanager, lastassign, lastreview, lastmanager, balance) = abi.decode(Data, (string, string, bool, address, address, ConfigCommitBase[], ConfigGrant, string[], uint128, uint128, uint128, uint128, uint128, mapping(address => uint128), mapping(address => uint128), mapping(address => uint128), uint128, uint128, uint128, uint128, uint128, uint128, bool, bool, bool, uint128, uint128, uint128, uint128));
 }
 
 function getGoshAddRegularTokenProposalParamsData (TvmCell Data) external pure
