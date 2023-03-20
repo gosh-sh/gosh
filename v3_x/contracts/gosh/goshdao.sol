@@ -58,7 +58,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     address public _rootTokenRoot;
     address public _lastAccountAddress;
     
-    bool _isTaskRedeployed = false;
+    bool public _isTaskRedeployed = false;
     
     bool _flag = false;
     bool _tombstone = false;
