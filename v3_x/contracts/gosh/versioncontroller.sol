@@ -171,6 +171,28 @@ contract VersionController is Modifiers {
         SystemContract(addr).checkUpdateRepo3{value : 0.15 ton, flag: 1}(name, namedao, prev, answer);
     }
     
+    function checkOldTaskVersion3(string namedao, string nametask, string repo, string previous, address previousaddr, string version, address answer) public view {
+        require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        require(_SystemContractCode.exists(tvm.hash(previous)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        TvmCell s1 = tvm.buildStateInit({
+            code: _SystemContractCode[tvm.hash(version)].Value,
+            contr: SystemContract,
+            pubkey: tvm.pubkey(),
+            varInit: {}
+        });
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        s1 = tvm.buildStateInit({
+            code: _SystemContractCode[tvm.hash(previous)].Value,
+            contr: SystemContract,
+            pubkey: tvm.pubkey(),
+            varInit: {}
+        });
+        addr = address.makeAddrStd(0, tvm.hash(s1));
+        SystemContract(addr).checkOldTaskVersion4{value : 0.15 ton, flag: 1}(namedao, nametask, repo, previousaddr, answer);
+    }
+    
     function updateCodeDao(TvmCell newcode, TvmCell cell, string version) public accept saveMsg {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);TvmCell s1 = tvm.buildStateInit({
             code: _SystemContractCode[tvm.hash(version)].Value,

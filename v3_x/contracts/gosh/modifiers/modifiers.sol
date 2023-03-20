@@ -82,6 +82,7 @@ struct ConfigCommit {
     mapping(address => bool) pubaddrassign;
     mapping(address => bool) pubaddrreview;
     mapping(address => bool) pubaddrmanager;
+    mapping(address => string) daoMembers;
 }
 
 struct ConfigCommitBase {
@@ -91,6 +92,7 @@ struct ConfigCommitBase {
     mapping(address => bool) pubaddrassign;
     mapping(address => bool) pubaddrreview;
     mapping(address => bool) pubaddrmanager;
+    mapping(address => string) daoMembers;
 }
 
 abstract contract Modifiers is ReplayProtection {   
@@ -129,7 +131,7 @@ abstract contract Modifiers is ReplayProtection {
     uint128 constant FEE_DEPLOY_BRANCH = 1.4 ton;
     uint128 constant FEE_DESTROY_BRANCH = 1.6 ton;
     uint128 constant FEE_DEPLOY_TAG = 6 ton;
-    uint128 constant FEE_DEPLOY_TASK = 9 ton;
+    uint128 constant FEE_DEPLOY_TASK = 19 ton;
     uint128 constant FEE_DEPLOY_DAO_TOKEN_WALLET = 200 ton;
     uint128 constant FEE_DESTROY_TAG = 1.3 ton;
     uint128 constant FEE_DEPLOY_TREE = 18 ton;
@@ -248,6 +250,10 @@ abstract contract Modifiers is ReplayProtection {
     
     uint32 constant DAO_LOCK_PROPOSAL_START_AFTER = 10 seconds;
     uint32 constant DAO_LOCK_PROPOSAL_DURATION = 1 weeks;
+    
+    uint32 constant TASK_UPGRADE_PROPOSAL_START_AFTER = 10 seconds;
+    uint32 constant TASK_UPGRADE_PROPOSAL_DURATION = 1 weeks;
+
 
 
     uint256 constant SETCOMMIT_PROPOSAL_KIND = 1;
@@ -287,6 +293,7 @@ abstract contract Modifiers is ReplayProtection {
     uint256 constant DAO_LOCK_PROPOSAL_KIND = 35;
     uint256 constant TASK_REDEPLOY_PROPOSAL_KIND = 36;
     uint256 constant TASK_REDEPLOYED_PROPOSAL_KIND = 37;
+    uint256 constant TASK_UPGRADE_PROPOSAL_KIND = 38;
     
     uint128 constant ALONE_DEPLOY_WALLET = 1;
     uint128 constant ALONE_SET_CONFIG = 2;

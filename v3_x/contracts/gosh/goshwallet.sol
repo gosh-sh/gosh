@@ -66,6 +66,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address rootpubaddr,
         address pubaddr,
         string nameDao,
+        TvmCell codeDao,
         TvmCell commitCode,
         TvmCell repositoryCode,
         TvmCell WalletCode,
@@ -97,6 +98,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _versionController = versionController;
         _rootpubaddr = rootpubaddr;
         _nameDao = nameDao;
+        _code[m_DaoCode] = codeDao;
         _code[m_WalletCode] = WalletCode;
         if (_index == 0) { require(msg.sender == _goshdao, ERR_SENDER_NO_ALLOWED); }
         if (_index != 0) { require(msg.sender == _getWalletAddr(0), ERR_SENDER_NO_ALLOWED); }
@@ -148,7 +150,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell s1 = _composeWalletStateInit(_pubaddr, _walletcounter - 1);
         new GoshWallet {
             stateInit: s1, value: 5 ton, wid: 0
-        }(  _versionController, _rootpubaddr, _pubaddr, _nameDao,
+        }(  _versionController, _rootpubaddr, _pubaddr, _nameDao, _code[m_DaoCode],
             _code[m_CommitCode],
             _code[m_RepositoryCode],
             _code[m_WalletCode],
@@ -784,7 +786,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell s1 = _composeWalletStateInit(_pubaddr, _walletcounter - 1);
         new GoshWallet {
             stateInit: s1, value: 60 ton, wid: 0
-        }(  _versionController,_rootpubaddr, _pubaddr, _nameDao,
+        }(  _versionController,_rootpubaddr, _pubaddr, _nameDao, _code[m_DaoCode],
             _code[m_CommitCode],
             _code[m_RepositoryCode],
             _code[m_WalletCode],
@@ -899,6 +901,36 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         new Repository {stateInit: s1, value: FEE_DEPLOY_REPO, wid: 0, flag: 1}(
             _pubaddr, nameRepo, _nameDao, _goshdao, _systemcontract, descr, _code[m_CommitCode], _code[m_WalletCode], _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _versions, _index, previous);
         getMoney();
+    }
+    
+    function startProposalForTaskUpgrade(
+        string nametask,
+        string reponame,
+        string oldversion,
+        address oldtask,
+        string[] hashtag,
+        string comment,
+        uint128 num_clients , address[] reviewers
+    ) public onlyOwnerPubkeyOptional(_access) accept {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        _saveMsg();
+
+        uint256 proposalKind = TASK_UPGRADE_PROPOSAL_KIND;
+        TvmCell c = abi.encode(proposalKind, nametask, reponame, oldversion, oldtask, hashtag, comment, now);
+
+        _startProposalForOperation(c, TASK_UPGRADE_PROPOSAL_START_AFTER, TASK_UPGRADE_PROPOSAL_DURATION, num_clients, reviewers);
+
+        getMoney();
+    }
+
+    function getCellForTaskUpgrade(string nametask,
+        string reponame,
+        string oldversion,
+        address oldtask,
+        string[] hashtag,
+        string comment) external pure returns(TvmCell) {
+        uint256 proposalKind = TASK_UPGRADE_PROPOSAL_KIND;
+        return abi.encode(proposalKind, nametask, reponame, oldversion, oldtask, hashtag, comment, now);      
     }
     
     function startProposalForSendDaoToken(
@@ -2418,6 +2450,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             } else 
             if (kind == TASK_REDEPLOYED_PROPOSAL_KIND) {
                 GoshDao(_goshdao).redeployedTask{value: 0.2 ton}(_pubaddr, _index);  
+            } else
+            if (kind == TASK_UPGRADE_PROPOSAL_KIND) {
+                (, string taskname, string reponame, string oldversion, address oldtask, string[] hashtag,,) = abi.decode(propData, (uint256, string, string, string, address, string[], string, uint32));
+                GoshDao(_goshdao).upgradeTask{value: 0.1 ton}(_pubaddr, _index, taskname, reponame, oldversion, oldtask, hashtag);   
             }
         }
     }
@@ -2585,6 +2621,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == DAO_LOCK_PROPOSAL_KIND) {
                 (, address wallet, bool isLock, uint128 grant,,) = abi.decode(propData, (uint256, address, bool, uint128, string, uint32));
                 GoshDao(_goshdao).daoAskLock{value: 0.1 ton}(_pubaddr, _index, wallet, isLock, grant);   
+            } else
+            if (kind == TASK_UPGRADE_PROPOSAL_KIND) {
+                (, string taskname, string reponame, string oldversion, address oldtask, string[] hashtag,,) = abi.decode(propData, (uint256, string, string, string, address, string[], string, uint32));
+                GoshDao(_goshdao).upgradeTask{value: 0.1 ton}(_pubaddr, _index, taskname, reponame, oldversion, oldtask, hashtag);   
             }
         }
     }
@@ -2727,7 +2767,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function getCellForTask(string nametask, 
-    	address repo,
+        address repo,
+    	string repoName,
     	bool ready,
     	ConfigCommitBase[] candidates,   
     	ConfigGrant grant,
@@ -2755,7 +2796,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     	uint128 balance) external view returns(TvmCell) {
     	mapping(uint8 => TvmCell) code;
     	code[m_WalletCode] = _code[m_WalletCode];
-        return abi.encode(nametask, repo, ready, _systemcontract, _goshdao, code, candidates, grant, hashtag, indexFinal, indexFinal, locktime, fullAssign, fullReview, fullManager, assigners, reviewers, managers, assignfull, reviewfull, managerfull, assigncomplete, reviewcomplete, managercomplete, allassign, allreview, allmanager, lastassign, lastreview, lastmanager, balance);
+    	code[m_DaoCode] = _code[m_DaoCode];
+        return abi.encode(nametask, repo, repoName, ready, _systemcontract, _goshdao, code, candidates, grant, hashtag, indexFinal, indexFinal, locktime, fullAssign, fullReview, fullManager, assigners, reviewers, managers, assignfull, reviewfull, managerfull, assigncomplete, reviewcomplete, managercomplete, allassign, allreview, allmanager, lastassign, lastreview, lastmanager, balance);
     }
     
     function getCellForRedeployTask(string reponame, string nametask,  string[] hashtag, TvmCell data) external pure returns(TvmCell) {

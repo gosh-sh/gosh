@@ -10,6 +10,7 @@
 				{"name":"rootpubaddr","type":"address"},
 				{"name":"pubaddr","type":"address"},
 				{"name":"nameDao","type":"string"},
+				{"name":"codeDao","type":"cell"},
 				{"name":"commitCode","type":"cell"},
 				{"name":"repositoryCode","type":"cell"},
 				{"name":"WalletCode","type":"cell"},
@@ -646,6 +647,35 @@
 			]
 		},
 		{
+			"name": "startProposalForTaskUpgrade",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"reponame","type":"string"},
+				{"name":"oldversion","type":"string"},
+				{"name":"oldtask","type":"address"},
+				{"name":"hashtag","type":"string[]"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellForTaskUpgrade",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"reponame","type":"string"},
+				{"name":"oldversion","type":"string"},
+				{"name":"oldtask","type":"address"},
+				{"name":"hashtag","type":"string[]"},
+				{"name":"comment","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "startProposalForSendDaoToken",
 			"inputs": [
 				{"name":"wallet","type":"address"},
@@ -1098,7 +1128,7 @@
 				{"name":"numberCommits","type":"uint128"},
 				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"},
-				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"}],"name":"task","type":"optional(tuple)"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"task","type":"optional(tuple)"},
 				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
@@ -1113,7 +1143,7 @@
 				{"name":"numberChangedFiles","type":"uint128"},
 				{"name":"numberCommits","type":"uint128"},
 				{"name":"comment","type":"string"},
-				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"}],"name":"task","type":"optional(tuple)"}
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"task","type":"optional(tuple)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -1645,8 +1675,9 @@
 			"inputs": [
 				{"name":"nametask","type":"string"},
 				{"name":"repo","type":"address"},
+				{"name":"repoName","type":"string"},
 				{"name":"ready","type":"bool"},
-				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"address"},{"name":"number_commit","type":"uint128"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"}],"name":"candidates","type":"tuple[]"},
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"address"},{"name":"number_commit","type":"uint128"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"candidates","type":"tuple[]"},
 				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"}],"name":"grant","type":"tuple"},
 				{"name":"hashtag","type":"string[]"},
 				{"name":"indexFinal","type":"uint128"},

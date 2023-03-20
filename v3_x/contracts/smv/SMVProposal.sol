@@ -449,6 +449,12 @@ function getDaoSendTokenProposalParams () external view
     (proposalKind, wallet, pubaddr, grant,,) = abi.decode(propData, (uint256, address, optional(address), uint128, string, uint32));
 }
 
+function getUpgradeTaskProposalParams () external view
+         returns( uint256  proposalKind, string taskname, string reponame, string oldversion, address oldtask, string[] hashtag, string comment)
+{
+    (proposalKind, taskname, reponame, oldversion, oldtask, hashtag, comment,) = abi.decode(propData, (uint256, string, string, string, address, string[], string, uint32));
+}
+
 function getDaoVoteProposalParams () external view
          returns(uint proposalKind, address wallet, uint256 platform_id, bool choice, uint128 amount, uint128 num_clients_base, string note) 
 {
@@ -544,6 +550,12 @@ function getGoshDeployTaskProposalParamsData (TvmCell Data) external pure
          returns( uint256  proposalKind, string reponame, string taskname, string[] tag, ConfigGrant grant, string comment)
 {
     (proposalKind, reponame, taskname, tag, grant, comment,) = abi.decode(Data, (uint256, string, string, string[], ConfigGrant, string, uint32));
+}
+
+function getUpgradeTaskProposalParamsData (TvmCell Data) external pure
+         returns( uint256  proposalKind, string taskname, string reponame, string oldversion, address oldtask, string[] hashtag, string comment)
+{
+    (proposalKind, taskname, reponame, oldversion, oldtask, hashtag, comment,) = abi.decode(Data, (uint256, string, string, string, address, string[], string, uint32));
 }
 
 function getGoshDeployRepoProposalParamsData (TvmCell Data) external pure

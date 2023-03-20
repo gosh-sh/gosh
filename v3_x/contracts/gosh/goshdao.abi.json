@@ -419,6 +419,20 @@
 			]
 		},
 		{
+			"name": "upgradeTask",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"nametask","type":"string"},
+				{"name":"repoName","type":"string"},
+				{"name":"oldversion","type":"string"},
+				{"name":"oldtask","type":"address"},
+				{"name":"hashtag","type":"string[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "redeployedTask",
 			"inputs": [
 				{"name":"pub","type":"address"},
@@ -725,6 +739,28 @@
 				{"name":"repo","type":"address"},
 				{"name":"tag","type":"string[]"},
 				{"name":"sender","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkOldTaskVersion",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"string"},
+				{"name":"previous","type":"string"},
+				{"name":"previousaddr","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkOldTaskVersion5",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"string"},
+				{"name":"previous","type":"address"},
+				{"name":"answer","type":"address"}
 			],
 			"outputs": [
 			]
