@@ -74,6 +74,11 @@ export async function countGitObjects(github_id: string) {
         const out_str = new TextDecoder().decode(await count_git_objects.output()).trim()
 
         number_of_git_objects = parseInt(out_str, 10)
+
+        // cleanup
+        console.log('About to remove dir: ', workdir)
+        await Deno.remove(workdir, {recursive: true})
+        console.log('Dir removed', github_id)
     }
 
     console.log(`Repo`, github_id, `contains`, number_of_git_objects)
@@ -82,11 +87,6 @@ export async function countGitObjects(github_id: string) {
         .from('github')
         .update({ objects: number_of_git_objects })
         .eq('id', github.id)
-
-    // cleanup
-    console.log('About to remove dir: ', workdir)
-    Deno.removeSync(workdir, { recursive: true })
-    console.log('Dir removed', github_id)
 
     // EXPLANATION: we split repos to 3 buckets by size: small | medium | large
     // TODO: more logs
