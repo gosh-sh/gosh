@@ -212,7 +212,7 @@ pipeline {
                             mkdir -p /home/jenkins/bin
 
                             # dispatcher
-                            cp -r ${WORKSPACE}/{JOB_NAME}/linux-amd64/git-remote-gosh /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
+                            cp -r ${WORKSPACE}/${JOB_NAME}/linux-amd64/git-remote-gosh /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
 
                             # remote
                             cd ${WORKSPACE}/${JOB_NAME}/linux-amd64/
