@@ -150,7 +150,7 @@ pipeline {
                 }
             }
         }*/
-        stage('Tests: Functional') {
+        stage('Tests') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -309,17 +309,6 @@ pipeline {
                     }
                     parallel containerStages
                 }
-            }
-        }
-        
-        stage('Test Upgrades') {
-            agent {
-                docker {
-                    image 'jenkins-docker-agent:1'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network host -v /root/jenkins-main/workspace:/tmp --add-host localnode:127.0.0.1'
-                }
-            }
-            steps {
                 script {
                     def containerStages = [:]
                     def basePort = 9000
@@ -339,11 +328,9 @@ pipeline {
                                         export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
                                         ./set-vars.sh v1_x_workspace_${index} http://localnode:${port}
                                         ./upgrade_tests/set_up.sh v1_x_workspace_${index} v2_x_workspace_${index}
-                                        #. ./env.env
                                         ./${script}
                                     """
-                                }
-                                
+                                }     
                             }
                         }
                     }
@@ -351,7 +338,7 @@ pipeline {
                 }
             }
         }
- 
+        
         stage('Tests: Web') {
             agent {
                 docker {
