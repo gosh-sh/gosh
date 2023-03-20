@@ -98,7 +98,7 @@ DAO_PUBKEY=$(cat $DAO_KEYS | sed -n '/public/ s/.*\([[:xdigit:]]\{64\}\).*/0x\1/
 
 # *create Profile
 USER_PROFILE_NAME=user$TEST_INDEX
-tonos-cli call --abi $SYSTEM_CONTRACT_ABI $SYSTEM_CONTRACT_ADDR deployProfile "{\"pubkey\":\"$DAO_PUBKEY\",\"name\":\"$\"}"
+tonos-cli call --abi $SYSTEM_CONTRACT_ABI $SYSTEM_CONTRACT_ADDR deployProfile "{\"pubkey\":\"$DAO_PUBKEY\",\"name\":\"$USER_PROFILE_NAME\"}"
 USER_PROFILE_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getProfileAddr "{\"name\":\"$USER_PROFILE_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 wait_account_active $USER_PROFILE_ADDR
 echo "export USER_PROFILE_ABI=$USER_PROFILE_ABI" >> env.env
