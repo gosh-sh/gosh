@@ -337,10 +337,18 @@ def deployVersion(version, files, basePort) {
 }
 
 def deployStage(version, index, port) {
-    echo "Starting Docker container on port ${port}"
-    sh """
-        docker run -d --name localnode-${port} -p ${port}:80 -e USER_AGREEMENT=yes -v ${WORKSPACE}/.ci/blockchain.conf:/ton-node/blockchain.conf.json tonlabs/local-node:latest
-    """
+    echo "Checking if Docker container localnode-${port} is already running"
+    def containerRunning = sh(returnStdout: true, script: "docker ps --filter name=localnode-${port} --format '{{.Names}}'").trim()
+
+    if (!containerRunning) {
+        echo "Starting Docker container on port ${port}"
+        sh """
+            docker run -d --name localnode-${port} -p ${port}:80 -e USER_AGREEMENT=yes -v ${WORKSPACE}/.ci/blockchain.conf:/ton-node/blockchain.conf.json tonlabs/local-node:latest
+        """
+    } else {
+        echo "Docker container localnode-${port} is already running"
+    }
+
     sh "cp -r ${version} ${version}_workspace_${index}"
     env.version = version
     dir("${WORKSPACE}/${version}_workspace_${index}/contracts/multisig") {
