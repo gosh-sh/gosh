@@ -105,7 +105,7 @@ impl ParallelDiffsUploadSupport {
                     &parallel_diff_clone.file_path,
                     &diff_coordinates_clone,
                     &last_commit_id,
-                    false, // <- It is known now
+                    is_last, // <- It is known now
                     &parallel_diff_clone.original_snapshot_content,
                     &parallel_diff_clone.diff,
                     &parallel_diff_clone.new_snapshot_content,
@@ -114,6 +114,7 @@ impl ParallelDiffsUploadSupport {
             }
                 .instrument(debug_span!("tokio::spawn::push_diff").or_current()),
         );
+        // TODO add to list here
     }
 
     #[instrument(level = "info", skip_all)]
