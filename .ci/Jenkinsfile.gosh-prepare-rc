@@ -165,8 +165,10 @@ pipeline {
     }
     post { 
         always { 
-            sh "docker ps -a --filter name=localnode-* -aq | xargs docker rm -f"
-            cleanWs()
+            node('jenkins-main') { 
+                sh "docker ps -a --filter name=localnode-* -aq | xargs docker rm -f"
+                cleanWs()
+            }
         }
     }
 }
