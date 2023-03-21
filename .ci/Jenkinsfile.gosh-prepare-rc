@@ -82,17 +82,6 @@ pipeline {
             }
         }
 
-        /*stage('Web: deploy') {
-            agent {
-                node {
-                    label 'jenkins-main'
-                }
-            }
-            steps {
-                deployWeb()
-            }
-        }*/
-
         stage('Tests') {
             agent {
                 docker {
@@ -113,7 +102,20 @@ pipeline {
                     runFunctionalTests(files, basePort, "Func v1", "v1_x")
                     runFunctionalTests(files, basePort, "Func v2", "v2_x")
                     runUpgradeTests(files, basePort)
+                    env.REACT_APP_GOSH_ROOTADDR = sh script: "cat v1_x_workspace_0/contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
+                    env.REACT_APP_GOSH = sh script: "cat v1_x_workspace_0/contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
                 }
+            }
+        }
+
+        stage('Web: deploy') {
+            agent {
+                node {
+                    label 'jenkins-main'
+                }
+            }
+            steps {
+                deployWeb()
             }
         }
         
@@ -159,11 +161,12 @@ pipeline {
                     prereleaseDockerExtension()
                 }
             }
-            post {
-                always {
-                    cleanWs()
-                }
-            }
+        }
+    }
+    post { 
+        always { 
+            sh "docker ps -a --filter name=localnode-* -aq | xargs docker rm -f"
+            cleanWs()
         }
     }
 }
@@ -497,7 +500,7 @@ def testWeb() {
                         docker run --rm \
                             -e GM_MODE='${tests[i].trim()}' \
                             -e RUN_NOW=1 \
-                            -e CONFIG_SEED="\$(cat ../../tests/user.seed)" \
+                            -e CONFIG_SEED="\$(cat ../../tests_workspace_0/user.seed)" \
                             -e CONFIG_APPURL=https://${BUCKET_NAME}.gosh.sh/ \
                             -e CONFIG_REDIS_HOST="" \
                             -e CONFIG_USERNAME=user1 \
