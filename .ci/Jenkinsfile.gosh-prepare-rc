@@ -124,7 +124,7 @@ pipeline {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network host --add-host localnode:127.0.0.1'
                 }
             }
             steps {
