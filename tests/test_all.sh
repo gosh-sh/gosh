@@ -10,13 +10,12 @@ set -o pipefail
 #  docker start local-node
 #  sleep 20
 
-#  ./node_se_scripts/deploy.sh
+#  ./node_se_scripts/deploy.sh $1 $2
 #fi
 
 # $1 = VERSION (v1_x, v2_x)
 
 . set-vars.sh $1 $2
-#. build_remote.sh
 ./01-clone_empty_repo.test.sh
 ./02-create_branch.test.sh
 ./03-push_multiple_updates_in_a_single_commit.test.sh
@@ -34,6 +33,8 @@ set -o pipefail
 ./15-diamond_merge_several_commits.test.sh
 ./16-push_after_diamond_merge.test.sh
 ./17-create_file_in_branch.test.sh
+./18-push_several_commits.test.sh
+./19-push_many_files.test.sh
 
 # upgrade tests.   Failing tests have ignore argument
 #./upgrade_tests/set_up_v2.sh
