@@ -365,7 +365,7 @@ def deployStage(version, index, port) {
     if (!containerRunning) {
         echo "Starting Docker container on port ${port}"
         sh """
-            docker run -d --name localnode-${port} --network test.app.gosh.sh -p ${port}:80 -e USER_AGREEMENT=yes -v ${WORKSPACE}/.ci/blockchain.conf:/ton-node/blockchain.conf.json tonlabs/local-node:latest
+            docker run -d --name localnode-${port} --network test.app.gosh.sh -p ${port}:80 -e USER_AGREEMENT=yes -v ${WORKSPACE}/.ci/blockchain.conf:/ton-node/blockchain.conf.json tonlabs/local-node:0.35.1
         """
     } else {
         echo "Docker container localnode-${port} is already running"
