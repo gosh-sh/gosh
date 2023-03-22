@@ -525,6 +525,7 @@ def testWeb() {
                             -e CONFIG_USERNAME=user1 \
                             -v \$(pwd)/config:/home/node/app/config:ro \
                             -v \$(pwd)/test-errors:/home/node/app/errors \
+                            --network host --add-host localnode:127.0.0.1 \
                             gosh-mon
                     """
                 }
