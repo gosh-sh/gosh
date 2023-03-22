@@ -6,7 +6,7 @@ import DropdownMenu from './DropdownMenu'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPaperPlane, faQuestionCircle } from '@fortawesome/free-regular-svg-icons'
 import { faDocker } from '@fortawesome/free-brands-svg-icons'
-import { faBlog } from '@fortawesome/free-solid-svg-icons'
+import { faBlog, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
 import { appModalStateAtom } from '../../store/app.state'
 import MDDocumentModal from '../Modal/MDDocument/MDDocumentModal'
 import { useUser } from 'react-gosh'
@@ -147,6 +147,19 @@ const Header = () => {
                     </>
                 )}
             </Disclosure>
+
+            {user.persist.phrase && (
+                <div className="container">
+                    <div className="bg-red-ff3b30 text-white px-5 py-4 rounded-xl mt-6">
+                        <FontAwesomeIcon icon={faExclamationTriangle} className="mr-3" />
+                        Please, DO NOT sign out, go to the{' '}
+                        <Link to={'/a/settings'} className="underline">
+                            Settings
+                        </Link>{' '}
+                        page now and backup your seed phrase
+                    </div>
+                </div>
+            )}
         </header>
     )
 }
