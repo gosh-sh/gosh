@@ -86,7 +86,7 @@ impl Tagging for Everscale {
             anyhow::bail!("hint: Updates were rejected because the tag already exists in the remote.");
         }
 
-        let wallet_contract = wallet.take_one().await?;
+        let wallet_contract = wallet.take_zero_wallet().await?;
         
         tracing::debug!("Acquired wallet: {}", wallet_contract.get_address());
 
@@ -101,7 +101,7 @@ impl Tagging for Everscale {
 
         let result = self
             .send_message(
-                wallet_contract.deref(),
+                &wallet_contract,
                 "deployTag",
                 Some(serde_json::to_value(params)?),
                 None,
