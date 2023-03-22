@@ -80,8 +80,7 @@ function deploy_DAO_and_repo {
   echo $GRANTED_PUBKEY
 
   echo "***** repo deploy *****"
-  tonos-cli -j call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
-      "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1
+  deploy_repo
   REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
   echo "REPO_ADDR=$REPO_ADDR"
 
@@ -91,9 +90,24 @@ function deploy_DAO_and_repo {
 }
 
 function upgrade_DAO {
-  TEST_VERSION=$TEST_VERSION1
+  if [ $# -lt 2 ]; then
+    TEST_VERSION=$TEST_VERSION1
+    NEW_SYSTEM_CONTRACT_ADDR=$SYSTEM_CONTRACT_ADDR_1
+  else
+    TEST_VERSION=$1
+    NEW_SYSTEM_CONTRACT_ADDR=$2
+  fi
+  if [[ $VERSION =~ "v1_x" ]]; then
+    upgrade_DAO_1 $TEST_VERSION $NEW_SYSTEM_CONTRACT_ADDR
+  else
+    upgrade_DAO_2 $TEST_VERSION $NEW_SYSTEM_CONTRACT_ADDR
+  fi
+}
+
+function upgrade_DAO_1 {
+  TEST_VERSION=$1
   PROP_ID=$PROP_ID1
-  NEW_SYSTEM_CONTRACT_ADDR=$SYSTEM_CONTRACT_ADDR_1
+  NEW_SYSTEM_CONTRACT_ADDR=$2
 
   echo "***** start proposal for upgrade *****"
   tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForUpgradeDao --newversion $TEST_VERSION --description "" --num_clients 1
@@ -128,12 +142,12 @@ function upgrade_DAO {
 }
 
 function upgrade_DAO_2 {
-  TEST_VERSION=$TEST_VERSION2
-  NEW_SYSTEM_CONTRACT_ADDR=$SYSTEM_CONTRACT_ADDR_2
+  TEST_VERSION=$1
+  NEW_SYSTEM_CONTRACT_ADDR=$2
 
   echo "***** start proposal for upgrade *****"
   tonos-cli -j callx --abi $WALLET_ABI_1 --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForUpgradeDao --newversion $TEST_VERSION --description "" --comment "" --num_clients 1 --reviewers []
-  NOW_ARG=$(tonos-cli account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
+  NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
   echo "NOW_ARG=$NOW_ARG"
 
   sleep 60
@@ -268,11 +282,11 @@ function wait_account_balance {
 }
 
 function deploy_repo {
-  if [[ $VERSION =~ "v2_x" ]]; then
-    tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \
-      "{\"nameRepo\":\"$REPO_NAME\",\"descr\":\"\",\"previous\":null}" || exit 1
-  else
+  if [[ $VERSION =~ "v1_x" ]]; then
     tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
       "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1
+  else
+    tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \
+      "{\"nameRepo\":\"$REPO_NAME\",\"descr\":\"\",\"previous\":null}" || exit 1
   fi
 }
