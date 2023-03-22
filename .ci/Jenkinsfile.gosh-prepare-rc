@@ -100,7 +100,8 @@ pipeline {
                         deployVersion(version, nodes, basePort)
                     }
 
-                    //runFunctionalTests(files, basePort, "Func v1", "v1_x")
+                    sh "rm -rf tests_workspace_*"
+                    runFunctionalTests(files, basePort, "Func v1", "v1_x")
                     //runFunctionalTests(files, basePort, "Func v2", "v2_x")
                     //runUpgradeTests(files, basePort)
                     env.REACT_APP_GOSH_ROOTADDR = sh script: "cat v1_x_workspace_0/contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
