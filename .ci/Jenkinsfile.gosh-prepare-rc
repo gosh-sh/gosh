@@ -43,8 +43,8 @@ pipeline {
                 git branch: "${COMMIT}", url: 'https://github.com/gosh-sh/gosh.git'
                 checkout scm
                 script {
-                    env.VERSION = sh script: "cat version.json | jq .version | tr -d '\"\n'", returnStdout: true
-                    currentBuild.displayName = "${BUILD_NUMBER}_${COMMIT}_${VERSION}"
+                    env.APP_VERSION = sh script: "cat version.json | jq .version | tr -d '\"\n'", returnStdout: true
+                    currentBuild.displayName = "${BUILD_NUMBER}_${COMMIT}_${APP_VERSION}"
                 }
             }
         }
@@ -472,7 +472,7 @@ def prepareHelperForTests() {
 
 def deployWeb() {
     script {
-        env.BUCKET_NAME = "app-" + "${COMMIT}_${VERSION}".replaceAll("[^a-zA-Z0-9 ]+","-")
+        env.BUCKET_NAME = "app-" + "${COMMIT}_${APP_VERSION}".replaceAll("[^a-zA-Z0-9 ]+","-")
         sh """
             sed -i '/REACT_APP_GOSH_ROOTADDR =/s/\$/${REACT_APP_GOSH_ROOTADDR}/' web/.env.ci
             sed -i '/REACT_APP_GOSH =/s/\$/{"1.0.0": "${REACT_APP_GOSH}"}/' web/.env.ci
@@ -540,12 +540,12 @@ def prereleaseBinaries() {
         if (!params.DRYRUN) {
             dir('.ci/scripts') {
                 withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
-                    sh './create-github-release.sh $TOKEN ${VERSION} ${COMMIT}'
-                    sh './github-upload-assets.sh $TOKEN ${VERSION} /tmp/${JOB_NAME}/git-remote-gosh-linux-amd64.tar'
-                    sh './github-upload-assets.sh $TOKEN ${VERSION} /tmp/${JOB_NAME}/git-remote-gosh-darwin-amd64.tar'
-                    sh './github-upload-assets.sh $TOKEN ${VERSION} /tmp/${JOB_NAME}/git-remote-gosh-linux-arm64.tar'
-                    sh './github-upload-assets.sh $TOKEN ${VERSION} /tmp/${JOB_NAME}/git-remote-gosh-darwin-arm64.tar'
-                    sh './github-upload-assets.sh $TOKEN ${VERSION} /tmp/${JOB_NAME}/git-remote-gosh-windows-amd64.zip'
+                    sh './create-github-release.sh $TOKEN ${APP_VERSION} ${COMMIT}'
+                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-linux-amd64.tar'
+                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-darwin-amd64.tar'
+                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-linux-arm64.tar'
+                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-darwin-arm64.tar'
+                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-windows-amd64.zip'
                 }
             }
         }
@@ -559,7 +559,7 @@ def prereleaseDockerExtension() {
                 withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                     sh 'docker login -u $USERNAME -p $PASSWORD'
                 }
-                sh "make push IMAGE=teamgosh/docker-extension TAG=rc-${VERSION} PLATFORM=linux/amd64,linux/arm64"
+                sh "make push IMAGE=teamgosh/docker-extension TAG=rc-${APP_VERSION} PLATFORM=linux/amd64,linux/arm64"
             }
         }
     }
@@ -581,7 +581,7 @@ def webTestsList() {
             steps {
                 script {
                     dir('docker-extension') {
-                        sh "make push IMAGE=localhost:5000/teamgosh/docker-extension TAG=${VERSION} PLATFORM=linux/amd64,linux/arm64 GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${VERSION}"
+                        sh "make push IMAGE=localhost:5000/teamgosh/docker-extension TAG=${APP_VERSION} PLATFORM=linux/amd64,linux/arm64 GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${APP_VERSION}"
                     }
                 }
             }
@@ -602,13 +602,13 @@ def webTestsList() {
                         dir('v2_x/git-remote-gosh') {
                         sh """
                             cp /var/jenkins_home/workspace/gosh-prepare-rc/git-remote-gosh/git-remote-gosh-amd64 snap/git-remote-gosh
-                            sed -i 's/VERSION_PLACEHOLDER/${VERSION}/g' snap/snapcraft.yaml
+                            sed -i 's/VERSION_PLACEHOLDER/${APP_VERSION}/g' snap/snapcraft.yaml
                             chmod +x snap/git-remote-gosh
                             cd snap
                             tar -cvf git-remote-gosh.tar git-remote-gosh
                             snapcraft clean --use-lxd
                             snapcraft --use-lxd
-                            snapcraft upload git-remote-gosh_${VERSION}_amd64.snap --release=candidate
+                            snapcraft upload git-remote-gosh_${APP_VERSION}_amd64.snap --release=candidate
                         """
                         }
                     }
