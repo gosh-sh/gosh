@@ -383,7 +383,7 @@ def deployStage(version, index, port) {
         sh 'make deploy-docker EXTRA_DOCKER_ARGS="--network host --add-host localnode:127.0.0.1"'
     }
     dir("${WORKSPACE}/${version}_workspace_${index}/contracts/gosh") {
-        sh 'make prepare-docker && make deploy-docker EXTRA_DOCKER_ARGS="--network host --add-host localnode:127.0.0.1"'
+        sh 'make prepare-docker && make build-contracts-docker && make deploy-docker EXTRA_DOCKER_ARGS="--network host --add-host localnode:127.0.0.1"'
     }
 }
 
