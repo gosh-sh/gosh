@@ -21,7 +21,7 @@ export default abstract class AppHandler extends GoshHandler {
             'start browser',           () => this.startBrowser(debug),
             'open page',               () => this.openPage(this.appurl),
             AppHandler.indexSteps, //-----------------------------------------------------------------------------------
-            'remove footer',           () => this.removeFooter(), // not a step, utility function
+            // 'remove footer',           () => this.removeFooter(), // not a step, utility function
             'click signin',            () => this.click(`//a[${ac_hrefs('/a/signin')}]`),
             // 'input seed',              () => this.pasteInto("//textarea[@name='phrase']", this.seed, undefined, undefined, true),
             'copy seed to clipboard',  () => this.setClipboard(this.seed),
