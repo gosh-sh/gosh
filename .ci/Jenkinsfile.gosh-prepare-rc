@@ -55,8 +55,8 @@ pipeline {
                 }
             }
             steps {
-                //buildDispatcher()
-                buildDispatcherDebug()
+                buildDispatcher()
+                //buildDispatcherDebug()
             }
         }
         stage('Build: Git Helper') {
@@ -66,8 +66,8 @@ pipeline {
                 }
             }
             steps {
-                //runFunctionSet('buildRemoteGosh')
-                runFunctionSet('buildRemoteGoshDebug')
+                runFunctionSet('buildRemoteGosh')
+                //runFunctionSet('buildRemoteGoshDebug')
             }
         }
 
@@ -103,8 +103,8 @@ pipeline {
                     }
 
                     runFunctionalTests(files, basePort, "Func v1", "v1_x")
-                    //runFunctionalTests(files, basePort, "Func v2", "v2_x")
-                    //runUpgradeTests(files, basePort)
+                    runFunctionalTests(files, basePort, "Func v2", "v2_x")
+                    runUpgradeTests(files, basePort)
                     env.REACT_APP_GOSH_ROOTADDR = sh script: "cat v1_x_workspace_0/contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
                     env.REACT_APP_GOSH = sh script: "cat v1_x_workspace_0/contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
                 }
@@ -166,14 +166,14 @@ pipeline {
             }
         }
     }
-    /*post { 
+    post { 
         always { 
             node('jenkins-main') { 
                 sh "docker ps -a --filter name=localnode-* -aq | xargs docker rm -f"
                 cleanWs()
             }
         }
-    }*/
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
