@@ -44,7 +44,7 @@ const GoshPhrase = () => {
             if (!valid) {
                 throw new GoshError(EGoshError.PHRASE_INVALID)
             }
-            setOnboarding((state) => ({ ...state, step: 'username' }))
+            setOnboarding((state) => ({ ...state, phrase: words, step: 'username' }))
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)

@@ -56,6 +56,7 @@ const GoshPhrase = (props: TGoshPhraseProps) => {
             if (!valid) {
                 throw new GoshError(EGoshError.PHRASE_INVALID)
             }
+            setSignupState((state) => ({ ...state, phrase: words }))
             setStep('username')
         } catch (e: any) {
             console.error(e.message)
