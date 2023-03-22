@@ -518,6 +518,19 @@ function useDaoMemberCreate(dao: IGoshDaoAdapter) {
                     },
                 }),
             )
+
+            // Stupid, but needed.
+            // If there is only one member add cell, we need to add extra
+            // cells for multiproposal for delay.
+            // If not, voting tokens won't be added to the user
+            const extraCells: { type: number; params: object }[] = []
+            if (memberAddCells.length === 1) {
+                extraCells.push({
+                    type: ESmvEventType.DAO_TOKEN_MINT,
+                    params: { amount: 0 },
+                })
+            }
+
             const memberAddVotingCells: { type: number; params: object }[] = clean.map(
                 ({ username, allowance }) => ({
                     type: ESmvEventType.DAO_TOKEN_VOTING_ADD,
@@ -525,7 +538,7 @@ function useDaoMemberCreate(dao: IGoshDaoAdapter) {
                 }),
             )
             await dao.createMultiProposal({
-                proposals: [...memberAddCells, ...memberAddVotingCells],
+                proposals: [...memberAddCells, ...extraCells, ...memberAddVotingCells],
             })
         }
     }
