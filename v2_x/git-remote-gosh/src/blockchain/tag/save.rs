@@ -100,7 +100,7 @@ impl Tagging for Everscale {
 
         let result = self
             .send_message(
-                &wallet_contract,
+                wallet_contract.deref(),
                 "deployTag",
                 Some(serde_json::to_value(params)?),
                 None,
