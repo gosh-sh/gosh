@@ -300,7 +300,7 @@ function deploy_task_with_proposal {
     "{\"taskName\":\"$TASK_NAME\",\"repoName\":\"$REPO_NAME\",\"tag\":[],\"comment\":\"\",\"grant\":{\"assign\":[{\"grant\":1,\"lock\":1},{\"grant\":1,\"lock\":$LOCK}],\"review\":[],\"manager\":[]},\"num_clients\":1,\"reviewers\":[]}"
 
   echo "TVMCELL=$TVMCELL"
-  sleep 60
+  sleep 10
 
   PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
         --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
@@ -335,7 +335,7 @@ function mint_tokens {
       --token $TOKEN --comment "" --num_clients 1 --reviewers []
     echo "TVMCELL=$TVMCELL"
 
-    sleep 60
+    sleep 10
 
     PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
       --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
