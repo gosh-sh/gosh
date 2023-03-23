@@ -514,7 +514,7 @@ def testWeb() {
     script {
         dir('monitoring/gosh-mon') {   
             sh "cp config/credentials.yml.template config/credentials.yml"
-            sh "docker build -t gosh-mon ."
+            sh "docker build --no-cache -t gosh-mon ."
             def tests = webTestsList()
             for (int i = 0; i < tests.length; i++) {
                 stage("Test ${tests[i]}") {
