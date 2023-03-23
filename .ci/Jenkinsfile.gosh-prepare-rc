@@ -38,7 +38,7 @@ pipeline {
                     } else {
                         env.COMMIT = params.sha1
                     }
-                    sh "docker ps -a --filter name=localnode-* -aq | xargs docker rm -f"
+                    sh "docker ps -a --filter name=localnode-* -aq | xargs docker rm -f || true"
                 }
                 echo "${COMMIT}"
                 git branch: "${COMMIT}", url: 'https://github.com/gosh-sh/gosh.git'
