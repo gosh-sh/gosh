@@ -55,8 +55,8 @@ pipeline {
                 }
             }
             steps {
-                //buildDispatcher()
-                buildDispatcherDebug()
+                buildDispatcher()
+                //buildDispatcherDebug()
             }
         }
         stage('Build: Git Helper') {
@@ -66,8 +66,8 @@ pipeline {
                 }
             }
             steps {
-                //runFunctionSet('buildRemoteGosh')
-                runFunctionSet('buildRemoteGoshDebug')
+                runFunctionSet('buildRemoteGosh')
+                //runFunctionSet('buildRemoteGoshDebug')
             }
         }
 
@@ -91,18 +91,20 @@ pipeline {
             }
             steps {
                 script {
+                    sh "rm -rf tests_workspace_*"
                     def basePort = 9000
                     def files = getTestFiles("tests")
                     def nodes = getNodesCount()
                     def versions = ["v1_x", "v2_x"]
                     
                     for (version in versions) {
+                        sh "rm -rf ${version}_workspace_*"
                         deployVersion(version, nodes, basePort)
                     }
 
-                    //runFunctionalTests(files, basePort, "Func v1", "v1_x")
-                    //runFunctionalTests(files, basePort, "Func v2", "v2_x")
-                    //runUpgradeTests(files, basePort)
+                    runFunctionalTests(files, basePort, "Func v1", "v1_x")
+                    runFunctionalTests(files, basePort, "Func v2", "v2_x")
+                    runUpgradeTests(files, basePort)
                     env.REACT_APP_GOSH_ROOTADDR = sh script: "cat v1_x_workspace_0/contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
                     env.REACT_APP_GOSH = sh script: "cat v1_x_workspace_0/contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
                 }
@@ -344,7 +346,6 @@ def getTestFiles(testsDir) {
 def deployVersion(version, files, basePort) {
     def containerStages = [:]
 
-    sh "rm -rf ${version}_workspace_*"
     for (int i = 0; i < files.size(); i++) {
         def port = basePort + i
         def index = i
@@ -364,7 +365,7 @@ def deployStage(version, index, port) {
     if (!containerRunning) {
         echo "Starting Docker container on port ${port}"
         sh """
-            docker run -d --name localnode-${port} -p ${port}:80 -e USER_AGREEMENT=yes -v ${WORKSPACE}/.ci/blockchain.conf:/ton-node/blockchain.conf.json tonlabs/local-node:latest
+            docker run -d --name localnode-${port} --network test.app.gosh.sh -p ${port}:80 -e USER_AGREEMENT=yes -v ${WORKSPACE}/.ci/blockchain.conf:/ton-node/blockchain.conf.json tonlabs/local-node:0.35.1
         """
     } else {
         echo "Docker container localnode-${port} is already running"
@@ -382,7 +383,7 @@ def deployStage(version, index, port) {
         sh 'make deploy-docker EXTRA_DOCKER_ARGS="--network host --add-host localnode:127.0.0.1"'
     }
     dir("${WORKSPACE}/${version}_workspace_${index}/contracts/gosh") {
-        sh 'make prepare-docker && make deploy-docker EXTRA_DOCKER_ARGS="--network host --add-host localnode:127.0.0.1"'
+        sh 'make prepare-docker && make build-contracts-docker && make deploy-docker EXTRA_DOCKER_ARGS="--network host --add-host localnode:127.0.0.1"'
     }
 }
 
