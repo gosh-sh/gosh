@@ -125,7 +125,7 @@ function upgrade_DAO_1 {
 
   tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m voteFor --platform_id $platform_id --choice true --amount 20 --num_clients 1
 
-  wait_wallet_tonbstone $WALLET_ADDR
+  wait_wallet_tombstone $WALLET_ADDR
 
   echo "tonos-cli -j runx --addr $NEW_SYSTEM_CONTRACT_ADDR -m getAddrDao --abi $SYSTEM_CONTRACT_ABI --name $DAO_NAME"
   DAO_ADDR=$(tonos-cli -j runx --addr $NEW_SYSTEM_CONTRACT_ADDR -m getAddrDao --abi $SYSTEM_CONTRACT_ABI --name $DAO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
@@ -240,7 +240,7 @@ function set_commit_proposal {
 }
 
 
-function wait_wallet_tonbstone {
+function wait_wallet_tombstone {
     stop_at=$((SECONDS+120))
     contract_addr=$1
     while [ $SECONDS -lt $stop_at ]; do
@@ -289,4 +289,63 @@ function deploy_repo {
     tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \
       "{\"nameRepo\":\"$REPO_NAME\",\"descr\":\"\",\"previous\":null}" || exit 1
   fi
+}
+
+function deploy_task_with_proposal {
+  echo "***** start proposal for task deploy *****"
+  LOCK=100
+  TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellTaskDeploy \
+    "{\"taskName\":\"$TASK_NAME\",\"repoName\":\"$REPO_NAME\",\"tag\":[],\"comment\":\"\",\"grant\":{\"assign\":[{\"grant\":1,\"lock\":1},{\"grant\":1,\"lock\":$LOCK}],\"review\":[],\"manager\":[]}}" | sed -n '/value0/ p' | cut -d'"' -f 4)
+  tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForTaskDeploy \
+    "{\"taskName\":\"$TASK_NAME\",\"repoName\":\"$REPO_NAME\",\"tag\":[],\"comment\":\"\",\"grant\":{\"assign\":[{\"grant\":1,\"lock\":1},{\"grant\":1,\"lock\":$LOCK}],\"review\":[],\"manager\":[]},\"num_clients\":1,\"reviewers\":[]}"
+
+  echo "TVMCELL=$TVMCELL"
+  sleep 60
+
+  PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
+        --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
+        "{\"data\":\"$TVMCELL\"}" \
+         --decode-c6 | grep value0 \
+        | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+  vote_for_proposal
+}
+
+# Needs $PROP_ID
+function vote_for_proposal {
+    echo "PROP_ID=$PROP_ID"
+    echo "***** get data for proposal *****"
+    tip3VotingLocker=$(tonos-cli -j run $WALLET_ADDR  --abi $WALLET_ABI tip3VotingLocker "{}" | sed -n '/tip3VotingLocker/ p' | cut -d'"' -f 4)
+    echo "tip3VotingLocker=$tip3VotingLocker"
+
+    platform_id=$(tonos-cli -j runx --addr $WALLET_ADDR -m getPlatfotmId --abi $WALLET_ABI --propId $PROP_ID --platformType 1 --_tip3VotingLocker $tip3VotingLocker | sed -n '/value0/ p' | cut -d'"' -f 4)
+    echo "platform_id=$platform_id"
+
+    sleep 3
+
+    tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m voteFor --platform_id $platform_id --choice true --amount 20 --num_clients 1 --note ""
+}
+
+function mint_tokens {
+    tonos-cli runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
+    echo "***** start proposal for task deploy *****"
+    TOKEN=5
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellMintToken --token $TOKEN --comment "" | sed -n '/value0/ p' | cut -d'"' -f 4)
+    tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForMintDaoReserve \
+      --token $TOKEN --comment "" --num_clients 1 --reviewers []
+    echo "TVMCELL=$TVMCELL"
+
+    sleep 60
+
+    PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
+      --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
+      "{\"data\":\"$TVMCELL\"}" \
+       --decode-c6 | grep value0 \
+      | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+    vote_for_proposal
+
+    sleep 3
+
+    tonos-cli runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
 }

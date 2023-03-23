@@ -37,6 +37,10 @@ echo "Start upgrade tests set up"
 echo "Deploy giver for upgrade"
 cd $GOSH_PATH/../multisig
 
+echo "" > Giver.addr
+echo "" > Giver.network
+echo "" > Giver.seed
+
 make generate-docker
 export GIVER_ADDR=`cat Giver.addr`
 echo "GIVER_ADDR = $GIVER_ADDR"
