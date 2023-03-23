@@ -215,31 +215,6 @@ function add_protected_branch {
   tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m voteFor --platform_id $platform_id --choice true --amount 20 --num_clients 1
 }
 
-function set_commit_proposal {
-  echo "***** start proposal for set commit *****"
-  tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForSetCommit --repoName $REPO_NAME --branchName $BRANCH_NAME --commit $COMMIT_ID --numberChangedFiles 1  --numberCommits 1 --num_clients 1
-
-  sleep 60
-  echo "***** get data for proposal *****"
-  tip3VotingLocker=$(tonos-cli -j run $WALLET_ADDR  --abi $WALLET_ABI tip3VotingLocker "{}" | sed -n '/tip3VotingLocker/ p' | cut -d'"' -f 4)
-  echo "tip3VotingLocker=$tip3VotingLocker"
-
-  PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 1000000 \
-  --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method get_set_commit_prop_id --abi-params \
-  "{\"repoName\":\"$REPO_NAME\",\"branchName\":\"$BRANCH_NAME\",\"commit\":\"$COMMIT_ID\",\"numberChangedFiles\":1,\"numberCommits\":1}"  --decode-c6 | grep value0 \
-  | sed -n '/value0/ p' | cut -d'"' -f 4)
-
-  echo "PROP_ID=$PROP_ID"
-
-  platform_id=$(tonos-cli -j runx --addr $WALLET_ADDR -m getPlatfotmId --abi $WALLET_ABI --propId $PROP_ID --platformType 1 --_tip3VotingLocker $tip3VotingLocker | sed -n '/value0/ p' | cut -d'"' -f 4)
-  echo "platform_id=$platform_id"
-
-  sleep 3
-
-  tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m voteFor --platform_id $platform_id --choice true --amount 20 --num_clients 1
-}
-
-
 function wait_wallet_tombstone {
     stop_at=$((SECONDS+120))
     contract_addr=$1
@@ -348,4 +323,29 @@ function mint_tokens {
     sleep 3
 
     tonos-cli runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
+}
+
+function set_commit_proposal {
+  tonos-cli runx --abi $REPO_ABI --addr $REPO_ADDR -m getAllAddress
+
+  echo "***** start proposal for set commit *****"
+  TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellSetCommit \
+    "{\"repoName\":\"$REPO_NAME\",\"branchName\":\"$BRANCH_NAME\",\"commit\":\"$COMMIT_ID\",\"numberChangedFiles\":1,\"numberCommits\":1,\"comment\":\"\",\"task\":{\"task\":\"$TASK_ADDR\",\"pubaddrassign\":{\"$USER_PROFILE_ADDR\":true},\"pubaddrreview\":{},\"pubaddrmanager\":{}}}" | sed -n '/value0/ p' | cut -d'"' -f 4)
+  tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForSetCommit \
+    "{\"repoName\":\"$REPO_NAME\",\"branchName\":\"$BRANCH_NAME\",\"commit\":\"$COMMIT_ID\",\"numberChangedFiles\":1,\"numberCommits\":1,\"comment\":\"\",\"task\":{\"task\":\"$TASK_ADDR\",\"pubaddrassign\":{\"$USER_PROFILE_ADDR\":true},\"pubaddrreview\":{},\"pubaddrmanager\":{}},\"num_clients\":1,\"reviewers\":[]}"
+  echo "TVMCELL=$TVMCELL"
+
+  sleep 10
+
+  PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
+        --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
+        "{\"data\":\"$TVMCELL\"}" \
+         --decode-c6 | grep value0 \
+        | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+  vote_for_proposal
+
+  sleep 10
+
+  tonos-cli runx --abi $REPO_ABI --addr $REPO_ADDR -m getAllAddress
 }
