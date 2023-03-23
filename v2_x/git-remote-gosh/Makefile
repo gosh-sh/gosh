@@ -54,7 +54,7 @@ install: copy_abi clear_screen
 install_for_test: copy_abi clear_screen
 	GOSH_BUILD_VERSION=`git describe --tags` cargo install --path .
 	./scripts/set_version.sh
-	GOSH_SUPPORTED_CONTRACT_VERSION=9998.0.0 cargo install --path .
+	GOSH_SUPPORTED_CONTRACT_VERSION=9999.0.0 cargo install --path .
 	./scripts/set_version.sh
 
 .PHONY: test

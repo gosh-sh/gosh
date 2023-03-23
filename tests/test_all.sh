@@ -16,7 +16,6 @@ set -o pipefail
 # $1 = VERSION (v1_x, v2_x)
 
 . set-vars.sh $1 $2
-#. build_remote.sh
 ./01-clone_empty_repo.test.sh
 ./02-create_branch.test.sh
 ./03-push_multiple_updates_in_a_single_commit.test.sh
@@ -35,23 +34,5 @@ set -o pipefail
 ./16-push_after_diamond_merge.test.sh
 ./17-create_file_in_branch.test.sh
 
-# upgrade tests.   Failing tests have ignore argument
-#./upgrade_tests/set_up_v2.sh
-#./upgrade_tests/01-clone_rewritten_repo.test.sh
-#./upgrade_tests/02_1-clone_upgraded_repo.test.sh
-#./upgrade_tests/02_2-push_after_upgrade.test.sh
-#./upgrade_tests/02_3-push_after_upgrade_with_several_commits.test.sh
-#./upgrade_tests/03-branch_from_parent.test.sh
-#./upgrade_tests/04-branch_from_grandparent.test.sh
-#./upgrade_tests/05-merge_branch_from_parent.test.sh
-#./upgrade_tests/05_1-merge_branch_from_parent_with_several_commits.test.sh
-#./upgrade_tests/05_2-push_after_merge.test.sh
-#./upgrade_tests/05_3-create_file_in_branch.test.sh
-#./upgrade_tests/06-merge_branch_from_grandparent.test.sh ignore
-#./upgrade_tests/07-branch_from_unrelated_commit.test.sh
-#./upgrade_tests/08-tagging_after_upgrade.test.sh ignore
-#./upgrade_tests/09-delete_tag_after_upgrade.test.sh ignore
-#./upgrade_tests/10-tagless_after_upgrade.test.sh ignore
-
-#./clean.sh
+./clean.sh
 echo "All tests passed"
