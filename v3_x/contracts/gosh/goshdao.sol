@@ -58,6 +58,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
     address public _rootTokenRoot;
     address public _lastAccountAddress;
     
+    bool _isTaskRedeployed = false;
+    
     bool _flag = false;
     bool _tombstone = false;
     bool public _allowMint = true;
@@ -562,6 +564,26 @@ contract GoshDao is Modifiers, TokenRootOwner {
         return;   	
     }
     
+        function redeployTask (address pub, uint128 index, string repoName, string nametask, string[] hashtag, TvmCell Data) public senderIs(getAddrWalletIn(pub, index))  accept {
+    	require(_tombstone == false, ERR_TOMBSTONE);
+    	require(_isTaskRedeployed == false, ERR_WRONG_DATA);
+    	address repo = _buildRepositoryAddr(repoName);
+        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});
+        optional(TvmCell) data1;
+        new Task{
+            stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1
+        }(data1, Data);
+        this.deployTaskTag{value:0.1 ton}(repo, address.makeAddrStd(0, tvm.hash(s1)), hashtag, msg.sender);  
+    	getMoney();	
+    }
+    
+    function redeployedTask (address pub, uint128 index) public senderIs(getAddrWalletIn(pub, index))  accept {
+    	require(_tombstone == false, ERR_TOMBSTONE);
+    	_isTaskRedeployed = true;
+    	getMoney();	
+    }
+    
     function smvdeploytagin (address pub, string[] tag) public senderIs(address(this))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
         require(tag.length + _counttag <= _limittag, ERR_TOO_MANY_TAGS);
@@ -939,10 +961,12 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _reserve -= balance;
         address repo = _buildRepositoryAddr(repoName);
         TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
-        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});
+        optional(TvmCell) data = abi.encode(repo, _systemcontract, _code[m_WalletCode], grant, balance, hashtag);
+        optional(TvmCell) data1;
         new Task{
             stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1
-        }(repo, _systemcontract, address(this), _code[m_WalletCode], grant, balance, hashtag);
+        }(data, data1);
         this.deployTaskTag{value:0.1 ton}(repo, address.makeAddrStd(0, tvm.hash(s1)), hashtag, sender);
         getMoney();
     }
@@ -974,7 +998,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     function getTaskAddr(string nametask, address repo) private view returns(address) {
         TvmCell deployCode = GoshLib.buildTagCode(_code[m_TaskCode], repo, version);
-        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});
         address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
         return taskaddr;
     }

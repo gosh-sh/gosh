@@ -6,13 +6,8 @@
 		{
 			"name": "constructor",
 			"inputs": [
-				{"name":"repo","type":"address"},
-				{"name":"goshaddr","type":"address"},
-				{"name":"goshdao","type":"address"},
-				{"name":"WalletCode","type":"cell"},
-				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"}],"name":"grant","type":"tuple"},
-				{"name":"balance","type":"uint128"},
-				{"name":"hashtag","type":"string[]"}
+				{"name":"defaultData","type":"optional(cell)"},
+				{"name":"extraData","type":"optional(cell)"}
 			],
 			"outputs": [
 			]
@@ -161,7 +156,8 @@
 		}
 	],
 	"data": [
-		{"key":1,"name":"_nametask","type":"string"}
+		{"key":1,"name":"_nametask","type":"string"},
+		{"key":2,"name":"_goshdao","type":"address"}
 	],
 	"events": [
 	],

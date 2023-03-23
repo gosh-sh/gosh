@@ -22,7 +22,7 @@ contract Task is Modifiers{
     address _repo;
     bool _ready = false;
     address _systemcontract;
-    address _goshdao;
+    address static _goshdao;
     mapping(uint8 => TvmCell) _code;
     ConfigCommitBase[] _candidates;   
     ConfigGrant _grant;   
@@ -50,23 +50,21 @@ contract Task is Modifiers{
     uint128 _balance;
     
     constructor(
-        address repo,    
-        address goshaddr,
-        address goshdao,
-        TvmCell WalletCode,
-        ConfigGrant grant,
-        uint128 balance,
-        string[] hashtag
-        ) public senderIs(goshdao) {
+        optional(TvmCell) defaultData,
+        optional(TvmCell) extraData
+        ) public senderIs(_goshdao) {
         require(_nametask != "", ERR_NO_DATA);
         tvm.accept();
-        _code[m_WalletCode] = WalletCode;
-        _systemcontract = goshaddr;
-        _goshdao = goshdao;
-        _repo = repo;
-        _grant = grant;
-        _balance = balance;
-        _hashtag = hashtag;
+        if (defaultData.hasValue()) { 
+            (_repo, _systemcontract, _code[m_WalletCode], _grant, _balance, _hashtag) = abi.decode(defaultData.get(),(address, address, TvmCell, ConfigGrant, uint128, string[]));
+        } else {
+            require(extraData.hasValue() == true, ERR_WRONG_DATA);
+            string name;
+            address dao;
+            (name, _repo, _ready, _systemcontract, dao, _code, _candidates, _grant, _hashtag, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance) = abi.decode(extraData.get(), (string, address, bool, address, address, mapping(uint8 => TvmCell), ConfigCommitBase[], ConfigGrant, string[], uint128, uint128, uint128, uint128, uint128, mapping(address => uint128), mapping(address => uint128), mapping(address => uint128), uint128, uint128, uint128, uint128, uint128, uint128, bool, bool, bool, uint128, uint128, uint128, uint128));
+            require(name == _nametask, ERR_WRONG_DATA);
+            require(dao == _goshdao, ERR_WRONG_DATA);            
+        }
     }
  /*   
     function setConfig(ConfigGrant grant, uint128 index) public {

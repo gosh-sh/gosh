@@ -558,6 +558,12 @@ function getGoshAddVoteTokenProposalParamsData (TvmCell Data) external pure
     (proposalKind, pubaddr, grant, comment, ) = abi.decode(Data, (uint256, address, uint128, string, uint32));
 }
 
+function getRedeployTaskProposalParamsData (TvmCell Data) external pure
+         returns(uint256  proposalKind,  string repoName, string nameTask, string[] hashtag, TvmCell data)
+{
+    (proposalKind, repoName, nameTask, hashtag, data, ) = abi.decode(Data, (uint256, string, string, string[], TvmCell, uint32));
+}
+
 function getGoshAddRegularTokenProposalParamsData (TvmCell Data) external pure
          returns(uint256  proposalKind,  address pubaddr, uint128 grant, string comment)
 {

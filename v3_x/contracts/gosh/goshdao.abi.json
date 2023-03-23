@@ -406,6 +406,28 @@
 			]
 		},
 		{
+			"name": "redeployTask",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"},
+				{"name":"hashtag","type":"string[]"},
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "redeployedTask",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "smvdeploytagin",
 			"inputs": [
 				{"name":"pub","type":"address"},
@@ -1110,6 +1132,7 @@
 		{"name":"m_SMVProposalCode","type":"cell"},
 		{"name":"_rootTokenRoot","type":"address"},
 		{"name":"_lastAccountAddress","type":"address"},
+		{"name":"_isTaskRedeployed","type":"bool"},
 		{"name":"_flag","type":"bool"},
 		{"name":"_tombstone","type":"bool"},
 		{"name":"_allowMint","type":"bool"},

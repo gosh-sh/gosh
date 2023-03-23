@@ -285,6 +285,8 @@ abstract contract Modifiers is ReplayProtection {
     uint256 constant REVIEW_CODE_PROPOSAL_KIND = 33;
     uint256 constant ASK_TASK_GRANT_PROPOSAL_KIND = 34;
     uint256 constant DAO_LOCK_PROPOSAL_KIND = 35;
+    uint256 constant TASK_REDEPLOY_PROPOSAL_KIND = 36;
+    uint256 constant TASK_REDEPLOYED_PROPOSAL_KIND = 37;
     
     uint128 constant ALONE_DEPLOY_WALLET = 1;
     uint128 constant ALONE_SET_CONFIG = 2;
