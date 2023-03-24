@@ -8,7 +8,7 @@ use super::{
     tree::DeployTree,
     user_wallet::BlockchainUserWalletService,
     BlockchainContractAddress, EverClient, Everscale, GetAddrBranchResult, GetBoolResult,
-    GoshCommit, GoshContract,
+    GoshCommit, GoshContract, AddrVersion,
 };
 use crate::abi as gosh_abi;
 use async_trait::async_trait;
@@ -228,6 +228,7 @@ pub mod tests {
                 commit_id: String,
                 file_path: String,
                 content: String,
+                ipfs: Option<String>
             ) -> anyhow::Result<()>;
         }
 

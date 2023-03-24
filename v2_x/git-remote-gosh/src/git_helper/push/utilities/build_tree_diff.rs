@@ -11,6 +11,7 @@ use std::{
     vec::Vec,
 };
 
+#[derive(Debug)]
 pub struct TreeDiff {
     pub added: Vec<recorder::Entry>,
     pub deleted: Vec<recorder::Entry>,

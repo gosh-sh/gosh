@@ -25,15 +25,15 @@ git config user.name "My name"
 git branch -m main
 
 echo "Init commit" > README.md
-git add *
+git add README.md
 git commit -m "init"
 
 echo "Init commit2 " > README.md
-git add *
+git add README.md
 git commit -m "init2"
 
 echo "Init commit3 " > README.md
-git add *
+git add README.md
 git commit -m "init3"
 git push -u origin main
 
@@ -49,14 +49,15 @@ echo 33333 > c.txt
 echo 44444 > d.txt
 cd ..
 
-git add *
-git commit -m "upload"
+echo ABCDEFGHIJ > 1.txt
+git add 1.txt
+git commit -m "pre-dev"
 git push -u origin main
 
 git checkout -b dev
 
 echo dev_branch > dev.txt
-git add *
+git add dev.txt
 git commit -m "dev"
 GOSH_TRACE=5 git push -u origin dev &> trace.log
 COMMITS_NUM=$(cat trace.log | grep "function: deployCommit" | wc -l)
@@ -75,4 +76,3 @@ fi
 
 echo "TEST SUCCEEDED"
 exit 0
-

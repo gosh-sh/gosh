@@ -154,6 +154,7 @@ pub trait DeployNewSnapshot {
         commit_id: String,
         file_path: String,
         content: String,
+        ipfs: Option<String>,
     ) -> anyhow::Result<()>;
 }
 
@@ -168,6 +169,7 @@ impl DeployNewSnapshot for Everscale {
         commit_id: String,
         file_path: String,
         content: String,
+        ipfs: Option<String>,
     ) -> anyhow::Result<()> {
         tracing::trace!("deploy_new_snapshot: repo_address={repo_address}, branch_name={branch_name}, commit_id={commit_id}, file_path={file_path}");
         let args = DeploySnapshotParams {
@@ -176,7 +178,7 @@ impl DeployNewSnapshot for Everscale {
             commit_id,
             file_path,
             content,
-            ipfs: None,
+            ipfs,
         };
         let wallet_contract = wallet.take_one().await?;
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());

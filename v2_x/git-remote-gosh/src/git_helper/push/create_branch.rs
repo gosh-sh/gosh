@@ -1,7 +1,7 @@
 use std::{fmt::Debug, str::FromStr};
 
 use crate::{
-    blockchain::{branch::DeployBranch, user_wallet::WalletError},
+    blockchain::{branch::DeployBranch, user_wallet::WalletError, Snapshot},
     git_helper::GitHelper,
 };
 use git_hash::ObjectId;
@@ -178,11 +178,11 @@ where
     pub async fn run(&mut self) -> anyhow::Result<bool> {
         let mut is_first_branch = true;
         self.prepare_commit_for_branching().await?;
-        self.preinit_branch().await?;
         if self.ancestor_commit != git_hash::ObjectId::from_str(ZERO_SHA)? {
             self.push_initial_snapshots().await?;
             is_first_branch = false;
         }
+        self.preinit_branch().await?;
         self.wait_branch_ready().await?;
         Ok(is_first_branch)
     }

@@ -1,6 +1,5 @@
 use crate::blockchain::user_wallet::{UserWallet, WalletError};
 use crate::ipfs::build_ipfs;
-use serde_json::Value;
 
 use crate::{
     blockchain::{
@@ -24,8 +23,8 @@ use crate::git_helper::push::parallel_diffs_upload_support::ParallelDiffsUploadS
 use super::is_going_to_ipfs;
 use super::utilities::retry::default_retry_strategy;
 
-const PUSH_DIFF_MAX_TRIES: i32 = 3;
-const PUSH_SNAPSHOT_MAX_TRIES: i32 = 3;
+// const PUSH_DIFF_MAX_TRIES: i32 = 3;
+// const PUSH_SNAPSHOT_MAX_TRIES: i32 = 3;
 
 enum BlobDst {
     Ipfs(String),
@@ -291,10 +290,8 @@ pub async fn push_new_branch_snapshot(
     original_content: &[u8],
 ) -> anyhow::Result<()> {
     tracing::trace!("push_new_branch_snapshot: remote_network={remote_network}, dao_addr={dao_addr}, repo_addr={repo_addr}, commit_id={commit_id}, branch_name={branch_name}, file_path={file_path}");
-    let content: Vec<u8> = ton_client::utils::compress_zstd(original_content, None)?;
-    tracing::trace!("compressed to {} size", content.len());
 
-    let (content, ipfs) = if is_going_to_ipfs(&content) {
+    let (content, ipfs) = if is_going_to_ipfs(original_content) {
         tracing::trace!("push_new_branch_snapshot->save_data_to_ipfs");
         let ipfs = Some(
             save_data_to_ipfs(&file_provider, original_content)
@@ -306,8 +303,9 @@ pub async fn push_new_branch_snapshot(
         );
         ("".to_string(), ipfs)
     } else {
-        let content: String = content.iter().map(|e| format!("{:x?}", e)).collect();
-        (content, None)
+        let compressed: Vec<u8> = compress_zstd(original_content, None)?;
+        tracing::trace!("compressed to {} size", compressed.len());
+        (hex::encode(compressed), None)
     };
 
     let wallet = blockchain.user_wallet(&dao_addr, &remote_network).await?;
@@ -320,6 +318,7 @@ pub async fn push_new_branch_snapshot(
             commit_id.to_string(),
             file_path.to_string(),
             content,
+            ipfs,
         )
         .await?;
 
@@ -410,6 +409,7 @@ where
                     commit_id.clone(),
                     file_path.clone(),
                     content.clone(),
+                    None,
                 )
                 .await
         },
