@@ -10,6 +10,7 @@
 				{"name":"rootpubaddr","type":"address"},
 				{"name":"pubaddr","type":"address"},
 				{"name":"nameDao","type":"string"},
+				{"name":"codeDao","type":"cell"},
 				{"name":"commitCode","type":"cell"},
 				{"name":"repositoryCode","type":"cell"},
 				{"name":"WalletCode","type":"cell"},
@@ -171,7 +172,8 @@
 				{"name":"amount","type":"uint128"},
 				{"name":"num_clients_base","type":"uint128"},
 				{"name":"note","type":"string"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -180,6 +182,7 @@
 		{
 			"name": "getCellDelay",
 			"inputs": [
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -202,7 +205,8 @@
 			"inputs": [
 				{"name":"newversion","type":"string"},
 				{"name":"description","type":"string"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -227,7 +231,8 @@
 				{"name":"pubaddr","type":"address[]"},
 				{"name":"increase","type":"bool[]"},
 				{"name":"grant","type":"uint128[]"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -248,7 +253,8 @@
 			"name": "getCellSetTombstoneDao",
 			"inputs": [
 				{"name":"description","type":"string"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -273,7 +279,8 @@
 				{"name":"wallet","type":"address"},
 				{"name":"propaddress","type":"address"},
 				{"name":"isAccept","type":"bool"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -303,7 +310,8 @@
 			"name": "getCellSetHideVotingResult",
 			"inputs": [
 				{"name":"res","type":"bool"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -324,7 +332,8 @@
 			"name": "getCellSetAllowDiscussion",
 			"inputs": [
 				{"name":"res","type":"bool"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -349,7 +358,8 @@
 				{"name":"repoName","type":"string[]"},
 				{"name":"nametag","type":"string[]"},
 				{"name":"newversion","type":"string"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -389,7 +399,8 @@
 			"name": "getCellSetAbilityInvite",
 			"inputs": [
 				{"name":"res","type":"bool"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -467,7 +478,8 @@
 			"name": "getCellMintToken",
 			"inputs": [
 				{"name":"token","type":"uint128"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -486,7 +498,8 @@
 		{
 			"name": "getCellAllowMint",
 			"inputs": [
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -509,7 +522,8 @@
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
 				{"name":"token","type":"uint128"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -532,7 +546,8 @@
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
 				{"name":"token","type":"uint128"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -567,7 +582,8 @@
 			"inputs": [
 				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
 				{"name":"dao","type":"optional(string)[]"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -588,7 +604,8 @@
 			"name": "getCellDeleteWalletDao",
 			"inputs": [
 				{"name":"pubaddr","type":"address[]"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -646,6 +663,36 @@
 			]
 		},
 		{
+			"name": "startProposalForTaskUpgrade",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"reponame","type":"string"},
+				{"name":"oldversion","type":"string"},
+				{"name":"oldtask","type":"address"},
+				{"name":"hashtag","type":"string[]"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellForTaskUpgrade",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"reponame","type":"string"},
+				{"name":"oldversion","type":"string"},
+				{"name":"oldtask","type":"address"},
+				{"name":"hashtag","type":"string[]"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "startProposalForSendDaoToken",
 			"inputs": [
 				{"name":"wallet","type":"address"},
@@ -664,7 +711,8 @@
 				{"name":"wallet","type":"address"},
 				{"name":"pubaddr","type":"optional(address)"},
 				{"name":"grant","type":"uint128"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -701,7 +749,8 @@
 				{"name":"nameRepo","type":"string"},
 				{"name":"descr","type":"string"},
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -805,7 +854,8 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"descr","type":"string"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -1098,7 +1148,7 @@
 				{"name":"numberCommits","type":"uint128"},
 				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"},
-				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"}],"name":"task","type":"optional(tuple)"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"task","type":"optional(tuple)"},
 				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
@@ -1113,7 +1163,8 @@
 				{"name":"numberChangedFiles","type":"uint128"},
 				{"name":"numberCommits","type":"uint128"},
 				{"name":"comment","type":"string"},
-				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"}],"name":"task","type":"optional(tuple)"}
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"task","type":"optional(tuple)"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -1138,7 +1189,8 @@
 				{"name":"wallet","type":"address"},
 				{"name":"repoName","type":"string"},
 				{"name":"taskName","type":"string"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -1163,7 +1215,8 @@
 				{"name":"wallet","type":"address"},
 				{"name":"isLock","type":"bool"},
 				{"name":"grant","type":"uint128"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -1186,7 +1239,8 @@
 			"inputs": [
 				{"name":"tag","type":"string[]"},
 				{"name":"repo","type":"string"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -1209,7 +1263,8 @@
 			"inputs": [
 				{"name":"tag","type":"string[]"},
 				{"name":"repo","type":"string"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -1230,7 +1285,8 @@
 			"name": "getCellAddDaoTag",
 			"inputs": [
 				{"name":"tag","type":"string[]"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -1251,7 +1307,8 @@
 			"name": "getCellDestroyDaoTag",
 			"inputs": [
 				{"name":"tag","type":"string[]"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -1274,7 +1331,8 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -1297,7 +1355,8 @@
 			"inputs": [
 				{"name":"taskName","type":"string"},
 				{"name":"repoName","type":"string"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -1346,7 +1405,8 @@
 				{"name":"number","type":"uint128"},
 				{"name":"proposals","type":"cell"},
 				{"name":"num_clients_base","type":"uint128"},
-				{"name":"reviewers_base","type":"address[]"}
+				{"name":"reviewers_base","type":"address[]"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -1373,7 +1433,8 @@
 				{"name":"repoName","type":"string"},
 				{"name":"tag","type":"string[]"},
 				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"}],"name":"grant","type":"tuple"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -1396,7 +1457,8 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
-				{"name":"comment","type":"string"}
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -1631,6 +1693,29 @@
 			]
 		},
 		{
+			"name": "getDetails",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"},
+				{"name":"value1","type":"uint128"},
+				{"name":"value2","type":"address"},
+				{"name":"value3","type":"address"},
+				{"name":"value4","type":"uint128"},
+				{"name":"value5","type":"address"},
+				{"name":"value6","type":"uint128"},
+				{"name":"value7","type":"optional(uint256)"},
+				{"name":"value8","type":"bool"}
+			]
+		},
+		{
+			"name": "getWalletIn",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "AddCell",
 			"inputs": [
 				{"name":"data1","type":"cell"},
@@ -1645,8 +1730,9 @@
 			"inputs": [
 				{"name":"nametask","type":"string"},
 				{"name":"repo","type":"address"},
+				{"name":"repoName","type":"string"},
 				{"name":"ready","type":"bool"},
-				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"address"},{"name":"number_commit","type":"uint128"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"}],"name":"candidates","type":"tuple[]"},
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"address"},{"name":"number_commit","type":"uint128"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"candidates","type":"tuple[]"},
 				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"}],"name":"grant","type":"tuple"},
 				{"name":"hashtag","type":"string[]"},
 				{"name":"indexFinal","type":"uint128"},
@@ -1681,7 +1767,8 @@
 				{"name":"reponame","type":"string"},
 				{"name":"nametask","type":"string"},
 				{"name":"hashtag","type":"string[]"},
-				{"name":"data","type":"cell"}
+				{"name":"data","type":"cell"},
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -1690,6 +1777,7 @@
 		{
 			"name": "getCellForRedeployedTask",
 			"inputs": [
+				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}

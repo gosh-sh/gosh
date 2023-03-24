@@ -214,6 +214,20 @@ contract SystemContract is Modifiers {
         addr.transfer(value);
     }
     
+    function checkOldTaskVersion2(string name, string nametask, string repo, string previous, address previousaddr, address answer) public view {
+        TvmCell s1 = _composeDaoStateInit(name);
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        VersionController(_versionController).checkOldTaskVersion3{value : 0.3 ton, flag: 1}(name, nametask, repo, previous, previousaddr, version, answer);
+    }
+    
+    function checkOldTaskVersion4(string name, string nametask, string repo, address previousaddr, address answer) public view senderIs(_versionController) accept {
+        TvmCell s1 = _composeDaoStateInit(name);
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        GoshDao(addr).checkOldTaskVersion5{value : 0.3 ton, flag: 1}(nametask, repo, previousaddr, answer);
+    }
+    
     function _composeRepoStateInit(string name, address goshdao) internal view returns(TvmCell) {
         TvmCell deployCode = GoshLib.buildRepositoryCode(
             _code[m_RepositoryCode], address(this), goshdao, version

@@ -87,6 +87,10 @@ contract Tag is Modifiers{
         return (_nametag, _commit, _nameCommit, _content, _repoName);
     }
     
+    function getTagIn() public view minValue(0.2 ton) {
+        IObject(msg.sender).returnTag{value: 0.1 ton}(_nametag, _commit, _nameCommit, _content, _repoName);
+    }
+    
     function getCommit() external view returns(address) {
         return _commit;
     }

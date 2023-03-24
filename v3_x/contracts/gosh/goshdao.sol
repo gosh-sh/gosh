@@ -143,7 +143,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
             _previous = previous; 
             GoshDao(_previous.get()).getPreviousInfo{value: 0.1 ton, flag: 1}(_nameDao); 
         }
-        else { this.deployWalletsConst{value: 0.1 ton, flag: 1}(pubmem, 0); }
+        else { 
+            _isTaskRedeployed = true;
+            this.deployWalletsConst{value: 0.1 ton, flag: 1}(pubmem, 0); 
+        }
         ProfileDao(_profiledao).deployedDao{value: 0.1 ton, flag: 1}(_nameDao, version);
     }
     
@@ -564,7 +567,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         return;   	
     }
     
-        function redeployTask (address pub, uint128 index, string repoName, string nametask, string[] hashtag, TvmCell Data) public senderIs(getAddrWalletIn(pub, index))  accept {
+    function redeployTask (address pub, uint128 index, string repoName, string nametask, string[] hashtag, TvmCell Data) public senderIs(getAddrWalletIn(pub, index))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
     	require(_isTaskRedeployed == false, ERR_WRONG_DATA);
     	address repo = _buildRepositoryAddr(repoName);
@@ -573,7 +576,21 @@ contract GoshDao is Modifiers, TokenRootOwner {
         optional(TvmCell) data1;
         new Task{
             stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1
-        }(data1, Data);
+        }(data1, Data, data1);
+        this.deployTaskTag{value:0.1 ton}(repo, address.makeAddrStd(0, tvm.hash(s1)), hashtag, msg.sender);  
+    	getMoney();	
+    }
+    
+    function upgradeTask (address pub, uint128 index, string nametask, string repoName, string oldversion, address oldtask, string[] hashtag) public senderIs(getAddrWalletIn(pub, index))  accept {
+    	require(_tombstone == false, ERR_TOMBSTONE);
+    	address repo = _buildRepositoryAddr(repoName);
+        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});
+        optional(TvmCell) data = abi.encode(repo, repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], oldversion, oldtask);
+        optional(TvmCell) data1;
+        new Task{
+            stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1
+        }(data1, data1, data);
         this.deployTaskTag{value:0.1 ton}(repo, address.makeAddrStd(0, tvm.hash(s1)), hashtag, msg.sender);  
     	getMoney();	
     }
@@ -799,7 +816,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _wallets[keyaddr] = MemberToken(_lastAccountAddress, _tokenforperson);
         new GoshWallet {
             stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0
-        }(  _versionController, _pubaddr, pubaddr, _nameDao, _code[m_CommitCode], 
+        }(  _versionController, _pubaddr, pubaddr, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _versions, _limit_wallets, null,
@@ -846,7 +863,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _wallets[keyaddr] = MemberToken(_lastAccountAddress, pubaddr.count);
         new GoshWallet {
             stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0
-        }(  _versionController, _pubaddr, pubaddr.member, _nameDao, _code[m_CommitCode], 
+        }(  _versionController, _pubaddr, pubaddr.member, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _versions, _limit_wallets, null,
@@ -871,7 +888,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));
         new GoshWallet {
             stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0
-        }(  _versionController, _pubaddr, pubaddr, _nameDao, _code[m_CommitCode], 
+        }(  _versionController, _pubaddr, pubaddr, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _versions, 1, null,
@@ -962,11 +979,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
         address repo = _buildRepositoryAddr(repoName);
         TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});
-        optional(TvmCell) data = abi.encode(repo, _systemcontract, _code[m_WalletCode], grant, balance, hashtag);
+        optional(TvmCell) data = abi.encode(repoName, repo, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], grant, balance, hashtag);
         optional(TvmCell) data1;
         new Task{
             stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1
-        }(data, data1);
+        }(data, data1, data1);
         this.deployTaskTag{value:0.1 ton}(repo, address.makeAddrStd(0, tvm.hash(s1)), hashtag, sender);
         getMoney();
     }
@@ -981,6 +998,15 @@ contract GoshDao is Modifiers, TokenRootOwner {
         for (uint8 t = 0; t < tag.length; t++){ 
             GoshWallet(sender).destroyTaskTag{value:0.2 ton}(repo, msg.sender, tag[t]);   	
         }
+    }
+    
+    function checkOldTaskVersion (string nametask, string repo, string previous, address previousaddr) public view senderIs(getTaskAddr(nametask, _buildRepositoryAddr(repo)))  accept {        
+        SystemContract(_systemcontract).checkOldTaskVersion2{value : 0.2 ton}(_nameDao, nametask, repo, previous, previousaddr, msg.sender);
+    }
+    
+    function checkOldTaskVersion5 (string nametask, string repo, address previous, address answer) public view senderIs(_systemcontract)  accept {       
+        require(previous ==  getTaskAddr(nametask, _buildRepositoryAddr(repo)), ERR_WRONG_DATA);
+        Task(previous).sendData{value:0.2 ton}(answer);
     }
     
     function returnTaskToken(string nametask, address repo, uint128 token) public senderIs(getTaskAddr(nametask, repo)) accept {
@@ -1195,5 +1221,9 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function getDetails() external view returns(address pubaddr, bool allowMint, bool hide_voting_results, bool allow_discussion_on_proposals, bool abilityInvite, bool isRepoUpgraded, string nameDao,
     mapping(uint256 => MemberToken) wallets, uint128 reserve, uint128 allbalance, uint128 totalsupply, mapping(uint256 => string) hashtag, mapping(uint256 => address) my_wallets, mapping(uint256 => string) daoMembers, bool isCheck) {
     return (_pubaddr, _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _isRepoUpgraded, _nameDao, _wallets, _reserve, _allbalance, _totalsupply, _hashtag, _my_wallets, _daoMembers, _isCheck);
+    }
+    
+    function getDaoIn() public view minValue(0.2 ton) {
+        IObject(msg.sender).returnDao{value: 0.1 ton}(_pubaddr, _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _isRepoUpgraded, _nameDao, _wallets, _reserve, _allbalance, _totalsupply, _hashtag, _my_wallets, _daoMembers, _isCheck);
     }
 }

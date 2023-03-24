@@ -52,6 +52,13 @@
 			]
 		},
 		{
+			"name": "getTagIn",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getCommit",
 			"inputs": [
 			],

@@ -13,12 +13,14 @@ import "./modifiers/modifiers.sol";
 import "./libraries/GoshLib.sol";
 import "goshwallet.sol";
 import "goshdao.sol";
+import "task.sol";
 
 /* Root contract of task */
 contract Task is Modifiers{
     string constant version = "3.0.0";
     
     string static _nametask;
+    string _repoName;
     address _repo;
     bool _ready = false;
     address _systemcontract;
@@ -35,6 +37,7 @@ contract Task is Modifiers{
     mapping(address => uint128) _assigners;
     mapping(address => uint128) _reviewers;
     mapping(address => uint128) _managers;
+    mapping(address => string) _daoMember;
     uint128 public _assignfull = 0;
     uint128 public _reviewfull = 0;
     uint128 public _managerfull = 0;
@@ -48,23 +51,82 @@ contract Task is Modifiers{
     uint128 _lastreview = 0;
     uint128 _lastmanager = 0;
     uint128 _balance;
+    bool _waitForUpdate = false;
+    address _previousVersionAddr;
+    string _previousVersion;
     
     constructor(
         optional(TvmCell) defaultData,
-        optional(TvmCell) extraData
+        optional(TvmCell) extraData,
+        optional(TvmCell) previousVersion
         ) public senderIs(_goshdao) {
         require(_nametask != "", ERR_NO_DATA);
         tvm.accept();
         if (defaultData.hasValue()) { 
-            (_repo, _systemcontract, _code[m_WalletCode], _grant, _balance, _hashtag) = abi.decode(defaultData.get(),(address, address, TvmCell, ConfigGrant, uint128, string[]));
-        } else {
-            require(extraData.hasValue() == true, ERR_WRONG_DATA);
+            (_repoName, _repo, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _grant, _balance, _hashtag) = abi.decode(defaultData.get(),(string, address, address, TvmCell, TvmCell, ConfigGrant, uint128, string[]));
+            return;
+        } 
+        if (extraData.hasValue() == true) {
             string name;
             address dao;
-            (name, _repo, _ready, _systemcontract, dao, _code, _candidates, _grant, _hashtag, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance) = abi.decode(extraData.get(), (string, address, bool, address, address, mapping(uint8 => TvmCell), ConfigCommitBase[], ConfigGrant, string[], uint128, uint128, uint128, uint128, uint128, mapping(address => uint128), mapping(address => uint128), mapping(address => uint128), uint128, uint128, uint128, uint128, uint128, uint128, bool, bool, bool, uint128, uint128, uint128, uint128));
+            (name, _repo, _repoName, _ready, _systemcontract, dao, _code, _candidates, _grant, _hashtag, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance) = abi.decode(extraData.get(), (string, address, string, bool, address, address, mapping(uint8 => TvmCell), ConfigCommitBase[], ConfigGrant, string[], uint128, uint128, uint128, uint128, uint128, mapping(address => uint128), mapping(address => uint128), mapping(address => uint128), uint128, uint128, uint128, uint128, uint128, uint128, bool, bool, bool, uint128, uint128, uint128, uint128));
             require(name == _nametask, ERR_WRONG_DATA);
-            require(dao == _goshdao, ERR_WRONG_DATA);            
+            require(dao == _goshdao, ERR_WRONG_DATA);   
+            return;         
         }
+        require(previousVersion.hasValue() == true, ERR_WRONG_DATA);
+        (_repo, _repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _previousVersion, _previousVersionAddr) = abi.decode(previousVersion.get(),(address, string, address, TvmCell, TvmCell, string, address));
+        GoshDao(_goshdao).checkOldTaskVersion(_nametask, _repoName, _previousVersion, _previousVersionAddr);
+        _waitForUpdate = true;
+    }
+    
+    function sendData(address toSend) public senderIs(_goshdao) accept {
+        TvmCell data = abi.encode (_nametask, _repoName, _repo, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance, _daoMember);
+        Task(toSend).getUpgradeData{value: 0.1 ton}(data);
+        selfdestruct(giver);
+    }
+    
+    function getUpgradeData(TvmCell data) public senderIs(_previousVersionAddr) accept {
+            string name;
+            mapping(address => string) daoMember;
+            (name, _repoName, _repo, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance, daoMember) = abi.decode(data, (string, string, address, bool, ConfigCommitBase[], ConfigGrant, uint128, uint128, uint128, uint128, uint128, mapping(address => uint128), mapping(address => uint128), mapping(address => uint128), uint128, uint128, uint128, uint128, uint128, uint128, bool, bool, bool, uint128, uint128, uint128, uint128, mapping(address => string)));
+            address zero;
+            this.checkdaoMember{value:0.1 ton}(daoMember, zero);
+            require(name == _nametask, ERR_WRONG_DATA);       
+    }
+    
+    function checkdaoMember(mapping(address => string) daoMember, address key) public senderIs(address(this)) accept {
+        optional(address, string) res = daoMember.next(key);
+        if (res.hasValue() == false) { _waitForUpdate = false; return; }
+        string name;
+        (key, name) = res.get();
+        address addr = getAddrDaoIn(name);
+        _daoMember[addr] = name;
+        if (_candidates[_indexFinal].pubaddrassign.exists(key) == true) {
+            _candidates[_indexFinal].pubaddrassign[addr] = _candidates[_indexFinal].pubaddrassign[key];
+            delete _candidates[_indexFinal].pubaddrassign[key];
+        }
+        if (_candidates[_indexFinal].pubaddrreview.exists(key) == true) {
+            _candidates[_indexFinal].pubaddrreview[addr] = _candidates[_indexFinal].pubaddrreview[key];
+            delete _candidates[_indexFinal].pubaddrreview[key];
+        }
+        if (_candidates[_indexFinal].pubaddrmanager.exists(key) == true) {
+            _candidates[_indexFinal].pubaddrmanager[addr] = _candidates[_indexFinal].pubaddrmanager[key];
+            delete _candidates[_indexFinal].pubaddrmanager[key];
+        }
+        if (_assigners.exists(key) == true) {
+            _assigners[addr] = _assigners[key];
+            delete _assigners[key];
+        }
+        if (_reviewers.exists(key) == true) {
+            _reviewers[addr] = _reviewers[key];
+            delete _reviewers[key];
+        }
+        if (_managers.exists(key) == true) {
+            _managers[addr] = _managers[key];
+            delete _managers[key];
+        }
+        this.checkdaoMember{value:0.1 ton}(daoMember, key);
     }
  /*   
     function setConfig(ConfigGrant grant, uint128 index) public {
@@ -74,6 +136,7 @@ contract Task is Modifiers{
     } 
  */   
     function isReady(ConfigCommitBase commit) public senderIs(_repo) {
+        require(_waitForUpdate == false, ERR_WRONG_UPGRADE_STATUS);
         require(_ready == false, ERR_TASK_COMPLETED);
         _candidates.push(commit);
 //    } 
@@ -86,19 +149,22 @@ contract Task is Modifiers{
         this.calculateAssignLength{value : 0.15 ton}(uint128(_candidates.length - 1));
     }
     
-    function calculateAssignLength (uint128 index) public view senderIs(address(this)) accept {    
+    function calculateAssignLength (uint128 index) public view senderIs(address(this)) accept {   
+        require(_waitForUpdate == false, ERR_WRONG_UPGRADE_STATUS); 
         require(_ready == false, ERR_TASK_COMPLETED);    
         uint128 assignfull = uint128(_candidates[index].pubaddrassign.keys().length);
         this.calculateReviewLength{value : 0.15 ton}(index, assignfull);
     }
     
-    function calculateReviewLength (uint128 index, uint128 assignfull) public view senderIs(address(this)) accept {      
+    function calculateReviewLength (uint128 index, uint128 assignfull) public view senderIs(address(this)) accept {   
+        require(_waitForUpdate == false, ERR_WRONG_UPGRADE_STATUS);   
         require(_ready == false, ERR_TASK_COMPLETED);  
         uint128 reviewfull = uint128(_candidates[index].pubaddrreview.keys().length);
         this.calculateManagerLength{value : 0.15 ton}(index, assignfull, reviewfull);
     }
     
     function calculateManagerLength (uint128 index, uint128 assignfull, uint128 reviewfull) public senderIs(address(this)) accept { 
+        require(_waitForUpdate == false, ERR_WRONG_UPGRADE_STATUS);
         require(_ready == false, ERR_TASK_COMPLETED);       
         uint128 managerfull = uint128(_candidates[index].pubaddrmanager.keys().length);
         require(assignfull + reviewfull + managerfull > 0, ERR_DIFFERENT_COUNT); 
@@ -111,6 +177,7 @@ contract Task is Modifiers{
     }
         
     function getGrant(address pubaddr, uint128 typegrant, uint128 index) public view {
+        require(_waitForUpdate == false, ERR_WRONG_UPGRADE_STATUS);
         require(_ready == true, ERR_TASK_NOT_COMPLETED);
         require(now >= _locktime, ERR_NOT_READY);
         checkAccess(pubaddr, msg.sender, index); 
@@ -130,6 +197,7 @@ contract Task is Modifiers{
     }
     
     function getGrantAssign(address pubaddr) public senderIs(address(this)) accept {
+        require(_waitForUpdate == false, ERR_WRONG_UPGRADE_STATUS);
         uint128 check = 0;
         for (uint128 i = _lastassign; i < _grant.assign.length; i++){
             check += 1;
@@ -154,6 +222,7 @@ contract Task is Modifiers{
     }
     
     function getGrantReview(address pubaddr) public senderIs(address(this)) accept {
+        require(_waitForUpdate == false, ERR_WRONG_UPGRADE_STATUS);
         uint128 check = 0;
         for (uint128 i = _lastreview; i < _grant.review.length; i++){
             check += 1;
@@ -178,6 +247,7 @@ contract Task is Modifiers{
     }
     
     function getGrantManager(address pubaddr) public senderIs(address(this)) accept {
+        require(_waitForUpdate == false, ERR_WRONG_UPGRADE_STATUS);
         uint128 check = 0;
         for (uint128 i = _lastmanager; i < _grant.manager.length; i++){
             check += 1;
@@ -227,6 +297,31 @@ contract Task is Modifiers{
         return _contract;
     }
     
+    function getAddrWalletIn(address pubaddr, uint128 index) private view returns(address) {
+        TvmCell s1 = _composeWalletStateInit(pubaddr, index);
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
+    
+    function getAddrDaoIn(string name) private view returns(address) {
+        TvmCell s1 = _composeDaoStateInit(name);
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
+        
+    function _composeDaoStateInit(string name) internal view returns(TvmCell) {
+        TvmBuilder b;
+        b.store(name);
+        b.store(version);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        TvmCell deployCode = tvm.setCodeSalt(_code[m_DaoCode], b.toCell());
+        return tvm.buildStateInit({
+            code: deployCode,
+            contr: GoshDao,
+            varInit: { _systemcontract : _systemcontract }
+        });
+    }
+    
     //Selfdestruct
     
     function destroy(address pubaddr, uint128 index) public {
@@ -237,7 +332,12 @@ contract Task is Modifiers{
         selfdestruct(giver);
     }
     
-    //Getters    
+    //Getters 
+    function getTaskIn() public view minValue(0.3 ton) {
+        TvmCell data = abi.encode (_nametask, _repoName, _repo, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance, _daoMember);
+        IObject(msg.sender).returnTask{value: 0.1 ton}(data);
+    }
+       
     function getStatus() external view returns(string nametask, address repo, ConfigCommitBase[] candidates, ConfigGrant grant, bool ready, uint128 indexFinal, string[] hashtag, uint128 locktime) {
         return (_nametask, _repo, _candidates, _grant, _ready, _indexFinal, _hashtag, _locktime);
     }
