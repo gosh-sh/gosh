@@ -51,7 +51,8 @@ export default class AppSetupHandler extends AppHandler {
                 'wait 10000ms to settle', () => this.wait(10000),
                 'input branch name',      () => this.type("//input[@name='newName' and @placeholder='Branch name']", br),
                 'click create button',    () => this.click("//button[contains(., 'Create branch') and @type='submit']"),
-                'wait for spinner gone',  () => this.waitForGone('svg.fa-spin', this.longtimeout_ms)
+                // 'wait for spinner gone',  () => this.waitForGone('svg.fa-spin', this.longtimeout_ms)
+                'wait for branch link',   () => this.waitFor(`//a[${or_hrefs(`/o/${or}/r/${re}/tree/${br}`)}]`),
             ]),
             'click branch link',     () => this.click(`//a[${or_hrefs(`/o/${or}/r/${re}/tree/${br}`)}]`),
             'wait for spinner gone', () => this.waitForGone('svg.fa-spinner'),
@@ -62,6 +63,7 @@ export default class AppSetupHandler extends AppHandler {
                 'input file name',       () => this.type("//input[@name='name' and @placeholder='Name of new file']", this.filename),
                 'click commit button',   () => this.click("//button[contains(., 'Commit changes') and @type='submit']"),
                 'scroll down',           () => this.pageDown(true, 2),
+                'wait 1000ms for safety',() => this.wait(1000),
                 'wait for spinner gone', () => this.waitForGone('svg.fa-spin', this.longtimeout_ms)
             ]),
             'click branches link',   () => this.click(`//a[${or_hrefs(`/o/${or}/r/${re}/branches`)}]`, this.longtimeout_ms),
@@ -74,11 +76,12 @@ export default class AppSetupHandler extends AppHandler {
                     'click branch item',      () => this.click(`//li[contains(., '${this.branch}') and @role='option']`),
                     'input dst branch name',  () => this.erasePaste("//input[@name='newName' and @placeholder='Branch name']", s),
                     'click create br button', () => this.click("//button[contains(., 'Create branch') and @type='submit']"),
-                    'wait for spinner gone',  () => this.waitForGone('svg.fa-spin', this.longtimeout_ms)
+                    // 'wait for spinner gone',  () => this.waitForGone('svg.fa-spin', this.longtimeout_ms)
+                    'wait for branch link',   () => this.waitFor(`//a[${or_hrefs(`/o/${or}/r/${re}/tree/${s}`)}]`),
                 ]),
             ]),
             'end setup', async () => { return 0; }
         );
     }
-    
+
 }
