@@ -1083,6 +1083,14 @@
 			]
 		},
 		{
+			"name": "_isTaskRedeployed",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_isTaskRedeployed","type":"bool"}
+			]
+		},
+		{
 			"name": "_allowMint",
 			"inputs": [
 			],

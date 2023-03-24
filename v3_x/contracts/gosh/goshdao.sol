@@ -58,7 +58,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     address public _rootTokenRoot;
     address public _lastAccountAddress;
     
-    bool _isTaskRedeployed = false;
+    bool public _isTaskRedeployed = false;
     
     bool _flag = false;
     bool _tombstone = false;
@@ -574,9 +574,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
         TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});
         optional(TvmCell) data1;
+    	mapping(uint8 => TvmCell) code;
+    	code[m_WalletCode] = _code[m_WalletCode];
+    	code[m_DaoCode] = _code[m_DaoCode];
+    	optional(TvmCell) data2 = abi.encode(code, Data);
         new Task{
             stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1
-        }(data1, Data, data1);
+        }(data1, data2, data1);
         this.deployTaskTag{value:0.1 ton}(repo, address.makeAddrStd(0, tvm.hash(s1)), hashtag, msg.sender);  
     	getMoney();	
     }

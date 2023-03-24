@@ -2848,10 +2848,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     	uint128 lastreview,
     	uint128 lastmanager,
     	uint128 balance) external view returns(TvmCell) {
-    	mapping(uint8 => TvmCell) code;
-    	code[m_WalletCode] = _code[m_WalletCode];
-    	code[m_DaoCode] = _code[m_DaoCode];
-        return abi.encode(nametask, repo, repoName, ready, _systemcontract, _goshdao, code, candidates, grant, hashtag, indexFinal, indexFinal, locktime, fullAssign, fullReview, fullManager, assigners, reviewers, managers, assignfull, reviewfull, managerfull, assigncomplete, reviewcomplete, managercomplete, allassign, allreview, allmanager, lastassign, lastreview, lastmanager, balance);
+        return abi.encode(nametask, repo, repoName, ready, _systemcontract, _goshdao, candidates, grant, hashtag, indexFinal, indexFinal, locktime, fullAssign, fullReview, fullManager, assigners, reviewers, managers, assignfull, reviewfull, managerfull, assigncomplete, reviewcomplete, managercomplete, allassign, allreview, allmanager, lastassign, lastreview, lastmanager, balance);
     }
     
     function getCellForRedeployTask(string reponame, string nametask,  string[] hashtag, TvmCell data, optional(uint32) time) external pure returns(TvmCell) {
