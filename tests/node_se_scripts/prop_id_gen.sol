@@ -121,4 +121,14 @@ contract TestAddress {
 		string comment;
 		return tvm.hash(abi.encode(proposalKind, repoName, taskName, tag, grant, comment, _now));
 	}
+
+	function getMultiProposal(
+		uint128 number,
+		TvmCell proposals,
+		uint32 _now
+	) external pure returns(uint256) {
+		uint256 proposalKind = MULTI_PROPOSAL_KIND;
+		TvmCell c = abi.encode(proposalKind, number, proposals, _now);
+		return tvm.hash(c);
+	}
 }

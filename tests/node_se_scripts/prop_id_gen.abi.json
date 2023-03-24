@@ -78,6 +78,17 @@
 			]
 		},
 		{
+			"name": "getMultiProposal",
+			"inputs": [
+				{"name":"number","type":"uint128"},
+				{"name":"proposals","type":"cell"},
+				{"name":"_now","type":"uint32"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
 			"name": "constructor",
 			"inputs": [
 			],
