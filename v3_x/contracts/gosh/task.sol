@@ -38,7 +38,6 @@ contract Task is Modifiers{
     mapping(address => uint128) _assigners;
     mapping(address => uint128) _reviewers;
     mapping(address => uint128) _managers;
-    mapping(address => string) _daoMember;
     uint128 public _assignfull = 0;
     uint128 public _reviewfull = 0;
     uint128 public _managerfull = 0;
@@ -87,7 +86,7 @@ contract Task is Modifiers{
     }
     
     function sendData(address toSend) public senderIs(_goshdao) accept {
-        TvmCell data = abi.encode (_nametask, _repoName, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance, _daoMember);
+        TvmCell data = abi.encode (_nametask, _repoName, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance);
         Task(toSend).getUpgradeData{value: 0.1 ton}(data);
         selfdestruct(giver);
     }
@@ -95,7 +94,7 @@ contract Task is Modifiers{
     function getUpgradeData(TvmCell data) public senderIs(_previousVersionAddr) accept {
             string name;
             mapping(address => string) daoMember;
-            (name, _repoName, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance, daoMember) = abi.decode(data, (string, string, bool, ConfigCommitBase[], ConfigGrant, uint128, uint128, uint128, uint128, uint128, mapping(address => uint128), mapping(address => uint128), mapping(address => uint128), uint128, uint128, uint128, uint128, uint128, uint128, bool, bool, bool, uint128, uint128, uint128, uint128, mapping(address => string)));
+            (name, _repoName, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance) = abi.decode(data, (string, string, bool, ConfigCommitBase[], ConfigGrant, uint128, uint128, uint128, uint128, uint128, mapping(address => uint128), mapping(address => uint128), mapping(address => uint128), uint128, uint128, uint128, uint128, uint128, uint128, bool, bool, bool, uint128, uint128, uint128, uint128));
             _repo = _buildRepositoryAddr(_repoName);
             address zero;
             this.checkdaoMember{value:0.1 ton}(daoMember, zero);
@@ -108,7 +107,7 @@ contract Task is Modifiers{
         string name;
         (key, name) = res.get();
         address addr = getAddrDaoIn(name);
-        _daoMember[addr] = name;
+        _candidates[_indexFinal].daoMembers[addr] = name;
         if (_candidates[_indexFinal].pubaddrassign.exists(key) == true) {
             _candidates[_indexFinal].pubaddrassign[addr] = _candidates[_indexFinal].pubaddrassign[key];
             delete _candidates[_indexFinal].pubaddrassign[key];
@@ -352,7 +351,7 @@ contract Task is Modifiers{
     
     //Getters 
     function getTaskIn() public view minValue(0.3 ton) {
-        TvmCell data = abi.encode (_nametask, _repoName, _repo, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance, _daoMember);
+        TvmCell data = abi.encode (_nametask, _repoName, _repo, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance);
         IObject(msg.sender).returnTask{value: 0.1 ton}(data);
     }
        
