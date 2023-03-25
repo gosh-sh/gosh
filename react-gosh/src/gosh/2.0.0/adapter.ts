@@ -4255,8 +4255,8 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
                 rest = next
                 await sleep(300)
             }
-            console.debug(items)
-            return items
+
+            return { details: null, items }
         } else {
             throw new GoshError(`Event type "${type}" is unknown`)
         }

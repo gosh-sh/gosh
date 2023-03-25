@@ -76,7 +76,7 @@ const DaoPage = () => {
                     <Button
                         onClick={async () => {
                             await dao.adapter.createMultiProposalAsDao({
-                                wallet: '0:96c7acca98bd39883d9d146e14b94b78c04b1ad4672febdd159d4b82929bc9b2',
+                                wallet: '0:88398ac0a832cc750d99175b7b0ef4af8d29f9434429117b784c7f00e54e81ea',
                                 proposals: [
                                     {
                                         type: ESmvEventType.DAO_TOKEN_MINT,
@@ -88,14 +88,6 @@ const DaoPage = () => {
                                         type: ESmvEventType.DAO_TAG_ADD,
                                         params: {
                                             tags: ['remote-tag'],
-                                        },
-                                    },
-                                    {
-                                        type: ESmvEventType.DAO_TOKEN_DAO_LOCK,
-                                        params: {
-                                            wallet: '0:96c7acca98bd39883d9d146e14b94b78c04b1ad4672febdd159d4b82929bc9b2',
-                                            isLock: true,
-                                            amount: 1,
                                         },
                                     },
                                 ],

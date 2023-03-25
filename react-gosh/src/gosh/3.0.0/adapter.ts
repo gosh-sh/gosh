@@ -4609,8 +4609,6 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getDaoVoteProposalParams'
         } else if (type === ESmvEventType.DAO_TOKEN_DAO_SEND) {
             fn = 'getDaoSendTokenProposalParams'
-        } else if (type === ESmvEventType.MULTI_PROPOSAL_AS_DAO) {
-            return {}
         } else if (type === ESmvEventType.UPGRADE_VERSION_CONTROLLER) {
             return {}
         } else if (type === ESmvEventType.DAO_REVIEWER) {
@@ -4627,27 +4625,27 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             const { num, data0 } = await event.runLocal('getDataFirst', {}, undefined, {
                 useCachedBoc: true,
             })
-            const count = parseInt(num)
-            const items = []
-
-            let rest = data0
-            for (let i = 0; i < count; i++) {
-                const { data1: curr, data2: next } = await event.runLocal(
-                    'getHalfData',
-                    { Data: rest },
-                    undefined,
-                    { useCachedBoc: true },
-                )
-                items.push(await this._getMultiEventData(event, curr))
-
-                if (i === count - 2) {
-                    items.push(await this._getMultiEventData(event, next))
-                    break
-                }
-                rest = next
-                await sleep(300)
+            return {
+                details: null,
+                items: await this._parseMultiEventCell(event, parseInt(num), data0),
             }
-            return items
+        } else if (type === ESmvEventType.MULTI_PROPOSAL_AS_DAO) {
+            const { number, proposals, ...rest } = await event.runLocal(
+                'getDaoMultiProposalParams',
+                {},
+                undefined,
+                {
+                    useCachedBoc: true,
+                },
+            )
+            return {
+                details: { number, proposals, ...rest },
+                items: await this._parseMultiEventCell(
+                    event,
+                    parseInt(number),
+                    proposals,
+                ),
+            }
         } else {
             throw new GoshError(`Event type "${type}" is unknown`)
         }
@@ -4655,6 +4653,33 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         const decoded = await event.runLocal(fn, {}, undefined, { useCachedBoc: true })
         delete decoded.proposalKind
         return decoded
+    }
+
+    private async _parseMultiEventCell(
+        event: IGoshSmvProposal,
+        count: number,
+        cell: string,
+    ) {
+        const items = []
+
+        let rest = cell
+        for (let i = 0; i < count; i++) {
+            const { data1: curr, data2: next } = await event.runLocal(
+                'getHalfData',
+                { Data: rest },
+                undefined,
+                { useCachedBoc: true },
+            )
+            items.push(await this._getMultiEventData(event, curr))
+
+            if (i === count - 2) {
+                items.push(await this._getMultiEventData(event, next))
+                break
+            }
+            rest = next
+            await sleep(300)
+        }
+        return items
     }
 
     private async _getMultiEventData(event: IGoshSmvProposal, data: string) {

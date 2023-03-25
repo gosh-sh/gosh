@@ -63,8 +63,8 @@ const DaoMemberOfModal = (props: TDaoMemberOfModalProps) => {
                     <div className="w-3/12 px-2">Karma</div>
                 </div>
                 <div className="divide-y divide-gray-e6edff">
-                    {daos.map(({ name, balance, allowance }) => (
-                        <div className="flex flex-wrap px-2 py-4">
+                    {daos.map(({ name, balance, allowance }, index) => (
+                        <div className="flex flex-wrap px-2 py-4" key={index}>
                             <div className="w-6/12 px-2">{name}</div>
                             <div className="w-3/12 px-2">{balance}</div>
                             <div className="w-3/12 px-2">{allowance}</div>

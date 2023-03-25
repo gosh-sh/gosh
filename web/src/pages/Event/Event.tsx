@@ -193,7 +193,8 @@ const EventPage = () => {
                         {event.type.kind === ESmvEventType.REPO_UPDATE_DESCRIPTION && (
                             <RepoDescriptionEvent data={event.data} />
                         )}
-                        {event.type.kind === ESmvEventType.MULTI_PROPOSAL && (
+                        {(event.type.kind === ESmvEventType.MULTI_PROPOSAL ||
+                            event.type.kind === ESmvEventType.MULTI_PROPOSAL_AS_DAO) && (
                             <MultiEvent
                                 version={dao.details.version}
                                 event={event}

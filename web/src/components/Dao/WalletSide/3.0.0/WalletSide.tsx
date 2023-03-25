@@ -115,6 +115,7 @@ const DaoWalletSide = (props: TDaoWalletSideProps) => {
                                 {({ isSubmitting }) => (
                                     <Form>
                                         <Button
+                                            type="submit"
                                             className={classNames(
                                                 'w-full !border-gray-e6edff bg-gray-fafafd',
                                                 'hover:!border-gray-53596d',
