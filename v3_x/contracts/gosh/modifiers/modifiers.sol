@@ -100,7 +100,7 @@ struct ConfigCommitBase {
 }
 
 abstract contract Modifiers is ReplayProtection {   
-    string constant versionModifiers = "2.0.0";
+    string constant versionModifiers = "3.0.0";
     
     //Task  constant
     uint8 constant m_assign = 1;

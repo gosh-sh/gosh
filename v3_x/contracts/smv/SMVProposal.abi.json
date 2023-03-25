@@ -533,7 +533,6 @@
 		{
 			"name": "getDaoLockVoteProposalParams",
 			"inputs": [
-				{"name":"value0","type":"cell"}
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
@@ -667,9 +666,9 @@
 				{"name":"fullAssign","type":"uint128"},
 				{"name":"fullReview","type":"uint128"},
 				{"name":"fullManager","type":"uint128"},
-				{"name":"assigners","type":"map(address,uint128)"},
-				{"name":"reviewers","type":"map(address,uint128)"},
-				{"name":"managers","type":"map(address,uint128)"},
+				{"name":"_assigners","type":"map(address,uint128)"},
+				{"name":"_reviewers","type":"map(address,uint128)"},
+				{"name":"_managers","type":"map(address,uint128)"},
 				{"name":"assignfull","type":"uint128"},
 				{"name":"reviewfull","type":"uint128"},
 				{"name":"managerfull","type":"uint128"},
