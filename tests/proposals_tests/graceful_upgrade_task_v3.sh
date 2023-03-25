@@ -127,7 +127,7 @@ sleep 10
 
 NEW_TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getWalletsFull | jq '.value0."'$USER_ADDR'".count' | cut -d'"' -f 2)
 
-if [ "$TOKEN_CNT" == "$NEW_TOKEN_CNT" ]; then
+if [ "21" != "$NEW_TOKEN_CNT" ]; then
     echo Did not get token
     exit 2
 fi
@@ -166,9 +166,16 @@ sleep 60
 OLD_VERSION=3.0.0
 
 upgrade_task_proposal
-
+OLD_TASK_ADDR=$TASK_ADDR
 TASK_ADDR=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTaskAddr --abi $WALLET_ABI_1 --nametask $TASK_NAME --repoName $REPO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
 wait_account_active $TASK_ADDR
+
+OLD_TASK_STATUS=$(tonos-cli -j account $OLD_TASK_ADDR | jq '."'$OLD_TASK_ADDR'".acc_type')
+
+if [ "$OLD_TASK_STATUS" != "\"NonExist\"" ]; then
+  echo wrong old task status
+  exit 2
+fi
 
 sleep 10
 
@@ -178,7 +185,8 @@ sleep 10
 
 FINAL_TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getWalletsFull | jq '.value0."'$USER_ADDR'".count' | cut -d'"' -f 2)
 
-if [ "$FINAL_TOKEN_CNT" == "$NEW_TOKEN_CNT" ]; then
+if [ "$FINAL_TOKEN_CNT" != "22" ]; then
     echo Did not get token
     exit 2
 fi
+
