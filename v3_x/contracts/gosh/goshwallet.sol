@@ -1529,7 +1529,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         address repo = _buildRepositoryAddr(repoName);
         TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
-        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: _goshdao}});
         address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
         Task(taskaddr).getGrant{value:0.3 ton}(_pubaddr, typegrant, _index);
         getMoney();
@@ -1543,7 +1543,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         address repo = _buildRepositoryAddr(repoName);
         TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
-        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: _goshdao}});
         address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
         Task(taskaddr).getGrant{value:0.3 ton}(_pubaddr, 1, _index);
         Task(taskaddr).getGrant{value:0.3 ton}(_pubaddr, 2, _index);
@@ -1559,7 +1559,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         address repo = _buildRepositoryAddr(repoName);
         TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
-        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: _goshdao}});
         address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
         Task(taskaddr).getGrant{value:0.3 ton}(_pubaddr, 1, _index);
         Task(taskaddr).getGrant{value:0.3 ton}(_pubaddr, 2, _index);
