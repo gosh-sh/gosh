@@ -26,6 +26,7 @@ type TDao = {
     isAuthLimited?: boolean
     isRepoUpgraded: boolean
     isTaskRedeployed: boolean
+    isMemberOf: { dao: TAddress; wallet: TAddress }[]
     hasRepoIndex: boolean
 }
 
@@ -43,6 +44,7 @@ type TDaoListItem = Omit<
     | 'isAuthenticated'
     | 'isRepoUpgraded'
     | 'isTaskRedeployed'
+    | 'isMemberOf'
     | 'hasRepoIndex'
 > & {
     adapter: IGoshDaoAdapter
@@ -59,6 +61,7 @@ type TDaoListItem = Omit<
     isLoadDetailsFired?: boolean
     isRepoUpgraded?: boolean
     isTaskRedeployed?: boolean
+    isMemberOf?: { dao: TAddress; wallet: TAddress }[]
     hasRepoIndex?: boolean
 }
 

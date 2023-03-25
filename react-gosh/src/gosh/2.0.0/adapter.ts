@@ -560,6 +560,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             isAuthLimited: await this._isAuthLimited(),
             isRepoUpgraded: details.isRepoUpgraded,
             isTaskRedeployed: true,
+            isMemberOf: [],
             hasRepoIndex: !!(await this._getSystemRepository()),
         }
     }

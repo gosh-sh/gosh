@@ -513,6 +513,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             isAuthenticated: !!this.profile && !!this.wallet,
             isRepoUpgraded: true,
             isTaskRedeployed: true,
+            isMemberOf: [],
             hasRepoIndex: false,
         }
     }

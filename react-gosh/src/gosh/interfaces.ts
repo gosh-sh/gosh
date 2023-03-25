@@ -345,7 +345,7 @@ interface IGoshRepositoryAdapter {
 
 interface IGoshSmvAdapter {
     getTotalSupply(): Promise<number>
-    getDetails(): Promise<TSmvDetails>
+    getDetails(wallet?: IGoshWallet): Promise<TSmvDetails>
     getClientsCount(): Promise<number>
     getEventCodeHash(): Promise<string>
     getEvent(

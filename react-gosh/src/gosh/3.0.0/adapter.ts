@@ -601,6 +601,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             isAuthLimited: await this._isAuthLimited(),
             isRepoUpgraded: details.isRepoUpgraded,
             isTaskRedeployed: _isTaskRedeployed,
+            isMemberOf: Object.keys(details.my_wallets).map((dao) => ({
+                dao: `0:${dao.slice(2)}`,
+                wallet: details.my_wallets[dao],
+            })),
             hasRepoIndex: !!(await this._getSystemRepository()),
         }
     }
@@ -4194,18 +4198,19 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         return +totalSupply_
     }
 
-    async getDetails(): Promise<TSmvDetails> {
-        if (!this.wallet) {
+    async getDetails(wallet?: IGoshWallet): Promise<TSmvDetails> {
+        wallet = wallet || this.wallet
+        if (!wallet) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
-        const smvBalance = await this._getLockerBalance()
+        const smvBalance = await this._getLockerBalance(wallet)
         return {
-            smvBalance: await this.getWalletBalance(this.wallet),
+            smvBalance: await this.getWalletBalance(wallet),
             smvAvailable: smvBalance.total,
             smvLocked: smvBalance.locked,
-            isLockerBusy: await this._isLockerBusy(),
-            allowance: await this._getAuthAllowance(),
+            isLockerBusy: await this._isLockerBusy(wallet),
+            allowance: await this._getAuthAllowance(wallet),
         }
     }
 
@@ -4504,37 +4509,43 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         })
     }
 
-    private async _getAuthAllowance() {
-        if (!this.wallet) {
+    private async _getAuthAllowance(wallet?: IGoshWallet) {
+        wallet = wallet || this.wallet
+        if (!wallet) {
             return 0
         }
         const { value0 } = await this.dao.runLocal('getWalletsToken', {})
-        const member = value0.find((item: any) => item.member === this.wallet?.address)
+        const member = value0.find((item: any) => item.member === wallet!.address)
         return member ? parseInt(member.count) : 0
     }
 
-    private async _isLockerBusy(): Promise<boolean> {
-        const locker = await this._getLocker()
+    private async _isLockerBusy(wallet?: IGoshWallet): Promise<boolean> {
+        const locker = await this._getLocker(wallet)
         const { lockerBusy } = await locker.runLocal('lockerBusy', {})
         return lockerBusy
     }
 
-    private async _getLockerAddress(): Promise<TAddress> {
-        if (!this.wallet) {
+    private async _getLockerAddress(wallet?: IGoshWallet): Promise<TAddress> {
+        wallet = wallet || this.wallet
+        if (!wallet) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
-        const { tip3VotingLocker } = await this.wallet.runLocal('tip3VotingLocker', {})
+        const { tip3VotingLocker } = await wallet.runLocal('tip3VotingLocker', {})
         return tip3VotingLocker
     }
 
-    private async _getLocker(): Promise<IGoshSmvLocker> {
-        const address = await this._getLockerAddress()
-        if (!this.locker) this.locker = new GoshSmvLocker(this.client, address)
+    private async _getLocker(wallet?: IGoshWallet): Promise<IGoshSmvLocker> {
+        const address = await this._getLockerAddress(wallet)
+        if (!this.locker) {
+            this.locker = new GoshSmvLocker(this.client, address)
+        }
         return this.locker
     }
 
-    private async _getLockerBalance(): Promise<{ total: number; locked: number }> {
-        const locker = await this._getLocker()
+    private async _getLockerBalance(
+        wallet?: IGoshWallet,
+    ): Promise<{ total: number; locked: number }> {
+        const locker = await this._getLocker(wallet)
         const { m_tokenBalance } = await locker.runLocal('m_tokenBalance', {})
         const { votes_locked } = await locker.runLocal('votes_locked', {})
         return { total: parseInt(m_tokenBalance), locked: parseInt(votes_locked) }
