@@ -91,7 +91,7 @@ GRANTED_PUBKEY=$(tonos-cli -j run --abi $WALLET_ABI $WALLET_ADDR getAccess {} | 
 USER_CONFIG=$(pwd)/config.json
 echo "export GOSH_CONFIG_PATH=$USER_CONFIG" >> env.env
 
-WALLET_PUBKEY=$(cat $WALLET_KEYS | sed -n '/public/ s/.*\([[:xdigit:]]\{64\}\).*/\1/p')
+WALLET_PUBKEY_CONFIG=$(cat $WALLET_KEYS | sed -n '/public/ s/.*\([[:xdigit:]]\{64\}\).*/\1/p')
 WALLET_SECRET=$(cat $WALLET_KEYS | sed -n '/secret/ s/.*\([[:xdigit:]]\{64\}\).*/\1/p')
 
 [ ! -d ~/.gosh ] && mkdir ~/.gosh
@@ -104,7 +104,7 @@ tee $USER_CONFIG <<EOF
     "$NETWORK": {
       "user-wallet": {
         "profile": "$USER_PROFILE_NAME",
-        "pubkey": "$WALLET_PUBKEY",
+        "pubkey": "$WALLET_PUBKEY_CONFIG",
         "secret": "$WALLET_SECRET"
       },
       "endpoints": ["$NETWORK/"]

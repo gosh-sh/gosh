@@ -14,6 +14,7 @@ function delay {
 function wait_account_active {
     stop_at=$((SECONDS+120))
     contract_addr=$1
+    is_ok=0
     while [ $SECONDS -lt $stop_at ]; do
         status=`tonos-cli -j -u $NETWORK account $contract_addr | jq -r '."'"$contract_addr"'".acc_type'`
         if [ "$status" = "Active" ]; then
@@ -150,7 +151,7 @@ function upgrade_DAO_2 {
   NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
   echo "NOW_ARG=$NOW_ARG"
 
-  sleep 60
+  sleep 10
 
   echo "***** get data for proposal *****"
   tip3VotingLocker=$(tonos-cli -j run $WALLET_ADDR  --abi $WALLET_ABI_1 tip3VotingLocker "{}" | sed -n '/tip3VotingLocker/ p' | cut -d'"' -f 4)

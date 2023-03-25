@@ -135,8 +135,32 @@ fi
 
 data=$(tonos-cli -j decode account data --addr $TASK_ADDR --abi $TASK_ABI)
 
+OLD_WALLET_ADDR=$WALLET_ADDR
+
 echo "Upgrade DAO"
 upgrade_DAO
+
+# for old version
+#UpdateHead
+#UnlockVoting(0)
+#Sendtokentonewversion
+
+tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m updateHead
+sleep 5
+tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m unlockVoting --amount 0
+sleep 5
+tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 21 --newversion "3.0.0"
+
+sleep 20
+
+NEW_TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getWalletsFull | jq '.value0."'$USER_ADDR'".count' | cut -d'"' -f 2)
+tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
+
+tonos-cli callx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m lockVoting --amount 0
+
+sleep 60
+
+tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
 
 # string
 nametask=$(echo $data | jq ._nametask)
@@ -260,19 +284,33 @@ params="{\"reponame\":\"$REPO_NAME\",\"nametask\":\"$TASK_NAME\",\"hashtag\":[],
 
 CELL_FOR_PROP=$(tonos-cli -j runx --addr $WALLET_ADDR --abi $WALLET_ABI_1 -m getCellForRedeployTask $params | sed -n '/value0/ p' | cut -d'"' -f 4)
 
+CLOSE_PROP_CELL=$(tonos-cli -j runx --addr $WALLET_ADDR --abi $WALLET_ABI_1 -m getCellForRedeployedTask "{\"time\":null}" | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+FINAL_CELL=$(tonos-cli -j runx --addr $WALLET_ADDR --abi $WALLET_ABI_1 -m AddCell "{\"data1\":\"$CELL_FOR_PROP\",\"data2\":\"$CLOSE_PROP_CELL\"}" | sed -n '/value0/ p' | cut -d'"' -f 4)
+
 echo "***** start multi proposal *****"
 tonos-cli -j callx --abi $WALLET_ABI_1 --addr $WALLET_ADDR --keys $WALLET_KEYS -m startMultiProposal \
-  "{\"number\":1,\"proposals\":\"$TVMCELL\",\"num_clients\":1,\"reviewers\":[]}"
+  "{\"number\":2,\"proposals\":\"$FINAL_CELL\",\"num_clients\":1,\"reviewers\":[]}"
 NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
 echo "NOW_ARG=$NOW_ARG"
 
 PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
   --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getMultiProposal --abi-params \
-  "{\"number\":1,\"proposals\":\"$TVMCELL\",\"_now\":$NOW_ARG}" \
+  "{\"number\":2,\"proposals\":\"$FINAL_CELL\",\"_now\":$NOW_ARG}" \
    --decode-c6 | grep value0 \
   | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+sleep 60
 
 vote_for_proposal
 
 TASK_ADDR=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTaskAddr --abi $WALLET_ABI_1 --nametask $TASK_NAME --repoName $REPO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
 wait_account_active $TASK_ADDR
+
+sleep 10
+
+tonos-cli callx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m askGrantToken --repoName $REPO_NAME --nametask $TASK_NAME --typegrant 1
+
+sleep 10
+
+NEW_TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getWalletsFull | jq '.value0."'$USER_ADDR'".count' | cut -d'"' -f 2)
