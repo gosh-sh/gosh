@@ -2821,7 +2821,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function getCellForTask(string nametask, 
-        address repo,
     	string repoName,
     	bool ready,
     	ConfigCommitBase[] candidates,   
@@ -2848,7 +2847,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     	uint128 lastreview,
     	uint128 lastmanager,
     	uint128 balance) external view returns(TvmCell) {
-        return abi.encode(nametask, repo, repoName, ready, _systemcontract, _goshdao, candidates, grant, hashtag, indexFinal, locktime, fullAssign, fullReview, fullManager, assigners, reviewers, managers, assignfull, reviewfull, managerfull, assigncomplete, reviewcomplete, managercomplete, allassign, allreview, allmanager, lastassign, lastreview, lastmanager, balance);
+        return abi.encode(nametask, repoName, ready, _systemcontract, _goshdao, candidates, grant, hashtag, indexFinal, locktime, fullAssign, fullReview, fullManager, assigners, reviewers, managers, assignfull, reviewfull, managerfull, assigncomplete, reviewcomplete, managercomplete, allassign, allreview, allmanager, lastassign, lastreview, lastmanager, balance);
     }
     
     function getCellForRedeployTask(string reponame, string nametask,  string[] hashtag, TvmCell data, optional(uint32) time) external pure returns(TvmCell) {

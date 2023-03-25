@@ -576,6 +576,40 @@ function getRedeployTaskProposalParamsData (TvmCell Data) external pure
     (proposalKind, repoName, nameTask, hashtag, data, ) = abi.decode(Data, (uint256, string, string, string[], TvmCell, uint32));
 }
 
+function getTaskData (TvmCell Data) external pure
+         returns(string nametask, 
+    	string repoName,
+    	bool ready,
+    	address systemcontract,
+    	address dao,
+    	ConfigCommitBase[] candidates,   
+    	ConfigGrant grant,
+    	string[] hashtag,
+    	uint128 indexFinal,
+    	uint128 locktime,
+    	uint128 fullAssign,
+    	uint128 fullReview,
+    	uint128 fullManager,
+    	mapping(address => uint128) assigners,
+    	mapping(address => uint128) reviewers,
+    	mapping(address => uint128) managers,
+    	uint128 assignfull,
+    	uint128 reviewfull,
+    	uint128 managerfull,
+    	uint128 assigncomplete,
+    	uint128 reviewcomplete,
+    	uint128 managercomplete,
+    	bool allassign,
+    	bool allreview,
+    	bool allmanager,
+    	uint128 lastassign,
+    	uint128 lastreview,
+    	uint128 lastmanager,
+    	uint128 balance)
+{
+    (nametask, repoName, ready, systemcontract, dao, candidates, grant, hashtag, indexFinal, locktime, fullAssign, fullReview, fullManager, assigners, reviewers, managers, assignfull, reviewfull, managerfull, assigncomplete, reviewcomplete, managercomplete, allassign, allreview, allmanager, lastassign, lastreview, lastmanager, balance) = abi.decode(Data, (string, string, bool, address, address, ConfigCommitBase[], ConfigGrant, string[], uint128, uint128, uint128, uint128, uint128, mapping(address => uint128), mapping(address => uint128), mapping(address => uint128), uint128, uint128, uint128, uint128, uint128, uint128, bool, bool, bool, uint128, uint128, uint128, uint128));
+}
+
 function getGoshAddRegularTokenProposalParamsData (TvmCell Data) external pure
          returns(uint256  proposalKind,  address pubaddr, uint128 grant, string comment)
 {
