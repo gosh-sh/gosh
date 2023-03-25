@@ -58,6 +58,29 @@ function wait_set_commit {
     fi
 }
 
+function deploy_DAO {
+  echo "Deploy DAO"
+  echo "DAO_NAME=$DAO_NAME"
+  tonos-cli -j call --abi $USER_PROFILE_ABI $USER_PROFILE_ADDR --sign $WALLET_KEYS deployDao \
+    "{\"systemcontract\":\"$SYSTEM_CONTRACT_ADDR\", \"name\":\"$DAO_NAME\", \"pubmem\":[\"$USER_PROFILE_ADDR\"]}"
+  DAO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrDao "{\"name\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
+  echo "***** awaiting dao deploy *****"
+  wait_account_active $DAO_ADDR
+  echo "DAO_ADDR=$DAO_ADDR"
+
+  WALLET_ADDR=$(tonos-cli -j run $DAO_ADDR getAddrWallet "{\"pubaddr\":\"$USER_PROFILE_ADDR\",\"index\":0}" --abi $DAO_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
+  echo "WALLET_ADDR=$WALLET_ADDR"
+
+  echo "***** turn DAO on *****"
+  tonos-cli -j call --abi $USER_PROFILE_ABI $USER_PROFILE_ADDR --sign $WALLET_KEYS turnOn \
+    "{\"pubkey\":\"$WALLET_PUBKEY\",\"wallet\":\"$WALLET_ADDR\"}"
+
+  sleep 10
+
+  GRANTED_PUBKEY=$(tonos-cli -j run --abi $WALLET_ABI $WALLET_ADDR getAccess {} | jq -r .value0)
+  echo $GRANTED_PUBKEY
+}
+
 function deploy_DAO_and_repo {
   echo "Deploy DAO"
   echo "DAO_NAME=$DAO_NAME"
@@ -351,7 +374,7 @@ function mint_tokens {
 function mint_tokens_3 {
     tonos-cli runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
     echo "***** start proposal for task deploy *****"
-    TOKEN=5
+    TOKEN="${TOKEN:-5}"
     tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForMintDaoReserve \
       --token $TOKEN --comment "" --num_clients 1 --reviewers []
     NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
@@ -405,11 +428,11 @@ function set_commit_proposal_3 {
 
   echo "***** start proposal for set commit *****"
   tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForSetCommit \
-    "{\"repoName\":\"$REPO_NAME\",\"branchName\":\"$BRANCH_NAME\",\"commit\":\"$COMMIT_ID\",\"numberChangedFiles\":1,\"numberCommits\":1,\"comment\":\"\",\"task\":{\"task\":\"$TASK_ADDR\",\"pubaddrassign\":{\"$USER_PROFILE_ADDR\":true},\"pubaddrreview\":{},\"pubaddrmanager\":{},\"daoMembers\":{}},\"num_clients\":1,\"reviewers\":[]}"
+    "{\"repoName\":\"$REPO_NAME\",\"branchName\":\"$BRANCH_NAME\",\"commit\":\"$COMMIT_ID\",\"numberChangedFiles\":1,\"numberCommits\":1,\"comment\":\"\",\"task\":{\"task\":\"$TASK_ADDR\",\"pubaddrassign\":{\"$TASK_OWNER\":true},\"pubaddrreview\":{},\"pubaddrmanager\":{},\"daoMembers\":{}},\"num_clients\":1,\"reviewers\":[]}"
   NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
   echo "NOW_ARG=$NOW_ARG"
   TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellSetCommit \
-    "{\"repoName\":\"$REPO_NAME\",\"branchName\":\"$BRANCH_NAME\",\"commit\":\"$COMMIT_ID\",\"numberChangedFiles\":1,\"numberCommits\":1,\"comment\":\"\",\"task\":{\"task\":\"$TASK_ADDR\",\"pubaddrassign\":{\"$USER_PROFILE_ADDR\":true},\"pubaddrreview\":{},\"pubaddrmanager\":{},\"daoMembers\":{}},\"time\":$NOW_ARG}" | sed -n '/value0/ p' | cut -d'"' -f 4)
+    "{\"repoName\":\"$REPO_NAME\",\"branchName\":\"$BRANCH_NAME\",\"commit\":\"$COMMIT_ID\",\"numberChangedFiles\":1,\"numberCommits\":1,\"comment\":\"\",\"task\":{\"task\":\"$TASK_ADDR\",\"pubaddrassign\":{\"$TASK_OWNER\":true},\"pubaddrreview\":{},\"pubaddrmanager\":{},\"daoMembers\":{}},\"time\":$NOW_ARG}" | sed -n '/value0/ p' | cut -d'"' -f 4)
   echo "TVMCELL=$TVMCELL"
 
   sleep 10
@@ -450,3 +473,56 @@ function upgrade_task_proposal {
 
   tonos-cli runx --abi $REPO_ABI --addr $REPO_ADDR -m getAllAddress
 }
+
+function add_dao_to_dao {
+  echo "***** start proposal for add dao to dao *****"
+#  struct MemberToken {
+#      address member;
+#      uint128 count;
+#  }
+  CHILD_TOKEN="${CHILD_TOKEN:-1}"
+  tonos-cli -j callx --abi $WALLET_ABI --addr $PARENT_WALLET_ADDR --keys $WALLET_KEYS -m startProposalForDeployWalletDao \
+    "{\"pubaddr\":[{\"member\":\"$CHILD_DAO_ADDR\",\"count\":$CHILD_TOKEN}],\"dao\":[\"$CHILD_DAO_NAME\"],\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
+  NOW_ARG=$(tonos-cli -j account $PARENT_WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
+  echo "NOW_ARG=$NOW_ARG"
+  TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $PARENT_WALLET_ADDR -m getCellDeployWalletDao \
+    "{\"pubaddr\":[{\"member\":\"$CHILD_DAO_ADDR\",\"count\":$CHILD_TOKEN}],\"dao\":[\"$CHILD_DAO_NAME\"],\"comment\":\"\",\"time\":$NOW_ARG}"  | sed -n '/value0/ p' | cut -d'"' -f 4)
+  sleep 10
+
+  PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
+        --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
+        "{\"data\":\"$TVMCELL\"}" \
+         --decode-c6 | grep value0 \
+        | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+  vote_for_proposal
+
+  sleep 10
+
+}
+
+function child_dao_ask_granted {
+  echo "***** start proposal for ask dao reward *****"
+
+  tonos-cli -j callx --abi $WALLET_ABI --addr $CHILD_WALLET_ADDR --keys $WALLET_KEYS -m startProposalForDaoAskGrant \
+    "{\"wallet\":$CHILD_DAO_WALLET_ADDR,\"repoName\":\"$REPO_NAME\",\"taskName\":\"$TASK_NAME\",\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
+  NOW_ARG=$(tonos-cli -j account $CHILD_WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
+  echo "NOW_ARG=$NOW_ARG"
+  TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $CHILD_WALLET_ADDR -m getCellForDaoAskGrant \
+    "{\"wallet\":$CHILD_DAO_WALLET_ADDR,\"repoName\":\"$REPO_NAME\",\"taskName\":\"$TASK_NAME\",\"comment\":\"\",\"time\":$NOW_ARG}"  | sed -n '/value0/ p' | cut -d'"' -f 4)
+  sleep 10
+
+  PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
+        --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
+        "{\"data\":\"$TVMCELL\"}" \
+         --decode-c6 | grep value0 \
+        | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+  WALLET_ADDR=$CHILD_WALLET_ADDR
+
+  vote_for_proposal
+
+  sleep 10
+
+}
+

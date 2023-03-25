@@ -5,8 +5,9 @@ set -x
 
 . ./util.sh
 
-#Deploy DAO v3
-#creat task
+#Deploy DAO1 v3
+#Deploy DAO2 v3
+#create task
 #solve task
 #get first reward
 #upgrade DAO to v4
@@ -21,13 +22,12 @@ SECOND_VERSION=v4_x
 #./upgrade_tests/set_up.sh $FIRST_VERSION $SECOND_VERSION
 #exit 0
 
-REPO_NAME=prop_repo02
-DAO_NAME="dao-prop-test02_$(date +%s)"
+REPO_NAME=prop_repo03
+DAO_NAME="dao-prop-child-test03_$(date +%s)"
 NEW_REPO_PATH=prop_repo02_v2
 COMMIT_ABI="../$FIRST_VERSION/contracts/gosh/commit.abi.json"
 SNAPSHOT_ABI="../$FIRST_VERSION/contracts/gosh/snapshot.abi.json"
 TASK_ABI="../$FIRST_VERSION/contracts/gosh/task.abi.json"
-
 
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
@@ -36,19 +36,42 @@ TASK_ABI="../$FIRST_VERSION/contracts/gosh/task.abi.json"
 #echo "0:427957f83cc1b7691afe6a23b37995e3a94a91dbd87ae272d67ab663e19507cf" | sed -r "s/:/x/"
 #gosh-cli runx -m getWalletsFull | jq '.value0."0x3523b82fc597261e996f63ac0da83418447311f323e6cb3151b315bdfc39de38".count'
 
-# deploy new DAO that will be upgraded
+deploy_DAO
+
+CHILD_DAO_NAME=$DAO_NAME
+CHILD_DAO_ADDR=$DAO_ADDR
+CHILD_WALLET_ADDR=$WALLET_ADDR
+
+DAO_NAME="dao-prop-test03_$(date +%s)"
+
 deploy_DAO_and_repo
 
+PARENT_DAO_NAME=$DAO_NAME
+PARENT_DAO_ADDR=$DAO_ADDR
+PARENT_WALLET_ADDR=$WALLET_ADDR
+
 mint_tokens_3
+
+add_dao_to_dao
+
+sleep 30
+
+CHILD_ADDR=$(echo $CHILD_DAO_ADDR | sed -r "s/:/x/")
+TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI --addr $PARENT_DAO_ADDR -m getWalletsFull | jq '.value0."'$CHILD_ADDR'".count' | cut -d'"' -f 2)
+if [ "$TOKEN_CNT" != "1" ]; then
+  echo Wrong amount of token
+  exit 1
+fi
+
+# wallet addr of child dao in parent dao
+CHILD_DAO_WALLET_ADDR=$(tonos-cli -j runx --abi $DAO_ABI --addr $PARENT_DAO_ADDR -m getWalletsFull | jq '.value0."'$CHILD_ADDR'".member' )
+echo "CHILD_DAO_WALLET_ADDR=$CHILD_DAO_WALLET_ADDR"
 
 TASK_NAME="task1"
 deploy_task_with_proposal_3
 
 TASK_ADDR=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTaskAddr --abi $WALLET_ABI --nametask $TASK_NAME --repoName $REPO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
 wait_account_active $TASK_ADDR
-
-USER_ADDR=$(echo $USER_PROFILE_ADDR | sed -r "s/:/x/")
-TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getWalletsFull | jq '.value0."'$USER_ADDR'".count' | cut -d'"' -f 2)
 
 export OLD_LINK="gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME"
 echo "OLD_LINK=$OLD_LINK"
@@ -106,7 +129,7 @@ wait_account_active $COMMIT_ADDR
 tonos-cli -j runx --abi $COMMIT_ABI --addr $COMMIT_ADDR -m getCommit
 tonos-cli -j runx --abi $SNAPSHOT_ABI --addr $SNAPSHOT_ADDR -m getSnapshot
 
-TASK_OWNER=$USER_PROFILE_ADDR
+TASK_OWNER=$CHILD_DAO_ADDR
 
 set_commit_proposal_3
 
@@ -123,23 +146,50 @@ if [ "$task_status" != "true" ]; then
     exit 2
 fi
 
-tonos-cli callx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m askGrantToken --repoName $REPO_NAME --nametask $TASK_NAME --typegrant 1
+child_dao_ask_granted
 
-sleep 10
+sleep 60
 
-NEW_TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getWalletsFull | jq '.value0."'$USER_ADDR'".count' | cut -d'"' -f 2)
-
-if [ "21" != "$NEW_TOKEN_CNT" ]; then
-    echo Did not get token
-    exit 2
+TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI --addr $PARENT_DAO_ADDR -m getWalletsFull | jq '.value0."'$CHILD_ADDR'".count' | cut -d'"' -f 2)
+if [ "$TOKEN_CNT" != "2" ]; then
+  echo Wrong amount of token
+  exit 1
 fi
 
-data=$(tonos-cli -j decode account data --addr $TASK_ADDR --abi $TASK_ABI)
 
-OLD_WALLET_ADDR=$WALLET_ADDR
 
-echo "Upgrade DAO"
+#works till here
+
+
+
+
+
+
+
+
+
+
+
+echo "Upgrade parent DAO"
+WALLET_ADDR=$PARENT_WALLET_ADDR
 upgrade_DAO
+
+NEW_PARENT_WALLET_ADDR=$WALLET_ADDR
+NEW_PARENT_DAO_ADDR=$DAO_ADDR
+
+sleep 20
+tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull
+
+echo "Upgrade child DAO"
+WALLET_ADDR=$CHILD_WALLET_ADDR
+upgrade_DAO
+
+NEW_CHILD_WALLET_ADDR=$WALLET_ADDR
+NEW_CHILD_DAO_ADDR=$DAO_ADDR
+
+sleep 20
+tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull
+
 
 # for old version
 #UpdateHead
