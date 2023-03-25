@@ -3,34 +3,30 @@ set -e
 set -o pipefail
 set -x
 
-#add fix to remove env.env
-
 . ./util.sh
 
-#Deploy DAO v2
+#Deploy DAO v3
 #creat task
 #solve task
 #get first reward
-#upgrade DAO to v3
-#redeploy task
+#upgrade DAO to v4
+#upgrade task
 #get second part of reward
 
-#парсить данные таски
-#getCellForTask
-#getCellForRedeployTask
-#
-#при ап с 3 на 4 надо провер что таска удалилась
 
-#./node_se_scripts/deploy.sh v2_x
-#. set-vars.sh v2_x
-#./upgrade_tests/set_up.sh v2_x v3_x
+FIRST_VERSION=v3_x
+SECOND_VERSION=v4_x
+#./node_se_scripts/deploy.sh $FIRST_VERSION
+#. set-vars.sh $FIRST_VERSION
+#./upgrade_tests/set_up.sh $FIRST_VERSION $SECOND_VERSION
+#exit 0
 
-REPO_NAME=prop_repo01
-DAO_NAME="dao-prop-test01_$(date +%s)"
-NEW_REPO_PATH=prop_repo01_v2
-COMMIT_ABI="../v2_x/contracts/gosh/commit.abi.json"
-SNAPSHOT_ABI="../v2_x/contracts/gosh/snapshot.abi.json"
-TASK_ABI="../v2_x/contracts/gosh/task.abi.json"
+REPO_NAME=prop_repo02
+DAO_NAME="dao-prop-test02_$(date +%s)"
+NEW_REPO_PATH=prop_repo02_v2
+COMMIT_ABI="../$FIRST_VERSION/contracts/gosh/commit.abi.json"
+SNAPSHOT_ABI="../$FIRST_VERSION/contracts/gosh/snapshot.abi.json"
+TASK_ABI="../$FIRST_VERSION/contracts/gosh/task.abi.json"
 
 
 # delete folders
@@ -43,10 +39,10 @@ TASK_ABI="../v2_x/contracts/gosh/task.abi.json"
 # deploy new DAO that will be upgraded
 deploy_DAO_and_repo
 
-mint_tokens
+mint_tokens_3
 
 TASK_NAME="task1"
-deploy_task_with_proposal
+deploy_task_with_proposal_3
 
 TASK_ADDR=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTaskAddr --abi $WALLET_ABI --nametask $TASK_NAME --repoName $REPO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
 wait_account_active $TASK_ADDR
@@ -110,7 +106,7 @@ wait_account_active $COMMIT_ADDR
 tonos-cli -j runx --abi $COMMIT_ABI --addr $COMMIT_ADDR -m getCommit
 tonos-cli -j runx --abi $SNAPSHOT_ABI --addr $SNAPSHOT_ADDR -m getSnapshot
 
-set_commit_proposal
+set_commit_proposal_3
 
 sleep 20
 
@@ -152,7 +148,7 @@ tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KE
 sleep 5
 tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m unlockVoting --amount 0
 sleep 5
-tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 21 --newversion "3.0.0"
+tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 21 --newversion "4.0.0"
 
 sleep 20
 
@@ -165,147 +161,11 @@ sleep 60
 
 tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
 
-# string
-nametask=$(echo $data | jq ._nametask)
-
-# address
-#repo=$(echo $data | jq ._repo)
-
-# string
-repoName="\"$REPO_NAME\""
-
-# bool
-ready=$(echo $data | jq ._ready)
-
-# ConfigCommitBase[]      NEED TO ADD DAO_MEMBERS daoMembers:{}
-candidates="$(echo $data | jq '._candidates[0] += {"daoMembers":{}}' | jq ._candidates | tr -d '[:space:]')"
-
-# ConfigGrant
-grant="$(echo $data | jq ._grant | tr -d '[:space:]')"
-
-# string[]
-hashtag=$(echo $data | jq ._hashtag)
-
-# uint128
-indexFinal=$(echo $data | jq ._indexFinal | tr -d '"')
-
-# uint128
-locktime=$(echo $data | jq ._locktime | tr -d '"')
-
-# uint128
-fullAssign=$(echo $data | jq ._fullAssign | tr -d '"')
-
-# uint128
-fullReview=$(echo $data | jq ._fullReview | tr -d '"')
-
-# uint128
-fullManager=$(echo $data | jq ._fullManager | tr -d '"')
-
-# mapping(address => uint128)
-assigners="$(echo $data | jq ._assigners | tr -d '[:space:]')"
-
-# mapping(address => uint128)
-reviewers=$(echo $data | jq ._reviewers)
-
-# mapping(address => uint128)
-managers=$(echo $data | jq ._managers)
-
-# uint128
-assignfull=$(echo $data | jq ._assignfull | tr -d '"')
-
-# uint128
-reviewfull=$(echo $data | jq ._reviewfull | tr -d '"')
-
-# uint128
-managerfull=$(echo $data | jq ._managerfull | tr -d '"')
-
-# uint128
-assigncomplete=$(echo $data | jq ._assigncomplete | tr -d '"')
-
-# uint128
-reviewcomplete=$(echo $data | jq ._reviewcomplete | tr -d '"')
-
-# uint128
-managercomplete=$(echo $data | jq ._managercomplete | tr -d '"')
-
-# bool
-allassign=$(echo $data | jq ._allassign)
-
-# bool
-allreview=$(echo $data | jq ._allreview)
-
-# bool
-allmanager=$(echo $data | jq ._allmanager)
-
-# uint128
-lastassign=$(echo $data | jq ._lastassign | tr -d '"')
-
-# uint128
-lastreview=$(echo $data | jq ._lastreview | tr -d '"')
-
-# uint128
-lastmanager=$(echo $data | jq ._lastmanager | tr -d '"')
-
-# uint128
-balance=$(echo $data | jq ._balance | tr -d '"')
-
-params="{"
-params+="\"nametask\":$nametask,"
-#params+="\"repo\":$repo,"
-params+="\"repoName\":$repoName,"
-params+="\"ready\":$ready,"
-params+="\"candidates\":$candidates,"
-params+="\"grant\":$grant,"
-params+="\"hashtag\":$hashtag,"
-params+="\"indexFinal\":$indexFinal,"
-params+="\"locktime\":$locktime,"
-params+="\"fullAssign\":$fullAssign,"
-params+="\"fullReview\":$fullReview,"
-params+="\"fullManager\":$fullManager,"
-params+="\"assigners\":$assigners,"
-params+="\"reviewers\":$reviewers,"
-params+="\"managers\":$managers,"
-params+="\"assignfull\":$assignfull,"
-params+="\"reviewfull\":$reviewfull,"
-params+="\"managerfull\":$managerfull,"
-params+="\"assigncomplete\":$assigncomplete,"
-params+="\"reviewcomplete\":$reviewcomplete,"
-params+="\"managercomplete\":$managercomplete,"
-params+="\"allassign\":$allassign,"
-params+="\"allreview\":$allreview,"
-params+="\"allmanager\":$allmanager,"
-params+="\"lastassign\":$lastassign,"
-params+="\"lastreview\":$lastreview,"
-params+="\"lastmanager\":$lastmanager,"
-params+="\"balance\":$balance"
-params+="}"
-
-TVMCELL=$(tonos-cli -j runx --addr $WALLET_ADDR --abi $WALLET_ABI_1 -m getCellForTask $params | sed -n '/value0/ p' | cut -d'"' -f 4)
-echo "TVMCELL=$TVMCELL"
-
-params="{\"reponame\":\"$REPO_NAME\",\"nametask\":\"$TASK_NAME\",\"hashtag\":[],\"data\":\"$TVMCELL\",\"time\":null}"
-
-CELL_FOR_PROP=$(tonos-cli -j runx --addr $WALLET_ADDR --abi $WALLET_ABI_1 -m getCellForRedeployTask $params | sed -n '/value0/ p' | cut -d'"' -f 4)
-
-CLOSE_PROP_CELL=$(tonos-cli -j runx --addr $WALLET_ADDR --abi $WALLET_ABI_1 -m getCellForRedeployedTask "{\"time\":null}" | sed -n '/value0/ p' | cut -d'"' -f 4)
-
-FINAL_CELL=$(tonos-cli -j runx --addr $WALLET_ADDR --abi $WALLET_ABI_1 -m AddCell "{\"data1\":\"$CELL_FOR_PROP\",\"data2\":\"$CLOSE_PROP_CELL\"}" | sed -n '/value0/ p' | cut -d'"' -f 4)
-
-echo "***** start multi proposal *****"
-tonos-cli -j callx --abi $WALLET_ABI_1 --addr $WALLET_ADDR --keys $WALLET_KEYS -m startMultiProposal \
-  "{\"number\":2,\"proposals\":\"$FINAL_CELL\",\"num_clients\":1,\"reviewers\":[]}"
-NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
-echo "NOW_ARG=$NOW_ARG"
-
-PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
-  --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getMultiProposal --abi-params \
-  "{\"number\":2,\"proposals\":\"$FINAL_CELL\",\"_now\":$NOW_ARG}" \
-   --decode-c6 | grep value0 \
-  | sed -n '/value0/ p' | cut -d'"' -f 4)
-
 sleep 60
 
-vote_for_proposal
+OLD_VERSION=3.0.0
+
+upgrade_task_proposal
 
 TASK_ADDR=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTaskAddr --abi $WALLET_ABI_1 --nametask $TASK_NAME --repoName $REPO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
 wait_account_active $TASK_ADDR
