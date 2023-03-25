@@ -4,7 +4,7 @@ import { classNames, ETaskBounty, shortString, useTask } from 'react-gosh'
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import CopyClipboard from '../../components/CopyClipboard'
-import { ToastError } from '../../components/Toast'
+import { ToastError, ToastSuccess } from '../../components/Toast'
 import { Button } from '../../components/Form'
 import Loader from '../../components/Loader'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
@@ -47,7 +47,14 @@ const TaskPage = () => {
                     })
                 }),
             )
-            toast.success('Claim rewards request sent. Check you wallet balance')
+            toast.success(
+                <ToastSuccess
+                    message={{
+                        title: 'Claim rewards request sent',
+                        content: 'Check you wallet balance',
+                    }}
+                />,
+            )
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)

@@ -1,5 +1,5 @@
 import { Field, Form, Formik } from 'formik'
-import { TDao, TDaoMemberDetails, useDaoMemberSetAllowance } from 'react-gosh'
+import { TDao, TDaoMemberDetails, TUserParam, useDaoMemberSetAllowance } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
@@ -8,6 +8,7 @@ import { Button } from '../../../../../components/Form'
 import { FormikTextarea } from '../../../../../components/Formik'
 import Loader from '../../../../../components/Loader'
 import DaoMemberListItem from './MemberListItem'
+import yup from '../../../../../yup-extended'
 
 type TDaoMemeberListProps = {
     dao: {
@@ -23,7 +24,7 @@ type TDaoMemeberListProps = {
         getMore: () => void
     }
     removal: {
-        remove: (username: string[]) => Promise<void>
+        remove: (user: TUserParam[]) => Promise<void>
         isFetching: (username: string) => boolean
     }
 }
@@ -39,10 +40,10 @@ const DaoMemeberList = (props: TDaoMemeberListProps) => {
     const updateAllowance = useDaoMemberSetAllowance(dao.adapter)
     const { isFetching, items } = members
 
-    const onDelete = async (username: string) => {
+    const onDelete = async (user: TUserParam) => {
         if (window.confirm('Delete member?')) {
             try {
-                await removal.remove([username])
+                await removal.remove([user])
                 navigate(`/o/${dao.details.name}/events`)
             } catch (e: any) {
                 console.error(e.message)
@@ -72,7 +73,11 @@ const DaoMemeberList = (props: TDaoMemeberListProps) => {
         <Formik
             initialValues={{
                 items: items.map((item) => ({ ...item, _allowance: item.allowance })),
+                comment: '',
             }}
+            validationSchema={yup.object().shape({
+                comment: yup.string().required(),
+            })}
             onSubmit={onSubmitAllowance}
             enableReinitialize
         >
@@ -104,7 +109,7 @@ const DaoMemeberList = (props: TDaoMemeberListProps) => {
                                     item={item}
                                     owner={dao.details.owner}
                                     isAuthMember={dao.details.isAuthMember}
-                                    isFetching={removal.isFetching(item.name)}
+                                    isFetching={removal.isFetching(item.user.name)}
                                     onDelete={onDelete}
                                 />
                             ))}

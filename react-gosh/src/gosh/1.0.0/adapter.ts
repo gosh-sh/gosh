@@ -76,6 +76,21 @@ import {
     TRepositoryCreateCommitTagParams,
     TIsMemberParams,
     TIsMemberResult,
+    TEventMultipleCreateProposalAsDaoParams,
+    TDaoTokenDaoSendParams,
+    TUserParam,
+    TTaskUpgradeParams,
+    TTaskUpgradeResult,
+    TTaskUpgradeCompleteParams,
+    TTaskUpgradeCompleteResult,
+    TDaoVoteParams,
+    TDaoVoteResult,
+    TDaoReviewParams,
+    TDaoReviewResult,
+    TTaskReceiveBountyDaoParams,
+    TTaskReceiveBountyDaoResult,
+    TDaoTokenDaoLockParams,
+    TDaoTokenDaoLockResult,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -189,6 +204,14 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
         })
     }
 
+    async isValidDao(name: string[]): Promise<{ username: string; address: string }[]> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async isValidUser(user: TUserParam): Promise<{ user: TUserParam; address: string }> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async setAuth(username: string, keys: KeyPair): Promise<void> {
         this.auth = { username, keys }
     }
@@ -269,6 +292,11 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
             { useCachedBoc: true },
         )
         return new GoshProfileDao(this.client, value0)
+    }
+
+    async getUserByAddress(address: string): Promise<TUserParam> {
+        const profile = await this.getProfile({ address })
+        return { name: await profile.getName(), type: 'user' }
     }
 
     async getRepository(options: {
@@ -412,12 +440,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async isMember(params: TIsMemberParams): TIsMemberResult {
-        const { username, profile } = params
+        const { user, profile } = params
 
         let pubaddr: string
-        if (username) {
-            const _profiles = await this.gosh.isValidProfile([username])
-            pubaddr = _profiles[0].address
+        if (user) {
+            const validated = await this.gosh.isValidProfile([user.name])
+            pubaddr = validated[0].address
         } else if (profile) {
             pubaddr = profile
         } else {
@@ -484,6 +512,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             isAuthMember: await this._isAuthMember(),
             isAuthenticated: !!this.profile && !!this.wallet,
             isRepoUpgraded: true,
+            isTaskRedeployed: true,
             hasRepoIndex: false,
         }
     }
@@ -571,7 +600,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async getReviewers(
-        username: string[],
+        user: TUserParam[],
     ): Promise<{ username: string; profile: string; wallet: string }[]> {
         throw new Error('Method is unavailable in current version')
     }
@@ -641,20 +670,16 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async deleteMember(params: TDaoMemberDeleteParams): Promise<TDaoMemberDeleteResult> {
-        const { usernames } = params
+        const { user } = params
 
         if (!this.wallet) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
-        const profiles = await executeByChunk(
-            usernames,
-            MAX_PARALLEL_READ,
-            async (username) => {
-                const profile = await this.gosh.getProfile({ username })
-                return profile.address
-            },
-        )
+        const profiles = await executeByChunk(user, MAX_PARALLEL_READ, async (item) => {
+            const profile = await this.gosh.getProfile({ username: item.name })
+            return profile.address
+        })
 
         const smv = await this.getSmv()
         await smv.validateProposalStart()
@@ -716,11 +741,33 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
-    async sendInternal2Internal(username: string, amount: number): Promise<void> {
+    async sendInternal2Internal(user: TUserParam, amount: number): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
     async send2DaoReserve(amount: number): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async sendDaoToken(params: TDaoTokenDaoSendParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async voteDao(params: TDaoVoteParams): Promise<TDaoVoteResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async reviewDao(params: TDaoReviewParams): Promise<TDaoReviewResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async receiveTaskBountyDao(
+        params: TTaskReceiveBountyDaoParams,
+    ): Promise<TTaskReceiveBountyDaoResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async lockDaoToken(params: TDaoTokenDaoLockParams): Promise<TDaoTokenDaoLockResult> {
         throw new Error('Method is unavailable in current version')
     }
 
@@ -736,6 +783,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
+    async createMultiProposalAsDao(
+        params: TEventMultipleCreateProposalAsDaoParams,
+    ): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async createTask(params: TTaskCreateParams): Promise<TTaskCreateResult> {
         throw new Error('Method is unavailable in current version')
     }
@@ -745,6 +798,16 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async deleteTask(params: TTaskDeleteParams): Promise<TTaskDeleteResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async upgradeTask(params: TTaskUpgradeParams): Promise<TTaskUpgradeResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async upgradeTaskComplete(
+        params: TTaskUpgradeCompleteParams,
+    ): Promise<TTaskUpgradeCompleteResult> {
         throw new Error('Method is unavailable in current version')
     }
 

@@ -1,14 +1,14 @@
 import { Dialog } from '@headlessui/react'
 import { toast } from 'react-toastify'
 import { IGoshDaoAdapter, IGoshSmvAdapter } from 'react-gosh/dist/gosh/interfaces'
-import { TDao, TSmvDetails, useSmvTokenTransfer } from 'react-gosh'
+import { TDao, TSmvDetails, TUserParam, useSmvTokenTransfer } from 'react-gosh'
 import { Field, Form, Formik } from 'formik'
-import { FormikInput } from '../Formik'
-import yup from '../../yup-extended'
-import { Button } from '../Form'
-import { ToastError } from '../Toast'
+import { FormikInput } from '../../../Formik'
+import yup from '../../../../yup-extended'
+import { Button } from '../../../Form'
+import { ToastError } from '../../../Toast'
 import { useResetRecoilState } from 'recoil'
-import { appModalStateAtom } from '../../store/app.state'
+import { appModalStateAtom } from '../../../../store/app.state'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import { useCallback } from 'react'
@@ -44,13 +44,16 @@ const WalletTokenSendModal = (props: TWalletTokenSendModalProps) => {
 
     const onSubmit = async (values: TFormValues) => {
         try {
-            const username = values.username.trim()
+            const user: TUserParam = {
+                name: values.username.trim(),
+                type: 'user',
+            }
             const amount = parseInt(values.amount)
 
-            if (username.toLowerCase() === dao.details.name.toLowerCase()) {
+            if (user.name.toLowerCase() === dao.details.name.toLowerCase()) {
                 await transferToDaoReserve(amount)
             } else {
-                await transferToInternal(username, amount)
+                await transferToInternal(user, amount)
             }
 
             toast.success('Tokens were sucessfuly sent')

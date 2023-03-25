@@ -1,5 +1,5 @@
 import { KeyPair } from '@eversdk/core'
-import { IGoshDaoAdapter, IGoshTopic } from '../gosh/interfaces'
+import { IGoshDaoAdapter, IGoshTask, IGoshTopic } from '../gosh/interfaces'
 import { TAddress, TEventCreateParams } from './types'
 
 enum ETaskBounty {
@@ -24,7 +24,8 @@ type TDao = {
     isAuthOwner: boolean
     isAuthMember: boolean
     isAuthLimited?: boolean
-    isRepoUpgraded?: boolean
+    isRepoUpgraded: boolean
+    isTaskRedeployed: boolean
     hasRepoIndex: boolean
 }
 
@@ -40,6 +41,8 @@ type TDaoListItem = Omit<
     | 'isAuthOwner'
     | 'isAuthMember'
     | 'isAuthenticated'
+    | 'isRepoUpgraded'
+    | 'isTaskRedeployed'
     | 'hasRepoIndex'
 > & {
     adapter: IGoshDaoAdapter
@@ -54,6 +57,8 @@ type TDaoListItem = Omit<
     isAuthMember?: boolean
     isAuthenticated?: boolean
     isLoadDetailsFired?: boolean
+    isRepoUpgraded?: boolean
+    isTaskRedeployed?: boolean
     hasRepoIndex?: boolean
 }
 
@@ -80,7 +85,7 @@ type TDaoMember = {
 }
 
 type TDaoMemberDetails = TDaoMember & {
-    name: string
+    user: TUserParam
 }
 
 type TWalletDetails = {
@@ -93,6 +98,7 @@ type TWalletDetails = {
 }
 
 type TTaskDetails = {
+    account: IGoshTask
     address: TAddress
     name: string
     repository: string
@@ -141,19 +147,41 @@ type TTaskDeleteResult = Promise<void | string>
 type TTaskReceiveBountyParams = {
     repository: string
     name: string
-    type: ETaskBounty
+    type?: ETaskBounty
+}
+
+type TTaskUpgradeParams = {
+    accountData: any
+    repoName: string
+}
+
+type TTaskUpgradeResult = string
+
+type TTaskUpgradeCompleteParams = {
+    cell?: boolean
+}
+
+type TTaskUpgradeCompleteResult = void
+
+type TUserParam = {
+    name: string
+    type: 'user' | 'dao' | string
 }
 
 type TDaoMemberCreateParams = TEventCreateParams & {
     usernames?: string[]
-    members?: { username: string; allowance: number; comment: string }[]
+    members?: {
+        user: TUserParam
+        allowance: number
+        comment: string
+    }[]
     cell?: boolean
 }
 
 type TDaoMemberCreateResult = Promise<void | string>
 
 type TDaoMemberDeleteParams = TEventCreateParams & {
-    usernames: string[]
+    user: TUserParam[]
     cell?: boolean
 }
 
@@ -182,7 +210,7 @@ type TDaoUpgradeParams = TEventCreateParams & {
 type TDaoUpgradeResult = Promise<void | string>
 
 type TDaoVotingTokenAddParams = TEventCreateParams & {
-    username: string
+    user: TUserParam
     amount: number
     alone?: boolean
     cell?: boolean
@@ -191,7 +219,7 @@ type TDaoVotingTokenAddParams = TEventCreateParams & {
 type TDaoVotingTokenAddResult = Promise<void | string>
 
 type TDaoRegularTokenAddParams = TEventCreateParams & {
-    username: string
+    user: TUserParam
     amount: number
     alone?: boolean
     cell?: boolean
@@ -213,6 +241,50 @@ type TDaoMintDisableParams = TEventCreateParams & {
 }
 
 type TDaoMintDisableResult = Promise<void | string>
+
+type TDaoTokenDaoSendParams = TEventCreateParams & {
+    wallet: TAddress
+    amount: number
+    profile?: TAddress
+    cell?: boolean
+}
+
+type TDaoVoteParams = TEventCreateParams & {
+    wallet: TAddress
+    platformId: string
+    choice: boolean
+    amount: number
+    cell?: boolean
+}
+
+type TDaoVoteResult = string | void
+
+type TDaoReviewParams = TEventCreateParams & {
+    wallet: TAddress
+    eventAddress: TAddress
+    choice: boolean
+    cell?: boolean
+}
+
+type TDaoReviewResult = string | void
+
+type TTaskReceiveBountyDaoParams = TEventCreateParams & {
+    wallet: TAddress
+    repoName: string
+    taskName: string
+    cell?: boolean
+}
+
+type TTaskReceiveBountyDaoResult = string | void
+
+type TDaoTokenDaoLockParams = TEventCreateParams & {
+    wallet: TAddress
+    isLock: boolean
+    amount: number
+    cell?: boolean
+}
+
+type TDaoTokenDaoLockResult = string | void
 
 type TDaoTagCreateParams = TEventCreateParams & {
     tags: string[]
@@ -268,7 +340,7 @@ type TTopicMessageCreateParams = {
 }
 
 type TIsMemberParams = {
-    username?: string
+    user?: TUserParam
     profile?: TAddress
 }
 
@@ -283,6 +355,7 @@ export {
     TDaoMemberDetails,
     TDaoSupplyDetails,
     TWalletDetails,
+    TUserParam,
     TTaskDetails,
     TTaskListItem,
     TTaskCreateParams,
@@ -308,6 +381,7 @@ export {
     TDaoMintTokenResult,
     TDaoMintDisableParams,
     TDaoMintDisableResult,
+    TDaoTokenDaoSendParams,
     TDaoTagCreateParams,
     TDaoTagCreateResult,
     TDaoTagDeleteParams,
@@ -322,4 +396,16 @@ export {
     TTopicMessageCreateParams,
     TIsMemberParams,
     TIsMemberResult,
+    TTaskUpgradeParams,
+    TTaskUpgradeResult,
+    TTaskUpgradeCompleteParams,
+    TTaskUpgradeCompleteResult,
+    TDaoVoteParams,
+    TDaoVoteResult,
+    TDaoReviewParams,
+    TDaoReviewResult,
+    TTaskReceiveBountyDaoParams,
+    TTaskReceiveBountyDaoResult,
+    TDaoTokenDaoLockParams,
+    TDaoTokenDaoLockResult,
 }

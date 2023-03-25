@@ -11,14 +11,13 @@ import { Button, Input } from '../../../../../components/Form'
 import { supabase } from '../../../../../helpers'
 import yup from '../../../../../yup-extended'
 import { ToastError } from '../../../../../components/Toast'
-import { TInvitationSentProps } from '../MemberForm'
 
 type TDaoMemberFormProps = {
     dao: {
         adapter: IGoshDaoAdapter
         details: TDao
     }
-    SuccessComponent: React.ComponentType<TInvitationSentProps>
+    SuccessComponent: React.ComponentType<any>
     getDaoInvites(): Promise<void>
     getUsernameByEmail(email: string): Promise<string | null>
 }
@@ -277,10 +276,7 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
                 }}
                 afterLeave={() => setTransition({ form: true, success: false })}
             >
-                <SuccessComponent
-                    hasEmails={!!emailsSelector.length}
-                    hasUsernames={!!usernamesSelector.length}
-                />
+                <SuccessComponent />
             </Transition>
         </div>
     )

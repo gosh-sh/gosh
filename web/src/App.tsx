@@ -52,6 +52,7 @@ import TopicCreatePage from './pages/TopicCreate'
 import TopicPage from './pages/Topic'
 import TaskPage from './pages/Task'
 import OnboardingDaoPage from './pages/OnboardingDao'
+import TasksUpgradePage from './pages/TasksUpgrade'
 
 const App = () => {
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
@@ -189,6 +190,7 @@ const App = () => {
                             <Route path="tasks">
                                 <Route index element={<TasksPage />} />
                                 <Route path="create" element={<TaskCreatePage />} />
+                                <Route path="upgrade" element={<TasksUpgradePage />} />
                                 <Route path=":address" element={<TaskPage />} />
                             </Route>
                             <Route path="topics">

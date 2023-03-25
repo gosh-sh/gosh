@@ -17,7 +17,7 @@ const DaoMemberListItem = (props: TMemberListItemProps) => {
 
     return (
         <tr>
-            <td className="px-3 py-2">{item.name}</td>
+            <td className="px-3 py-2">{item.user.name}</td>
             <td className="px-3 py-2 text-gray-7c8db5 font-light">{item.allowance}</td>
             <td className="px-3 py-2 text-gray-7c8db5 font-light text-sm">
                 {item.profile && (
@@ -38,7 +38,7 @@ const DaoMemberListItem = (props: TMemberListItemProps) => {
                     <button
                         type="button"
                         className="hover:text-gray-53596d disabled:opacity-20 disabled:pointer-events-none"
-                        onClick={() => onDelete(item.name)}
+                        onClick={() => onDelete(item.user.name)}
                         disabled={isFetching || item.profile === owner}
                     >
                         {isFetching ? (

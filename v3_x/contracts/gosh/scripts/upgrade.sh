@@ -67,6 +67,12 @@ TOPIC_CODE=$(everdev contract dt $GOSH_PATH/topic.tvc | tr -d ' ",' | sed -n '/c
 # Echo VersionController address
 echo "========== VersionController address: $VERSIONCONTROLLER_ADDR"
 
+# Upgrade VersionController (this step is not necessary for each upgrade)
+echo "========== Upgrade VersionController code"
+VERSIONCONTROLLER_CODE=$(everdev contract dt $GOSH_PATH/versioncontroller.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+everdev contract run $VERSIONCONTROLLER_ABI updateCode --input "{\"newcode\": \"$VERSIONCONTROLLER_CODE\", \"cell\": \"\"}" --network $NETWORK --signer $SIGNER --address $VERSIONCONTROLLER_ADDR > /dev/null || exit 1
+delay 40
+
 # Apply VersionController setters
 echo "========== Run VersionController setters"
 echo "     ====> Run setSystemContractCode"

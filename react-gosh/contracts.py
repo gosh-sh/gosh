@@ -8,7 +8,7 @@ from pathlib import Path
 DST_CONTRACTS_PATH = Path('./src/resources/contracts/abi.json')
 CONTRACTS = {
     '': [
-        'versioncontroller',
+        'gosh/versioncontroller',
         'profile',
         'profileindex',
         'profiledao',
@@ -94,7 +94,7 @@ def main():
             src = SRC_CONTRACTS_PATH / f'{contract}.abi.json'
             key = contract.replace('gosh/', '').replace('smv/', '').lower()
 
-            if key in CONTRACTS['']:
+            if key in CONTRACTS[''] or key == 'versioncontroller':
                 abis[key] = json.load(open(src, encoding='utf8'))
             else:
                 abis[version][key] = json.load(open(src, encoding='utf8'))
