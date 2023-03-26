@@ -560,11 +560,11 @@ function dao_transfer_tokens {
   GRANT=2
   OLD_VERSION=3.0.0
   tonos-cli -j callx --abi $WALLET_ABI --addr $NEW_CHILD_WALLET_ADDR --keys $WALLET_KEYS -m startProposalForDaoTransferTokens \
-    "{\"wallet\":\"$CHILD_DAO_WALLET_ADDR\",\"grant\":$GRANT,\"oldversion\":\"$OLD_VERSION\",\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
+    "{\"wallet\":\"$CHILD_DAO_WALLET_ADDR\",\"newwallet\":\"$NEW_CHILD_DAO_WALLET_ADDR\",\"grant\":$GRANT,\"oldversion\":\"$OLD_VERSION\",\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
   NOW_ARG=$(tonos-cli -j account $NEW_CHILD_WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
   echo "NOW_ARG=$NOW_ARG"
   TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_CHILD_WALLET_ADDR -m getCellDaoTransferTokens \
-    "{\"wallet\":\"$CHILD_DAO_WALLET_ADDR\",\"grant\":$GRANT,\"oldversion\":\"$OLD_VERSION\",\"comment\":\"\",\"time\":$NOW_ARG}"  | sed -n '/value0/ p' | cut -d'"' -f 4)
+    "{\"wallet\":\"$CHILD_DAO_WALLET_ADDR\",\"newwallet\":\"$NEW_CHILD_DAO_WALLET_ADDR\",\"grant\":$GRANT,\"oldversion\":\"$OLD_VERSION\",\"comment\":\"\",\"time\":$NOW_ARG}"  | sed -n '/value0/ p' | cut -d'"' -f 4)
   sleep 10
 
   PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \

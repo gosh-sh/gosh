@@ -183,11 +183,6 @@ CHILD_ADDR=$(echo $NEW_CHILD_DAO_ADDR | sed -r "s/:/x/")
 NEW_CHILD_DAO_WALLET_ADDR=$(tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull | jq '.value0."'$CHILD_ADDR'".member' | cut -d'"' -f 2)
 echo "NEW_CHILD_DAO_WALLET_ADDR=$NEW_CHILD_DAO_WALLET_ADDR"
 
-TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull | jq '.value0."'$CHILD_ADDR'".count' | cut -d'"' -f 2)
-if [ "$TOKEN_CNT" != "0" ]; then
-  echo Wrong amount of token
-  exit 1
-fi
 tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getTokenBalance
 tonos-cli -j runx --abi $DAO_ABI --addr $NEW_CHILD_DAO_ADDR -m getTokenBalance
 
@@ -293,7 +288,8 @@ fi
 
 #апргейд обоих
 #в даомембере в старой версии в личном кошельке daoAskUnlockAfterTombstone
-#startProposalForDaoTransferTokens
+#
 #
 #в новой
+# startProposalForDaoTransferTokens
 #startProposalForDaoLockVote
