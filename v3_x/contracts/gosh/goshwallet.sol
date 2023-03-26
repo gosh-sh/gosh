@@ -1904,6 +1904,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     	ISMVTokenLocker(tip3VotingLocker).unlockVoting {value: 3*SMVConstants.ACTION_FEE, flag: 1}
                                                    (amount);
+        updateHeadIn();
     }
 
     function _startProposalForOperation(TvmCell dataCell, uint32 startTimeAfter, uint32 durationTime, uint128 num_clients, address[] reviewers) internal view
