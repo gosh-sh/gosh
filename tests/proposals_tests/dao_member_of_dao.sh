@@ -64,7 +64,7 @@ if [ "$TOKEN_CNT" != "1" ]; then
 fi
 
 # wallet addr of child dao in parent dao
-CHILD_DAO_WALLET_ADDR=$(tonos-cli -j runx --abi $DAO_ABI --addr $PARENT_DAO_ADDR -m getWalletsFull | jq '.value0."'$CHILD_ADDR'".member' )
+CHILD_DAO_WALLET_ADDR=$(tonos-cli -j runx --abi $DAO_ABI --addr $PARENT_DAO_ADDR -m getWalletsFull | jq '.value0."'$CHILD_ADDR'".member' | cut -d'"' -f 2)
 echo "CHILD_DAO_WALLET_ADDR=$CHILD_DAO_WALLET_ADDR"
 
 TASK_NAME="task1"
@@ -156,19 +156,7 @@ if [ "$TOKEN_CNT" != "2" ]; then
   exit 1
 fi
 
-
-
-#works till here
-
-
-
-
-
-
-
-
-
-
+tonos-cli -j runx --abi $DAO_ABI --addr $PARENT_DAO_ADDR -m getWalletsFull
 
 echo "Upgrade parent DAO"
 WALLET_ADDR=$PARENT_WALLET_ADDR
@@ -182,6 +170,7 @@ tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull
 
 echo "Upgrade child DAO"
 WALLET_ADDR=$CHILD_WALLET_ADDR
+DAO_NAME=$CHILD_DAO_NAME
 upgrade_DAO
 
 NEW_CHILD_WALLET_ADDR=$WALLET_ADDR
@@ -190,55 +179,121 @@ NEW_CHILD_DAO_ADDR=$DAO_ADDR
 sleep 20
 tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull
 
+CHILD_ADDR=$(echo $NEW_CHILD_DAO_ADDR | sed -r "s/:/x/")
+NEW_CHILD_DAO_WALLET_ADDR=$(tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull | jq '.value0."'$CHILD_ADDR'".member' | cut -d'"' -f 2)
+echo "NEW_CHILD_DAO_WALLET_ADDR=$NEW_CHILD_DAO_WALLET_ADDR"
 
-# for old version
-#UpdateHead
-#UnlockVoting(0)
-#Sendtokentonewversion
+TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull | jq '.value0."'$CHILD_ADDR'".count' | cut -d'"' -f 2)
+if [ "$TOKEN_CNT" != "0" ]; then
+  echo Wrong amount of token
+  exit 1
+fi
+tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getTokenBalance
+tonos-cli -j runx --abi $DAO_ABI --addr $NEW_CHILD_DAO_ADDR -m getTokenBalance
 
-tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m updateHead
+tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_PARENT_WALLET_ADDR -m m_pseudoDAOBalance
+tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_PARENT_WALLET_ADDR -m m_pseudoDAOVoteBalance
+tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_CHILD_WALLET_ADDR -m m_pseudoDAOBalance
+tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_CHILD_WALLET_ADDR -m m_pseudoDAOVoteBalance
+
+tonos-cli callx --addr "$PARENT_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m updateHead
+tonos-cli callx --addr "$CHILD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m updateHead
 sleep 5
-tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m unlockVoting --amount 0
+tonos-cli callx --addr "$PARENT_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m unlockVoting --amount 0
+tonos-cli callx --addr "$CHILD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m unlockVoting --amount 0
 sleep 5
-tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 21 --newversion "4.0.0"
+tonos-cli callx --addr "$PARENT_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 20 --newversion "4.0.0"
+tonos-cli callx --addr "$CHILD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 20 --newversion "4.0.0"
+sleep 60
 
-sleep 20
-
-NEW_TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getWalletsFull | jq '.value0."'$USER_ADDR'".count' | cut -d'"' -f 2)
-tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
-
-tonos-cli callx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m lockVoting --amount 0
+tonos-cli callx --addr "$NEW_PARENT_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m lockVoting --amount 0
+tonos-cli callx --addr "$NEW_CHILD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m lockVoting --amount 0
 
 sleep 60
 
-tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
+tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getTokenBalance
+tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull
+tonos-cli -j runx --abi $DAO_ABI --addr $NEW_CHILD_DAO_ADDR -m getTokenBalance
+tonos-cli -j runx --abi $DAO_ABI --addr $NEW_CHILD_DAO_ADDR -m getWalletsFull
+tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_PARENT_WALLET_ADDR -m m_pseudoDAOBalance
+tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_PARENT_WALLET_ADDR -m m_pseudoDAOVoteBalance
+tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_CHILD_WALLET_ADDR -m m_pseudoDAOBalance
+tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_CHILD_WALLET_ADDR -m m_pseudoDAOVoteBalance
+
+
+tonos-cli -j runx --abi $WALLET_ABI --addr $CHILD_WALLET_ADDR -m m_pseudoDAOBalance
+tonos-cli -j runx --abi $WALLET_ABI --addr $CHILD_WALLET_ADDR -m m_pseudoDAOVoteBalance
+
+tonos-cli callx --addr "$CHILD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m daoAskUnlockAfterTombstone --wallet $CHILD_DAO_WALLET_ADDR
+sleep 30
+#tonos-cli callx --addr "$CHILD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendDaoTokenToNewVersion --wallet $CHILD_DAO_WALLET_ADDR --grant 1 --newversion "4.0.0"
+dao_transfer_tokens
+
+sleep 30
+
+
+tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull
+tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getTokenBalance
+
+child_dao_lock_vote
+
+sleep 60
+
+tonos-cli -j runx --abi $WALLET_ABI --addr $CHILD_WALLET_ADDR -m m_pseudoDAOBalance
+tonos-cli -j runx --abi $WALLET_ABI --addr $CHILD_WALLET_ADDR -m m_pseudoDAOVoteBalance
+
+tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull
+tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getTokenBalance
 
 sleep 60
 
 OLD_VERSION=3.0.0
+WALLET_ADDR=$NEW_PARENT_WALLET_ADDR
 
 upgrade_task_proposal
 OLD_TASK_ADDR=$TASK_ADDR
 TASK_ADDR=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTaskAddr --abi $WALLET_ABI_1 --nametask $TASK_NAME --repoName $REPO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
 wait_account_active $TASK_ADDR
 
-OLD_TASK_STATUS=$(tonos-cli -j account $OLD_TASK_ADDR | jq '."'$OLD_TASK_ADDR'".acc_type')
-
-if [ "$OLD_TASK_STATUS" != "\"NonExist\"" ]; then
-  echo wrong old task status
-  exit 2
-fi
-
 sleep 10
 
-tonos-cli callx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m askGrantToken --repoName $REPO_NAME --nametask $TASK_NAME --typegrant 1
+CHILD_WALLET_ADDR=$NEW_CHILD_WALLET_ADDR
+child_dao_ask_granted
 
-sleep 10
+sleep 60
 
-FINAL_TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getWalletsFull | jq '.value0."'$USER_ADDR'".count' | cut -d'"' -f 2)
-
-if [ "$FINAL_TOKEN_CNT" != "22" ]; then
-    echo Did not get token
-    exit 2
+TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull | jq '.value0."'$CHILD_ADDR'".count' | cut -d'"' -f 2)
+if [ "$TOKEN_CNT" != "3" ]; then
+  echo Wrong amount of token
+  exit 1
 fi
 
+
+
+
+#до апгрейдв
+#tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m updateHead
+#sleep 5
+#tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m unlockVoting --amount 0
+#sleep 5
+#tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 21 --newversion "4.0.0"
+#
+#вывести все токены в парент дао
+#
+# function startProposalForDaoLockVote(
+#        address wallet,
+#        bool isLock,  unlock lock
+#        uint128 grant,
+#        string comment,
+#        uint128 num_clients,
+#        address[] reviewers
+#
+
+
+
+#апргейд обоих
+#в даомембере в старой версии в личном кошельке daoAskUnlockAfterTombstone
+#startProposalForDaoTransferTokens
+#
+#в новой
+#startProposalForDaoLockVote
