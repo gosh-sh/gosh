@@ -361,6 +361,28 @@
 			]
 		},
 		{
+			"name": "daoSendTokenToNewVersion",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"wallet","type":"address"},
+				{"name":"grant","type":"uint128"},
+				{"name":"newversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "daoAskLockTomb",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"wallet","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "daoAskLock",
 			"inputs": [
 				{"name":"pub","type":"address"},

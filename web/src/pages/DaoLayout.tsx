@@ -28,7 +28,10 @@ const DaoLayout = () => {
     const [description, setDescription] = useState<string | null>()
     const [isReady, setIsReady] = useState<boolean>(false)
     const [upgrades, setUpgrades] = useState<
-        'isNotLatest' | 'isUpgradeAvailable' | 'isRepoUpgradeNeeded'
+        | 'isNotLatest'
+        | 'isUpgradeAvailable'
+        | 'isRepoUpgradeNeeded'
+        | 'isTaskUpgradeNeeded'
     >()
 
     const getTabs = () => {
@@ -98,6 +101,12 @@ const DaoLayout = () => {
             // Check repositories upgraded flag
             if (!dao.details.isRepoUpgraded) {
                 setUpgrades('isRepoUpgradeNeeded')
+                return
+            }
+
+            // Check tasks upgraded flag
+            if (!dao.details.isTaskRedeployed) {
+                setUpgrades('isTaskUpgradeNeeded')
                 return
             }
 
@@ -228,10 +237,24 @@ const DaoLayout = () => {
                                 <>
                                     DAO repositories should be upgraded.
                                     <br />
-                                    Go to the{' '}
+                                    Go to the repositories{' '}
                                     <Link
                                         className="underline"
                                         to={`/o/${daoName}/repos/upgrade`}
+                                    >
+                                        upgrade
+                                    </Link>{' '}
+                                    page
+                                </>
+                            )}
+                            {upgrades === 'isTaskUpgradeNeeded' && (
+                                <>
+                                    DAO tasks should be upgraded.
+                                    <br />
+                                    Go to the tasks{' '}
+                                    <Link
+                                        className="underline"
+                                        to={`/o/${daoName}/tasks/upgrade`}
                                     >
                                         upgrade
                                     </Link>{' '}

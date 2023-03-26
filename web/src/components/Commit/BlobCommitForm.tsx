@@ -1,6 +1,12 @@
 import { Field, Form, Formik } from 'formik'
 import { Tab } from '@headlessui/react'
-import { classNames, getCodeLanguageFromFilename, splitByPath, TDao } from 'react-gosh'
+import {
+    classNames,
+    getCodeLanguageFromFilename,
+    splitByPath,
+    TDao,
+    TUserParam,
+} from 'react-gosh'
 import { TPushProgress, TRepository } from 'react-gosh/dist/types/repo.types'
 import RepoBreadcrumbs from '../Repo/Breadcrumbs'
 import { FormikInput } from '../Formik'
@@ -23,9 +29,9 @@ export type TBlobCommitFormValues = {
     message?: string
     tags?: string
     task?: string
-    assigners?: string
-    reviewers?: string
-    managers?: string
+    assigners?: string | TUserParam[]
+    reviewers?: string | TUserParam[]
+    managers?: string | TUserParam[]
     isPullRequest?: boolean
 }
 
@@ -79,16 +85,35 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
             managers: '',
             isPullRequest: false,
         }
-        return {
-            ...initialValues,
-            ...(dao.details.version !== '1.0.0' ? version_2_0_0 : {}),
+        const version_3_0_0 = {
+            task: '',
+            assigners: [],
+            reviewers: [],
+            managers: [],
+            isPullRequest: false,
         }
+
+        let versionised = {}
+        if (dao.details.version === '2.0.0') {
+            versionised = version_2_0_0
+        } else if (dao.details.version === '3.0.0') {
+            versionised = version_3_0_0
+        }
+
+        return { ...initialValues, ...versionised }
     }
 
     const getValidationSchema = () => {
         const version_2_0_0 = {
             task: yup.string(),
-            assigners: yup.string(),
+            assigners: yup
+                .string()
+                .test('check-task', 'Field is required', function (value) {
+                    if (this.parent.task && !value) {
+                        return false
+                    }
+                    return true
+                }),
             reviewers: yup.string(),
             managers: yup.string(),
             isPullRequest: yup
@@ -104,12 +129,42 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                     },
                 ),
         }
+        const version_3_0_0 = {
+            task: yup.string(),
+            assigners: yup.array().test('check-task', 'Min 1 assigner', function (value) {
+                if (this.parent.task && !value?.length) {
+                    return false
+                }
+                return true
+            }),
+            reviewers: yup.array(),
+            managers: yup.array(),
+            isPullRequest: yup
+                .boolean()
+                .test(
+                    'check-pullrequest',
+                    'Proposal is required if task was selected',
+                    function (value) {
+                        if (this.parent.task && !value) {
+                            return false
+                        }
+                        return true
+                    },
+                ),
+        }
+
+        let versionised = {}
+        if (dao.details.version === '2.0.0') {
+            versionised = version_2_0_0
+        } else if (dao.details.version === '3.0.0') {
+            versionised = version_3_0_0
+        }
 
         return yup.object().shape({
             name: yup.string().required('Field is required'),
             title: yup.string().required('Field is required'),
             ...validationSchema,
-            ...(dao.details.version !== '1.0.0' ? version_2_0_0 : {}),
+            ...versionised,
         })
     }
 

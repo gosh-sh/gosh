@@ -3,7 +3,14 @@ import { MAX_PARALLEL_READ } from '../constants'
 import { EGoshError, GoshError } from '../errors'
 import { IGoshDaoAdapter, IGoshSmvAdapter } from '../gosh/interfaces'
 import { executeByChunk, getAllAccounts } from '../helpers'
-import { TAddress, TDao, TSmvDetails, TSmvEvent, TSmvEventListItem } from '../types'
+import {
+    TAddress,
+    TDao,
+    TSmvDetails,
+    TSmvEvent,
+    TSmvEventListItem,
+    TUserParam,
+} from '../types'
 
 function useSmv(dao: { adapter: IGoshDaoAdapter; details: TDao }) {
     const [adapter, setAdapter] = useState<IGoshSmvAdapter>()
@@ -120,14 +127,14 @@ function useSmvTokenTransfer(smv?: IGoshSmvAdapter, dao?: IGoshDaoAdapter) {
         }
     }
 
-    const transferToInternal = async (username: string, amount: number) => {
+    const transferToInternal = async (user: TUserParam, amount: number) => {
         try {
             setProgress((state) => ({ ...state, toInternal: true }))
 
             if (!dao) {
                 throw new GoshError('DAO adapter is undefined')
             }
-            await dao.sendInternal2Internal(username, amount)
+            await dao.sendInternal2Internal(user, amount)
         } catch (e) {
             throw e
         } finally {

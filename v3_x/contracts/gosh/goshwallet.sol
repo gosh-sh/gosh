@@ -1679,12 +1679,24 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
     
+    function sendTokenToNewVersionIn(uint128 grant, string newversion) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
+        require(grant <= m_pseudoDAOBalance, ERR_TOO_LOW_BALANCE);
+        m_pseudoDAOBalance -= grant;        
+        SystemContract(_systemcontract).sendTokenToNewVersion2{value : 0.2 ton}(_pubaddr, _nameDao, _index, grant, newversion);
+        getMoney();
+    }
+    
     function sendTokenToNewVersion5(uint128 grant) public senderIs(_systemcontract)  accept saveMsg {
         m_pseudoDAOBalance += grant;        
         getMoney();
     }
 
-
+    function sendDaoTokenToNewVersion(address wallet, uint128 grant, string newversion) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        require(_limited == false, ERR_WALLET_LIMITED);
+        GoshDao(_goshdao).daoSendTokenToNewVersion{value : 0.2 ton}(_pubaddr, _index, wallet, grant, newversion);
+        getMoney();
+    }
+    
     function receiveToken(
         address pubaddr,
         uint128 index,
@@ -1952,6 +1964,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = ASK_TASK_GRANT_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = now; }
         return abi.encode(proposalKind, wallet, repoName, taskName, comment, time.get());  
+    }
+    
+    function daoAskUnlockAfterTombstone(address wallet) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+        require(_limited == false, ERR_WALLET_LIMITED);
+        GoshDao(_goshdao).daoAskLockTomb{value: 0.1 ton}(_pubaddr, _index, wallet);
     }
     
     function startProposalForDaoLockVote(

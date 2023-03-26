@@ -1,15 +1,15 @@
 import { Dialog } from '@headlessui/react'
 import { toast } from 'react-toastify'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
-import { ESmvEventType, TDao } from 'react-gosh'
+import { ESmvEventType, TDao, TUserParam } from 'react-gosh'
 import { Field, Form, Formik } from 'formik'
-import { FormikCheckbox, FormikInput, FormikTextarea } from '../Formik'
-import yup from '../../yup-extended'
-import { Button } from '../Form'
+import { FormikCheckbox, FormikInput, FormikTextarea } from '../../../Formik'
+import yup from '../../../../yup-extended'
+import { Button } from '../../../Form'
 import { useNavigate } from 'react-router-dom'
-import { ToastError } from '../Toast'
+import { ToastError } from '../../../Toast'
 import { useResetRecoilState } from 'recoil'
-import { appModalStateAtom } from '../../store/app.state'
+import { appModalStateAtom } from '../../../../store/app.state'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 
@@ -34,32 +34,35 @@ const DaoTokenSendModal = (props: TDaoTokenSendModalProps) => {
 
     const onSubmit = async (values: TFormValues) => {
         try {
-            const { isVoting, comment } = values
-            const username = values.username.trim()
+            const { isVoting, comment, username } = values
+            const user = {
+                name: username.trim(),
+                type: 'user',
+            } as TUserParam
             const amount = parseInt(values.amount)
-            const isMember = await dao.adapter.isMember({ username })
+            const isMember = await dao.adapter.isMember({ user })
 
             if (isVoting) {
                 if (isMember) {
-                    await dao.adapter.addVotingTokens({ username, amount, comment })
+                    await dao.adapter.addVotingTokens({ user, amount, comment })
                 } else {
                     await dao.adapter.createMultiProposal({
                         proposals: [
                             {
                                 type: ESmvEventType.DAO_MEMBER_ADD,
                                 params: {
-                                    members: [{ username, allowance: 0, comment: '' }],
+                                    members: [{ user, allowance: 0, comment: '' }],
                                 },
                             },
                             {
                                 type: ESmvEventType.DAO_TOKEN_VOTING_ADD,
-                                params: { username, amount },
+                                params: { user, amount },
                             },
                         ],
                     })
                 }
             } else {
-                await dao.adapter.addRegularTokens({ username, amount, comment })
+                await dao.adapter.addRegularTokens({ user, amount, comment })
             }
 
             resetModal()

@@ -109,6 +109,16 @@ contract Repository is Modifiers{
             _protectedBranch = protectedBranch;
             _head = head;
             this.smvdeployrepotagin{value: 0.1 ton}(hashtag.values());
+            return;
+        }
+        if (ver == "3.0.0"){
+            (bool ans, mapping(uint256 => Item) Branches, mapping(uint256 => bool) protectedBranch, string head, mapping(uint256 => string) hashtag) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => bool), string, mapping(uint256 => string)));
+            if (ans == false) { selfdestruct(giver); }
+            _Branches = Branches;
+            _protectedBranch = protectedBranch;
+            _head = head;
+            this.smvdeployrepotagin{value: 0.1 ton}(hashtag.values());
+            return;
         }
         if (ver == "3.0.0"){
             (bool ans, mapping(uint256 => Item) Branches, mapping(uint256 => bool) protectedBranch, string head, mapping(uint256 => string) hashtag) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => bool), string, mapping(uint256 => string)));
@@ -213,7 +223,7 @@ contract Repository is Modifiers{
     function SendDiff(string branch, address commit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task, bool isUpgrade) public view senderIs(address(this)){
         tvm.accept();
         require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
-        uint128 valueton = number * 1 ton;
+        uint128 valueton = number * 1 ton + 0.5 ton;
         if (valueton > 1000 ton) { valueton = 1000 ton; }
         Commit(commit).SendDiff{value: valueton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].commitaddr, number, numberCommits, task, isUpgrade);
     }
@@ -222,7 +232,7 @@ contract Repository is Modifiers{
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        uint128 valueton = number * 1 ton;
+        uint128 valueton = number * 1 ton + 0.5 ton;
         if (valueton > 1000 ton) { valueton = 1000 ton; }
         Commit(commit).SendDiffSmv{value: valueton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].commitaddr, number, numberCommits, task);
     }

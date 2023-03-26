@@ -1,4 +1,5 @@
 import { IGoshRepositoryAdapter, IGoshWallet } from '../gosh/interfaces'
+import { TUserParam } from './dao.types'
 import { TAddress, TEventCreateParams } from './types'
 
 enum EBlobFlag {
@@ -132,9 +133,9 @@ type TBranchOperateProgress = {
 
 type TTaskCommitConfig = {
     task: string
-    assigners: string[]
-    reviewers: string[]
-    managers: string[]
+    assigners: string[] | TUserParam[]
+    reviewers: string[] | TUserParam[]
+    managers: string[] | TUserParam[]
 }
 
 type TRepositoryCreateParams = TEventCreateParams & {

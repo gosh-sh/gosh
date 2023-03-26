@@ -37,7 +37,7 @@ const DaoWalletSide = (props: TDaoWalletSideProps) => {
         return member ? member.allowance : 0
     }, [dao.details.isAuthMember, dao.details.members, user.profile])
 
-    const onDaoTokenSendClick = () => {
+    const onTokenSendClick = () => {
         setModal({
             static: false,
             isOpen: true,
@@ -61,7 +61,7 @@ const DaoWalletSide = (props: TDaoWalletSideProps) => {
                                     'hover:!border-gray-53596d',
                                 )}
                                 variant="custom"
-                                onClick={onDaoTokenSendClick}
+                                onClick={onTokenSendClick}
                             >
                                 Send
                             </Button>

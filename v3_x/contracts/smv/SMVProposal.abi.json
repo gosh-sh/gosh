@@ -531,6 +531,33 @@
 			]
 		},
 		{
+			"name": "getDaoMultiProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"wallet","type":"address"},
+				{"name":"number","type":"uint128"},
+				{"name":"proposals","type":"cell"},
+				{"name":"num_clients_base","type":"uint128"},
+				{"name":"reviewers_base","type":"address[]"}
+			]
+		},
+		{
+			"name": "getDaoMultiProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"wallet","type":"address"},
+				{"name":"number","type":"uint128"},
+				{"name":"proposals","type":"cell"},
+				{"name":"num_clients_base","type":"uint128"},
+				{"name":"reviewers_base","type":"address[]"}
+			]
+		},
+		{
 			"name": "getDaoLockVoteProposalParams",
 			"inputs": [
 			],

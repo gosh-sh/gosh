@@ -63,6 +63,7 @@ const DaoTokenMintModal = (props: TDaoTokenMintModalProps) => {
                     }}
                     validationSchema={yup.object().shape({
                         amount: yup.number().integer().positive().required(),
+                        comment: yup.string().required(),
                     })}
                     onSubmit={onSubmit}
                 >

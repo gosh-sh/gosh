@@ -542,6 +542,18 @@ contract GoshDao is Modifiers, TokenRootOwner {
     	getMoney();	
     }
     
+     function daoSendTokenToNewVersion (address pub, uint128 index, address wallet, uint128 grant, string newversion) public senderIs(getAddrWalletIn(pub, index))  accept {
+    	require(_tombstone == true, ERR_TOMBSTONE);
+        GoshWallet(wallet).sendTokenToNewVersionIn{value:0.2 ton}(grant, newversion);   
+    	getMoney();	
+    }
+    
+    function daoAskLockTomb (address pub, uint128 index, address wallet) public senderIs(getAddrWalletIn(pub, index))  accept {
+    	require(_tombstone == true, ERR_TOMBSTONE);
+    	GoshWallet(wallet).unlockVotingInDao{value:0.2 ton}(uint128(0));
+    	getMoney();
+    }
+    
     function daoAskLock (address pub, uint128 index, address wallet, bool isLock, uint128 grant) public senderIs(getAddrWalletIn(pub, index))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
     	if (isLock) {  GoshWallet(wallet).lockVotingInDao{value:0.2 ton}(grant); }

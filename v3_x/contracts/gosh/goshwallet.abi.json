@@ -1087,9 +1087,28 @@
 			]
 		},
 		{
+			"name": "sendTokenToNewVersionIn",
+			"inputs": [
+				{"name":"grant","type":"uint128"},
+				{"name":"newversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "sendTokenToNewVersion5",
 			"inputs": [
 				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendDaoTokenToNewVersion",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"grant","type":"uint128"},
+				{"name":"newversion","type":"string"}
 			],
 			"outputs": [
 			]
@@ -1194,6 +1213,14 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "daoAskUnlockAfterTombstone",
+			"inputs": [
+				{"name":"wallet","type":"address"}
+			],
+			"outputs": [
 			]
 		},
 		{

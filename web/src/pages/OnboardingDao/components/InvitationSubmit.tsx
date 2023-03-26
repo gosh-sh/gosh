@@ -28,7 +28,13 @@ const DaoInvitationSubmit = (props: TDaoInvitationSubmitProps) => {
         try {
             const { comment } = values
             await dao.adapter.createMember({
-                members: [{ username: user.username!, allowance: 0, comment }],
+                members: [
+                    {
+                        user: { name: user.username!, type: 'user' },
+                        allowance: 0,
+                        comment,
+                    },
+                ],
             })
 
             await supabase

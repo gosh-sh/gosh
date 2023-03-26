@@ -8,12 +8,21 @@ import {
     TDaoMintDisableParams,
     TDaoMintTokenParams,
     TDaoRegularTokenAddParams,
+    TDaoReviewParams,
     TDaoTagCreateParams,
     TDaoTagDeleteParams,
+    TDaoTokenDaoSendParams,
+    TDaoTokenDaoLockParams,
     TDaoUpgradeParams,
+    TDaoVoteParams,
     TDaoVotingTokenAddParams,
     TTaskCreateParams,
     TTaskDeleteParams,
+    TTaskReceiveBountyDaoParams,
+    TTaskUpgradeCompleteParams,
+    TTaskTransferParams,
+    TUserParam,
+    TTaskUpgradeParams,
 } from './dao.types'
 import {
     TRepositoryChangeBranchProtectionParams,
@@ -39,7 +48,7 @@ type TValidationResult = {
 
 type TEventCreateParams = {
     comment?: string
-    reviewers?: string[]
+    reviewers?: TUserParam[]
 }
 
 type TEventMultipleCreateProposalParams = TEventCreateParams & {
@@ -128,12 +137,54 @@ type TEventMultipleCreateProposalParams = TEventCreateParams & {
               type: ESmvEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE
               params: TDaoAskMembershipAllowanceParams
           }
+        | {
+              type: ESmvEventType.DELAY
+              params: object
+          }
+        | {
+              type: ESmvEventType.DAO_TOKEN_DAO_SEND
+              params: TDaoTokenDaoSendParams
+          }
+        | {
+              type: ESmvEventType.TASK_REDEPLOY
+              params: TTaskTransferParams
+          }
+        | {
+              type: ESmvEventType.TASK_REDEPLOYED
+              params: TTaskUpgradeCompleteParams
+          }
+        | {
+              type: ESmvEventType.DAO_VOTE
+              params: TDaoVoteParams
+          }
+        | {
+              type: ESmvEventType.DAO_REVIEWER
+              params: TDaoReviewParams
+          }
+        | {
+              type: ESmvEventType.DAO_RECEIVE_BOUNTY
+              params: TTaskReceiveBountyDaoParams
+          }
+        | {
+              type: ESmvEventType.DAO_TOKEN_DAO_LOCK
+              params: TDaoTokenDaoLockParams
+          }
+        | {
+              type: ESmvEventType.TASK_UPGRADE
+              params: TTaskUpgradeParams
+          }
     )[]
+}
+
+type TEventMultipleCreateProposalAsDaoParams = TEventMultipleCreateProposalParams & {
+    wallet: TAddress
+    reviewersBase?: TUserParam[]
 }
 
 export {
     TAddress,
     TEventMultipleCreateProposalParams,
+    TEventMultipleCreateProposalAsDaoParams,
     TPaginatedAccountsResult,
     TEventCreateParams,
     TValidationResult,

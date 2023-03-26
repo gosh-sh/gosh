@@ -7,11 +7,15 @@ import {
     TAddress,
     TDaoCreateProgress,
     TDaoListItem,
+    TDaoMemberCreateParams,
     TDaoMemberDetails,
+    TDaoMintTokenParams,
+    TDaoVotingTokenAddParams,
     TTaskDetails,
     TTaskListItem,
     TTopic,
     TTopicCreateParams,
+    TUserParam,
 } from '../types'
 import { EGoshError, GoshError } from '../errors'
 import { AppConfig } from '../appconfig'
@@ -410,7 +414,7 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
 
         setMembers((state) => ({
             ...state,
-            items: items.sort((a, b) => (a.name > b.name ? 1 : -1)),
+            items: items.sort((a, b) => (a.user.name > b.user.name ? 1 : -1)),
             filtered: items.map((item) => item.profile),
             isFetching: false,
         }))
@@ -428,7 +432,7 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
                 const name = await profile.getName()
                 const wallet = await dao.getMemberWallet({ address: member.wallet })
                 const balance = await smv.getWalletBalance(wallet)
-                return { ...member, name, allowance: balance }
+                return { ...member, allowance: balance, user: { name, type: 'user' } }
             },
         )
         return items
@@ -439,9 +443,8 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
 
         const members = await dao.getMembers()
         const items = await executeByChunk(members, MAX_PARALLEL_READ, async (member) => {
-            const profile = await gosh.getProfile({ address: member.profile })
-            const name = await profile.getName()
-            return { ...member, name }
+            const user = await gosh.getUserByAddress(member.profile)
+            return { ...member, user }
         })
         return items
     }
@@ -460,7 +463,11 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
                 filtered: state.items
                     .filter((item) => {
                         const pattern = new RegExp(search, 'i')
-                        return !search || !item.name || item.name.search(pattern) >= 0
+                        return (
+                            !search ||
+                            !item.user.name ||
+                            item.user.name.search(pattern) >= 0
+                        )
                     })
                     .map((item) => item.profile),
             }
@@ -506,47 +513,76 @@ function useDaoMemberCreate(dao: IGoshDaoAdapter) {
     }
 
     const _create_2_0_0 = async (options: {
-        members?: { username: string; allowance: number; comment: string }[]
+        members?: TDaoMemberCreateParams['members']
     }) => {
-        const clean = (options.members || []).filter(({ username }) => !!username)
-        if (clean.length) {
-            const memberAddCells: { type: number; params: object }[] = clean.map(
-                ({ username, comment }) => ({
-                    type: ESmvEventType.DAO_MEMBER_ADD,
-                    params: {
-                        members: [{ username, allowance: 0, comment }],
-                    },
-                }),
-            )
+        const clean = (options.members || []).filter(({ user }) => !!user.name)
+        if (!clean.length) {
+            return
+        }
 
-            // Stupid, but needed.
-            // If there is only one member add cell, we need to add extra
-            // cells for multiproposal for delay.
-            // If not, voting tokens won't be added to the user
-            const extraCells: { type: number; params: object }[] = []
-            if (memberAddCells.length === 1) {
-                extraCells.push({
-                    type: ESmvEventType.DAO_TOKEN_MINT,
-                    params: { amount: 0 },
-                })
-            }
+        const memberAddCells: { type: number; params: TDaoMemberCreateParams }[] =
+            clean.map(({ user, comment }) => ({
+                type: ESmvEventType.DAO_MEMBER_ADD,
+                params: {
+                    members: [{ user, allowance: 0, comment }],
+                },
+            }))
 
-            const memberAddVotingCells: { type: number; params: object }[] = clean.map(
-                ({ username, allowance }) => ({
-                    type: ESmvEventType.DAO_TOKEN_VOTING_ADD,
-                    params: { username, amount: allowance },
-                }),
-            )
-            await dao.createMultiProposal({
-                proposals: [...memberAddCells, ...extraCells, ...memberAddVotingCells],
+        // Stupid, but needed.
+        // If there is only one member add cell, we need to add extra
+        // cells for multiproposal for delay.
+        // If not, voting tokens won't be added to the user
+        const extraCells: { type: number; params: TDaoMintTokenParams }[] = []
+        if (memberAddCells.length === 1) {
+            extraCells.push({
+                type: ESmvEventType.DAO_TOKEN_MINT,
+                params: { amount: 0 },
             })
         }
+
+        const memberAddVotingCells: {
+            type: number
+            params: TDaoVotingTokenAddParams
+        }[] = clean.map(({ user, allowance }) => ({
+            type: ESmvEventType.DAO_TOKEN_VOTING_ADD,
+            params: { user, amount: allowance },
+        }))
+        await dao.createMultiProposal({
+            proposals: [...memberAddCells, ...extraCells, ...memberAddVotingCells],
+        })
+    }
+
+    const _create_3_0_0 = async (options: {
+        members?: TDaoMemberCreateParams['members']
+    }) => {
+        const clean = (options.members || []).filter(({ user }) => !!user.name)
+        if (!clean.length) {
+            return
+        }
+
+        const memberAddCells: { type: number; params: TDaoMemberCreateParams }[] =
+            clean.map(({ user, comment }) => ({
+                type: ESmvEventType.DAO_MEMBER_ADD,
+                params: {
+                    members: [{ user, allowance: 0, comment }],
+                },
+            }))
+        const memberAddVotingCells: { type: number; params: TDaoVotingTokenAddParams }[] =
+            clean.map(({ user, allowance }) => ({
+                type: ESmvEventType.DAO_TOKEN_VOTING_ADD,
+                params: { user, amount: allowance },
+            }))
+        await dao.createMultiProposal({
+            proposals: [...memberAddCells, ...memberAddVotingCells],
+        })
     }
 
     if (version === '1.0.0') {
         return _create_1_0_0
+    } else if (version === '2.0.0') {
+        return _create_2_0_0
     }
-    return _create_2_0_0
+    return _create_3_0_0
 }
 
 function useDaoMemberDelete(dao: IGoshDaoAdapter) {
@@ -554,10 +590,12 @@ function useDaoMemberDelete(dao: IGoshDaoAdapter) {
 
     const isFetching = (username: string) => fetching.indexOf(username) >= 0
 
-    const remove = async (username: string[]) => {
-        setFetching((state) => [...state, ...username])
-        await dao.deleteMember({ usernames: username })
-        setFetching((state) => state.filter((item) => username.indexOf(item) < 0))
+    const remove = async (user: TUserParam[]) => {
+        const nameList = user.map(({ name }) => name)
+
+        setFetching((state) => [...state, ...nameList])
+        await dao.deleteMember({ user })
+        setFetching((state) => state.filter((item) => nameList.indexOf(item) < 0))
     }
 
     return { remove, isFetching }

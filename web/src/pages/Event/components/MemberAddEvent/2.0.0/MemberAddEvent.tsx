@@ -1,25 +1,26 @@
-import { GoshAdapterFactory, shortString, TAddress } from 'react-gosh'
+import { shortString, TAddress, TUserParam } from 'react-gosh'
 import { useEffect, useState } from 'react'
 import CopyClipboard from '../../../../../components/CopyClipboard'
+import { IGoshAdapter } from 'react-gosh/dist/gosh/interfaces'
 
 type TMemberAddEventProps = {
     data: any
+    gosh: IGoshAdapter
 }
 
 const MemberAddEvent = (props: TMemberAddEventProps) => {
-    const { data } = props
+    const { data, gosh } = props
     const [members, setMembers] = useState<
-        { username: string; profile: TAddress; allowance: number }[]
+        { user: TUserParam; profile: TAddress; allowance: number }[]
     >([])
 
     useEffect(() => {
         const _getProfileNames = async () => {
-            const gosh = GoshAdapterFactory.createLatest()
             const items = await Promise.all(
                 data.pubaddr.map(async (item: any) => {
-                    const instance = await gosh.getProfile({ address: item.member })
+                    const user = await gosh.getUserByAddress(item.member)
                     return {
-                        username: await instance.getName(),
+                        user,
                         profile: item.member,
                         allowance: item.count,
                     }
@@ -34,7 +35,9 @@ const MemberAddEvent = (props: TMemberAddEventProps) => {
         <div className="divide-y divide-gray-e6edff">
             {members.map((item, index) => (
                 <div key={index} className="py-2">
-                    <div className="font-medium">{item.username}</div>
+                    <div className="font-medium">
+                        {item.user.name} ({item.user.type})
+                    </div>
                     <div className="flex gap-3 text-gray-7c8db5 text-sm">
                         <div>Profile:</div>
                         <CopyClipboard
