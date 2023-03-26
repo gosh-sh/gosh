@@ -109,7 +109,9 @@ pipeline {
                     runFunctionalTests(files, basePort, "Func v1", "v1_x")
                     runFunctionalTests(files, basePort, "Func v2", "v2_x")
                     runFunctionalTests(files, basePort, "Func v3", "v3_x")
-                    runUpgradeTests(files, basePort)
+                    runUpgradeTests(files, basePort, 1, 2)
+                    runUpgradeTests(files, basePort, 2, 3)
+                    runUpgradeTests(files, basePort, 1, 3)
                     env.REACT_APP_GOSH_ROOTADDR = sh script: "cat v1_x_workspace_0/contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
                     env.REACT_APP_GOSH = sh script: "cat v1_x_workspace_0/contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
                 }
@@ -419,23 +421,23 @@ def runSingleFunctionalTest(script, index, port, version) {
     }
 }
 
-def runUpgradeTests(files, basePort) {
+def runUpgradeTests(files, basePort, from, to) {
     def containerStages = [:]
 
     for (int i = 0; i < files.size(); i++) {
         def script = files[i]
         def port = basePort + i
         def index = i
-        containerStages["Upgr ${script}"] = {
+        containerStages["Upgr $from-$to ${script}"] = {
             stage("Upgr ${script}") {
-                runSingleUpgradeTest(script, index, port)
+                runSingleUpgradeTest(script, index, port, from, to)
             }
         }
     }
     parallel containerStages
 }
 
-def runSingleUpgradeTest(script, index, port) {
+def runSingleUpgradeTest(script, index, port, from, to) {
     prepareHelperForTests()
     sh "cp -r tests tests_workspace_${index}"
     dir("${WORKSPACE}/tests_workspace_${index}") {
