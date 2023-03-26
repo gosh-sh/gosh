@@ -1539,7 +1539,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         address repo = _buildRepositoryAddr(repoName);
         TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
-        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: _goshdao}});
         address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
         Task(taskaddr).destroy{value:0.4 ton}(_pubaddr, _index);
         getMoney();
@@ -1597,9 +1597,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address repo,
         uint128 grant
     ) public senderIs(getTaskAddr(nametask, repo)) accept saveMsg {
-        GoshDao(_goshdao).addVoteTokenTask{value: 0.1 ton}(_pubaddr, _index, grant);
-        GoshDao(_goshdao).requestMint {value: SMVConstants.ACTION_FEE} (tip3VotingLocker, _pubaddr, grant, _index);
-        _lockedBalance += grant;
+        m_pseudoDAOBalance += grant;
         getMoney();
     }
     
