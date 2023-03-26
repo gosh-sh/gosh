@@ -542,9 +542,9 @@ contract GoshDao is Modifiers, TokenRootOwner {
     	getMoney();	
     }
     
-     function daoSendTokenToNewVersion (address pub, uint128 index, address wallet, uint128 grant, string newversion) public senderIs(getAddrWalletIn(pub, index))  accept {
+     function daoSendTokenToNewVersion (address pub, uint128 index, address wallet, optional(address) newwallet, uint128 grant, string newversion) public senderIs(getAddrWalletIn(pub, index))  accept {
     	require(_tombstone == true, ERR_TOMBSTONE);
-        GoshWallet(wallet).sendTokenToNewVersionIn{value:0.2 ton}(grant, newversion);   
+        GoshWallet(wallet).sendTokenToNewVersionIn{value:0.2 ton}(newwallet, grant, newversion);   
     	getMoney();	
     }
     

@@ -151,6 +151,7 @@
 			"name": "startProposalForDaoTransferTokens",
 			"inputs": [
 				{"name":"wallet","type":"address"},
+				{"name":"newwallet","type":"address"},
 				{"name":"grant","type":"uint128"},
 				{"name":"oldversion","type":"string"},
 				{"name":"comment","type":"string"},
@@ -164,6 +165,7 @@
 			"name": "getCellDaoTransferTokens",
 			"inputs": [
 				{"name":"wallet","type":"address"},
+				{"name":"newwallet","type":"address"},
 				{"name":"grant","type":"uint128"},
 				{"name":"oldversion","type":"string"},
 				{"name":"comment","type":"string"},
@@ -1115,6 +1117,7 @@
 		{
 			"name": "sendTokenToNewVersionIn",
 			"inputs": [
+				{"name":"newwallet","type":"optional(address)"},
 				{"name":"grant","type":"uint128"},
 				{"name":"newversion","type":"string"}
 			],
@@ -1133,6 +1136,7 @@
 			"name": "sendDaoTokenToNewVersion",
 			"inputs": [
 				{"name":"wallet","type":"address"},
+				{"name":"newwallet","type":"address"},
 				{"name":"grant","type":"uint128"},
 				{"name":"newversion","type":"string"}
 			],

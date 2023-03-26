@@ -64,12 +64,16 @@ contract SystemContract is Modifiers {
     }  
    
  
-    function sendTokenToNewVersion2(address  pubaddr, string namedao, uint128 index, uint128 grant, string newversion) public view senderIs(getAddrWalletIn(pubaddr, namedao, index)) accept {
-        VersionController(_versionController).sendTokenToNewVersion3{value : 0.3 ton, flag: 1}(grant, newversion, version, pubaddr, namedao);
+    function sendTokenToNewVersion2(address  pubaddr, string namedao, uint128 index, optional(address) newwallet, uint128 grant, string newversion) public view senderIs(getAddrWalletIn(pubaddr, namedao, index)) accept {
+        VersionController(_versionController).sendTokenToNewVersion3{value : 0.3 ton, flag: 1}(grant, newversion, version, pubaddr, namedao, newwallet);
     }
     
     
-    function sendTokenToNewVersion4(uint128 grant, address  pubaddr, string dao) public view senderIs(_versionController) accept {
+    function sendTokenToNewVersion4(uint128 grant, address  pubaddr, string dao, optional(address) newwallet) public view senderIs(_versionController) accept {
+        if (newwallet.hasValue()) { 
+            GoshWallet(newwallet.get()).sendTokenToNewVersion5{value : 0.3 ton, flag: 1}(grant);
+            return; 
+        }
         GoshWallet(getAddrWalletIn(pubaddr, dao, 0)).sendTokenToNewVersion5{value : 0.3 ton, flag: 1}(grant);
     }
 
@@ -282,12 +286,12 @@ contract SystemContract is Modifiers {
         return;
     }
     
-    function DaoTransferToken2(address pubaddr, uint128 index, string namedao, address wallet, uint128 grant, string oldversion, string newversion) public view senderIs(getAddrWalletIn(pubaddr, namedao, index)) accept {
-        VersionController(_versionController).DaoTransferToken3{value : 0.3 ton, flag: 1}(pubaddr, index, namedao, wallet, grant,  oldversion, newversion);
+    function DaoTransferToken2(address pubaddr, uint128 index, string namedao, address wallet, address newwallet, uint128 grant, string oldversion, string newversion) public view senderIs(getAddrWalletIn(pubaddr, namedao, index)) accept {
+        VersionController(_versionController).DaoTransferToken3{value : 0.3 ton, flag: 1}(pubaddr, index, namedao, wallet, newwallet, grant,  oldversion, newversion);
     }
     
-    function DaoTransferToken4(address pubaddr, uint128 index, string namedao, address wallet, uint128 grant, string newversion) public view senderIs(_versionController) accept {
-        GoshWallet(getAddrWalletIn(pubaddr, namedao, index)).sendDaoTokenToNewVersion{value : 0.3 ton, flag: 1}(wallet, grant, newversion);
+    function DaoTransferToken4(address pubaddr, uint128 index, string namedao, address wallet, address newwallet, uint128 grant, string newversion) public view senderIs(_versionController) accept {
+        GoshWallet(getAddrWalletIn(pubaddr, namedao, index)).sendDaoTokenToNewVersion{value : 0.3 ton, flag: 1}(wallet, newwallet, grant, newversion);
     }
     
     function updateCode(TvmCell newcode, TvmCell cell) public onlyOwner accept saveMsg {

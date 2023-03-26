@@ -97,7 +97,7 @@ contract VersionController is Modifiers {
     }
 
     
-    function sendTokenToNewVersion3(uint128 grant, string version, string previousversion, address pubaddr, string namedao) public view {
+    function sendTokenToNewVersion3(uint128 grant, string version, string previousversion, address pubaddr, string namedao, optional(address) newwallet) public view {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         require(_SystemContractCode.exists(tvm.hash(previousversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         TvmCell s1 = tvm.buildStateInit({
@@ -116,7 +116,7 @@ contract VersionController is Modifiers {
         });
         addr = address.makeAddrStd(0, tvm.hash(s1));
         tvm.accept();
-        SystemContract(addr).sendTokenToNewVersion4(grant, pubaddr, namedao);
+        SystemContract(addr).sendTokenToNewVersion4(grant, pubaddr, namedao, newwallet);
     }
 
     
@@ -193,7 +193,7 @@ contract VersionController is Modifiers {
         SystemContract(addr).checkOldTaskVersion4{value : 0.15 ton, flag: 1}(namedao, nametask, repo, previousaddr, answer);
     }
     
-    function DaoTransferToken3(address pubaddr, uint128 index, string namedao, address wallet, uint128 grant, string oldversion, string newversion) public view {
+    function DaoTransferToken3(address pubaddr, uint128 index, string namedao, address wallet, address newwallet, uint128 grant, string oldversion, string newversion) public view {
         require(_SystemContractCode.exists(tvm.hash(newversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         require(_SystemContractCode.exists(tvm.hash(oldversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         TvmCell s1 = tvm.buildStateInit({
@@ -212,7 +212,7 @@ contract VersionController is Modifiers {
             varInit: {}
         });
         addr = address.makeAddrStd(0, tvm.hash(s1));
-        SystemContract(addr).DaoTransferToken4{value : 0.15 ton, flag: 1}(pubaddr, index, namedao, wallet, grant, newversion);
+        SystemContract(addr).DaoTransferToken4{value : 0.15 ton, flag: 1}(pubaddr, index, namedao, wallet, newwallet, grant, newversion);
     }
     
     function updateCodeDao(TvmCell newcode, TvmCell cell, string version) public accept saveMsg {
