@@ -205,8 +205,8 @@ const TasksUpgradePage = () => {
             toast.success(
                 <ToastSuccess
                     message={{
-                        title: 'Event created',
-                        content: 'Tasks upgrade event created',
+                        title: isEvent ? 'Event created' : 'Tasks upgraded',
+                        content: isEvent ? 'Tasks upgrade event created' : undefined,
                     }}
                 />,
             )
