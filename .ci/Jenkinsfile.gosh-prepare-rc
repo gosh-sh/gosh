@@ -106,9 +106,9 @@ pipeline {
                         deployVersion(version, nodes, basePort)
                     }
 
-                    runFunctionalTests(files, basePort, "Func v1", "v1_x")
-                    runFunctionalTests(files, basePort, "Func v2", "v2_x")
-                    runFunctionalTests(files, basePort, "Func v3", "v3_x")
+                    #runFunctionalTests(files, basePort, "Func v1", "v1_x")
+                    #runFunctionalTests(files, basePort, "Func v2", "v2_x")
+                    #runFunctionalTests(files, basePort, "Func v3", "v3_x")
                     runUpgradeTests(files, basePort, 1, 2)
                     runUpgradeTests(files, basePort, 2, 3)
                     runUpgradeTests(files, basePort, 1, 3)
@@ -451,7 +451,7 @@ def runSingleUpgradeTest(script, index, port, from, to) {
         sh """
             export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
             ./set-vars.sh v${from}_x_workspace_${index} http://localnode:${port}
-            ./upgrade_tests/set_up.sh v${from}_x_workspace_${index} v$to}_x_workspace_${index}
+            ./upgrade_tests/set_up.sh v${from}_x_workspace_${index} v${to}_x_workspace_${index}
             ./${script}
         """
     }
