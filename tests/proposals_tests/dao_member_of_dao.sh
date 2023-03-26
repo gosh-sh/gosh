@@ -131,7 +131,7 @@ tonos-cli -j runx --abi $SNAPSHOT_ABI --addr $SNAPSHOT_ADDR -m getSnapshot
 
 TASK_OWNER=$CHILD_DAO_ADDR
 
-set_commit_proposal_3
+set_commit_proposal_3_dao
 
 sleep 20
 
@@ -253,6 +253,7 @@ wait_account_active $TASK_ADDR
 sleep 10
 
 CHILD_WALLET_ADDR=$NEW_CHILD_WALLET_ADDR
+CHILD_DAO_WALLET_ADDR=$NEW_CHILD_DAO_WALLET_ADDR
 child_dao_ask_granted
 
 sleep 60
