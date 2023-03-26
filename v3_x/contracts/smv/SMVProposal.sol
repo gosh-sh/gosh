@@ -534,25 +534,25 @@ function getDaoMultiProposalParamsData (TvmCell Data) external pure
     (proposalKind, wallet, number, proposals, num_clients_base, reviewers_base,) = abi.decode(Data, (uint256, address, uint128, TvmCell, uint128, address[], uint32));
 }
 
-function getDaoLockVoteProposalParams () external view
-         returns( uint256  proposalKind, address wallet, uint128 grant, string oldversion, string comment)
-{
-    (proposalKind, wallet, grant, oldversion, comment,) = abi.decode(propData,(uint256, address, uint128, string, string, uint32));
-}
-
-function getDaoLockVoteProposalParamsData (TvmCell Data) external pure
-         returns( uint256  proposalKind, address wallet, uint128 grant, string oldversion, string comment)
-{
-    (proposalKind, wallet, grant, oldversion, comment,) = abi.decode(Data,(uint256, address, uint128, string, string, uint32));
-}
-
 function getDaoTransferTokenProposalParams () external view
+         returns( uint256  proposalKind, address wallet, address newwallet, uint128 grant, string oldversion, string comment)
+{
+    (proposalKind, wallet, newwallet, grant, oldversion, comment,) = abi.decode(propData,(uint256, address, address, uint128, string, string, uint32));
+}
+
+function getDaoTransferTokenProposalParamsData (TvmCell Data) external pure
+         returns( uint256  proposalKind, address wallet, address newwallet, uint128 grant, string oldversion, string comment)
+{
+    (proposalKind, wallet, newwallet, grant, oldversion, comment,) = abi.decode(Data,(uint256, address, address, uint128, string, string, uint32));
+}
+
+function getDaoLockVoteProposalParams () external view
          returns( uint256  proposalKind, address wallet, bool isLock, uint128 grant, string comment)
 {
     (proposalKind, wallet, isLock, grant, comment, ) = abi.decode(propData, (uint256, address, bool, uint128, string, uint32));
 }
 
-function getDaoTransferTokenProposalParamsData (TvmCell Data) external pure
+function getDaoLockVoteProposalParamsData (TvmCell Data) external pure
          returns( uint256  proposalKind, address wallet, bool isLock, uint128 grant, string comment)
 {
     (proposalKind, wallet, isLock, grant, comment, ) = abi.decode(Data, (uint256, address, bool, uint128, string, uint32));
