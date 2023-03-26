@@ -118,6 +118,7 @@ type TTaskDetails = {
     confirmed: boolean
     confirmedAt: number
     tags: string[]
+    tagsRaw: string[]
 }
 
 type TTaskListItem = TTaskDetails & {

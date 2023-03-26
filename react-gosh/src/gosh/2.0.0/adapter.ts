@@ -698,11 +698,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         const repository = await this.getRepository({ address: details.repo })
 
         // Clean tags
-        const _systemTagIndex = details.hashtag.findIndex(
-            (item: string) => item === SYSTEM_TAG,
-        )
+        const tagsClean = [...details.hashtag]
+        const _systemTagIndex = tagsClean.findIndex((item: string) => item === SYSTEM_TAG)
         if (_systemTagIndex >= 0) {
-            details.hashtag.splice(_systemTagIndex, 1)
+            tagsClean.splice(_systemTagIndex, 1)
         }
 
         // Parse candidates
@@ -745,7 +744,8 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             config: details.grant,
             confirmed: details.ready,
             confirmedAt: details.locktime,
-            tags: details.hashtag,
+            tags: tagsClean,
+            tagsRaw: details.hashtag,
         }
     }
 

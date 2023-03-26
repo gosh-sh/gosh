@@ -37,6 +37,7 @@ import { DaoTokenDaoSendEvent } from './components/DaoTokenDaoSendEvent/DaoToken
 import { DaoReviewEvent } from './components/DaoReviewEvent/DaoReviewEvent'
 import { DaoReceiveBountyEvent } from './components/DaoReceiveBountyEvent/DaoReceiveBountyEvent'
 import { DaoTokenDaoLockEvent } from './components/DaoTokenDaoLockEvent/DaoTokenDaoLockEvent'
+import { TaskUpgradeEvent } from './components/TaskUpgradeEvent/TaskUpgradeEvent'
 
 const EventPage = () => {
     const { eventAddr } = useParams()
@@ -215,6 +216,9 @@ const EventPage = () => {
                         )}
                         {event.type.kind === ESmvEventType.DAO_TOKEN_DAO_LOCK && (
                             <DaoTokenDaoLockEvent data={event.data} />
+                        )}
+                        {event.type.kind === ESmvEventType.TASK_UPGRADE && (
+                            <TaskUpgradeEvent data={event.data} />
                         )}
                     </div>
                 </div>

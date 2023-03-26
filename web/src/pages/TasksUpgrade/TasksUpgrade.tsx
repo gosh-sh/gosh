@@ -114,6 +114,79 @@ const TasksUpgradePage = () => {
         return { isEvent: taskDeployCells.length > 0 }
     }
 
+    const _upgrade_from_3 = async () => {
+        // Get prev (3.0) DAO adapter
+        const ver = '3.0.0'
+        const vgosh = GoshAdapterFactory.create(ver)
+        const vdao = await vgosh.getDao({ name: dao.details.name, useAuth: false })
+
+        // Get all repositories from DAO 3.0 and task code hash for repo
+        const repos = await getRepositoryAccounts(dao.details.name, {
+            version: ver,
+        })
+        const taskCodeHashes = await executeByChunk(
+            repos,
+            MAX_PARALLEL_READ,
+            async ({ address }) => {
+                const repo = await vdao.getRepository({ address })
+                const name = await repo.getName()
+                return {
+                    repoName: name,
+                    taskCodeHash: await vdao.getTaskCodeHash(name),
+                }
+            },
+        )
+        progressDispatch({ type: 'get_repositories', payload: true })
+
+        // Get all tasks from DAO 3.0
+        const taskDeployCells: { type: number; params: TTaskUpgradeParams }[] = []
+        for (const { repoName, taskCodeHash } of taskCodeHashes) {
+            const accounts = await getAllAccounts({
+                filters: [`code_hash: {eq:"${taskCodeHash}"}`],
+                result: ['id'],
+            })
+            const cells = await executeByChunk(
+                accounts,
+                MAX_PARALLEL_READ,
+                async ({ id }) => {
+                    const task = await vdao.getTask({ address: id })
+                    return {
+                        type: ESmvEventType.TASK_UPGRADE,
+                        params: {
+                            repoName,
+                            taskName: task.name,
+                            taskPrev: {
+                                address: task.address,
+                                version: task.account.version,
+                            },
+                            tag: task.tagsRaw,
+                        },
+                    }
+                },
+            )
+            taskDeployCells.push(...cells)
+        }
+        progressDispatch({ type: 'get_tasks', payload: true })
+
+        // Create multi proposal or update flag
+        if (taskDeployCells.length > 0) {
+            await dao.adapter.createMultiProposal({
+                proposals: [
+                    ...taskDeployCells,
+                    {
+                        type: ESmvEventType.TASK_REDEPLOYED,
+                        params: {},
+                    },
+                ],
+            })
+        } else {
+            await dao.adapter.upgradeTaskComplete({ cell: false })
+        }
+        progressDispatch({ type: 'upgrade_tasks', payload: true })
+
+        return { isEvent: taskDeployCells.length > 0 }
+    }
+
     const onTasksUpgrade = async () => {
         try {
             if (dao.details.isTaskRedeployed) {
@@ -123,6 +196,9 @@ const TasksUpgradePage = () => {
             let isEvent = false
             if (dao.details.version === '3.0.0') {
                 const result = await _upgrade_from_2()
+                isEvent = result.isEvent
+            } else if (dao.details.version === '4.0.0') {
+                const result = await _upgrade_from_3()
                 isEvent = result.isEvent
             }
 

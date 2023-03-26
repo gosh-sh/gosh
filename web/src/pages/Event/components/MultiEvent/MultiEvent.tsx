@@ -27,6 +27,7 @@ import { TaskCreateEvent } from '../TaskCreateEvent/TaskCreateEvent'
 import { TaskDeleteEvent } from '../TaskDeleteEvent/TaskDeleteEvent'
 import { TaskTransferCompleteEvent } from '../TaskTransferCompleteEvent/TaskTransferCompleteEvent'
 import { TaskTransferEvent } from '../TaskTransferEvent/TaskTransferEvent'
+import { TaskUpgradeEvent } from '../TaskUpgradeEvent/TaskUpgradeEvent'
 
 type TMultiEventProps = {
     version: string
@@ -162,6 +163,9 @@ const MultiEvent = (props: TMultiEventProps) => {
                             )}
                             {data.type.kind === ESmvEventType.TASK_REDEPLOY && (
                                 <TaskTransferEvent data={data} />
+                            )}
+                            {data.type.kind === ESmvEventType.TASK_UPGRADE && (
+                                <TaskUpgradeEvent data={data} />
                             )}
                             {data.type.kind === ESmvEventType.TASK_REDEPLOYED && (
                                 <TaskTransferCompleteEvent />
