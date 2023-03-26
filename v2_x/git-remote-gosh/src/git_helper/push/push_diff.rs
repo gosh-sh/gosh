@@ -284,12 +284,23 @@ pub async fn push_new_branch_snapshot(
     remote_network: &str,
     dao_addr: &BlockchainContractAddress,
     repo_addr: &BlockchainContractAddress,
+    expected_addr: &BlockchainContractAddress,
     commit_id: &git_hash::ObjectId,
     branch_name: &str,
     file_path: &str,
     original_content: &[u8],
+    ipfs: &Option<String>,
 ) -> anyhow::Result<()> {
     tracing::trace!("push_new_branch_snapshot: remote_network={remote_network}, dao_addr={dao_addr}, repo_addr={repo_addr}, commit_id={commit_id}, branch_name={branch_name}, file_path={file_path}");
+
+    let wallet = blockchain.user_wallet(&dao_addr, &remote_network).await?;
+
+    let snapshot_contract = GoshContract::new(expected_addr, gosh_abi::SNAPSHOT);
+    if snapshot_contract.is_active(blockchain.client()).await? {
+        blockchain
+            .delete_snapshot(&wallet, expected_addr.clone())
+            .await?;
+    }
 
     let (content, ipfs) = if is_going_to_ipfs(original_content) {
         tracing::trace!("push_new_branch_snapshot->save_data_to_ipfs");
@@ -307,8 +318,6 @@ pub async fn push_new_branch_snapshot(
         tracing::trace!("compressed to {} size", compressed.len());
         (hex::encode(compressed), None)
     };
-
-    let wallet = blockchain.user_wallet(&dao_addr, &remote_network).await?;
 
     blockchain
         .deploy_new_snapshot(

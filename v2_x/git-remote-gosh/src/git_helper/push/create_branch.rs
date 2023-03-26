@@ -98,28 +98,43 @@ where
 
         let mut snapshot_handlers = JoinSet::new();
 
-        for entry in snapshots_to_deploy {
-            let mut buffer: Vec<u8> = Vec::new();
-            let content = self
-                .context
-                .local_repository()
-                .objects
-                .try_find(entry.oid, &mut buffer)?
-                .expect("blob must be in the local repository")
-                .decode()?
-                .as_blob()
-                .expect("It must be a blob object")
-                .data
-                .to_owned();
+        let context = &mut self.context.clone();
 
+        let ancestor_id = self.ancestor_commit.to_string();
+        let ancestor_address = context.calculate_commit_address(&self.ancestor_commit).await?;
+        let ancestor_data = crate::blockchain::GoshCommit::load(
+            context.blockchain.client(),
+            &ancestor_address
+        )
+        .await
+        .map_err(|e| anyhow::format_err!("Failed to load commit with SHA=\"{}\". Error: {e}", ancestor_id))?;
+
+        for entry in snapshots_to_deploy {
             let blockchain = self.context.blockchain.clone();
+            let file_path = entry.filepath.to_string();
+            let mut repo_contract = blockchain.repo_contract().clone();
+
+            let snapshot_addr = Snapshot::calculate_address(
+                self.context.blockchain.client(),
+                &mut repo_contract,
+                &ancestor_data.branch,
+                &file_path,
+            ).await?;
+            let snapshot = Snapshot::load(blockchain.client(), &snapshot_addr).await?;
+
+            let expected_snapshot_addr = Snapshot::calculate_address(
+                self.context.blockchain.client(),
+                &mut repo_contract,
+                &self.new_branch,
+                &file_path,
+            ).await?;
+
             let remote_network = self.context.remote.network.clone();
             let dao_addr = self.context.dao_addr.clone();
             let repo_addr = self.context.repo_addr.clone();
             let file_provider = self.context.file_provider.clone();
             let ancestor_commit = self.ancestor_commit.clone();
             let new_branch = self.new_branch.clone();
-            let full_path = entry.filepath.to_string();
 
             let condition = |e: &anyhow::Error| {
                 if e.is::<WalletError>() {
@@ -142,10 +157,12 @@ where
                                 &remote_network,
                                 &dao_addr,
                                 &repo_addr,
+                                &expected_snapshot_addr,
                                 &ancestor_commit,
                                 &new_branch,
-                                &full_path,
-                                &content,
+                                &file_path,
+                                &snapshot.current_content,
+                                &snapshot.current_ipfs,
                             )
                             .await
                         },
