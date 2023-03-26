@@ -65,7 +65,7 @@ contract SystemContract is Modifiers {
    
  
     function sendTokenToNewVersion2(address  pubaddr, string namedao, uint128 index, optional(address) newwallet, uint128 grant, string newversion) public view senderIs(getAddrWalletIn(pubaddr, namedao, index)) accept {
-        VersionController(_versionController).sendTokenToNewVersion3{value : 0.3 ton, flag: 1}(grant, newversion, version, pubaddr, namedao, newwallet);
+        VersionController(_versionController).sendTokenToNewVersion33{value : 0.3 ton, flag: 1}(grant, newversion, version, pubaddr, namedao, newwallet);
     }
     
     
