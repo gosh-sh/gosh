@@ -2026,6 +2026,14 @@
 			]
 		},
 		{
+			"name": "_lockedBalance",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_lockedBalance","type":"uint128"}
+			]
+		},
+		{
 			"name": "_totalDoubt",
 			"inputs": [
 			],

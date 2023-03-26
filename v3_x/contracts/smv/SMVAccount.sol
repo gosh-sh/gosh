@@ -84,7 +84,7 @@ uint128 DEFAULT_DAO_BALANCE;
 uint128 DEFAULT_DAO_VOTE_BALANCE;
 uint128 constant DEFAULT_PROPOSAL_VALUE = 20;
     
-uint128 _lockedBalance = 0;
+uint128 public _lockedBalance = 0;
 uint128 public _totalDoubt = 0;
 
 constructor(address pubaddr, TvmCell lockerCode, TvmCell tokenWalletCode,
