@@ -79,7 +79,7 @@ contract Task is Modifiers{
             return;         
         }
         require(previousVersion.hasValue() == true, ERR_WRONG_DATA);
-        (_repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _previousVersion, _previousVersionAddr) = abi.decode(previousVersion.get(),(string, address, TvmCell, TvmCell, TvmCell, string, address));
+        (_repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _hashtag, _previousVersion, _previousVersionAddr) = abi.decode(previousVersion.get(),(string, address, TvmCell, TvmCell, TvmCell, string[], string, address));
         _repo = _buildRepositoryAddr(_repoName);
         GoshDao(_goshdao).checkOldTaskVersion{value: 0.2 ton}(_nametask, _repoName, _previousVersion, _previousVersionAddr);
         _waitForUpdate = true;

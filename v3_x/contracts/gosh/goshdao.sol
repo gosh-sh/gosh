@@ -603,7 +603,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     	address repo = _buildRepositoryAddr(repoName);
         TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});
-        optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], oldversion, oldtask);
+        optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], hashtag, oldversion, oldtask);
         optional(TvmCell) data1;
         new Task{
             stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1
