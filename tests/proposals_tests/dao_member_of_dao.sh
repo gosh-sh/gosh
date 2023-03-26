@@ -55,17 +55,17 @@ mint_tokens_3
 add_dao_to_dao
 
 sleep 30
-
+# wallet addr of child dao in parent dao
 CHILD_ADDR=$(echo $CHILD_DAO_ADDR | sed -r "s/:/x/")
-TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI --addr $PARENT_DAO_ADDR -m getWalletsFull | jq '.value0."'$CHILD_ADDR'".count' | cut -d'"' -f 2)
+CHILD_DAO_WALLET_ADDR=$(tonos-cli -j runx --abi $DAO_ABI --addr $PARENT_DAO_ADDR -m getWalletsFull | jq '.value0."'$CHILD_ADDR'".member' | cut -d'"' -f 2)
+echo "CHILD_DAO_WALLET_ADDR=$CHILD_DAO_WALLET_ADDR"
+
+TOKEN_CNT=$(tonos-cli -j runx --abi $WALLET_ABI --addr $CHILD_DAO_WALLET_ADDR -m _lockedBalance | jq '._lockedBalance' | cut -d'"' -f 2)
 if [ "$TOKEN_CNT" != "1" ]; then
   echo Wrong amount of token
   exit 1
 fi
 
-# wallet addr of child dao in parent dao
-CHILD_DAO_WALLET_ADDR=$(tonos-cli -j runx --abi $DAO_ABI --addr $PARENT_DAO_ADDR -m getWalletsFull | jq '.value0."'$CHILD_ADDR'".member' | cut -d'"' -f 2)
-echo "CHILD_DAO_WALLET_ADDR=$CHILD_DAO_WALLET_ADDR"
 
 TASK_NAME="task1"
 deploy_task_with_proposal_3
@@ -150,8 +150,8 @@ child_dao_ask_granted
 
 sleep 60
 
-TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI --addr $PARENT_DAO_ADDR -m getWalletsFull | jq '.value0."'$CHILD_ADDR'".count' | cut -d'"' -f 2)
-if [ "$TOKEN_CNT" != "2" ]; then
+TOKEN_CNT=$(tonos-cli -j runx --abi $WALLET_ABI --addr $CHILD_DAO_WALLET_ADDR -m m_pseudoDAOBalance | jq '.m_pseudoDAOBalance' | cut -d'"' -f 2)
+if [ "$TOKEN_CNT" != "1" ]; then
   echo Wrong amount of token
   exit 1
 fi
@@ -258,8 +258,8 @@ child_dao_ask_granted
 
 sleep 60
 
-TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull | jq '.value0."'$CHILD_ADDR'".count' | cut -d'"' -f 2)
-if [ "$TOKEN_CNT" != "3" ]; then
+TOKEN_CNT=$(tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_CHILD_DAO_WALLET_ADDR -m m_pseudoDAOBalance | jq '.m_pseudoDAOBalance' | cut -d'"' -f 2)
+if [ "$TOKEN_CNT" != "2" ]; then
   echo Wrong amount of token
   exit 1
 fi
