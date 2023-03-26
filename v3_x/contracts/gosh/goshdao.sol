@@ -1017,6 +1017,15 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }
     }
     
+    function destroyTaskTag2 (string nametask, address repo, string[] tag) public view senderIs(getTaskAddr(nametask, repo))  accept {
+        uint256 keyaddr;       
+        require(_wallets.next(keyaddr).hasValue() == true, ERR_NO_DATA);
+        (,MemberToken worker) = _wallets.next(keyaddr).get();
+        for (uint8 t = 0; t < tag.length; t++){ 
+            GoshWallet(worker.member).destroyTaskTag{value:0.2 ton}(repo, msg.sender, tag[t]);   	
+        }
+    }
+    
     function checkOldTaskVersion (string nametask, string repo, string previous, address previousaddr) public view senderIs(getTaskAddr(nametask, _buildRepositoryAddr(repo)))  accept {        
         SystemContract(_systemcontract).checkOldTaskVersion2{value : 0.2 ton}(_nameDao, nametask, repo, previous, previousaddr, msg.sender);
     }

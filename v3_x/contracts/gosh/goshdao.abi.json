@@ -766,6 +766,16 @@
 			]
 		},
 		{
+			"name": "destroyTaskTag2",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"tag","type":"string[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "checkOldTaskVersion",
 			"inputs": [
 				{"name":"nametask","type":"string"},

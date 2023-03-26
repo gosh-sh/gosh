@@ -148,6 +148,32 @@
 			]
 		},
 		{
+			"name": "startProposalForDaoTransferTokens",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"grant","type":"uint128"},
+				{"name":"oldversion","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellDaoTransferTokens",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"grant","type":"uint128"},
+				{"name":"oldversion","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "startProposalForDaoVote",
 			"inputs": [
 				{"name":"wallet","type":"address"},
@@ -1527,6 +1553,30 @@
 			]
 		},
 		{
+			"name": "voteFor",
+			"inputs": [
+				{"name":"platform_id","type":"uint256"},
+				{"name":"choice","type":"bool"},
+				{"name":"amount","type":"uint128"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"note","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "voteForIn",
+			"inputs": [
+				{"name":"platform_id","type":"uint256"},
+				{"name":"choice","type":"bool"},
+				{"name":"amount","type":"uint128"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"note","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "destroy",
 			"inputs": [
 			],
@@ -1860,30 +1910,6 @@
 			"name": "unlockVoting",
 			"inputs": [
 				{"name":"amount","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "voteFor",
-			"inputs": [
-				{"name":"platform_id","type":"uint256"},
-				{"name":"choice","type":"bool"},
-				{"name":"amount","type":"uint128"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"note","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "voteForIn",
-			"inputs": [
-				{"name":"platform_id","type":"uint256"},
-				{"name":"choice","type":"bool"},
-				{"name":"amount","type":"uint128"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"note","type":"string"}
 			],
 			"outputs": [
 			]

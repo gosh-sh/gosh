@@ -107,6 +107,20 @@
 			]
 		},
 		{
+			"name": "DaoTransferToken3",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"namedao","type":"string"},
+				{"name":"wallet","type":"address"},
+				{"name":"grant","type":"uint128"},
+				{"name":"oldversion","type":"string"},
+				{"name":"newversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "updateCodeDao",
 			"inputs": [
 				{"name":"newcode","type":"cell"},

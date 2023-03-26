@@ -213,6 +213,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function setTombstoneWallet(string description) public senderIs(_goshdao)  accept saveMsg {
         _tombstone = true;
+        updateHeadIn();
         if (_index >= _walletcounter - 1) { return; }
         GoshWallet(_getWalletAddr(_index + 1)).askForTombstone{value : 0.1 ton, flag: 1}(_index, description);
     }
@@ -241,6 +242,30 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     function askForLimitedBasic(bool decision, uint128 index) public senderIs(_getWalletAddr(index)) {
         _limited = decision;
+    }
+    
+    function startProposalForDaoTransferTokens(
+        address wallet, uint128 grant, string oldversion, 
+        string comment,
+        uint128 num_clients , address[] reviewers
+
+    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        uint256 proposalKind = TRANSFER_TO_NEW_VERSION_PROPOSAL_KIND;
+        TvmCell c = abi.encode(proposalKind, wallet, grant, oldversion, comment, now);
+
+        _startProposalForOperation(c, TRANSFER_TO_NEW_VERSION_PROPOSAL_START_AFTER, TRANSFER_TO_NEW_VERSION_PROPOSAL_DURATION, num_clients, reviewers);
+
+        getMoney();
+    }
+    
+    function getCellDaoTransferTokens(
+        address wallet, uint128 grant, string oldversion,
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
+        if (time.hasValue() == false) { time = now; }
+        uint256 proposalKind = TRANSFER_TO_NEW_VERSION_PROPOSAL_KIND;
+        return abi.encode(proposalKind, wallet, grant, oldversion, comment, time.get());
     }
     
     function startProposalForDaoVote(
@@ -1691,7 +1716,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
-    function sendDaoTokenToNewVersion(address wallet, uint128 grant, string newversion) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+    function sendDaoTokenToNewVersion(address wallet, uint128 grant, string newversion) public senderIs(_systemcontract) accept saveMsg {
         require(_limited == false, ERR_WALLET_LIMITED);
         GoshDao(_goshdao).daoSendTokenToNewVersion{value : 0.2 ton}(_pubaddr, _index, wallet, grant, newversion);
         getMoney();
@@ -2517,6 +2542,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == TASK_UPGRADE_PROPOSAL_KIND) {
                 (, string taskname, string reponame, string oldversion, address oldtask, string[] hashtag,,) = abi.decode(propData, (uint256, string, string, string, address, string[], string, uint32));
                 GoshDao(_goshdao).upgradeTask{value: 0.1 ton}(_pubaddr, _index, taskname, reponame, oldversion, oldtask, hashtag);   
+            }  else
+            if (kind == TRANSFER_TO_NEW_VERSION_PROPOSAL_KIND) {
+                (, address wallet, uint128 grant, string oldversion,,) = abi.decode(propData,(uint256, address, uint128, string, string, uint32));
+                SystemContract(_systemcontract).DaoTransferToken2{value: 0.2 ton}(_pubaddr, _index, _nameDao, wallet, grant, oldversion, version);
             }
         }
     }
@@ -2531,7 +2560,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         //for tests
         lastVoteResult = res;
         ////////////////////
-
+        updateHeadIn();
         if (res.hasValue() && res.get()) {
             TvmSlice s = propData.toSlice();
             uint256 kind = s.decode(uint256);
@@ -2688,6 +2717,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == TASK_UPGRADE_PROPOSAL_KIND) {
                 (, string taskname, string reponame, string oldversion, address oldtask, string[] hashtag,,) = abi.decode(propData, (uint256, string, string, string, address, string[], string, uint32));
                 GoshDao(_goshdao).upgradeTask{value: 0.1 ton}(_pubaddr, _index, taskname, reponame, oldversion, oldtask, hashtag);   
+            }  else
+            if (kind == TRANSFER_TO_NEW_VERSION_PROPOSAL_KIND) {
+                (, address wallet, uint128 grant, string oldversion,,) = abi.decode(propData,(uint256, address, uint128, string, string, uint32));
+                SystemContract(_systemcontract).DaoTransferToken2{value: 0.2 ton}(_pubaddr, _index, _nameDao, wallet, grant, oldversion, version);
             }
         }
     }
@@ -2696,6 +2729,65 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
         GoshDao(_goshdao).redeployedTask{value: 0.2 ton}(_pubaddr, _index);  
+    }
+    
+    function voteFor (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platform_id, bool choice, uint128 amount, uint128 num_clients, string note) external  onlyOwnerPubkey(_access.get())
+    {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(initialized, SMVErrors.error_not_initialized);
+        require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
+                                    2*SMVConstants.VOTING_FEE + num_clients*SMVConstants.CLIENT_LIST_FEE +
+                                    SMVConstants.CLIENT_INIT_VALUE +
+                                    SMVConstants.PROP_INITIALIZE_FEE +
+                                    9*SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low+2000);
+        tvm.accept();
+        _saveMsg();
+        note;
+        TvmBuilder staticBuilder;
+        uint8 platformType = 0;
+        staticBuilder.store(platformType, tip3VotingLocker, platform_id, platformCodeHash, platformCodeDepth);
+
+        TvmBuilder inputBuilder;
+        inputBuilder.store(choice);
+
+        ISMVTokenLocker(tip3VotingLocker).startPlatform
+                    {value:  2*SMVConstants.VOTING_FEE  + num_clients*SMVConstants.CLIENT_LIST_FEE +
+                             SMVConstants.CLIENT_INIT_VALUE +
+                             SMVConstants.PROP_INITIALIZE_FEE +
+                             8*SMVConstants.ACTION_FEE, flag: 1 }
+                    (m_SMVPlatformCode, m_SMVClientCode, amount, staticBuilder.toCell(), inputBuilder.toCell(),
+                                    SMVConstants.CLIENT_INIT_VALUE +
+                                    SMVConstants.PROP_INITIALIZE_FEE + 5*SMVConstants.ACTION_FEE, _goshdao);
+    }
+
+    function voteForIn (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platform_id, bool choice, uint128 amount, uint128 num_clients, string note) external  onlyOwnerAddress(_pubaddr)
+    {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(initialized, SMVErrors.error_not_initialized);
+        require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
+                                    2*SMVConstants.VOTING_FEE + num_clients*SMVConstants.CLIENT_LIST_FEE +
+                                    SMVConstants.CLIENT_INIT_VALUE +
+                                    SMVConstants.PROP_INITIALIZE_FEE +
+                                    9*SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low+2000);
+
+        tvm.accept();
+        _saveMsg();
+        note;
+        TvmBuilder staticBuilder;
+        uint8 platformType = 0;
+        staticBuilder.store(platformType, tip3VotingLocker, platform_id, platformCodeHash, platformCodeDepth);
+
+        TvmBuilder inputBuilder;
+        inputBuilder.store(choice);
+
+        ISMVTokenLocker(tip3VotingLocker).startPlatform
+                        {value:  2*SMVConstants.VOTING_FEE  + num_clients*SMVConstants.CLIENT_LIST_FEE +
+                                 SMVConstants.CLIENT_INIT_VALUE +
+                                 SMVConstants.PROP_INITIALIZE_FEE +
+                                 8*SMVConstants.ACTION_FEE, flag: 1 }
+                        (m_SMVPlatformCode, m_SMVClientCode, amount, staticBuilder.toCell(), inputBuilder.toCell(),
+                                        SMVConstants.CLIENT_INIT_VALUE +
+                                        SMVConstants.PROP_INITIALIZE_FEE + 5*SMVConstants.ACTION_FEE, _goshdao);
     }
 
     //Fallback/Receive
