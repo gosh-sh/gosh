@@ -17,6 +17,57 @@ if [ -z "$2" ]
 else
     export NETWORK=$2
 fi
+
+# Check that git-remote-gosh was installed properly
+## ***************** Generated with ChatGPT ***********************
+
+# if [ $# -lt 1 ]; then
+#   echo "Usage: $0 <version> <network>"
+#   exit 1
+# fi
+
+# if [[ "$1" != "v1_x" && "$1" != "v2_x" && "$1" != "v1_x_clone" ]]; then
+#   echo "Error: First argument must be either 'v1_x' or 'v2_x'"
+#   exit 1
+# fi
+
+# # Call git-remote-gosh with argument dispatcher_ini
+# output=$(git-remote-gosh dispatcher_ini)
+
+# # Print the Gosh dispatcher ini and supported remote versions
+# echo "Gosh dispatcher ini and supported remote versions: $output"
+
+# # Check if first argument is v1_x or v2_x
+# if [[ $1 == "v1_x" || "$1" == "v1_x_clone" ]]; then
+#   # Check that output contains git-remote-gosh_v1_0_0
+#   if [[ $output == *"git-remote-gosh_v1_0_0"* ]]; then
+#     echo "Output contains git-remote-gosh_v1_0_0"
+#   else
+#     # Exit with error message
+#     echo "Proper remote version (git-remote-gosh_v1_0_0) was not found"
+#     exit 1
+#   fi
+
+# elif [[ $1 == "v2_x" ]]; then
+#   # Check that output contains git-remote-gosh_v2_0_0
+#   if [[ $output == *"git-remote-gosh_v2_0_0"* ]]; then
+#     echo "Output contains git-remote-gosh_v2_0_0"
+#   else
+#     # Exit with error message
+#     echo "Proper remote version (git-remote-gosh_v2_0_0) was not found"
+#     exit 1
+#   fi
+
+# else
+#   # Invalid argument
+#   echo "Invalid argument. Please specify either v1_x or v2_x."
+#   echo "Valid variants of the argument: v1_x, v2_x"
+#   exit 1
+# fi
+
+## ********************************************************************
+
+
 TEST_INDEX="${TEST_INDEX:-$(date +%s)}"
 echo "TEST INDEX $TEST_INDEX"
 echo "export NETWORK=$NETWORK" > env.env

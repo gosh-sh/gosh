@@ -5,6 +5,7 @@ set -e
 REPO_OWNER=gosh-sh
 REPO=gosh
 RELEASE=rc-3.0.14
+
 # TODO: get it from one source with binary
 
 # Check OS and architecture

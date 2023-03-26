@@ -369,7 +369,7 @@ impl BlobsRebuildingPlan {
                                 result.unwrap_err()
                             );
                             tokio::time::sleep(std::time::Duration::from_secs(5)).await;
-                            panic!("stopped");
+                            // panic!("stopped");
                         }
                     };
                     result.map_err(|e| anyhow::Error::from(e))

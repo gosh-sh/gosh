@@ -21,7 +21,7 @@ NEW_REPO_PATH=upgrade_repo02_3_v2
 # deploy new DAO that will be upgraded
 deploy_DAO_and_repo
 
-export OLD_LINK="gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME"
+export OLD_LINK="gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME"
 echo "OLD_LINK=$OLD_LINK"
 
 echo "***** cloning old version repo *****"
@@ -29,6 +29,9 @@ git clone $OLD_LINK
 
 # check
 cd $REPO_NAME
+git config user.email "foo@bar.com"
+git config user.name "My name"
+git branch -m main
 REPO_STATUS=1
 if git status | grep 'No commits yet'; then
     REPO_STATUS=0
@@ -43,11 +46,13 @@ echo "***** Pushing file to old repo *****"
 echo old_ver1 > 1.txt
 git add 1.txt
 git commit -m test
-git push
+git push -u origin main
 echo old_ver2 > 1.txt
 git add 1.txt
 git commit -m test1
 git push
+
+wait_set_commit $REPO_ADDR main
 
 cd ..
 
@@ -55,15 +60,15 @@ echo "Upgrade DAO"
 upgrade_DAO
 
 echo "***** new repo02_3 deploy *****"
-gosh-cli call --abi $WALLET_ABI_1 --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \
+tonos-cli call --abi $WALLET_ABI_1 --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \
     "{\"nameRepo\":\"$REPO_NAME\",\"descr\":\"\",\"previous\":{\"addr\":\"$REPO_ADDR\", \"version\":\"$CUR_VERSION\"}}" || exit 1
-REPO_ADDR=$(gosh-cli -j run $SYSTEM_CONTRACT_ADDR_1 getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
+REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR_1 getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
 
 echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
 sleep 3
 
-export NEW_LINK="gosh::$NETWORK://$SYSTEM_CONTRACT_ADDR_1/$DAO_NAME/$REPO_NAME"
+export NEW_LINK="gosh://$SYSTEM_CONTRACT_ADDR_1/$DAO_NAME/$REPO_NAME"
 echo "NEW_LINK=$NEW_LINK"
 
 echo "***** push after upgrade *****"
@@ -74,7 +79,7 @@ git add 1.txt
 git commit -m test2
 git push
 
-#git log
+wait_set_commit $REPO_ADDR main
 
 cd ..
 
