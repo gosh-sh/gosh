@@ -79,8 +79,8 @@ import {
     TEventMultipleCreateProposalAsDaoParams,
     TDaoTokenDaoSendParams,
     TUserParam,
-    TTaskUpgradeParams,
-    TTaskUpgradeResult,
+    TTaskTransferParams,
+    TTaskTransferResult,
     TTaskUpgradeCompleteParams,
     TTaskUpgradeCompleteResult,
     TDaoVoteParams,
@@ -91,6 +91,8 @@ import {
     TTaskReceiveBountyDaoResult,
     TDaoTokenDaoLockParams,
     TDaoTokenDaoLockResult,
+    TTaskUpgradeParams,
+    TTaskUpgradeResult,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -799,6 +801,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async deleteTask(params: TTaskDeleteParams): Promise<TTaskDeleteResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async transferTask(params: TTaskTransferParams): Promise<TTaskTransferResult> {
         throw new Error('Method is unavailable in current version')
     }
 

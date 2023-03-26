@@ -20,8 +20,9 @@ import {
     TTaskDeleteParams,
     TTaskReceiveBountyDaoParams,
     TTaskUpgradeCompleteParams,
-    TTaskUpgradeParams,
+    TTaskTransferParams,
     TUserParam,
+    TTaskUpgradeParams,
 } from './dao.types'
 import {
     TRepositoryChangeBranchProtectionParams,
@@ -146,7 +147,7 @@ type TEventMultipleCreateProposalParams = TEventCreateParams & {
           }
         | {
               type: ESmvEventType.TASK_REDEPLOY
-              params: TTaskUpgradeParams
+              params: TTaskTransferParams
           }
         | {
               type: ESmvEventType.TASK_REDEPLOYED
@@ -167,6 +168,10 @@ type TEventMultipleCreateProposalParams = TEventCreateParams & {
         | {
               type: ESmvEventType.DAO_TOKEN_DAO_LOCK
               params: TDaoTokenDaoLockParams
+          }
+        | {
+              type: ESmvEventType.TASK_UPGRADE
+              params: TTaskUpgradeParams
           }
     )[]
 }

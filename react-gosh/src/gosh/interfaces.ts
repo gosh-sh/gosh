@@ -80,8 +80,8 @@ import {
     TEventMultipleCreateProposalAsDaoParams,
     TDaoTokenDaoSendParams,
     TUserParam,
-    TTaskUpgradeParams,
-    TTaskUpgradeResult,
+    TTaskTransferParams,
+    TTaskTransferResult,
     TTaskUpgradeCompleteParams,
     TTaskUpgradeCompleteResult,
     TDaoVoteParams,
@@ -92,6 +92,8 @@ import {
     TTaskReceiveBountyDaoResult,
     TDaoTokenDaoLockParams,
     TDaoTokenDaoLockResult,
+    TTaskUpgradeParams,
+    TTaskUpgradeResult,
 } from '../types'
 
 interface IGoshAdapter {
@@ -225,6 +227,7 @@ interface IGoshDaoAdapter {
     createTask(params: TTaskCreateParams): Promise<TTaskCreateResult>
     receiveTaskBounty(params: TTaskReceiveBountyParams): Promise<void>
     deleteTask(params: TTaskDeleteParams): Promise<TTaskDeleteResult>
+    transferTask(params: TTaskTransferParams): Promise<TTaskTransferResult>
     upgradeTask(params: TTaskUpgradeParams): Promise<TTaskUpgradeResult>
     upgradeTaskComplete(
         params: TTaskUpgradeCompleteParams,

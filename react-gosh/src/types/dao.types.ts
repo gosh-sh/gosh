@@ -153,12 +153,22 @@ type TTaskReceiveBountyParams = {
     type?: ETaskBounty
 }
 
-type TTaskUpgradeParams = {
+type TTaskTransferParams = {
     accountData: any
     repoName: string
 }
 
-type TTaskUpgradeResult = string
+type TTaskTransferResult = string
+
+type TTaskUpgradeParams = TEventCreateParams & {
+    repoName: string
+    taskName: string
+    taskPrev: { address: TAddress; version: string }
+    tag: string[]
+    cell?: boolean
+}
+
+type TTaskUpgradeResult = string | void
 
 type TTaskUpgradeCompleteParams = {
     cell?: boolean
@@ -399,8 +409,8 @@ export {
     TTopicMessageCreateParams,
     TIsMemberParams,
     TIsMemberResult,
-    TTaskUpgradeParams,
-    TTaskUpgradeResult,
+    TTaskTransferParams,
+    TTaskTransferResult,
     TTaskUpgradeCompleteParams,
     TTaskUpgradeCompleteResult,
     TDaoVoteParams,
@@ -411,4 +421,6 @@ export {
     TTaskReceiveBountyDaoResult,
     TDaoTokenDaoLockParams,
     TDaoTokenDaoLockResult,
+    TTaskUpgradeParams,
+    TTaskUpgradeResult,
 }

@@ -8,6 +8,7 @@ import {
     GoshAdapterFactory,
     GoshError,
     MAX_PARALLEL_READ,
+    TTaskTransferParams,
     TTaskUpgradeParams,
 } from 'react-gosh'
 import { useNavigate, useOutletContext } from 'react-router-dom'
@@ -72,7 +73,7 @@ const TasksUpgradePage = () => {
         progressDispatch({ type: 'get_repositories', payload: true })
 
         // Get all tasks from DAO 2.0
-        const taskDeployCells: { type: number; params: TTaskUpgradeParams }[] = []
+        const taskDeployCells: { type: number; params: TTaskTransferParams }[] = []
         for (const { repoName, taskCodeHash } of taskCodeHashes) {
             const accounts = await getAllAccounts({
                 filters: [`code_hash: {eq:"${taskCodeHash}"}`],

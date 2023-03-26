@@ -42,4 +42,5 @@ export const SmvEventTypes: { [key: number]: string } = {
     35: 'DAO token lock',
     36: 'Redeploy task',
     37: 'Redeployed task',
+    38: 'Task upgrade',
 }

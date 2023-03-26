@@ -80,8 +80,8 @@ import {
     TEventMultipleCreateProposalAsDaoParams,
     TDaoTokenDaoSendParams,
     TUserParam,
-    TTaskUpgradeParams,
-    TTaskUpgradeResult,
+    TTaskTransferParams,
+    TTaskTransferResult,
     TTaskUpgradeCompleteParams,
     TTaskUpgradeCompleteResult,
     TDaoVoteParams,
@@ -92,6 +92,8 @@ import {
     TTaskReceiveBountyDaoResult,
     TDaoTokenDaoLockParams,
     TDaoTokenDaoLockResult,
+    TTaskUpgradeParams,
+    TTaskUpgradeResult,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -1622,7 +1624,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
-    async upgradeTask(params: TTaskUpgradeParams): Promise<TTaskUpgradeResult> {
+    async transferTask(params: TTaskTransferParams): Promise<TTaskTransferResult> {
         const { accountData, repoName } = params
 
         if (!this.wallet) {
@@ -1674,6 +1676,48 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             time: null,
         })
         return value0
+    }
+
+    async upgradeTask(params: TTaskUpgradeParams): Promise<TTaskUpgradeResult> {
+        const {
+            repoName,
+            taskName,
+            taskPrev,
+            tag,
+            comment = '',
+            reviewers = [],
+            cell,
+        } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellForTaskUpgrade', {
+                reponame: repoName,
+                nametask: taskName,
+                oldversion: taskPrev.version,
+                oldtask: taskPrev.address,
+                hashtag: tag,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForTaskUpgrade', {
+                reponame: repoName,
+                nametask: taskName,
+                oldversion: taskPrev.version,
+                oldtask: taskPrev.address,
+                hashtag: tag,
+                comment: comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
     async upgradeTaskComplete(
@@ -2055,7 +2099,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
                 return value0
             }
             if (type === ESmvEventType.TASK_REDEPLOY) {
-                return await this.upgradeTask(params)
+                return await this.transferTask(params)
             }
             if (type === ESmvEventType.TASK_REDEPLOYED) {
                 return await this.upgradeTaskComplete({ ...params, cell: true })
@@ -2074,6 +2118,9 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             }
             if (type === ESmvEventType.DAO_TOKEN_DAO_LOCK) {
                 return await this.lockDaoToken({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.TASK_UPGRADE) {
+                return await this.upgradeTask({ ...params, cell: true })
             }
             return null
         })
@@ -4621,6 +4668,8 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             return {}
         } else if (type === ESmvEventType.TASK_REDEPLOYED) {
             return {}
+        } else if (type === ESmvEventType.TASK_UPGRADE) {
+            fn = 'getUpgradeTaskProposalParams'
         } else if (type === ESmvEventType.MULTI_PROPOSAL) {
             const { num, data0 } = await event.runLocal('getDataFirst', {}, undefined, {
                 useCachedBoc: true,
@@ -4762,6 +4811,8 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getTaskData'
         } else if (kind === ESmvEventType.TASK_REDEPLOYED) {
             return { type }
+        } else if (kind === ESmvEventType.TASK_UPGRADE) {
+            fn = 'getUpgradeTaskProposalParamsData'
         } else {
             throw new GoshError(`Multi event type "${type}" is unknown`)
         }
