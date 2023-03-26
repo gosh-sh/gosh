@@ -265,6 +265,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
 
                 pub.member = address.makeAddrStd(0, key);
             	deployWalletIn(pub);
+            	if (_daoMembers[key] != "") { 
+                    pub.member = _getDaoAddress(_daoMembers[key]);
+                    (, uint256 addrkey) = pub.member.unpack(); 
+                    _daoMembers[addrkey] = _daoMembers[key];
+                }
                 this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, key, wallets, tags);
                 address[] a1;
                 a1.push(pub.member);

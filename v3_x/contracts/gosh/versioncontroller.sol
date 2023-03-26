@@ -97,7 +97,30 @@ contract VersionController is Modifiers {
     }
 
     
-    function sendTokenToNewVersion3(uint128 grant, string version, string previousversion, address pubaddr, string namedao, optional(address) newwallet) public view {
+    function sendTokenToNewVersion3(uint128 grant, string version, string previousversion, address pubaddr, string namedao) public view {
+        optional(address) newwallet;
+        require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        require(_SystemContractCode.exists(tvm.hash(previousversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        TvmCell s1 = tvm.buildStateInit({
+            code: _SystemContractCode[tvm.hash(previousversion)].Value,
+            contr: SystemContract,
+            pubkey: tvm.pubkey(),
+            varInit: {}
+        });
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        s1 = tvm.buildStateInit({
+            code: _SystemContractCode[tvm.hash(version)].Value,
+            contr: SystemContract,
+            pubkey: tvm.pubkey(),
+            varInit: {}
+        });
+        addr = address.makeAddrStd(0, tvm.hash(s1));
+        tvm.accept();
+        SystemContract(addr).sendTokenToNewVersion4(grant, pubaddr, namedao, newwallet);
+    }
+    
+    function sendTokenToNewVersion33(uint128 grant, string version, string previousversion, address pubaddr, string namedao, optional(address) newwallet) public view {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         require(_SystemContractCode.exists(tvm.hash(previousversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         TvmCell s1 = tvm.buildStateInit({

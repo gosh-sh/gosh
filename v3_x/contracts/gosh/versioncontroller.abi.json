@@ -64,6 +64,18 @@
 				{"name":"version","type":"string"},
 				{"name":"previousversion","type":"string"},
 				{"name":"pubaddr","type":"address"},
+				{"name":"namedao","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokenToNewVersion33",
+			"inputs": [
+				{"name":"grant","type":"uint128"},
+				{"name":"version","type":"string"},
+				{"name":"previousversion","type":"string"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"namedao","type":"string"},
 				{"name":"newwallet","type":"optional(address)"}
 			],
