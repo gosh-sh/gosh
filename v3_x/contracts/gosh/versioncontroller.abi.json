@@ -19,6 +19,14 @@
 			]
 		},
 		{
+			"name": "destroySS",
+			"inputs": [
+				{"name":"version","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setSystemContractCode",
 			"inputs": [
 				{"name":"code","type":"cell"},

@@ -46,6 +46,11 @@ contract VersionController is Modifiers {
         });
         new SystemContract {stateInit: s1, value: FEE_DEPLOY_SYSTEM_CONTRACT, wid: 0, flag: 1}(_code);
     }
+    
+    function destroySS(string version) public onlyOwner accept saveMsg {
+        require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        delete _SystemContractCode[tvm.hash(version)];
+    }
 
     function setSystemContractCode(TvmCell code, string version) public  onlyOwner accept {       
         require(_SystemContractCode.exists(tvm.hash(version)) == false, ERR_SYSTEM_CONTRACT_BAD_VERSION);
