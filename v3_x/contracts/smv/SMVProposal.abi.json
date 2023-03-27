@@ -1098,6 +1098,14 @@
 			]
 		},
 		{
+			"name": "propData",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"propData","type":"cell"}
+			]
+		},
+		{
 			"name": "reviewers",
 			"inputs": [
 			],
