@@ -43,4 +43,5 @@ export const SmvEventTypes: { [key: number]: string } = {
     36: 'Redeploy task',
     37: 'Redeployed task',
     38: 'Task upgrade',
+    39: 'DAO transfer tokens from previous version',
 }

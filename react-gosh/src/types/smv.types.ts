@@ -38,6 +38,7 @@ enum ESmvEventType {
     TASK_REDEPLOY = 36,
     TASK_REDEPLOYED = 37,
     TASK_UPGRADE = 38,
+    DAO_TOKEN_TRANSFER_FROM_PREV = 39,
 }
 
 type TSmvDetails = {

@@ -1,13 +1,6 @@
 import { Form, Formik } from 'formik'
 import { useCallback } from 'react'
-import {
-    classNames,
-    GoshAdapterFactory,
-    TDao,
-    TSmvDetails,
-    useUser,
-    whileFinite,
-} from 'react-gosh'
+import { classNames, GoshError, TDao, TSmvDetails, useUser } from 'react-gosh'
 import { IGoshDaoAdapter, IGoshSmvAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { toast } from 'react-toastify'
 import { useSetRecoilState } from 'recoil'
@@ -59,16 +52,22 @@ const DaoWalletSide = (props: TDaoWalletSideProps) => {
         try {
             const { value0 } = await dao.adapter.dao.runLocal('getPreviousDaoAddr', {})
 
-            const gosh2 = GoshAdapterFactory.create('2.0.0')
-            const dao2 = await gosh2.getDao({ address: value0, useAuth: true })
-            const smv2 = await dao2.getSmv()
+            const gosh = dao.adapter.getGosh()
+            const daoPrev = await gosh.getDao({ address: value0, useAuth: true })
+            const { value1: daoPrevVer } = await daoPrev.dao.runLocal('getVersion', {})
+            if (daoPrevVer === '1.0.0') {
+                throw new GoshError('Transfer is not needed', {
+                    message: 'Transfer from DAO version 1.0.0 is not needed',
+                })
+            }
 
-            await smv2.releaseAll()
-            await smv2.transferToWallet(0)
-            const balance = await smv2.getWalletBalance(dao2.wallet!)
-            await dao2.wallet?.run('sendTokenToNewVersion', {
+            const smvPrev = await daoPrev.getSmv()
+            await smvPrev.releaseAll()
+            await smvPrev.transferToWallet(0)
+            const balance = await smvPrev.getWalletBalance(daoPrev.wallet!)
+            await daoPrev.wallet?.run('sendTokenToNewVersion', {
                 grant: balance,
-                newversion: '3.0.0',
+                newversion: dao.details.version,
             })
 
             toast.success(

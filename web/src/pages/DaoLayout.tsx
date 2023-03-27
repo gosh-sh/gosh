@@ -222,6 +222,9 @@ const DaoLayout = () => {
                                 <>
                                     New version of DAO available.
                                     <br />
+                                    It is recommended to complete all proposals before
+                                    upgrade.
+                                    <br />
                                     Check if corresponding proposal does not exist and go
                                     to the{' '}
                                     <Link
