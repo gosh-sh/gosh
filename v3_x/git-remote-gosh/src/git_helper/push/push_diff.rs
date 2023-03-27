@@ -51,8 +51,8 @@ pub async fn push_diff<'a, B>(
     diff: &'a [u8],
     new_snapshot_content: &'a Vec<u8>,
 ) -> anyhow::Result<()>
-where
-    B: BlockchainService,
+    where
+        B: BlockchainService,
 {
     tracing::trace!("push_diff: repo_name={repo_name}, dao_address={dao_address}, remote_network={remote_network}, ipfs_endpoint={ipfs_endpoint}, commit_id={commit_id}, branch_name={branch_name}, blob_id={blob_id}, file_path={file_path}, diff_coordinate={diff_coordinate:?}, last_commit_id={last_commit_id}, is_last={is_last}");
     let wallet = blockchain.user_wallet(dao_address, remote_network).await?;
@@ -63,7 +63,7 @@ where
         branch_name,
         file_path,
     ))
-    .await?;
+        .await?;
 
     let blockchain = blockchain.clone();
     let original_snapshot_content = original_snapshot_content.clone();
@@ -105,11 +105,11 @@ where
                 &diff,
                 &new_snapshot_content,
             )
-            .await
+                .await
         },
         condition,
     )
-    .await?;
+        .await?;
     Ok(())
 }
 
@@ -338,8 +338,8 @@ pub async fn push_initial_snapshot<B>(
     upgrade: bool,
     commit_id: String,
 ) -> anyhow::Result<()>
-where
-    B: BlockchainService + 'static,
+    where
+        B: BlockchainService + 'static,
 {
     tracing::trace!("push_initial_snapshot: repo_addr={repo_addr}, dao_addr={dao_addr}, remote_network={remote_network}, branch_name={branch_name}, file_path={file_path}");
     let wallet = blockchain.user_wallet(&dao_addr, &remote_network).await?;
@@ -369,7 +369,7 @@ where
             &branch_name,
             &file_path,
         )
-        .await?;
+            .await?;
         let snapshot = Snapshot::load(blockchain.client(), &snapshot_addr).await?;
         let content: Vec<u8> = ton_client::utils::compress_zstd(&snapshot.current_content, None)?;
         tracing::trace!("Previous snapshot content: {content:?}");
@@ -389,10 +389,16 @@ where
             &commit_id,
         ).await?;
         tracing::trace!("start waiting for commit to be ready, address: {new_commit}");
-        ParallelDiffsUploadSupport::wait_contracts_deployed(
+        let undeployed = ParallelDiffsUploadSupport::wait_contracts_deployed(
             &blockchain,
             &vec![new_commit],
         ).await?;
+        if !undeployed.is_empty() {
+            anyhow::bail!(
+                "Commit was not deployed in expected time: {}",
+                undeployed[0]
+            );
+        }
         tracing::trace!("commit is ready");
 
         (content_string, commit_id)
@@ -415,5 +421,5 @@ where
         },
         condition,
     )
-    .await
+        .await
 }

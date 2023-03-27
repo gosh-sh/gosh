@@ -313,7 +313,8 @@ where
             let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
 
             if let Err(_) = parent_contract.get_version(self.blockchain.client()).await {
-                if let Err(_) = ParallelDiffsUploadSupport::wait_contracts_deployed(&self.blockchain, &[parent]).await {
+                let undeployed = ParallelDiffsUploadSupport::wait_contracts_deployed(&self.blockchain, &[parent]).await;
+                if undeployed.is_err() || !undeployed.unwrap().is_empty() {
                     tracing::trace!("Failed to call parent");
                     let right_commit_address = if let Ok(res) = self.find_commit(&id).await {
                         res.1
@@ -850,9 +851,32 @@ where
 
         // wait for all spawned collections to finish
         parallel_diffs_upload_support.push_dangling(self).await?;
-        parallel_diffs_upload_support
-            .wait_all_diffs(self.blockchain.clone())
-            .await?;
+        let number_of_files_changed = parallel_diffs_upload_support.get_parallels_number();
+        let mut attempts = 0;
+        let mut last_rest_cnt = 0;
+        while attempts < 3 {
+            attempts += 1;
+            let res = parallel_diffs_upload_support
+                .wait_all_diffs(self.blockchain.clone())
+                .await?;
+            tracing::trace!("Wait all diffs result: {res:?}");
+            if res.is_empty() {
+                break;
+            }
+            if res.len() != last_rest_cnt {
+                attempts = 0;
+            }
+            tracing::trace!("Restart deploy on undeployed diffs");
+            let expected = parallel_diffs_upload_support.get_expected().to_owned();
+            parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
+            for address in res {
+                tracing::trace!("Get params of undeployed diff: {}", address);
+                let (coord, parallel, is_last) = expected.get(&address).ok_or(anyhow::format_err!("Failed to get diff params"))?.clone();
+                // parallel_diffs_upload_support.push(self, diff).await?;
+                parallel_diffs_upload_support.add_to_push_list(self, &coord, &parallel, is_last);
+            }
+            parallel_diffs_upload_support.push_dangling(self).await?;
+        }
 
         while let Some(finished_task) = push_handlers.join_next().await {
             let finished_task: std::result::Result<anyhow::Result<()>, JoinError> = finished_task;
@@ -890,7 +914,7 @@ where
             .notify_commit(
                 &latest_commit_id,
                 local_branch_name,
-                parallel_diffs_upload_support.get_parallels_number(),
+                number_of_files_changed,
                 number_of_commits,
                 &self.remote,
                 &self.dao_addr,
