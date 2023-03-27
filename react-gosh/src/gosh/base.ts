@@ -53,6 +53,20 @@ class BaseContract implements IContract {
         return this.cachedBoc
     }
 
+    async data(): Promise<string> {
+        const { result } = await this.account.client.net.query_collection({
+            collection: 'accounts',
+            filter: { id: { eq: this.address } },
+            result: 'data',
+        })
+        if (!result.length) {
+            throw new GoshError('Can not read data for accout', {
+                address: this.address,
+            })
+        }
+        return result[0].data
+    }
+
     async isDeployed(): Promise<boolean> {
         const response = await this.account.client.net.query_collection({
             collection: 'accounts',
@@ -212,6 +226,19 @@ class BaseContract implements IContract {
         } catch {
             return null
         }
+    }
+
+    async decodeAccountData(data?: string) {
+        if (!data) {
+            data = await this.data()
+        }
+
+        const result = await this.account.client.abi.decode_account_data({
+            abi: this.account.abi,
+            data: data!,
+            allow_partial: true,
+        })
+        return result.data
     }
 
     private async _runLocalCached(

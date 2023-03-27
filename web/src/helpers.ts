@@ -4,6 +4,7 @@ import { GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
 import { createAvatar } from '@dicebear/core'
 import { identicon } from '@dicebear/collection'
+import yup from './yup-extended'
 
 const supabase = createClient(
     'https://auth.gosh.sh',
@@ -86,6 +87,11 @@ const getIdenticonAvatar = (options: any) => {
     })
 }
 
+const isValidEmail = (email: string) => {
+    const schema = yup.string().email()
+    return schema.isValidSync(email)
+}
+
 /**
  * Toast shortcuts
  */
@@ -129,4 +135,5 @@ export {
     onExternalLinkClick,
     ToastOptionsShortcuts,
     getIdenticonAvatar,
+    isValidEmail,
 }

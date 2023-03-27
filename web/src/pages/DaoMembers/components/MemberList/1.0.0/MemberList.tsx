@@ -1,4 +1,4 @@
-import { TDao, TDaoMemberDetails } from 'react-gosh'
+import { TDao, TDaoMemberDetails, TUserParam } from 'react-gosh'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { ToastError } from '../../../../../components/Toast'
@@ -16,7 +16,7 @@ type TDaoMemeberListProps = {
         getMore: () => void
     }
     removal: {
-        remove: (username: string[]) => Promise<void>
+        remove: (user: TUserParam[]) => Promise<void>
         isFetching: (username: string) => boolean
     }
 }
@@ -29,7 +29,7 @@ const DaoMemeberList = (props: TDaoMemeberListProps) => {
     const onDelete = async (username: string) => {
         if (window.confirm('Delete member?')) {
             try {
-                await removal.remove([username])
+                await removal.remove([{ name: username, type: 'user' }])
                 navigate(`/o/${daoDetails.name}/events`)
             } catch (e: any) {
                 console.error(e.message)
@@ -64,7 +64,7 @@ const DaoMemeberList = (props: TDaoMemeberListProps) => {
                         item={item}
                         owner={daoDetails.owner}
                         isAuthMember={daoDetails.isAuthMember}
-                        isFetching={removal.isFetching(item.name)}
+                        isFetching={removal.isFetching(item.user.name)}
                         onDelete={onDelete}
                     />
                 ))}
