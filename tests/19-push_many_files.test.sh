@@ -26,7 +26,7 @@ git config user.name "My name"
 git branch -m main
 
 echo "***** Generating files *****"
-for n in {1..300}; do
+for n in {1..400}; do
     dd if=/dev/urandom of=file$( printf %03d "$n" ).bin bs=1 count=$(( RANDOM % 8192 ))
 done
 
@@ -45,7 +45,7 @@ echo "***** check repo *****"
 cd "$REPO_NAME-clone"
 
 cur_ver=$(ls -la | wc -l)
-if [ "$cur_ver" != "304" ]; then
+if [ "$cur_ver" != "404" ]; then
   echo "WRONG NUMBER OF FILES"
   exit 1
 fi
