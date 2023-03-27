@@ -23,6 +23,11 @@ export async function runBash({
 export async function goshCli(...args: string[]) {
     const cmd = ['gosh-cli', '-j', ...args]
     const display_cmd = cmd.map((x) => `'${x}'`).join(' ')
+
+    // Print current time
+    const now = new Date();
+    console.debug(`Current timestamp: ${now}`)
+
     console.debug(`gosh cli: ${display_cmd}`)
     const p = Deno.run({
         cmd,
@@ -34,10 +39,13 @@ export async function goshCli(...args: string[]) {
         p.output().then((res) => new TextDecoder().decode(res)),
         p.stderrOutput().then((res) => new TextDecoder().decode(res)),
     ])
-    if (stderr) {
+    if (stdout) {
         console.log('Stdout:', stdout)
+    }
+    if (stderr) {
         console.log('Stderr:', stderr)
     }
+    console.log('Status:', status)
     if (status.success) {
         return JSON.parse(stdout)
     }

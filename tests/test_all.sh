@@ -34,6 +34,7 @@ set -o pipefail
 ./16-push_after_diamond_merge.test.sh
 ./17-create_file_in_branch.test.sh
 ./18-push_several_commits.test.sh
+./19-push_many_files.test.sh
 
 ./clean.sh
 echo "All tests passed"

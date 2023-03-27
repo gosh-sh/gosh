@@ -73,6 +73,7 @@ impl BlockchainCall for Everscale {
             signer,
             deploy_set: None,
             processing_try_index: None,
+            signature_id: None,
         };
 
         let sdk_result = ton_client::processing::process_message(
@@ -111,10 +112,11 @@ impl BlockchainCall for Everscale {
         C: ContractInfo + Sync,
     {
         tracing::trace!(
-            "blockchain call start: contract.address: {:?}, function: {}, args: {:?}",
+            "blockchain call start: contract.address: {:?}, function: {}, args: {:?}, expected_address: {:?}",
             contract.get_address().clone(),
             function_name,
-            args
+            args,
+            expected_address,
         );
         let call_set = match args {
             Some(value) => CallSet::some_with_function_and_input(function_name, value),
@@ -141,6 +143,7 @@ impl BlockchainCall for Everscale {
                 signer,
                 deploy_set: None,
                 processing_try_index: None,
+                signature_id: None,
             },
         )
         .await?;

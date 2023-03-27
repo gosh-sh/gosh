@@ -340,6 +340,7 @@ async fn run_local(
             signer: Signer::None,
             deploy_set: None,
             processing_try_index: None,
+            signature_id: None,
         },
     )
     .instrument(info_span!("run_local sdk::encode_message").or_current())
@@ -450,6 +451,7 @@ async fn run_static(
             signer: Signer::None,
             deploy_set: None,
             processing_try_index: None,
+            signature_id: None,
         },
     )
     .instrument(info_span!("run_static sdk::encode_message").or_current())

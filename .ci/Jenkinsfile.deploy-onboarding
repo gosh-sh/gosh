@@ -18,6 +18,7 @@ pipeline {
                     }
                     dir('onboarding-workflow_v1') {
                         sh 'docker compose down -v --remove-orphans || true'
+                        sh 'docker system prune -f'
                         sh 'npm i'
                         sh 'make docker'
                     }
@@ -26,6 +27,7 @@ pipeline {
                     }
                     dir('onboarding-workflow_v2') {
                         sh 'docker compose down -v --remove-orphans || true'
+                        sh 'docker system prune -f'
                         sh 'npm i'
                         sh 'make docker'
                     }
