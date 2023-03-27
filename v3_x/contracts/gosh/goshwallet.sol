@@ -2734,7 +2734,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     function voteFor (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platform_id, bool choice, uint128 amount, uint128 num_clients, string note) external  onlyOwnerPubkey(_access.get())
     {
-        require(_tombstone == false, ERR_TOMBSTONE);
         require(initialized, SMVErrors.error_not_initialized);
         require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
                                     2*SMVConstants.VOTING_FEE + num_clients*SMVConstants.CLIENT_LIST_FEE +
@@ -2763,7 +2762,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function voteForIn (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platform_id, bool choice, uint128 amount, uint128 num_clients, string note) external  onlyOwnerAddress(_pubaddr)
     {
-        require(_tombstone == false, ERR_TOMBSTONE);
         require(initialized, SMVErrors.error_not_initialized);
         require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
                                     2*SMVConstants.VOTING_FEE + num_clients*SMVConstants.CLIENT_LIST_FEE +
