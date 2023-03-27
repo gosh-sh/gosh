@@ -106,8 +106,8 @@ pipeline {
                         deployVersion(version, nodes, basePort)
                     }
 
-                    //runFunctionalTests(files, basePort, "Func v1", "v1_x")
-                    //runFunctionalTests(files, basePort, "Func v2", "v2_x")
+                    runFunctionalTests(files, basePort, "Func v1", "v1_x")
+                    runFunctionalTests(files, basePort, "Func v2", "v2_x")
                     runFunctionalTests(files, basePort, "Func v3", "v3_x")
                     runUpgradeTests(files, basePort, 1, 2)
                     runUpgradeTests(files, basePort, 2, 3)
