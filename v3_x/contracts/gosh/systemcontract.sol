@@ -28,7 +28,7 @@ contract SystemContract is Modifiers {
     
     address _versionController;
     bool _flag = true;
-    mapping(uint8 => TvmCell) _code;
+    mapping(uint8 => TvmCell) public _code;
     mapping(uint128 => address) public _indexes;
 
     //Limits
@@ -229,7 +229,7 @@ contract SystemContract is Modifiers {
     function checkOldTaskVersion4(string name, string nametask, string repo, address previousaddr, address answer) public view senderIs(_versionController) accept {
         TvmCell s1 = _composeDaoStateInit(name);
         address addr = address.makeAddrStd(0, tvm.hash(s1));
-        GoshDao(addr).checkOldTaskVersion5{value : 0.3 ton, flag: 1}(nametask, repo, previousaddr, answer);
+        GoshDao(addr).checkOldTaskVersion5{value : 0.31 ton, flag: 1}(nametask, repo, previousaddr, answer);
     }
     
     function _composeRepoStateInit(string name, address goshdao) internal view returns(TvmCell) {

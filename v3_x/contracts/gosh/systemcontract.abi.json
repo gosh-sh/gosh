@@ -689,6 +689,14 @@
 			]
 		},
 		{
+			"name": "_code",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_code","type":"map(uint8,cell)"}
+			]
+		},
+		{
 			"name": "_indexes",
 			"inputs": [
 			],
