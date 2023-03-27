@@ -558,32 +558,34 @@
 			]
 		},
 		{
-			"name": "getDaoLockVoteProposalParams",
+			"name": "getDaoTransferTokenProposalParams",
 			"inputs": [
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"wallet","type":"address"},
+				{"name":"newwallet","type":"address"},
 				{"name":"grant","type":"uint128"},
 				{"name":"oldversion","type":"string"},
 				{"name":"comment","type":"string"}
 			]
 		},
 		{
-			"name": "getDaoLockVoteProposalParamsData",
+			"name": "getDaoTransferTokenProposalParamsData",
 			"inputs": [
 				{"name":"Data","type":"cell"}
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"wallet","type":"address"},
+				{"name":"newwallet","type":"address"},
 				{"name":"grant","type":"uint128"},
 				{"name":"oldversion","type":"string"},
 				{"name":"comment","type":"string"}
 			]
 		},
 		{
-			"name": "getDaoTransferTokenProposalParams",
+			"name": "getDaoLockVoteProposalParams",
 			"inputs": [
 			],
 			"outputs": [
@@ -595,7 +597,7 @@
 			]
 		},
 		{
-			"name": "getDaoTransferTokenProposalParamsData",
+			"name": "getDaoLockVoteProposalParamsData",
 			"inputs": [
 				{"name":"Data","type":"cell"}
 			],
