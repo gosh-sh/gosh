@@ -37,11 +37,14 @@ mod push_tag;
 mod push_tree;
 use push_tag::push_tag;
 mod delete_tag;
+mod parallel_snapshot_upload_support;
+
 use crate::blockchain::contract::{ContractRead, GoshContract};
 use crate::blockchain::{AddrVersion, get_commit_by_addr, GetNameCommitResult, gosh_abi};
 use delete_tag::delete_tag;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 use push_tree::push_tree;
+use crate::git_helper::push::parallel_snapshot_upload_support::{ParallelCommit, ParallelCommitUploadSupport, ParallelSnapshot, ParallelSnapshotUploadSupport, ParallelTreeUploadSupport};
 
 static PARALLEL_PUSH_LIMIT: usize = 1 << 6;
 
@@ -122,7 +125,7 @@ where
         branch_name: &str,
         statistics: &mut PushBlobStatistics,
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
-        parallel_snapshot_uploads: &mut JoinSet<anyhow::Result<()>>,
+        parallel_snapshot_uploads: &mut ParallelSnapshotUploadSupport,
         upgrade_commit: bool,
     ) -> anyhow::Result<()> {
         {
@@ -134,22 +137,14 @@ where
             let branch_name = branch_name.to_string();
             let file_path = file_path.to_string();
             let commit_str = commit_id.to_string();
-            parallel_snapshot_uploads.spawn(
-                async move {
-                    push_initial_snapshot(
-                        blockchain,
-                        repo_address,
-                        dao_addr,
-                        remote_network,
-                        branch_name,
-                        file_path,
-                        upgrade_commit,
-                        commit_str,
-                    )
-                    .await
-                }
-                .instrument(info_span!("tokio::spawn::push_initial_snapshot").or_current()),
-            );
+            parallel_snapshot_uploads.add_to_push_list(self,
+                ParallelSnapshot::new(
+                    branch_name,
+                    file_path,
+                    upgrade_commit,
+                    commit_str,
+                )
+            ).await?;
         }
 
         let file_diff =
@@ -346,12 +341,12 @@ where
         remote_branch_name: &str,
         local_branch_name: &str,
         parents_of_commits: &mut HashMap<&'a str, Vec<String>>,
-        push_handlers: &mut JoinSet<anyhow::Result<()>>,
+        push_commits: &mut ParallelCommitUploadSupport,
         push_semaphore: Arc<Semaphore>,
         prev_commit_id: &mut Option<ObjectId>,
         statistics: &mut PushBlobStatistics,
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
-        parallel_snapshot_uploads: &mut JoinSet<anyhow::Result<()>>,
+        parallel_snapshot_uploads: &mut ParallelSnapshotUploadSupport,
         upgrade_commit: bool,
         parents_for_upgrade: Vec<AddrVersion>,
     ) -> anyhow::Result<()> {
@@ -402,44 +397,8 @@ where
             let tree_addr = tree_addr.clone();
             let branch_name = remote_branch_name.to_owned().clone();
 
-            let permit = push_semaphore.acquire_owned().await?;
+            push_commits.add_to_push_list(self, ParallelCommit::new(object_id, branch_name, tree_addr, raw_commit, parents, upgrade_commit), push_semaphore.clone()).await?;
 
-            let condition = |e: &anyhow::Error| {
-                if e.is::<WalletError>() {
-                    false
-                } else {
-                    tracing::warn!("Attempt failed with {:#?}", e);
-                    true
-                }
-            };
-
-            push_handlers.spawn(
-                async move {
-                    let res = RetryIf::spawn(
-                        default_retry_strategy(),
-                        || async {
-                            blockchain
-                                .push_commit(
-                                    &object_id,
-                                    &branch_name,
-                                    &tree_addr,
-                                    &remote,
-                                    &dao_addr,
-                                    &raw_commit,
-                                    &parents,
-                                    upgrade_commit,
-                                )
-                                .await
-                        },
-                        condition,
-                    )
-                    .await;
-
-                    drop(permit);
-                    res
-                }
-                .instrument(info_span!("tokio::spawn::push_commit").or_current()),
-            );
         }
 
         let tree_diff = utilities::build_tree_diff_from_commits(
@@ -582,9 +541,11 @@ where
         tracing::trace!("List of commit objects: {commit_objects_list:?}");
 
         // 9) push objects
-        let mut push_handlers: JoinSet<anyhow::Result<()>> = JoinSet::new();
+        let mut push_commits= ParallelCommitUploadSupport::new();
         let push_semaphore = Arc::new(Semaphore::new(PARALLEL_PUSH_LIMIT));
-        let mut parallel_snapshot_uploads: JoinSet<anyhow::Result<()>> = JoinSet::new();
+        // let mut parallel_snapshot_uploads: JoinSet<anyhow::Result<()>> = JoinSet::new();
+        let mut parallel_tree_uploads = ParallelTreeUploadSupport::new();
+        let mut parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
         let mut parents_of_commits: HashMap<&str, Vec<String>> =
             HashMap::from([(ZERO_SHA, vec![]), ("", vec![])]);
         let mut visited_trees: HashSet<ObjectId> = HashSet::new();
@@ -610,7 +571,7 @@ where
                         remote_branch_name,
                         local_branch_name,
                         &mut parents_of_commits,
-                        &mut push_handlers,
+                        &mut push_commits,
                         push_semaphore.clone(),
                         &mut prev_commit_id,
                         &mut statistics,
@@ -635,7 +596,7 @@ where
                         self,
                         &object_id,
                         &mut visited_trees,
-                        &mut push_handlers,
+                        &mut parallel_tree_uploads,
                         push_semaphore.clone(),
                     )
                     .await?;
@@ -649,31 +610,6 @@ where
             .wait_all_diffs(self.blockchain.clone())
             .await?;
 
-        while let Some(finished_task) = push_handlers.join_next().await {
-            let finished_task: std::result::Result<anyhow::Result<()>, JoinError> = finished_task;
-            match finished_task {
-                Err(e) => {
-                    bail!("obj join-hanlder: {}", e);
-                }
-                Ok(Err(e)) => {
-                    bail!("obj inner: {}", e)
-                }
-                Ok(Ok(_)) => {}
-            }
-        }
-
-        while let Some(finished_task) = parallel_snapshot_uploads.join_next().await {
-            let finished_task: std::result::Result<anyhow::Result<()>, JoinError> = finished_task;
-            match finished_task {
-                Err(e) => {
-                    bail!("snapshots join-hanlder: {}", e);
-                }
-                Ok(Err(e)) => {
-                    bail!("snapshots inner: {}", e)
-                }
-                Ok(Ok(_)) => {}
-            }
-        }
 
         // 10) call set commit to the new version of the ancestor commit
         self.blockchain
@@ -786,9 +722,10 @@ where
         // 8. Deploy all commit objects
 
         // create collections for spawned tasks and statistics
-        let mut push_handlers: JoinSet<anyhow::Result<()>> = JoinSet::new();
+        let mut push_commits = ParallelCommitUploadSupport::new();
         let push_semaphore = Arc::new(Semaphore::new(PARALLEL_PUSH_LIMIT));
-        let mut parallel_snapshot_uploads: JoinSet<anyhow::Result<()>> = JoinSet::new();
+        let mut parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
+        let mut parallel_tree_uploads = ParallelTreeUploadSupport::new();
         let mut parents_of_commits: HashMap<&str, Vec<String>> =
             HashMap::from([(ZERO_SHA, vec![]), ("", vec![])]);
         let mut visited_trees: HashSet<ObjectId> = HashSet::new();
@@ -816,7 +753,7 @@ where
                         remote_branch_name,
                         local_branch_name,
                         &mut parents_of_commits,
-                        &mut push_handlers,
+                        &mut push_commits,
                         push_semaphore.clone(),
                         &mut prev_commit_id,
                         &mut statistics,
@@ -841,7 +778,7 @@ where
                         self,
                         &object_id,
                         &mut visited_trees,
-                        &mut push_handlers,
+                        &mut parallel_tree_uploads,
                         push_semaphore.clone(),
                     )
                     .await?;
@@ -878,31 +815,82 @@ where
             parallel_diffs_upload_support.push_dangling(self).await?;
         }
 
-        while let Some(finished_task) = push_handlers.join_next().await {
-            let finished_task: std::result::Result<anyhow::Result<()>, JoinError> = finished_task;
-            match finished_task {
-                Err(e) => {
-                    bail!("obj join-hanlder: {}", e);
-                }
-                Ok(Err(e)) => {
-                    bail!("obj inner: {}", e)
-                }
-                Ok(Ok(_)) => {}
+        let mut attempts = 0;
+        let mut last_rest_cnt = 0;
+        while attempts < 3 {
+            attempts += 1;
+            let res = parallel_snapshot_uploads
+                .wait_all_snapshots(self.blockchain.clone())
+                .await?;
+            tracing::trace!("Wait all snapshots result: {res:?}");
+            if res.is_empty() {
+                break;
+            }
+            if res.len() != last_rest_cnt {
+                attempts = 0;
+            }
+            tracing::trace!("Restart deploy on undeployed snapshots");
+            let expected = parallel_snapshot_uploads.get_expected().to_owned();
+            parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
+            for address in res {
+                let snapshot = expected.get(&address).ok_or(anyhow::format_err!("Failed to get diff params"))?.clone();
+                tracing::trace!("Get params of undeployed snapshot: {} {:?}", address, snapshot);
+                parallel_snapshot_uploads.add_to_push_list(self, snapshot).await?;
             }
         }
 
-        while let Some(finished_task) = parallel_snapshot_uploads.join_next().await {
-            let finished_task: std::result::Result<anyhow::Result<()>, JoinError> = finished_task;
-            match finished_task {
-                Err(e) => {
-                    bail!("snapshots join-hanlder: {}", e);
-                }
-                Ok(Err(e)) => {
-                    bail!("snapshots inner: {}", e)
-                }
-                Ok(Ok(_)) => {}
+
+        let mut attempts = 0;
+        let mut last_rest_cnt = 0;
+        while attempts < 3 {
+            attempts += 1;
+            let res = parallel_tree_uploads
+                .wait_all_trees(self.blockchain.clone())
+                .await?;
+            tracing::trace!("Wait all trees result: {res:?}");
+            if res.is_empty() {
+                break;
+            }
+            if res.len() != last_rest_cnt {
+                attempts = 0;
+            }
+            tracing::trace!("Restart deploy on undeployed trees");
+            let expected = parallel_tree_uploads.get_expected().to_owned();
+            parallel_tree_uploads = ParallelTreeUploadSupport::new();
+            for address in res {
+                let tree = expected.get(&address).ok_or(anyhow::format_err!("Failed to get diff params"))?.clone();
+                tracing::trace!("Get params of undeployed tree: {} {:?}", address, tree.tree_id);
+                parallel_tree_uploads.add_to_push_list(self, tree, push_semaphore.clone()).await?;
             }
         }
+
+
+        let mut attempts = 0;
+        let mut last_rest_cnt = 0;
+        while attempts < 3 {
+            attempts += 1;
+            let res = push_commits
+                .wait_all_commits(self.blockchain.clone())
+                .await?;
+            tracing::trace!("Wait all commits result: {res:?}");
+            if res.is_empty() {
+                break;
+            }
+            if res.len() != last_rest_cnt {
+                attempts = 0;
+            }
+            tracing::trace!("Restart deploy on undeployed commits");
+            let expected = push_commits.get_expected().to_owned();
+            push_commits = ParallelCommitUploadSupport::new();
+            for address in res {
+                let commit = expected.get(&address).ok_or(anyhow::format_err!("Failed to get diff params"))?.clone();
+                tracing::trace!("Get params of undeployed tree: {} {:?}", address, commit.commit_id);
+                push_commits.add_to_push_list(self, commit, push_semaphore.clone()).await?;
+            }
+        }
+
+
+
 
         // 9. Set commit (move HEAD)
         let number_of_commits = calculate_left_distance(
