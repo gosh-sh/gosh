@@ -21,7 +21,7 @@ uint256 public propId;
 uint32  creationTime;
 address public tokenRoot;
 
-TvmCell propData;
+TvmCell public propData;
 mapping (address => bool) public reviewers;
 uint32 public startTime;
 uint32 public finishTime;
