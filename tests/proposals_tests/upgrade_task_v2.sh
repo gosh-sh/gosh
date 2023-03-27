@@ -24,6 +24,7 @@ set -x
 #./node_se_scripts/deploy.sh v2_x
 #. set-vars.sh v2_x
 #./upgrade_tests/set_up.sh v2_x v3_x
+#exit 0
 
 REPO_NAME=prop_repo01
 DAO_NAME="dao-prop-test01_$(date +%s)"
@@ -52,7 +53,6 @@ TASK_ADDR=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTaskAddr --abi $WALLET_A
 wait_account_active $TASK_ADDR
 
 USER_ADDR=$(echo $USER_PROFILE_ADDR | sed -r "s/:/x/")
-TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getWalletsFull | jq '.value0."'$USER_ADDR'".count' | cut -d'"' -f 2)
 
 export OLD_LINK="gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME"
 echo "OLD_LINK=$OLD_LINK"
@@ -316,9 +316,8 @@ tonos-cli callx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" 
 
 sleep 10
 
-FINAL_TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getWalletsFull | jq '.value0."'$USER_ADDR'".count' | cut -d'"' -f 2)
-
-if [ "$FINAL_TOKEN_CNT" == "$NEW_TOKEN_CNT" ]; then
-    echo Did not get token
-    exit 2
+TOKEN_CNT=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m m_pseudoDAOBalance | jq '.m_pseudoDAOBalance' | cut -d'"' -f 2)
+if [ "$TOKEN_CNT" != "1" ]; then
+  echo Wrong amount of token
+  exit 1
 fi

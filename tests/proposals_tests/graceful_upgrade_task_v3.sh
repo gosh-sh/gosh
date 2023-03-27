@@ -127,11 +127,10 @@ tonos-cli callx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" 
 
 sleep 10
 
-NEW_TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getWalletsFull | jq '.value0."'$USER_ADDR'".count' | cut -d'"' -f 2)
-
-if [ "21" != "$NEW_TOKEN_CNT" ]; then
-    echo Did not get token
-    exit 2
+TOKEN_CNT=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m m_pseudoDAOBalance | jq '.m_pseudoDAOBalance' | cut -d'"' -f 2)
+if [ "$TOKEN_CNT" != "1" ]; then
+  echo Wrong amount of token
+  exit 1
 fi
 
 data=$(tonos-cli -j decode account data --addr $TASK_ADDR --abi $TASK_ABI)
@@ -185,10 +184,9 @@ tonos-cli callx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" 
 
 sleep 10
 
-FINAL_TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getWalletsFull | jq '.value0."'$USER_ADDR'".count' | cut -d'"' -f 2)
-
-if [ "$FINAL_TOKEN_CNT" != "22" ]; then
-    echo Did not get token
-    exit 2
+TOKEN_CNT=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m m_pseudoDAOBalance | jq '.m_pseudoDAOBalance' | cut -d'"' -f 2)
+if [ "$TOKEN_CNT" != "2" ]; then
+  echo Wrong amount of token
+  exit 1
 fi
 
