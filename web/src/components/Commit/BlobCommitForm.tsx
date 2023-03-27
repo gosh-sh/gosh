@@ -78,6 +78,7 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
     const [codeLanguage, setCodeLanguage] = useState<string>('plaintext')
 
     const getInitialValues = () => {
+        const version_1_0_0 = {}
         const version_2_0_0 = {
             task: '',
             assigners: '',
@@ -94,9 +95,13 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
         }
 
         let versionised = {}
-        if (dao.details.version === '2.0.0') {
+        if (dao.details.version === '1.0.0') {
+            versionised = version_1_0_0
+        } else if (dao.details.version === '2.0.0') {
             versionised = version_2_0_0
         } else if (dao.details.version === '3.0.0') {
+            versionised = version_3_0_0
+        } else {
             versionised = version_3_0_0
         }
 
@@ -104,6 +109,7 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
     }
 
     const getValidationSchema = () => {
+        const version_1_0_0 = {}
         const version_2_0_0 = {
             task: yup.string(),
             assigners: yup
@@ -154,9 +160,13 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
         }
 
         let versionised = {}
-        if (dao.details.version === '2.0.0') {
+        if (dao.details.version === '1.0.0') {
+            versionised = version_1_0_0
+        } else if (dao.details.version === '2.0.0') {
             versionised = version_2_0_0
         } else if (dao.details.version === '3.0.0') {
+            versionised = version_3_0_0
+        } else {
             versionised = version_3_0_0
         }
 

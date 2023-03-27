@@ -58,6 +58,7 @@ const BlobDeleteForm = (props: TBlobDeleteFormProps) => {
     const navigate = useNavigate()
 
     const getInitialValues = () => {
+        const version_1_0_0 = {}
         const version_2_0_0 = {
             task: '',
             assigners: '',
@@ -74,9 +75,13 @@ const BlobDeleteForm = (props: TBlobDeleteFormProps) => {
         }
 
         let versionised = {}
-        if (dao.details.version === '2.0.0') {
+        if (dao.details.version === '1.0.0') {
+            versionised = version_1_0_0
+        } else if (dao.details.version === '2.0.0') {
             versionised = version_2_0_0
         } else if (dao.details.version === '3.0.0') {
+            versionised = version_3_0_0
+        } else {
             versionised = version_3_0_0
         }
 
@@ -84,6 +89,7 @@ const BlobDeleteForm = (props: TBlobDeleteFormProps) => {
     }
 
     const getValidationSchema = () => {
+        const version_1_0_0 = {}
         const version_2_0_0 = {
             task: yup.string(),
             assigners: yup
@@ -134,9 +140,13 @@ const BlobDeleteForm = (props: TBlobDeleteFormProps) => {
         }
 
         let versionised = {}
-        if (dao.details.version === '2.0.0') {
+        if (dao.details.version === '1.0.0') {
+            versionised = version_1_0_0
+        } else if (dao.details.version === '2.0.0') {
             versionised = version_2_0_0
         } else if (dao.details.version === '3.0.0') {
+            versionised = version_3_0_0
+        } else {
             versionised = version_3_0_0
         }
 
