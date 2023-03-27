@@ -28,7 +28,7 @@ contract SystemContract is Modifiers {
     
     address _versionController;
     bool _flag = true;
-    mapping(uint8 => TvmCell) _code;
+    mapping(uint8 => TvmCell) public _code;
     mapping(uint128 => address) public _indexes;
 
     //Limits
