@@ -302,7 +302,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) private {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        GoshDao(_goshdao).daoVote{value: 0.1 ton}(_pubaddr, _index, wallet, platform_id, choice, amount, num_clients_base, note);
+        GoshDao(_goshdao).daoVote{value: 0.1 ton, flag: 1}(_pubaddr, _index, wallet, platform_id, choice, amount, num_clients_base, note);
         getMoney();
     }
 
@@ -509,7 +509,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        this._tagUpgrade2{value:0.12 ton}(repoName, nametag, newversion, 0);
+        this._tagUpgrade2{value:0.12 ton, flag: 1}(repoName, nametag, newversion, 0);
         getMoney();
     }
     
@@ -520,7 +520,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint128 index
     ) public senderIs(address(this))  accept saveMsg {
         if (index >= repoName.length) { return; }
-        this._tagUpgrade2{value:0.12 ton}(repoName, nametag, newversion, index + 1);
+        this._tagUpgrade2{value:0.12 ton, flag: 1}(repoName, nametag, newversion, index + 1);
         address repo = _buildRepositoryAddr(repoName[index]);
         TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag[index]}});
@@ -682,7 +682,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function _mintToken(uint128 grant) private view {
-        GoshDao(_goshdao).mintReserve{value:0.1 ton}(grant, _pubaddr, _index);
+        GoshDao(_goshdao).mintReserve{value:0.1 ton, flag: 1}(grant, _pubaddr, _index);
     }
     
     function startProposalForAddVoteToken(
@@ -751,7 +751,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);       
         tvm.accept();
         _saveMsg();
-        GoshDao(_goshdao).proposalForDeployWalletDao{value: 1.3 ton}(_pubaddr, _index, pubaddr, dao, comment, num_clients, reviewers);
+        GoshDao(_goshdao).proposalForDeployWalletDao{value: 1.3 ton, flag: 1}(_pubaddr, _index, pubaddr, dao, comment, num_clients, reviewers);
     }
     
     
@@ -886,7 +886,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         if (_flag == true) { return; }
         if (address(this).balance > 20000 ton) { return; }
         _flag = true;
-        SystemContract(_systemcontract).sendMoney{value : 0.2 ton}(_pubaddr, _goshdao, 21000 ton, _index);
+        SystemContract(_systemcontract).sendMoney{value : 0.2 ton, flag: 1}(_pubaddr, _goshdao, 21000 ton, _index);
     }
     
     function deployTopic(string name, string content, address object) public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
@@ -900,13 +900,13 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function deployMessage(address topic, optional(uint256) answer, string message) public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        Topic(topic).acceptMessage{value:0.1 ton}(_pubaddr, _index, answer, message);
+        Topic(topic).acceptMessage{value:0.1 ton, flag: 1}(_pubaddr, _index, answer, message);
     }       
     
     function setCheckDao() public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        GoshDao(_goshdao).setCheck{value:0.1 ton}(_pubaddr, _index);
+        GoshDao(_goshdao).setCheck{value:0.1 ton, flag: 1}(_pubaddr, _index);
     }       
 
     function _composeTopicStateInit(string name, string content, address object) internal view returns(TvmCell) {
@@ -1015,7 +1015,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) private {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        GoshDao(_goshdao).daoSendToken{value: 0.1 ton}(_pubaddr, _index, wallet, pubaddr, grant);
+        GoshDao(_goshdao).daoSendToken{value: 0.1 ton, flag: 1}(_pubaddr, _index, wallet, pubaddr, grant);
         getMoney();
     }
     
@@ -1388,7 +1388,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        DaoTag(_getdaotagaddr(daotag)).destroy { value: 0.1 ton}(_pubaddr, _index);
+        DaoTag(_getdaotagaddr(daotag)).destroy { value: 0.1 ton, flag: 1}(_pubaddr, _index);
         getMoney();
     }
     
@@ -1408,8 +1408,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        RepoTagGosh(_getrepotaggoshaddr(_repo, daotag)).destroy { value: 0.1 ton}(_pubaddr, _index);
-        RepoTagGosh(_getrepotagdaoaddr(_repo, daotag)).destroy { value: 0.1 ton}(_pubaddr, _index);
+        RepoTagGosh(_getrepotaggoshaddr(_repo, daotag)).destroy { value: 0.1 ton, flag: 1}(_pubaddr, _index);
+        RepoTagGosh(_getrepotagdaoaddr(_repo, daotag)).destroy { value: 0.1 ton, flag: 1}(_pubaddr, _index);
         getMoney();
     }
     
@@ -1442,7 +1442,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) private {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        GoshDao(_goshdao).deployTask{value: 0.3 ton}(_pubaddr, _index, repoName, nametask, hashtag, grant);
+        GoshDao(_goshdao).deployTask{value: 0.3 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant);
         getMoney();
     }
     
@@ -1492,9 +1492,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address repo,
         address task,
         string tag) private {       
-        RepoTagGosh(_gettasktaggoshaddr(repo, task, tag)).destroy { value: 0.1 ton}(_pubaddr, _index);
-        RepoTagGosh(_gettasktagdaoaddr(repo, task, tag)).destroy { value: 0.1 ton}(_pubaddr, _index);
-        RepoTagGosh(_gettasktagrepoaddr(repo, task, tag)).destroy { value: 0.1 ton}(_pubaddr, _index);
+        RepoTagGosh(_gettasktaggoshaddr(repo, task, tag)).destroy { value: 0.1 ton, flag: 1}(_pubaddr, _index);
+        RepoTagGosh(_gettasktagdaoaddr(repo, task, tag)).destroy { value: 0.1 ton, flag: 1}(_pubaddr, _index);
+        RepoTagGosh(_gettasktagrepoaddr(repo, task, tag)).destroy { value: 0.1 ton, flag: 1}(_pubaddr, _index);
         getMoney();
     }
     
@@ -1541,7 +1541,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: _goshdao}});
         address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
-        Task(taskaddr).destroy{value:0.4 ton}(_pubaddr, _index);
+        Task(taskaddr).destroy{value:0.4 ton, flag: 1}(_pubaddr, _index);
         getMoney();
     }
 
@@ -1556,7 +1556,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: _goshdao}});
         address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
-        Task(taskaddr).getGrant{value:0.3 ton}(_pubaddr, typegrant, _index);
+        Task(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, typegrant, _index);
         getMoney();
     }
     
@@ -1570,9 +1570,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: _goshdao}});
         address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
-        Task(taskaddr).getGrant{value:0.3 ton}(_pubaddr, 1, _index);
-        Task(taskaddr).getGrant{value:0.3 ton}(_pubaddr, 2, _index);
-        Task(taskaddr).getGrant{value:0.3 ton}(_pubaddr, 3, _index);
+        Task(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, 1, _index);
+        Task(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, 2, _index);
+        Task(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, 3, _index);
         getMoney();
     }
     
@@ -1586,9 +1586,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: _goshdao}});
         address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
-        Task(taskaddr).getGrant{value:0.3 ton}(_pubaddr, 1, _index);
-        Task(taskaddr).getGrant{value:0.3 ton}(_pubaddr, 2, _index);
-        Task(taskaddr).getGrant{value:0.3 ton}(_pubaddr, 3, _index);
+        Task(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, 1, _index);
+        Task(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, 2, _index);
+        Task(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, 3, _index);
         getMoney();
     }
 
@@ -1624,7 +1624,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint128 diff = math.min(grant, m_pseudoDAOBalance - m_pseudoDAOVoteBalance);
         m_pseudoDAOVoteBalance += diff;
         if (diff != grant) {
-            GoshDao(_goshdao).returnAllowance{value: 0.2 ton}(grant - diff, _pubaddr, _index);
+            GoshDao(_goshdao).returnAllowance{value: 0.2 ton, flag: 1}(grant - diff, _pubaddr, _index);
         }
     }
     
@@ -1649,7 +1649,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(grant <= m_pseudoDAOBalance, ERR_TOO_LOW_BALANCE);
         m_pseudoDAOBalance -= grant;
-        GoshDao(_goshdao).receiveTokentoReserve{value: 0.1 ton}(_pubaddr, _index, grant);
+        GoshDao(_goshdao).receiveTokentoReserve{value: 0.1 ton, flag: 1}(_pubaddr, _index, grant);
         getMoney();
     }
     
@@ -1660,7 +1660,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(grant <= m_pseudoDAOBalance, ERR_TOO_LOW_BALANCE);
         m_pseudoDAOBalance -= grant;
-        GoshDao(_goshdao).receiveTokentoReserve{value: 0.1 ton}(_pubaddr, _index, grant);
+        GoshDao(_goshdao).receiveTokentoReserve{value: 0.1 ton, flag: 1}(_pubaddr, _index, grant);
         getMoney();
     }
 
@@ -1672,7 +1672,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(grant <= m_pseudoDAOBalance, ERR_TOO_LOW_BALANCE);
         m_pseudoDAOBalance -= grant;
-        GoshWallet(_getWalletAddrPub(pubaddr, 0)).receiveToken{value: 0.1 ton}(_pubaddr, _index, grant);
+        GoshWallet(_getWalletAddrPub(pubaddr, 0)).receiveToken{value: 0.1 ton, flag: 1}(_pubaddr, _index, grant);
         getMoney();
     }
     
@@ -1684,14 +1684,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(grant <= m_pseudoDAOBalance, ERR_TOO_LOW_BALANCE);
         m_pseudoDAOBalance -= grant;
-        GoshWallet(_getWalletAddrPub(pubaddr, 0)).receiveToken{value: 0.1 ton}(_pubaddr, _index, grant);
+        GoshWallet(_getWalletAddrPub(pubaddr, 0)).receiveToken{value: 0.1 ton, flag: 1}(_pubaddr, _index, grant);
         getMoney();
     }
     
     function deployCustomContract(TvmCell data) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);   
-        SystemContract(_systemcontract).deployCustomData{value : 0.2 ton}(data, _pubaddr, _nameDao, _index);
+        SystemContract(_systemcontract).deployCustomData{value : 0.2 ton, flag: 1}(data, _pubaddr, _nameDao, _index);
         getMoney();
     }
     
@@ -1699,14 +1699,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(grant <= m_pseudoDAOBalance, ERR_TOO_LOW_BALANCE);
         m_pseudoDAOBalance -= grant;        
         optional(address) newwallet;
-        SystemContract(_systemcontract).sendTokenToNewVersion2{value : 0.2 ton}(_pubaddr, _nameDao, _index, newwallet, grant, newversion);
+        SystemContract(_systemcontract).sendTokenToNewVersion2{value : 0.2 ton, flag: 1}(_pubaddr, _nameDao, _index, newwallet, grant, newversion);
         getMoney();
     }
     
     function sendTokenToNewVersionIn(optional(address) newwallet, uint128 grant, string newversion) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
         require(grant <= m_pseudoDAOBalance, ERR_TOO_LOW_BALANCE);
         m_pseudoDAOBalance -= grant;        
-        SystemContract(_systemcontract).sendTokenToNewVersion2{value : 0.2 ton}(_pubaddr, _nameDao, _index, newwallet, grant, newversion);
+        SystemContract(_systemcontract).sendTokenToNewVersion2{value : 0.2 ton, flag: 1}(_pubaddr, _nameDao, _index, newwallet, grant, newversion);
         getMoney();
     }
     
@@ -1718,7 +1718,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function sendDaoTokenToNewVersion(address wallet, address newwallet, uint128 grant, string newversion) public senderIs(_systemcontract) accept saveMsg {
         require(_limited == false, ERR_WALLET_LIMITED);
         optional(address) neww = newwallet;
-        GoshDao(_goshdao).daoSendTokenToNewVersion{value : 0.2 ton}(_pubaddr, _index, wallet, neww, grant, newversion);
+        GoshDao(_goshdao).daoSendTokenToNewVersion{value : 0.2 ton, flag: 1}(_pubaddr, _index, wallet, neww, grant, newversion);
         getMoney();
     }
     
@@ -1735,14 +1735,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address pubaddr,
         uint128 token
     ) private view {
-        GoshDao(_goshdao).addVoteTokenPub{value: 0.1 ton}(pubaddr, _pubaddr, _index, token);
+        GoshDao(_goshdao).addVoteTokenPub{value: 0.1 ton, flag: 1}(pubaddr, _pubaddr, _index, token);
     }
     
     function _addTokenRegular(
         address pubaddr,
         uint128 token
     ) private view {
-        GoshDao(_goshdao).addRegularTokenPub{value: 0.1 ton}(pubaddr, _pubaddr, _index, token);
+        GoshDao(_goshdao).addRegularTokenPub{value: 0.1 ton, flag: 1}(pubaddr, _pubaddr, _index, token);
     }
     
     function getTaskAddr(string nametask, address repo) private view returns(address) {
@@ -1994,7 +1994,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     function daoAskUnlockAfterTombstone(address wallet) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(_limited == false, ERR_WALLET_LIMITED);
-        GoshDao(_goshdao).daoAskLockTomb{value: 0.1 ton}(_pubaddr, _index, wallet);
+        GoshDao(_goshdao).daoAskLockTomb{value: 0.1 ton, flag: 1}(_pubaddr, _index, wallet);
     }
     
     function startProposalForDaoLockVote(
@@ -2266,7 +2266,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) private {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        GoshDao(_goshdao).daoMulti{value: 0.1 ton}(_pubaddr, _index, wallet, number, proposals, num_clients, reviewers);
+        GoshDao(_goshdao).daoMulti{value: 0.1 ton, flag: 1}(_pubaddr, _index, wallet, number, proposals, num_clients, reviewers);
         getMoney();
     }
     
@@ -2384,10 +2384,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         if (num == 0) { return; }
         if (num > 2) {
             (TvmCell data1, TvmCell data2) = abi.decode(Data,(TvmCell, TvmCell));
-            this.isCompletedCallbackIn{value : 0.1 ton}(num - 1, data1, data2);
+            this.isCompletedCallbackIn{value : 0.1 ton, flag: 1}(num - 1, data1, data2);
         }
         if (num == 2) {       
-            this.isCompletedCallbackIn{value : 0.1 ton}(num - 1, Data, Data);
+            this.isCompletedCallbackIn{value : 0.1 ton, flag: 1}(num - 1, Data, Data);
         }
         if (true) {
             TvmSlice s = propData.toSlice();
@@ -2515,7 +2515,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == DELAY_PROPOSAL_KIND) {
                (, uint32 _time) = abi.decode(propData, (uint256, uint32));
                _time;
-               GoshDao(_goshdao).doNothing{value: 0.1 ton}(_pubaddr, _index);          
+               GoshDao(_goshdao).doNothing{value: 0.1 ton, flag: 1}(_pubaddr, _index);          
             } else
             if (kind == SEND_TOKEN_PROPOSAL_KIND) {
                 (, address wallet, optional(address) pubaddr, uint128 grant,,) = abi.decode(propData, (uint256, address, optional(address), uint128, string, uint32));
@@ -2523,30 +2523,30 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             } else
             if (kind == REVIEW_CODE_PROPOSAL_KIND) {
                 (, address wallet, address propaddr, bool isAccept,,) = abi.decode(propData, (uint256, address, address, bool, string, uint32));
-                GoshDao(_goshdao).daoSendReview{value: 0.1 ton}(_pubaddr, _index, wallet, propaddr, isAccept);   
+                GoshDao(_goshdao).daoSendReview{value: 0.1 ton, flag: 1}(_pubaddr, _index, wallet, propaddr, isAccept);   
             } else
             if (kind == ASK_TASK_GRANT_PROPOSAL_KIND) {
                 (, address wallet, string repoName, string taskName,,) = abi.decode(propData, (uint256, address, string, string, string, uint32));
-                GoshDao(_goshdao).daoAskGrantFull{value: 0.1 ton}(_pubaddr, _index, wallet, repoName, taskName);   
+                GoshDao(_goshdao).daoAskGrantFull{value: 0.1 ton, flag: 1}(_pubaddr, _index, wallet, repoName, taskName);   
             } else
             if (kind == DAO_LOCK_PROPOSAL_KIND) {
                 (, address wallet, bool isLock, uint128 grant,,) = abi.decode(propData, (uint256, address, bool, uint128, string, uint32));
-                GoshDao(_goshdao).daoAskLock{value: 0.1 ton}(_pubaddr, _index, wallet, isLock, grant);   
+                GoshDao(_goshdao).daoAskLock{value: 0.1 ton, flag: 1}(_pubaddr, _index, wallet, isLock, grant);   
             } else 
             if (kind == TASK_REDEPLOY_PROPOSAL_KIND) {
                 (, string repoName, string nameTask, string[] hashtag, TvmCell data,) = abi.decode(propData, (uint256, string, string, string[], TvmCell, uint32));
-                GoshDao(_goshdao).redeployTask{value: 0.2 ton}(_pubaddr, _index, repoName, nameTask, hashtag, data);   
+                GoshDao(_goshdao).redeployTask{value: 0.2 ton, flag: 1}(_pubaddr, _index, repoName, nameTask, hashtag, data);   
             } else 
             if (kind == TASK_REDEPLOYED_PROPOSAL_KIND) {
-                GoshDao(_goshdao).redeployedTask{value: 0.2 ton}(_pubaddr, _index);  
+                GoshDao(_goshdao).redeployedTask{value: 0.2 ton, flag: 1}(_pubaddr, _index);  
             } else
             if (kind == TASK_UPGRADE_PROPOSAL_KIND) {
                 (, string taskname, string reponame, string oldversion, address oldtask, string[] hashtag,,) = abi.decode(propData, (uint256, string, string, string, address, string[], string, uint32));
-                GoshDao(_goshdao).upgradeTask{value: 0.1 ton}(_pubaddr, _index, taskname, reponame, oldversion, oldtask, hashtag);   
+                GoshDao(_goshdao).upgradeTask{value: 0.1 ton, flag: 1}(_pubaddr, _index, taskname, reponame, oldversion, oldtask, hashtag);   
             }  else
             if (kind == TRANSFER_TO_NEW_VERSION_PROPOSAL_KIND) {
                 (, address wallet, address newwallet, uint128 grant, string oldversion,,) = abi.decode(propData,(uint256, address, address, uint128, string, string, uint32));
-                SystemContract(_systemcontract).DaoTransferToken2{value: 0.2 ton}(_pubaddr, _index, _nameDao, wallet, newwallet, grant, oldversion, version);
+                SystemContract(_systemcontract).DaoTransferToken2{value: 0.2 ton, flag: 1}(_pubaddr, _index, _nameDao, wallet, newwallet, grant, oldversion, version);
             }
         }
     }
@@ -2568,7 +2568,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == MULTI_PROPOSAL_KIND) { 
                 (, uint128 num, TvmCell allpr,) = abi.decode(propData,(uint256, uint128, TvmCell, uint32));
                 (TvmCell data1, TvmCell data2) = abi.decode(allpr,(TvmCell, TvmCell));
-                this.isCompletedCallbackIn{value : 0.1 ton}(num, data1, data2);
+                this.isCompletedCallbackIn{value : 0.1 ton, flag: 1}(num, data1, data2);
                 return;                
             }
             if (kind == SETCOMMIT_PROPOSAL_KIND) {
@@ -2734,7 +2734,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     function voteFor (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platform_id, bool choice, uint128 amount, uint128 num_clients, string note) external  onlyOwnerPubkey(_access.get())
     {
-        require(_tombstone == false, ERR_TOMBSTONE);
         require(initialized, SMVErrors.error_not_initialized);
         require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
                                     2*SMVConstants.VOTING_FEE + num_clients*SMVConstants.CLIENT_LIST_FEE +
@@ -2763,7 +2762,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function voteForIn (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platform_id, bool choice, uint128 amount, uint128 num_clients, string note) external  onlyOwnerAddress(_pubaddr)
     {
-        require(_tombstone == false, ERR_TOMBSTONE);
         require(initialized, SMVErrors.error_not_initialized);
         require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
                                     2*SMVConstants.VOTING_FEE + num_clients*SMVConstants.CLIENT_LIST_FEE +
