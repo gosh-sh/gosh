@@ -4,6 +4,12 @@ type TTaskCreateEventProps = {
     data: any
 }
 
+const lockToStr = (period: number): string => {
+    const months = Math.floor(period / 2592000)
+    const seconds = Math.floor(period % 2592000)
+    return `${months} mo` + (seconds !== 0 ? `${seconds} s` : '')
+}
+
 const TaskCreateEvent = (props: TTaskCreateEventProps) => {
     const { data } = props
 
@@ -39,7 +45,7 @@ const TaskCreateEvent = (props: TTaskCreateEventProps) => {
                             const manager = data.grant.manager[index]
                             return (
                                 <tr key={index}>
-                                    <td className="px-2">{assign.lock}</td>
+                                    <td className="px-2">{lockToStr(assign.lock)}</td>
                                     <td className="px-2">{assign.grant}</td>
                                     <td className="px-2">{review.grant}</td>
                                     <td className="px-2">{manager.grant}</td>

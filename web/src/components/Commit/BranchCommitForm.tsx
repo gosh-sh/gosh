@@ -47,6 +47,7 @@ const BranchCommitForm = (props: TBranchCommitFormProps) => {
     } = props
 
     const getInitialValues = () => {
+        const version_1_0_0 = {}
         const version_2_0_0 = {
             task: '',
             assigners: '',
@@ -63,9 +64,13 @@ const BranchCommitForm = (props: TBranchCommitFormProps) => {
         }
 
         let versionised = {}
-        if (dao.details.version === '2.0.0') {
+        if (dao.details.version === '1.0.0') {
+            versionised = version_1_0_0
+        } else if (dao.details.version === '2.0.0') {
             versionised = version_2_0_0
         } else if (dao.details.version === '3.0.0') {
+            versionised = version_3_0_0
+        } else {
             versionised = version_3_0_0
         }
 
@@ -73,6 +78,7 @@ const BranchCommitForm = (props: TBranchCommitFormProps) => {
     }
 
     const getValidationSchema = () => {
+        const version_1_0_0 = {}
         const version_2_0_0 = {
             task: yup.string(),
             assigners: yup
@@ -123,9 +129,13 @@ const BranchCommitForm = (props: TBranchCommitFormProps) => {
         }
 
         let versionised = {}
-        if (dao.details.version === '2.0.0') {
+        if (dao.details.version === '1.0.0') {
+            versionised = version_1_0_0
+        } else if (dao.details.version === '2.0.0') {
             versionised = version_2_0_0
         } else if (dao.details.version === '3.0.0') {
+            versionised = version_3_0_0
+        } else {
             versionised = version_3_0_0
         }
 
