@@ -2384,10 +2384,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         if (num == 0) { return; }
         if (num > 2) {
             (TvmCell data1, TvmCell data2) = abi.decode(Data,(TvmCell, TvmCell));
-            this.isCompletedCallbackIn{value : 0.1 ton}(num - 1, data1, data2);
+            this.isCompletedCallbackIn{value : 0.1 ton, flag: 1}(num - 1, data1, data2);
         }
         if (num == 2) {       
-            this.isCompletedCallbackIn{value : 0.1 ton}(num - 1, Data, Data);
+            this.isCompletedCallbackIn{value : 0.1 ton, flag: 1}(num - 1, Data, Data);
         }
         if (true) {
             TvmSlice s = propData.toSlice();
@@ -2568,7 +2568,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == MULTI_PROPOSAL_KIND) { 
                 (, uint128 num, TvmCell allpr,) = abi.decode(propData,(uint256, uint128, TvmCell, uint32));
                 (TvmCell data1, TvmCell data2) = abi.decode(allpr,(TvmCell, TvmCell));
-                this.isCompletedCallbackIn{value : 0.1 ton}(num, data1, data2);
+                this.isCompletedCallbackIn{value : 0.1 ton, flag: 1}(num, data1, data2);
                 return;                
             }
             if (kind == SETCOMMIT_PROPOSAL_KIND) {
