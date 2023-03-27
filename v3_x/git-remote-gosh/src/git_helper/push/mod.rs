@@ -803,6 +803,7 @@ where
             if res.len() != last_rest_cnt {
                 attempts = 0;
             }
+            last_rest_cnt = res.len();
             tracing::trace!("Restart deploy on undeployed diffs");
             let expected = parallel_diffs_upload_support.get_expected().to_owned();
             parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
@@ -829,6 +830,7 @@ where
             if res.len() != last_rest_cnt {
                 attempts = 0;
             }
+            last_rest_cnt = res.len();
             tracing::trace!("Restart deploy on undeployed snapshots");
             let expected = parallel_snapshot_uploads.get_expected().to_owned();
             parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
@@ -854,6 +856,7 @@ where
             if res.len() != last_rest_cnt {
                 attempts = 0;
             }
+            last_rest_cnt = res.len();
             tracing::trace!("Restart deploy on undeployed trees");
             let expected = parallel_tree_uploads.get_expected().to_owned();
             parallel_tree_uploads = ParallelTreeUploadSupport::new();
@@ -879,6 +882,7 @@ where
             if res.len() != last_rest_cnt {
                 attempts = 0;
             }
+            last_rest_cnt = res.len();
             tracing::trace!("Restart deploy on undeployed commits");
             let expected = push_commits.get_expected().to_owned();
             push_commits = ParallelCommitUploadSupport::new();
