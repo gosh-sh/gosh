@@ -1,0 +1,13 @@
+2023-03-28T16:44:54.512Z ::: short timeout 20000, long timeout 180000
+2023-03-28T16:44:54.512Z ********* Running step #0  (start browser)
+2023-03-28T16:44:54.712Z End
+Error: Failed to launch the browser process!
+[18:33:0328/164454.666691:ERROR:bus.cc(399)] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[18:18:0328/164454.679329:ERROR:ozone_platform_x11.cc(239)] Missing X server or $DISPLAY
+[18:18:0328/164454.679359:ERROR:env.cc(255)] The platform failed to initialize.  Exiting.
+[0328/164454.695741:ERROR:nacl_helper_linux.cc(355)] NaCl helper process running without a sandbox!
+Most likely you need to configure your SUID sandbox correctly
+
+
+TROUBLESHOOTING: https://pptr.dev/troubleshooting
+
