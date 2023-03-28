@@ -55,6 +55,7 @@ class AppSetupHandler extends AppHandler_1.default {
                 'click code branch icon', () => this.click("div.items-center > svg.fa-code-branch"),
                 'input src branch name', () => this.erasePaste("//input[@type='text' and @placeholder='Search branch']", this.branch),
                 'click branch item', () => this.click(`//li[contains(., '${this.branch}') and @role='option']`),
+                'wait 500ms for safety', () => this.wait(500),
                 'input dst branch name', () => this.erasePaste("//input[@name='newName' and @placeholder='Branch name']", s),
                 'click create br button', () => this.click("//button[contains(., 'Create branch') and @type='submit']"),
                 // 'wait for spinner gone',  () => this.waitForGone('svg.fa-spin', this.longtimeout_ms)
