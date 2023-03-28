@@ -39,13 +39,15 @@ class AppSetupHandler extends AppHandler_1.default {
             'wait 10000ms to settle', () => this.wait(10000),
             'input branch name', () => this.type("//input[@name='newName' and @placeholder='Branch name']", br),
             'click create button', () => this.click("//button[contains(., 'Create branch') and @type='submit']"),
-            'wait for spinner gone', () => this.waitForGone('svg.fa-spin', this.longtimeout_ms)
+            // 'wait for spinner gone',  () => this.waitForGone('svg.fa-spin', this.longtimeout_ms)
+            'wait for branch link', () => this.waitFor(`//a[${(0, Utils_1.or_hrefs)(`/o/${or}/r/${re}/tree/${br}`)}]`),
         ]), 'click branch link', () => this.click(`//a[${(0, Utils_1.or_hrefs)(`/o/${or}/r/${re}/tree/${br}`)}]`), 'wait for spinner gone', () => this.waitForGone('svg.fa-spinner'), 'count wanted files', async () => { found.file = (await this.count(`//a[${(0, Utils_1.or_hrefs)(`/o/${or}/r/${re}/blobs/view/${br}/${fn}`)}]`)) == 1; }, 'file exists', ...this.cond_ifnot(() => found.file, [
             'click add file button', () => this.click(`//a[${(0, Utils_1.or_hrefs)(`/o/${or}/r/${re}/blobs/create/${br}`)}]`),
             'input file contents', () => this.erasePaste("div.view-lines", '0'),
             'input file name', () => this.type("//input[@name='name' and @placeholder='Name of new file']", this.filename),
             'click commit button', () => this.click("//button[contains(., 'Commit changes') and @type='submit']"),
             'scroll down', () => this.pageDown(true, 2),
+            'wait 1000ms for safety', () => this.wait(1000),
             'wait for spinner gone', () => this.waitForGone('svg.fa-spin', this.longtimeout_ms)
         ]), 'click branches link', () => this.click(`//a[${(0, Utils_1.or_hrefs)(`/o/${or}/r/${re}/branches`)}]`, this.longtimeout_ms), 'wait for main br link', () => this.waitFor(`//a[${(0, Utils_1.or_hrefs)(`/o/${or}/r/${re}/tree/main`)}]`), ...this.for_each(this.branches, 'branches', (s) => [
             'count wanted branches', async () => { found[`b${s}`] = (await this.count(`//a[${(0, Utils_1.or_hrefs)(`/o/${or}/r/${re}/tree/${s}`)}]`)) == 1; },
@@ -53,9 +55,11 @@ class AppSetupHandler extends AppHandler_1.default {
                 'click code branch icon', () => this.click("div.items-center > svg.fa-code-branch"),
                 'input src branch name', () => this.erasePaste("//input[@type='text' and @placeholder='Search branch']", this.branch),
                 'click branch item', () => this.click(`//li[contains(., '${this.branch}') and @role='option']`),
+                'wait 500ms for safety', () => this.wait(500),
                 'input dst branch name', () => this.erasePaste("//input[@name='newName' and @placeholder='Branch name']", s),
                 'click create br button', () => this.click("//button[contains(., 'Create branch') and @type='submit']"),
-                'wait for spinner gone', () => this.waitForGone('svg.fa-spin', this.longtimeout_ms)
+                // 'wait for spinner gone',  () => this.waitForGone('svg.fa-spin', this.longtimeout_ms)
+                'wait for branch link', () => this.waitFor(`//a[${(0, Utils_1.or_hrefs)(`/o/${or}/r/${re}/tree/${s}`)}]`),
             ]),
         ]), 'end setup', async () => { return 0; });
     }
