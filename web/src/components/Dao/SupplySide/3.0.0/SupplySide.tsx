@@ -49,7 +49,9 @@ const DaoSupplySide = (props: TDaoSupplySideProps) => {
         >
             <div>
                 <div className="mb-1 text-gray-7c8db5 text-sm">DAO total supply</div>
-                <div className="text-3xl font-medium">{dao.details.supply.total}</div>
+                <div className="text-3xl font-medium">
+                    {dao.details.supply.total.toLocaleString()}
+                </div>
             </div>
             {!!dao.details.isMemberOf.length && (
                 <div className="mt-4">
@@ -68,7 +70,9 @@ const DaoSupplySide = (props: TDaoSupplySideProps) => {
             <hr className="my-4 bg-gray-e6edff" />
             <div>
                 <div className="mb-1 text-gray-7c8db5 text-sm">DAO reserve</div>
-                <div className="text-xl font-medium">{dao.details.supply.reserve}</div>
+                <div className="text-xl font-medium">
+                    {dao.details.supply.reserve.toLocaleString()}
+                </div>
             </div>
             {dao.details.isAuthMember && (
                 <div className="mt-3 flex flex-wrap gap-x-3">

@@ -91,7 +91,9 @@ const DaoWalletSide = (props: TDaoWalletSideProps) => {
         >
             <div>
                 <div className="mb-1 text-gray-7c8db5 text-sm">Your wallet balance</div>
-                <div className="text-xl font-medium">{getUserBalance()}</div>
+                <div className="text-xl font-medium">
+                    {getUserBalance().toLocaleString()}
+                </div>
                 {(dao.details.isAuthMember || dao.details.isAuthLimited) && (
                     <div className="mt-3 flex flex-wrap gap-x-3">
                         <div className="grow">
@@ -138,7 +140,9 @@ const DaoWalletSide = (props: TDaoWalletSideProps) => {
                     <hr className="my-4 bg-gray-e6edff" />
                     <div>
                         <div className="mb-1 text-gray-7c8db5 text-sm">Karma</div>
-                        <div className="text-xl font-medium">{getUserAllowance()}</div>
+                        <div className="text-xl font-medium">
+                            {getUserAllowance()?.toLocaleString()}
+                        </div>
                     </div>
                 </>
             )}

@@ -18,7 +18,9 @@ const DaoSupplySide = (props: TDaoSupplySideProps) => {
         >
             <div>
                 <div className="mb-1 text-gray-7c8db5 text-sm">DAO total supply</div>
-                <div className="text-3xl font-medium">{dao.details.supply.total}</div>
+                <div className="text-3xl font-medium">
+                    {dao.details.supply.total.toLocaleString()}
+                </div>
             </div>
         </div>
     )
