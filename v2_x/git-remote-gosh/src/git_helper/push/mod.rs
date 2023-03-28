@@ -336,7 +336,7 @@ impl<Blockchain> GitHelper<Blockchain>
             }
         }
 
-        Ok(None)
+        Ok(Some(from.to_string()))
     }
 
     #[instrument(level = "info", skip_all)]

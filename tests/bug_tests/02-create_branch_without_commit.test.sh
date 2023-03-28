@@ -25,32 +25,28 @@ git config user.name "My name"
 git branch -m main
 
 echo "Init commit" > README.md
-git add *
+git add README.md
 git commit -m "init"
 
-mkdir "dir1"
-cd dir1
-echo 11111 > a.txt
-echo 22222 > b.txt
-cd ..
+mkdir dir1
+echo 11111 > dir1/a.txt
+echo 22222 > dir1/b.txt
 
-mkdir "dir2"
-cd dir2
-echo 33333 > c.txt
-echo 44444 > d.txt
-cd ..
+mkdir dir2
+echo 33333 > dir2/c.txt
+echo 44444 > dir2/d.txt
 
-git add *
+git add dir1/a.txt dir1/b.txt dir2/c.txt dir2/d.txt
 git commit -m "upload"
 git push -u origin main
 
-git checkout -b dev
-git push -u origin dev
+git checkout -b dev-x
+GOSH_TRACE=5 git push -u origin dev-x &> trace.log
 cd ..
 
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME "$REPO_NAME"_clone
 cd "$REPO_NAME"_clone
-git checkout dev
+git checkout dev-x
 
 cur_content=$(cat dir2/c.txt)
 if [ $cur_content != "33333" ]; then

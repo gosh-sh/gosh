@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use std::sync::Arc;
 
 use crate::blockchain::{
     calculate_contract_address, call::BlockchainCall, contract::ContractInfo,
@@ -84,7 +85,7 @@ impl Tagging for Everscale {
         }
 
         let wallet_contract = wallet.take_zero_wallet().await?;
-        
+
         tracing::debug!("Acquired wallet: {}", wallet_contract.get_address());
 
         let params = DeployTagParams {
