@@ -53,7 +53,7 @@ const DaoMemberOfModal = (props: TDaoMemberOfModalProps) => {
                 </button>
             </div>
             <Dialog.Title className="mb-8 text-3xl text-center font-medium">
-                DAO member of
+                Wallet's Owner
             </Dialog.Title>
 
             <div className="border border-gray-e6edff rounded-xl">
