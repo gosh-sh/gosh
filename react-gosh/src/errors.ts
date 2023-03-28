@@ -41,6 +41,7 @@ export enum EGoshError {
     SMV_NO_PROPOSAL = 'SMV proposal undefined',
     SMV_NO_START = 'Voting for event is not started yet',
     SMV_NO_BALANCE = 'Not enough tokens to start proposal',
+    SMV_NO_ALLOWANCE = 'Not enough karma to start proposal',
 }
 
 export class GoshError extends Error {

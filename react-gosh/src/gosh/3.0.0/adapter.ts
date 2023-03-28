@@ -594,6 +594,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             owner,
             tags: Object.values(details.hashtag),
             isMintOn: await this._isMintOn(),
+            isMintOnPrevDiff: await this._isMintOnPrevDiff(),
             isEventProgressOn: !details.hide_voting_results,
             isEventDiscussionOn: details.allow_discussion_on_proposals,
             isAskMembershipOn: details.abilityInvite,
@@ -1860,7 +1861,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return true
     }
 
-    private async _isMintOnDiff(): Promise<boolean> {
+    private async _isMintOnPrevDiff(): Promise<boolean> {
         const { _allowMint: cur } = await this.dao.runLocal('_allowMint', {})
         const prev = await this._isMintOnPrev()
         return cur === true && prev === false
@@ -4466,7 +4467,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
 
         const allowance = await this._getAuthAllowance()
         if (allowance < min) {
-            throw new GoshError('Allowance too low to start proposal', {
+            throw new GoshError(EGoshError.SMV_NO_ALLOWANCE, {
                 yours: allowance,
                 min,
             })
@@ -4487,7 +4488,11 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             return
         }
 
-        throw new GoshError(EGoshError.SMV_NO_BALANCE)
+        throw new GoshError(EGoshError.SMV_NO_BALANCE, {
+            min,
+            message:
+                "You don't have enough tokens or didn't transfer your tokens from previous version",
+        })
     }
 
     async transferToSmv(amount: number): Promise<void> {

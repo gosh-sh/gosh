@@ -1,19 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
-import {
-    classNames,
-    useDao,
-    TDao,
-    shortString,
-    AppConfig,
-    GoshAdapterFactory,
-} from 'react-gosh'
+import { classNames, useDao, TDao, shortString } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import SideMenuContainer from '../components/SideMenuContainer'
 import Loader from '../components/Loader'
 import CopyClipboard from '../components/CopyClipboard'
 import ReactTooltip from 'react-tooltip'
 import { getIdenticonAvatar } from '../helpers'
+import { DaoNotification } from '../components/Dao'
 
 export type TDaoLayoutOutletContext = {
     dao: {
@@ -27,12 +21,6 @@ const DaoLayout = () => {
     const dao = useDao(daoName!)
     const [description, setDescription] = useState<string | null>()
     const [isReady, setIsReady] = useState<boolean>(false)
-    const [upgrades, setUpgrades] = useState<
-        | 'isNotLatest'
-        | 'isUpgradeAvailable'
-        | 'isRepoUpgradeNeeded'
-        | 'isTaskUpgradeNeeded'
-    >()
 
     const getTabs = () => {
         const tabs = [
@@ -75,47 +63,6 @@ const DaoLayout = () => {
             setIsReady(true)
         }
     }, [dao.isFetching, getDaoShortDescription])
-
-    useEffect(() => {
-        const _checkUpgrades = async () => {
-            if (!isReady || !dao.details || !dao.details.isAuthMember) {
-                return
-            }
-
-            // Check if using latest version of DAO or new version avaiable
-            const latest = Object.keys(AppConfig.versions).reverse()[0]
-            if (dao.details.version !== latest) {
-                const gosh = GoshAdapterFactory.createLatest()
-                const newest = await gosh.getDao({
-                    name: dao.details.name,
-                    useAuth: false,
-                })
-                if (await newest.isDeployed()) {
-                    setUpgrades('isNotLatest')
-                } else {
-                    setUpgrades('isUpgradeAvailable')
-                }
-                return
-            }
-
-            // Check repositories upgraded flag
-            if (!dao.details.isRepoUpgraded) {
-                setUpgrades('isRepoUpgradeNeeded')
-                return
-            }
-
-            // Check tasks upgraded flag
-            if (!dao.details.isTaskRedeployed) {
-                setUpgrades('isTaskUpgradeNeeded')
-                return
-            }
-
-            // Reset upgrades message
-            setUpgrades(undefined)
-        }
-
-        _checkUpgrades()
-    }, [isReady, dao.details])
 
     return (
         <SideMenuContainer>
@@ -201,69 +148,11 @@ const DaoLayout = () => {
             )}
             {isReady && !dao.errors.length && (
                 <>
-                    {upgrades && (
-                        <div className="mb-6 py-3 px-5 bg-red-ff3b30 text-white text-sm rounded-xl">
-                            {upgrades === 'isNotLatest' && (
-                                <>
-                                    You are using old version of DAO.
-                                    <br />
-                                    <button
-                                        className="underline"
-                                        onClick={() => {
-                                            document.location = `/o/${daoName}`
-                                        }}
-                                    >
-                                        Reload
-                                    </button>{' '}
-                                    page to go to the latest version
-                                </>
-                            )}
-                            {upgrades === 'isUpgradeAvailable' && (
-                                <>
-                                    New version of DAO available.
-                                    <br />
-                                    It is highly recommended to complete all proposals
-                                    before upgrade.
-                                    <br />
-                                    Check if corresponding proposal does not exist and go
-                                    to the{' '}
-                                    <Link
-                                        className="underline"
-                                        to={`/o/${daoName}/settings/upgrade`}
-                                    >
-                                        DAO upgrade
-                                    </Link>{' '}
-                                    page.
-                                </>
-                            )}
-                            {upgrades === 'isRepoUpgradeNeeded' && (
-                                <>
-                                    DAO repositories should be upgraded.
-                                    <br />
-                                    Go to the repositories{' '}
-                                    <Link
-                                        className="underline"
-                                        to={`/o/${daoName}/repos/upgrade`}
-                                    >
-                                        upgrade
-                                    </Link>{' '}
-                                    page
-                                </>
-                            )}
-                            {upgrades === 'isTaskUpgradeNeeded' && (
-                                <>
-                                    DAO tasks should be upgraded.
-                                    <br />
-                                    Go to the tasks{' '}
-                                    <Link
-                                        className="underline"
-                                        to={`/o/${daoName}/tasks/upgrade`}
-                                    >
-                                        upgrade
-                                    </Link>{' '}
-                                    page
-                                </>
-                            )}
+                    {dao.details && dao.adapter && (
+                        <div className="mb-6">
+                            <DaoNotification
+                                dao={{ details: dao.details, adapter: dao.adapter }}
+                            />
                         </div>
                     )}
 
