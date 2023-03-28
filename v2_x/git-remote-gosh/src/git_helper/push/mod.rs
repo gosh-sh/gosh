@@ -1234,7 +1234,7 @@ mod tests {
 
         let m = HashMap::from([
             (
-                "a3888f56db3b43dedd32991b49842b16965041af",
+                "a3888f56db3b43dedd32991b49842b16965041af".to_owned(),
                 vec!["44699fc8627c1d78191f48d336e4d07d1325e38d".to_owned()],
             ),
             ("".to_owned(), vec![]),

@@ -289,7 +289,6 @@ pub async fn push_new_branch_snapshot(
     branch_name: &str,
     file_path: &str,
     original_content: &[u8],
-    ipfs: &Option<String>,
 ) -> anyhow::Result<()> {
     tracing::trace!("push_new_branch_snapshot: remote_network={remote_network}, dao_addr={dao_addr}, repo_addr={repo_addr}, commit_id={commit_id}, branch_name={branch_name}, file_path={file_path}");
 

@@ -5,7 +5,6 @@ use crate::{
     git_helper::GitHelper,
 };
 use git_hash::ObjectId;
-use git_object::tree;
 use git_odb::Find;
 use git_traverse::tree::recorder;
 use tokio::task::{JoinError, JoinSet};
@@ -74,27 +73,11 @@ where
 
     #[instrument(level = "info", skip_all)]
     async fn push_initial_snapshots(&mut self) -> anyhow::Result<()> {
-        let all_files: Vec<recorder::Entry> = {
-            self.context
-                .local_repository()
-                .find_object(self.ancestor_commit)?
-                .into_commit()
-                .tree()?
-                .traverse()
-                .breadthfirst
-                .files()?
-                .into_iter()
-                .collect()
-        };
-        let snapshots_to_deploy: Vec<recorder::Entry> = all_files
-            .into_iter()
-            .filter(|e| match e.mode {
-                tree::EntryMode::Blob | tree::EntryMode::BlobExecutable => true,
-                tree::EntryMode::Link => true,
-                tree::EntryMode::Tree => false,
-                tree::EntryMode::Commit => false,
-            })
-            .collect();
+        let repository = self.context.local_repository();
+        let tree_root_id =
+            repository.find_object(self.ancestor_commit)?.into_commit().tree()?.id;
+        let snapshots_to_deploy: Vec<recorder::Entry> =
+            super::utilities::all_files(repository, tree_root_id)?;
 
         let mut snapshot_handlers = JoinSet::new();
 
@@ -110,17 +93,22 @@ where
         .map_err(|e| anyhow::format_err!("Failed to load commit with SHA=\"{}\". Error: {e}", ancestor_id))?;
 
         for entry in snapshots_to_deploy {
+            let mut buffer: Vec<u8> = Vec::new();
+            let content = self
+                .context
+                .local_repository()
+                .objects
+                .try_find(entry.oid, &mut buffer)?
+                .expect("blob must be in the local repository")
+                .decode()?
+                .as_blob()
+                .expect("It must be a blob object")
+                .data
+                .to_owned();
+
             let blockchain = self.context.blockchain.clone();
             let file_path = entry.filepath.to_string();
             let mut repo_contract = blockchain.repo_contract().clone();
-
-            let snapshot_addr = Snapshot::calculate_address(
-                self.context.blockchain.client(),
-                &mut repo_contract,
-                &ancestor_data.branch,
-                &file_path,
-            ).await?;
-            let snapshot = Snapshot::load(blockchain.client(), &snapshot_addr).await?;
 
             let expected_snapshot_addr = Snapshot::calculate_address(
                 self.context.blockchain.client(),
@@ -161,8 +149,7 @@ where
                                 &ancestor_commit,
                                 &new_branch,
                                 &file_path,
-                                &snapshot.current_content,
-                                &snapshot.current_ipfs,
+                                &content,
                             )
                             .await
                         },
