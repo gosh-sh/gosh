@@ -11,6 +11,7 @@ import { appModalStateAtom } from '../../store/app.state'
 import { ToastError } from '../Toast'
 import { Button } from '../Form'
 import { FormikTextarea } from '../Formik'
+import yup from '../../yup-extended'
 
 type TDaoRequestMembershipModalProps = {
     dao: {
@@ -33,7 +34,13 @@ const DaoRequestMembershipModal = (props: TDaoRequestMembershipModalProps) => {
         try {
             const { comment } = values
             await dao.adapter.createMember({
-                members: [{ username: user.username!, allowance: 0, comment }],
+                members: [
+                    {
+                        user: { name: user.username!, type: 'user' },
+                        allowance: 0,
+                        comment,
+                    },
+                ],
             })
 
             resetModal()
@@ -56,7 +63,13 @@ const DaoRequestMembershipModal = (props: TDaoRequestMembershipModalProps) => {
             </Dialog.Title>
 
             <div>
-                <Formik initialValues={{ comment: '' }} onSubmit={onSubmit}>
+                <Formik
+                    initialValues={{ comment: '' }}
+                    onSubmit={onSubmit}
+                    validationSchema={yup.object().shape({
+                        comment: yup.string().required(),
+                    })}
+                >
                     {({ isSubmitting }) => (
                         <Form>
                             <div>

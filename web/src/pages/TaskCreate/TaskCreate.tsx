@@ -180,6 +180,7 @@ const TaskCreatePage = () => {
                         }
                         return true
                     }),
+                comment: yup.string().required(),
             })}
             onSubmit={onCreateTask}
         >

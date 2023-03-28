@@ -5,11 +5,10 @@ import json
 from pathlib import Path
 
 
-SRC_CONTRACTS_PATH = Path('../contracts')
 DST_CONTRACTS_PATH = Path('./src/resources/contracts/abi.json')
 CONTRACTS = {
     '': [
-        'versioncontroller',
+        'gosh/versioncontroller',
         'profile',
         'profileindex',
         'profiledao',
@@ -49,6 +48,26 @@ CONTRACTS = {
         'smv/SMVTokenLocker',
         'smv/SMVClient',
         'smv/TokenRoot'
+    ],
+    '3.0.0': [
+        'gosh/systemcontract',
+        'gosh/goshdao',
+        'gosh/goshwallet',
+        'gosh/repository',
+        'gosh/commit',
+        'gosh/snapshot',
+        'gosh/tag',
+        'gosh/task',
+        'gosh/diff',
+        'gosh/tree',
+        'gosh/content-signature',
+        'gosh/daotag',
+        'gosh/taggosh',
+        'gosh/topic',
+        'smv/SMVProposal',
+        'smv/SMVTokenLocker',
+        'smv/SMVClient',
+        'smv/TokenRoot'
     ]
 }
 
@@ -61,12 +80,21 @@ def main():
         if version and not abis.get(version):
             abis[version] = {}
 
+        if version == '1.0.0':
+            SRC_CONTRACTS_PATH = 'v1_x'
+        elif version == '2.0.0':
+            SRC_CONTRACTS_PATH = 'v2_x'
+        elif version == '3.0.0':
+            SRC_CONTRACTS_PATH = 'v3_x'
+        else:
+            SRC_CONTRACTS_PATH = 'v3_x'
+
+        SRC_CONTRACTS_PATH = Path('../') / SRC_CONTRACTS_PATH / 'contracts'
         for contract in contracts:
-            v = f'v{version}/' if version else ''
-            src = SRC_CONTRACTS_PATH / f'{v}{contract}.abi.json'
+            src = SRC_CONTRACTS_PATH / f'{contract}.abi.json'
             key = contract.replace('gosh/', '').replace('smv/', '').lower()
 
-            if key in CONTRACTS['']:
+            if key in CONTRACTS[''] or key == 'versioncontroller':
                 abis[key] = json.load(open(src, encoding='utf8'))
             else:
                 abis[version][key] = json.load(open(src, encoding='utf8'))

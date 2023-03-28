@@ -6,3 +6,4 @@ repo*
 upgrade_repo*
 gosh-cli.conf.json
 *.log
+prop_repo*

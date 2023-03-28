@@ -4,6 +4,12 @@ type TTaskCreateEventProps = {
     data: any
 }
 
+const lockToStr = (period: number): string => {
+    const months = Math.floor(period / 2592000)
+    const seconds = Math.floor(period % 2592000)
+    return `${months} mo` + (seconds !== 0 ? `${seconds} s` : '')
+}
+
 const TaskCreateEvent = (props: TTaskCreateEventProps) => {
     const { data } = props
 
@@ -20,7 +26,38 @@ const TaskCreateEvent = (props: TTaskCreateEventProps) => {
             <div className="flex gap-3 text-gray-7c8db5 text-sm">
                 <div>Tags:</div>
                 <div>
-                    {data.tag.filter((tag: string) => tag !== SYSTEM_TAG).join(', ')}
+                    {data.tag.filter((tag: string) => tag !== SYSTEM_TAG).join(', ') ||
+                        '-'}
+                </div>
+            </div>
+            <div className="flex gap-3 text-gray-7c8db5 text-sm">
+                <div>Assigners total:</div>
+                <div>
+                    {data.grant.assign
+                        .reduce((_sum: number, item: any) => {
+                            return _sum + parseInt(item.grant)
+                        }, 0)
+                        .toLocaleString()}
+                </div>
+            </div>
+            <div className="flex gap-3 text-gray-7c8db5 text-sm">
+                <div>Managers total:</div>
+                <div>
+                    {data.grant.manager
+                        .reduce((_sum: number, item: any) => {
+                            return _sum + parseInt(item.grant)
+                        }, 0)
+                        .toLocaleString()}
+                </div>
+            </div>
+            <div className="flex gap-3 text-gray-7c8db5 text-sm">
+                <div>Reviewers total:</div>
+                <div>
+                    {data.grant.review
+                        .reduce((_sum: number, item: any) => {
+                            return _sum + parseInt(item.grant)
+                        }, 0)
+                        .toLocaleString()}
                 </div>
             </div>
             <div className="mt-4 overflow-hidden overflow-x-scroll">
@@ -39,10 +76,16 @@ const TaskCreateEvent = (props: TTaskCreateEventProps) => {
                             const manager = data.grant.manager[index]
                             return (
                                 <tr key={index}>
-                                    <td className="px-2">{assign.lock}</td>
-                                    <td className="px-2">{assign.grant}</td>
-                                    <td className="px-2">{review.grant}</td>
-                                    <td className="px-2">{manager.grant}</td>
+                                    <td className="px-2">{lockToStr(assign.lock)}</td>
+                                    <td className="px-2">
+                                        {parseInt(assign.grant).toLocaleString()}
+                                    </td>
+                                    <td className="px-2">
+                                        {parseInt(review.grant).toLocaleString()}
+                                    </td>
+                                    <td className="px-2">
+                                        {parseInt(manager.grant).toLocaleString()}
+                                    </td>
                                 </tr>
                             )
                         })}

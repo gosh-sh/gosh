@@ -1,5 +1,5 @@
 import CopyClipboard from '../../../../../components/CopyClipboard'
-import { shortString, TDaoMemberDetails } from 'react-gosh'
+import { shortString, TDaoMemberDetails, TUserParam } from 'react-gosh'
 import Spinner from '../../../../../components/Spinner'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
@@ -12,7 +12,7 @@ type TMemberListItemProps = {
     owner: string
     isAuthMember: boolean
     isFetching: boolean
-    onDelete(username: string): Promise<void>
+    onDelete(user: TUserParam): Promise<void>
 }
 
 const DaoMemberListItem = (props: TMemberListItemProps) => {
@@ -20,7 +20,10 @@ const DaoMemberListItem = (props: TMemberListItemProps) => {
 
     return (
         <tr>
-            <td className="px-3 py-2">{item.name}</td>
+            <td className="px-3 py-2">
+                <div>{item.user.name}</div>
+                <small className="text-xs text-gray-7c8db5">{item.user.type}</small>
+            </td>
             <td className="px-3 py-2 text-gray-7c8db5 font-light">
                 {isAuthMember ? (
                     <>
@@ -60,7 +63,7 @@ const DaoMemberListItem = (props: TMemberListItemProps) => {
                     <button
                         type="button"
                         className="hover:text-gray-53596d disabled:opacity-20 disabled:pointer-events-none"
-                        onClick={() => onDelete(item.name)}
+                        onClick={() => onDelete(item.user)}
                         disabled={isFetching || item.profile === owner}
                     >
                         {isFetching ? (

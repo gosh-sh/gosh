@@ -10,15 +10,17 @@ set -o pipefail
 #  docker start local-node
 #  sleep 20
 
-#  ./node_se_scripts/deploy.sh v1_x
+#  ./node_se_scripts/deploy.sh $1 $4
 #fi
 
-# $1 = VERSION (v1_x, v2_x)  ignore
-# $2 = NETWORK
+# $1 = VERSION FROM  (v1_x, v2_x)
+# $2 = VERSION TO    (v2_x, v3_x)
+# $3 = VERSION TO up (v3_x)
+# $4 = NETWORK
+# version variants: (1, 3) (2, 3) (1, 2, 3) no need to call (1, 2) separately it is executed in (1, 2, 3)
 
-# put under flag deploy of 9999
-. set-vars.sh v1_x $2
-./upgrade_tests/set_up.sh
+. set-vars.sh $1 $4
+./upgrade_tests/set_up.sh $1 $2 $3
 ./upgrade_tests/01-clone_rewritten_repo.test.sh
 ./upgrade_tests/02_1-clone_upgraded_repo.test.sh
 ./upgrade_tests/02_2-push_after_upgrade.test.sh

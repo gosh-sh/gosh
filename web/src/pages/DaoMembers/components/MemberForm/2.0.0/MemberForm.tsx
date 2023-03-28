@@ -11,7 +11,6 @@ import { Button, Input, Textarea } from '../../../../../components/Form'
 import { supabase, ToastOptionsShortcuts } from '../../../../../helpers'
 import yup from '../../../../../yup-extended'
 import { ToastError } from '../../../../../components/Toast'
-import { TInvitationSentProps } from '../MemberForm'
 import { Buffer } from 'buffer'
 import * as clipboardy from 'clipboardy'
 
@@ -20,7 +19,7 @@ type TDaoMemberFormProps = {
         adapter: IGoshDaoAdapter
         details: TDao
     }
-    SuccessComponent: React.ComponentType<TInvitationSentProps>
+    SuccessComponent: React.ComponentType<any>
     getDaoInvites(): Promise<void>
     getUsernameByEmail(email: string): Promise<string | null>
 }
@@ -76,7 +75,10 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
     const usernamesSelector = members
         .filter(({ type, name }) => !!name.value && type === 'username')
         .map(({ name, allowance, comment }) => ({
-            username: name.value,
+            user: {
+                name: name.value,
+                type: 'user',
+            },
             allowance: allowance.value,
             comment: comment.value,
         }))
@@ -284,9 +286,9 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
             }
 
             // Add existing profiles to DAO
-            const usernameStringList = usernamesSelector.map(({ username }) => username)
-            const usernamesUnique = usernamesSelector.filter(({ username }, index) => {
-                return usernameStringList.indexOf(username) === index
+            const usernameStringList = usernamesSelector.map(({ user }) => user.name)
+            const usernamesUnique = usernamesSelector.filter(({ user }, index) => {
+                return usernameStringList.indexOf(user.name) === index
             })
             if (usernamesUnique.length) {
                 await createDaoMember({ members: usernamesUnique })
@@ -503,10 +505,7 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
                 }}
                 afterLeave={() => setTransition({ form: true, success: false })}
             >
-                <SuccessComponent
-                    hasUsernames={!!usernamesSelector.length}
-                    hasEmails={!!emailsSelector.length}
-                />
+                <SuccessComponent />
             </Transition>
         </>
     )
