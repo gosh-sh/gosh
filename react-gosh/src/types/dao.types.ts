@@ -28,6 +28,7 @@ type TDao = {
     isTaskRedeployed: boolean
     isMemberOf: { dao: TAddress; wallet: TAddress }[]
     hasRepoIndex: boolean
+    isMintOnPrevDiff?: boolean
 }
 
 type TDaoListItem = Omit<
