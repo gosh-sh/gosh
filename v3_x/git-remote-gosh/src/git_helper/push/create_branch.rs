@@ -1,11 +1,10 @@
 use std::{fmt::Debug, str::FromStr};
 
 use crate::{
-    blockchain::{branch::DeployBranch, user_wallet::WalletError},
+    blockchain::{branch::DeployBranch, user_wallet::WalletError, Snapshot},
     git_helper::GitHelper,
 };
 use git_hash::ObjectId;
-use git_object::tree;
 use git_odb::Find;
 use git_traverse::tree::recorder;
 use tokio::task::{JoinError, JoinSet};
@@ -74,29 +73,24 @@ where
 
     #[instrument(level = "info", skip_all)]
     async fn push_initial_snapshots(&mut self) -> anyhow::Result<()> {
-        let all_files: Vec<recorder::Entry> = {
-            self.context
-                .local_repository()
-                .find_object(self.ancestor_commit)?
-                .into_commit()
-                .tree()?
-                .traverse()
-                .breadthfirst
-                .files()?
-                .into_iter()
-                .collect()
-        };
-        let snapshots_to_deploy: Vec<recorder::Entry> = all_files
-            .into_iter()
-            .filter(|e| match e.mode {
-                tree::EntryMode::Blob | tree::EntryMode::BlobExecutable => true,
-                tree::EntryMode::Link => true,
-                tree::EntryMode::Tree => false,
-                tree::EntryMode::Commit => false,
-            })
-            .collect();
+        let repository = self.context.local_repository();
+        let tree_root_id =
+            repository.find_object(self.ancestor_commit)?.into_commit().tree()?.id;
+        let snapshots_to_deploy: Vec<recorder::Entry> =
+            super::utilities::all_files(repository, tree_root_id)?;
 
         let mut snapshot_handlers = JoinSet::new();
+
+        let context = &mut self.context.clone();
+
+        let ancestor_id = self.ancestor_commit.to_string();
+        let ancestor_address = context.calculate_commit_address(&self.ancestor_commit).await?;
+        let ancestor_data = crate::blockchain::GoshCommit::load(
+            context.blockchain.client(),
+            &ancestor_address
+        )
+        .await
+        .map_err(|e| anyhow::format_err!("Failed to load commit with SHA=\"{}\". Error: {e}", ancestor_id))?;
 
         for entry in snapshots_to_deploy {
             let mut buffer: Vec<u8> = Vec::new();
@@ -113,13 +107,22 @@ where
                 .to_owned();
 
             let blockchain = self.context.blockchain.clone();
+            let file_path = entry.filepath.to_string();
+            let mut repo_contract = blockchain.repo_contract().clone();
+
+            let expected_snapshot_addr = Snapshot::calculate_address(
+                self.context.blockchain.client(),
+                &mut repo_contract,
+                &self.new_branch,
+                &file_path,
+            ).await?;
+
             let remote_network = self.context.remote.network.clone();
             let dao_addr = self.context.dao_addr.clone();
             let repo_addr = self.context.repo_addr.clone();
             let file_provider = self.context.file_provider.clone();
             let ancestor_commit = self.ancestor_commit.clone();
             let new_branch = self.new_branch.clone();
-            let full_path = entry.filepath.to_string();
 
             let condition = |e: &anyhow::Error| {
                 if e.is::<WalletError>() {
@@ -142,9 +145,10 @@ where
                                 &remote_network,
                                 &dao_addr,
                                 &repo_addr,
+                                &expected_snapshot_addr,
                                 &ancestor_commit,
                                 &new_branch,
-                                &full_path,
+                                &file_path,
                                 &content,
                             )
                             .await
@@ -178,11 +182,11 @@ where
     pub async fn run(&mut self) -> anyhow::Result<bool> {
         let mut is_first_branch = true;
         self.prepare_commit_for_branching().await?;
-        self.preinit_branch().await?;
         if self.ancestor_commit != git_hash::ObjectId::from_str(ZERO_SHA)? {
             self.push_initial_snapshots().await?;
             is_first_branch = false;
         }
+        self.preinit_branch().await?;
         self.wait_branch_ready().await?;
         Ok(is_first_branch)
     }

@@ -28,7 +28,7 @@ impl TreeDiff {
     }
 }
 
-fn all_files(repository: &Repository, tree_root: ObjectId) -> anyhow::Result<Vec<recorder::Entry>> {
+pub fn all_files(repository: &Repository, tree_root: ObjectId) -> anyhow::Result<Vec<recorder::Entry>> {
     let all_objects: Vec<recorder::Entry> = {
         repository
             .find_object(tree_root)?

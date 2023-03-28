@@ -3,12 +3,12 @@ use super::{
     commit::save::BlockchainCommitPusher,
     contract::ContractRead,
     get_contracts_blocks,
-    snapshot::save::{DeployDiff, DeployNewSnapshot},
+    snapshot::save::{DeployDiff, DeployNewSnapshot, DeleteSnapshot},
     tag::save::Tagging,
     tree::DeployTree,
     user_wallet::BlockchainUserWalletService,
     BlockchainContractAddress, EverClient, Everscale, GetAddrBranchResult, GetBoolResult,
-    GoshCommit, GoshContract,
+    GoshCommit, GoshContract, AddrVersion,
 };
 use crate::abi as gosh_abi;
 use async_trait::async_trait;
@@ -63,6 +63,7 @@ pub trait BlockchainService:
     + DeployTree
     + DeployDiff
     + DeployNewSnapshot
+    + DeleteSnapshot
     + Tagging
 {
     fn client(&self) -> &EverClient;
@@ -228,6 +229,16 @@ pub mod tests {
                 commit_id: String,
                 file_path: String,
                 content: String,
+                ipfs: Option<String>,
+            ) -> anyhow::Result<()>;
+        }
+
+        #[async_trait]
+        impl DeleteSnapshot for Everscale {
+            async fn delete_snapshot(
+                &self,
+                wallet: &UserWallet,
+                snapshot_address: BlockchainContractAddress,
             ) -> anyhow::Result<()>;
         }
 
