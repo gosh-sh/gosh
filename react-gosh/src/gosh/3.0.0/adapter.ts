@@ -593,7 +593,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             },
             owner,
             tags: Object.values(details.hashtag),
-            isMintOn: details.allowMint,
+            isMintOn: await this._isMintOn(),
             isEventProgressOn: !details.hide_voting_results,
             isEventDiscussionOn: details.allow_discussion_on_proposals,
             isAskMembershipOn: details.abilityInvite,
@@ -1838,8 +1838,22 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     private async _isMintOn(): Promise<boolean> {
-        const { _allowMint } = await this.dao.runLocal('_allowMint', {})
-        return _allowMint
+        let allowMint = true
+
+        const data = await this.dao.runLocal('_allowMint', {})
+        allowMint = data._allowMint
+
+        if (allowMint) {
+            const { value0: prevAddr } = await this.dao.runLocal('getPreviousDaoAddr', {})
+            const prevDao = await this.gosh.getDao({ address: prevAddr, useAuth: false })
+            const { value1: prevVer } = await prevDao.dao.runLocal('getVersion', {})
+            if (prevVer !== '1.0.0') {
+                const data = await prevDao.dao.runLocal('_allowMint', {})
+                allowMint = data._allowMint
+            }
+        }
+
+        return allowMint
     }
 
     private _getMembers(mapping: { [key: string]: { member: TAddress; count: string } }) {
