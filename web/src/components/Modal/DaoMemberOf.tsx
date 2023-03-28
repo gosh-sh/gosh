@@ -66,8 +66,10 @@ const DaoMemberOfModal = (props: TDaoMemberOfModalProps) => {
                     {daos.map(({ name, balance, allowance }, index) => (
                         <div className="flex flex-wrap px-2 py-4" key={index}>
                             <div className="w-6/12 px-2">{name}</div>
-                            <div className="w-3/12 px-2">{balance}</div>
-                            <div className="w-3/12 px-2">{allowance}</div>
+                            <div className="w-3/12 px-2">{balance.toLocaleString()}</div>
+                            <div className="w-3/12 px-2">
+                                {allowance.toLocaleString()}
+                            </div>
                         </div>
                     ))}
                 </div>
