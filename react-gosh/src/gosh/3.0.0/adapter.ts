@@ -1847,6 +1847,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 
     private async _isMintOnPrev(): Promise<boolean> {
         const { value0: prevAddr } = await this.dao.runLocal('getPreviousDaoAddr', {})
+        if (!prevAddr) {
+            return true
+        }
+
         const prevDao = await this.gosh.getDao({ address: prevAddr, useAuth: false })
         const { value1: prevVer } = await prevDao.dao.runLocal('getVersion', {})
         if (prevVer !== '1.0.0') {
@@ -1854,6 +1858,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             return _allowMint
         }
         return true
+    }
+
+    private async _isMintOnDiff(): Promise<boolean> {
+        const { _allowMint: cur } = await this.dao.runLocal('_allowMint', {})
+        const prev = await this._isMintOnPrev()
+        return cur === true && prev === false
     }
 
     private _getMembers(mapping: { [key: string]: { member: TAddress; count: string } }) {
