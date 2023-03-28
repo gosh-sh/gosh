@@ -3,7 +3,7 @@ import { useCallback } from 'react'
 import { classNames, TDao, TSmvEvent, useSmv, useSmvVote } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { toast } from 'react-toastify'
-import { ToastError } from '../../../../../components/Toast'
+import { ToastError, ToastSuccess } from '../../../../../components/Toast'
 import { Button } from '../../../../../components/Form'
 import { FormikInput, FormikTextarea } from '../../../../../components/Formik'
 import yup from '../../../../../yup-extended'
@@ -37,7 +37,14 @@ const EventVotingForm = (props: TEventVotingFormProps) => {
     const onSubmit = async (values: TFormValues) => {
         try {
             await vote(values.approve === true, values.amount)
-            toast.success('Vote accepted, event details will be updated soon')
+            toast.success(
+                <ToastSuccess
+                    message={{
+                        title: 'Vote accepted',
+                        content: 'Event details will be updated soon',
+                    }}
+                />,
+            )
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)

@@ -37,7 +37,10 @@ const DaoMemberInvites = (props: TDaoMemberInvitesProps) => {
             await createDaoMember({
                 members: [
                     {
-                        username: item.recipientUsername,
+                        user: {
+                            name: item.recipientUsername,
+                            type: 'user',
+                        },
                         allowance: item.recipientAllowance || 0,
                         comment: item.recipientComment || '',
                     },

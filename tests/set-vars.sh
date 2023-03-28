@@ -17,6 +17,7 @@ if [ -z "$2" ]
 else
     export NETWORK=$2
 fi
+
 TEST_INDEX="${TEST_INDEX:-$(date +%s)}"
 echo "TEST INDEX $TEST_INDEX"
 echo "export NETWORK=$NETWORK" > env.env
@@ -66,6 +67,7 @@ wait_account_active $DAO_ADDR
 
 echo "***** awaiting dao deploy *****"
 wait_account_active $DAO_ADDR
+echo "export DAO_ADDR=$DAO_ADDR" >> env.env
 
 # user keys
 export WALLET_KEYS=$DAO_KEYS
@@ -89,7 +91,7 @@ GRANTED_PUBKEY=$(tonos-cli -j run --abi $WALLET_ABI $WALLET_ADDR getAccess {} | 
 USER_CONFIG=$(pwd)/config.json
 echo "export GOSH_CONFIG_PATH=$USER_CONFIG" >> env.env
 
-WALLET_PUBKEY=$(cat $WALLET_KEYS | sed -n '/public/ s/.*\([[:xdigit:]]\{64\}\).*/\1/p')
+WALLET_PUBKEY_CONFIG=$(cat $WALLET_KEYS | sed -n '/public/ s/.*\([[:xdigit:]]\{64\}\).*/\1/p')
 WALLET_SECRET=$(cat $WALLET_KEYS | sed -n '/secret/ s/.*\([[:xdigit:]]\{64\}\).*/\1/p')
 
 [ ! -d ~/.gosh ] && mkdir ~/.gosh
@@ -102,7 +104,7 @@ tee $USER_CONFIG <<EOF
     "$NETWORK": {
       "user-wallet": {
         "profile": "$USER_PROFILE_NAME",
-        "pubkey": "$WALLET_PUBKEY",
+        "pubkey": "$WALLET_PUBKEY_CONFIG",
         "secret": "$WALLET_SECRET"
       },
       "endpoints": ["$NETWORK/"]

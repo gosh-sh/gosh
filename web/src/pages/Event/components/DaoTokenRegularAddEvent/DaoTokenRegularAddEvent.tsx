@@ -1,30 +1,32 @@
 import { useEffect, useState } from 'react'
-import { GoshAdapterFactory } from 'react-gosh'
+import { TUserParam } from 'react-gosh'
+import { IGoshAdapter } from 'react-gosh/dist/gosh/interfaces'
 
 type TDaoTokenRegularAddEventProps = {
     data: any
+    gosh: IGoshAdapter
 }
 
 const DaoTokenRegularAddEvent = (props: TDaoTokenRegularAddEventProps) => {
-    const { data } = props
-    const [username, setUsername] = useState<string>()
+    const { data, gosh } = props
+    const [user, setUser] = useState<TUserParam>()
 
     useEffect(() => {
-        const _getUsername = async () => {
-            const gosh = GoshAdapterFactory.createLatest()
-            const instance = await gosh.getProfile({ address: data.pubaddr })
-            const name = await instance.getName()
-            setUsername(name)
+        const _getUser = async () => {
+            const user = await gosh.getUserByAddress(data.pubaddr)
+            setUser(user)
         }
 
-        _getUsername()
+        _getUser()
     }, [data.pubaddr])
 
     return (
         <div className="flex flex-col gap-y-1">
             <div className="flex gap-3 text-gray-7c8db5 text-sm">
                 <div>Username:</div>
-                <div>{username}</div>
+                <div>
+                    {user?.name} ({user?.type})
+                </div>
             </div>
             <div className="flex gap-3 text-gray-7c8db5 text-sm">
                 <div>Amount:</div>

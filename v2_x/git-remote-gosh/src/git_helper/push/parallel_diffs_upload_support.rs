@@ -18,7 +18,7 @@ pub struct ParallelDiffsUploadSupport {
     dangling_diffs: HashMap<String, (PushDiffCoordinate, ParallelDiff)>,
     next_parallel_index: u32,
     last_commit_id: git_hash::ObjectId,
-    expecting_deployed_contacts_addresses: Vec<BlockchainContractAddress>,
+    expecting_deployed_contacts_addresses: HashMap<BlockchainContractAddress,(PushDiffCoordinate, ParallelDiff, bool)>,
     pushed_blobs: JoinSet<anyhow::Result<()>>,
 }
 
@@ -68,9 +68,54 @@ impl ParallelDiffsUploadSupport {
             dangling_diffs: HashMap::new(),
             next_parallel_index: 0,
             last_commit_id: *last_commit_id,
-            expecting_deployed_contacts_addresses: vec![],
+            expecting_deployed_contacts_addresses: HashMap::new(),
             pushed_blobs: JoinSet::new(),
         }
+    }
+
+    pub fn get_expected(&self) -> &HashMap<BlockchainContractAddress,(PushDiffCoordinate, ParallelDiff, bool)> {
+        &self.expecting_deployed_contacts_addresses
+    }
+
+    pub fn add_to_push_list(
+        &mut self,
+        context: &mut GitHelper<impl BlockchainService + 'static>,
+        diff_coordinates: &PushDiffCoordinate,
+        parallel_diff: &ParallelDiff,
+        is_last: bool,
+    ) {
+        let blockchain = context.blockchain.clone();
+        let dao_address: BlockchainContractAddress = context.dao_addr.clone();
+        let remote_network: String = context.remote.network.clone();
+        let diff_coordinates_clone = diff_coordinates.clone();
+        let parallel_diff_clone = parallel_diff.clone();
+        let last_commit_id = self.last_commit_id.clone();
+        let repo_name: String = context.remote.repo.clone();
+        let ipfs_http_endpoint: String = context.config.ipfs_http_endpoint().to_string();
+        self.pushed_blobs.spawn(
+            async move {
+                push_diff(
+                    &blockchain,
+                    &repo_name,
+                    &dao_address,
+                    &remote_network,
+                    &ipfs_http_endpoint,
+                    &parallel_diff_clone.commit_id,
+                    &parallel_diff_clone.branch_name,
+                    &parallel_diff_clone.blob_id,
+                    &parallel_diff_clone.file_path,
+                    &diff_coordinates_clone,
+                    &last_commit_id,
+                    is_last, // <- It is known now
+                    &parallel_diff_clone.original_snapshot_content,
+                    &parallel_diff_clone.diff,
+                    &parallel_diff_clone.new_snapshot_content,
+                )
+                    .await
+            }
+                .instrument(debug_span!("tokio::spawn::push_diff").or_current()),
+        );
+        // TODO add to list here
     }
 
     #[instrument(level = "info", skip_all)]
@@ -78,46 +123,17 @@ impl ParallelDiffsUploadSupport {
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
     ) -> anyhow::Result<()> {
-        for (diff_coordinates, parallel_diff) in self.dangling_diffs.values() {
+        let values = self.dangling_diffs.clone().into_values().collect::<Vec<(PushDiffCoordinate, ParallelDiff)>>();
+        for (diff_coordinates, parallel_diff) in values {
             {
-                let blockchain = context.blockchain.clone();
-                let dao_address: BlockchainContractAddress = context.dao_addr.clone();
-                let remote_network: String = context.remote.network.clone();
-                let diff_coordinates = diff_coordinates.clone();
-                let parallel_diff = parallel_diff.clone();
-                let last_commit_id = self.last_commit_id.clone();
-                let repo_name: String = context.remote.repo.clone();
-                let ipfs_http_endpoint: String = context.config.ipfs_http_endpoint().to_string();
-                self.pushed_blobs.spawn(
-                    async move {
-                        push_diff(
-                            &blockchain,
-                            &repo_name,
-                            &dao_address,
-                            &remote_network,
-                            &ipfs_http_endpoint,
-                            &parallel_diff.commit_id,
-                            &parallel_diff.branch_name,
-                            &parallel_diff.blob_id,
-                            &parallel_diff.file_path,
-                            &diff_coordinates,
-                            &last_commit_id,
-                            true, // <- It is known now
-                            &parallel_diff.original_snapshot_content,
-                            &parallel_diff.diff,
-                            &parallel_diff.new_snapshot_content,
-                        )
-                        .await
-                    }
-                    .instrument(info_span!("tokio::spawn::push_diff").or_current()),
-                );
+                self.add_to_push_list(context, &diff_coordinates, &parallel_diff, true);
             }
             let mut repo_contract = context.blockchain.repo_contract().clone();
             let diff_contract_address = diff_address(
                 &context.blockchain.client(),
                 &mut repo_contract,
                 &self.last_commit_id,
-                diff_coordinates,
+                &diff_coordinates,
             )
             .await?;
             tracing::trace!(
@@ -127,26 +143,27 @@ impl ParallelDiffsUploadSupport {
                 diff_contract_address
             );
             self.expecting_deployed_contacts_addresses
-                .push(diff_contract_address);
+                .insert(diff_contract_address, (diff_coordinates.to_owned(), parallel_diff.to_owned(), true));
         }
         Ok(())
     }
 
-    pub async fn wait_all_diffs<B>(&mut self, blockchain: B) -> anyhow::Result<()>
+    pub async fn wait_all_diffs<B>(&mut self, blockchain: B) -> anyhow::Result<Vec<BlockchainContractAddress>>
     where
         B: BlockchainService + 'static,
     {
         // TODO:
         // - Let user know if we reached it
         // - Make it configurable
+        let addresses = self.expecting_deployed_contacts_addresses.clone().into_keys().collect::<Vec<BlockchainContractAddress>>();
         tracing::debug!(
             "Expecting the following diff contracts to be deployed: {:?}",
-            self.expecting_deployed_contacts_addresses
+            addresses
         );
         while let Some(finished_task) = self.pushed_blobs.join_next().await {
             match finished_task {
                 Err(e) => {
-                    bail!("diffs joih-handler: {}", e);
+                    bail!("diffs join-handler: {}", e);
                 }
                 Ok(Err(e)) => {
                     bail!("diffs inner: {}", e);
@@ -156,7 +173,7 @@ impl ParallelDiffsUploadSupport {
         }
         ParallelDiffsUploadSupport::wait_contracts_deployed(
             &blockchain,
-            &self.expecting_deployed_contacts_addresses,
+            &addresses,
         )
         .await
     }
@@ -165,12 +182,12 @@ impl ParallelDiffsUploadSupport {
     pub async fn wait_contracts_deployed<B>(
         blockchain: &B,
         addresses: &[BlockchainContractAddress],
-    ) -> anyhow::Result<()>
+    ) -> anyhow::Result<Vec<BlockchainContractAddress>>
     where
         B: BlockchainService + 'static,
     {
         tracing::trace!("wait_contracts_deployed: addresses={addresses:?}");
-        let mut deploymend_results: JoinSet<anyhow::Result<()>> = JoinSet::new();
+        let mut deploymend_results: JoinSet<anyhow::Result<Vec<BlockchainContractAddress>>> = JoinSet::new();
         for chunk in addresses.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {
             let mut waiting_for_addresses = Vec::from(addresses);
             let b = blockchain.clone();
@@ -180,10 +197,12 @@ impl ParallelDiffsUploadSupport {
                     while !waiting_for_addresses.is_empty() {
                         iteration += 1;
                         if iteration > MAX_RETRIES_FOR_DIFFS_TO_APPEAR + 1 {
-                            anyhow::bail!(
+                            // anyhow::bail!(
+                            tracing::trace!(
                                 "Some contracts didn't appear in time: {}",
                                 waiting_for_addresses.format_short()
                             );
+                            return Ok(waiting_for_addresses);
                         }
                         match b
                             .get_contracts_state_raw_data(&waiting_for_addresses, true)
@@ -214,15 +233,19 @@ impl ParallelDiffsUploadSupport {
                             }
                         }
                     } // While loop
-                    Ok(())
+                    Ok(vec![])
                 } //move
                 .instrument(info_span!("tokio::spawn::wait_diff_deployed").or_current()),
             );
         }
+        let mut undeployed_contracts = HashSet::new();
         while let Some(res) = deploymend_results.join_next().await {
-            let _: () = res??;
+            let mut val = res??;
+            for el in val {
+                undeployed_contracts.insert(el);
+            }
         }
-        Ok(())
+        Ok(Vec::from_iter(undeployed_contracts))
     }
 
     #[instrument(level = "info", skip_all)]
@@ -280,37 +303,23 @@ impl ParallelDiffsUploadSupport {
         match prev_value {
             None => {}
             Some((diff_coordinates, parallel_diff)) => {
-                let blockchain = context.blockchain.clone();
-                let dao_address: BlockchainContractAddress = context.dao_addr.clone();
-                let remote_network: String = context.remote.network.clone();
-                let diff_coordinates = diff_coordinates.clone();
-                let parallel_diff = parallel_diff.clone();
-                let last_commit_id = self.last_commit_id.clone();
-                let repo_name: String = context.remote.repo.clone();
-                let ipfs_http_endpoint: String = context.config.ipfs_http_endpoint().to_string();
-                self.pushed_blobs.spawn(
-                    async move {
-                        push_diff(
-                            &blockchain,
-                            &repo_name,
-                            &dao_address,
-                            &remote_network,
-                            &ipfs_http_endpoint,
-                            &parallel_diff.commit_id,
-                            &parallel_diff.branch_name,
-                            &parallel_diff.blob_id,
-                            &parallel_diff.file_path,
-                            &diff_coordinates,
-                            &last_commit_id,
-                            false, // <- It is known now
-                            &parallel_diff.original_snapshot_content,
-                            &parallel_diff.diff,
-                            &parallel_diff.new_snapshot_content,
-                        )
-                        .await
-                    }
-                    .instrument(debug_span!("tokio::spawn::push_diff").or_current()),
-                );
+                self.add_to_push_list(context, &diff_coordinates, &parallel_diff, false);
+                let mut repo_contract = context.blockchain.repo_contract().clone();
+                let diff_contract_address = diff_address(
+                    &context.blockchain.client(),
+                    &mut repo_contract,
+                    &self.last_commit_id,
+                    &diff_coordinates,
+                )
+                .await?;
+                tracing::trace!(
+                "diff_contract_address <commit: {}, coord: {:?}>: {}",
+                self.last_commit_id,
+                diff_coordinates,
+                diff_contract_address
+            );
+                self.expecting_deployed_contacts_addresses
+                    .insert(diff_contract_address, (diff_coordinates, parallel_diff, false));
             }
         }
         Ok(())

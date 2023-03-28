@@ -32,6 +32,12 @@ import {
     MultiEvent,
 } from './components'
 import ReactTooltip from 'react-tooltip'
+import { DaoVoteEvent } from './components/DaoVoteEvent/DaoVoteEvent'
+import { DaoTokenDaoSendEvent } from './components/DaoTokenDaoSendEvent/DaoTokenDaoSendEvent'
+import { DaoReviewEvent } from './components/DaoReviewEvent/DaoReviewEvent'
+import { DaoReceiveBountyEvent } from './components/DaoReceiveBountyEvent/DaoReceiveBountyEvent'
+import { DaoTokenDaoLockEvent } from './components/DaoTokenDaoLockEvent/DaoTokenDaoLockEvent'
+import { TaskUpgradeEvent } from './components/TaskUpgradeEvent/TaskUpgradeEvent'
 
 const EventPage = () => {
     const { eventAddr } = useParams()
@@ -108,13 +114,20 @@ const EventPage = () => {
                             <MemberAddEvent
                                 version={dao.details.version}
                                 data={event.data}
+                                gosh={dao.adapter.getGosh()}
                             />
                         )}
                         {event.type.kind === ESmvEventType.DAO_MEMBER_DELETE && (
-                            <MemberRemoveEvent data={event.data} />
+                            <MemberRemoveEvent
+                                data={event.data}
+                                gosh={dao.adapter.getGosh()}
+                            />
                         )}
                         {event.type.kind === ESmvEventType.DAO_ALLOWANCE_CHANGE && (
-                            <MemberAllowanceEvent data={event.data} />
+                            <MemberAllowanceEvent
+                                data={event.data}
+                                gosh={dao.adapter.getGosh()}
+                            />
                         )}
                         {event.type.kind === ESmvEventType.DAO_TOKEN_MINT && (
                             <DaoMintReserveEvent data={event.data} />
@@ -155,10 +168,16 @@ const EventPage = () => {
                             <DaoAskMembershipAllowanceEvent data={event.data} />
                         )}
                         {event.type.kind === ESmvEventType.DAO_TOKEN_VOTING_ADD && (
-                            <DaoTokenVotingAddEvent data={event.data} />
+                            <DaoTokenVotingAddEvent
+                                data={event.data}
+                                gosh={dao.adapter.getGosh()}
+                            />
                         )}
                         {event.type.kind === ESmvEventType.DAO_TOKEN_REGULAR_ADD && (
-                            <DaoTokenRegularAddEvent data={event.data} />
+                            <DaoTokenRegularAddEvent
+                                data={event.data}
+                                gosh={dao.adapter.getGosh()}
+                            />
                         )}
                         {event.type.kind === ESmvEventType.DAO_TAG_ADD && (
                             <DaoTagAddEvent data={event.data} />
@@ -175,8 +194,31 @@ const EventPage = () => {
                         {event.type.kind === ESmvEventType.REPO_UPDATE_DESCRIPTION && (
                             <RepoDescriptionEvent data={event.data} />
                         )}
-                        {event.type.kind === ESmvEventType.MULTI_PROPOSAL && (
-                            <MultiEvent version={dao.details.version} event={event} />
+                        {(event.type.kind === ESmvEventType.MULTI_PROPOSAL ||
+                            event.type.kind === ESmvEventType.MULTI_PROPOSAL_AS_DAO) && (
+                            <MultiEvent
+                                version={dao.details.version}
+                                event={event}
+                                gosh={dao.adapter.getGosh()}
+                            />
+                        )}
+                        {event.type.kind === ESmvEventType.DAO_VOTE && (
+                            <DaoVoteEvent data={event.data} />
+                        )}
+                        {event.type.kind === ESmvEventType.DAO_TOKEN_DAO_SEND && (
+                            <DaoTokenDaoSendEvent data={event.data} />
+                        )}
+                        {event.type.kind === ESmvEventType.DAO_REVIEWER && (
+                            <DaoReviewEvent data={event.data} />
+                        )}
+                        {event.type.kind === ESmvEventType.DAO_RECEIVE_BOUNTY && (
+                            <DaoReceiveBountyEvent data={event.data} />
+                        )}
+                        {event.type.kind === ESmvEventType.DAO_TOKEN_DAO_LOCK && (
+                            <DaoTokenDaoLockEvent data={event.data} />
+                        )}
+                        {event.type.kind === ESmvEventType.TASK_UPGRADE && (
+                            <TaskUpgradeEvent data={event.data} />
                         )}
                     </div>
                 </div>

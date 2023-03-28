@@ -4,6 +4,7 @@ import successImage from '../../../../assets/images/success.png'
 import { supabase } from '../../../../helpers'
 import DAO_MEMBER_FORM_1_0_0 from './1.0.0/MemberForm'
 import DAO_MEMBER_FORM_2_0_0 from './2.0.0/MemberForm'
+import DAO_MEMBER_FORM_3_0_0 from './3.0.0/MemberForm'
 
 type TDaoMemberFormProps = {
     dao: {
@@ -13,14 +14,7 @@ type TDaoMemberFormProps = {
     getDaoInvites(): Promise<void>
 }
 
-export type TInvitationSentProps = {
-    hasUsernames: boolean
-    hasEmails: boolean
-}
-
-const InvitationSent = (props: TInvitationSentProps) => {
-    const { hasEmails, hasUsernames } = props
-
+const InvitationSent = () => {
     return (
         <div className="bg-white">
             <div className="max-w-[9.75rem] mx-auto">
@@ -28,17 +22,15 @@ const InvitationSent = (props: TInvitationSentProps) => {
             </div>
             <div className="mt-6">
                 <h3 className="text-xl font-medium text-center mb-4">Success</h3>
-                {hasEmails && (
-                    <p className="text-gray-7c8db5 text-sm mb-3">
-                        Users invited by email will receive invitation email message
-                    </p>
-                )}
-                {hasUsernames && (
-                    <p className="text-gray-7c8db5 text-sm">
-                        Users invited by GOSH username are added to proposal and waiting
-                        for voting
-                    </p>
-                )}
+
+                <p className="text-gray-7c8db5 text-sm mb-3">
+                    Users invited by email will receive invitation email message
+                </p>
+
+                <p className="text-gray-7c8db5 text-sm">
+                    Users invited by GOSH username are added to proposal and waiting for
+                    voting
+                </p>
             </div>
         </div>
     )
@@ -70,9 +62,18 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
                 SuccessComponent={InvitationSent}
             />
         )
+    } else if (version === '2.0.0') {
+        return (
+            <DAO_MEMBER_FORM_2_0_0
+                dao={dao}
+                getDaoInvites={getDaoInvites}
+                getUsernameByEmail={getUsernameByEmail}
+                SuccessComponent={InvitationSent}
+            />
+        )
     }
     return (
-        <DAO_MEMBER_FORM_2_0_0
+        <DAO_MEMBER_FORM_3_0_0
             dao={dao}
             getDaoInvites={getDaoInvites}
             getUsernameByEmail={getUsernameByEmail}

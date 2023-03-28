@@ -396,10 +396,16 @@ where
             &commit_id,
         ).await?;
         tracing::trace!("start waiting for commit to be ready, address: {new_commit}");
-        ParallelDiffsUploadSupport::wait_contracts_deployed(
+        let undeployed = ParallelDiffsUploadSupport::wait_contracts_deployed(
             &blockchain,
             &vec![new_commit],
         ).await?;
+        if !undeployed.is_empty() {
+            anyhow::bail!(
+                "Commit was not deployed in expected time: {}",
+                undeployed[0]
+            );
+        }
         tracing::trace!("commit is ready");
 
         (content_string, commit_id)

@@ -273,7 +273,7 @@ async fn get_contracts_blocks(
             }
         }
         for r in query_result.iter() {
-            let boc = r["boc"].as_str().expect("boc must be a string").to_owned();
+            let boc = r["boc"].as_str().ok_or(anyhow::format_err!("boc must be a string"))?.to_owned();
             let address = BlockchainContractAddress::new(
                 r["id"]
                     .as_str()
@@ -340,6 +340,7 @@ async fn run_local(
             signer: Signer::None,
             deploy_set: None,
             processing_try_index: None,
+            signature_id: None,
         },
     )
     .instrument(info_span!("run_local sdk::encode_message").or_current())
@@ -450,6 +451,7 @@ async fn run_static(
             signer: Signer::None,
             deploy_set: None,
             processing_try_index: None,
+            signature_id: None,
         },
     )
     .instrument(info_span!("run_static sdk::encode_message").or_current())

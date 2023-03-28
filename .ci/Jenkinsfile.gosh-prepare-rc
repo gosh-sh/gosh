@@ -5,6 +5,9 @@ def runFunctionSet(function_name) {
         },
         "v2_x": {
             "${function_name}"('v2_x')
+        },
+        "v3_x": {
+            "${function_name}"('v3_x')
         }
     ]
     parallel(running_set)
@@ -38,13 +41,14 @@ pipeline {
                     } else {
                         env.COMMIT = params.sha1
                     }
+                    sh "docker ps -a --filter name=localnode-* -aq | xargs docker rm -f || true"
                 }
                 echo "${COMMIT}"
                 git branch: "${COMMIT}", url: 'https://github.com/gosh-sh/gosh.git'
                 checkout scm
                 script {
-                    env.VERSION = sh script: "cat version.json | jq .version | tr -d '\"\n'", returnStdout: true
-                    currentBuild.displayName = "${BUILD_NUMBER}_${COMMIT}_${VERSION}"
+                    env.APP_VERSION = sh script: "cat version.json | jq .version | tr -d '\"\n'", returnStdout: true
+                    currentBuild.displayName = "${BUILD_NUMBER}_${COMMIT}_${APP_VERSION}"
                 }
             }
         }
@@ -56,6 +60,7 @@ pipeline {
             }
             steps {
                 buildDispatcher()
+                //buildDispatcherDebug()
             }
         }
         stage('Build: Git Helper') {
@@ -66,6 +71,7 @@ pipeline {
             }
             steps {
                 runFunctionSet('buildRemoteGosh')
+                //runFunctionSet('buildRemoteGoshDebug')
             }
         }
 
@@ -80,33 +86,39 @@ pipeline {
             }
         }
 
-        stage('Deploy: deploy smart-contracts') {
-            parallel {
-                stage('v1_x') {
-                    agent {
-                        docker {
-                            image 'jenkins-docker-agent:1'
-                            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se'
-                        }
-                    }
-                    steps {
-                        deployContracts('v1_x')
-                    }
+        stage('Tests') {
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network host -v /root/jenkins-main/workspace:/tmp --add-host localnode:127.0.0.1'
                 }
-                stage('v2_x') {
-                    agent {
-                        docker {
-                            image 'jenkins-docker-agent:1'
-                            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se'
-                        }
+            }
+            steps {
+                script {
+                    sh "rm -rf tests_workspace_*"
+                    def basePort = 9000
+                    def files = getTestFiles("tests")
+                    def nodes = getNodesCount()
+                    def versions = ["v1_x", "v2_x", "v3_x"]
+                    
+                    for (version in versions) {
+                        sh "rm -rf ${version}_workspace_*"
+                        deployVersion(version, nodes, basePort)
                     }
-                    steps {
-                        deployContracts('v2_x')
-                    }
+
+                    runFunctionalTests(files, basePort, "Func v1", "v1_x")
+                    runFunctionalTests(files, basePort, "Func v2", "v2_x")
+                    runFunctionalTests(files, basePort, "Func v3", "v3_x")
+                    runUpgradeTests(files, basePort, 1, 2)
+                    runUpgradeTests(files, basePort, 2, 3)
+                    runUpgradeTests(files, basePort, 1, 3)
+                    env.REACT_APP_GOSH_ROOTADDR = sh script: "cat v1_x_workspace_0/contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
+                    env.REACT_APP_GOSH = sh script: "cat v1_x_workspace_0/contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
                 }
             }
         }
-        /*stage('Web: deploy') {
+
+        stage('Web: deploy') {
             agent {
                 node {
                     label 'jenkins-main'
@@ -115,40 +127,13 @@ pipeline {
             steps {
                 deployWeb()
             }
-        }*/
-        stage('Tests: functional') {
-            parallel {
-                stage('v1_x') {
-                    agent {
-                        docker {
-                            image 'jenkins-docker-agent:1'
-                            // -v /root/jenkins-main/workspace // FOR BINARIES
-                            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp'
-                        }
-                    }
-                    steps {
-                        testsFunctional('v1_x')
-                    }
-                }
-                stage('v2_x') {
-                    agent {
-                        docker {
-                            image 'jenkins-docker-agent:1'
-                            // -v /root/jenkins-main/workspace // FOR BINARIES
-                            args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network docker-network-for-se -v /root/jenkins-main/workspace:/tmp'
-                        }
-                    }
-                    steps {
-                        testsFunctional('v2_x')
-                    }
-                }
-            }
         }
-        /*stage('Tests: Web') {
+        
+        stage('Tests: Web') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network host --add-host localnode:127.0.0.1'
                 }
             }
             steps {
@@ -160,7 +145,7 @@ pipeline {
                     archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*.png"
                 }
             }
-        }*/
+        }
 
         stage('Prerelease: Git Helper - bin') {
             agent {
@@ -186,10 +171,12 @@ pipeline {
                     prereleaseDockerExtension()
                 }
             }
-            post {
-                always {
-                    cleanWs()
-                }
+        }
+    }
+    post { 
+        always { 
+            node('jenkins-main') { 
+                cleanWs()
             }
         }
     }
@@ -198,6 +185,7 @@ pipeline {
 ///////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////FUNCTIONS//////////////////////////////////
 
+// BUILD
 def buildDispatcher() {
     script {
         dir('gosh-dispatcher') {
@@ -225,6 +213,28 @@ def buildDispatcher() {
                 az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id $PIPELINE_2_ID --path windows-amd64
                 az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id $PIPELINE_2_ID --path linux-arm64
                 az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id $PIPELINE_2_ID --path darwin-arm64
+            '''
+        }
+    }
+}
+
+def buildDispatcherDebug() {
+    script {
+        dir('gosh-dispatcher') {
+            sh '''
+                #!/bin/bash
+                set -ex
+
+                cd ${WORKSPACE}
+                rm -rf linux-*
+                rm -rf darwin-*
+                rm -rf windows-*
+
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 535 --path linux-amd64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 535 --path darwin-amd64
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 535 --path windows-amd64
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 535 --path linux-arm64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 535 --path darwin-arm64
             '''
         }
     }
@@ -262,6 +272,38 @@ def buildRemoteGosh(version) {
     }
 }
 
+def buildRemoteGoshDebug(version) {
+    script {
+        dir("${version}/git-remote-gosh") {
+            sh """
+                #!/bin/bash
+                set -ex
+
+                cd ${WORKSPACE}
+
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 536 --path linux-amd64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 536 --path darwin-amd64
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 536 --path windows-amd64
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 536 --path linux-arm64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 536 --path darwin-arm64
+
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 537 --path linux-amd64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 537 --path darwin-amd64
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 537 --path windows-amd64
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 537 --path linux-arm64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 537 --path darwin-arm64
+
+
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 538 --path linux-amd64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 538 --path darwin-amd64
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 538 --path windows-amd64
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 538 --path linux-arm64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 538 --path darwin-arm64
+            """
+        }
+    }
+}
+
 def archiveAzureArtifacts() {
     script {
         sh '''
@@ -289,30 +331,162 @@ def archiveAzureArtifacts() {
     }
 }
 
-def deployContracts(version) {
-    script {
-        dir("${version}/contracts/multisig") {
-            // Deploy msig giver for GOSH deployment
-            sh 'make build-contracts-docker'
-            sh 'make generate-docker NETWORK=https://local-evernode.gosh.sh'
-            sh '''
-                tonos-cli -u https://local-evernode.gosh.sh call 0:ece57bcc6c530283becbbd8a3b24d3c5987cdddc3c8b7b33be6e4a6312490415 sendTransaction "{\\"dest\\": \\"$(cat Giver.addr)\\", \\"value\\": 5000000000000000, \\"bounce\\": false}" --abi GiverV2.abi.json --sign GiverV2.keys.json
-            '''
-            sh 'make deploy-docker EXTRA_DOCKER_ARGS="--network docker-network-for-se"'
-        }
-        dir("${version}/contracts/gosh") {
-            sh 'make prepare-docker && make deploy-docker EXTRA_DOCKER_ARGS="--network docker-network-for-se"'
-        }
-        env.REACT_APP_GOSH_ROOTADDR = sh script: "cat ${version}/contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
-        env.REACT_APP_GOSH = sh script: "cat ${version}/contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
+// FUNCTIONAL TESTS & DEPLOYS
+
+def getNodesCount() {
+    def filesTestsDir = []
+    def filesUpgrTestsDir = []
+
+    filesTestsDir = sh(script: 'ls tests/*.test.sh', returnStdout: true).trim().split('\n')
+    filesUpgrTestsDir = sh(script: "ls tests/upgrade_tests/*.test.sh", returnStdout: true).trim().split('\n')
+
+    // Compare the number of files in both directories and return the larger array
+    if (filesTestsDir.size() > filesUpgrTestsDir.size()) {
+        return filesTestsDir
+    } else {
+        return filesUpgrTestsDir
     }
-    archiveArtifacts artifacts: "${version}/contracts/gosh/*.seed"
-    archiveArtifacts artifacts: "${version}/contracts/gosh/*.addr"
 }
+
+def getTestFiles(testsDir) {
+    def files
+    dir(testsDir) {
+        files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]\\+"', returnStdout: true).trim().split('\n')
+    }
+    return files
+}
+
+def deployVersion(version, files, basePort) {
+    def containerStages = [:]
+
+    for (int i = 0; i < files.size(); i++) {
+        def port = basePort + i
+        def index = i
+        containerStages["Deploy ${version} ${i}"] = {
+            stage("Deploy ${version} ${index}") {
+                deployStage(version, index, port)
+            }
+        }
+    }
+    parallel containerStages
+}
+
+def deployStage(version, index, port) {
+    echo "Checking if Docker container localnode-${port} is already running"
+    def containerRunning = sh(returnStdout: true, script: "docker ps --filter name=localnode-${port} --format '{{.Names}}'").trim()
+
+    if (!containerRunning) {
+        echo "Starting Docker container on port ${port}"
+        sh """
+            docker run -d --name localnode-${port} --network test.app.gosh.sh -p ${port}:80 -e USER_AGREEMENT=yes -v ${WORKSPACE}/.ci/blockchain.conf:/ton-node/blockchain.conf.json tonlabs/local-node:0.35.1
+        """
+    } else {
+        echo "Docker container localnode-${port} is already running"
+    }
+
+    sh "cp -r ${version} ${version}_workspace_${index}"
+    env.version = version
+    dir("${WORKSPACE}/${version}_workspace_${index}/contracts/multisig") {
+        sh "make build-contracts-docker"
+        sh "make generate-docker NETWORK=http://localnode:${port}"
+        env.giverAddr = sh(returnStdout: true, script: 'cat Giver.addr').trim()
+        sh """
+            tonos-cli -u http://localnode:${port} call 0:ece57bcc6c530283becbbd8a3b24d3c5987cdddc3c8b7b33be6e4a6312490415 sendTransaction '{"dest": "${env.giverAddr}", "value": 50000000000000000, "bounce": false}' --abi GiverV2.abi.json --sign GiverV2.keys.json
+        """
+        sh 'make deploy-docker EXTRA_DOCKER_ARGS="--network host --add-host localnode:127.0.0.1"'
+    }
+    dir("${WORKSPACE}/${version}_workspace_${index}/contracts/gosh") {
+        sh 'make prepare-docker && make build-contracts-docker && make deploy-docker EXTRA_DOCKER_ARGS="--network host --add-host localnode:127.0.0.1"'
+    }
+}
+
+def runFunctionalTests(files, basePort, stagePrefix, version) {
+    def containerStages = [:]
+
+    for (int i = 0; i < files.size(); i++) {
+        def script = files[i]
+        def port = basePort + i
+        def index = i
+        containerStages["${stagePrefix} ${script}"] = {
+            stage("${stagePrefix} ${script}") {
+                runSingleFunctionalTest(script, index, port, version)
+            }
+        }
+    }
+    parallel containerStages
+}
+
+def runSingleFunctionalTest(script, index, port, version) {
+    prepareHelperForTests()
+    sh "cp -r tests tests_workspace_${index}"
+    dir("${WORKSPACE}/tests_workspace_${index}") {
+        sh """
+            export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
+            ./set-vars.sh ${version}_workspace_${index} http://localnode:${port}
+            ./${script}
+        """
+    }
+}
+
+def runUpgradeTests(files, basePort, from, to) {
+    def containerStages = [:]
+
+    for (int i = 0; i < files.size(); i++) {
+        def script = files[i]
+        def port = basePort + i
+        def index = i
+        containerStages["Upgr $from-$to ${script}"] = {
+            stage("Upgr ${script}") {
+                runSingleUpgradeTest(script, index, port, from, to)
+            }
+        }
+    }
+    parallel containerStages
+}
+
+def runSingleUpgradeTest(script, index, port, from, to) {
+    prepareHelperForTests()
+    sh "cp -r tests tests_workspace_${index}"
+    dir("${WORKSPACE}/tests_workspace_${index}") {
+        sh """
+            export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
+            ./set-vars.sh v${from}_x_workspace_${index} http://localnode:${port}
+            ./upgrade_tests/set_up.sh v${from}_x_workspace_${index} v${to}_x_workspace_${index}
+            ./${script}
+        """
+    }
+}
+
+def prepareHelperForTests() {
+    dir("${WORKSPACE}/tests") {
+        sh """
+            #!/bin/bash
+            set -e
+            set -x
+            cd ../tests
+            mkdir -p /home/jenkins/bin
+
+            # dispatcher
+            cp -r /tmp/${JOB_NAME}/linux-amd64/git-remote-gosh /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
+
+            # remote
+            cd /tmp/${JOB_NAME}/linux-amd64/
+            # REMOTE_VERSION=\$(find . -name "git-remote-gosh_*" | tr -d "./")
+            cd -
+            cp -r /tmp/${JOB_NAME}/linux-amd64/git-remote-gosh_* /home/jenkins/bin/ && chmod +x /home/jenkins/bin/git-remote-gosh_*
+            mkdir -p /home/jenkins/.gosh/
+            # echo \$REMOTE_VERSION > /home/jenkins/.gosh/dispatcher.ini
+            cd /home/jenkins/bin/
+            ls git-remote-gosh_* -1 > /home/jenkins/.gosh/dispatcher.ini
+        """
+    }
+}
+
+// WEB
 
 def deployWeb() {
     script {
-        env.BUCKET_NAME = "app-" + "${COMMIT}_${VERSION}".replaceAll("[^a-zA-Z0-9 ]+","-")
+        env.BUCKET_NAME = "app-" + "${COMMIT}_${APP_VERSION}".replaceAll("[^a-zA-Z0-9 ]+","-")
         sh """
             sed -i '/REACT_APP_GOSH_ROOTADDR =/s/\$/${REACT_APP_GOSH_ROOTADDR}/' web/.env.ci
             sed -i '/REACT_APP_GOSH =/s/\$/{"1.0.0": "${REACT_APP_GOSH}"}/' web/.env.ci
@@ -345,45 +519,11 @@ def deployWeb() {
     }
 }
 
-def testsFunctional(version) {
-    script {
-        dir("${version}") {
-            sh """
-                #!/bin/bash
-                set -e
-                set -x
-                cd ../tests
-                mkdir -p /home/jenkins/bin
-
-                VERSION_PREFIX=\$(echo ${version} | tr -d _x)
-
-                # dispatcher
-                cp -r /tmp/${JOB_NAME}/linux-amd64/git-remote-gosh /home/jenkins/bin/git-remote-gosh && chmod +x /home/jenkins/bin/git-remote-gosh
-
-                # remote
-                cd /tmp/${JOB_NAME}/linux-amd64/
-                REMOTE_VERSION=\$(find . -name "git-remote-gosh_\$VERSION_PREFIX*" | tr -d "./")
-                cd -
-                cp -r /tmp/${JOB_NAME}/linux-amd64/\$REMOTE_VERSION /home/jenkins/bin/\$REMOTE_VERSION && chmod +x /home/jenkins/bin/\$REMOTE_VERSION
-                mkdir -p /home/jenkins/.gosh/
-                echo \$REMOTE_VERSION > /home/jenkins/.gosh/dispatcher.ini
-                export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:\$PATH
-                #./set-vars.sh https://local-evernode.gosh.sh
-                ./test_all.sh ${version} https://local-evernode.gosh.sh
-
-            """
-            /* def files = sh(script: 'ls *.test.sh | grep "[0-9][0-9]-\\+"', returnStdout: true).trim().split('\n')
-            runParallel items: (files).collect { "${it}" } */
-        }
-    }
-    archiveArtifacts artifacts: 'tests/*.seed'
-}
-
 def testWeb() {
     script {
         dir('monitoring/gosh-mon') {   
             sh "cp config/credentials.yml.template config/credentials.yml"
-            sh "docker build -t gosh-mon ."
+            sh "docker build --no-cache -t gosh-mon ."
             def tests = webTestsList()
             for (int i = 0; i < tests.length; i++) {
                 stage("Test ${tests[i]}") {
@@ -392,12 +532,13 @@ def testWeb() {
                         docker run --rm \
                             -e GM_MODE='${tests[i].trim()}' \
                             -e RUN_NOW=1 \
-                            -e CONFIG_SEED="\$(cat ../../tests/user.seed)" \
+                            -e CONFIG_SEED="\$(cat ../../tests_workspace_0/user.seed)" \
                             -e CONFIG_APPURL=https://${BUCKET_NAME}.gosh.sh/ \
                             -e CONFIG_REDIS_HOST="" \
                             -e CONFIG_USERNAME=user1 \
                             -v \$(pwd)/config:/home/node/app/config:ro \
                             -v \$(pwd)/test-errors:/home/node/app/errors \
+                            --network host --add-host localnode:127.0.0.1 \
                             gosh-mon
                     """
                 }
@@ -406,17 +547,19 @@ def testWeb() {
     }
 }
 
+// RELEASE
+
 def prereleaseBinaries() {
     script {
         if (!params.DRYRUN) {
             dir('.ci/scripts') {
                 withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
-                    sh './create-github-release.sh $TOKEN ${VERSION} ${COMMIT}'
-                    sh './github-upload-assets.sh $TOKEN ${VERSION} /tmp/${JOB_NAME}/git-remote-gosh-linux-amd64.tar'
-                    sh './github-upload-assets.sh $TOKEN ${VERSION} /tmp/${JOB_NAME}/git-remote-gosh-darwin-amd64.tar'
-                    sh './github-upload-assets.sh $TOKEN ${VERSION} /tmp/${JOB_NAME}/git-remote-gosh-linux-arm64.tar'
-                    sh './github-upload-assets.sh $TOKEN ${VERSION} /tmp/${JOB_NAME}/git-remote-gosh-darwin-arm64.tar'
-                    sh './github-upload-assets.sh $TOKEN ${VERSION} /tmp/${JOB_NAME}/git-remote-gosh-windows-amd64.zip'
+                    sh './create-github-release.sh $TOKEN ${APP_VERSION} ${COMMIT}'
+                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-linux-amd64.tar'
+                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-darwin-amd64.tar'
+                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-linux-arm64.tar'
+                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-darwin-arm64.tar'
+                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-windows-amd64.zip'
                 }
             }
         }
@@ -430,22 +573,10 @@ def prereleaseDockerExtension() {
                 withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'teamgosh-dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                     sh 'docker login -u $USERNAME -p $PASSWORD'
                 }
-                sh "make push IMAGE=teamgosh/docker-extension TAG=rc-${VERSION} PLATFORM=linux/amd64,linux/arm64"
+                sh "make push IMAGE=teamgosh/docker-extension TAG=rc-${APP_VERSION} PLATFORM=linux/amd64,linux/arm64"
             }
         }
     }
-}
-
-def runParallel(args) {
-  parallel args.items.collectEntries { name -> [ "${name}": {
-    stage("${name}") {
-        sh """
-            export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
-            . ./env.env
-            ./${name}
-        """
-    }
-  }]}
 }
 
 def webTestsList() {
@@ -464,7 +595,7 @@ def webTestsList() {
             steps {
                 script {
                     dir('docker-extension') {
-                        sh "make push IMAGE=localhost:5000/teamgosh/docker-extension TAG=${VERSION} PLATFORM=linux/amd64,linux/arm64 GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${VERSION}"
+                        sh "make push IMAGE=localhost:5000/teamgosh/docker-extension TAG=${APP_VERSION} PLATFORM=linux/amd64,linux/arm64 GOSH_GIT_IMAGE=localhost:5000/teamgosh/git:${APP_VERSION}"
                     }
                 }
             }
@@ -485,13 +616,13 @@ def webTestsList() {
                         dir('v2_x/git-remote-gosh') {
                         sh """
                             cp /var/jenkins_home/workspace/gosh-prepare-rc/git-remote-gosh/git-remote-gosh-amd64 snap/git-remote-gosh
-                            sed -i 's/VERSION_PLACEHOLDER/${VERSION}/g' snap/snapcraft.yaml
+                            sed -i 's/VERSION_PLACEHOLDER/${APP_VERSION}/g' snap/snapcraft.yaml
                             chmod +x snap/git-remote-gosh
                             cd snap
                             tar -cvf git-remote-gosh.tar git-remote-gosh
                             snapcraft clean --use-lxd
                             snapcraft --use-lxd
-                            snapcraft upload git-remote-gosh_${VERSION}_amd64.snap --release=candidate
+                            snapcraft upload git-remote-gosh_${APP_VERSION}_amd64.snap --release=candidate
                         """
                         }
                     }

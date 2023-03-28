@@ -14,7 +14,7 @@ keywords = ['git-remote', 'git', 'gosh']
 name = 'git-remote-gosh'
 resolver = '2'
 rust-version = "1.65"
-version = '3.0.13'
+version = '3.0.16'
 
 [profile.profiling]
 debug = 1
@@ -55,7 +55,7 @@ opentelemetry = {version = "0.18.0", features = ["rt-tokio"]}
 opentelemetry-otlp = {version = "0.11.0", features = ["grpc-tonic"]}
 opentelemetry-semantic-conventions = "0.10.0"
 primitive-types = '0.12.1'
-proc-macro2 = "=1.0.46"
+proc-macro2 = "=1.0.52"
 reqwest-middleware = "0.2.0"
 reqwest-tracing = "0.4.0"
 serde_json = '1.0.93'
@@ -93,12 +93,12 @@ version = '1.21.2'
 [dependencies.ton_client]
 git = 'https://github.com/tonlabs/ever-sdk.git'
 package = 'ton_client'
-rev = '13eb9bfd8e7553c5551b497b5c66542c742c0c1a'
+tag = "1.41.1"
 
 [dependencies.ton_sdk]
 git = 'https://github.com/tonlabs/ever-sdk.git'
 package = 'ton_sdk'
-rev = '13eb9bfd8e7553c5551b497b5c66542c742c0c1a'
+tag = "1.41.1"
 
 [dependencies.zstd]
 default-features = false

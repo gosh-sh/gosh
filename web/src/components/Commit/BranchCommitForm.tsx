@@ -1,5 +1,5 @@
 import { Form, Formik } from 'formik'
-import { classNames, TDao } from 'react-gosh'
+import { classNames, TDao, TUserParam } from 'react-gosh'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { TPushProgress, TRepository } from 'react-gosh/dist/types/repo.types'
 import yup from '../../yup-extended'
@@ -11,7 +11,7 @@ export type TBranchCommitFormValues = {
     tags?: string
     deleteSrcBranch?: boolean
     task?: string
-    assigners?: string
+    assigners?: string | TUserParam[]
     reviewers?: string
     managers?: string
     isPullRequest?: boolean
@@ -47,6 +47,7 @@ const BranchCommitForm = (props: TBranchCommitFormProps) => {
     } = props
 
     const getInitialValues = () => {
+        const version_1_0_0 = {}
         const version_2_0_0 = {
             task: '',
             assigners: '',
@@ -54,16 +55,40 @@ const BranchCommitForm = (props: TBranchCommitFormProps) => {
             managers: '',
             isPullRequest: false,
         }
-        return {
-            ...initialValues,
-            ...(dao.details.version !== '1.0.0' ? version_2_0_0 : {}),
+        const version_3_0_0 = {
+            task: '',
+            assigners: [],
+            reviewers: [],
+            managers: [],
+            isPullRequest: false,
         }
+
+        let versionised = {}
+        if (dao.details.version === '1.0.0') {
+            versionised = version_1_0_0
+        } else if (dao.details.version === '2.0.0') {
+            versionised = version_2_0_0
+        } else if (dao.details.version === '3.0.0') {
+            versionised = version_3_0_0
+        } else {
+            versionised = version_3_0_0
+        }
+
+        return { ...initialValues, ...versionised }
     }
 
     const getValidationSchema = () => {
+        const version_1_0_0 = {}
         const version_2_0_0 = {
             task: yup.string(),
-            assigners: yup.string(),
+            assigners: yup
+                .string()
+                .test('check-task', 'Field is required', function (value) {
+                    if (this.parent.task && !value) {
+                        return false
+                    }
+                    return true
+                }),
             reviewers: yup.string(),
             managers: yup.string(),
             isPullRequest: yup
@@ -79,11 +104,46 @@ const BranchCommitForm = (props: TBranchCommitFormProps) => {
                     },
                 ),
         }
+        const version_3_0_0 = {
+            task: yup.string(),
+            assigners: yup.array().test('check-task', 'Min 1 assigner', function (value) {
+                if (this.parent.task && !value?.length) {
+                    return false
+                }
+                return true
+            }),
+            reviewers: yup.array(),
+            managers: yup.array(),
+            isPullRequest: yup
+                .boolean()
+                .test(
+                    'check-pullrequest',
+                    'Proposal is required if task was selected',
+                    function (value) {
+                        if (this.parent.task && !value) {
+                            return false
+                        }
+                        return true
+                    },
+                ),
+        }
+
+        let versionised = {}
+        if (dao.details.version === '1.0.0') {
+            versionised = version_1_0_0
+        } else if (dao.details.version === '2.0.0') {
+            versionised = version_2_0_0
+        } else if (dao.details.version === '3.0.0') {
+            versionised = version_3_0_0
+        } else {
+            versionised = version_3_0_0
+        }
 
         return yup.object().shape({
+            name: yup.string().required('Field is required'),
             title: yup.string().required('Field is required'),
             ...validationSchema,
-            ...(dao.details.version !== '1.0.0' ? version_2_0_0 : {}),
+            ...versionised,
         })
     }
 

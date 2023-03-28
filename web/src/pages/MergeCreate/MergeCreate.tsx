@@ -27,14 +27,27 @@ const MergeCreatePage = () => {
     const onPush = async (values: TBranchCommitFormValues) => {
         try {
             const { title, message, tags, isPullRequest, deleteSrcBranch } = values
-            const task = values.task
-                ? {
-                      task: values.task,
-                      assigners: values.assigners?.split(' ') || [],
-                      reviewers: values.reviewers?.split(' ') || [],
-                      managers: values.managers?.split(' ') || [],
-                  }
-                : undefined
+
+            let task
+            if (values.task) {
+                const assigners = !values.assigners
+                    ? []
+                    : typeof values.assigners === 'string'
+                    ? values.assigners.split(' ')
+                    : values.assigners
+                const reviewers = !values.reviewers
+                    ? []
+                    : typeof values.reviewers === 'string'
+                    ? values.reviewers.split(' ')
+                    : values.reviewers
+                const managers = !values.managers
+                    ? []
+                    : typeof values.managers === 'string'
+                    ? values.managers.split(' ')
+                    : values.managers
+                task = { task: values.task, assigners, reviewers, managers }
+            }
+
             await push(title, { message, tags, isPullRequest, deleteSrcBranch, task })
             if (isPullRequest) {
                 navigate(`/o/${daoName}/events`, { replace: true })

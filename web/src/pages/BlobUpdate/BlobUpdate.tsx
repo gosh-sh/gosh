@@ -32,14 +32,26 @@ const BlobUpdatePage = () => {
                 original: blob?.content ?? '',
                 modified: content,
             }
-            const task = values.task
-                ? {
-                      task: values.task,
-                      assigners: values.assigners?.split(' ') || [],
-                      reviewers: values.reviewers?.split(' ') || [],
-                      managers: values.managers?.split(' ') || [],
-                  }
-                : undefined
+
+            let task
+            if (values.task) {
+                const assigners = !values.assigners
+                    ? []
+                    : typeof values.assigners === 'string'
+                    ? values.assigners.split(' ')
+                    : values.assigners
+                const reviewers = !values.reviewers
+                    ? []
+                    : typeof values.reviewers === 'string'
+                    ? values.reviewers.split(' ')
+                    : values.reviewers
+                const managers = !values.managers
+                    ? []
+                    : typeof values.managers === 'string'
+                    ? values.managers.split(' ')
+                    : values.managers
+                task = { task: values.task, assigners, reviewers, managers }
+            }
 
             await push(title, [blobObject], { isPullRequest, message, tags, task })
             if (isPullRequest) {

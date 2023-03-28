@@ -1,5 +1,5 @@
 import { Form, Formik } from 'formik'
-import { classNames, TDao, TPushProgress, TRepository } from 'react-gosh'
+import { classNames, TDao, TPushProgress, TRepository, TUserParam } from 'react-gosh'
 import RepoBreadcrumbs from '../Repo/Breadcrumbs'
 import { useNavigate } from 'react-router-dom'
 import BlobDiffPreview from '../Blob/DiffPreview'
@@ -13,7 +13,7 @@ export type TBlobDeleteFormValues = {
     message?: string
     tags?: string
     task?: string
-    assigners?: string
+    assigners?: string | TUserParam[]
     reviewers?: string
     managers?: string
     isPullRequest?: boolean
@@ -58,23 +58,48 @@ const BlobDeleteForm = (props: TBlobDeleteFormProps) => {
     const navigate = useNavigate()
 
     const getInitialValues = () => {
+        const version_1_0_0 = {}
         const version_2_0_0 = {
             task: '',
-            reviewers: '',
             assigners: '',
+            reviewers: '',
             managers: '',
             isPullRequest: false,
         }
-        return {
-            ...initialValues,
-            ...(dao.details.version !== '1.0.0' ? version_2_0_0 : {}),
+        const version_3_0_0 = {
+            task: '',
+            assigners: [],
+            reviewers: [],
+            managers: [],
+            isPullRequest: false,
         }
+
+        let versionised = {}
+        if (dao.details.version === '1.0.0') {
+            versionised = version_1_0_0
+        } else if (dao.details.version === '2.0.0') {
+            versionised = version_2_0_0
+        } else if (dao.details.version === '3.0.0') {
+            versionised = version_3_0_0
+        } else {
+            versionised = version_3_0_0
+        }
+
+        return { ...initialValues, ...versionised }
     }
 
     const getValidationSchema = () => {
+        const version_1_0_0 = {}
         const version_2_0_0 = {
             task: yup.string(),
-            assigners: yup.string(),
+            assigners: yup
+                .string()
+                .test('check-task', 'Field is required', function (value) {
+                    if (this.parent.task && !value) {
+                        return false
+                    }
+                    return true
+                }),
             reviewers: yup.string(),
             managers: yup.string(),
             isPullRequest: yup
@@ -90,11 +115,46 @@ const BlobDeleteForm = (props: TBlobDeleteFormProps) => {
                     },
                 ),
         }
+        const version_3_0_0 = {
+            task: yup.string(),
+            assigners: yup.array().test('check-task', 'Min 1 assigner', function (value) {
+                if (this.parent.task && !value?.length) {
+                    return false
+                }
+                return true
+            }),
+            reviewers: yup.array(),
+            managers: yup.array(),
+            isPullRequest: yup
+                .boolean()
+                .test(
+                    'check-pullrequest',
+                    'Proposal is required if task was selected',
+                    function (value) {
+                        if (this.parent.task && !value) {
+                            return false
+                        }
+                        return true
+                    },
+                ),
+        }
+
+        let versionised = {}
+        if (dao.details.version === '1.0.0') {
+            versionised = version_1_0_0
+        } else if (dao.details.version === '2.0.0') {
+            versionised = version_2_0_0
+        } else if (dao.details.version === '3.0.0') {
+            versionised = version_3_0_0
+        } else {
+            versionised = version_3_0_0
+        }
 
         return yup.object().shape({
+            name: yup.string().required('Field is required'),
             title: yup.string().required('Field is required'),
             ...validationSchema,
-            ...(dao.details.version !== '1.0.0' ? version_2_0_0 : {}),
+            ...versionised,
         })
     }
 

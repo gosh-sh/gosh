@@ -77,6 +77,23 @@ import {
     TRepositoryCreateCommitTagParams,
     TIsMemberParams,
     TIsMemberResult,
+    TEventMultipleCreateProposalAsDaoParams,
+    TDaoTokenDaoSendParams,
+    TUserParam,
+    TTaskTransferParams,
+    TTaskTransferResult,
+    TTaskUpgradeCompleteParams,
+    TTaskUpgradeCompleteResult,
+    TDaoVoteParams,
+    TDaoVoteResult,
+    TDaoReviewParams,
+    TDaoReviewResult,
+    TTaskReceiveBountyDaoParams,
+    TTaskReceiveBountyDaoResult,
+    TDaoTokenDaoLockParams,
+    TDaoTokenDaoLockResult,
+    TTaskUpgradeParams,
+    TTaskUpgradeResult,
 } from '../types'
 
 interface IGoshAdapter {
@@ -88,6 +105,8 @@ interface IGoshAdapter {
     isValidDaoName(name: string): TValidationResult
     isValidRepoName(name: string): TValidationResult
     isValidProfile(username: string[]): Promise<{ username: string; address: TAddress }[]>
+    isValidDao(name: string[]): Promise<{ username: string; address: TAddress }[]>
+    isValidUser(user: TUserParam): Promise<{ user: TUserParam; address: TAddress }>
 
     setAuth(username: string, keys: KeyPair): Promise<void>
     resetAuth(): Promise<void>
@@ -100,6 +119,7 @@ interface IGoshAdapter {
         useAuth?: boolean
     }): Promise<IGoshDaoAdapter>
     getDaoProfile(options: { name?: string; address?: string }): Promise<IGoshProfileDao>
+    getUserByAddress(address: TAddress): Promise<TUserParam>
     /**
      * Does not support repository authentication.
      * Good for use to get read-only repository.
@@ -152,9 +172,10 @@ interface IGoshDaoAdapter {
         profile?: TAddress
         address?: TAddress
         index?: number
+        create?: boolean
     }): Promise<IGoshWallet>
     getReviewers(
-        username: string[],
+        user: TUserParam[],
     ): Promise<{ username: string; profile: TAddress; wallet: TAddress }[]>
 
     getTaskCodeHash(repository: string): Promise<string>
@@ -185,17 +206,32 @@ interface IGoshDaoAdapter {
     addRegularTokens(
         params: TDaoRegularTokenAddParams,
     ): Promise<TDaoRegularTokenAddResult>
-    sendInternal2Internal(username: string, amount: number): Promise<void>
+    sendInternal2Internal(user: TUserParam, amount: number): Promise<void>
     send2DaoReserve(amount: number): Promise<void>
+    sendDaoToken(params: TDaoTokenDaoSendParams): Promise<void>
+    voteDao(params: TDaoVoteParams): Promise<TDaoVoteResult>
+    reviewDao(params: TDaoReviewParams): Promise<TDaoReviewResult>
+    receiveTaskBountyDao(
+        params: TTaskReceiveBountyDaoParams,
+    ): Promise<TTaskReceiveBountyDaoResult>
+    lockDaoToken(params: TDaoTokenDaoLockParams): Promise<TDaoTokenDaoLockResult>
 
     createTag(params: TDaoTagCreateParams): Promise<TDaoTagCreateResult>
     deleteTag(params: TDaoTagDeleteParams): Promise<TDaoTagDeleteResult>
 
     createMultiProposal(params: TEventMultipleCreateProposalParams): Promise<void>
+    createMultiProposalAsDao(
+        params: TEventMultipleCreateProposalAsDaoParams,
+    ): Promise<void>
 
     createTask(params: TTaskCreateParams): Promise<TTaskCreateResult>
     receiveTaskBounty(params: TTaskReceiveBountyParams): Promise<void>
     deleteTask(params: TTaskDeleteParams): Promise<TTaskDeleteResult>
+    transferTask(params: TTaskTransferParams): Promise<TTaskTransferResult>
+    upgradeTask(params: TTaskUpgradeParams): Promise<TTaskUpgradeResult>
+    upgradeTaskComplete(
+        params: TTaskUpgradeCompleteParams,
+    ): Promise<TTaskUpgradeCompleteResult>
 
     sendEventReview(params: TDaoEventSendReviewParams): Promise<void>
     updateEventShowProgress(
@@ -312,7 +348,7 @@ interface IGoshRepositoryAdapter {
 
 interface IGoshSmvAdapter {
     getTotalSupply(): Promise<number>
-    getDetails(): Promise<TSmvDetails>
+    getDetails(wallet?: IGoshWallet): Promise<TSmvDetails>
     getClientsCount(): Promise<number>
     getEventCodeHash(): Promise<string>
     getEvent(
@@ -353,6 +389,7 @@ interface IContract {
 
     isDeployed(): Promise<boolean>
     boc(): Promise<string>
+    data(): Promise<string>
     getMessages(
         variables: {
             msgType: string[]
@@ -378,6 +415,7 @@ interface IContract {
         settings?: { logging?: boolean; retries?: number; useCachedBoc?: boolean },
     ): Promise<any>
     decodeMessageBody(body: string, type: number): Promise<DecodedMessageBody | null>
+    decodeAccountData(data?: string): Promise<any>
 }
 
 interface IGoshRoot extends IContract {
