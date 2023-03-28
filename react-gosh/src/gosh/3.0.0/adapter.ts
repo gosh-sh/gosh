@@ -1838,22 +1838,32 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     private async _isMintOn(): Promise<boolean> {
-        let allowMint = true
+        const { _allowMint } = await this.dao.runLocal('_allowMint', {})
+        if (_allowMint) {
+            return await this._isMintOnPrev()
+        }
+        return _allowMint
+    }
 
-        const data = await this.dao.runLocal('_allowMint', {})
-        allowMint = data._allowMint
-
-        if (allowMint) {
-            const { value0: prevAddr } = await this.dao.runLocal('getPreviousDaoAddr', {})
-            const prevDao = await this.gosh.getDao({ address: prevAddr, useAuth: false })
-            const { value1: prevVer } = await prevDao.dao.runLocal('getVersion', {})
-            if (prevVer !== '1.0.0') {
-                const data = await prevDao.dao.runLocal('_allowMint', {})
-                allowMint = data._allowMint
-            }
+    private async _isMintOnPrev(): Promise<boolean> {
+        const { value0: prevAddr } = await this.dao.runLocal('getPreviousDaoAddr', {})
+        if (!prevAddr) {
+            return true
         }
 
-        return allowMint
+        const prevDao = await this.gosh.getDao({ address: prevAddr, useAuth: false })
+        const { value1: prevVer } = await prevDao.dao.runLocal('getVersion', {})
+        if (prevVer !== '1.0.0') {
+            const { _allowMint } = await prevDao.dao.runLocal('_allowMint', {})
+            return _allowMint
+        }
+        return true
+    }
+
+    private async _isMintOnDiff(): Promise<boolean> {
+        const { _allowMint: cur } = await this.dao.runLocal('_allowMint', {})
+        const prev = await this._isMintOnPrev()
+        return cur === true && prev === false
     }
 
     private _getMembers(mapping: { [key: string]: { member: TAddress; count: string } }) {
