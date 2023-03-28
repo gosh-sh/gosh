@@ -20,6 +20,7 @@ use tracing::Instrument;
 
 use super::is_going_to_ipfs;
 use tokio::{sync::Semaphore, task::JoinSet};
+use crate::git_helper::push::parallel_snapshot_upload_support::{ParallelTree, ParallelTreeUploadSupport};
 
 use super::utilities::retry::default_retry_strategy;
 
@@ -72,7 +73,7 @@ async fn construct_tree_node(
         &context.blockchain.client(),
         format!("{}:{}", type_obj, file_name).as_bytes(),
     )
-    .await?;
+        .await?;
     Ok((format!("0x{}", key), tree_node))
 }
 
@@ -81,7 +82,7 @@ pub async fn push_tree(
     context: &mut GitHelper<impl BlockchainService + 'static>,
     tree_id: &ObjectId,
     visited: &mut HashSet<ObjectId>,
-    handlers: &mut JoinSet<anyhow::Result<()>>,
+    handlers: &mut ParallelTreeUploadSupport,
     push_semaphore: Arc<Semaphore>,
 ) -> anyhow::Result<()> {
     tracing::trace!("push_tree: tree_id={tree_id}");
@@ -121,46 +122,13 @@ pub async fn push_tree(
         let repo = context.remote.repo.clone();
         let cache = context.cache.clone();
 
-        let permit = push_semaphore.clone().acquire_owned().await?;
-
-        let condition = |e: &anyhow::Error| {
-            if e.is::<WalletError>() {
-                false
-            } else {
-                tracing::warn!("Attempt failed with {:#?}", e);
-                true
-            }
-        };
-
-        handlers.spawn(
-            async move {
-                let res = RetryIf::spawn(
-                    default_retry_strategy(),
-                    || async {
-                        inner_deploy_tree(
-                            &blockchain,
-                            &network,
-                            &dao_addr,
-                            &repo,
-                            &tree_id,
-                            &tree_nodes,
-                        )
-                        .await
-                    },
-                    condition,
-                )
-                .await;
-                drop(permit);
-                res
-            }
-            .instrument(info_span!("tokio::spawn::inner_deploy_tree").or_current()),
-        );
+        handlers.add_to_push_list(context, ParallelTree::new(tree_id, tree_nodes), push_semaphore.clone()).await?;
     }
     Ok(())
 }
 
 #[instrument(level = "info", skip_all)]
-async fn inner_deploy_tree(
+pub async fn inner_deploy_tree(
     blockchain: &impl BlockchainService,
     remote_network: &str,
     dao_addr: &BlockchainContractAddress,

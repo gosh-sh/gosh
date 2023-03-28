@@ -50,11 +50,42 @@
 			]
 		},
 		{
+			"name": "getHash",
+			"inputs": [
+				{"name":"data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
 			"name": "unzip",
 			"inputs": [
 				{"name":"data","type":"bytes"}
 			],
 			"outputs": [
+			]
+		},
+		{
+			"name": "getCellTaskDeploy",
+			"inputs": [
+				{"name":"taskName","type":"string"},
+				{"name":"repoName","type":"string"},
+				{"name":"_now","type":"uint32"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
+			"name": "getMultiProposal",
+			"inputs": [
+				{"name":"number","type":"uint128"},
+				{"name":"proposals","type":"cell"},
+				{"name":"_now","type":"uint32"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
 			]
 		},
 		{

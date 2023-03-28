@@ -46,3 +46,16 @@ git push --all -vvv gosh >>"$LOG_FILE"
 PUSH_END=$SECONDS
 PUSH_DURATION=$((PUSH_END - PUSH_START))
 log "...complete. Push took $(convertsecs $PUSH_DURATION)."
+cd ..
+
+log "Cloning after push\n"
+git clone "gosh://$GOSH_SYSTEM_CONTRACT_ADDR/$GOSH_DAO_NAME/$GOSH_REPO_NAME" "repo_clone"
+
+log "***** comparing repositories *****"
+DIFF_STATUS=1
+if  diff --brief --recursive "repo" "repo_clone" --exclude ".git"; then
+    DIFF_STATUS=0
+fi
+log "Compare status: $DIFF_STATUS"
+
+exit $DIFF_STATUS
