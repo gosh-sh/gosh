@@ -8,15 +8,14 @@ set -o pipefail
 #       -v /home/user/GOSH/dev/gosh/tests/node_se_scripts/blockchain.conf.json:/ton-node/blockchain.conf.json \
 #       tonlabs/local-node:0.36.3
 #  docker start local-node
-#  sleep 20
-
-#  ./node_se_scripts/deploy.sh v2_x $2
+#  sleep 10
+#
+#  ./node_se_scripts/deploy.sh $1 $2
 #fi
 
 # $1 = VERSION (v1_x, v2_x)
 
-. set-vars.sh v2_x $2
-
+. set-vars.sh $1 $2
 ./bug_tests/01-create_branch.test.sh
 ./bug_tests/02-create_branch_without_commit.test.sh
 
