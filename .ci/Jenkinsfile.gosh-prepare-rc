@@ -97,7 +97,7 @@ pipeline {
                 script {
                     sh "rm -rf tests_workspace_*"
                     def basePort = 9000
-                    def files1 = getTestFiles("tests")
+                    def files = getTestFiles("tests")
                     def nodes = getNodesCount()
                     def versions = ["v1_x", "v2_x", "v3_x"]
                     
