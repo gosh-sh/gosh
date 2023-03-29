@@ -1,13 +1,8 @@
 import { SYSTEM_TAG } from 'react-gosh'
+import { TaskGrantList } from '../../../../components/Task/GrantList'
 
 type TTaskCreateEventProps = {
     data: any
-}
-
-const lockToStr = (period: number): string => {
-    const months = Math.floor(period / 2592000)
-    const seconds = Math.floor(period % 2592000)
-    return `${months} mo` + (seconds !== 0 ? `${seconds} s` : '')
 }
 
 const TaskCreateEvent = (props: TTaskCreateEventProps) => {
@@ -61,36 +56,7 @@ const TaskCreateEvent = (props: TTaskCreateEventProps) => {
                 </div>
             </div>
             <div className="mt-4 overflow-hidden overflow-x-scroll">
-                <table className="w-full">
-                    <thead className="text-gray-7c8db5 text-xs text-left">
-                        <tr>
-                            <th className="font-light px-2">Lock/Vesting</th>
-                            <th className="font-light px-2">Assigners</th>
-                            <th className="font-light px-2">Reviewers</th>
-                            <th className="font-light px-2">Managers</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {data.grant.assign.map((assign: any, index: number) => {
-                            const review = data.grant.review[index]
-                            const manager = data.grant.manager[index]
-                            return (
-                                <tr key={index}>
-                                    <td className="px-2">{lockToStr(assign.lock)}</td>
-                                    <td className="px-2">
-                                        {parseInt(assign.grant).toLocaleString()}
-                                    </td>
-                                    <td className="px-2">
-                                        {parseInt(review.grant).toLocaleString()}
-                                    </td>
-                                    <td className="px-2">
-                                        {parseInt(manager.grant).toLocaleString()}
-                                    </td>
-                                </tr>
-                            )
-                        })}
-                    </tbody>
-                </table>
+                <TaskGrantList config={data.grant} />
             </div>
         </div>
     )
