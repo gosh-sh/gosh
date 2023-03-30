@@ -5,6 +5,8 @@ set -o pipefail
 
 set -x
 
+# This tests pushes an empty branch and then checks that branch contain valid files.
+
 REPO_NAME="repo_bug_02_create_branch_$(date +%s)"
 
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME

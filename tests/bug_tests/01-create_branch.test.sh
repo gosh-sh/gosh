@@ -5,6 +5,9 @@ set -o pipefail
 
 set -x
 
+# This tests pushes a branch and then checks that commits from the parent branch
+# were not pushed again for the new branch.
+
 REPO_NAME="repo_bug_01_create_branch_$(date +%s)"
 
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
