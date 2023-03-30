@@ -11,6 +11,11 @@ function delay {
     sleep $sleep_for
 }
 
+function list_branches {
+    repo_addr=$1
+    tonos-cli -j -u $NETWORK run $repo_addr getAllAddress {} --abi ../$REPO_ABI | jq -r '.value0[].branchname'
+}
+
 function wait_account_active {
     stop_at=$((SECONDS+120))
     contract_addr=$1
