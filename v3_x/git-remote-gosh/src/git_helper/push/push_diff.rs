@@ -295,6 +295,7 @@ pub async fn push_new_branch_snapshot(
 
     let snapshot_contract = GoshContract::new(expected_addr, gosh_abi::SNAPSHOT);
     if snapshot_contract.is_active(blockchain.client()).await? {
+        tracing::debug!("push_new_branch_snapshot: deleting snapshot: branch_name={branch_name}, file_path={file_path}");
         blockchain
             .delete_snapshot(&wallet, expected_addr.clone())
             .await?;
