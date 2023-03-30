@@ -1,8 +1,5 @@
 use crate::{
-    blockchain::{
-        tree::TreeNode, tvm_hash, user_wallet::WalletError, BlockchainContractAddress,
-        BlockchainService,
-    },
+    blockchain::{tree::TreeNode, BlockchainContractAddress, BlockchainService, tvm_hash},
     git_helper::GitHelper,
 };
 use git_hash::ObjectId;
@@ -15,14 +12,10 @@ use std::{
 };
 
 use crate::cache::Cache;
-use tokio_retry::RetryIf;
-use tracing::Instrument;
 
 use super::is_going_to_ipfs;
-use tokio::{sync::Semaphore, task::JoinSet};
+use tokio::sync::Semaphore;
 use crate::git_helper::push::parallel_snapshot_upload_support::{ParallelTree, ParallelTreeUploadSupport};
-
-use super::utilities::retry::default_retry_strategy;
 
 const MARKER_FLAG: u32 = 1u32;
 
