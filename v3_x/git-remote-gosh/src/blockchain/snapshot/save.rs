@@ -79,11 +79,11 @@ struct DeleteSnapshotParams {
     snapshot_address: BlockchainContractAddress,
 }
 
-#[derive(Debug, Deserialize)]
-struct SaveRes {
-    #[serde(alias = "Hash")]
-    hash: String,
-}
+// #[derive(Debug, Deserialize)]
+// struct SaveRes {
+//     #[serde(alias = "Hash")]
+//     hash: String,
+// }
 
 // Note: making fields verbose
 // It must be very clear what is going on

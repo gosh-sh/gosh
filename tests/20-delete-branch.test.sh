@@ -43,8 +43,6 @@ if [ "$(echo "$LIST" | grep -e "^$BRANCH\$")" != $BRANCH ]; then
     echo "FAILED: branch '$BRANCH' not found"
     exit 1
 fi
-echo "branch '$BRANCH' created"
-echo "$LIST"
 
 GOSH_TRACE=5 git push origin :$BRANCH &> trace.log
 
@@ -53,8 +51,6 @@ if [ "$(echo "$LIST" | grep -e "^$BRANCH\$")" != "" ]; then
     echo "FAILED: branch '$BRANCH' still exists"
     exit 1
 fi
-echo "branch '$BRANCH' removed"
-echo "$LIST"
 
 echo "TEST SUCCEEDED"
 
