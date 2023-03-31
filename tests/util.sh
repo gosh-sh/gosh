@@ -11,6 +11,27 @@ function delay {
     sleep $sleep_for
 }
 
+function list_branches {
+    repo_addr=$1
+    tonos-cli -j -u $NETWORK run $repo_addr getAllAddress {} --abi ../$REPO_ABI | jq -r '.value0[].branchname'
+}
+
+function get_account_status {
+    contract_addr=$1
+    tonos-cli -j -u $NETWORK account $contract_addr | jq -r '."'"$contract_addr"'".acc_type'
+}
+
+function get_snapshot_status {
+    repo_addr=$1
+    branch=$2
+    file_path=$3
+
+    params='{"branch": "'"$branch"'", "name": "'"$file_path"'"}'
+    snapshot_addr=`tonos-cli -j -u $NETWORK run $repo_addr getSnapshotAddr "$params" --abi ../$REPO_ABI | jq -r .value0`
+    status=`get_account_status $snapshot_addr`
+    echo $status
+}
+
 function wait_account_active {
     stop_at=$((SECONDS+120))
     contract_addr=$1

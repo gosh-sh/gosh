@@ -5,12 +5,12 @@ use serde::{de, Deserialize};
 use std::fmt::Debug;
 use ton_client::{abi::Abi, crypto::KeyPair};
 
-enum AccountType {
-    Uninit,
-    Active,
-    Frozen,
-    NonExistent,
-}
+// enum AccountType {
+//     Uninit,
+//     Active,
+//     Frozen,
+//     NonExistent,
+// }
 
 #[derive(Deserialize, Debug)]
 pub struct ContractStatus {
