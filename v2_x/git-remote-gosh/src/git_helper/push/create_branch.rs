@@ -63,9 +63,9 @@ where
         DeployBranch::deploy_branch(
             &self.context.blockchain,
             &wallet,
-            &self.context.remote.repo,
-            &self.new_branch,
-            &self.ancestor_commit.to_string(),
+            self.context.remote.repo.clone(),
+            self.new_branch.clone(),
+            self.ancestor_commit.to_string(),
         )
         .await?;
         Ok(())

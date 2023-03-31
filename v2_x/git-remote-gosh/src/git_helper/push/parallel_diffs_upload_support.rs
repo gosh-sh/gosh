@@ -240,7 +240,7 @@ impl ParallelDiffsUploadSupport {
         }
         let mut undeployed_contracts = HashSet::new();
         while let Some(res) = deploymend_results.join_next().await {
-            let mut val = res??;
+            let val = res??;
             for el in val {
                 undeployed_contracts.insert(el);
             }

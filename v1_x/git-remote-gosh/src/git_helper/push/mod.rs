@@ -3,6 +3,7 @@ use self::push_diff::push_initial_snapshot;
 use super::GitHelper;
 use crate::{
     blockchain::{
+        branch::DeleteBranch,
         contract::{ContractRead, GoshContract},
         user_wallet::WalletError,
         ZERO_SHA, MAX_ACCOUNTS_ADDRESSES_PER_QUERY,
@@ -976,7 +977,7 @@ where
                 self.delete_remote_tag(remote_tag).await?
             }
             ["", remote_ref] => {
-                delete_remote_ref(remote_ref).await?
+                self.delete_remote_ref(remote_ref).await?
             },
             [local_tag, remote_tag] if local_tag.starts_with("refs/tags") => {
                 self.push_ref_tag(local_tag, remote_tag).await?
@@ -988,6 +989,24 @@ where
         };
         tracing::debug!("push ref result: {result}");
         Ok(result)
+    }
+
+    async fn delete_remote_ref(&mut self, remote_ref: &str) -> anyhow::Result<String> {
+        let branch_name: &str = get_ref_name(remote_ref)?;
+
+        let wallet = self
+                .blockchain
+                .user_wallet(&self.dao_addr, &self.remote.network)
+                .await?;
+
+            DeleteBranch::delete_branch(
+                &self.blockchain,
+                &wallet,
+                self.remote.repo.clone(),
+                branch_name.to_string(),
+            )
+            .await?;
+        Ok(format!("ok {remote_ref}\n"))
     }
 
     async fn delete_remote_tag(&mut self, remote_ref: &str) -> anyhow::Result<String> {
@@ -1016,10 +1035,6 @@ fn get_ref_name(_ref: &str) -> anyhow::Result<&str> {
     let mut iter = _ref.rsplit('/');
     iter.next()
         .ok_or(anyhow::anyhow!("wrong ref format '{}'", &_ref))
-}
-
-async fn delete_remote_ref(remote_ref: &str) -> anyhow::Result<String> {
-    Ok("deleted remote ref".to_owned())
 }
 
 #[instrument(level = "info", skip_all)]
