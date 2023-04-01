@@ -90,7 +90,7 @@ struct MessageInfo {
         uint32 expireAt;
 }
 
-struct Pause {
+struct PauseCommit {
     bool send;
     string branch;
     address branchcommit;
@@ -102,4 +102,20 @@ struct PauseDiff {
     uint128 send;
     address branchcommit;
     uint128 index;
+}
+
+struct PauseTree {
+    uint256 index;
+    string path;
+    uint128 typer;
+}
+
+struct SystemContractV {
+    string Key;
+    TvmCell Value;
+}
+
+struct SystemContractAddr {
+    string Key;
+    address Value;
 }

@@ -46,7 +46,7 @@ contract Commit is Modifiers {
     uint128 _numbercommits;
     uint128 _approved;
     bool _flag = false;
-    optional(Pause) _saved;
+    optional(PauseCommit) _saved;
     bool _initupgrade;
     optional(string) _prevversion;
     optional(ConfigCommit) _task;
@@ -175,7 +175,7 @@ contract Commit is Modifiers {
             _commitcheck = false;
             return; 
         }
-        if (address(this).balance < 5 ton) { _saved = Pause(false, "", address.makeAddrNone(), index, number); return; }
+        if (address(this).balance < 5 ton) { _saved = PauseCommit(false, "", address.makeAddrNone(), index, number); return; }
         DiffC(getDiffAddress(_nameCommit, index, 0)).cancelCommit{value : 0.2 ton, flag: 1}();
         this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(index + 1, number);
     }
@@ -238,7 +238,7 @@ contract Commit is Modifiers {
         tvm.accept();
         getMoney();
         if (_continueDiff == false) { return; }
-        if (address(this).balance < 5 ton) { _saved = Pause(true, branch, branchcommit, index, number); return; }
+        if (address(this).balance < 5 ton) { _saved = PauseCommit(true, branch, branchcommit, index, number); return; }
         if ((number == 0) && (index == 0)) {
             _approved = 0;
             _continueDiff = false;
@@ -415,7 +415,7 @@ contract Commit is Modifiers {
         if (msg.sender == _goshdao) {
             _flag = false;
             if (_saved.hasValue() == true) {
-                Pause val = _saved.get();
+                PauseCommit val = _saved.get();
                 if (val.send == true) {
                     this._sendAllDiff{value: 0.2 ton, bounce: true, flag: 1}(val.branch, val.branchcommit, val.index, val.number);
                 }

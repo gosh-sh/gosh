@@ -120,6 +120,15 @@ contract Repository is Modifiers{
             this.smvdeployrepotagin{value: 0.1 ton}(hashtag.values());
             return;
         }
+        if (ver == "4.0.0"){
+            (bool ans, mapping(uint256 => Item) Branches, mapping(uint256 => bool) protectedBranch, string head, mapping(uint256 => string) hashtag) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => bool), string, mapping(uint256 => string)));
+            if (ans == false) { selfdestruct(giver); }
+            _Branches = Branches;
+            _protectedBranch = protectedBranch;
+            _head = head;
+            this.smvdeployrepotagin{value: 0.1 ton}(hashtag.values());
+            return;
+        }
     }
     
     function smvdeployrepotagin (string[] tag) public senderIs(address(this)) accept {

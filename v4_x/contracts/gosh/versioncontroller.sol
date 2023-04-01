@@ -15,15 +15,6 @@ import "systemcontract.sol";
 import "profiledao.sol";
 import "profileindex.sol";
 
-struct SystemContractV {
-    string Key;
-    TvmCell Value;
-}
-
-struct SystemContractAddr {
-    string Key;
-    address Value;
-}
 /* Version contract of SystemContract */
 contract VersionController is Modifiers {
     string constant _version = "4.0.0";

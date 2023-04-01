@@ -216,8 +216,17 @@ contract GoshDao is Modifiers, TokenRootOwner {
             _versions[tvm.hash(version)] = version;
             uint256 zero;
             this.returnWalletsVersion{value: 0.1 ton}(ver, zero, wallets, hashtag);
+            GoshDao(_previous.get()).getDaoIn{value: 0.3 ton, flag: 1}();
         }
     }
+
+    function returnDao(address, bool allowMint, bool hide_voting_results, bool allow_discussion_on_proposals, bool abilityInvite, bool, string, mapping(uint256 => MemberToken), uint128, uint128, uint128, mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), bool) public senderIs(_previous.get()) accept {
+        _allowMint = allowMint;
+        _hide_voting_results = hide_voting_results;
+        _allow_discussion_on_proposals = allow_discussion_on_proposals; 
+        _abilityInvite = abilityInvite;
+    }
+
     
     function getPreviousInfo1(mapping(uint256 => MemberToken) wallets, uint128 _) public internalMsg {
         _;
@@ -1255,6 +1264,6 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function getDaoIn() public view minValue(0.2 ton) {
-        IObject(msg.sender).returnDao{value: 0.1 ton}(_pubaddr, _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _isRepoUpgraded, _nameDao, _wallets, _reserve, _allbalance, _totalsupply, _hashtag, _my_wallets, _daoMembers, _isCheck);
+        IObject(msg.sender).returnDao{value: 0.1 ton, flag: 1}(_pubaddr, _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _isRepoUpgraded, _nameDao, _wallets, _reserve, _allbalance, _totalsupply, _hashtag, _my_wallets, _daoMembers, _isCheck);
     }
 }

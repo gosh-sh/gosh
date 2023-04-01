@@ -9,8 +9,7 @@ pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 pragma AbiHeader time;
 
-/* import "./modifiers/modifiers.sol";
- */import "repository.sol";
+import "repository.sol";
 import "commit.sol";
 import "diff.sol";
 import "daotag.sol";
@@ -1783,12 +1782,20 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function deployAddTree(
         string repoName,
         string shaTree,
-        mapping(uint256 => TreeObject) datatree,
-        bool isFinal
+        mapping(uint256 => TreeObject) datatree
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        Tree(getTreeAddr(shaTree, _buildRepositoryAddr(repoName))).addTree{value: 0.2 ton}(_pubaddr, _index, datatree, isFinal);
+        Tree(getTreeAddr(shaTree, _buildRepositoryAddr(repoName))).addTree{value: 0.2 ton}(_pubaddr, _index, datatree);
+    }
+
+    function setTreeFinishMark(
+        string repoName,
+        string shaTree
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        Tree(getTreeAddr(shaTree, _buildRepositoryAddr(repoName))).setFinishMark{value: 0.2 ton}(_pubaddr, _index);
     }
 
     function getTreeAddr(string shaTree, address rootRepo) internal view returns(address) {
