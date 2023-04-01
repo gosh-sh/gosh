@@ -7,11 +7,7 @@
 pragma ever-solidity >=0.66.0;
 
 import "errors.sol";
-
-struct MessageInfo {
-        uint256 messageHash;
-        uint32 expireAt;
-}
+import "structs/structs.sol";
 
 abstract contract ReplayProtection is Errors {   
     string constant versionRP = "4.0.0";

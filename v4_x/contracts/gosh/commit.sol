@@ -17,14 +17,6 @@ import "repository.sol";
 import "goshdao.sol";
 import "./libraries/GoshLib.sol";
 
-struct Pause {
-    bool send;
-    string branch;
-    address branchcommit;
-    uint128 index;
-    uint128 number;
-}
-
 /* Root contract of Commit */
 contract Commit is Modifiers {
     string constant version = "4.0.0";

@@ -7,6 +7,7 @@
 pragma ever-solidity >=0.66.0;
 
 import "replayprotection.sol";
+import "structs/structs.sol";
 
 interface IObject {
     function returnSnap(string, bytes, optional(string), string, bytes, optional(string), string, bool) external;
@@ -18,85 +19,6 @@ interface IObject {
     function returnWallet(uint128, uint128, address, address, uint128, address, uint128, optional(uint256), bool) external;
     function returnTag(string, address, string, string, string) external;
     function returnTask(TvmCell) external;
-}
-
-//Structs  
-struct MemberToken {
-    address member;
-    uint128 count;
-}
-struct TreeAnswer {
-    address sender;
-    bool isCommit;
-}
-
-struct Request {
-    address answer;
-    string fullPath;
-    string lastPath;
-    uint256 sha;
-}
-
-struct TreeObject {
-    string flags;
-    string mode;
-    string typeObj;
-    string name;
-    string sha1;
-    uint256 sha256;
-}
-
-struct Diff {
-    address snap;
-    string commit;
-    optional(bytes) patch;
-    optional(string) ipfs;
-    bool removeIpfs;
-    string sha1;
-    uint256 sha256;
-}
-
-struct Item {
-    string branchname;
-    address commitaddr;
-    string commitversion;
-}
-
-struct AddrVersion {
-    address addr;
-    string version;
-}
-
-struct GlobalConfig {
-        address goshAddr;
-}
-
-struct ConfigPair {
-    uint128 grant;
-    uint128 lock;
-}
-struct ConfigGrant {
-    ConfigPair[] assign;
-    ConfigPair[] review;
-    ConfigPair[] manager;
-}
-
-struct ConfigCommit {
-    address task;
-    mapping(address => bool) pubaddrassign;
-    mapping(address => bool) pubaddrreview;
-    mapping(address => bool) pubaddrmanager;
-    mapping(address => string) daoMembers;
-}
-
-struct ConfigCommitBase {
-    address task;
-    address commit;
-    uint128 number_commit;
-    mapping(address => bool) pubaddrassign;
-    mapping(address => bool) pubaddrreview;
-    mapping(address => bool) pubaddrmanager;
-    mapping(address => string) daoMembers;
 }
 
 abstract contract Modifiers is ReplayProtection {   

@@ -18,12 +18,6 @@ import "tree.sol";
 import "goshdao.sol";
 import "./libraries/GoshLib.sol";
 
-struct PauseDiff {
-    uint128 send;
-    address branchcommit;
-    uint128 index;
-}
-
 /* Root contract of Diff */
 contract DiffC is Modifiers {
     string constant version = "4.0.0";
