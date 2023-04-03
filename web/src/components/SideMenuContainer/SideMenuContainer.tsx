@@ -7,11 +7,11 @@ import ReactTooltip from 'react-tooltip'
 import { onExternalLinkClick } from '../../helpers'
 import CopyClipboard from '../CopyClipboard'
 
-const SideMenuContainer = (props: React.PropsWithChildren) => {
+const SideMenuContainer = (props: React.PropsWithChildren<any>) => {
     const { children } = props
 
-    const goshRoot = process.env.REACT_APP_GOSH_ROOTADDR ?? ''
-    const goshNetwork = process.env.REACT_APP_GOSH_NETWORK?.split(',')[0]
+    const goshRoot = import.meta.env.REACT_APP_GOSH_ROOTADDR ?? ''
+    const goshNetwork = import.meta.env.REACT_APP_GOSH_NETWORK?.split(',')[0]
 
     const menu = [
         { to: '/a/orgs', title: 'My organizations' },

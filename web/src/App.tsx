@@ -58,23 +58,23 @@ const App = () => {
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
 
     const getAppConfig = () => {
-        const endpoints = process.env.REACT_APP_GOSH_NETWORK?.split(',')
-        const versions = JSON.parse(process.env.REACT_APP_GOSH || '{}')
+        const endpoints = import.meta.env.REACT_APP_GOSH_NETWORK?.split(',')
+        const versions = JSON.parse(import.meta.env.REACT_APP_GOSH || '{}')
         return {
             goshclient: {
                 network: {
                     endpoints,
                     queries_protocol:
-                        process.env.REACT_APP_ISDOCKEREXT === 'true'
+                        import.meta.env.REACT_APP_ISDOCKEREXT === 'true'
                             ? NetworkQueriesProtocol.HTTP
                             : NetworkQueriesProtocol.WS,
                     sending_endpoint_count: endpoints?.length,
                 },
             },
-            goshroot: process.env.REACT_APP_GOSH_ROOTADDR || '',
+            goshroot: import.meta.env.REACT_APP_GOSH_ROOTADDR || '',
             goshver: versions,
-            ipfs: process.env.REACT_APP_IPFS || '',
-            isDockerExt: process.env.REACT_APP_ISDOCKEREXT === 'true',
+            ipfs: import.meta.env.REACT_APP_IPFS || '',
+            isDockerExt: import.meta.env.REACT_APP_ISDOCKEREXT === 'true',
         }
     }
 

@@ -43,7 +43,7 @@ const SettingsPage = () => {
                     secret: user.keys?.secret,
                 },
                 // TODO: fix possible undefined
-                endpoints: process.env.REACT_APP_GOSH_NETWORK?.split(','),
+                endpoints: import.meta.env.REACT_APP_GOSH_NETWORK?.split(','),
             },
         },
     }

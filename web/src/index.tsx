@@ -8,7 +8,7 @@ import { RecoilRoot } from 'recoil'
 
 // Check for docker extension flag
 let ConditionedRouter = BrowserRouter
-if (process.env.REACT_APP_ISDOCKEREXT === 'true') {
+if (import.meta.env.REACT_APP_ISDOCKEREXT === 'true') {
     ConditionedRouter = HashRouter
     libWebSetup({
         binaryURL: `./eversdk.wasm?v=${Math.random().toString(36).slice(2, 8)}`,
