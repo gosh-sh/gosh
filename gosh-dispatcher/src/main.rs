@@ -18,6 +18,11 @@ use tracing_subscriber::fmt::format::FmtSpan;
 
 use clap::Arg;
 use std::str::FromStr;
+use gosh_builder_grpc_api::proto::{
+    git_remote_gosh_client::GitRemoteGoshClient, CommandRequest, GetArchiveRequest, SpawnRequest,
+};
+use tar::Archive;
+use zstd::Decoder;
 
 #[cfg(target_family = "unix")]
 const INI_LOCATION: &str = "~/.gosh/dispatcher.ini";
@@ -31,6 +36,7 @@ const GIT_HELPER_ENV_TRACE_VERBOSITY: &str = "GOSH_TRACE";
 static DISPATCHER_ENDL: &str = "endl";
 
 const GOSH_GRPC_ENABLE: &str = "GOSH_GRPC_ENABLE";
+const GOSH_GRPC_CONTAINER: &str = "GOSH_GRPC_CONTAINER";
 const GRPC_URL: &str = "http://localhost:8000";
 
 #[tokio::main]
@@ -181,7 +187,10 @@ async fn dispatcher_main() -> anyhow::Result<()> {
             let mut lines = reader.lines();
             while let Ok(Some(line)) = lines.next_line().await {
                 tracing::trace!("caught output line: {line}");
-                if line.contains(DISPATCHER_ENDL) {
+                if line.contains(DISPATCHER_ENDL) { // TODO: change to equal
+                    if std::env::var(GOSH_GRPC_CONTAINER).is_ok() {
+                        output.push(line.clone());
+                    }
                     break;
                 }
                 if line.starts_with("dispatcher") {
@@ -364,7 +373,10 @@ async fn call_helper_after_fail(
         let mut lines = reader.lines();
         while let Ok(Some(line)) = lines.next_line().await {
             tracing::trace!("Caught out line: {line}");
-            if line.contains(DISPATCHER_ENDL) {
+            if line.contains(DISPATCHER_ENDL) { // TODO: change to equal
+                if std::env::var(GOSH_GRPC_CONTAINER).is_ok() {
+                    output.push(line.clone());
+                }
                 break;
             }
             output.push(line.clone());
@@ -424,12 +436,6 @@ async fn write_output(buffer: &Vec<u8>) -> anyhow::Result<()> {
     Ok(())
 }
 
-use flate2::read::GzDecoder;
-use gosh_builder_grpc_api::proto::{
-    git_remote_gosh_client::GitRemoteGoshClient, CommandRequest, GetArchiveRequest, SpawnRequest,
-};
-use tar::Archive;
-
 async fn grpc_mode() -> anyhow::Result<()> {
     // In this mode dispatcher is run inside a container and should call not git-remote-gosh
     // binaries, but send messages to the server via grpc.
@@ -466,12 +472,13 @@ async fn grpc_mode() -> anyhow::Result<()> {
                 })
                 .await?;
             tracing::trace!("decode tarball");
-            let tar = GzDecoder::new(&res.get_ref().body[..]);
+            let tar = Decoder::new(&res.get_ref().body[..])?;
             let mut archive = Archive::new(tar);
             tracing::trace!("unpack tarball");
             let local_git_dir = std::env::var("GIT_DIR")?;
             archive.unpack(&local_git_dir)?;
         }
+        let input_line = format!("{input_line}\n");
         let res = client
             .command(CommandRequest {
                 id: session_id.clone(),
