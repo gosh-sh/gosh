@@ -11,6 +11,7 @@ use tracing::Instrument;
 
 const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
 
+#[derive(Debug)]
 pub struct ParallelDiffsUploadSupport {
     parallels: HashMap<String, u32>,
     next_index: HashMap<String, u32>,
@@ -21,7 +22,7 @@ pub struct ParallelDiffsUploadSupport {
     pushed_blobs: JoinSet<anyhow::Result<()>>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ParallelDiff {
     commit_id: git_hash::ObjectId,
     branch_name: String,
@@ -239,7 +240,7 @@ impl ParallelDiffsUploadSupport {
         }
         let mut undeployed_contracts = HashSet::new();
         while let Some(res) = deploymend_results.join_next().await {
-            let mut val = res??;
+            let val = res??;
             for el in val {
                 undeployed_contracts.insert(el);
             }

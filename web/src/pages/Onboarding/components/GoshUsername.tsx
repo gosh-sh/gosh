@@ -19,6 +19,8 @@ import { EDaoInviteStatus } from '../../../store/onboarding.types'
 import PreviousStep from './PreviousStep'
 import { FormikInput } from '../../../components/Formik'
 import { Button } from '../../../components/Form'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faExclamation } from '@fortawesome/free-solid-svg-icons'
 
 type TGoshUsernameProps = {
     signoutOAuth(): Promise<void>
@@ -257,6 +259,23 @@ const GoshUsername = (props: TGoshUsernameProps) => {
                                             </>
                                         }
                                     />
+                                </div>
+
+                                <div className="flex flex-nowrap mt-5 bg-red-ff3b30/5 px-3 py-2.5 rounded-xl text-red-ff3b30">
+                                    <div>
+                                        <div className="border border-red-ff3b30 rounded-xl px-4 py-2">
+                                            <FontAwesomeIcon
+                                                icon={faExclamation}
+                                                size="lg"
+                                            />
+                                        </div>
+                                    </div>
+                                    <span className="ml-3 text-xs">
+                                        This is your unique cryptographic identifier in
+                                        Gosh. <br />
+                                        Please note that after creating your username it
+                                        will be impossible to change it in the future
+                                    </span>
                                 </div>
 
                                 <div className="nickname-form__submit">

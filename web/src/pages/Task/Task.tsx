@@ -9,6 +9,7 @@ import { Button } from '../../components/Form'
 import Loader from '../../components/Loader'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import { TaskStatusBadge } from '../Tasks/components'
+import { TaskGrantList } from '../../components/Task/GrantList'
 
 const TaskPage = () => {
     const { address } = useParams()
@@ -175,6 +176,9 @@ const TaskPage = () => {
                                             iconContainerClassName="text-gray-7c8db5"
                                             componentProps={{ text: details.address }}
                                         />
+                                    </div>
+                                    <div className="mt-4 overflow-hidden overflow-x-scroll">
+                                        <TaskGrantList config={details.config} />
                                     </div>
                                 </div>
                             </div>

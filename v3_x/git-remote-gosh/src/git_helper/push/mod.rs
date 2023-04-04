@@ -1,18 +1,17 @@
-use self::push_diff::push_initial_snapshot;
-
 use super::GitHelper;
 use crate::{
     blockchain::{
-        get_commit_address, user_wallet::WalletError, BlockchainContractAddress, BlockchainService,
-        ZERO_SHA,
+        branch::DeleteBranch,
+        contract::{ContractRead, GoshContract},
+        ZERO_SHA, MAX_ACCOUNTS_ADDRESSES_PER_QUERY,
+        AddrVersion, BlockchainContractAddress, BlockchainService,
+        GetNameCommitResult, get_commit_address, gosh_abi,
     },
-    git_helper::push::{
-        create_branch::CreateBranchOperation, utilities::retry::default_retry_strategy,
-    },
+    git_helper::push::create_branch::CreateBranchOperation,
 };
-use anyhow::bail;
 use git_hash::{self, ObjectId};
 use git_odb::Find;
+use ton_client::net::ParamsOfQuery;
 use std::{
     collections::{HashMap, HashSet},
     str::FromStr,
@@ -20,13 +19,7 @@ use std::{
     vec::Vec,
 };
 
-use serde_json::Value;
-use tokio::{
-    sync::Semaphore,
-    task::{JoinError, JoinSet},
-};
-use tokio_retry::RetryIf;
-use tracing::Instrument;
+use tokio::sync::Semaphore;
 
 pub mod create_branch;
 mod parallel_diffs_upload_support;
@@ -39,8 +32,6 @@ use push_tag::push_tag;
 mod delete_tag;
 mod parallel_snapshot_upload_support;
 
-use crate::blockchain::contract::{ContractRead, GoshContract};
-use crate::blockchain::{AddrVersion, get_commit_by_addr, GetNameCommitResult, gosh_abi};
 use delete_tag::delete_tag;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 use push_tree::push_tree;
@@ -74,10 +65,12 @@ pub struct GetPreviousResult {
     pub previous: Option<AddrVersion>,
 }
 
-#[derive(Deserialize, Debug)]
-struct GetTreeResult {
-    #[serde(rename = "value0")]
-    pub tree_address: BlockchainContractAddress,
+#[derive(Deserialize, Debug, Clone)]
+pub struct AccountStatus {
+    #[serde(rename = "id")]
+    pub address: String,
+    #[serde(rename = "acc_type")]
+    pub status: u8,
 }
 
 impl<Blockchain> GitHelper<Blockchain>
@@ -274,6 +267,69 @@ where
         ))
     }
 
+    #[instrument(level = "trace")]
+    async fn find_ancestor_commit(
+        &self,
+        from: git_repository::Id<'_>,
+    ) -> anyhow::Result<Option<String>> {
+        let walk = from
+            .ancestors()
+            .all()?
+            .map(|e| e.expect("all entities should be present"))
+            .into_iter();
+
+        let accounts: Vec<_> = walk.map(|a| a.to_string()).collect();
+
+        let query = r#"query($accounts: [String]!) {
+            accounts(filter: {
+                id: { in: $accounts }
+            }) {
+                id acc_type
+            }
+        }"#
+        .to_owned();
+
+        let client = self.blockchain.client();
+        let repo_contract = &mut self.blockchain.repo_contract().clone();
+        let mut map_id_addr = Vec::<(String, String)>::new();
+
+        for ids in accounts.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {
+            let mut addresses = Vec::<BlockchainContractAddress>::new();
+            for id in ids {
+                let commit_address = get_commit_address(client, repo_contract, id).await?;
+                // let (version, commit_address) = self.find_commit(id).await?;
+                addresses.push(commit_address.clone());
+                map_id_addr.push((id.to_owned(), String::from(commit_address)));
+            }
+            let result = ton_client::net::query(
+                Arc::clone(client),
+                ParamsOfQuery {
+                    query: query.clone(),
+                    variables: Some(serde_json::json!({
+                        "accounts": addresses
+                    })),
+                    ..Default::default()
+                },
+            )
+            .await
+            .map(|r| r.result)?;
+
+            let raw_data = result["data"]["accounts"].clone();
+            let existing_commits: Vec<AccountStatus> = serde_json::from_value(raw_data)?;
+
+            for commit in map_id_addr.iter().rev() {
+                let mut ex_iter = existing_commits.iter();
+                let pos = ex_iter.position(|x| x.address == commit.1 && x.status == 1);
+
+                if pos.is_none() {
+                    return Ok(Some(commit.0.clone()))
+                }
+            }
+        }
+
+        Ok(Some(from.to_string()))
+    }
+
     #[instrument(level = "info", skip_all)]
     async fn check_parents<'a>(
         &mut self,
@@ -291,8 +347,8 @@ where
 
         let raw_commit = String::from_utf8(commit.data.to_vec())?;
 
-        let mut commit_iter = commit.try_into_commit_iter().unwrap();
-        let mut parent_ids: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
+        let commit_iter = commit.try_into_commit_iter().unwrap();
+        let parent_ids: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
 
         let mut repo_contract = self.blockchain.repo_contract().clone();
 
@@ -340,7 +396,7 @@ where
         object_id: ObjectId,
         remote_branch_name: &str,
         local_branch_name: &str,
-        parents_of_commits: &mut HashMap<&'a str, Vec<String>>,
+        parents_of_commits: &mut HashMap<String, Vec<String>>,
         push_commits: &mut ParallelCommitUploadSupport,
         push_semaphore: Arc<Semaphore>,
         prev_commit_id: &mut Option<ObjectId>,
@@ -364,9 +420,9 @@ where
         let tree_id = commit_iter.tree_id()?;
         let mut parent_ids: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
         if !parent_ids.is_empty() {
-            parents_of_commits.insert(oid, parent_ids.clone());
+            parents_of_commits.insert(oid.to_owned(), parent_ids.clone());
         } else {
-            parents_of_commits.insert(oid, vec![ZERO_SHA.to_owned()]);
+            parents_of_commits.insert(oid.to_owned(), vec![ZERO_SHA.to_owned()]);
             // if parent_ids is empty, add bogus parent
             parent_ids.push(ZERO_SHA.to_string());
         }
@@ -546,8 +602,8 @@ where
         // let mut parallel_snapshot_uploads: JoinSet<anyhow::Result<()>> = JoinSet::new();
         let mut parallel_tree_uploads = ParallelTreeUploadSupport::new();
         let mut parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
-        let mut parents_of_commits: HashMap<&str, Vec<String>> =
-            HashMap::from([(ZERO_SHA, vec![]), ("", vec![])]);
+        let mut parents_of_commits: HashMap<String, Vec<String>> =
+            HashMap::from([(ZERO_SHA.to_owned(), vec![]), ("".to_owned(), vec![])]);
         let mut visited_trees: HashSet<ObjectId> = HashSet::new();
         let mut statistics = PushBlobStatistics::new();
 
@@ -651,7 +707,7 @@ where
         // 2. Find ancestor commit in local repo
 
         // find ancestor commit in remote repo, if the remote branch was found
-        let (ancestor_commit_id, mut prev_commit_id) =
+        let (mut ancestor_commit_id, mut prev_commit_id) =
             if let Some(remote_commit_addr) = remote_commit_addr {
                 self.find_ancestor_commit_in_remote_repo(remote_branch_name, remote_commit_addr)
                     .await?
@@ -660,7 +716,7 @@ where
                 // this means a branch is created and all initial states are filled there
                 ("".to_owned(), None)
             };
-        let ancestor_commit_object = if ancestor_commit_id != "" {
+        let mut ancestor_commit_object = if ancestor_commit_id != "" {
             Some(ObjectId::from_str(&ancestor_commit_id)?)
         } else {
             None
@@ -688,21 +744,19 @@ where
         // |/
         // A
         // B can come before A and remote can't find parent version for B
-        let commit_objects_list =
-            get_list_of_commit_objects(latest_commit, ancestor_commit_object)?;
-
+        let mut parents_of_commits: HashMap<String, Vec<String>> =
+            HashMap::from([(ZERO_SHA.to_owned(), vec![]), ("".to_owned(), vec![])]);
         // 3. If branch needs to be created do so
         if prev_commit_id.is_none() {
             //    ---
             //    Otherwise check if a head of the branch
             //    is pointing to the ancestor commit. Fail
             //    if it doesn't
-            let originating_commit = git_hash::ObjectId::from_str(
-                commit_objects_list
-                    .first()
-                    .expect("git object list is empty"),
-            )?;
+            let originating_commit = self.find_ancestor_commit(latest_commit).await?.unwrap();
+            let originating_commit = git_hash::ObjectId::from_str(&originating_commit)?;
+
             let branching_point = self.get_parent_id(&originating_commit)?;
+            ancestor_commit_object = Some(branching_point);
             let mut create_branch_op =
                 CreateBranchOperation::new(branching_point, remote_branch_name, self);
             let is_first_ever_branch = create_branch_op.run().await?;
@@ -710,10 +764,18 @@ where
                 if is_first_ever_branch {
                     None
                 } else {
-                    Some(originating_commit)
+                    ancestor_commit_id = branching_point.to_string().clone();
+                    parents_of_commits.insert(
+                        originating_commit.to_hex().to_string(),
+                        vec![ancestor_commit_id]
+                    );
+                    ancestor_commit_object
                 }
             };
         }
+        // get list of git objects in local repo, excluding ancestor ones
+        let commit_and_tree_list =
+            get_list_of_commit_objects(latest_commit, ancestor_commit_object)?;
 
         // 4. Do prepare commit for all commits
         // 5. Deploy tree objects of all commits
@@ -726,8 +788,6 @@ where
         let push_semaphore = Arc::new(Semaphore::new(PARALLEL_PUSH_LIMIT));
         let mut parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
         let mut parallel_tree_uploads = ParallelTreeUploadSupport::new();
-        let mut parents_of_commits: HashMap<&str, Vec<String>> =
-            HashMap::from([(ZERO_SHA, vec![]), ("", vec![])]);
         let mut visited_trees: HashSet<ObjectId> = HashSet::new();
         let mut statistics = PushBlobStatistics::new();
 
@@ -736,7 +796,7 @@ where
         let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
 
         // iterate through the git objects list and push them
-        for oid in &commit_objects_list {
+        for oid in &commit_and_tree_list {
             let object_id = git_hash::ObjectId::from_str(oid)?;
             let object_kind = self.local_repository().find_object(object_id)?.kind;
             match object_kind {
@@ -848,7 +908,6 @@ where
             anyhow::bail!("Failed to deploy all snapshots. Undeployed snapshots: {expected_contracts:?}")
         }
 
-
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
         while attempts < 3 {
@@ -876,7 +935,6 @@ where
         if attempts == 3 {
             anyhow::bail!("Failed to deploy all trees. Undeployed trees: {expected_contracts:?}")
         }
-
 
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
@@ -906,10 +964,12 @@ where
             anyhow::bail!("Failed to deploy all commits. Undeployed commits: {expected_contracts:?}")
         }
 
-
-
-
         // 9. Set commit (move HEAD)
+        ancestor_commit_id = match ancestor_commit_object {
+            Some(v) => v.to_string(),
+            None => "".to_owned(),
+        };
+
         let number_of_commits = calculate_left_distance(
             parents_of_commits,
             &latest_commit_id.clone().to_string(),
@@ -994,15 +1054,37 @@ where
             ["", remote_tag] if remote_tag.starts_with("refs/tags") => {
                 self.delete_remote_tag(remote_tag).await?
             }
-            ["", remote_ref] => delete_remote_ref(remote_ref).await?,
+            ["", remote_ref] => {
+                self.delete_remote_ref(remote_ref).await?
+            },
             [local_tag, remote_tag] if local_tag.starts_with("refs/tags") => {
                 self.push_ref_tag(local_tag, remote_tag).await?
             }
-            [local_ref, remote_ref] => self.push_ref(local_ref, remote_ref).await?,
+            [local_ref, remote_ref] => {
+                self.push_ref(local_ref, remote_ref).await?
+            },
             _ => unreachable!(),
         };
         tracing::debug!("push ref result: {result}");
         Ok(result)
+    }
+
+    async fn delete_remote_ref(&mut self, remote_ref: &str) -> anyhow::Result<String> {
+        let branch_name: &str = get_ref_name(remote_ref)?;
+
+        let wallet = self
+                .blockchain
+                .user_wallet(&self.dao_addr, &self.remote.network)
+                .await?;
+
+            DeleteBranch::delete_branch(
+                &self.blockchain,
+                &wallet,
+                self.remote.repo.clone(),
+                branch_name.to_string(),
+            )
+            .await?;
+        Ok(format!("ok {remote_ref}\n"))
     }
 
     async fn delete_remote_tag(&mut self, remote_ref: &str) -> anyhow::Result<String> {
@@ -1033,12 +1115,8 @@ fn get_ref_name(_ref: &str) -> anyhow::Result<&str> {
         .ok_or(anyhow::anyhow!("wrong ref format '{}'", &_ref))
 }
 
-async fn delete_remote_ref(remote_ref: &str) -> anyhow::Result<String> {
-    Ok("deleted remote ref".to_owned())
-}
-
 #[instrument(level = "info", skip_all)]
-fn calculate_left_distance(m: HashMap<&str, Vec<String>>, from: &str, till: &str) -> u64 {
+fn calculate_left_distance(m: HashMap<String, Vec<String>>, from: &str, till: &str) -> u64 {
     tracing::trace!("calculate_left_distance: from={from}, till={till}");
     if from == till {
         return 1u64;
@@ -1123,85 +1201,85 @@ mod tests {
     fn ensure_calc_left_dist_correctly() {
         let m = HashMap::from([
             (
-                "7986a9690ed067dc1a917b6df10342a5b9129e0b",
+                "7986a9690ed067dc1a917b6df10342a5b9129e0b".to_owned(),
                 vec![ZERO_SHA.to_owned()],
             ),
-            (ZERO_SHA, vec![]),
+            (ZERO_SHA.to_owned(), vec![]),
         ]);
         let dist = calculate_left_distance(m, "7986a9690ed067dc1a917b6df10342a5b9129e0b", "");
         assert_eq!(dist, 1);
 
         let m = HashMap::from([
             (
-                "5c39d86543b994882f83689fbfa79b952fa8e711",
+                "5c39d86543b994882f83689fbfa79b952fa8e711".to_owned(),
                 vec!["d043874c7e470206ddf62f21b7c7d23a6792a8f5".to_owned()],
             ),
             (
-                "d043874c7e470206ddf62f21b7c7d23a6792a8f5",
+                "d043874c7e470206ddf62f21b7c7d23a6792a8f5".to_owned(),
                 vec!["16798be2e82bc8ec3d64c27352b05d0c6552c83c".to_owned()],
             ),
             (
-                "16798be2e82bc8ec3d64c27352b05d0c6552c83c",
+                "16798be2e82bc8ec3d64c27352b05d0c6552c83c".to_owned(),
                 vec![ZERO_SHA.to_owned()],
             ),
-            (ZERO_SHA, vec![]),
+            (ZERO_SHA.to_owned(), vec![]),
         ]);
         let dist = calculate_left_distance(m, "5c39d86543b994882f83689fbfa79b952fa8e711", "");
         assert_eq!(dist, 3);
 
         let m = HashMap::from([
             (
-                "fc99c36ef31c6e5c6fef6e45acbc91018f73eef8",
+                "fc99c36ef31c6e5c6fef6e45acbc91018f73eef8".to_owned(),
                 vec!["f7ccf77b87907612d3c03d21eea2d63f5345f4e4".to_owned()],
             ),
             (
-                "f7ccf77b87907612d3c03d21eea2d63f5345f4e4",
+                "f7ccf77b87907612d3c03d21eea2d63f5345f4e4".to_owned(),
                 vec![ZERO_SHA.to_owned()],
             ),
-            (ZERO_SHA, vec![]),
+            (ZERO_SHA.to_owned(), vec![]),
         ]);
         let dist = calculate_left_distance(m, "fc99c36ef31c6e5c6fef6e45acbc91018f73eef8", "");
         assert_eq!(dist, 2);
 
         let m = HashMap::from([
             (
-                "d37a30e4a2023e5dd419b0ad08526fa4adb6c1d1",
+                "d37a30e4a2023e5dd419b0ad08526fa4adb6c1d1".to_owned(),
                 vec![
                     "eb452a9deefbf63574af0b375488029dd2c4342a".to_owned(),
                     "eb7cb820baae9165838fec6c99a6b58d8dcfd57c".to_owned(),
                 ],
             ),
             (
-                "eb7cb820baae9165838fec6c99a6b58d8dcfd57c",
+                "eb7cb820baae9165838fec6c99a6b58d8dcfd57c".to_owned(),
                 vec!["8b9d412c468ea82d45384edb695f388db7a9aaee".to_owned()],
             ),
             (
-                "8b9d412c468ea82d45384edb695f388db7a9aaee",
+                "8b9d412c468ea82d45384edb695f388db7a9aaee".to_owned(),
                 vec!["8512ab02f932cb1735e360356632c4daebec8c22".to_owned()],
             ),
             (
-                "eb452a9deefbf63574af0b375488029dd2c4342a",
+                "eb452a9deefbf63574af0b375488029dd2c4342a".to_owned(),
                 vec!["8512ab02f932cb1735e360356632c4daebec8c22".to_owned()],
             ),
             (
-                "8512ab02f932cb1735e360356632c4daebec8c22",
+                "8512ab02f932cb1735e360356632c4daebec8c22".to_owned(),
                 vec!["98efe1b538f0b43593cca2c23f4f7f5141ae93df".to_owned()],
             ),
             (
-                "98efe1b538f0b43593cca2c23f4f7f5141ae93df",
+                "98efe1b538f0b43593cca2c23f4f7f5141ae93df".to_owned(),
                 vec![ZERO_SHA.to_owned()],
             ),
-            (ZERO_SHA, vec![]),
+            (ZERO_SHA.to_owned(), vec![]),
         ]);
         let dist = calculate_left_distance(m, "d37a30e4a2023e5dd419b0ad08526fa4adb6c1d1", "");
         assert_eq!(dist, 4);
 
         let m = HashMap::from([
             (
-                "a3888f56db3b43dedd32991b49842b16965041af",
+                "a3888f56db3b43dedd32991b49842b16965041af".to_owned(),
                 vec!["44699fc8627c1d78191f48d336e4d07d1325e38d".to_owned()],
             ),
-            ("", vec![]),
+            ("".to_owned(), vec![]),
         ]);
         let dist = calculate_left_distance(
             m,
@@ -1291,7 +1369,7 @@ mod tests {
 
             mock_blockchain
                 .expect_notify_commit()
-                .returning(|_, _, _, _, _, _| Ok(()));
+                .returning(|_, _, _, _, _, _, _| Ok(()));
 
             let mut helper = setup_test_helper(
                 json!({

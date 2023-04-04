@@ -4,10 +4,8 @@ use std::env;
 
 use serde_json::Value;
 use std::sync::Arc;
-use anyhow::bail;
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
-use crate::blockchain::contract::ContractRead;
 use crate::cache::proxy::CacheProxy;
 use crate::{
     abi as gosh_abi,

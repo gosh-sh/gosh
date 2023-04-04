@@ -1,9 +1,9 @@
 use super::{
-    branch::DeployBranch,
+    branch::{DeleteBranch, DeployBranch},
     commit::save::BlockchainCommitPusher,
     contract::ContractRead,
     get_contracts_blocks,
-    snapshot::save::{DeployDiff, DeployNewSnapshot},
+    snapshot::save::{DeployDiff, DeployNewSnapshot, DeleteSnapshot},
     tag::save::Tagging,
     tree::DeployTree,
     user_wallet::BlockchainUserWalletService,
@@ -60,9 +60,11 @@ pub trait BlockchainService:
     + BlockchainReadContractRawDataService
     // TODO: fix naming later
     + DeployBranch
+    + DeleteBranch
     + DeployTree
     + DeployDiff
     + DeployNewSnapshot
+    + DeleteSnapshot
     + Tagging
 {
     fn client(&self) -> &EverClient;
@@ -186,9 +188,19 @@ pub mod tests {
             async fn deploy_branch(
                 &self,
                 wallet: &UserWallet,
-                repo_name: &str,
-                new_name: &str,
-                from_commit: &str,
+                repo_name: String,
+                new_name: String,
+                from_commit: String,
+            ) -> anyhow::Result<()>;
+        }
+
+        #[async_trait]
+        impl DeleteBranch for Everscale {
+            async fn delete_branch(
+                &self,
+                wallet: &UserWallet,
+                repo_name: String,
+                branch_name: String,
             ) -> anyhow::Result<()>;
         }
 
@@ -228,6 +240,16 @@ pub mod tests {
                 commit_id: String,
                 file_path: String,
                 content: String,
+                ipfs: Option<String>
+            ) -> anyhow::Result<()>;
+        }
+
+        #[async_trait]
+        impl DeleteSnapshot for Everscale {
+            async fn delete_snapshot(
+                &self,
+                wallet: &UserWallet,
+                snapshot_address: BlockchainContractAddress,
             ) -> anyhow::Result<()>;
         }
 
@@ -264,6 +286,7 @@ pub mod tests {
                 parents: &[BlockchainContractAddress],
                 upgrade_commit: bool,
             ) -> anyhow::Result<()>;
+
             async fn notify_commit(
                 &self,
                 commit_id: &ObjectId,

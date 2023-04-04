@@ -87,7 +87,7 @@ pub enum ContractKind {
 
 base64_serde_type!(Base64Standard, base64::engine::general_purpose::STANDARD);
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 pub struct GoshBlob {
     sha: String,
     commit: String,

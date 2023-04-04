@@ -1,24 +1,26 @@
-use crate::blockchain::{snapshot::PushDiffCoordinate, BlockchainContractAddress, Snapshot, Tree, AddrVersion, get_commit_address};
-use crate::blockchain::{BlockchainService, FormatShort, MAX_ACCOUNTS_ADDRESSES_PER_QUERY};
-use crate::git_helper::push::push_diff::{diff_address, is_diff_deployed, push_diff, push_initial_snapshot};
-use crate::git_helper::GitHelper;
-
 use anyhow::bail;
-use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
-use std::vec::Vec;
+use std::{collections::HashMap, sync::Arc, vec::Vec};
 use git_hash::ObjectId;
-use tokio::sync::Semaphore;
-use tokio::task::JoinSet;
+use tokio::{sync::Semaphore, task::JoinSet};
 use tokio_retry::RetryIf;
 use tracing::Instrument;
-use crate::blockchain::tree::TreeNode;
-use crate::blockchain::user_wallet::WalletError;
-use crate::git_helper::push::parallel_diffs_upload_support::ParallelDiffsUploadSupport;
-use crate::git_helper::push::push_tree::inner_deploy_tree;
-use crate::git_helper::push::utilities::retry::default_retry_strategy;
+use crate::{
+    blockchain::{
+        tree::TreeNode, user_wallet::WalletError,
+        BlockchainContractAddress, BlockchainService, Snapshot, Tree, AddrVersion,
+        get_commit_address,
+    },
+    git_helper::{
+        GitHelper,
+        push::{
+            parallel_diffs_upload_support::ParallelDiffsUploadSupport,
+            push_diff::push_initial_snapshot, push_tree::inner_deploy_tree,
+            utilities::retry::default_retry_strategy,
+        },
+    }
+};
 
-const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
+// const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
 
 // TODO: refactor this code and unite all this parallel pushes
 

@@ -73,11 +73,17 @@ struct DeploySnapshotParams {
     ipfs: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
-struct SaveRes {
-    #[serde(alias = "Hash")]
-    hash: String,
+#[derive(Serialize, Debug)]
+struct DeleteSnapshotParams {
+    #[serde(rename = "snap")]
+    snapshot_address: BlockchainContractAddress,
 }
+
+// #[derive(Debug, Deserialize)]
+// struct SaveRes {
+//     #[serde(alias = "Hash")]
+//     hash: String,
+// }
 
 // Note: making fields verbose
 // It must be very clear what is going on
@@ -154,6 +160,7 @@ pub trait DeployNewSnapshot {
         commit_id: String,
         file_path: String,
         content: String,
+        ipfs: Option<String>,
     ) -> anyhow::Result<()>;
 }
 
@@ -168,6 +175,7 @@ impl DeployNewSnapshot for Everscale {
         commit_id: String,
         file_path: String,
         content: String,
+        ipfs: Option<String>,
     ) -> anyhow::Result<()> {
         tracing::trace!("deploy_new_snapshot: repo_address={repo_address}, branch_name={branch_name}, commit_id={commit_id}, file_path={file_path}");
         let args = DeploySnapshotParams {
@@ -176,7 +184,7 @@ impl DeployNewSnapshot for Everscale {
             commit_id,
             file_path,
             content,
-            ipfs: None,
+            ipfs,
         };
         let wallet_contract = wallet.take_one().await?;
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
@@ -193,6 +201,46 @@ impl DeployNewSnapshot for Everscale {
         if let Err(ref e) = result {
             tracing::trace!("deploy_branch_error: {}", e);
         }
+        result
+    }
+}
+
+#[async_trait]
+pub trait DeleteSnapshot {
+    async fn delete_snapshot(
+        &self,
+        wallet: &UserWallet,
+        snapshot_address: BlockchainContractAddress,
+    ) -> anyhow::Result<()>;
+}
+
+#[async_trait]
+impl DeleteSnapshot for Everscale {
+    #[instrument(level = "info", skip_all)]
+    async fn delete_snapshot(
+        &self,
+        wallet: &UserWallet,
+        snapshot_address: BlockchainContractAddress,
+    ) -> anyhow::Result<()> {
+        tracing::trace!("delete_snapshot: address={snapshot_address}");
+
+        let wallet_contract = wallet.take_one().await?;
+        let args = DeleteSnapshotParams { snapshot_address };
+        let result = self
+            .send_message(
+                wallet_contract.deref(),
+                "deleteSnapshot",
+                Some(serde_json::to_value(args)?),
+                None
+            )
+            .await
+            .map(|_| ());
+        drop(wallet_contract);
+
+        if let Err(ref e) = result {
+            tracing::trace!("delete_snapshot: error: {}", e);
+        }
+
         result
     }
 }
