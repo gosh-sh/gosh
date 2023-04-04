@@ -4253,7 +4253,6 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     private dao: IGoshDao
     private client: TonClient
     private wallet?: IGoshWallet
-    private locker?: IGoshSmvLocker
 
     constructor(gosh: IGoshAdapter, dao: IGoshDao, wallet?: IGoshWallet) {
         this.client = gosh.client
@@ -4612,10 +4611,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
 
     private async _getLocker(wallet?: IGoshWallet): Promise<IGoshSmvLocker> {
         const address = await this._getLockerAddress(wallet)
-        if (!this.locker) {
-            this.locker = new GoshSmvLocker(this.client, address)
-        }
-        return this.locker
+        return new GoshSmvLocker(this.client, address)
     }
 
     private async _getLockerBalance(

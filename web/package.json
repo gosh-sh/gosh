@@ -14,7 +14,7 @@
         "build:prod": "dotenv -e .env.production node env.json.js && dotenv -e .env.production vite build",
         "build:dockerdev": "rim -m 'src/**/* | package.json | tsconfig.json | vite.config.ts | postcss.config.js | tailwind.config.json | .env.docker.development | ../react-gosh/src/**/*' -s 'rim.cache.json' dotenv -e .env.docker.development -- vite build --base=./",
         "build:dockerprod": "rim -m 'src/**/* | package.json | tsconfig.json | vite.config.ts | postcss.config.js | tailwind.config.json | .env.docker.production | ../react-gosh/src/**/*' -s 'rim.cache.json' dotenv -e .env.docker.production -- vite build --base=./",
-        "update-react-gosh": "cd ../react-gosh && rm -rf dist && pnpm run build && cd - && rm -rf ./node_modules/react-gosh || true && rm -rf ./node_modules/.cache || true && pnpm update react-gosh"
+        "update-react-gosh": "cd ../react-gosh && rm -rf dist && pnpm run build && cd - && pnpm update react-gosh"
     },
     "eslintConfig": {
         "extends": [
@@ -98,6 +98,7 @@
         "@types/diff": "^5.0.2",
         "@types/file-saver": "^2.0.5",
         "@types/jest": "^27.0.1",
+        "@types/lodash": "^4.14.192",
         "@types/node": "^17.0.30",
         "@types/react": "^18.0.32",
         "@types/react-copy-to-clipboard": "^5.0.2",

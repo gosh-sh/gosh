@@ -90,6 +90,7 @@ type TDaoMember = {
 
 type TDaoMemberDetails = TDaoMember & {
     user: TUserParam
+    balance?: number
 }
 
 type TWalletDetails = {

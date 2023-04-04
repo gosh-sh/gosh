@@ -24,6 +24,14 @@ const DaoMemberListItem = (props: TMemberListItemProps) => {
                 <div>{item.user.name}</div>
                 <small className="text-xs text-gray-7c8db5">{item.user.type}</small>
             </td>
+            <td className="px-3 py-2 text-gray-7c8db5 font-light text-sm">
+                {item.profile && (
+                    <CopyClipboard
+                        componentProps={{ text: item.profile }}
+                        label={shortString(item.profile, 6, 6)}
+                    />
+                )}
+            </td>
             <td className="px-3 py-2 text-gray-7c8db5 font-light">
                 {isAuthMember ? (
                     <>
@@ -37,26 +45,32 @@ const DaoMemberListItem = (props: TMemberListItemProps) => {
                             name={`items.${index}.allowance`}
                             component={FormikInput}
                             autoComplete="off"
-                            placeholder="New allowance value"
+                            placeholder="New karma value"
                         />
                     </>
                 ) : (
                     item.allowance
                 )}
             </td>
-            <td className="px-3 py-2 text-gray-7c8db5 font-light text-sm">
-                {item.profile && (
-                    <CopyClipboard
-                        componentProps={{ text: item.profile }}
-                        label={shortString(item.profile, 6, 6)}
-                    />
+            <td className="px-3 py-2 text-gray-7c8db5 font-light">
+                {isAuthMember ? (
+                    <>
+                        <Field
+                            type="hidden"
+                            name={`items.${index}._balance`}
+                            component="input"
+                            autoComplete="off"
+                        />
+                        <Field
+                            name={`items.${index}.balance`}
+                            component={FormikInput}
+                            autoComplete="off"
+                            placeholder="New balance value"
+                        />
+                    </>
+                ) : (
+                    item.balance
                 )}
-            </td>
-            <td className="px-3 py-2 text-gray-7c8db5 font-light text-sm">
-                <CopyClipboard
-                    componentProps={{ text: item.wallet }}
-                    label={shortString(item.wallet, 6, 6)}
-                />
             </td>
             <td className="px-3 py-2 text-gray-7c8db5 font-light text-right">
                 {isAuthMember && (

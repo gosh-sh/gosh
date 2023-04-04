@@ -1,5 +1,5 @@
 import { Field, Form, Formik } from 'formik'
-import { TDao, TDaoMemberDetails, TUserParam, useDaoMemberSetAllowance } from 'react-gosh'
+import { TDao, TDaoMemberDetails, TUserParam, useDaoMemberUpdate } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
@@ -30,14 +30,14 @@ type TDaoMemeberListProps = {
 }
 
 type TAllowanceFormValues = {
-    items: (TDaoMemberDetails & { _allowance?: number })[]
+    items: (TDaoMemberDetails & { _allowance?: number; _balance?: number })[]
     comment?: string
 }
 
 const DaoMemeberList = (props: TDaoMemeberListProps) => {
     const { dao, members, removal } = props
     const navigate = useNavigate()
-    const updateAllowance = useDaoMemberSetAllowance(dao.adapter)
+    const updateMember = useDaoMemberUpdate(dao.adapter)
     const { isFetching, items } = members
 
     const onDelete = async (user: TUserParam) => {
@@ -54,11 +54,13 @@ const DaoMemeberList = (props: TDaoMemeberListProps) => {
 
     const onSubmitAllowance = async (values: TAllowanceFormValues) => {
         try {
-            await updateAllowance(
+            await updateMember(
                 values.items.map((item) => ({
                     ...item,
                     allowance: parseInt((item.allowance || 0).toString()),
                     _allowance: parseInt((item._allowance || 0).toString()),
+                    balance: parseInt((item.balance || 0).toString()),
+                    _balance: parseInt((item._balance || 0).toString()),
                 })),
                 values.comment,
             )
@@ -72,7 +74,11 @@ const DaoMemeberList = (props: TDaoMemeberListProps) => {
     return (
         <Formik
             initialValues={{
-                items: items.map((item) => ({ ...item, _allowance: item.allowance })),
+                items: items.map((item) => ({
+                    ...item,
+                    _allowance: item.allowance,
+                    _balance: item.balance,
+                })),
                 comment: '',
             }}
             validationSchema={yup.object().shape({
@@ -86,10 +92,10 @@ const DaoMemeberList = (props: TDaoMemeberListProps) => {
                     <table className="w-full">
                         <thead>
                             <tr className="text-gray-7c8db5 text-left text-xs">
-                                <th className="font-normal px-3 py-2 w-4/12">name</th>
-                                <th className="font-normal px-3 py-2">allowance</th>
-                                <th className="font-normal px-3 py-2 w-3/12">profile</th>
-                                <th className="font-normal px-3 py-2 w-3/12">wallet</th>
+                                <th className="font-normal px-3 py-2 w-3/12">name</th>
+                                <th className="font-normal px-3 py-2">profile</th>
+                                <th className="font-normal px-3 py-2">karma</th>
+                                <th className="font-normal px-3 py-2">balance</th>
                                 <th className="font-normal px-3 py-2"></th>
                             </tr>
                         </thead>

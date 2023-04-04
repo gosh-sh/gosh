@@ -440,11 +440,17 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
 
     const _getMemberList_2_0_0 = async () => {
         const gosh = dao.getGosh()
+        const smv = await dao.getSmv()
 
         const members = await dao.getMembers()
         const items = await executeByChunk(members, MAX_PARALLEL_READ, async (member) => {
             const user = await gosh.getUserByAddress(member.profile)
-            return { ...member, user }
+
+            const wallet = await dao.getMemberWallet({ address: member.wallet })
+            const { smvAvailable, smvLocked, smvBalance } = await smv.getDetails(wallet)
+            const balance = Math.max(smvAvailable, smvLocked) + smvBalance
+
+            return { ...member, user, balance }
         })
         return items
     }
@@ -474,21 +480,25 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
         })
     }, [search])
 
-    /** Refresh members list */
-    useEffect(() => {
-        let _intervalLock = false
-        const interval = setInterval(async () => {
-            if (!_intervalLock) {
-                _intervalLock = true
-                await _getMemberList()
-                _intervalLock = false
-            }
-        }, 30000)
+    /**
+     * Refresh members list
+     * TODO: Disable for now (member list is editable)
+     * Need a mechanism to prevent updated if member list item changed
+     */
+    // useEffect(() => {
+    //     let _intervalLock = false
+    //     const interval = setInterval(async () => {
+    //         if (!_intervalLock) {
+    //             _intervalLock = true
+    //             await _getMemberList()
+    //             _intervalLock = false
+    //         }
+    //     }, 30000)
 
-        return () => {
-            clearInterval(interval)
-        }
-    }, [members.isFetching, _getMemberList])
+    //     return () => {
+    //         clearInterval(interval)
+    //     }
+    // }, [members.isFetching, _getMemberList])
 
     return {
         isFetching: members.isFetching,
@@ -611,48 +621,107 @@ function useDaoMint(dao: IGoshDaoAdapter) {
     return mint
 }
 
-function useDaoMemberSetAllowance(dao: IGoshDaoAdapter) {
+function useDaoMemberUpdate(dao: IGoshDaoAdapter) {
     const update = async (
-        updated: (TDaoMemberDetails & { _allowance?: number })[],
+        updated: (TDaoMemberDetails & { _allowance?: number; _balance?: number })[],
         comment?: string,
     ) => {
-        // Validate allowance and DAO supply
+        /**
+         * Get DAO total supply
+         *  - total karma can not be greater than supply
+         *  - total balance can not be greater than supply
+         */
         const { supply } = await dao.getDetails()
-        const sum = updated.reduce((_sum: number, { allowance }) => {
+
+        const allowanceTotal = updated.reduce((_sum: number, { allowance }) => {
             return _sum + (allowance || 0)
         }, 0)
-        if (sum > supply.total) {
-            throw new GoshError('Allowance error', {
-                allowance: sum,
+        if (allowanceTotal > supply.total) {
+            throw new GoshError('Karma is too large', {
+                karma: allowanceTotal,
                 supply: supply.total,
-                message:
-                    'Total member allowance can not be greater than DAO total supply',
+                message: 'Total member karma can not be greater than DAO total supply',
             })
         }
 
-        // Prepare allowance changed data and update
-        const prepared = updated
+        const balanceTotal = updated.reduce((_sum: number, { balance }) => {
+            return _sum + (balance || 0)
+        }, 0)
+        if (balanceTotal > supply.total) {
+            throw new GoshError('Balance is too large', {
+                balance: balanceTotal,
+                supply: supply.total,
+                message: 'Total member balance can not be greater than DAO total supply',
+            })
+        }
+
+        // Prepare balance change cells
+        const balanceCells = updated
+            .filter(({ balance, _balance }) => {
+                let isValid = _filter(balance, _balance)
+                if (isValid) {
+                    isValid = balance! > _balance!
+                }
+                return isValid
+            })
+            .map(({ user, balance = 0, _balance = 0 }) => ({
+                type: ESmvEventType.DAO_TOKEN_REGULAR_ADD,
+                params: {
+                    user,
+                    amount: Math.abs(balance - _balance),
+                },
+            }))
+
+        // Prepare allowance change cells
+        const allowanceCells = updated
             .filter(({ allowance, _allowance }) => {
-                if (allowance === undefined || _allowance === undefined) {
-                    return false
-                }
-                if (!Number.isInteger(allowance) || !Number.isInteger(_allowance)) {
-                    return false
-                }
-                if (allowance < 0 || _allowance < 0) {
-                    return false
-                }
-                if (allowance === _allowance) {
-                    return false
-                }
-                return true
+                return _filter(allowance, _allowance)
             })
             .map(({ profile, allowance = 0, _allowance = 0 }) => ({
-                profile,
-                increase: allowance > _allowance,
-                amount: Math.abs(allowance - _allowance),
+                type: ESmvEventType.DAO_ALLOWANCE_CHANGE,
+                params: {
+                    members: [
+                        {
+                            profile,
+                            increase: allowance > _allowance,
+                            amount: Math.abs(allowance - _allowance),
+                        },
+                    ],
+                },
             }))
-        await dao.updateMemberAllowance({ members: prepared, comment })
+
+        // Result cells
+        const resultCells: { type: number; params: object }[] = [
+            ...balanceCells,
+            ...allowanceCells,
+        ]
+        if (resultCells.length === 0) {
+            throw new GoshError('Nothing was changed')
+        } else if (resultCells.length === 1) {
+            resultCells.push({ type: ESmvEventType.DELAY, params: {} })
+        }
+
+        // Create multiproposal
+        await dao.createMultiProposal({
+            proposals: resultCells,
+            comment,
+        })
+    }
+
+    const _filter = (a: number | undefined, b: number | undefined) => {
+        if (a === undefined || b === undefined) {
+            return false
+        }
+        if (!Number.isInteger(a) || !Number.isInteger(b)) {
+            return false
+        }
+        if (a < 0 || b < 0) {
+            return false
+        }
+        if (a === b) {
+            return false
+        }
+        return true
     }
 
     return update
@@ -1103,7 +1172,7 @@ export {
     useDaoMemberList,
     useDaoMemberCreate,
     useDaoMemberDelete,
-    useDaoMemberSetAllowance,
+    useDaoMemberUpdate,
     useDaoMint,
     useDaoSettingsManage,
     useTaskList,

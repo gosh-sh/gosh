@@ -12,7 +12,7 @@ import { supabase, ToastOptionsShortcuts } from '../../../../../helpers'
 import yup from '../../../../../yup-extended'
 import { ToastError } from '../../../../../components/Toast'
 import { Buffer } from 'buffer'
-import * as clipboardy from 'clipboardy'
+import clipboardy from 'clipboardy'
 
 type TDaoMemberFormProps = {
     dao: {
