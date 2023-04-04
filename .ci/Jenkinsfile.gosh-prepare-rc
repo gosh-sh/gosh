@@ -159,7 +159,7 @@ pipeline {
             }
         }
 
-        stage('Prerelease: push rc Docker Extension image') {
+        stage('Prerelease: push rc Docker Extension img') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
