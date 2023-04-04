@@ -23,9 +23,7 @@ body,
 }
 
 .container {
-    @apply px-5
-        max-w-container
-        mx-auto;
+    @apply max-w-full px-5 lg:px-24;
 
     &--full {
         @apply px-0 sm:px-5;
@@ -40,6 +38,22 @@ body,
     &::-webkit-scrollbar {
         display: none;
     }
+}
+
+.row {
+    @apply flex flex-wrap gap-y-4 -mx-2;
+}
+
+.col {
+    @apply px-2 w-full grow basis-0;
+}
+
+.col-n {
+    @extend .col;
+    @apply grow-0 shrink-0 basis-full
+        md:w-6/12 md:basis-6/12
+        xl:w-4/12 xl:basis-4/12
+        2xl:w-2/12 2xl:basis-2/12;
 }
 
 .checkbox-custom {

@@ -58,26 +58,33 @@ const DaosPage = () => {
 
     return (
         <>
-            <div className="flex flex-wrap justify-between items-center gap-3 mb-8">
-                <Input
-                    className="grow"
-                    type="search"
-                    placeholder="Search GOSH DAO..."
-                    autoComplete="off"
-                    value={search}
-                    disabled={isFetching}
-                    onChange={(e) => setSearch(e.target.value)}
-                    before={
-                        <FontAwesomeIcon
-                            icon={faMagnifyingGlass}
-                            className="text-gray-7c8db5 font-extralight py-3 pl-4"
-                        />
-                    }
-                    test-id="input-dao-search"
-                />
-                <ButtonLink to="/a/orgs/create" test-id="link-dao-create">
-                    Create new DAO
-                </ButtonLink>
+            <div className="row mb-8">
+                <div className="col !basis-full md:!basis-0">
+                    <Input
+                        type="search"
+                        placeholder="Search GOSH DAO..."
+                        autoComplete="off"
+                        value={search}
+                        disabled={isFetching}
+                        onChange={(e) => setSearch(e.target.value)}
+                        before={
+                            <FontAwesomeIcon
+                                icon={faMagnifyingGlass}
+                                className="text-gray-7c8db5 font-extralight py-3 pl-4"
+                            />
+                        }
+                        test-id="input-dao-search"
+                    />
+                </div>
+                <div className="col md:!grow-0">
+                    <ButtonLink
+                        to="/a/orgs/create"
+                        className="block w-full"
+                        test-id="link-dao-create"
+                    >
+                        Create new DAO
+                    </ButtonLink>
+                </div>
             </div>
 
             {!!githubData.length && (
@@ -86,13 +93,11 @@ const DaosPage = () => {
                         Pending import from GitHub
                     </div>
 
-                    <div className="flex flex-wrap gap-5 justify-between">
+                    <div className="row">
                         {githubData.map((item, index) => (
-                            <ExternalListItem
-                                key={index}
-                                className={'basis-full md:basis-[48.1%]'}
-                                item={item}
-                            />
+                            <div key={index} className="col-n">
+                                <ExternalListItem item={item} />
+                            </div>
                         ))}
                     </div>
                 </div>
@@ -110,15 +115,13 @@ const DaosPage = () => {
                     </div>
                 )}
 
-                <div className="flex flex-wrap gap-5 justify-between">
+                <div className="row">
                     {items.map((item, index) => {
                         getItemDetails(item)
                         return (
-                            <DaoListItem
-                                key={index}
-                                className={'basis-full md:basis-[48.1%]'}
-                                item={item}
-                            />
+                            <div key={index} className="col-n">
+                                <DaoListItem className="h-full" item={item} />
+                            </div>
                         )
                     })}
                 </div>
@@ -127,6 +130,7 @@ const DaosPage = () => {
                     <div className="text-center mt-6">
                         <Button
                             type="button"
+                            className="w-full md:w-auto"
                             disabled={isFetching}
                             isLoading={isFetching}
                             onClick={getMore}

@@ -22,7 +22,6 @@ import {
     IGoshRepositoryAdapter,
     IGoshWallet,
 } from 'react-gosh/dist/gosh/interfaces'
-import SideMenuContainer from '../components/SideMenuContainer'
 import { faFile } from '@fortawesome/free-regular-svg-icons'
 import Loader from '../components/Loader'
 
@@ -95,7 +94,7 @@ const RepoLayout = () => {
     }, [isFetching, updateBranches])
 
     return (
-        <SideMenuContainer>
+        <div className="container py-10">
             <h1 className="flex flex-wrap items-center mb-6 px-5 sm:px-0">
                 <Link
                     to={`/o/${daoName}`}
@@ -177,7 +176,7 @@ const RepoLayout = () => {
                     <Outlet context={{ dao, repository }} />
                 </>
             )}
-        </SideMenuContainer>
+        </div>
     )
 }
 

@@ -1,6 +1,6 @@
 import { Form, Formik } from 'formik'
 import { useCallback, useEffect, useState } from 'react'
-import { TDao } from 'react-gosh'
+import { classNames, TDao } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
@@ -13,10 +13,11 @@ type TDaoDescriptionProps = {
         adapter: IGoshDaoAdapter
         details: TDao
     }
+    className?: string
 }
 
 const DaoDescription = (props: TDaoDescriptionProps) => {
-    const { dao } = props
+    const { dao, className } = props
     const navigate = useNavigate()
     const [description, setDescription] = useState<{
         isFetching: boolean
@@ -56,9 +57,21 @@ const DaoDescription = (props: TDaoDescriptionProps) => {
         return null
     }
     return (
-        <div className="border border-gray-e6edff rounded-xl px-4 py-5 mb-9">
-            <div className="py-10 text-center text-sm text-gray-53596d">
-                {!description.content && !dao.details.hasRepoIndex && (
+        <div
+            className={classNames(
+                'border border-gray-e6edff rounded-xl overflow-hidden',
+                className,
+            )}
+        >
+            <div className="flex flex-nowrap justify-between p-5 border-b border-gray-e6edff">
+                <div className="font-medium">README.md</div>
+                {/* <div className="text-gray-7c8db5">
+                    <button>Read more</button>
+                </div> */}
+            </div>
+
+            {!description.content && !dao.details.hasRepoIndex && (
+                <div className="text-center text-sm text-gray-53596d p-5">
                     <Formik
                         initialValues={{ name: '_index' }}
                         onSubmit={onSystemRepositoryCreate}
@@ -80,29 +93,31 @@ const DaoDescription = (props: TDaoDescriptionProps) => {
                             </Form>
                         )}
                     </Formik>
-                )}
-                {!description.content && dao.details.hasRepoIndex && (
-                    <div>
-                        You can add organization description by placing
-                        <br />
-                        readme.md file to main branch of{' '}
-                        <Link
-                            to={`/o/${dao.details.name}/r/_index`}
-                            className="text-blue-348eff"
-                        >
-                            _index
-                        </Link>{' '}
-                        repository
-                    </div>
-                )}
-                {!!description.content && (
-                    <BlobPreview
-                        filename="README.md"
-                        value={description.content}
-                        className="!p-0"
-                    />
-                )}
-            </div>
+                </div>
+            )}
+
+            {!description.content && dao.details.hasRepoIndex && (
+                <div className="text-center text-sm text-gray-53596d p-5">
+                    You can add organization description by placing
+                    <br />
+                    readme.md file to main branch of{' '}
+                    <Link
+                        to={`/o/${dao.details.name}/r/_index`}
+                        className="text-blue-348eff"
+                    >
+                        _index
+                    </Link>{' '}
+                    repository
+                </div>
+            )}
+
+            {!!description.content && (
+                <BlobPreview
+                    filename="README.md"
+                    value={description.content}
+                    className="!p-5"
+                />
+            )}
         </div>
     )
 }

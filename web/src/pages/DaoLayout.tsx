@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import { classNames, useDao, TDao, shortString } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
-import SideMenuContainer from '../components/SideMenuContainer'
 import Loader from '../components/Loader'
 import CopyClipboard from '../components/CopyClipboard'
 import ReactTooltip from 'react-tooltip'
@@ -65,16 +64,18 @@ const DaoLayout = () => {
     }, [dao.isFetching, getDaoShortDescription])
 
     return (
-        <SideMenuContainer>
-            <div className="flex flex-nowrap gap-x-4 mb-6">
-                <div className="w-20 overflow-hidden rounded-lg">
-                    <img
-                        src={getIdenticonAvatar({ seed: daoName }).toDataUriSync()}
-                        className="w-full"
-                        alt=""
-                    />
+        <div className="container py-10">
+            <div className="row mb-6">
+                <div className="col !grow-0">
+                    <div className="overflow-hidden rounded-xl w-12 md:w-16 lg:w-20">
+                        <img
+                            src={getIdenticonAvatar({ seed: daoName }).toDataUriSync()}
+                            className="w-full"
+                            alt=""
+                        />
+                    </div>
                 </div>
-                <div>
+                <div className="col">
                     <h1 className="mb-2">
                         <Link
                             to={`/o/${daoName}`}
@@ -184,7 +185,7 @@ const DaoLayout = () => {
                     <Outlet context={{ dao }} />
                 </>
             )}
-        </SideMenuContainer>
+        </div>
     )
 }
 
