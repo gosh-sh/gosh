@@ -16,8 +16,13 @@ use version_compare::Version;
 use tracing_subscriber::fmt;
 use tracing_subscriber::fmt::format::FmtSpan;
 
-use std::str::FromStr;
 use clap::Arg;
+use std::str::FromStr;
+use gosh_builder_grpc_api::proto::{
+    git_remote_gosh_client::GitRemoteGoshClient, CommandRequest, GetArchiveRequest, SpawnRequest,
+};
+use tar::Archive;
+use zstd::Decoder;
 
 #[cfg(target_family = "unix")]
 const INI_LOCATION: &str = "~/.gosh/dispatcher.ini";
@@ -30,6 +35,10 @@ const SHIPPING_INI_PATH: &str = "dispatcher.ini";
 const GIT_HELPER_ENV_TRACE_VERBOSITY: &str = "GOSH_TRACE";
 static DISPATCHER_ENDL: &str = "endl";
 
+const GOSH_GRPC_ENABLE: &str = "GOSH_GRPC_ENABLE";
+const GOSH_GRPC_CONTAINER: &str = "GOSH_GRPC_CONTAINER";
+const GRPC_URL: &str = "http://localhost:8000";
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let matches = clap::Command::new("gosh-dispatcher")
@@ -39,12 +48,11 @@ async fn main() -> anyhow::Result<()> {
         .arg(
             Arg::new("version")
                 .long("version")
-                .action(clap::ArgAction::SetTrue)
+                .action(clap::ArgAction::SetTrue),
         )
-        .subcommand(
-            clap::Command::new("dispatcher_ini")
-                .about("Get path to the current dispatcher ini file and list of supported remote versions"),
-        )
+        .subcommand(clap::Command::new("dispatcher_ini").about(
+            "Get path to the current dispatcher ini file and list of supported remote versions",
+        ))
         .get_matches();
 
     let version = option_env!("GOSH_BUILD_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
@@ -75,9 +83,11 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-
 async fn dispatcher_main() -> anyhow::Result<()> {
     set_up_logger();
+    if let Ok(_) = std::env::var(GOSH_GRPC_ENABLE) {
+        return grpc_mode().await;
+    }
     let mut args = std::env::args().collect::<Vec<String>>();
     if args.len() < 3 {
         anyhow::bail!("Wrong number of arguments.");
@@ -177,7 +187,10 @@ async fn dispatcher_main() -> anyhow::Result<()> {
             let mut lines = reader.lines();
             while let Ok(Some(line)) = lines.next_line().await {
                 tracing::trace!("caught output line: {line}");
-                if line.contains(DISPATCHER_ENDL) {
+                if line.contains(DISPATCHER_ENDL) { // TODO: change to equal
+                    if std::env::var(GOSH_GRPC_CONTAINER).is_ok() {
+                        output.push(line.clone());
+                    }
                     break;
                 }
                 if line.starts_with("dispatcher") {
@@ -196,12 +209,7 @@ async fn dispatcher_main() -> anyhow::Result<()> {
             tracing::trace!("append to buffer: '{line}'");
             buffer.append(&mut format!("{line}\n").as_bytes().to_vec());
         }
-        tracing::trace!("send output: '{buffer:?}'");
-        io::stdout()
-            .write_all(&buffer)
-            .await
-            .unwrap();
-        io::stdout().flush().await?;
+        write_output(&buffer).await?;
         if let Some(line) = dispatcher_cmd {
             dispatcher_cmd = None;
             let _main_res = main_helper.wait().await;
@@ -263,7 +271,6 @@ fn get_ini_path() -> String {
         }
     });
     shellexpand::tilde(&path_str).into_owned()
-
 }
 
 fn load_remote_versions_from_ini() -> anyhow::Result<Vec<String>> {
@@ -366,7 +373,10 @@ async fn call_helper_after_fail(
         let mut lines = reader.lines();
         while let Ok(Some(line)) = lines.next_line().await {
             tracing::trace!("Caught out line: {line}");
-            if line.contains(DISPATCHER_ENDL) {
+            if line.contains(DISPATCHER_ENDL) { // TODO: change to equal
+                if std::env::var(GOSH_GRPC_CONTAINER).is_ok() {
+                    output.push(line.clone());
+                }
                 break;
             }
             output.push(line.clone());
@@ -380,12 +390,7 @@ async fn call_helper_after_fail(
         tracing::trace!("append to buffer: '{line}'");
         buffer.append(&mut format!("{line}\n").as_bytes().to_vec());
     }
-    // tracing::trace!("send output: '{buffer:?}'");
-    io::stdout()
-        .write_all(&buffer)
-        .await
-        .unwrap();
-
+    write_output(&buffer).await?;
     Ok(previous_helper)
 }
 
@@ -417,6 +422,70 @@ async fn write_to_helper(helper: &mut Child, input_line: &String) -> anyhow::Res
         stdin.flush().await?;
     } else {
         panic!("Failed to take stdin");
+    }
+    Ok(())
+}
+
+async fn write_output(buffer: &Vec<u8>) -> anyhow::Result<()> {
+    tracing::trace!(
+        "send output: '{buffer:?}' {}",
+        String::from_utf8_lossy(buffer)
+    );
+    io::stdout().write_all(buffer).await?;
+    io::stdout().flush().await?;
+    Ok(())
+}
+
+async fn grpc_mode() -> anyhow::Result<()> {
+    // In this mode dispatcher is run inside a container and should call not git-remote-gosh
+    // binaries, but send messages to the server via grpc.
+    // Dispatcher resend all git commands to grpc server and sends answer to git.
+    // After all commands been processed git send an empty line and after getting it
+    // dispatcher calls server to send the compressed repo, receives it, unpacks and
+    // finishes execution.
+
+    let mut args = std::env::args().collect::<Vec<String>>();
+    tracing::trace!("Start grpc client, url: {}", GRPC_URL);
+    let mut client = GitRemoteGoshClient::connect(GRPC_URL).await?;
+    let session_id = uuid::Uuid::new_v4().to_string();
+    tracing::trace!("grpc session id: {}", session_id);
+
+    //   call client start
+    args.remove(0);
+    client
+        .spawn(SpawnRequest {
+            id: session_id.clone(),
+            args,
+        })
+        .await?;
+
+    let mut lines = BufReader::new(io::stdin()).lines();
+    tracing::trace!("Start dispatcher message interchange via grpc");
+    while let Some(input_line) = lines.next_line().await? {
+        tracing::trace!("send input: {}", input_line);
+        if input_line.is_empty() {
+            // get tarball from server
+            tracing::trace!("fetch finished, get tarball from server");
+            let res = client
+                .get_archive(GetArchiveRequest {
+                    id: session_id.clone(),
+                })
+                .await?;
+            tracing::trace!("decode tarball");
+            let tar = Decoder::new(&res.get_ref().body[..])?;
+            let mut archive = Archive::new(tar);
+            tracing::trace!("unpack tarball");
+            let local_git_dir = std::env::var("GIT_DIR")?;
+            archive.unpack(&local_git_dir)?;
+        }
+        let input_line = format!("{input_line}\n");
+        let res = client
+            .command(CommandRequest {
+                id: session_id.clone(),
+                body: input_line.as_bytes().to_vec(),
+            })
+            .await?;
+        write_output(&res.get_ref().body).await?;
     }
     Ok(())
 }
