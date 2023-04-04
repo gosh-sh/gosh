@@ -469,7 +469,8 @@ async fn grpc_mode() -> anyhow::Result<()> {
             let tar = GzDecoder::new(&res.get_ref().body[..]);
             let mut archive = Archive::new(tar);
             tracing::trace!("unpack tarball");
-            archive.unpack(".")?;
+            let local_git_dir = std::env::var("GIT_DIR")?;
+            archive.unpack(&local_git_dir)?;
         }
         let res = client
             .command(CommandRequest {
