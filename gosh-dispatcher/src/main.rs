@@ -23,7 +23,7 @@ use clap::Arg;
 const INI_LOCATION: &str = "~/.gosh/dispatcher.ini";
 
 #[cfg(target_family = "windows")]
-const INI_LOCATION: &str = "$HOME/.gosh/dispatcher.ini";
+const INI_LOCATION: &str = "~\\.gosh\\dispatcher.ini";
 
 const SHIPPING_INI_PATH: &str = "dispatcher.ini";
 
