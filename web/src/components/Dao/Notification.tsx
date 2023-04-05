@@ -90,11 +90,17 @@ const DaoNotification = (props: TDaoNotificationProps) => {
     if (msgType === 'isUpgradeAvailable') {
         return (
             <Alert variant="danger">
-                New version of DAO available.
+                A new version of DAO is available.
                 <br />
-                It is highly recommended to complete all proposals before upgrade.
+                Please complete all proposals before upgrading.
                 <br />
-                Check if corresponding proposal does not exist and go to the{' '}
+                <b>
+                    All uncompleted proposals will be rejected and will not be transferred
+                    to the upgraded version.
+                </b>
+                <br />
+                Please check that a corresponding proposal does not exist before going to
+                the{' '}
                 <Link
                     className="underline"
                     to={`/o/${dao.details.name}/settings/upgrade`}
