@@ -626,34 +626,7 @@ function useDaoMemberUpdate(dao: IGoshDaoAdapter) {
         updated: (TDaoMemberDetails & { _allowance?: number; _balance?: number })[],
         comment?: string,
     ) => {
-        /**
-         * Get DAO total supply
-         *  - total karma can not be greater than supply
-         *  - total balance can not be greater than supply
-         */
         const { supply } = await dao.getDetails()
-
-        const allowanceTotal = updated.reduce((_sum: number, { allowance }) => {
-            return _sum + (allowance || 0)
-        }, 0)
-        if (allowanceTotal > supply.total) {
-            throw new GoshError('Karma is too large', {
-                karma: allowanceTotal,
-                supply: supply.total,
-                message: 'Total member karma can not be greater than DAO total supply',
-            })
-        }
-
-        const balanceTotal = updated.reduce((_sum: number, { balance }) => {
-            return _sum + (balance || 0)
-        }, 0)
-        if (balanceTotal > supply.total) {
-            throw new GoshError('Balance is too large', {
-                balance: balanceTotal,
-                supply: supply.total,
-                message: 'Total member balance can not be greater than DAO total supply',
-            })
-        }
 
         // Prepare balance change cells
         const balanceCells = updated
@@ -672,6 +645,18 @@ function useDaoMemberUpdate(dao: IGoshDaoAdapter) {
                 },
             }))
 
+        // Validate balance change against DAO reserve
+        const balanceIncrease = balanceCells.reduce((_sum: number, { params }) => {
+            return _sum + params.amount
+        }, 0)
+        if (balanceIncrease > supply.reserve) {
+            throw new GoshError('Reserve is not enough', {
+                increase: balanceIncrease,
+                reserve: supply.reserve,
+                message: 'DAO reserve is not enough',
+            })
+        }
+
         // Prepare allowance change cells
         const allowanceCells = updated
             .filter(({ allowance, _allowance }) => {
@@ -689,6 +674,18 @@ function useDaoMemberUpdate(dao: IGoshDaoAdapter) {
                     ],
                 },
             }))
+
+        // Validate total allowance against DAO supply
+        const allowanceTotal = updated.reduce((_sum: number, { allowance }) => {
+            return _sum + (allowance || 0)
+        }, 0)
+        if (allowanceTotal > supply.total) {
+            throw new GoshError('Karma is too large', {
+                karma: allowanceTotal,
+                supply: supply.total,
+                message: 'Total members karma can not be greater than DAO total supply',
+            })
+        }
 
         // Result cells
         const resultCells: { type: number; params: object }[] = [
