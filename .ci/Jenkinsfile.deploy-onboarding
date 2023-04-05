@@ -14,7 +14,7 @@ pipeline {
                     env.VERSION = sh script: "cat version.json | jq .version | tr -d '\"\n'", returnStdout: true
                     currentBuild.displayName = "#${BUILD_NUMBER}_deploy-onbd_${VERSION}"
                     dir('v1_x/contracts/gosh') {
-                        sh 'make build-contracts'
+                        sh 'make prepare-docker && make build-contracts-docker'
                     }
                     dir('onboarding-workflow_v1') {
                         sh 'docker compose down -v --remove-orphans || true'
@@ -22,7 +22,7 @@ pipeline {
                         sh 'make docker'
                     }
                     dir('v2_x/contracts/gosh') {
-                        sh 'make build-contracts'
+                        sh 'make prepare-docker && make build-contracts-docker'
                     }
                     dir('onboarding-workflow_v2') {
                         sh 'docker compose down -v --remove-orphans || true'
