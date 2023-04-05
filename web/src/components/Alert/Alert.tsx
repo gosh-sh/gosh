@@ -17,7 +17,7 @@ const iconMap: Record<string, IconDefinition> = {
 }
 
 const variantMap: Record<string, string> = {
-    danger: 'bg-red-ff3b30 text-white',
+    danger: 'bg-red-dd3a3a text-white',
 }
 
 const Alert = (props: TAlertProps) => {
