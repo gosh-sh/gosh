@@ -36,10 +36,10 @@ pipeline {
             steps {
                 script {
                     dir('onboarding-workflow_v1') {
-                        sh 'docker-compose up -d'
+                        sh 'docker compose up -d'
                     }
                     dir('onboarding-workflow_v2') {
-                        sh 'docker-compose up -d'
+                        sh 'docker compose up -d'
                     }
                 }
             }
