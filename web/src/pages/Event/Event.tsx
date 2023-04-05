@@ -31,7 +31,7 @@ import {
     RepoDescriptionEvent,
     MultiEvent,
 } from './components'
-import ReactTooltip from 'react-tooltip'
+import { Tooltip } from 'react-tooltip'
 import { DaoVoteEvent } from './components/DaoVoteEvent/DaoVoteEvent'
 import { DaoTokenDaoSendEvent } from './components/DaoTokenDaoSendEvent/DaoTokenDaoSendEvent'
 import { DaoReviewEvent } from './components/DaoReviewEvent/DaoReviewEvent'
@@ -86,7 +86,10 @@ const EventPage = () => {
                     <div>
                         <CopyClipboard
                             label={
-                                <span data-tip="Event address">
+                                <span
+                                    data-tooltip-id="common-tip"
+                                    data-tooltip-content="Event address"
+                                >
                                     {shortString(eventAddr!)}
                                 </span>
                             }
@@ -266,8 +269,8 @@ const EventPage = () => {
                         </div>
                     )}
                 </div>
-                <ReactTooltip clickable />
             </div>
+            <Tooltip id="common-tip" clickable />
         </div>
     )
 }

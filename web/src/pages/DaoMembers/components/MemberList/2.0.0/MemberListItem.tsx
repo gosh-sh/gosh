@@ -6,9 +6,11 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import { Field } from 'formik'
 import { FormikInput } from '../../../../../components/Formik'
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons'
-import ReactTooltip from 'react-tooltip'
+import { Tooltip } from 'react-tooltip'
+import { Link } from 'react-router-dom'
 
 type TMemberListItemProps = {
+    daoName: string
     index: number
     item: TDaoMemberDetails
     owner: string
@@ -18,7 +20,7 @@ type TMemberListItemProps = {
 }
 
 const DaoMemberListItem = (props: TMemberListItemProps) => {
-    const { index, item, owner, isAuthMember, isFetching, onDelete } = props
+    const { daoName, index, item, owner, isAuthMember, isFetching, onDelete } = props
 
     return (
         <>
@@ -81,7 +83,7 @@ const DaoMemberListItem = (props: TMemberListItemProps) => {
                                     after: item.balancePrev ? (
                                         <div
                                             className="text-xs text-red-dd3a3a py-2 pr-3"
-                                            data-tip="Untransferred tokens from previous version"
+                                            data-tooltip-id="member-balance-tip"
                                         >
                                             +{item.balancePrev}
                                             <FontAwesomeIcon
@@ -92,6 +94,14 @@ const DaoMemberListItem = (props: TMemberListItemProps) => {
                                     ) : null,
                                 }}
                             />
+                            <Tooltip id="member-balance-tip" clickable>
+                                <div>Untransferred tokens from previous version</div>
+                                <div>
+                                    <Link to={`/o/${daoName}`} className="underline">
+                                        Transfer
+                                    </Link>
+                                </div>
+                            </Tooltip>
                         </>
                     ) : (
                         item.balance
@@ -114,7 +124,6 @@ const DaoMemberListItem = (props: TMemberListItemProps) => {
                     )}
                 </td>
             </tr>
-            <ReactTooltip clickable />
         </>
     )
 }

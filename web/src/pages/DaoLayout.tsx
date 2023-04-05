@@ -4,7 +4,7 @@ import { classNames, useDao, TDao, shortString } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import Loader from '../components/Loader'
 import CopyClipboard from '../components/CopyClipboard'
-import ReactTooltip from 'react-tooltip'
+import { Tooltip } from 'react-tooltip'
 import { getIdenticonAvatar } from '../helpers'
 import { DaoNotification } from '../components/Dao'
 
@@ -130,9 +130,11 @@ const DaoLayout = () => {
                         <CopyClipboard
                             className="text-xs text-gray-7c8db5"
                             label={
-                                <span data-tip="DAO address">
+                                <span
+                                    data-tooltip-id="common-tip"
+                                    data-tooltip-content="DAO address"
+                                >
                                     {shortString(dao.adapter.getAddress())}
-                                    <ReactTooltip clickable />
                                 </span>
                             }
                             componentProps={{
@@ -191,6 +193,8 @@ const DaoLayout = () => {
                     <Outlet context={{ dao }} />
                 </>
             )}
+
+            <Tooltip id="common-tip" clickable />
         </div>
     )
 }

@@ -111,6 +111,7 @@ const DaoMemeberList = (props: TDaoMemeberListProps) => {
 
                             {values.items.map((item, index) => (
                                 <DaoMemberListItem
+                                    daoName={dao.details.name}
                                     key={index}
                                     index={index}
                                     item={item}

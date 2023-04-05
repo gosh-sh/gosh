@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { classNames, shortString, TDaoListItem } from 'react-gosh'
 import { Link } from 'react-router-dom'
 import CopyClipboard from '../../components/CopyClipboard'
-import ReactTooltip from 'react-tooltip'
+import { Tooltip } from 'react-tooltip'
 import { getIdenticonAvatar } from '../../helpers'
 
 type TDaoListItemProps = {
@@ -62,7 +62,7 @@ const DaoListItem = (props: TDaoListItemProps) => {
                         )}
                     >
                         <div>Version: {item.version}</div>
-                        <div data-tip="Members">
+                        <div data-tooltip-id="common-tip" data-tooltip-content="Members">
                             <FontAwesomeIcon icon={faUsers} className="mr-1" />
                             {item.members?.length}
                         </div>
@@ -70,14 +70,17 @@ const DaoListItem = (props: TDaoListItemProps) => {
                         <CopyClipboard
                             componentProps={{ text: item.address }}
                             label={
-                                <span data-tip="DAO address">
+                                <span
+                                    data-tooltip-id="common-tip"
+                                    data-tooltip-content="DAO address"
+                                >
                                     {shortString(item.address, 6, 6)}
                                 </span>
                             }
                         />
                     </div>
                 </div>
-                <ReactTooltip clickable />
+                <Tooltip id="common-tip" clickable />
             </div>
         </div>
     )
