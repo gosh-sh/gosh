@@ -18,7 +18,10 @@ export type TDaoLayoutOutletContext = {
 const DaoLayout = () => {
     const { daoName } = useParams()
     const dao = useDao(daoName!)
-    const [description, setDescription] = useState<string | null>()
+    const [description, setDescription] = useState<{
+        isFetching: boolean
+        content: string | null
+    }>({ isFetching: true, content: null })
     const [isReady, setIsReady] = useState<boolean>(false)
 
     const getTabs = () => {
@@ -51,8 +54,9 @@ const DaoLayout = () => {
 
     const getDaoShortDescription = useCallback(async () => {
         if (dao.adapter) {
+            setDescription((state) => ({ ...state, isFetching: true }))
             const content = await dao.adapter.getShortDescription()
-            setDescription(content)
+            setDescription((state) => ({ ...state, isFetching: false, content }))
         }
     }, [dao.adapter])
 
@@ -101,25 +105,27 @@ const DaoLayout = () => {
                             </span>
                         ))}
                     </h1>
-                    <div className="mb-2 text-sm">
-                        {!description && dao.details?.isAuthMember && (
-                            <>
-                                Place description.txt to main branch of{' '}
-                                {dao.details.hasRepoIndex ? (
-                                    <Link
-                                        to={`/o/${dao.details.name}/r/_index`}
-                                        className="text-blue-348eff"
-                                    >
-                                        _index
-                                    </Link>
-                                ) : (
-                                    '_index'
-                                )}{' '}
-                                repo to add short description
-                            </>
-                        )}
-                        {!!description && description}
-                    </div>
+                    {!description.isFetching && (
+                        <div className="mb-2 text-sm">
+                            {!description.content && dao.details?.isAuthMember && (
+                                <>
+                                    Place description.txt to main branch of{' '}
+                                    {dao.details.hasRepoIndex ? (
+                                        <Link
+                                            to={`/o/${dao.details.name}/r/_index`}
+                                            className="text-blue-348eff"
+                                        >
+                                            _index
+                                        </Link>
+                                    ) : (
+                                        '_index'
+                                    )}{' '}
+                                    repo to add short description
+                                </>
+                            )}
+                            {!!description.content && description.content}
+                        </div>
+                    )}
                     {dao.adapter && (
                         <CopyClipboard
                             className="text-xs text-gray-7c8db5"
