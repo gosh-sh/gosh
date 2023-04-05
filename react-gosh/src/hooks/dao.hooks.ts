@@ -441,6 +441,7 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
     const _getMemberList_2_0_0 = async () => {
         const gosh = dao.getGosh()
         const smv = await dao.getSmv()
+        const prevDao = await dao.getPrevDao()
 
         const members = await dao.getMembers()
         const items = await executeByChunk(members, MAX_PARALLEL_READ, async (member) => {
@@ -450,7 +451,16 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
             const { smvAvailable, smvLocked, smvBalance } = await smv.getDetails(wallet)
             const balance = Math.max(smvAvailable, smvLocked) + smvBalance
 
-            return { ...member, user, balance }
+            let balancePrev = 0
+            if (prevDao && prevDao.getVersion() !== '1.0.0') {
+                const wallet = await prevDao.getMemberWallet({ profile: member.profile })
+                const { smvAvailable, smvLocked, smvBalance } = await smv.getDetails(
+                    wallet,
+                )
+                balancePrev = Math.max(smvAvailable, smvLocked) + smvBalance
+            }
+
+            return { ...member, user, balance, balancePrev }
         })
         return items
     }

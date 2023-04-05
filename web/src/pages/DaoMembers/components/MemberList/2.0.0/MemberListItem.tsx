@@ -5,6 +5,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import { Field } from 'formik'
 import { FormikInput } from '../../../../../components/Formik'
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons'
+import ReactTooltip from 'react-tooltip'
 
 type TMemberListItemProps = {
     index: number
@@ -19,84 +21,101 @@ const DaoMemberListItem = (props: TMemberListItemProps) => {
     const { index, item, owner, isAuthMember, isFetching, onDelete } = props
 
     return (
-        <tr>
-            <td className="px-3 py-2">
-                <div>{item.user.name}</div>
-                <small className="text-xs text-gray-7c8db5">{item.user.type}</small>
-            </td>
-            <td className="px-3 py-2 text-gray-7c8db5 font-light text-sm">
-                {item.profile && (
-                    <CopyClipboard
-                        componentProps={{ text: item.profile }}
-                        label={shortString(item.profile, 6, 6)}
-                    />
-                )}
-            </td>
-            <td className="px-3 py-2 text-gray-7c8db5 font-light text-sm">
-                {item.wallet && (
-                    <CopyClipboard
-                        componentProps={{ text: item.wallet }}
-                        label={shortString(item.wallet, 6, 6)}
-                    />
-                )}
-            </td>
-            <td className="px-3 py-2 text-gray-7c8db5 font-light">
-                {isAuthMember ? (
-                    <>
-                        <Field
-                            type="hidden"
-                            name={`items.${index}._allowance`}
-                            component="input"
-                            autoComplete="off"
+        <>
+            <tr>
+                <td className="px-3 py-2">
+                    <div>{item.user.name}</div>
+                    <small className="text-xs text-gray-7c8db5">{item.user.type}</small>
+                </td>
+                <td className="px-3 py-2 text-gray-7c8db5 font-light text-sm">
+                    {item.profile && (
+                        <CopyClipboard
+                            componentProps={{ text: item.profile }}
+                            label={shortString(item.profile, 6, 6)}
                         />
-                        <Field
-                            name={`items.${index}.allowance`}
-                            component={FormikInput}
-                            autoComplete="off"
-                            placeholder="New karma value"
+                    )}
+                </td>
+                <td className="px-3 py-2 text-gray-7c8db5 font-light text-sm">
+                    {item.wallet && (
+                        <CopyClipboard
+                            componentProps={{ text: item.wallet }}
+                            label={shortString(item.wallet, 6, 6)}
                         />
-                    </>
-                ) : (
-                    item.allowance
-                )}
-            </td>
-            <td className="px-3 py-2 text-gray-7c8db5 font-light">
-                {isAuthMember ? (
-                    <>
-                        <Field
-                            type="hidden"
-                            name={`items.${index}._balance`}
-                            component="input"
-                            autoComplete="off"
-                        />
-                        <Field
-                            name={`items.${index}.balance`}
-                            component={FormikInput}
-                            autoComplete="off"
-                            placeholder="New balance value"
-                        />
-                    </>
-                ) : (
-                    item.balance
-                )}
-            </td>
-            <td className="px-3 py-2 text-gray-7c8db5 font-light text-right">
-                {isAuthMember && (
-                    <button
-                        type="button"
-                        className="hover:text-gray-53596d disabled:opacity-20 disabled:pointer-events-none"
-                        onClick={() => onDelete(item.user)}
-                        disabled={isFetching || item.profile === owner}
-                    >
-                        {isFetching ? (
-                            <Spinner size="xs" />
-                        ) : (
-                            <FontAwesomeIcon icon={faTimes} size="lg" />
-                        )}
-                    </button>
-                )}
-            </td>
-        </tr>
+                    )}
+                </td>
+                <td className="px-3 py-2 text-gray-7c8db5 font-light">
+                    {isAuthMember ? (
+                        <>
+                            <Field
+                                type="hidden"
+                                name={`items.${index}._allowance`}
+                                component="input"
+                                autoComplete="off"
+                            />
+                            <Field
+                                name={`items.${index}.allowance`}
+                                component={FormikInput}
+                                autoComplete="off"
+                                placeholder="New karma value"
+                            />
+                        </>
+                    ) : (
+                        item.allowance
+                    )}
+                </td>
+                <td className="px-3 py-2 text-gray-7c8db5 font-light">
+                    {isAuthMember ? (
+                        <>
+                            <Field
+                                type="hidden"
+                                name={`items.${index}._balance`}
+                                component="input"
+                                autoComplete="off"
+                            />
+                            <Field
+                                name={`items.${index}.balance`}
+                                component={FormikInput}
+                                autoComplete="off"
+                                placeholder="New balance value"
+                                inputProps={{
+                                    after: item.balancePrev ? (
+                                        <div
+                                            className="text-xs text-red-dd3a3a py-2 pr-3"
+                                            data-tip="Untransferred tokens from previous version"
+                                        >
+                                            +{item.balancePrev}
+                                            <FontAwesomeIcon
+                                                icon={faQuestionCircle}
+                                                className="ml-1"
+                                            />
+                                        </div>
+                                    ) : null,
+                                }}
+                            />
+                        </>
+                    ) : (
+                        item.balance
+                    )}
+                </td>
+                <td className="px-3 py-2 text-gray-7c8db5 font-light text-right">
+                    {isAuthMember && (
+                        <button
+                            type="button"
+                            className="hover:text-gray-53596d disabled:opacity-20 disabled:pointer-events-none"
+                            onClick={() => onDelete(item.user)}
+                            disabled={isFetching || item.profile === owner}
+                        >
+                            {isFetching ? (
+                                <Spinner size="xs" />
+                            ) : (
+                                <FontAwesomeIcon icon={faTimes} size="lg" />
+                            )}
+                        </button>
+                    )}
+                </td>
+            </tr>
+            <ReactTooltip clickable />
+        </>
     )
 }
 

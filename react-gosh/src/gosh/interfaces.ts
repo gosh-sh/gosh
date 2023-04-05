@@ -185,6 +185,7 @@ interface IGoshDaoAdapter {
     getTopic(params: { address?: TAddress }): Promise<TTopic>
 
     getSmv(): Promise<IGoshSmvAdapter>
+    getPrevDao(): Promise<IGoshDaoAdapter | null>
 
     createRepository(params: TRepositoryCreateParams): Promise<TRepositoryCreateResult>
 

@@ -780,6 +780,19 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return new GoshSmvAdapter(this.gosh, this.dao, this.wallet)
     }
 
+    async getPrevDao() {
+        const { value0: prevAddr } = await this.dao.runLocal('getPreviousDaoAddr', {})
+        if (!prevAddr) {
+            return null
+        }
+
+        const prevDao = await this.gosh.getDao({ address: prevAddr, useAuth: false })
+        const { value1: prevVer } = await prevDao.dao.runLocal('getVersion', {})
+
+        const prevGosh = GoshAdapterFactory.create(prevVer)
+        return await prevGosh.getDao({ address: prevAddr, useAuth: false })
+    }
+
     async createRepository(
         params: TRepositoryCreateParams,
     ): Promise<TRepositoryCreateResult> {

@@ -628,6 +628,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return new GoshSmvAdapter(this.gosh, this.dao, this.wallet)
     }
 
+    async getPrevDao() {
+        return null
+    }
+
     async createRepository(
         params: TRepositoryCreateParams,
     ): Promise<TRepositoryCreateResult> {
