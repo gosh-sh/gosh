@@ -4,7 +4,7 @@ set -o pipefail
 . ./util.sh
 set -x
 
-REPO_NAME="repo16"
+REPO_NAME="repo16_$(date +%s)"
 CHECK_REPO_PATH="$REPO_NAME""_check"
 
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME

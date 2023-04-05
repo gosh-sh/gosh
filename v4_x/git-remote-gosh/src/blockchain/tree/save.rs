@@ -27,6 +27,8 @@ pub struct DeployTreeArgs {
     #[serde(rename = "datatree")]
     nodes: HashMap<String, TreeNode>,
     ipfs: Option<String>,
+    #[serde(rename = "isFinal")]
+    pub is_final: bool,
 }
 
 #[async_trait]
@@ -54,6 +56,7 @@ impl DeployTree for Everscale {
             repo_name: repo_name.to_owned(),
             nodes: nodes.to_owned(),
             ipfs: None, // !!!
+            is_final: true,
         };
         tracing::trace!("DeployTreeArgs: {params:?}");
         let wallet_contract = wallet.take_one().await?;

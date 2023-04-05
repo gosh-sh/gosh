@@ -17,7 +17,7 @@ set -e
 set -o pipefail
 . ./util.sh
 
-REPO_NAME=repo9
+REPO_NAME="repo9_$(date +%s)"
 
 [ -d $REPO_NAME"-clone1" ] && rm -rf $REPO_NAME"-clone1"
 [ -d $REPO_NAME"-clone2" ] && rm -rf $REPO_NAME"-clone2"

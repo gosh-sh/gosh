@@ -17,7 +17,7 @@ set -e
 . ./util.sh
 
 #1
-REPO_NAME=repo8
+REPO_NAME="repo8_$(date +%s)"
 
 [ -d $REPO_NAME"-clone1" ] && rm -rf $REPO_NAME"-clone1"
 [ -d $REPO_NAME"-clone2" ] && rm -rf $REPO_NAME"-clone2"

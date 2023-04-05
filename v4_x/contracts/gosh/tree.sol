@@ -99,7 +99,7 @@ contract Tree is Modifiers {
 
     function checkFull(string namecommit, address repo, string branch, uint128 typer) public senderIs(getCommitAddr(namecommit, repo)) {
         require(_check == false, ERR_PROCCESS_IS_EXIST);
-        require(_isReady == false, ERR_PROCCESS_END);
+        require(_isReady == true, ERR_PROCCESS_END);
         _check = true;
         _checkbranch = branch;
         _root = true;
@@ -110,7 +110,7 @@ contract Tree is Modifiers {
 
     function checkTree(uint256 index, string path, uint128 typer) public senderIs(address(this)) {
         require(_check == true, ERR_PROCCESS_END);
-        require(_isReady == false, ERR_PROCCESS_END);
+        require(_isReady == true, ERR_PROCCESS_END);
         getMoney();
         if (address(this).balance < 5 ton) { _saved = PauseTree(index, path, typer); return; }
         optional(uint256, TreeObject) res = _tree.next(index);
@@ -135,7 +135,7 @@ contract Tree is Modifiers {
         getMoney();
         require(_check == true, ERR_PROCCESS_END);
         require(_needAnswer > 0, ERR_NO_NEED_ANSWER);
-        require(_isReady == false, ERR_PROCCESS_END);
+        require(_isReady == true, ERR_PROCCESS_END);
         if (_ready == false) {
             if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false, typer); }
             _check = false;
@@ -152,7 +152,7 @@ contract Tree is Modifiers {
     }
 
     function getCheckTree(string name, string branch, string path, uint128 typer) public senderIs(getTreeAddr(name)) {
-        require(_isReady == false, ERR_PROCCESS_END);      tvm.accept();
+        require(_isReady == true, ERR_PROCCESS_END);      tvm.accept();
         path += "/";
         require(_check == false, ERR_PROCCESS_IS_EXIST);
         _check = true;
@@ -164,7 +164,7 @@ contract Tree is Modifiers {
     }
 
     function gotCheckTree(string name, bool res, uint128 typer) public senderIs(getTreeAddr(name)) {
-        require(_isReady == false, ERR_PROCCESS_END);
+        require(_isReady == true, ERR_PROCCESS_END);
         tvm.accept();
         getMoney();
         if (_check == true) { return; }
@@ -227,21 +227,21 @@ contract Tree is Modifiers {
 
     function getShaInfoDiff(string commit, uint128 index1, uint128 index2, Request value0) public {
         require(checkAccessDiff(commit, msg.sender, index1, index2), ERR_SENDER_NO_ALLOWED);
-        require(_isReady == false, ERR_PROCCESS_END);
+        require(_isReady == true, ERR_PROCCESS_END);
         tvm.accept();
         getShaInfo(value0);
         getMoney();
     }
 
     function getShaInfoCommit(string commit, Request value0) public senderIs(getCommitAddr(commit, _repo)) {
-        require(_isReady == false, ERR_PROCCESS_END);
+        require(_isReady == true, ERR_PROCCESS_END);
         tvm.accept();
         getShaInfo(value0);
         getMoney();
     }
 
     function getShaInfoTree(string sha, Request value0) public {
-        require(_isReady == false, ERR_PROCCESS_END);
+        require(_isReady == true, ERR_PROCCESS_END);
         require(msg.sender == getTreeAddr(sha), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         getShaInfo(value0);
