@@ -1,36 +1,18 @@
-import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Form, Formik } from 'formik'
-import React, { useEffect, useState } from 'react'
-import { AppConfig, classNames, GoshAdapterFactory, TDao } from 'react-gosh'
+import { useEffect, useState } from 'react'
+import { AppConfig, GoshAdapterFactory, TDao } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { Button } from '../Form'
 import { ToastError, ToastSuccess } from '../Toast'
+import Alert from '../Alert/Alert'
 
 type TDaoNotificationProps = {
     dao: {
         adapter: IGoshDaoAdapter
         details: TDao
     }
-}
-
-const Danger = (props: React.PropsWithChildren) => {
-    const { children } = props
-    return (
-        <div
-            className={classNames(
-                'flex flex-nowrap items-center gap-x-4',
-                'py-3 px-5 bg-red-ff3b30 text-white text-sm rounded-xl',
-            )}
-        >
-            <div>
-                <FontAwesomeIcon icon={faExclamationTriangle} size="lg" />
-            </div>
-            <div className="grow">{children}</div>
-        </div>
-    )
 }
 
 const DaoNotification = (props: TDaoNotificationProps) => {
@@ -107,7 +89,7 @@ const DaoNotification = (props: TDaoNotificationProps) => {
 
     if (msgType === 'isUpgradeAvailable') {
         return (
-            <Danger>
+            <Alert variant="danger">
                 New version of DAO available.
                 <br />
                 It is highly recommended to complete all proposals before upgrade.
@@ -120,12 +102,12 @@ const DaoNotification = (props: TDaoNotificationProps) => {
                     DAO upgrade
                 </Link>{' '}
                 page.
-            </Danger>
+            </Alert>
         )
     }
     if (msgType === 'isNotLatest') {
         return (
-            <Danger>
+            <Alert variant="danger">
                 You are using old version of DAO.
                 <br />
                 <button
@@ -137,12 +119,12 @@ const DaoNotification = (props: TDaoNotificationProps) => {
                     Reload
                 </button>{' '}
                 page to go to the latest version
-            </Danger>
+            </Alert>
         )
     }
     if (msgType === 'isMintOnPrevDiff') {
         return (
-            <Danger>
+            <Alert variant="danger">
                 <Formik initialValues={{}} onSubmit={onIsMintOnPrevDiffSubmit}>
                     {({ isSubmitting }) => (
                         <Form>
@@ -170,12 +152,12 @@ const DaoNotification = (props: TDaoNotificationProps) => {
                         </Form>
                     )}
                 </Formik>
-            </Danger>
+            </Alert>
         )
     }
     if (msgType === 'isRepoUpgradeNeeded') {
         return (
-            <Danger>
+            <Alert variant="danger">
                 DAO repositories should be upgraded.
                 <br />
                 Go to the repositories{' '}
@@ -183,19 +165,19 @@ const DaoNotification = (props: TDaoNotificationProps) => {
                     upgrade
                 </Link>{' '}
                 page
-            </Danger>
+            </Alert>
         )
     }
     if (msgType === 'isTaskUpgradeNeeded') {
         return (
-            <Danger>
+            <Alert variant="danger">
                 DAO tasks should be upgraded.
                 <br />
                 Please, go to the{' '}
                 <Link className="underline" to={`/o/${dao.details.name}/tasks/upgrade`}>
                     tasks upgrade page
                 </Link>
-            </Danger>
+            </Alert>
         )
     }
     return null
