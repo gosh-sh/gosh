@@ -32,6 +32,14 @@ const DaoMemberListItem = (props: TMemberListItemProps) => {
                     />
                 )}
             </td>
+            <td className="px-3 py-2 text-gray-7c8db5 font-light text-sm">
+                {item.wallet && (
+                    <CopyClipboard
+                        componentProps={{ text: item.wallet }}
+                        label={shortString(item.wallet, 6, 6)}
+                    />
+                )}
+            </td>
             <td className="px-3 py-2 text-gray-7c8db5 font-light">
                 {isAuthMember ? (
                     <>

@@ -94,6 +94,7 @@ const DaoMemeberList = (props: TDaoMemeberListProps) => {
                             <tr className="text-gray-7c8db5 text-left text-xs">
                                 <th className="font-normal px-3 py-2 w-3/12">name</th>
                                 <th className="font-normal px-3 py-2">profile</th>
+                                <th className="font-normal px-3 py-2">wallet</th>
                                 <th className="font-normal px-3 py-2">karma</th>
                                 <th className="font-normal px-3 py-2">balance</th>
                                 <th className="font-normal px-3 py-2"></th>
