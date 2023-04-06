@@ -140,7 +140,6 @@ const BranchCommitForm = (props: TBranchCommitFormProps) => {
         }
 
         return yup.object().shape({
-            name: yup.string().required('Field is required'),
             title: yup.string().required('Field is required'),
             ...validationSchema,
             ...versionised,
