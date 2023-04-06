@@ -14,6 +14,7 @@ docker:
 	docker buildx build \
 		--progress=plain \
 		-t gosh-onboarding \
+		--no-cache \
 		--build-arg GOSH_ENDPOINTS=$(GOSH_ENDPOINTS) \
 		--build-arg BRANCH=$(BRANCH) \
 		.
