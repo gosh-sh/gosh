@@ -19,6 +19,7 @@ use crate::{
         },
     }
 };
+use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
 
 // const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
 
@@ -138,7 +139,7 @@ impl ParallelSnapshotUploadSupport {
                 Ok(Ok(_)) => {}
             }
         }
-        ParallelDiffsUploadSupport::wait_contracts_deployed(
+        wait_contracts_deployed(
             &blockchain,
             &addresses,
         )
@@ -293,7 +294,7 @@ impl ParallelCommitUploadSupport {
                 Ok(Ok(_)) => {}
             }
         }
-        ParallelDiffsUploadSupport::wait_contracts_deployed(
+        wait_contracts_deployed(
             &blockchain,
             &addresses,
         )
@@ -430,7 +431,7 @@ impl ParallelTreeUploadSupport {
                 Ok(Ok(_)) => {}
             }
         }
-        ParallelDiffsUploadSupport::wait_contracts_deployed(
+        wait_contracts_deployed(
             &blockchain,
             &addresses,
         )

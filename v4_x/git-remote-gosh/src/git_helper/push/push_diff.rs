@@ -16,6 +16,7 @@ use crate::{
 };
 use tokio_retry::RetryIf;
 use ton_client::utils::compress_zstd;
+use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
 use crate::blockchain::get_commit_address;
 use crate::git_helper::push::GetPreviousResult;
 use crate::git_helper::push::parallel_diffs_upload_support::ParallelDiffsUploadSupport;
@@ -396,7 +397,7 @@ pub async fn push_initial_snapshot<B>(
             &commit_id,
         ).await?;
         tracing::trace!("start waiting for commit to be ready, address: {new_commit}");
-        let undeployed = ParallelDiffsUploadSupport::wait_contracts_deployed(
+        let undeployed = wait_contracts_deployed(
             &blockchain,
             &vec![new_commit],
         ).await?;

@@ -35,9 +35,11 @@ mod parallel_snapshot_upload_support;
 use delete_tag::delete_tag;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 use push_tree::push_tree;
+use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
 use crate::git_helper::push::parallel_snapshot_upload_support::{ParallelCommit, ParallelCommitUploadSupport, ParallelSnapshot, ParallelSnapshotUploadSupport, ParallelTreeUploadSupport};
 
 static PARALLEL_PUSH_LIMIT: usize = 1 << 6;
+static MAX_REDEPLOY_ATTEMPTS: i32 = 3;
 
 #[derive(Default)]
 struct PushBlobStatistics {
@@ -364,7 +366,7 @@ where
             let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
 
             if let Err(_) = parent_contract.get_version(self.blockchain.client()).await {
-                let undeployed = ParallelDiffsUploadSupport::wait_contracts_deployed(&self.blockchain, &[parent]).await;
+                let undeployed = wait_contracts_deployed(&self.blockchain, &[parent]).await;
                 if undeployed.is_err() || !undeployed.unwrap().is_empty() {
                     tracing::trace!("Failed to call parent");
                     let right_commit_address = if let Ok(res) = self.find_commit(&id).await {
@@ -852,7 +854,7 @@ where
         let number_of_files_changed = parallel_diffs_upload_support.get_parallels_number();
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
-        while attempts < 3 {
+        while attempts < MAX_REDEPLOY_ATTEMPTS {
             attempts += 1;
             expected_contracts = parallel_diffs_upload_support
                 .wait_all_diffs(self.blockchain.clone())
@@ -876,13 +878,13 @@ where
             }
             parallel_diffs_upload_support.push_dangling(self).await?;
         }
-        if attempts == 3 {
+        if attempts == MAX_REDEPLOY_ATTEMPTS {
             anyhow::bail!("Failed to deploy all diffs. Undeployed diffs: {expected_contracts:?}")
         }
 
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
-        while attempts < 3 {
+        while attempts < MAX_REDEPLOY_ATTEMPTS {
             attempts += 1;
             expected_contracts = parallel_snapshot_uploads
                 .wait_all_snapshots(self.blockchain.clone())
@@ -904,13 +906,13 @@ where
                 parallel_snapshot_uploads.add_to_push_list(self, snapshot).await?;
             }
         }
-        if attempts == 3 {
+        if attempts == MAX_REDEPLOY_ATTEMPTS {
             anyhow::bail!("Failed to deploy all snapshots. Undeployed snapshots: {expected_contracts:?}")
         }
 
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
-        while attempts < 3 {
+        while attempts < MAX_REDEPLOY_ATTEMPTS {
             attempts += 1;
             expected_contracts = parallel_tree_uploads
                 .wait_all_trees(self.blockchain.clone())
@@ -932,13 +934,13 @@ where
                 parallel_tree_uploads.add_to_push_list(self, tree, push_semaphore.clone()).await?;
             }
         }
-        if attempts == 3 {
+        if attempts == MAX_REDEPLOY_ATTEMPTS {
             anyhow::bail!("Failed to deploy all trees. Undeployed trees: {expected_contracts:?}")
         }
 
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
-        while attempts < 3 {
+        while attempts < MAX_REDEPLOY_ATTEMPTS {
             attempts += 1;
             expected_contracts = push_commits
                 .wait_all_commits(self.blockchain.clone())
@@ -960,7 +962,7 @@ where
                 push_commits.add_to_push_list(self, commit, push_semaphore.clone()).await?;
             }
         }
-        if attempts == 3 {
+        if attempts == MAX_REDEPLOY_ATTEMPTS {
             anyhow::bail!("Failed to deploy all commits. Undeployed commits: {expected_contracts:?}")
         }
 
