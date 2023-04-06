@@ -1,8 +1,10 @@
+use crate::blockchain::blockchain_contract_address::FormatShort;
+use crate::blockchain::{
+    BlockchainContractAddress, BlockchainService, MAX_ACCOUNTS_ADDRESSES_PER_QUERY,
+};
 use std::collections::HashSet;
 use tokio::task::JoinSet;
-use crate::blockchain::{BlockchainContractAddress, BlockchainService, MAX_ACCOUNTS_ADDRESSES_PER_QUERY};
 use tracing::Instrument;
-use crate::blockchain::blockchain_contract_address::FormatShort;
 
 const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
 
@@ -11,11 +13,12 @@ pub async fn wait_contracts_deployed<B>(
     blockchain: &B,
     addresses: &[BlockchainContractAddress],
 ) -> anyhow::Result<Vec<BlockchainContractAddress>>
-    where
-        B: BlockchainService + 'static,
+where
+    B: BlockchainService + 'static,
 {
     tracing::trace!("wait_contracts_deployed: addresses={addresses:?}");
-    let mut deploymend_results: JoinSet<anyhow::Result<Vec<BlockchainContractAddress>>> = JoinSet::new();
+    let mut deploymend_results: JoinSet<anyhow::Result<Vec<BlockchainContractAddress>>> =
+        JoinSet::new();
     for chunk in addresses.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {
         let mut waiting_for_addresses = Vec::from(addresses);
         let b = blockchain.clone();
@@ -27,9 +30,9 @@ pub async fn wait_contracts_deployed<B>(
                     if iteration > MAX_RETRIES_FOR_DIFFS_TO_APPEAR + 1 {
                         // anyhow::bail!(
                         tracing::trace!(
-                                "Some contracts didn't appear in time: {}",
-                                waiting_for_addresses.format_short()
-                            );
+                            "Some contracts didn't appear in time: {}",
+                            waiting_for_addresses.format_short()
+                        );
                         return Ok(waiting_for_addresses);
                     }
                     match b
@@ -45,25 +48,25 @@ pub async fn wait_contracts_deployed<B>(
                             if !waiting_for_addresses.is_empty() {
                                 tokio::time::sleep(std::time::Duration::from_secs(3)).await;
                                 tracing::trace!(
-                                        "Addresses {} are not ready yet. iteration {}",
-                                        waiting_for_addresses.format_short(),
-                                        iteration
-                                    );
+                                    "Addresses {} are not ready yet. iteration {}",
+                                    waiting_for_addresses.format_short(),
+                                    iteration
+                                );
                             }
                         }
                         Err(ref e) => {
                             tokio::time::sleep(std::time::Duration::from_secs(3)).await;
                             tracing::trace!(
-                                    "State request failed with: {}. iteration {}",
-                                    e,
-                                    iteration
-                                );
+                                "State request failed with: {}. iteration {}",
+                                e,
+                                iteration
+                            );
                         }
                     }
                 } // While loop
                 Ok(vec![])
             } //move
-                .instrument(info_span!("tokio::spawn::wait_diff_deployed").or_current()),
+            .instrument(info_span!("tokio::spawn::wait_diff_deployed").or_current()),
         );
     }
     let mut undeployed_contracts = HashSet::new();

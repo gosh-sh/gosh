@@ -1,13 +1,15 @@
-use crate::blockchain::contract::{ContractInfo, wait_contracts_deployed};
+use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
+use crate::blockchain::contract::ContractInfo;
 use crate::blockchain::user_wallet::UserWallet;
-use crate::blockchain::{BlockchainService, call::BlockchainCall, Everscale, GoshBlobBitFlags, Tree};
+use crate::blockchain::{
+    call::BlockchainCall, BlockchainService, Everscale, GoshBlobBitFlags, Tree,
+};
 use async_trait::async_trait;
 use git_object;
 use git_object::tree;
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::Arc;
-use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
 
 #[derive(Serialize, Debug, Clone)]
 pub struct TreeNode {
@@ -78,16 +80,16 @@ impl DeployTree for Everscale {
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
         let result = if nodes.len() > TREE_NODES_CHUNK_MAX_SIZE {
             let mut repo_contract = self.repo_contract().clone();
-            let tree_address = Tree::calculate_address(
-                &Arc::clone(self.client()),
-                &mut repo_contract,
-                sha,
-            )
-                .await?;
+            let tree_address =
+                Tree::calculate_address(&Arc::clone(self.client()), &mut repo_contract, sha)
+                    .await?;
             let mut nodes = nodes.to_owned();
             let mut chunk: HashMap<String, TreeNode> = HashMap::new();
             let mut counter = 0;
-            (chunk, nodes) = nodes.into_iter().partition(|(_,_)| { counter += 1; counter <= TREE_NODES_CHUNK_MAX_SIZE });
+            (chunk, nodes) = nodes.into_iter().partition(|(_, _)| {
+                counter += 1;
+                counter <= TREE_NODES_CHUNK_MAX_SIZE
+            });
             let params = DeployTreeArgs {
                 sha: sha.to_owned(),
                 repo_name: repo_name.to_owned(),
@@ -98,20 +100,15 @@ impl DeployTree for Everscale {
             tracing::trace!("DeployTreeArgs: {params:?}");
             let mut attempts = 0;
             while attempts < MAX_REDEPLOY_ATTEMPTS {
-                self
-                    .send_message(
-                        wallet_contract.deref(),
-                        "deployTree",
-                        Some(serde_json::to_value(params.clone())?),
-                        None,
-                    )
-                    .await
-                    .map(|_| ())?;
-                let res = wait_contracts_deployed(
-                    self,
-                    &[tree_address.clone()],
+                self.send_message(
+                    wallet_contract.deref(),
+                    "deployTree",
+                    Some(serde_json::to_value(params.clone())?),
+                    None,
                 )
-                    .await;
+                .await
+                .map(|_| ())?;
+                let res = wait_contracts_deployed(self, &[tree_address.clone()]).await;
                 attempts += 1;
                 if attempts == MAX_REDEPLOY_ATTEMPTS && res.is_err() {
                     res?;
@@ -164,15 +161,14 @@ impl DeployTree for Everscale {
                 is_final: true,
             };
             tracing::trace!("DeployTreeArgs: {params:?}");
-            self
-                .send_message(
-                    wallet_contract.deref(),
-                    "deployTree",
-                    Some(serde_json::to_value(params)?),
-                    None,
-                )
-                .await
-                .map(|_| ())
+            self.send_message(
+                wallet_contract.deref(),
+                "deployTree",
+                Some(serde_json::to_value(params)?),
+                None,
+            )
+            .await
+            .map(|_| ())
         };
         drop(wallet_contract);
         if let Err(ref e) = result {

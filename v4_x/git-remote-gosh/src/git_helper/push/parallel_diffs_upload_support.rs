@@ -1,14 +1,14 @@
+use crate::blockchain::BlockchainService;
 use crate::blockchain::{snapshot::PushDiffCoordinate, BlockchainContractAddress};
-use crate::blockchain::{BlockchainService, FormatShort, MAX_ACCOUNTS_ADDRESSES_PER_QUERY};
 use crate::git_helper::push::push_diff::{diff_address, is_diff_deployed, push_diff};
 use crate::git_helper::GitHelper;
 
+use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
 use anyhow::bail;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::vec::Vec;
 use tokio::task::JoinSet;
 use tracing::Instrument;
-use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
 
 const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
 
@@ -18,7 +18,8 @@ pub struct ParallelDiffsUploadSupport {
     dangling_diffs: HashMap<String, (PushDiffCoordinate, ParallelDiff)>,
     next_parallel_index: u32,
     last_commit_id: git_hash::ObjectId,
-    expecting_deployed_contacts_addresses: HashMap<BlockchainContractAddress,(PushDiffCoordinate, ParallelDiff, bool)>,
+    expecting_deployed_contacts_addresses:
+        HashMap<BlockchainContractAddress, (PushDiffCoordinate, ParallelDiff, bool)>,
     pushed_blobs: JoinSet<anyhow::Result<()>>,
 }
 
@@ -73,7 +74,9 @@ impl ParallelDiffsUploadSupport {
         }
     }
 
-    pub fn get_expected(&self) -> &HashMap<BlockchainContractAddress,(PushDiffCoordinate, ParallelDiff, bool)> {
+    pub fn get_expected(
+        &self,
+    ) -> &HashMap<BlockchainContractAddress, (PushDiffCoordinate, ParallelDiff, bool)> {
         &self.expecting_deployed_contacts_addresses
     }
 
@@ -111,9 +114,9 @@ impl ParallelDiffsUploadSupport {
                     &parallel_diff_clone.diff,
                     &parallel_diff_clone.new_snapshot_content,
                 )
-                    .await
+                .await
             }
-                .instrument(debug_span!("tokio::spawn::push_diff").or_current()),
+            .instrument(debug_span!("tokio::spawn::push_diff").or_current()),
         );
         // TODO add to list here
     }
@@ -123,7 +126,11 @@ impl ParallelDiffsUploadSupport {
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
     ) -> anyhow::Result<()> {
-        let values = self.dangling_diffs.clone().into_values().collect::<Vec<(PushDiffCoordinate, ParallelDiff)>>();
+        let values = self
+            .dangling_diffs
+            .clone()
+            .into_values()
+            .collect::<Vec<(PushDiffCoordinate, ParallelDiff)>>();
         for (diff_coordinates, parallel_diff) in values {
             {
                 self.add_to_push_list(context, &diff_coordinates, &parallel_diff, true);
@@ -135,27 +142,36 @@ impl ParallelDiffsUploadSupport {
                 &self.last_commit_id,
                 &diff_coordinates,
             )
-                .await?;
+            .await?;
             tracing::trace!(
                 "diff_contract_address <commit: {}, coord: {:?}>: {}",
                 self.last_commit_id,
                 diff_coordinates,
                 diff_contract_address
             );
-            self.expecting_deployed_contacts_addresses
-                .insert(diff_contract_address, (diff_coordinates.to_owned(), parallel_diff.to_owned(), true));
+            self.expecting_deployed_contacts_addresses.insert(
+                diff_contract_address,
+                (diff_coordinates.to_owned(), parallel_diff.to_owned(), true),
+            );
         }
         Ok(())
     }
 
-    pub async fn wait_all_diffs<B>(&mut self, blockchain: B) -> anyhow::Result<Vec<BlockchainContractAddress>>
-        where
-            B: BlockchainService + 'static,
+    pub async fn wait_all_diffs<B>(
+        &mut self,
+        blockchain: B,
+    ) -> anyhow::Result<Vec<BlockchainContractAddress>>
+    where
+        B: BlockchainService + 'static,
     {
         // TODO:
         // - Let user know if we reached it
         // - Make it configurable
-        let addresses = self.expecting_deployed_contacts_addresses.clone().into_keys().collect::<Vec<BlockchainContractAddress>>();
+        let addresses = self
+            .expecting_deployed_contacts_addresses
+            .clone()
+            .into_keys()
+            .collect::<Vec<BlockchainContractAddress>>();
         tracing::debug!(
             "Expecting the following diff contracts to be deployed: {:?}",
             addresses
@@ -171,11 +187,7 @@ impl ParallelDiffsUploadSupport {
                 Ok(Ok(_)) => {}
             }
         }
-        wait_contracts_deployed(
-            &blockchain,
-            &addresses,
-        )
-            .await
+        wait_contracts_deployed(&blockchain, &addresses).await
     }
 
     #[instrument(level = "info", skip_all)]
@@ -183,8 +195,8 @@ impl ParallelDiffsUploadSupport {
         blockchain: &B,
         expecting_address: &BlockchainContractAddress,
     ) -> anyhow::Result<()>
-        where
-            B: BlockchainService,
+    where
+        B: BlockchainService,
     {
         tracing::trace!("wait_diff_deployed: expecting_address={expecting_address}");
         for iteration in 0..MAX_RETRIES_FOR_DIFFS_TO_APPEAR {
@@ -241,15 +253,17 @@ impl ParallelDiffsUploadSupport {
                     &self.last_commit_id,
                     &diff_coordinates,
                 )
-                    .await?;
+                .await?;
                 tracing::trace!(
-                "diff_contract_address <commit: {}, coord: {:?}>: {}",
-                self.last_commit_id,
-                diff_coordinates,
-                diff_contract_address
-            );
-                self.expecting_deployed_contacts_addresses
-                    .insert(diff_contract_address, (diff_coordinates, parallel_diff, false));
+                    "diff_contract_address <commit: {}, coord: {:?}>: {}",
+                    self.last_commit_id,
+                    diff_coordinates,
+                    diff_contract_address
+                );
+                self.expecting_deployed_contacts_addresses.insert(
+                    diff_contract_address,
+                    (diff_coordinates, parallel_diff, false),
+                );
             }
         }
         Ok(())
