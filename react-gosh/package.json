@@ -10,7 +10,7 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "prepublish": "tsc",
-        "build": "npm run prepublish && npm pack"
+        "build": "pnpm run prepublish && pnpm pack"
     },
     "author": "",
     "license": "ISC",
@@ -31,7 +31,7 @@
         "diff": "^5.1.0",
         "isutf8": "^4.0.0",
         "react": "^18.2.0",
-        "recoil": "^0.7.4",
+        "recoil": "^0.7.7",
         "recoil-persist": "^4.2.0"
     }
 }

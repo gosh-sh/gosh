@@ -34,7 +34,7 @@ const Header = () => {
                         </Link>
 
                         <div className="flex items-center gap-x-4 sm:gap-x-34px ml-4">
-                            {process.env.REACT_APP_ISDOCKEREXT === 'true' && (
+                            {import.meta.env.REACT_APP_ISDOCKEREXT === 'true' && (
                                 <>
                                     <Link
                                         to="/containers"
