@@ -78,7 +78,7 @@ const DaoMemberInvites = (props: TDaoMemberInvitesProps) => {
             <thead>
                 <tr className="text-gray-7c8db5 text-left text-xs">
                     <th className="font-normal w-1/2 whitespace-nowrap">Invited user</th>
-                    <th className="font-normal px-3">Allowance</th>
+                    <th className="font-normal px-3">Karma</th>
                     <th className="font-normal px-3">Status</th>
                     <th></th>
                 </tr>

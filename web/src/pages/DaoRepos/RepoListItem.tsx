@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
 import { TRepositoryListItem } from 'react-gosh/dist/types/repo.types'
-import ReactTooltip from 'react-tooltip'
+import { Tooltip } from 'react-tooltip'
 
 type TRepositoryListItemProps = {
     daoName: string
@@ -40,7 +40,7 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
 
             <div className="flex gap-4 mt-3 text-sm text-gray-7c8db5 justify-between">
                 <div className="flex gap-4">
-                    <div data-tip="Branches">
+                    <div data-tooltip-id="common-tip" data-tooltip-content="Branches">
                         <FontAwesomeIcon icon={faCodeFork} className="mr-1" />
                         {item.branches?.length}
                     </div>
@@ -50,13 +50,16 @@ const RepositoryListItem = (props: TRepositoryListItemProps) => {
                         text: item.address,
                     }}
                     label={
-                        <span data-tip="Repository address">
+                        <span
+                            data-tooltip-id="common-tip"
+                            data-tooltip-content="Repository address"
+                        >
                             {shortString(item.address)}
                         </span>
                     }
                 />
             </div>
-            <ReactTooltip clickable />
+            <Tooltip id="common-tip" clickable />
         </div>
     )
 }

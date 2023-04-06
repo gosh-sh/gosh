@@ -4,7 +4,8 @@ export default {
     theme: {
         extend: {
             maxWidth: {
-                container: '1288px',
+                'side-right': '20.4375rem',
+                'side-right-md': '18rem',
                 '696px': '43.5rem',
                 '264px': '16.5rem',
             },

@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { classNames, shortString, TDaoListItem } from 'react-gosh'
 import { Link } from 'react-router-dom'
 import CopyClipboard from '../../components/CopyClipboard'
-import ReactTooltip from 'react-tooltip'
+import { Tooltip } from 'react-tooltip'
 import { getIdenticonAvatar } from '../../helpers'
 
 type TDaoListItemProps = {
@@ -17,33 +17,33 @@ const DaoListItem = (props: TDaoListItemProps) => {
     return (
         <div
             className={classNames(
-                'border border-gray-e6edff rounded-xl flex flex-nowrap p-5',
+                'p-5 border border-gray-e6edff rounded-xl',
                 'hover:bg-gray-e6edff/20',
                 className,
             )}
         >
-            <div className="overflow-hidden rounded-xl">
-                <img
-                    src={getIdenticonAvatar({ seed: item.name }).toDataUriSync()}
-                    alt=""
-                    className="w-14 h-14 md:w-20 md:h-20"
-                />
-            </div>
-            <div className="grow pl-4">
-                <div className="flex flex-wrap items-center">
-                    <div className="mb-1 grow">
+            <div className={classNames('row !flex-nowrap')}>
+                <div className="col !grow-0">
+                    <div className="overflow-hidden rounded-xl w-12 md:w-16 lg:w-20">
+                        <img
+                            src={getIdenticonAvatar({ seed: item.name }).toDataUriSync()}
+                            alt=""
+                            className="w-full"
+                        />
+                    </div>
+                </div>
+                <div className="col">
+                    <div className="mb-3 truncate">
                         <Link
                             to={`/o/${item.name}`}
                             className="text-xl font-medium leading-5 capitalize"
                         >
                             {item.name}
                         </Link>
-                        <span className="ml-2 align-super text-sm font-normal text-gray-7c8db5">
-                            {item.version}
-                        </span>
                     </div>
+
                     {!!item.tags?.length && (
-                        <div className="flex flex-wrap gap-2 text-xs text-gray-7c8db5">
+                        <div className="mb-3 flex flex-wrap gap-2 text-xs text-gray-7c8db5">
                             {item.tags.map((tag, index) => (
                                 <span
                                     key={index}
@@ -54,31 +54,34 @@ const DaoListItem = (props: TDaoListItemProps) => {
                             ))}
                         </div>
                     )}
-                </div>
 
-                <div
-                    className={classNames(
-                        'flex flex-wrap items-center gap-x-5 gap-y-1 mt-4',
-                        'text-gray-7c8db5 text-xs font-light',
-                    )}
-                >
-                    <div data-tip="Members">
-                        <FontAwesomeIcon icon={faUsers} className="mr-1" />
-                        {item.members?.length}
+                    <div
+                        className={classNames(
+                            'flex flex-wrap items-center gap-x-5 gap-y-2',
+                            'text-gray-7c8db5 text-xs font-light',
+                        )}
+                    >
+                        <div>Version: {item.version}</div>
+                        <div data-tooltip-id="common-tip" data-tooltip-content="Members">
+                            <FontAwesomeIcon icon={faUsers} className="mr-1" />
+                            {item.members?.length}
+                        </div>
+                        <div>Total supply: {item.supply?.total.toLocaleString()}</div>
+                        <CopyClipboard
+                            componentProps={{ text: item.address }}
+                            label={
+                                <span
+                                    data-tooltip-id="common-tip"
+                                    data-tooltip-content="DAO address"
+                                >
+                                    {shortString(item.address, 6, 6)}
+                                </span>
+                            }
+                        />
                     </div>
-                    <div>Total supply {item.supply?.total}</div>
-                    <CopyClipboard
-                        className="grow justify-end"
-                        componentProps={{ text: item.address }}
-                        label={
-                            <span data-tip="DAO address">
-                                {shortString(item.address, 6, 6)}
-                            </span>
-                        }
-                    />
                 </div>
+                <Tooltip id="common-tip" clickable />
             </div>
-            <ReactTooltip clickable />
         </div>
     )
 }

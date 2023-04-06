@@ -13,6 +13,10 @@ if (import.meta.env.REACT_APP_ISDOCKEREXT === 'true') {
     libWebSetup({
         binaryURL: `./eversdk.wasm?v=${Math.random().toString(36).slice(2, 8)}`,
     })
+} else {
+    libWebSetup({
+        binaryURL: `/eversdk.wasm?v=ubv73h`,
+    })
 }
 
 const container = document.getElementById('root')

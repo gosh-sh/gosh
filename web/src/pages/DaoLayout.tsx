@@ -2,10 +2,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import { classNames, useDao, TDao, shortString } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
-import SideMenuContainer from '../components/SideMenuContainer'
 import Loader from '../components/Loader'
 import CopyClipboard from '../components/CopyClipboard'
-import ReactTooltip from 'react-tooltip'
+import { Tooltip } from 'react-tooltip'
 import { getIdenticonAvatar } from '../helpers'
 import { DaoNotification } from '../components/Dao'
 
@@ -19,7 +18,10 @@ export type TDaoLayoutOutletContext = {
 const DaoLayout = () => {
     const { daoName } = useParams()
     const dao = useDao(daoName!)
-    const [description, setDescription] = useState<string | null>()
+    const [description, setDescription] = useState<{
+        isFetching: boolean
+        content: string | null
+    }>({ isFetching: true, content: null })
     const [isReady, setIsReady] = useState<boolean>(false)
 
     const getTabs = () => {
@@ -52,8 +54,9 @@ const DaoLayout = () => {
 
     const getDaoShortDescription = useCallback(async () => {
         if (dao.adapter) {
+            setDescription((state) => ({ ...state, isFetching: true }))
             const content = await dao.adapter.getShortDescription()
-            setDescription(content)
+            setDescription((state) => ({ ...state, isFetching: false, content }))
         }
     }, [dao.adapter])
 
@@ -65,16 +68,18 @@ const DaoLayout = () => {
     }, [dao.isFetching, getDaoShortDescription])
 
     return (
-        <SideMenuContainer>
-            <div className="flex flex-nowrap gap-x-4 mb-6">
-                <div className="w-20 overflow-hidden rounded-lg">
-                    <img
-                        src={getIdenticonAvatar({ seed: daoName }).toDataUriSync()}
-                        className="w-full"
-                        alt=""
-                    />
+        <div className="container py-10">
+            <div className="row mb-6">
+                <div className="col !grow-0">
+                    <div className="overflow-hidden rounded-xl w-12 md:w-16 lg:w-20">
+                        <img
+                            src={getIdenticonAvatar({ seed: daoName }).toDataUriSync()}
+                            className="w-full"
+                            alt=""
+                        />
+                    </div>
                 </div>
-                <div>
+                <div className="col">
                     <h1 className="mb-2">
                         <Link
                             to={`/o/${daoName}`}
@@ -100,32 +105,36 @@ const DaoLayout = () => {
                             </span>
                         ))}
                     </h1>
-                    <div className="mb-2 text-sm">
-                        {!description && dao.details?.isAuthMember && (
-                            <>
-                                Place description.txt to main branch of{' '}
-                                {dao.details.hasRepoIndex ? (
-                                    <Link
-                                        to={`/o/${dao.details.name}/r/_index`}
-                                        className="text-blue-348eff"
-                                    >
-                                        _index
-                                    </Link>
-                                ) : (
-                                    '_index'
-                                )}{' '}
-                                repo to add short description
-                            </>
-                        )}
-                        {!!description && description}
-                    </div>
+                    {!description.isFetching && (
+                        <div className="mb-2 text-sm">
+                            {!description.content && dao.details?.isAuthMember && (
+                                <>
+                                    Place description.txt to main branch of{' '}
+                                    {dao.details.hasRepoIndex ? (
+                                        <Link
+                                            to={`/o/${dao.details.name}/r/_index`}
+                                            className="text-blue-348eff"
+                                        >
+                                            _index
+                                        </Link>
+                                    ) : (
+                                        '_index'
+                                    )}{' '}
+                                    repo to add short description
+                                </>
+                            )}
+                            {!!description.content && description.content}
+                        </div>
+                    )}
                     {dao.adapter && (
                         <CopyClipboard
                             className="text-xs text-gray-7c8db5"
                             label={
-                                <span data-tip="DAO address">
+                                <span
+                                    data-tooltip-id="common-tip"
+                                    data-tooltip-content="DAO address"
+                                >
                                     {shortString(dao.adapter.getAddress())}
-                                    <ReactTooltip clickable />
                                 </span>
                             }
                             componentProps={{
@@ -184,7 +193,9 @@ const DaoLayout = () => {
                     <Outlet context={{ dao }} />
                 </>
             )}
-        </SideMenuContainer>
+
+            <Tooltip id="common-tip" clickable />
+        </div>
     )
 }
 
