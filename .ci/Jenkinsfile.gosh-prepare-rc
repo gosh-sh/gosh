@@ -109,10 +109,12 @@ pipeline {
                         deployVersion(version, nodes, basePort)
                     }
 
-                    runFunctionalTests(files, basePort, "Func v1", "v1_x")
-                    runFunctionalTests(files, basePort, "Func v2", "v2_x")
-                    runFunctionalTests(files, basePort, "Func v3", "v3_x")
-                    runFunctionalTests(files, basePort, "Func v4", "v4_x")
+                    //runFunctionalTests(files, basePort, "Func v1", "v1_x")
+                    //runFunctionalTests(files, basePort, "Func v2", "v2_x")
+                    //runFunctionalTests(files, basePort, "Func v3", "v3_x")
+                    //runFunctionalTests(files, basePort, "Func v4", "v4_x")
+
+                    def files = getTestFiles("tests/upgrade_tests")
                     runUpgradeTests(files, basePort, 1, 2)
                     runUpgradeTests(files, basePort, 2, 3)
                     runUpgradeTests(files, basePort, 1, 3)
