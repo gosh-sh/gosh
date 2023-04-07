@@ -141,7 +141,7 @@ impl ParallelDiffsUploadSupport {
         let values = self.dangling_diffs.clone().into_values().collect::<Vec<(PushDiffCoordinate, ParallelDiff)>>();
         for (diff_coordinates, parallel_diff) in values {
             {
-                self.add_to_push_list(context, &diff_coordinates, &parallel_diff, true);
+                self.add_to_push_list(context, &diff_coordinates, &parallel_diff, true).await?;
             }
         }
         Ok(())
@@ -302,7 +302,7 @@ impl ParallelDiffsUploadSupport {
         match prev_value {
             None => {}
             Some((diff_coordinates, parallel_diff)) => {
-                self.add_to_push_list(context, &diff_coordinates, &parallel_diff, false);
+                self.add_to_push_list(context, &diff_coordinates, &parallel_diff, false).await?;
             }
         }
         Ok(())
