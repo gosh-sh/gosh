@@ -276,7 +276,6 @@ fn get_ini_path() -> anyhow::Result<String> {
 
 fn load_remote_versions_from_ini() -> anyhow::Result<Vec<String>> {
     let path_str = get_ini_path()?;
-    eprintln!("path_str: {path_str}");
     let path = Path::new(&path_str).to_owned();
     let file = File::open(path)
         .map_err(|e| format_err!("Failed to read dispatcher ini file {}: {}", path_str, e))?;
