@@ -10,7 +10,7 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "prepublish": "tsc",
-        "build": "npm run prepublish && npm pack"
+        "build": "pnpm run prepublish && pnpm pack"
     },
     "author": "",
     "license": "ISC",
@@ -23,15 +23,15 @@
     },
     "dependencies": {
         "@docker/extension-api-client": "^0.2.3",
-        "@eversdk/appkit": "^0.3.2",
-        "@eversdk/core": "^1.39.0",
-        "@eversdk/lib-web": "^1.39.0",
+        "@eversdk/appkit": "^0.3.6",
+        "@eversdk/core": "^1.42.1",
+        "@eversdk/lib-web": "^1.42.1",
         "buffer": "^6.0.3",
         "crypto-js": "^4.1.1",
         "diff": "^5.1.0",
         "isutf8": "^4.0.0",
         "react": "^18.2.0",
-        "recoil": "^0.7.4",
+        "recoil": "^0.7.7",
         "recoil-persist": "^4.2.0"
     }
 }

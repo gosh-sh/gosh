@@ -51,7 +51,7 @@ const MemberAllowanceEvent = (props: TMemberAllowanceEventProps) => {
                         />
                     </div>
                     <div className="flex gap-3 text-gray-7c8db5 text-sm">
-                        <div>Allowance change:</div>
+                        <div>Karma change:</div>
                         {item.delta}
                     </div>
                 </div>

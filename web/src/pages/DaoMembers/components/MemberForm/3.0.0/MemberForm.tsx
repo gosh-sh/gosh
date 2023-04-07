@@ -11,7 +11,7 @@ import { isValidEmail, supabase, ToastOptionsShortcuts } from '../../../../../he
 import yup from '../../../../../yup-extended'
 import { ToastError } from '../../../../../components/Toast'
 import { Buffer } from 'buffer'
-import * as clipboardy from 'clipboardy'
+import clipboardy from 'clipboardy'
 import AsyncCreatableSelect from 'react-select/async-creatable'
 import { FormikInput, FormikTextarea } from '../../../../../components/Formik'
 

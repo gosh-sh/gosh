@@ -43,7 +43,7 @@ const SettingsPage = () => {
                     secret: user.keys?.secret,
                 },
                 // TODO: fix possible undefined
-                endpoints: process.env.REACT_APP_GOSH_NETWORK?.split(','),
+                endpoints: import.meta.env.REACT_APP_GOSH_NETWORK?.split(','),
             },
         },
     }
@@ -91,7 +91,7 @@ const SettingsPage = () => {
     }
 
     return (
-        <div>
+        <>
             <h1 className="text-3xl font-medium">User settings</h1>
 
             <div className="mt-10 flex flex-wrap gap-x-6 gap-y-4 items-center">
@@ -199,7 +199,7 @@ const SettingsPage = () => {
                 )}
                 <LockButton isLocked={!showRemote} onClick={onShowRemoteToggle} />
             </div>
-        </div>
+        </>
     )
 }
 

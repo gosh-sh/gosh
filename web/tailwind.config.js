@@ -1,9 +1,11 @@
-module.exports = {
-    content: ['./src/**/*.{js,jsx,ts,tsx}'],
+/** @type {import('tailwindcss').Config} */
+export default {
+    content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
     theme: {
         extend: {
             maxWidth: {
-                container: '1288px',
+                'side-right': '20.4375rem',
+                'side-right-md': '18rem',
                 '696px': '43.5rem',
                 '264px': '16.5rem',
             },

@@ -13,8 +13,8 @@ const EventsPage = () => {
         useSmvEventList(dao.adapter, { perPage: 5 })
 
     return (
-        <div className="flex flex-wrap gap-4 justify-between">
-            <div className="grow">
+        <div className="row flex-wrap">
+            <div className="col !basis-full md:!basis-0">
                 <h3 className="text-xl font-medium mb-4">DAO events</h3>
                 <div className="border border-gray-e6edff rounded-xl overflow-hidden">
                     {isFetching && !items.length && (
@@ -59,12 +59,14 @@ const EventsPage = () => {
                 </div>
             </div>
 
-            <div className="basis-4/12 flex flex-col gap-y-5">
-                <DaoSupplySide dao={dao} />
-                {dao.details.isAuthenticated && (
-                    <DaoWalletSide dao={dao} wallet={wallet} />
-                )}
-                <DaoMembersSide dao={dao} />
+            <div className="col !max-w-full md:!max-w-side-right-md lg:!max-w-side-right">
+                <div className="flex flex-col gap-y-5">
+                    <DaoSupplySide dao={dao} />
+                    {dao.details.isAuthenticated && (
+                        <DaoWalletSide dao={dao} wallet={wallet} />
+                    )}
+                    <DaoMembersSide dao={dao} />
+                </div>
             </div>
         </div>
     )
