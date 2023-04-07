@@ -1786,7 +1786,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        Tree(getTreeAddr(shaTree, _buildRepositoryAddr(repoName))).addTree{value: 0.2 ton}(_pubaddr, _index, datatree);
+        Tree(getTreeAddr(shaTree, _buildRepositoryAddr(repoName))).addTree{value: 0.2 ton, flag: 1}(_pubaddr, _index, datatree);
     }
 
     function setTreeFinishMark(
@@ -1795,7 +1795,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        Tree(getTreeAddr(shaTree, _buildRepositoryAddr(repoName))).setFinishMark{value: 0.2 ton}(_pubaddr, _index);
+        Tree(getTreeAddr(shaTree, _buildRepositoryAddr(repoName))).setFinishMark{value: 0.2 ton, flag: 1}(_pubaddr, _index);
     }
 
     function getTreeAddr(string shaTree, address rootRepo) internal view returns(address) {

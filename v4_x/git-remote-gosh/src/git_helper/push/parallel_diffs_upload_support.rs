@@ -23,7 +23,7 @@ pub struct ParallelDiffsUploadSupport {
     pushed_blobs: JoinSet<anyhow::Result<()>>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ParallelDiff {
     commit_id: git_hash::ObjectId,
     branch_name: String,
@@ -80,13 +80,13 @@ impl ParallelDiffsUploadSupport {
         &self.expecting_deployed_contacts_addresses
     }
 
-    pub fn add_to_push_list(
+    pub async fn add_to_push_list(
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
         diff_coordinates: &PushDiffCoordinate,
         parallel_diff: &ParallelDiff,
         is_last: bool,
-    ) {
+    ) -> anyhow::Result<()> {
         let blockchain = context.blockchain.clone();
         let dao_address: BlockchainContractAddress = context.dao_addr.clone();
         let remote_network: String = context.remote.network.clone();
@@ -118,7 +118,25 @@ impl ParallelDiffsUploadSupport {
             }
             .instrument(debug_span!("tokio::spawn::push_diff").or_current()),
         );
-        // TODO add to list here
+        let mut repo_contract = context.blockchain.repo_contract().clone();
+        let diff_contract_address = diff_address(
+            &context.blockchain.client(),
+            &mut repo_contract,
+            &self.last_commit_id,
+            &diff_coordinates,
+        )
+            .await?;
+        tracing::trace!(
+                "diff_contract_address <commit: {}, coord: {:?}>: {}",
+                self.last_commit_id,
+                diff_coordinates,
+                diff_contract_address
+            );
+        self.expecting_deployed_contacts_addresses.insert(
+            diff_contract_address,
+            (diff_coordinates.to_owned(), parallel_diff.to_owned(), true),
+        );
+        Ok(())
     }
 
     #[instrument(level = "info", skip_all)]
@@ -133,26 +151,8 @@ impl ParallelDiffsUploadSupport {
             .collect::<Vec<(PushDiffCoordinate, ParallelDiff)>>();
         for (diff_coordinates, parallel_diff) in values {
             {
-                self.add_to_push_list(context, &diff_coordinates, &parallel_diff, true);
+                self.add_to_push_list(context, &diff_coordinates, &parallel_diff, true).await?;
             }
-            let mut repo_contract = context.blockchain.repo_contract().clone();
-            let diff_contract_address = diff_address(
-                &context.blockchain.client(),
-                &mut repo_contract,
-                &self.last_commit_id,
-                &diff_coordinates,
-            )
-            .await?;
-            tracing::trace!(
-                "diff_contract_address <commit: {}, coord: {:?}>: {}",
-                self.last_commit_id,
-                diff_coordinates,
-                diff_contract_address
-            );
-            self.expecting_deployed_contacts_addresses.insert(
-                diff_contract_address,
-                (diff_coordinates.to_owned(), parallel_diff.to_owned(), true),
-            );
         }
         Ok(())
     }
@@ -245,25 +245,7 @@ impl ParallelDiffsUploadSupport {
         match prev_value {
             None => {}
             Some((diff_coordinates, parallel_diff)) => {
-                self.add_to_push_list(context, &diff_coordinates, &parallel_diff, false);
-                let mut repo_contract = context.blockchain.repo_contract().clone();
-                let diff_contract_address = diff_address(
-                    &context.blockchain.client(),
-                    &mut repo_contract,
-                    &self.last_commit_id,
-                    &diff_coordinates,
-                )
-                .await?;
-                tracing::trace!(
-                    "diff_contract_address <commit: {}, coord: {:?}>: {}",
-                    self.last_commit_id,
-                    diff_coordinates,
-                    diff_contract_address
-                );
-                self.expecting_deployed_contacts_addresses.insert(
-                    diff_contract_address,
-                    (diff_coordinates, parallel_diff, false),
-                );
+                self.add_to_push_list(context, &diff_coordinates, &parallel_diff, false).await?;
             }
         }
         Ok(())

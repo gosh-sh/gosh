@@ -1,9 +1,7 @@
 use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
-use crate::blockchain::contract::ContractInfo;
+use crate::blockchain::contract::{ContractInfo, GoshContract};
 use crate::blockchain::user_wallet::UserWallet;
-use crate::blockchain::{
-    call::BlockchainCall, BlockchainService, Everscale, GoshBlobBitFlags, Tree,
-};
+use crate::blockchain::{call::BlockchainCall, BlockchainService, Everscale, GoshBlobBitFlags, Tree, BlockchainContractAddress};
 use async_trait::async_trait;
 use git_object;
 use git_object::tree;
@@ -45,7 +43,7 @@ pub struct DeployAddTreeArgs {
     nodes: HashMap<String, TreeNode>,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Clone)]
 pub struct SetTreeFinishMarkArgs {
     #[serde(rename = "shaTree")]
     pub sha: String,
@@ -66,6 +64,7 @@ pub trait DeployTree {
 
 static TREE_NODES_CHUNK_MAX_SIZE: usize = 200;
 static MAX_REDEPLOY_ATTEMPTS: i32 = 3;
+const MAX_RETRIES_FOR_CHUNKS_TO_APPEAR: i32 = 20;
 
 #[async_trait]
 impl DeployTree for Everscale {
@@ -79,7 +78,9 @@ impl DeployTree for Everscale {
         let wallet_contract = wallet.take_one().await?;
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
         let result = if nodes.len() > TREE_NODES_CHUNK_MAX_SIZE {
+            tracing::trace!("Start tree upload by chunks");
             let mut repo_contract = self.repo_contract().clone();
+            let nodes_cnt = nodes.len();
             let tree_address =
                 Tree::calculate_address(&Arc::clone(self.client()), &mut repo_contract, sha)
                     .await?;
@@ -109,48 +110,75 @@ impl DeployTree for Everscale {
                 .await
                 .map(|_| ())?;
                 let res = wait_contracts_deployed(self, &[tree_address.clone()]).await;
+                if res.is_ok() {
+                    break;
+                }
                 attempts += 1;
                 if attempts == MAX_REDEPLOY_ATTEMPTS && res.is_err() {
                     res?;
                 }
             }
-            // let mut first = true;
-            // while nodes.len() > 0 {
-            //     let mut counter = 0;
-            //
-            //     } else {
-            //         let params = DeployAddTreeArgs {
-            //             sha: sha.to_owned(),
-            //             repo_name: repo_name.to_owned(),
-            //             nodes: chunk,
-            //         };
-            //         tracing::trace!("DeployAddTreeArgs: {params:?}");
-            //         self
-            //             .send_message(
-            //                 wallet_contract.deref(),
-            //                 "deployAddTree",
-            //                 Some(serde_json::to_value(params)?),
-            //                 None,
-            //             )
-            //             .await
-            //             .map(|_| ())?;
-            //     }
-            //     first = false;
-            // }
-            // let params = SetTreeFinishMarkArgs {
-            //     sha: sha.to_owned(),
-            //     repo_name: repo_name.to_owned(),
-            // };
-            // tracing::trace!("SetTreeFinishMarkArgs: {params:?}");
-            // self
-            //     .send_message(
-            //         wallet_contract.deref(),
-            //         "setTreeFinishMark",
-            //         Some(serde_json::to_value(params)?),
-            //         None,
-            //     )
-            //     .await
-            //     .map(|_| ())?;
+            let mut attempts = 0;
+            let rest_nodes = nodes;
+            while attempts < MAX_REDEPLOY_ATTEMPTS {
+                let mut nodes = rest_nodes.clone();
+                while nodes.len() > 0 {
+                    let mut counter = 0;
+                    let mut chunk: HashMap<String, TreeNode> = HashMap::new();
+                    (chunk, nodes) = nodes.into_iter().partition(|(_, _)| {
+                        counter += 1;
+                        counter <= TREE_NODES_CHUNK_MAX_SIZE
+                    });
+                    let params = DeployAddTreeArgs {
+                        sha: sha.to_owned(),
+                        repo_name: repo_name.to_owned(),
+                        nodes: chunk,
+                    };
+                    tracing::trace!("DeployAddTreeArgs: {params:?}");
+                    self
+                        .send_message(
+                            wallet_contract.deref(),
+                            "deployAddTree",
+                            Some(serde_json::to_value(params)?),
+                            None,
+                        )
+                        .await
+                        .map(|_| ())?;
+                }
+                let res = wait_for_all_chunks_to_be_loaded(self, &tree_address, nodes_cnt).await;
+                if res.is_ok() {
+                    break;
+                }
+                attempts += 1;
+                if attempts == MAX_REDEPLOY_ATTEMPTS && res.is_err() {
+                    res?;
+                }
+            }
+
+            let mut attempts = 0;
+            let params = SetTreeFinishMarkArgs {
+                sha: sha.to_owned(),
+                repo_name: repo_name.to_owned(),
+            };
+            while attempts < MAX_REDEPLOY_ATTEMPTS {
+                tracing::trace!("SetTreeFinishMarkArgs: {params:?}");
+                let res = self
+                    .send_message(
+                        wallet_contract.deref(),
+                        "setTreeFinishMark",
+                        Some(serde_json::to_value(params.clone())?),
+                        None,
+                    )
+                    .await
+                    .map(|_| ());
+                if res.is_ok() {
+                    break;
+                }
+                attempts += 1;
+                if attempts == MAX_REDEPLOY_ATTEMPTS && res.is_err() {
+                    res?;
+                }
+            }
             Ok(())
         } else {
             let params = DeployTreeArgs {
@@ -203,4 +231,29 @@ fn convert_to_type_obj(entry_mode: tree::EntryMode) -> String {
         Commit => "commit",
     }
     .to_owned()
+}
+
+#[instrument(level = "info", skip_all)]
+async fn wait_for_all_chunks_to_be_loaded<B>(
+    blockchain: &B,
+    tree_address: &BlockchainContractAddress,
+    nodes_cnt: usize,
+) -> anyhow::Result<()>
+where
+    B: BlockchainService + 'static,
+{
+    tracing::trace!("wait_for_all_chunks_to_be_loaded: tree_addr={:?}", tree_address);
+    let mut counter = 0;
+    while counter <= MAX_RETRIES_FOR_CHUNKS_TO_APPEAR {
+        tracing::trace!("wait_for_all_chunks_to_be_loaded iteration: {counter}");
+        let tree = Tree::load(blockchain.client(), tree_address).await?;
+        tracing::trace!("Tree objects state: {:?}", tree);
+        tracing::trace!("Tree map length: {:?} (waiting length = {})", tree.objects.len(), nodes_cnt);
+        if tree.objects.len() == nodes_cnt {
+            return Ok(())
+        }
+        counter += 1;
+        tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+    }
+    Err(anyhow::format_err!("Tree state is not complete after wait"))
 }

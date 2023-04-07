@@ -83,7 +83,7 @@ contract Tree is Modifiers {
     function addTreeself(uint256 index, mapping(uint256 => TreeObject) tree1) public senderIs(address(this)){
         tvm.accept();
         require(_isReady == false, ERR_PROCCESS_END);
-        optional(uint256, TreeObject) res = _tree.next(index);
+        optional(uint256, TreeObject) res = tree1.next(index);
         if (res.hasValue()) {
             TreeObject obj;
             (index, obj) = res.get();

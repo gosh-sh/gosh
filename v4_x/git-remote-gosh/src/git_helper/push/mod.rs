@@ -872,6 +872,43 @@ where
         }
 
         let mut expected_contracts = vec![];
+        let mut attempts = 0;
+        let mut last_rest_cnt = 0;
+        while attempts < MAX_REDEPLOY_ATTEMPTS {
+            attempts += 1;
+            expected_contracts = parallel_tree_uploads
+                .wait_all_trees(self.blockchain.clone())
+                .await?;
+            tracing::trace!("Wait all trees result: {expected_contracts:?}");
+            if expected_contracts.is_empty() {
+                break;
+            }
+            if expected_contracts.len() != last_rest_cnt {
+                attempts = 0;
+            }
+            last_rest_cnt = expected_contracts.len();
+            tracing::trace!("Restart deploy on undeployed trees");
+            let expected = parallel_tree_uploads.get_expected().to_owned();
+            parallel_tree_uploads = ParallelTreeUploadSupport::new();
+            for address in expected_contracts.clone() {
+                let tree = expected
+                    .get(&address)
+                    .ok_or(anyhow::format_err!("Failed to get diff params"))?
+                    .clone();
+                tracing::trace!(
+                    "Get params of undeployed tree: {} {:?}",
+                    address,
+                    tree.tree_id
+                );
+                parallel_tree_uploads
+                    .add_to_push_list(self, tree, push_semaphore.clone())
+                    .await?;
+            }
+        }
+        if attempts == MAX_REDEPLOY_ATTEMPTS {
+            anyhow::bail!("Failed to deploy all trees. Undeployed trees: {expected_contracts:?}")
+        }
+
         // wait for all spawned collections to finish
         parallel_diffs_upload_support.push_dangling(self).await?;
         let number_of_files_changed = parallel_diffs_upload_support.get_parallels_number();
@@ -894,13 +931,12 @@ where
             let expected = parallel_diffs_upload_support.get_expected().to_owned();
             parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
             for address in expected_contracts.clone() {
-                tracing::trace!("Get params of undeployed diff: {}", address);
                 let (coord, parallel, is_last) = expected
                     .get(&address)
                     .ok_or(anyhow::format_err!("Failed to get diff params"))?
                     .clone();
                 // parallel_diffs_upload_support.push(self, diff).await?;
-                parallel_diffs_upload_support.add_to_push_list(self, &coord, &parallel, is_last);
+                parallel_diffs_upload_support.add_to_push_list(self, &coord, &parallel, is_last).await?;
             }
             parallel_diffs_upload_support.push_dangling(self).await?;
         }
@@ -945,43 +981,6 @@ where
             anyhow::bail!(
                 "Failed to deploy all snapshots. Undeployed snapshots: {expected_contracts:?}"
             )
-        }
-
-        let mut attempts = 0;
-        let mut last_rest_cnt = 0;
-        while attempts < MAX_REDEPLOY_ATTEMPTS {
-            attempts += 1;
-            expected_contracts = parallel_tree_uploads
-                .wait_all_trees(self.blockchain.clone())
-                .await?;
-            tracing::trace!("Wait all trees result: {expected_contracts:?}");
-            if expected_contracts.is_empty() {
-                break;
-            }
-            if expected_contracts.len() != last_rest_cnt {
-                attempts = 0;
-            }
-            last_rest_cnt = expected_contracts.len();
-            tracing::trace!("Restart deploy on undeployed trees");
-            let expected = parallel_tree_uploads.get_expected().to_owned();
-            parallel_tree_uploads = ParallelTreeUploadSupport::new();
-            for address in expected_contracts.clone() {
-                let tree = expected
-                    .get(&address)
-                    .ok_or(anyhow::format_err!("Failed to get diff params"))?
-                    .clone();
-                tracing::trace!(
-                    "Get params of undeployed tree: {} {:?}",
-                    address,
-                    tree.tree_id
-                );
-                parallel_tree_uploads
-                    .add_to_push_list(self, tree, push_semaphore.clone())
-                    .await?;
-            }
-        }
-        if attempts == MAX_REDEPLOY_ATTEMPTS {
-            anyhow::bail!("Failed to deploy all trees. Undeployed trees: {expected_contracts:?}")
         }
 
         let mut attempts = 0;
