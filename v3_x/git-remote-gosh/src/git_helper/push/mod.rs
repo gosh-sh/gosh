@@ -872,7 +872,7 @@ where
                 tracing::trace!("Get params of undeployed diff: {}", address);
                 let (coord, parallel, is_last) = expected.get(&address).ok_or(anyhow::format_err!("Failed to get diff params"))?.clone();
                 // parallel_diffs_upload_support.push(self, diff).await?;
-                parallel_diffs_upload_support.add_to_push_list(self, &coord, &parallel, is_last);
+                parallel_diffs_upload_support.add_to_push_list(self, &coord, &parallel, is_last).await?;
             }
             parallel_diffs_upload_support.push_dangling(self).await?;
         }
