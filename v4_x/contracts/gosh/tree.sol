@@ -9,14 +9,14 @@ pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 pragma AbiHeader time;
 
-import "./modifiers/modifiers.sol";
+import "./smv/modifiers/modifiers.sol";
 import "./libraries/GoshLib.sol";
-import "goshwallet.sol";
-import "commit.sol";
-import "tree.sol";
-import "snapshot.sol";
-import "diff.sol";
-import "goshdao.sol";
+import "./goshwallet.sol";
+import "./commit.sol";
+import "./tree.sol";
+import "./snapshot.sol";
+import "./diff.sol";
+import "./goshdao.sol";
 
 /* Root contract of Tree */
 contract Tree is Modifiers {
@@ -54,7 +54,7 @@ contract Tree is Modifiers {
         TvmCell codeCommit,
         TvmCell SnapshotCode,
         bool isFinal,
-        uint128 index) public {
+        uint128 index) {
         require(_shaTree != "", ERR_NO_DATA);
         tvm.accept();
         _code[m_WalletCode] = WalletCode;
@@ -83,7 +83,7 @@ contract Tree is Modifiers {
     function addTreeself(uint256 index, mapping(uint256 => TreeObject) tree1) public senderIs(address(this)){
         tvm.accept();
         require(_isReady == false, ERR_PROCCESS_END);
-        optional(uint256, TreeObject) res = _tree.next(index);
+        optional(uint256, TreeObject) res = tree1.next(index);
         if (res.hasValue()) {
             TreeObject obj;
             (index, obj) = res.get();
@@ -99,7 +99,7 @@ contract Tree is Modifiers {
 
     function checkFull(string namecommit, address repo, string branch, uint128 typer) public senderIs(getCommitAddr(namecommit, repo)) {
         require(_check == false, ERR_PROCCESS_IS_EXIST);
-        require(_isReady == false, ERR_PROCCESS_END);
+        require(_isReady == true, ERR_PROCCESS_END);
         _check = true;
         _checkbranch = branch;
         _root = true;
@@ -110,7 +110,7 @@ contract Tree is Modifiers {
 
     function checkTree(uint256 index, string path, uint128 typer) public senderIs(address(this)) {
         require(_check == true, ERR_PROCCESS_END);
-        require(_isReady == false, ERR_PROCCESS_END);
+        require(_isReady == true, ERR_PROCCESS_END);
         getMoney();
         if (address(this).balance < 5 ton) { _saved = PauseTree(index, path, typer); return; }
         optional(uint256, TreeObject) res = _tree.next(index);
@@ -135,7 +135,7 @@ contract Tree is Modifiers {
         getMoney();
         require(_check == true, ERR_PROCCESS_END);
         require(_needAnswer > 0, ERR_NO_NEED_ANSWER);
-        require(_isReady == false, ERR_PROCCESS_END);
+        require(_isReady == true, ERR_PROCCESS_END);
         if (_ready == false) {
             if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false, typer); }
             _check = false;
@@ -152,7 +152,7 @@ contract Tree is Modifiers {
     }
 
     function getCheckTree(string name, string branch, string path, uint128 typer) public senderIs(getTreeAddr(name)) {
-        require(_isReady == false, ERR_PROCCESS_END);      tvm.accept();
+        require(_isReady == true, ERR_PROCCESS_END);      tvm.accept();
         path += "/";
         require(_check == false, ERR_PROCCESS_IS_EXIST);
         _check = true;
@@ -164,7 +164,7 @@ contract Tree is Modifiers {
     }
 
     function gotCheckTree(string name, bool res, uint128 typer) public senderIs(getTreeAddr(name)) {
-        require(_isReady == false, ERR_PROCCESS_END);
+        require(_isReady == true, ERR_PROCCESS_END);
         tvm.accept();
         getMoney();
         if (_check == true) { return; }
@@ -185,7 +185,7 @@ contract Tree is Modifiers {
     }
 
     function getMoney() private {
-        if (now - timeMoney > 3600) { _flag = false; timeMoney = now; }
+        if (block.timestamp - timeMoney > 3600) { _flag = false; timeMoney = block.timestamp; }
         if (_flag == true) { return; }
         if (address(this).balance > 300 ton) { return; }
         _flag = true;
@@ -227,14 +227,14 @@ contract Tree is Modifiers {
 
     function getShaInfoDiff(string commit, uint128 index1, uint128 index2, Request value0) public {
         require(checkAccessDiff(commit, msg.sender, index1, index2), ERR_SENDER_NO_ALLOWED);
-        require(_isReady == false, ERR_PROCCESS_END);
+        require(_isReady == true, ERR_PROCCESS_END);
         tvm.accept();
         getShaInfo(value0);
         getMoney();
     }
 
     function getShaInfoCommit(string commit, Request value0) public senderIs(getCommitAddr(commit, _repo)) {
-        require(_isReady == false, ERR_PROCCESS_END);
+        require(_isReady == true, ERR_PROCCESS_END);
         tvm.accept();
         getShaInfo(value0);
         getMoney();
@@ -249,7 +249,8 @@ contract Tree is Modifiers {
     }
 
     function getShaInfo(Request value0) private {
-        optional(uint32) pos = value0.lastPath.find(byte('/'));
+        string symbol = '/';
+        optional(uint32) pos = value0.lastPath.find(symbol);
         getMoney();
         if (pos.hasValue() == true){
             string nowPath = value0.lastPath.substr(0, pos.get());
@@ -258,29 +259,29 @@ contract Tree is Modifiers {
                 Tree(getTreeAddr(_tree[tvm.hash("tree:" + nowPath)].sha1)).getShaInfoTree{value: 0.25 ton, flag: 1}(_shaTree, value0);
             }
             else {
-                Snapshot(value0.answer).TreeAnswer{value: 0.21 ton, flag: 1}(value0, null, _shaTree);
+                Snapshot(value0.answer).returnTreeAnswer{value: 0.21 ton, flag: 1}(value0, null, _shaTree);
             }
             getMoney();
             return;
         }
         else {
             if (_tree.exists(tvm.hash("blob:" + value0.lastPath)) == true) {
-                Snapshot(value0.answer).TreeAnswer{value: 0.23 ton, flag: 1}(value0, _tree[tvm.hash("blob:" + value0.lastPath)], _shaTree);
+                Snapshot(value0.answer).returnTreeAnswer{value: 0.23 ton, flag: 1}(value0, _tree[tvm.hash("blob:" + value0.lastPath)], _shaTree);
                 return;
             }
             if (_tree.exists(tvm.hash("blobExecutable:" + value0.lastPath)) == true) {
-                Snapshot(value0.answer).TreeAnswer{value: 0.23 ton, flag: 1}(value0, _tree[tvm.hash("blobExecutable:" + value0.lastPath)], _shaTree);
+                Snapshot(value0.answer).returnTreeAnswer{value: 0.23 ton, flag: 1}(value0, _tree[tvm.hash("blobExecutable:" + value0.lastPath)], _shaTree);
                 return;
             }
             if (_tree.exists(tvm.hash("link:" + value0.lastPath)) == true) {
-                Snapshot(value0.answer).TreeAnswer{value: 0.23 ton, flag: 1}(value0, _tree[tvm.hash("link:" + value0.lastPath)], _shaTree);
+                Snapshot(value0.answer).returnTreeAnswer{value: 0.23 ton, flag: 1}(value0, _tree[tvm.hash("link:" + value0.lastPath)], _shaTree);
                 return;
             }
             if (_tree.exists(tvm.hash("commit:" + value0.lastPath)) == true) {
-                Snapshot(value0.answer).TreeAnswer{value: 0.23 ton, flag: 1}(value0, _tree[tvm.hash("commit:" + value0.lastPath)], _shaTree);
+                Snapshot(value0.answer).returnTreeAnswer{value: 0.23 ton, flag: 1}(value0, _tree[tvm.hash("commit:" + value0.lastPath)], _shaTree);
                 return;
             }
-            Snapshot(value0.answer).TreeAnswer{value: 0.22 ton, flag: 1}(value0, null, _shaTree);
+            Snapshot(value0.answer).returnTreeAnswer{value: 0.22 ton, flag: 1}(value0, null, _shaTree);
             return;
         }
     }
@@ -327,7 +328,7 @@ contract Tree is Modifiers {
 
     function destroy(address pubaddr, uint128 index) public {
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        selfdestruct(giver);
+        selfdestruct(_systemcontract);
     }
 
     //Getters

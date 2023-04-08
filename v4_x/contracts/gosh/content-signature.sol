@@ -10,7 +10,7 @@ pragma AbiHeader time;
 pragma AbiHeader pubkey;
 pragma AbiHeader time;
 
-import "./modifiers/modifiers.sol";
+import "./smv/modifiers/modifiers.sol";
 import "./libraries/GoshLib.sol";
 import "goshwallet.sol";
 // import "action.sol";
@@ -26,30 +26,14 @@ contract ContentSignature is Modifiers {
     string static _commit;
 //    address _action;
      
-    constructor(address pubaddr, TvmCell WalletCode, string content, uint128 index) public {
+    constructor(address pubaddr, TvmCell WalletCode, string content, uint128 index) {
         tvm.accept();
         _content = content;
         _code[m_WalletCode] = WalletCode;
         _pubaddr = pubaddr;
 //        _action = action;
-        require(checkAccess(_pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
 //        if (_label != "") { Action(_action).activate{value : 0.1 ton}(_commit, _content); }
-    }
-    
-    function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);
-        TvmCell _contract = tvm.buildStateInit({
-            code: deployCode,
-            contr: GoshWallet,
-            varInit: {_systemcontract : _systemcontract, _goshdao: _goshdao, _index: index}
-        });
-        return _contract;
-    }
-    
-    function checkAccess(address pubaddr, address sender, uint128 index) internal view returns(bool) {
-        TvmCell s1 = _composeWalletStateInit(pubaddr, index);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        return addr == sender;
     }
     
     function getContent() external view returns(string) {

@@ -1689,7 +1689,7 @@
 			"name": "getTaskAddr",
 			"inputs": [
 				{"name":"nametask","type":"string"},
-				{"name":"repoName","type":"string"}
+				{"name":"reponame","type":"string"}
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}

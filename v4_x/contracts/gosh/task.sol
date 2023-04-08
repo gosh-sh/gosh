@@ -9,7 +9,7 @@ pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 pragma AbiHeader time;
 
-import "./modifiers/modifiers.sol";
+import "./smv/modifiers/modifiers.sol";
 import "./libraries/GoshLib.sol";
 import "goshwallet.sol";
 import "goshdao.sol";
@@ -59,7 +59,7 @@ contract Task is Modifiers{
         optional(TvmCell) defaultData,
         optional(TvmCell) extraData,
         optional(TvmCell) previousVersion
-        ) public senderIs(_goshdao) {
+        ) senderIs(_goshdao) {
         require(_nametask != "", ERR_NO_DATA);
         tvm.accept();
         if (defaultData.hasValue()) { 
@@ -89,7 +89,7 @@ contract Task is Modifiers{
         TvmCell data = abi.encode (_nametask, _repoName, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance);
         Task(toSend).getUpgradeData{value: 0.1 ton}(data);
         GoshDao(_goshdao).destroyTaskTag2{value: 0.21 ton}(_nametask, _repo, _hashtag);
-        selfdestruct(giver);
+        selfdestruct(_systemcontract);
     }
     
     function getUpgradeData(TvmCell data) public senderIs(_previousVersionAddr) accept {
@@ -179,13 +179,13 @@ contract Task is Modifiers{
         _managerfull = managerfull;
         _indexFinal = index;
         _ready = true;
-        _locktime = now;
+        _locktime = block.timestamp;
     }
         
     function getGrant(address pubaddr, uint128 typegrant, uint128 index) public view {
         require(_waitForUpdate == false, ERR_WRONG_UPGRADE_STATUS);
         require(_ready == true, ERR_TASK_NOT_COMPLETED);
-        require(now >= _locktime, ERR_NOT_READY);
+        require(block.timestamp >= _locktime, ERR_NOT_READY);
         checkAccess(pubaddr, msg.sender, index); 
         tvm.accept();
         if (m_assign == typegrant) {
@@ -208,7 +208,7 @@ contract Task is Modifiers{
         for (uint128 i = _lastassign; i < _grant.assign.length; i++){
             check += 1;
             if (check == 3) { this.getGrantAssign{value: 0.2 ton}(pubaddr); return; }
-            if (now >= _grant.assign[i].lock + _locktime) { 
+            if (block.timestamp >= _grant.assign[i].lock + _locktime) { 
                 _fullAssign += _grant.assign[i].grant; 
                 _grant.assign[i].grant = 0; 
                 _lastassign = i + 1;
@@ -233,7 +233,7 @@ contract Task is Modifiers{
         for (uint128 i = _lastreview; i < _grant.review.length; i++){
             check += 1;
             if (check == 3) { this.getGrantReview{value: 0.2 ton}(pubaddr); return; }
-            if (now >= _grant.review[i].lock + _locktime) { 
+            if (block.timestamp >= _grant.review[i].lock + _locktime) { 
                 _fullReview += _grant.review[i].grant; 
                 _grant.review[i].grant = 0; 
                 _lastreview = i + 1;
@@ -258,7 +258,7 @@ contract Task is Modifiers{
         for (uint128 i = _lastmanager; i < _grant.manager.length; i++){
             check += 1;
             if (check == 3) { this.getGrantManager{value: 0.2 ton}(pubaddr); return; }
-            if (now >= _grant.manager[i].lock + _locktime) { 
+            if (block.timestamp >= _grant.manager[i].lock + _locktime) { 
                 _fullManager += _grant.manager[i].grant; 
                 _grant.manager[i].grant = 0; 
                 _lastmanager = i + 1;
@@ -289,7 +289,7 @@ contract Task is Modifiers{
         if (_managercomplete != _managerfull) { return; }
         GoshDao(_goshdao).returnTaskToken{value: 0.2 ton}(_nametask, _repo, _balance);
         GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton}(_nametask, _repo, _hashtag, addr);
-        selfdestruct(giver);
+        selfdestruct(_systemcontract);
     }
     
     
@@ -346,7 +346,7 @@ contract Task is Modifiers{
         require(_ready == false, ERR_TASK_COMPLETED);
         GoshDao(_goshdao).returnTaskToken{value: 0.2 ton}(_nametask, _repo, _balance);
         GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton}(_nametask, _repo, _hashtag, msg.sender);
-        selfdestruct(giver);
+        selfdestruct(_systemcontract);
     }
     
     //Getters 

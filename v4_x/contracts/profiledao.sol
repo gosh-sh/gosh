@@ -9,7 +9,7 @@ pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 pragma AbiHeader time;
 
-import "./modifiers/modifiers.sol";
+import "./smv/modifiers/modifiers.sol";
 import "goshwallet.sol";
 import "systemcontract.sol";
 import "goshdao.sol";
@@ -25,7 +25,7 @@ contract ProfileDao is Modifiers {
     
     uint128 timeMoney = 0;
 
-    constructor() public {
+    constructor() {
         _pubaddr = msg.sender;
         getMoney();
     }
@@ -53,7 +53,7 @@ contract ProfileDao is Modifiers {
 
     //Money part
     function getMoney() private {
-        if (now - timeMoney > 3600) { _flag = false; timeMoney = now; }
+        if (block.timestamp - timeMoney > 3600) { _flag = false; timeMoney = block.timestamp; }
         if (_flag == true) { return; }
         if (address(this).balance > 1000 ton) { return; }
         _flag = true;

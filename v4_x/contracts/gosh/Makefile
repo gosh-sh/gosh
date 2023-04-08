@@ -19,6 +19,10 @@ build-contracts:
 		if [ "${target-dir}" != "" ] ; then cp $$i.* ${target-dir}/ ; fi; \
 	done
 
+	cd smv; \
+	make build-contracts; \
+	cd ..; \
+
 clean-contracts:
 	for i in $(cpfl); do \
 		rm $$i.sol  || exit $$@; \

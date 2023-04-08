@@ -9,7 +9,7 @@ pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 pragma AbiHeader time;
 
-import "./modifiers/modifiers.sol";
+import "./smv/modifiers/modifiers.sol";
 import "./libraries/GoshLib.sol";
 import "systemcontract.sol";
 import "profiledao.sol";
@@ -22,7 +22,7 @@ contract VersionController is Modifiers {
     mapping(uint256 => SystemContractV) _SystemContractCode;
     mapping(uint8 => TvmCell) _code;
 
-    constructor() public onlyOwner {
+    constructor() onlyOwner {
         require(tvm.pubkey() != 0, ERR_NEED_PUBKEY);
         tvm.accept();
     }
@@ -36,6 +36,18 @@ contract VersionController is Modifiers {
             varInit: {}
         });
         new SystemContract {stateInit: s1, value: FEE_DEPLOY_SYSTEM_CONTRACT, wid: 0, flag: 1}(_code);
+    }
+
+    function getMoneyFromSystemContract(string version, uint128 value) public onlyOwner accept saveMsg {
+        require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        TvmCell s1 = tvm.buildStateInit({
+            code: _SystemContractCode[tvm.hash(version)].Value,
+            contr: SystemContract,
+            pubkey: tvm.pubkey(),
+            varInit: {}
+        });
+        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        SystemContract(addr).returnMoney(value);
     }
     
     function destroySS(string version) public onlyOwner accept saveMsg {
@@ -235,7 +247,8 @@ contract VersionController is Modifiers {
     }
     
     function updateCodeDao(TvmCell newcode, TvmCell cell, string version) public accept saveMsg {
-        require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);TvmCell s1 = tvm.buildStateInit({
+        require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        TvmCell s1 = tvm.buildStateInit({
             code: _SystemContractCode[tvm.hash(version)].Value,
             contr: SystemContract,
             pubkey: tvm.pubkey(),
@@ -266,6 +279,10 @@ contract VersionController is Modifiers {
         });
         return address.makeAddrStd(0, tvm.hash(s1));
     }
+
+    function returnMoney(address destination, uint128 value) public onlyOwner accept saveMsg {
+        destination.transfer(value);
+    }  
     
     //Setters
     function setProfileIndex(TvmCell code) public  onlyOwner accept {

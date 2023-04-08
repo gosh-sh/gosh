@@ -10,7 +10,7 @@ pragma AbiHeader pubkey;
 pragma AbiHeader time;
 
 import "systemcontract.sol";
-import "./modifiers/modifiers.sol";
+import "./smv/modifiers/modifiers.sol";
 import "./libraries/GoshLib.sol";
 import "goshwallet.sol";
 
@@ -39,7 +39,7 @@ contract Tag is Modifiers{
         string reponame,
         string namedao,
         TvmCell WalletCode,
-        uint128 index) public onlyOwner {
+        uint128 index) onlyOwner {
         require(_nametag != "", ERR_NO_DATA);
         tvm.accept();
         _code[m_WalletCode] = WalletCode;
@@ -79,7 +79,7 @@ contract Tag is Modifiers{
     //Selfdestruct
     function destroy(address pubaddr, uint128 index) public {
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        selfdestruct(giver);
+        selfdestruct(_systemcontract);
     }
     
     //Getters

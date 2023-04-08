@@ -9,7 +9,7 @@ pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 pragma AbiHeader time;
 
-import "./modifiers/modifiers.sol";
+import "./smv/modifiers/modifiers.sol";
 import "goshwallet.sol";
 import "./libraries/GoshLib.sol";
 
@@ -28,7 +28,7 @@ contract RepoTagGosh is Modifiers {
         address goshaddr,
         string tag,
         TvmCell WalletCode,
-        uint128 index) public onlyOwner {
+        uint128 index) onlyOwner {
         tvm.accept();
         _code[m_WalletCode] = WalletCode;
         _systemcontract = goshaddr;
@@ -55,7 +55,7 @@ contract RepoTagGosh is Modifiers {
     //Selfdestruct
     function destroy(address pubaddr, uint128 index) public {
         require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        selfdestruct(giver);
+        selfdestruct(_systemcontract);
     }
     
     //Getters    

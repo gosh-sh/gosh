@@ -10,7 +10,7 @@ pragma AbiHeader pubkey;
 pragma AbiHeader time;
 
 import "systemcontract.sol";
-import "./modifiers/modifiers.sol";
+import "./smv/modifiers/modifiers.sol";
 import "./libraries/GoshLib.sol";
 import "goshwallet.sol";
 
@@ -30,7 +30,7 @@ contract Topic is Modifiers{
         address goshaddr,
         address goshdao,
         address object,
-        TvmCell WalletCode) public onlyOwner {
+        TvmCell WalletCode) onlyOwner {
         tvm.accept();
         _code[m_WalletCode] = WalletCode;
         _systemcontract = goshaddr;
@@ -60,12 +60,6 @@ contract Topic is Modifiers{
         answer; message;
     }
     
-    //Selfdestruct
-/*    function destroy(address pubaddr, uint128 index) public {
-        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        selfdestruct(giver);
-    }
-*/   
     //Getters
     function getObject() external view returns(string, string, address, address, address) {
         return (_name, _content, _object, _systemcontract, _goshdao);
