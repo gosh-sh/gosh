@@ -181,6 +181,7 @@ export interface Database {
                     auth_user: string | null
                     onboarded_at: string | null
                     email: string | null
+                    email_other: string | null
                 }
                 Insert: {
                     id?: string
@@ -190,6 +191,7 @@ export interface Database {
                     auth_user?: string | null
                     onboarded_at?: string | null
                     email?: string | null
+                    email_other?: string | null
                 }
                 Update: {
                     id?: string
@@ -199,6 +201,7 @@ export interface Database {
                     auth_user?: string | null
                     onboarded_at?: string | null
                     email?: string | null
+                    email_other?: string | null
                 }
             }
         }

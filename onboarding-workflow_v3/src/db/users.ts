@@ -7,9 +7,19 @@ export async function getUserSendEmail(user: User) {
         .from('users')
         .select('email_other')
         .eq('auth_user', user.id)
-        .single()
+        .order('created_at', { ascending: false })
+        .limit(1)
     if (error) {
+        console.error(error.message)
         throw new Error(error.message)
     }
-    return data.email_other || user.email
+
+    const email_other = data.length ? data[0].email_other : null
+    const email = email_other || user.email
+    if (!email) {
+        const err_message = `Error: User ${user} has no email`
+        console.error(err_message)
+        throw new Error(err_message)
+    }
+    return email.trim()
 }

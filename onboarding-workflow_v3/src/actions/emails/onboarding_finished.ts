@@ -1,19 +1,14 @@
 import nunjucks from 'npm:nunjucks'
 import { getDb, User } from '../../db/db.ts'
 import { INTENT_ONBOARDING_FINISHED } from './constants.ts'
+import { getUserSendEmail } from '../../db/users.ts'
 
 const EMAIL_SUBJECT = 'Welcome to GOSH!'
 const EMAIL_HTML_FILE = 'emails/onboarding_finished.html.template'
 const EMAIL_TEXT_FILE = 'emails/onboarding_finished.text.template'
 
 export async function emailOnboardingFinished(user: User) {
-    if (!user.email) {
-        const err_message = `Error: User ${user} has no email`
-        console.log(err_message)
-        throw new Error(err_message)
-    }
-
-    const mail_to = user.email.trim()
+    const mail_to = await getUserSendEmail(user)
     const mail_html = nunjucks.render(EMAIL_HTML_FILE)
     const mail_text = nunjucks.render(EMAIL_TEXT_FILE)
 
@@ -24,7 +19,7 @@ export async function emailOnboardingFinished(user: User) {
         .eq('intent', INTENT_ONBOARDING_FINISHED)
         .eq('mail_to', mail_to)
 
-    console.log(`Emails: ${emails}`)
+    console.log('Emails', emails)
 
     if (error) {
         console.log(`DB error`, error)

@@ -2,6 +2,7 @@ import { Mutex } from 'https://deno.land/x/semaphore@v1.1.2/mod.ts'
 import { INTENT_ONBOARDING_FINISHED } from '../actions/emails/constants.ts'
 import { emailWelcomeHighDemand } from '../actions/emails/welcome_high_demand.ts'
 import { getDb } from '../db/db.ts'
+import { getUserSendEmail } from '../db/users.ts'
 
 const mutex = new Mutex()
 
@@ -36,13 +37,14 @@ async function notifyNewUsers() {
         for (const user of users) {
             console.log('Process potentially new user', user.id)
 
-            if (!user.email) {
-                console.log(`Error: user ${user.id} has no email`)
+            const user_created_at = new Date(user.created_at)
+            let mail_to
+            try {
+                mail_to = await getUserSendEmail(user)
+            } catch {
+                console.error(`Error: user ${user.id} has no email`)
                 continue
             }
-
-            const mail_to = user.email.trim()
-            const user_created_at = new Date(user.created_at)
 
             // TODO: improve with DB views/triggers
             if (now.getTime() - user_created_at.getTime() < 48 * 60 * 60 * 1000) {

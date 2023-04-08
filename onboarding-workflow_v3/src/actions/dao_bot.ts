@@ -1,7 +1,13 @@
 import { DaoBot, updateDaoBot } from '../db/dao_bot.ts'
 import { getGithubsForClone, Github, updateGithubByDaoBot } from '../db/github.ts'
 import { hasAccess, isAccountActive } from '../eversdk/account.ts'
-import { deployDao, getAddrDao, isDaoMember, setRepoUpdated, turnOnDao } from '../eversdk/dao.ts'
+import {
+    deployDao,
+    getAddrDao,
+    isDaoMember,
+    setRepoUpdated,
+    turnOnDao,
+} from '../eversdk/dao.ts'
 import { calculateProfileAddr, deployProfile } from '../eversdk/dao_bot.ts'
 import { getAddrWallet } from '../eversdk/gosh_repo.ts'
 import { countGitObjectsProducer } from '../queues/mod.ts'

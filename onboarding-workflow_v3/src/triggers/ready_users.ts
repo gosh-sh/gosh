@@ -101,11 +101,16 @@ while (true) {
                 const version = Deno.env.get('GOSH_VERSION') ?? ''
                 console.log('Version ', version)
                 if (version === '1.0.0') {
-                  await setAloneDaoConfig(100, walletAddress, seed)
-                  await deployAloneDaoWallet([userProfileAddress], walletAddress, seed)
+                    await setAloneDaoConfig(100, walletAddress, seed)
+                    await deployAloneDaoWallet([userProfileAddress], walletAddress, seed)
                 } else {
-                  await AloneMintDaoReserve(100, walletAddress, seed)
-                  await deployAloneDaoWallet_v2(userProfileAddress, walletAddress, seed, 100)
+                    await AloneMintDaoReserve(100, walletAddress, seed)
+                    await deployAloneDaoWallet_v2(
+                        userProfileAddress,
+                        walletAddress,
+                        seed,
+                        100,
+                    )
                 }
             }),
         )

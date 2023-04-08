@@ -1,19 +1,14 @@
 import nunjucks from 'npm:nunjucks'
 import { getDb, User } from '../../db/db.ts'
 import { INTENT_WELCOME_HIGH_DEMAND } from './constants.ts'
+import { getUserSendEmail } from '../../db/users.ts'
 
 const EMAIL_SUBJECT = 'Hello and Welcome'
 const EMAIL_HTML_FILE = 'emails/welcome_high_demand.html.template'
 const EMAIL_TEXT_FILE = 'emails/welcome_high_demand.text.template'
 
 export async function emailWelcomeHighDemand(user: User) {
-    if (!user.email) {
-        const err_message = `Error: User ${user} has no email`
-        console.log(err_message)
-        throw new Error(err_message)
-    }
-
-    const mail_to = user.email.trim()
+    const mail_to = await getUserSendEmail(user)
     const mail_html = nunjucks.render(EMAIL_HTML_FILE)
     const mail_text = nunjucks.render(EMAIL_TEXT_FILE)
 
@@ -25,7 +20,7 @@ export async function emailWelcomeHighDemand(user: User) {
         .eq('intent', INTENT_WELCOME_HIGH_DEMAND)
         .eq('mail_to', mail_to)
 
-    console.log(`Emails: ${emails}`)
+    console.log('Emails', emails)
 
     if (error) {
         console.log(`DB error`, error)
