@@ -3446,7 +3446,6 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (bItem) {
             throw new GoshError(EGoshError.FILE_EXISTS, { path: bPath })
         }
-        console.debug('here', treepath, { original, modified })
         return await Promise.all(
             treepath.map(async (path) => {
                 const _content = {
