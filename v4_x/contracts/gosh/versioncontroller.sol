@@ -29,25 +29,13 @@ contract VersionController is Modifiers {
 
     function deploySystemContract(string version) public onlyOwner accept saveMsg {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
-        TvmCell s1 = tvm.buildStateInit({
-            code: _SystemContractCode[tvm.hash(version)].Value,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
+        TvmCell s1 = GoshLib.composeSystemContractStateInit(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey());
         new SystemContract {stateInit: s1, value: FEE_DEPLOY_SYSTEM_CONTRACT, wid: 0, flag: 1}(_code);
     }
 
     function getMoneyFromSystemContract(string version, uint128 value) public onlyOwner accept saveMsg {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
-        TvmCell s1 = tvm.buildStateInit({
-            code: _SystemContractCode[tvm.hash(version)].Value,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        SystemContract(addr).returnMoney(value);
+        SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey())).returnMoney{value: 0.1 ton, flag: 1}(value);
     }
     
     function destroySS(string version) public onlyOwner accept saveMsg {
@@ -63,45 +51,17 @@ contract VersionController is Modifiers {
     function fromInitUpgrade4(string name, string namedao, string nameCommit, address commit, string version, string branch, address newcommit, string previousversion) public view {       
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         require(_SystemContractCode.exists(tvm.hash(previousversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
-        TvmCell s1 = tvm.buildStateInit({
-            code: _SystemContractCode[tvm.hash(previousversion)].Value,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
-        s1 = tvm.buildStateInit({
-            code: _SystemContractCode[tvm.hash(version)].Value,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
-        addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(previousversion)].Value, tvm.pubkey()) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        SystemContract(addr).fromInitUpgrade5{value: 0.1 ton, flag : 1}(name, namedao, nameCommit, commit, branch, newcommit);  
+        SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey())).fromInitUpgrade5{value: 0.1 ton, flag : 1}(name, namedao, nameCommit, commit, branch, newcommit);  
     }
     
     function upgradeTag2(string namedao, string namerepo, string nametag, string namecommit, address commit, string content, string version, string previousversion) public view {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         require(_SystemContractCode.exists(tvm.hash(previousversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
-        TvmCell s1 = tvm.buildStateInit({
-            code: _SystemContractCode[tvm.hash(previousversion)].Value,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
-        s1 = tvm.buildStateInit({
-            code: _SystemContractCode[tvm.hash(version)].Value,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
-        addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(previousversion)].Value, tvm.pubkey()) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        SystemContract(addr).upgradeTag3{value: 0.1 ton, flag : 1}(namedao, namerepo, nametag, namecommit, commit, content);
+        SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey())).upgradeTag3{value: 0.1 ton, flag : 1}(namedao, namerepo, nametag, namecommit, commit, content);
     }
 
     
@@ -109,153 +69,56 @@ contract VersionController is Modifiers {
         optional(address) newwallet;
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         require(_SystemContractCode.exists(tvm.hash(previousversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
-        TvmCell s1 = tvm.buildStateInit({
-            code: _SystemContractCode[tvm.hash(previousversion)].Value,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
-        s1 = tvm.buildStateInit({
-            code: _SystemContractCode[tvm.hash(version)].Value,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
-        addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(previousversion)].Value, tvm.pubkey()) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        SystemContract(addr).sendTokenToNewVersion4(grant, pubaddr, namedao, newwallet);
+        SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey())).sendTokenToNewVersion4{value: 0.1 ton, flag: 1}(grant, pubaddr, namedao, newwallet);
     }
     
     function sendTokenToNewVersion33(uint128 grant, string version, string previousversion, address pubaddr, string namedao, optional(address) newwallet) public view {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         require(_SystemContractCode.exists(tvm.hash(previousversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
-        TvmCell s1 = tvm.buildStateInit({
-            code: _SystemContractCode[tvm.hash(previousversion)].Value,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
-        s1 = tvm.buildStateInit({
-            code: _SystemContractCode[tvm.hash(version)].Value,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
-        addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(previousversion)].Value, tvm.pubkey()) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        SystemContract(addr).sendTokenToNewVersion4(grant, pubaddr, namedao, newwallet);
+        SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey())).sendTokenToNewVersion4{value: 0.1 ton, flag: 1}(grant, pubaddr, namedao, newwallet);
     }
 
     
     function upgradeDao2(string namedao, string version, address previous, string previousversion) public view {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         require(_SystemContractCode.exists(tvm.hash(previousversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
-        TvmCell s1 = tvm.buildStateInit({
-            code: _SystemContractCode[tvm.hash(previousversion)].Value,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
-        s1 = tvm.buildStateInit({
-            code: _SystemContractCode[tvm.hash(version)].Value,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
-        addr = address.makeAddrStd(0, tvm.hash(s1));
+        require(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(previousversion)].Value, tvm.pubkey()) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        TvmCell s0 = tvm.buildStateInit({
-            code: _code[m_ProfileDaoCode],
-            contr: ProfileDao,
-            varInit: {_name : namedao, _versioncontroller: address(this)}
-        });
-        address daoprofile = address.makeAddrStd(0, tvm.hash(s0));
         address[] pubmem;
-        ProfileDao(daoprofile).upgradeDao{value: 0.1 ton, flag : 1}(addr, previous, pubmem);
+        ProfileDao(GoshLib.calculateProfileDaoAddress(_code[m_ProfileDaoCode], address(this), namedao)).upgradeDao{value: 0.1 ton, flag : 1}(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey()), previous, pubmem);
     }
     
     function checkUpdateRepo2(string name, string namedao, string version, AddrVersion prev, address answer) public view {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         require(_SystemContractCode.exists(tvm.hash(prev.version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
-        TvmCell s1 = tvm.buildStateInit({
-            code: _SystemContractCode[tvm.hash(version)].Value,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey()) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        s1 = tvm.buildStateInit({
-            code: _SystemContractCode[tvm.hash(prev.version)].Value,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
-        addr = address.makeAddrStd(0, tvm.hash(s1));
-        SystemContract(addr).checkUpdateRepo3{value : 0.15 ton, flag: 1}(name, namedao, prev, answer);
+        SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(prev.version)].Value, tvm.pubkey())).checkUpdateRepo3{value : 0.15 ton, flag: 1}(name, namedao, prev, answer);
     }
     
     function checkOldTaskVersion3(string namedao, string nametask, string repo, string previous, address previousaddr, string version, address answer) public view {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         require(_SystemContractCode.exists(tvm.hash(previous)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
-        TvmCell s1 = tvm.buildStateInit({
-            code: _SystemContractCode[tvm.hash(version)].Value,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey()) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        s1 = tvm.buildStateInit({
-            code: _SystemContractCode[tvm.hash(previous)].Value,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
-        addr = address.makeAddrStd(0, tvm.hash(s1));
-        SystemContract(addr).checkOldTaskVersion4{value : 0.15 ton, flag: 1}(namedao, nametask, repo, previousaddr, answer);
+        SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(previous)].Value, tvm.pubkey())).checkOldTaskVersion4{value : 0.15 ton, flag: 1}(namedao, nametask, repo, previousaddr, answer);
     }
     
     function DaoTransferToken3(address pubaddr, uint128 index, string namedao, address wallet, address newwallet, uint128 grant, string oldversion, string newversion) public view {
         require(_SystemContractCode.exists(tvm.hash(newversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         require(_SystemContractCode.exists(tvm.hash(oldversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
-        TvmCell s1 = tvm.buildStateInit({
-            code: _SystemContractCode[tvm.hash(newversion)].Value,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(newversion)].Value, tvm.pubkey()) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        s1 = tvm.buildStateInit({
-            code: _SystemContractCode[tvm.hash(oldversion)].Value,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
-        addr = address.makeAddrStd(0, tvm.hash(s1));
-        SystemContract(addr).DaoTransferToken4{value : 0.15 ton, flag: 1}(pubaddr, index, namedao, wallet, newwallet, grant, newversion);
+        SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(oldversion)].Value, tvm.pubkey())).DaoTransferToken4{value : 0.15 ton, flag: 1}(pubaddr, index, namedao, wallet, newwallet, grant, newversion);
     }
     
     function updateCodeDao(TvmCell newcode, TvmCell cell, string version) public accept saveMsg {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
-        TvmCell s1 = tvm.buildStateInit({
-            code: _SystemContractCode[tvm.hash(version)].Value,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey()) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.setcode(newcode);
         tvm.setCurrentCode(newcode);
         onCodeUpgrade(cell);
@@ -271,13 +134,7 @@ contract VersionController is Modifiers {
     }
     
     function _getSystemContractAddr(TvmCell code) private view returns(address) {
-        TvmCell s1 = tvm.buildStateInit({
-            code: code,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
-        return address.makeAddrStd(0, tvm.hash(s1));
+        return GoshLib.calculateSystemContractAddress(code, tvm.pubkey());
     }
 
     function returnMoney(address destination, uint128 value) public onlyOwner accept saveMsg {
@@ -299,13 +156,7 @@ contract VersionController is Modifiers {
 
     //Getters   
     function _getProfileIndexAddr(uint256 pubkey, string name) private view returns(address) {
-        TvmCell s1 = tvm.buildStateInit({
-            code: GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, address(this), "1.0.0"),
-            contr: ProfileIndex,
-            pubkey: tvm.pubkey(),
-            varInit: { _name : name }
-        });
-        return address.makeAddrStd(0, tvm.hash(s1));
+        return GoshLib.calculateProfileIndexAddress(_code[m_ProfileIndexCode], address(this), pubkey, name);
     }    
     
     function getProfileIndexAddr(uint256 pubkey, string name) external view returns(address) {
@@ -317,25 +168,15 @@ contract VersionController is Modifiers {
     }
     
     function _getProfileAddr(string name) private view returns(address) {
-        TvmCell s1 = tvm.buildStateInit({
-            code: _code[m_ProfileCode],
-            contr: Profile,
-            varInit: {_name : name, _versioncontroller: address(this)}
-        });
-        return address.makeAddrStd(0, tvm.hash(s1));
+        return GoshLib.calculateProfileAddress(_code[m_ProfileCode], address(this), name);
     }
     
     function getProfileAddr(string name) external view returns(address) {
-        return _getProfileAddr(name);
+        return GoshLib.calculateProfileAddress(_code[m_ProfileCode], address(this), name);
     }
     
     function getProfileDaoAddr(string name) external view returns(address){
-        TvmCell s0 = tvm.buildStateInit({
-            code: _code[m_ProfileDaoCode],
-            contr: ProfileDao,
-            varInit: {_name : name, _versioncontroller: address(this)}
-        });
-        return address(tvm.hash(s0));
+        return GoshLib.calculateProfileDaoAddress(_code[m_ProfileDaoCode], address(this), name);
     }
     
     function getSystemContractCode(string version) external view returns(SystemContractV) {
@@ -345,13 +186,7 @@ contract VersionController is Modifiers {
 
     function getSystemContractAddr(string version) external view returns(address) {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
-        TvmCell s1 = tvm.buildStateInit({
-            code: _SystemContractCode[tvm.hash(version)].Value,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
-        return address.makeAddrStd(0, tvm.hash(s1));
+        return GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey());
     }
     
     function getVersionAddr() external view returns(address[]) {

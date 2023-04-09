@@ -138,7 +138,7 @@ contract Repository is Modifiers{
             if (_hashtag.exists(tvm.hash(tag[t]))) { continue; }
             _counttag++;
             _hashtag[tvm.hash(tag[t])] = tag[t];
-            GoshWallet(_creator).deployRepoTag{value:0.2 ton}(_name, tag[t]);   	
+            GoshWallet(_creator).deployRepoTag{value:0.2 ton, flag: 1}(_name, tag[t]);   	
         }
         _ready = true;
     }
@@ -235,20 +235,20 @@ contract Repository is Modifiers{
         if (task.hasValue()){
             ConfigCommit taskf = task.get();
             ConfigCommitBase tasksend = ConfigCommitBase({task: taskf.task, commit: getCommitAddr(namecommit), number_commit: number_commit, pubaddrassign: taskf.pubaddrassign, pubaddrreview: taskf.pubaddrreview, pubaddrmanager: taskf.pubaddrmanager, daoMembers: taskf.daoMembers});
-            Task(taskf.task).isReady{value: 0.1 ton}(tasksend);
+            Task(taskf.task).isReady{value: 0.1 ton, flag: 1}(tasksend);
         }
         Commit(getCommitAddr(namecommit)).allCorrect{value: 0.1 ton, flag: 1}(number);
     }
 
     function fromInitUpgrade2(string nameCommit, address commit, string ver, string branch) public view senderIs(getCommitAddr(nameCommit)) accept {       
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
-        if (_previousversion.hasValue() == false) { Commit(msg.sender).stopUpgrade{value:0.1 ton}();  return; }
+        if (_previousversion.hasValue() == false) { Commit(msg.sender).stopUpgrade{value:0.1 ton, flag: 1}();  return; }
         SystemContract(_systemcontract).fromInitUpgrade3{value: 0.3 ton, bounce: true, flag: 1}(_name, _nameDao, nameCommit, commit, ver, branch, msg.sender);
     }
     
     function fromInitUpgrade6(string nameCommit, address commit, string branch, address newcommit) public view senderIs(_systemcontract) accept {       
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
-        Commit(getCommitAddr(nameCommit)).fromInitUpgrade(commit, branch, newcommit);
+        Commit(getCommitAddr(nameCommit)).fromInitUpgrade{value: 0.1 ton, flag: 1}(commit, branch, newcommit);
     }
     
     function setHEAD(address pubaddr, string nameBranch, uint128 index) public {
@@ -300,7 +300,7 @@ contract Repository is Modifiers{
     function isDeleteSnap(string branch, string name) public view minValue(0.2 ton) senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], address(this), branch, name)){
         tvm.accept();
         require(_Branches.exists(tvm.hash(branch)) == false, ERR_BRANCH_EXIST);
-        Snapshot(msg.sender).destroyfinal{value:0.1 ton}();
+        Snapshot(msg.sender).destroyfinal{value:0.1 ton, flag: 1}();
     }
     
     function smvdeployrepotag (address pub, uint128 index, string[] tag) public accept {
@@ -311,7 +311,7 @@ contract Repository is Modifiers{
             _counttag++;
             _hashtag[tvm.hash(tag[t])] = tag[t];
             address addr = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pub, index);
-            GoshWallet(addr).deployRepoTag{value:0.2 ton}(_name, tag[t]);   	
+            GoshWallet(addr).deployRepoTag{value:0.2 ton, flag: 1}(_name, tag[t]);   	
         }
     }
     
@@ -322,7 +322,7 @@ contract Repository is Modifiers{
             _counttag--;
             delete _hashtag[tvm.hash(tag[t])];
             address addr = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pub, index);
-            GoshWallet(addr).destroyRepoTag{value:0.2 ton}(_name, tag[t]);   	
+            GoshWallet(addr).destroyRepoTag{value:0.2 ton, flag: 1}(_name, tag[t]);   	
         }
     }
 
@@ -433,12 +433,12 @@ contract Repository is Modifiers{
         return (_description, _name, AllBranches, _head, _hashtag, _ready);
     }    
         
-    function getRepositoryIn() public view minValue(0.3 ton) {
+    function getRepositoryIn() public view minValue(0.5 ton) {
         Item[] AllBranches;
         for ((uint256 key, Item value) : _Branches) {
             key;
             AllBranches.push(value);
         }
-        IObject(msg.sender).returnRepo{value: 0.1 ton}(_description, _name, AllBranches, _head, _hashtag, _ready);
+        IObject(msg.sender).returnRepo{value: 0.1 ton, flag: 1}(_description, _name, AllBranches, _head, _hashtag, _ready);
     }
 }

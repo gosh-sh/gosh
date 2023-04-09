@@ -100,7 +100,7 @@ contract Snapshot is Modifiers {
         if (_flag == true) { return; }
         if (address(this).balance > 1000 ton) { return; }
         _flag = true;
-        GoshDao(_goshdao).sendMoneySnap{value : 0.2 ton}(_branch, _rootRepo, _name);
+        GoshDao(_goshdao).sendMoneySnap{value : 0.2 ton, flag: 1}(_branch, _rootRepo, _name);
     }
     
     function returnTreeAnswer(Request value0, optional(TreeObject) value1, string sha) public senderIs(getTreeAddr(sha)) {
@@ -239,7 +239,7 @@ contract Snapshot is Modifiers {
     //Selfdestruct
     function destroy(address pubaddr, uint128 index) public view minValue(0.3 ton) accept {
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
-        Repository(_rootRepo).isDeleteSnap{value: 0.4 ton} (_branch, _name);
+        Repository(_rootRepo).isDeleteSnap{value: 0.4 ton, flag: 1} (_branch, _name);
     }
     
     function destroyfinal() public senderIs(_rootRepo) {
@@ -253,9 +253,9 @@ contract Snapshot is Modifiers {
         return (_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit, _ready);
     }
     
-    function getSnapshotIn() public view minValue(0.2 ton)
+    function getSnapshotIn() public view minValue(0.5 ton)
     {
-        IObject(msg.sender).returnSnap{value: 0.1 ton}(_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit, _ready);
+        IObject(msg.sender).returnSnap{value: 0.1 ton, flag: 1}(_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit, _ready);
     }
 
     function getName() external view returns(string) {

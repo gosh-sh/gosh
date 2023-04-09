@@ -17,11 +17,28 @@ import "../topic.sol";
 import "../taggosh.sol";
 import "../goshdao.sol";
 import "../tag.sol";
+import "../profile.sol";
+import "../profiledao.sol";
 
 library GoshLib {
     string constant versionLib = "4.0.0";
 
 //Address part
+    function calculateTaskAddress(TvmCell code, address goshdao, address repo, string nametask) public returns(address) {
+        TvmCell stateInit = composeTaskStateInit(code, goshdao, repo, nametask);
+        return address.makeAddrStd(0, tvm.hash(stateInit));    
+    } 
+
+    function calculateProfileIndexAddress(TvmCell code, address versionController, uint256 pubkey, string name) public returns(address) {
+        TvmCell stateInit = composeProfileIndexStateInit(code, versionController, pubkey, name);
+        return address.makeAddrStd(0, tvm.hash(stateInit));    
+    } 
+
+    function calculateSystemContractAddress(TvmCell code, uint256 pubkey) public returns(address) {
+        TvmCell stateInit = composeSystemContractStateInit(code, pubkey);
+        return address.makeAddrStd(0, tvm.hash(stateInit));    
+    }   
+
     function calculateTreeAddress(TvmCell code, string shaTree, address rootRepo) public returns(address) {
         TvmCell deployCode = buildTreeCode(code, versionLib);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Tree, varInit: {_shaTree: shaTree, _repo: rootRepo}});
@@ -59,16 +76,6 @@ library GoshLib {
         return address(tvm.hash(state));
     }
 
-    function calculateSystemContractAddress(TvmCell code) public returns(address) {
-        TvmCell s1 = tvm.buildStateInit({
-            code: code,
-            contr: SystemContract,
-            pubkey: tvm.pubkey(),
-            varInit: {}
-        });
-        return address.makeAddrStd(0, tvm.hash(s1));
-    }
-
     function calculateWalletAddress(TvmCell code, address systemcontract, address goshdao, address pubaddr, uint128 index) public returns(address) {
         TvmCell deployCode = buildWalletCode(code, pubaddr, versionLib);
         TvmCell s1 = tvm.buildStateInit({
@@ -100,12 +107,6 @@ library GoshLib {
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: DaoTag, varInit: {_goshdao: goshdao}});
         return address.makeAddrStd(0, tvm.hash(s1));
     }
-       
-    function calculateTaskAddress(TvmCell code, address goshdao, string nametask, address repo) public returns(address) {
-        TvmCell deployCode = buildTagCode(code, repo, versionLib);
-        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: goshdao}});
-        return address.makeAddrStd(0, tvm.hash(s1));
-    }
   
     function calculateContentAddress(TvmCell code, 
         address systemcontract,
@@ -115,6 +116,21 @@ library GoshLib {
         string label) public returns(address) {
         TvmCell deployCode = buildSignatureCode(code, repo, versionLib);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: ContentSignature, varInit: {_commit : commit, _label : label, _systemcontract : systemcontract, _goshdao : goshdao}});
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
+
+    function calculateTopicAddress(TvmCell code, address goshdao, string name, string content, address object) public returns(address) {
+        TvmCell s1 = composeTopicStateInit(code, goshdao, name, content, object);
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
+
+    function calculateProfileAddress(TvmCell code, address versionController, string name) public returns(address) {
+        TvmCell s1 = composeProfileStateInit(code, versionController, name);
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
+
+    function calculateProfileDaoAddress(TvmCell code, address versionController, string name) public returns(address) {
+        TvmCell s1 = composeProfileDaoStateInit(code, versionController, name);
         return address.makeAddrStd(0, tvm.hash(s1));
     }
 
@@ -151,6 +167,29 @@ library GoshLib {
     function calculateTagAddress(TvmCell code, address repo, string nametag) public returns(address){        
         TvmCell deployCode = composeTagStateInit(code, repo, nametag);
         return address.makeAddrStd(0, tvm.hash(deployCode));
+    }
+
+    function composeProfileStateInit(TvmCell code, address versionController, string name) public returns(TvmCell) {
+        TvmCell s1 = tvm.buildStateInit({
+            code: code,
+            contr: Profile,
+            varInit: {_name : name, _versioncontroller: versionController}
+        });
+        return s1;
+    }
+
+    function composeTaskStateInit(TvmCell code, address goshdao, address repo, string nametask) public returns(TvmCell) {
+        TvmCell deployCode = buildTaskCode(code, repo, versionLib);
+        return tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: goshdao}});
+    }        
+
+    function composeProfileDaoStateInit(TvmCell code, address versionController, string name) public returns(TvmCell) {
+        TvmCell s1 = tvm.buildStateInit({
+            code: code,
+            contr: ProfileDao,
+            varInit: {_name : name, _versioncontroller: versionController}
+        });
+        return s1;
     }
 
     function composeWalletStateInit(TvmCell code, address systemcontract, address goshdao, address pubaddr, uint128 index) public returns(TvmCell) {
@@ -216,6 +255,24 @@ library GoshLib {
     function composeTagStateInit(TvmCell code, address repo, string nametag) public returns(TvmCell) {
         TvmCell deployCode = buildTagCode(code, repo, versionLib);
         return tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag}});
+    }
+
+    function composeSystemContractStateInit(TvmCell code, uint256 pubkey) public returns(TvmCell) {
+        return tvm.buildStateInit({
+            code: code,
+            contr: SystemContract,
+            pubkey: pubkey,
+            varInit: {}
+        });
+    }
+
+    function composeProfileIndexStateInit(TvmCell code, address versionController, uint256 pubkey, string name) public returns(TvmCell) {
+        return tvm.buildStateInit({
+            code: buildProfileIndexCode(code, pubkey, versionController, "1.0.0"),
+            contr: ProfileIndex,
+            pubkey: tvm.pubkey(),
+            varInit: { _name : name }
+        });
     }
 
 //Code Part

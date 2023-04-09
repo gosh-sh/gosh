@@ -98,7 +98,7 @@ contract Commit is Modifiers {
         if (_flag == true) { return; }
         if (address(this).balance > 1400 ton) { return; }
         _flag = true;
-        GoshDao(_goshdao).sendMoneyCommit{value : 0.2 ton}(_rootRepo, _nameCommit);
+        GoshDao(_goshdao).sendMoneyCommit{value : 0.2 ton, flag: 1}(_rootRepo, _nameCommit);
     }
 
     //Commit part
@@ -117,8 +117,8 @@ contract Commit is Modifiers {
     }
     
     function fromInitUpgrade(address commit, string branch, address newcommit) public view senderIs(_rootRepo) accept {
-        if (commit != address(this)) { Commit(msg.sender).continueUpgrade{value: 0.1 ton}(false, branch); return; }
-        Commit(newcommit).continueUpgrade{value: 0.1 ton}(_isCorrect, branch);
+        if (commit != address(this)) { Commit(msg.sender).continueUpgrade{value: 0.1 ton, flag: 1}(false, branch); return; }
+        Commit(newcommit).continueUpgrade{value: 0.1 ton, flag: 1}(_isCorrect, branch);
     }
     
     function continueUpgrade(bool res, string branch) public senderIs(_parents[0].addr) accept {
@@ -175,7 +175,7 @@ contract Commit is Modifiers {
             if (_nameCommit == "0000000000000000000000000000000000000000") {  Repository(_rootRepo).initCommit{value: 0.14 ton, flag:1}(_nameCommit, branch, _parents[0]); }
             else { 
                 if (_parents[0].version == "1.0.0") { Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch, 1); }
-                else { Repository(_rootRepo).fromInitUpgrade2{value: 0.6 ton}(_nameCommit, _parents[0].addr, _parents[0].version, branch); } 
+                else { Repository(_rootRepo).fromInitUpgrade2{value: 0.6 ton, flag: 1}(_nameCommit, _parents[0].addr, _parents[0].version, branch); } 
             }
             return;
         }
@@ -259,7 +259,7 @@ contract Commit is Modifiers {
         uint128 numberCommits) public senderIs(address(this)) {
         if (branchCommit  == address(this)) {
                 if (numberCommits != 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
-                Commit(newC).ChainAccept{value: 0.3 ton, bounce: true }(_nameCommit, branchName, branchCommit, newC);
+                Commit(newC).ChainAccept{value: 0.3 ton, bounce: true , flag: 1}(_nameCommit, branchName, branchCommit, newC);
         }
         else {
             if (_parents.length == 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
@@ -316,7 +316,7 @@ contract Commit is Modifiers {
 
     function acceptAll(string branch, address branchCommit) public senderIs(address(this)) {
         if ((_commitcheck != false) && (_diffcheck != false)) {
-            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true }(branch, branchCommit, _nameCommit, _number, _numbercommits, _task);
+            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch, branchCommit, _nameCommit, _number, _numbercommits, _task);
             _number = 0;
         }
         else {
@@ -465,8 +465,8 @@ contract Commit is Modifiers {
         return (_rootRepo, _nameBranch, _nameCommit, _parents, _commit, _initupgrade, _isCorrect);
     }
     
-    function getCommitIn() public view minValue(0.2 ton) {
-        IObject(msg.sender).returnCommit{value: 0.1 ton}(_rootRepo, _nameBranch, _nameCommit, _parents, _commit, _initupgrade, _isCorrect);
+    function getCommitIn() public view minValue(0.5 ton) {
+        IObject(msg.sender).returnCommit{value: 0.1 ton, flag: 1}(_rootRepo, _nameBranch, _nameCommit, _parents, _commit, _initupgrade, _isCorrect);
     }
 
     function getCount() external view returns(uint128, bool) {

@@ -83,7 +83,7 @@ contract DiffC is Modifiers {
         if (_flag == true) { return; }
         if (address(this).balance > 10 ton) { return; }
         _flag = true;
-        GoshDao(_goshdao).sendMoneyDiff{value : 0.2 ton}(_rootRepo, _nameCommit, _index1, _index2);
+        GoshDao(_goshdao).sendMoneyDiff{value : 0.2 ton, flag: 1}(_rootRepo, _nameCommit, _index1, _index2);
     }
     
     function checkAllAccess(address sender) private view returns(bool) {
