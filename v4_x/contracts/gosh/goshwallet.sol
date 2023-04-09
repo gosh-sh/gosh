@@ -1655,11 +1655,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string shaTree,
         mapping(uint256 => TreeObject) datatree,
         optional(string) ipfs,
+        uint128 number,
         bool isFinal
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        _deployTree(repoName, shaTree, datatree, ipfs, isFinal);
+        _deployTree(repoName, shaTree, datatree, ipfs, number, isFinal);
     }
 
     function deployAddTree(
@@ -1692,13 +1693,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string shaTree,
         mapping(uint256 => TreeObject) datatree,
         optional(string) ipfs,
+        uint128  number,
         bool isFinal
     ) internal {
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
         TvmCell s1 = GoshLib.composeTreeStateInit(_code[m_TreeCode], shaTree, repo);
         new Tree{
             stateInit: s1, value: FEE_DEPLOY_TREE, wid: 0, bounce: true, flag: 1
-        }(_pubaddr, datatree, ipfs, _systemcontract, _goshdao, _code[m_WalletCode], _code[m_DiffCode], _code[m_TreeCode], _code[m_CommitCode], _code[m_SnapshotCode], isFinal, _index);
+        }(_pubaddr, datatree, ipfs, _systemcontract, _goshdao, _code[m_WalletCode], _code[m_DiffCode], _code[m_TreeCode], _code[m_CommitCode], _code[m_SnapshotCode], number, isFinal, _index);
         getMoney();
     }
 

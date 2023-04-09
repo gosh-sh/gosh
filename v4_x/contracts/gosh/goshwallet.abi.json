@@ -1160,6 +1160,7 @@
 				{"name":"shaTree","type":"string"},
 				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"datatree","type":"map(uint256,tuple)"},
 				{"name":"ipfs","type":"optional(string)"},
+				{"name":"number","type":"uint128"},
 				{"name":"isFinal","type":"bool"}
 			],
 			"outputs": [

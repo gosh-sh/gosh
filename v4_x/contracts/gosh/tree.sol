@@ -39,6 +39,8 @@ contract Tree is Modifiers {
     bool _flag = false;
     optional(PauseTree) _saved;
 
+    uint128 _number = 0;
+    uint128 _neednumber;
     bool _isReady = false;
     uint128 timeMoney = 0; 
     
@@ -53,6 +55,7 @@ contract Tree is Modifiers {
         TvmCell codeTree,
         TvmCell codeCommit,
         TvmCell SnapshotCode,
+        uint128 number,
         bool isFinal,
         uint128 index) {
         require(_shaTree != "", ERR_NO_DATA);
@@ -63,6 +66,7 @@ contract Tree is Modifiers {
         _systemcontract = rootGosh;
         _goshdao = goshdao;
         _isReady = isFinal;
+        _neednumber = number;
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         _ipfs = ipfs;
         _code[m_DiffCode] = codeDiff;
@@ -87,6 +91,9 @@ contract Tree is Modifiers {
         if (res.hasValue()) {
             TreeObject obj;
             (index, obj) = res.get();
+            if (_tree.exists(index) == false) { 
+                _number += 1; 
+            }
             _tree[index] = obj;
             this.addTreeself{value: 0.2 ton, flag: 1}(index, tree1);
         }
@@ -94,6 +101,7 @@ contract Tree is Modifiers {
 
     function setFinishMark(address pubaddr, uint128 index) public {
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        require(_neednumber == _number, ERR_WRONG_DATA);
         _isReady = true;        
     } 
 
