@@ -98,6 +98,9 @@ git push -u origin $BRANCH_NAME 2>&1 | grep 'fetch first'
 
 cd ..
 
+sleep 10
+
+
 # 10
 echo "***** cloning repo *****"
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone3"

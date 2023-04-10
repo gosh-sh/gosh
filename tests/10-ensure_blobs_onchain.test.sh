@@ -82,6 +82,8 @@ git push -u origin $BRANCH_NAME 2>&1 | grep "inner_push_diff->save_data_to_ipfs"
 
 cd ..
 
+sleep 10
+
 # 9
 echo "***** cloning repo *****"
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone2"

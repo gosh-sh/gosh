@@ -65,6 +65,9 @@ sleep 30
 
 echo "***** cloning repo (2) *****"
 cd ..
+
+sleep 10
+
 git clone --recurse-submodules \
     gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 

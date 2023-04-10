@@ -46,6 +46,9 @@ git push -u origin $BRANCH_NAME
 
 echo "***** cloning repo *****"
 cd ..
+
+sleep 10
+
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 # check
@@ -71,6 +74,9 @@ git push -u origin $BRANCH_NAME
 
 echo "***** cloning repo *****"
 cd ..
+
+sleep 10
+
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 # check
@@ -96,6 +102,9 @@ git push -u origin $BRANCH_NAME
 
 echo "***** cloning repo *****"
 cd ..
+
+sleep 10
+
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 # check
@@ -121,6 +130,9 @@ git push -u origin $BRANCH_NAME
 
 echo "***** cloning repo *****"
 cd ..
+
+sleep 10
+
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 # check
@@ -146,6 +158,9 @@ git push -u origin $BRANCH_NAME
 
 echo "***** cloning repo *****"
 cd ..
+
+sleep 10
+
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 # check
@@ -171,6 +186,9 @@ git push -u origin $BRANCH_NAME
 
 echo "***** cloning repo *****"
 cd ..
+
+sleep 10
+
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 # check
@@ -196,6 +214,9 @@ git push -u origin $BRANCH_NAME
 
 echo "***** cloning repo *****"
 cd ..
+
+sleep 10
+
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 # check
@@ -221,6 +242,9 @@ git push -u origin $BRANCH_NAME
 
 echo "***** cloning repo *****"
 cd ..
+
+sleep 10
+
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 echo "***** comparing repositories *****"

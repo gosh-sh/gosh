@@ -71,6 +71,9 @@ sleep 60
 
 echo "***** cloning repo *****"
 cd ..
+
+sleep 10
+
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 echo "***** check repo *****"
