@@ -1165,6 +1165,15 @@
 			]
 		},
 		{
+			"name": "destroyTree",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"shaTree","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployAddTree",
 			"inputs": [
 				{"name":"repoName","type":"string"},

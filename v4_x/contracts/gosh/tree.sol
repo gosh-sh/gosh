@@ -281,6 +281,7 @@ contract Tree is Modifiers {
     }
 
     function destroy(address pubaddr, uint128 index) public {
+        require(_isReady == false, ERR_PROCCESS_END);
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         selfdestruct(_systemcontract);
     }

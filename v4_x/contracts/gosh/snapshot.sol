@@ -103,17 +103,10 @@ contract Snapshot is Modifiers {
         GoshDao(_goshdao).sendMoneySnap{value : 0.2 ton, flag: 1}(_branch, _rootRepo, _name);
     }
     
-    function returnTreeAnswer(Request value0, optional(TreeObject) value1, string sha) public senderIs(getTreeAddr(sha)) {
+    function returnTreeAnswer(Request value0, optional(TreeObject) value1, string sha) public senderIs(GoshLib.calculateTreeAddress(_code[m_TreeCode], sha, _rootRepo)) {
         if (value1.hasValue() == false) { selfdestruct(_systemcontract); return; }
         if (value1.get().sha256 != value0.sha) { selfdestruct(_systemcontract); return; }
         _ready = true;
-    }
-    
-    function getTreeAddr(string shaTree) internal view returns(address) {
-        TvmCell deployCode = GoshLib.buildTreeCode(_code[m_TreeCode], version);
-        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Tree, varInit: {_shaTree: shaTree, _repo: _rootRepo}});
-        //return tvm.insertPubkey(stateInit, pubkey);
-        return address.makeAddrStd(0, tvm.hash(stateInit));
     }
     
     function isReady(uint256 sha1, uint128 typer) public view minValue(0.15 ton) {
