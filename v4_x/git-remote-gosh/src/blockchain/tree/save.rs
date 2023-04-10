@@ -29,6 +29,7 @@ pub struct DeployTreeArgs {
     #[serde(rename = "datatree")]
     nodes: HashMap<String, TreeNode>,
     ipfs: Option<String>,
+    number: u128,
     #[serde(rename = "isFinal")]
     pub is_final: bool,
 }
@@ -96,6 +97,7 @@ impl DeployTree for Everscale {
                 repo_name: repo_name.to_owned(),
                 nodes: chunk,
                 ipfs: None, // !!!
+                number: (nodes.len() - TREE_NODES_CHUNK_MAX_SIZE) as u128,
                 is_final: false,
             };
             tracing::trace!("DeployTreeArgs: {params:?}");
@@ -186,6 +188,7 @@ impl DeployTree for Everscale {
                 repo_name: repo_name.to_owned(),
                 nodes: nodes.to_owned(),
                 ipfs: None, // !!!
+                number: 0,
                 is_final: true,
             };
             tracing::trace!("DeployTreeArgs: {params:?}");
