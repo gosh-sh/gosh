@@ -9,7 +9,7 @@ pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 pragma AbiHeader time;
 
-import "./modifiers/modifiers.sol";
+import "./smv/modifiers/modifiers.sol";
 import "goshwallet.sol";
 import "goshdao.sol";
 import "repository.sol";
@@ -46,25 +46,28 @@ contract SystemContract is Modifiers {
 
     address public _lastGoshDao;
     
-    constructor(mapping(uint8 => TvmCell) code) public {
+    constructor(mapping(uint8 => TvmCell) code) {
         require(tvm.pubkey() != 0, ERR_NEED_PUBKEY);
         tvm.accept();
         _code = code;
         _versionController = msg.sender;
     }
+
+    function returnMoney(uint128 value) public view senderIs(_versionController) accept {
+        msg.sender.transfer(value);
+    }  
     
     function upgradeTag1(string namedao, string namerepo, string nametag, string namecommit, address commit, string content, string newversion) public view senderIs(getTagAddr(namedao, namerepo, nametag)) accept {
         VersionController(_versionController).upgradeTag2{value : 0.3 ton, flag: 1}(namedao, namerepo, nametag, namecommit, commit, content, newversion, version);
     }
     
     function upgradeTag3(string namedao, string namerepo, string nametag, string namecommit, address commit,  string content) public view senderIs(_versionController) accept {
-        TvmCell s1 = _composeDaoStateInit(namedao);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao);
         GoshDao(addr).upgradeTag4{value : 0.11 ton, flag: 1}(namerepo, nametag, namecommit, commit, content);
     }  
    
  
-    function sendTokenToNewVersion2(address  pubaddr, string namedao, uint128 index, optional(address) newwallet, uint128 grant, string newversion) public view senderIs(getAddrWalletIn(pubaddr, namedao, index)) accept {
+    function sendTokenToNewVersion2(address  pubaddr, string namedao, uint128 index, optional(address) newwallet, uint128 grant, string newversion) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), pubaddr, index)) accept {
         VersionController(_versionController).sendTokenToNewVersion33{value : 0.3 ton, flag: 1}(grant, newversion, version, pubaddr, namedao, newwallet);
     }
     
@@ -74,74 +77,59 @@ contract SystemContract is Modifiers {
             GoshWallet(newwallet.get()).sendTokenToNewVersion5{value : 0.3 ton, flag: 1}(grant);
             return; 
         }
-        GoshWallet(getAddrWalletIn(pubaddr, dao, 0)).sendTokenToNewVersion5{value : 0.3 ton, flag: 1}(grant);
+        GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), dao), pubaddr, 0)).sendTokenToNewVersion5{value : 0.3 ton, flag: 1}(grant);
     }
 
 
     function fromInitUpgrade3(string name, string namedao, string nameCommit, address commit, string ver, string branch, address newcommit) public view {
-        TvmCell s1 = _composeDaoStateInit(namedao);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        require(_buildRepositoryAddr(name, addr) == msg.sender, ERR_SENDER_NO_ALLOWED);       
+        address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao);
+        require(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, name) == msg.sender, ERR_SENDER_NO_ALLOWED);       
         tvm.accept();
         VersionController(_versionController).fromInitUpgrade4{value : 0.3 ton, flag: 1}(name, namedao, nameCommit, commit, ver, branch, newcommit, version);   
     }
     
     function fromInitUpgrade5(string name, string namedao, string nameCommit, address commit, string branch, address newcommit) public view senderIs(_versionController) accept {       
-        TvmCell s1 = _composeDaoStateInit(namedao);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));     
-        Repository(_buildRepositoryAddr(name, addr)).fromInitUpgrade6{value : 0.3 ton, flag: 1}(nameCommit, commit, branch, newcommit);   
+        address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao);     
+        Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, name)).fromInitUpgrade6{value : 0.3 ton, flag: 1}(nameCommit, commit, branch, newcommit);   
     }
     
     function upgradeDao1(string namedao, string newversion) public view {
-        TvmCell s1 = _composeDaoStateInit(namedao);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao);
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         VersionController(_versionController).upgradeDao2{value : 0.3 ton, flag: 1}(namedao, newversion, msg.sender, version);
     }
     
     function checkUpdateRepo1(string name, string namedao, AddrVersion prev, address answer) public view {
-        TvmCell s1 = _composeDaoStateInit(namedao);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        require(_buildRepositoryAddr(name, addr) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao);
+        require(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, name) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         VersionController(_versionController).checkUpdateRepo2{value : 0.15 ton, flag: 1}(name, namedao, version, prev, answer);
     }
     
     function checkUpdateRepo3(string name, string namedao, AddrVersion prev, address answer) public view senderIs(_versionController) accept {
-        TvmCell s1 = _composeDaoStateInit(namedao);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        address repo = _buildRepositoryAddr(name, addr);
+        address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, name);
         Repository(repo).checkUpdateRepo4{value : 0.15 ton, flag: 1}(prev, answer);
-    }   
-    
-    function _buildRepositoryAddr(string name, address dao) private view returns (address) {
-        return address(tvm.hash(_composeRepoStateInit(name, dao)));
-    }
+    }  
     
     function deployProfile(string name, uint256 pubkey) public accept saveMsg {
         require(checkName(name), ERR_WRONG_NAME);
-        TvmCell s1 = tvm.buildStateInit({
-            code: _code[m_ProfileCode],
-            contr: Profile,
-            varInit: {_name: name, _versioncontroller: _versionController}
-        });
+        TvmCell s1 = GoshLib.composeProfileStateInit(_code[m_ProfileCode], _versionController, name);
         new Profile {stateInit: s1, value: FEE_DEPLOY_PROFILE, wid: 0, flag: 1}(_code[m_ProfileDaoCode], _code[m_ProfileCode], _code[m_ProfileIndexCode], pubkey);
     }
     
     function upgradeVersionCode(TvmCell newcode, TvmCell cell) public accept saveMsg {
-        TvmCell s1 = _composeDaoStateInit("gosh");
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), "gosh");
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         VersionController(_versionController).updateCodeDao{value : 0.3 ton, flag: 1}(newcode, cell, version);
     }
 
     function askIndexAddr(string name, TvmCell Data, uint128 index, address sender) public accept saveMsg {
-        TvmCell s1 = _composeDaoStateInit(name);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), name);
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         if (_indexes.exists(index)) {
-            GoshWallet(sender).saveData(Data, index, _indexes[index]);
+            GoshWallet(sender).saveData{value: 0.1 ton, flag: 1}(Data, index, _indexes[index]);
         } 
     }
     
@@ -151,14 +139,9 @@ contract SystemContract is Modifiers {
     
     function deployDao(string name, address pubaddr, optional(address) previous, address[] pubmem) public accept saveMsg {
         require(_flag == false, ERR_GOSH_UPDATE);
-        TvmCell s0 = tvm.buildStateInit({
-            code: _code[m_ProfileDaoCode],
-            contr: ProfileDao,
-            varInit: {_name : name, _versioncontroller: _versionController}
-        });
-        require(address.makeAddrStd(0, tvm.hash(s0)) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateProfileDaoAddress(_code[m_ProfileDaoCode], _versionController, name) == msg.sender, ERR_SENDER_NO_ALLOWED);
         require(checkNameDao(name), ERR_WRONG_NAME);
-        TvmCell s1 = _composeDaoStateInit(name);
+        TvmCell s1 = GoshLib.composeDaoStateInit(_code[m_DaoCode], address(this), name);
         _lastGoshDao = new GoshDao {stateInit: s1, value: FEE_DEPLOY_DAO, wid: 0, flag: 1}(
             _versionController,
             pubaddr,
@@ -190,8 +173,7 @@ contract SystemContract is Modifiers {
     }
 
     function sendMoney(address pubaddr, address goshdao, uint128 value, uint128 index) public view {
-        TvmCell s1 = _composeWalletStateInit(pubaddr, goshdao, index);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        address addr = GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), goshdao, pubaddr, index);
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         addr.transfer(value);
@@ -199,99 +181,42 @@ contract SystemContract is Modifiers {
     
     function sendMoneyProfile(string name, uint128 value) public view {
         tvm.accept();
-        TvmCell s1 = tvm.buildStateInit({
-            code: _code[m_ProfileCode],
-            contr: Profile,
-            varInit: {_name : name, _versioncontroller: _versionController}
-        });
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        address addr = GoshLib.calculateProfileAddress(_code[m_ProfileCode], _versionController, name);
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         addr.transfer(value);
     }
     
     function sendMoneyDao(string name, uint128 value) public view {
-        TvmCell s1 = _composeDaoStateInit(name);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), name);
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         addr.transfer(value);
     }
     
     function checkOldTaskVersion2(string name, string nametask, string repo, string previous, address previousaddr, address answer) public view {
-        TvmCell s1 = _composeDaoStateInit(name);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), name);
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         VersionController(_versionController).checkOldTaskVersion3{value : 0.3 ton, flag: 1}(name, nametask, repo, previous, previousaddr, version, answer);
     }
     
     function checkOldTaskVersion4(string name, string nametask, string repo, address previousaddr, address answer) public view senderIs(_versionController) accept {
-        TvmCell s1 = _composeDaoStateInit(name);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
+        address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), name);
         GoshDao(addr).checkOldTaskVersion5{value : 0.31 ton, flag: 1}(nametask, repo, previousaddr, answer);
     }
     
-    function _composeRepoStateInit(string name, address goshdao) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildRepositoryCode(
-            _code[m_RepositoryCode], address(this), goshdao, version
-        );
-        return tvm.buildStateInit({
-            code: deployCode,
-            contr: Repository,
-            varInit: {_name: name}
-        });
-    }
-
-    function _composeWalletStateInit(address pubaddr, address dao, uint128 index) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);
-        TvmCell _contract = tvm.buildStateInit({
-            code: deployCode,
-            contr: GoshWallet,
-            varInit: {_systemcontract : address(this), _goshdao: dao, _index: index}
-        });
-        return _contract;
-    }
-
-    function _composeDaoStateInit(string name) internal view returns(TvmCell) {
-        TvmBuilder b;
-        b.store(name);
-        b.store(version);
-        uint256 hash = tvm.hash(b.toCell());
-        delete b;
-        b.store(hash);
-        TvmCell deployCode = tvm.setCodeSalt(_code[m_DaoCode], b.toCell());
-        return tvm.buildStateInit({
-            code: deployCode,
-            contr: GoshDao,
-            varInit: { _systemcontract : address(this) }
-        });
-    }
-
-    function _composeCommitStateInit(string _commit, address repo) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildCommitCode(_code[m_CommitCode], repo, version);
-        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Commit, varInit: {_nameCommit: _commit}});
-        return stateInit;
-    }
-    
-    function getAddrWalletIn(address pubaddr, string namedao, uint128 index) private view returns(address) {
-        TvmCell s1 = _composeDaoStateInit(namedao);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        s1 = _composeWalletStateInit(pubaddr, addr, index);
-        return address.makeAddrStd(0, tvm.hash(s1));
-    }
-    
-    function deployCustomData(TvmCell data0, address pubaddr, string namedao, uint128 index) public view senderIs(getAddrWalletIn(pubaddr, namedao, index)) accept {
+    function deployCustomData(TvmCell data0, address pubaddr, string namedao, uint128 index) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), pubaddr, index)) accept {
         data0;
         return;
     }
     
-    function DaoTransferToken2(address pubaddr, uint128 index, string namedao, address wallet, address newwallet, uint128 grant, string oldversion, string newversion) public view senderIs(getAddrWalletIn(pubaddr, namedao, index)) accept {
+    function DaoTransferToken2(address pubaddr, uint128 index, string namedao, address wallet, address newwallet, uint128 grant, string oldversion, string newversion) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), pubaddr, index)) accept {
         VersionController(_versionController).DaoTransferToken3{value : 0.3 ton, flag: 1}(pubaddr, index, namedao, wallet, newwallet, grant,  oldversion, newversion);
     }
     
     function DaoTransferToken4(address pubaddr, uint128 index, string namedao, address wallet, address newwallet, uint128 grant, string newversion) public view senderIs(_versionController) accept {
-        GoshWallet(getAddrWalletIn(pubaddr, namedao, index)).sendDaoTokenToNewVersion{value : 0.3 ton, flag: 1}(wallet, newwallet, grant, newversion);
+        GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), pubaddr, index)).sendDaoTokenToNewVersion{value : 0.3 ton, flag: 1}(wallet, newwallet, grant, newversion);
     }
     
     function updateCode(TvmCell newcode, TvmCell cell) public onlyOwner accept saveMsg {
@@ -420,23 +345,13 @@ contract SystemContract is Modifiers {
     }
     
     function getTopicAddr(string name, string content, address object, address dao) external view returns(address) {
-        TvmCell deployCode = GoshLib.buildTopicCode(
-            _code[m_TopicCode], dao, version
-        );
-        return address.makeAddrStd(0, tvm.hash(tvm.buildStateInit({
-            code: deployCode,
-            contr: Topic,
-            varInit: {_name: name, _content: content, _object: object}
-        })));
+        return GoshLib.calculateTopicAddress(_code[m_TopicCode], dao, name, content, object);
     }
     
     function getTaskAddr(string nametask, string dao, string repoName) external view returns(address) {
-        TvmCell s0 = _composeDaoStateInit(dao);
-        address addr = address.makeAddrStd(0, tvm.hash(s0));
-        address repo = _buildRepositoryAddr(repoName, addr);
-        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
-        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
-        address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
+        address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), dao);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, repoName);
+        address taskaddr = GoshLib.calculateTaskAddress(_code[m_TaskCode], addr, repo, nametask);
         return taskaddr;
     }
 
@@ -445,38 +360,30 @@ contract SystemContract is Modifiers {
         string repoName,
         string nametag
     ) private view returns(address) {
-        TvmCell s1 = _composeDaoStateInit(daoName);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        address repo = _buildRepositoryAddr(repoName, addr);
-        TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version);
-        TvmCell s2 = tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag}});
-        return address.makeAddrStd(0, tvm.hash(s2));
+        address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), daoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, repoName);
+        return GoshLib.calculateTagAddress(_code[m_TagCode], repo, nametag);
     }
     
     function getContentAddress(string repoName,
         string daoName,
         string commit,
         string label) external view returns(address) {
-        TvmCell s1 = _composeRepoStateInit(repoName, address.makeAddrStd(0, tvm.hash(_composeDaoStateInit(daoName))));
-        address repo = address.makeAddrStd(0, tvm.hash(s1));
-        TvmCell deployCode = GoshLib.buildSignatureCode(_code[m_contentSignature], repo, version);
-        TvmCell s2 = tvm.buildStateInit({code: deployCode, contr: ContentSignature, varInit: {_commit : commit, _label : label}});
-       return address.makeAddrStd(0, tvm.hash(s2));
+        address dao = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), daoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), dao, repoName);
+        return GoshLib.calculateContentAddress(_code[m_contentSignature], address(this), dao, repo, commit, label);
     }
 
     function getAddrRepository(string name, string dao) external view returns(address) {
-        TvmCell s1 = _composeRepoStateInit(name, address.makeAddrStd(0, tvm.hash(_composeDaoStateInit(dao))));
-        return address.makeAddrStd(0, tvm.hash(s1));
+        return GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), dao), name);
     }
 
     function getAddrDao(string name) external view returns(address) {
-        TvmCell s1 = _composeDaoStateInit(name);
-        return address.makeAddrStd(0, tvm.hash(s1));
+        return GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), name);
     }
     
     function getAddrWallet(address pubaddr, address dao, uint128 index) external view returns(address) {
-        TvmCell s1 = _composeWalletStateInit(pubaddr, dao, index);
-        return address.makeAddrStd(0, tvm.hash(s1));
+        return GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), dao, pubaddr, index);
     }
 
     function getRepoDaoCode(address dao) external view returns(TvmCell) {
@@ -486,21 +393,11 @@ contract SystemContract is Modifiers {
     }    
     
     function getProfileAddr(string name) external view returns(address) {
-        TvmCell s1 = tvm.buildStateInit({
-            code: _code[m_ProfileCode],
-            contr: Profile,
-            varInit: {_name : name, _versioncontroller: _versionController}
-        });
-        return address.makeAddrStd(0, tvm.hash(s1));
+        return GoshLib.calculateProfileAddress(_code[m_ProfileCode], _versionController, name);
     }
     
     function getProfileDaoAddr(string name) external view returns(address){
-        TvmCell s0 = tvm.buildStateInit({
-            code: _code[m_ProfileDaoCode],
-            contr: ProfileDao,
-            varInit: {_name : name, _versioncontroller: _versionController}
-        });
-        return address(tvm.hash(s0));
+        return GoshLib.calculateProfileDaoAddress(_code[m_ProfileDaoCode], _versionController, name);
     }   
     
     function getDaoTagCode(string hashtag) external view returns(TvmCell) {

@@ -101,7 +101,7 @@
 			"name": "getPreviousInfo1",
 			"inputs": [
 				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
-				{"name":"_","type":"uint128"}
+				{"name":"trash","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -856,6 +856,16 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getTaskAddr",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repoName","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
 			]
 		},
 		{

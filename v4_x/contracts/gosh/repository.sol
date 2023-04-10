@@ -15,7 +15,7 @@ import "tag.sol";
 import "task.sol";
 import "snapshot.sol";
 import "./libraries/GoshLib.sol";
-import "./modifiers/modifiers.sol";
+import "./smv/modifiers/modifiers.sol";
 
 /* Root contract of Repository */
 contract Repository is Modifiers{
@@ -57,7 +57,7 @@ contract Repository is Modifiers{
         mapping(uint256 => string) versions,
         uint128 index,
         optional(AddrVersion) previousversion
-        ) public {
+        ) {
         require(_name != "", ERR_NO_DATA);
         tvm.accept();
         _description = desc;
@@ -67,7 +67,7 @@ contract Repository is Modifiers{
         _systemcontract = rootgosh;
         _goshdao = goshdao;
         _nameDao = nameDao;
-        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         _name = name;
         _code[m_CommitCode] = CommitCode;
         _code[m_TagCode] = codeTag;
@@ -78,23 +78,24 @@ contract Repository is Modifiers{
         _previousversion = previousversion;
         if (_previousversion.hasValue()) { SystemContract(_systemcontract).checkUpdateRepo1{value: 0.3 ton, bounce: true, flag: 1}(_name, _nameDao, _previousversion.get(), address(this)); return; }
         _ready = true;
-        TvmCell s1 = _composeCommitStateInit("0000000000000000000000000000000000000000");
-        _Branches[tvm.hash("main")] = Item("main", address.makeAddrStd(0, tvm.hash(s1)), version);
+        _Branches[tvm.hash("main")] = Item("main", GoshLib.calculateCommitAddress(_code[m_CommitCode], address(this), "0000000000000000000000000000000000000000"), version);
         _head = "main";
         _creator = msg.sender;
     }
 
     function checkUpdateRepo4(AddrVersion prev, address answer) public view senderIs(_systemcontract) accept {
+        TvmCell a;
         if (prev.addr != address(this)) {
-            TvmCell a = abi.encode(false, _Branches, _protectedBranch, _head, _hashtag);
+            a = abi.encode(false, _Branches, _protectedBranch, _head, _hashtag);
             Repository(answer).checkUpdateRepoVer5{value : 0.15 ton, flag: 1}(version, a);
+            return;
         }
-        TvmCell a = abi.encode(true, _Branches, _protectedBranch, _head, _hashtag);
+        a = abi.encode(true, _Branches, _protectedBranch, _head, _hashtag);
         Repository(answer).checkUpdateRepoVer5{value : 0.15 ton, flag: 1}(version, a);
     }
 
     function checkUpdateRepo5(bool ans, mapping(uint256 => Item) Branches, mapping(uint256 => bool) protectedBranch, string head) public senderIs(_previousversion.get().addr) accept {
-        if (ans == false) { selfdestruct(giver); }
+        if (ans == false) { selfdestruct(_systemcontract); }
         _Branches = Branches;
         _protectedBranch = protectedBranch;
         _head = head;
@@ -104,7 +105,7 @@ contract Repository is Modifiers{
     function checkUpdateRepoVer5(string ver, TvmCell a) public senderIs(_previousversion.get().addr) accept {
         if (ver == "2.0.0"){
             (bool ans, mapping(uint256 => Item) Branches, mapping(uint256 => bool) protectedBranch, string head, mapping(uint256 => string) hashtag) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => bool), string, mapping(uint256 => string)));
-            if (ans == false) { selfdestruct(giver); }
+            if (ans == false) { selfdestruct(_systemcontract); }
             _Branches = Branches;
             _protectedBranch = protectedBranch;
             _head = head;
@@ -113,7 +114,7 @@ contract Repository is Modifiers{
         }
         if (ver == "3.0.0"){
             (bool ans, mapping(uint256 => Item) Branches, mapping(uint256 => bool) protectedBranch, string head, mapping(uint256 => string) hashtag) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => bool), string, mapping(uint256 => string)));
-            if (ans == false) { selfdestruct(giver); }
+            if (ans == false) { selfdestruct(_systemcontract); }
             _Branches = Branches;
             _protectedBranch = protectedBranch;
             _head = head;
@@ -122,7 +123,7 @@ contract Repository is Modifiers{
         }
         if (ver == "4.0.0"){
             (bool ans, mapping(uint256 => Item) Branches, mapping(uint256 => bool) protectedBranch, string head, mapping(uint256 => string) hashtag) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => bool), string, mapping(uint256 => string)));
-            if (ans == false) { selfdestruct(giver); }
+            if (ans == false) { selfdestruct(_systemcontract); }
             _Branches = Branches;
             _protectedBranch = protectedBranch;
             _head = head;
@@ -137,7 +138,7 @@ contract Repository is Modifiers{
             if (_hashtag.exists(tvm.hash(tag[t]))) { continue; }
             _counttag++;
             _hashtag[tvm.hash(tag[t])] = tag[t];
-            GoshWallet(_creator).deployRepoTag{value:0.2 ton}(_name, tag[t]);   	
+            GoshWallet(_creator).deployRepoTag{value:0.2 ton, flag: 1}(_name, tag[t]);   	
         }
         _ready = true;
     }
@@ -145,7 +146,7 @@ contract Repository is Modifiers{
     //Branch part
     function deployBranch(address pubaddr, string newname, string fromcommit, uint128 index)  public minValue(0.5 ton) {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
-        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         require(_Branches.exists(tvm.hash(newname)) == false, ERR_BRANCH_EXIST);
         if ("0000000000000000000000000000000000000000" == fromcommit) { _Branches[tvm.hash(newname)] = Item(newname, getCommitAddr(fromcommit), version); return; }
@@ -162,32 +163,9 @@ contract Repository is Modifiers{
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         tvm.accept();
         require(_Branches.exists(tvm.hash(name)), ERR_BRANCH_NOT_EXIST);
-        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         require(_protectedBranch[tvm.hash(name)] == false, ERR_BRANCH_PROTECTED);
         delete _Branches[tvm.hash(name)];
-    }
-
-    //Access part
-    function checkAccess(address pubaddr, address sender, uint128 index) internal view returns(bool) {
-        TvmCell s1 = _composeWalletStateInit(pubaddr, index);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        return addr == sender;
-    }
-
-    function _composeCommitStateInit(string _commit) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildCommitCode(_code[m_CommitCode], address(this), version);
-        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Commit, varInit: {_nameCommit: _commit}});
-        return stateInit;
-    }
-
-    function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);
-        TvmCell _contract = tvm.buildStateInit({
-            code: deployCode,
-            contr: GoshWallet,
-            varInit: {_systemcontract : _systemcontract, _goshdao: _goshdao, _index: index}
-        });
-        return _contract;
     }
 
     function initCommit(string namecommit, string branch, AddrVersion commit) public senderIs(getCommitAddr(namecommit)) accept {
@@ -216,7 +194,7 @@ contract Repository is Modifiers{
     function changeDescription(address pubaddr, string descr, uint128 index) public {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         tvm.accept();
-        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         _description = descr;
     }
     
@@ -232,7 +210,7 @@ contract Repository is Modifiers{
     function SendDiffSmv(address pubaddr, uint128 index, string branch, address commit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task) public view accept {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
-        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         uint128 valueton = number * 1 ton + 0.5 ton;
         if (valueton > 1000 ton) { valueton = 1000 ton; }
         Commit(commit).SendDiffSmv{value: valueton, bounce: true, flag: 1}(branch, _Branches[tvm.hash(branch)].commitaddr, number, numberCommits, task);
@@ -240,8 +218,8 @@ contract Repository is Modifiers{
 
     //Selfdestruct
     function destroy(address pubaddr, uint128 index) public {
-        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        selfdestruct(giver);
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        selfdestruct(_systemcontract);
     }
 
     //Setters
@@ -257,25 +235,25 @@ contract Repository is Modifiers{
         if (task.hasValue()){
             ConfigCommit taskf = task.get();
             ConfigCommitBase tasksend = ConfigCommitBase({task: taskf.task, commit: getCommitAddr(namecommit), number_commit: number_commit, pubaddrassign: taskf.pubaddrassign, pubaddrreview: taskf.pubaddrreview, pubaddrmanager: taskf.pubaddrmanager, daoMembers: taskf.daoMembers});
-            Task(taskf.task).isReady{value: 0.1 ton}(tasksend);
+            Task(taskf.task).isReady{value: 0.1 ton, flag: 1}(tasksend);
         }
         Commit(getCommitAddr(namecommit)).allCorrect{value: 0.1 ton, flag: 1}(number);
     }
 
     function fromInitUpgrade2(string nameCommit, address commit, string ver, string branch) public view senderIs(getCommitAddr(nameCommit)) accept {       
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
-        if (_previousversion.hasValue() == false) { Commit(msg.sender).stopUpgrade{value:0.1 ton}();  return; }
+        if (_previousversion.hasValue() == false) { Commit(msg.sender).stopUpgrade{value:0.1 ton, flag: 1}();  return; }
         SystemContract(_systemcontract).fromInitUpgrade3{value: 0.3 ton, bounce: true, flag: 1}(_name, _nameDao, nameCommit, commit, ver, branch, msg.sender);
     }
     
     function fromInitUpgrade6(string nameCommit, address commit, string branch, address newcommit) public view senderIs(_systemcontract) accept {       
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
-        Commit(getCommitAddr(nameCommit)).fromInitUpgrade(commit, branch, newcommit);
+        Commit(getCommitAddr(nameCommit)).fromInitUpgrade{value: 0.1 ton, flag: 1}(commit, branch, newcommit);
     }
     
     function setHEAD(address pubaddr, string nameBranch, uint128 index) public {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
-        require(checkAccess(pubaddr, msg.sender, index),ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         require(_Branches.exists(tvm.hash(nameBranch)), ERR_BRANCH_NOT_EXIST);
         tvm.accept();
         _head = nameBranch;
@@ -285,7 +263,7 @@ contract Repository is Modifiers{
 
     function addProtectedBranch(address pubaddr, string branch, uint128 index) public {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
-        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
         if (_protectedBranch[tvm.hash(branch)] == true) { return; }
@@ -294,7 +272,7 @@ contract Repository is Modifiers{
 
     function deleteProtectedBranch(address pubaddr, string branch, uint128 index) public {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
-        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (_protectedBranch.exists(tvm.hash(branch)) == false) { return; }
         if (_protectedBranch[tvm.hash(branch)] == false) { return; }
@@ -311,60 +289,40 @@ contract Repository is Modifiers{
 
     function isNotProtected(address pubaddr, string branch, address commit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task, bool isUpgrade, uint128 index) public view {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
-        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if ((_protectedBranch[tvm.hash(branch)] == false) || (isUpgrade == true)) {
             this.SendDiff{value: 0.7 ton, bounce: true, flag: 1}(branch, commit, number, numberCommits, task, isUpgrade);
             return;
         }
     }
-
-    function _composeTreeStateInit(string shaTree) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildTreeCode(_code[m_TreeCode], version);
-        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Tree, varInit: {_shaTree: shaTree, _repo: address(this)}});
-        return stateInit;
-    }
-
-    function _composeDiffStateInit(string _commit, address repo, uint128 index1, uint128 index2) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildCommitCode(_code[m_DiffCode], repo, version);
-        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: DiffC, varInit: {_nameCommit: _commit, _index1: index1, _index2: index2}});
-        return stateInit;
-    }
     
-    function isDeleteSnap(string branch, string name) public view minValue(0.2 ton) senderIs(_getSnapshotAddr(branch, name)){
+    function isDeleteSnap(string branch, string name) public view minValue(0.2 ton) senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], address(this), branch, name)){
         tvm.accept();
         require(_Branches.exists(tvm.hash(branch)) == false, ERR_BRANCH_EXIST);
-        Snapshot(msg.sender).destroyfinal{value:0.1 ton}();
-    }
-    
-    function _getSnapshotAddr(string branch, string name) private view returns(address) {
-        TvmCell deployCode = GoshLib.buildSnapshotCode(_code[m_SnapshotCode], address(this), branch, version);
-        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
-        return address.makeAddrStd(0, tvm.hash(stateInit));
+        Snapshot(msg.sender).destroyfinal{value:0.1 ton, flag: 1}();
     }
     
     function smvdeployrepotag (address pub, uint128 index, string[] tag) public accept {
-        require(checkAccess(pub, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pub, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         require(tag.length + _counttag <= _limittag, ERR_TOO_MANY_TAGS);
         for (uint8 t = 0; t < tag.length; t++){     
             if (_hashtag.exists(tvm.hash(tag[t]))) { continue; }
             _counttag++;
             _hashtag[tvm.hash(tag[t])] = tag[t];
-            TvmCell s1 = _composeWalletStateInit(pub, 0);
-            address addr = address.makeAddrStd(0, tvm.hash(s1));
-            GoshWallet(addr).deployRepoTag{value:0.2 ton}(_name, tag[t]);   	
+            address addr = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pub, index);
+            GoshWallet(addr).deployRepoTag{value:0.2 ton, flag: 1}(_name, tag[t]);   	
         }
     }
     
     function smvdestroyrepotag (address pub, uint128 index, string[] tag) public accept {
-        require(checkAccess(pub, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pub, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         for (uint8 t = 0; t < tag.length; t++){     
             if (_hashtag.exists(tvm.hash(tag[t])) == false) { continue; }
             _counttag--;
             delete _hashtag[tvm.hash(tag[t])];
-            TvmCell s1 = _composeWalletStateInit(pub, 0);
-            address addr = address.makeAddrStd(0, tvm.hash(s1));
-            GoshWallet(addr).destroyRepoTag{value:0.2 ton}(_name, tag[t]);   	
+            address addr = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pub, index);
+            GoshWallet(addr).destroyRepoTag{value:0.2 ton, flag: 1}(_name, tag[t]);   	
         }
     }
 
@@ -387,8 +345,7 @@ contract Repository is Modifiers{
     }
 
     function getTreeAddr(string treeName) external view returns(address) {
-        TvmCell s1 = _composeTreeStateInit(treeName);
-        return address.makeAddrStd(0, tvm.hash(s1));
+        return GoshLib.calculateTreeAddress(_code[m_TreeCode], treeName, address(this));
     }
 
     function getProtectedBranch() external view returns(mapping(uint256 => bool)) {
@@ -419,8 +376,7 @@ contract Repository is Modifiers{
     }
 
     function getDiffAddr (string commitName, uint128 index1, uint128 index2) external view returns(address) {
-        TvmCell s1 = _composeDiffStateInit(commitName, address(this), index1, index2);
-        return  address(tvm.hash(s1));
+        return GoshLib.calculateDiffAddress(_code[m_DiffCode], address(this), commitName, index1, index2);
     }
     
     function getTags() external view returns(mapping(uint256 => string)) {
@@ -448,8 +404,7 @@ contract Repository is Modifiers{
     }
 
     function getCommitAddr(string nameCommit) public view returns(address)  {
-        TvmCell s1 = _composeCommitStateInit(nameCommit);
-        return address.makeAddrStd(0, tvm.hash(s1));
+        return GoshLib.calculateCommitAddress(_code[m_CommitCode], address(this), nameCommit);
     }
 
     function getVersion() external pure returns(string, string) {
@@ -478,12 +433,12 @@ contract Repository is Modifiers{
         return (_description, _name, AllBranches, _head, _hashtag, _ready);
     }    
         
-    function getRepositoryIn() public view minValue(0.3 ton) {
+    function getRepositoryIn() public view minValue(0.5 ton) {
         Item[] AllBranches;
         for ((uint256 key, Item value) : _Branches) {
             key;
             AllBranches.push(value);
         }
-        IObject(msg.sender).returnRepo{value: 0.1 ton}(_description, _name, AllBranches, _head, _hashtag, _ready);
+        IObject(msg.sender).returnRepo{value: 0.1 ton, flag: 1}(_description, _name, AllBranches, _head, _hashtag, _ready);
     }
 }

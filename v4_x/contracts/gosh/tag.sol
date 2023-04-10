@@ -10,7 +10,7 @@ pragma AbiHeader pubkey;
 pragma AbiHeader time;
 
 import "systemcontract.sol";
-import "./modifiers/modifiers.sol";
+import "./smv/modifiers/modifiers.sol";
 import "./libraries/GoshLib.sol";
 import "goshwallet.sol";
 
@@ -39,7 +39,7 @@ contract Tag is Modifiers{
         string reponame,
         string namedao,
         TvmCell WalletCode,
-        uint128 index) public onlyOwner {
+        uint128 index) onlyOwner {
         require(_nametag != "", ERR_NO_DATA);
         tvm.accept();
         _code[m_WalletCode] = WalletCode;
@@ -48,38 +48,22 @@ contract Tag is Modifiers{
         _pubaddr = pubaddr;
         _repoName = reponame;
         _nameDao = namedao;
-        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         _nameCommit = nameCommit;
         _commit = commit;
         _content = content;
     }
     
-    function checkAccess(address pubaddr, address sender, uint128 index) internal view returns(bool) {
-        TvmCell s1 = _composeWalletStateInit(pubaddr, index);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        return addr == sender;
-    }
-    
-    function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);
-        TvmCell _contract = tvm.buildStateInit({
-            code: deployCode,
-            contr: GoshWallet,
-            varInit: {_systemcontract : _systemcontract, _goshdao: _goshdao, _index: index}
-        });
-        return _contract;
-    }
-    
     function upgradeToVersion(address pubaddr, uint128 index, string newversion) public view {
-        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         newversion;
-        SystemContract(_systemcontract).upgradeTag1(_nameDao, _repoName, _nametag, _nameCommit, _commit, _content, newversion);
+        SystemContract(_systemcontract).upgradeTag1{value: 0.2 ton, flag: 1}(_nameDao, _repoName, _nametag, _nameCommit, _commit, _content, newversion);
     }
     
     //Selfdestruct
     function destroy(address pubaddr, uint128 index) public {
-        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        selfdestruct(giver);
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        selfdestruct(_systemcontract);
     }
     
     //Getters
@@ -87,8 +71,8 @@ contract Tag is Modifiers{
         return (_nametag, _commit, _nameCommit, _content, _repoName);
     }
     
-    function getTagIn() public view minValue(0.2 ton) {
-        IObject(msg.sender).returnTag{value: 0.1 ton}(_nametag, _commit, _nameCommit, _content, _repoName);
+    function getTagIn() public view minValue(0.5 ton) {
+        IObject(msg.sender).returnTag{value: 0.1 ton, flag: 1}(_nametag, _commit, _nameCommit, _content, _repoName);
     }
     
     function getCommit() external view returns(address) {

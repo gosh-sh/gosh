@@ -10,7 +10,7 @@ pragma AbiHeader pubkey;
 pragma AbiHeader time;
 
 import "./libraries/GoshLib.sol";
-import "./modifiers/modifiers.sol";
+import "./smv/modifiers/modifiers.sol";
 import "snapshot.sol";
 import "commit.sol";
 import "repository.sol";
@@ -57,7 +57,7 @@ contract Snapshot is Modifiers {
         bytes data,
         optional(string) ipfsdata,
         string commit
-    ) public {
+    ) {
         tvm.accept();
         _pubaddr = pubaddr;
         _rootRepo = rootrepo;
@@ -71,7 +71,7 @@ contract Snapshot is Modifiers {
         _systemcontract = rootgosh;
         _goshdao = goshdao;
         _code[m_WalletCode] = WalletCode;
-        require(checkAccess(_pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         _oldcommits = commit;
         _commits = commit;
         _oldsnapshot = data;
@@ -89,33 +89,23 @@ contract Snapshot is Modifiers {
             //ignore ipfs snapshot check
             if (ipfsdata.hasValue() == true) { _ready = true; return; }
             
-            Commit(_buildCommitAddr(_oldcommits))
+            Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits))
                 .getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, _branch, _name);
         }
         getMoney();
     }
     
     function getMoney() private {
-        if (now - timeMoney > 3600) { _flag = false; timeMoney = now; }
+        if (block.timestamp - timeMoney > 3600) { _flag = false; timeMoney = block.timestamp; }
         if (_flag == true) { return; }
         if (address(this).balance > 1000 ton) { return; }
         _flag = true;
-        GoshDao(_goshdao).sendMoneySnap{value : 0.2 ton}(_branch, _rootRepo, _name);
-    }
-
-    function _buildCommitAddr(string commit) private view returns(address) {
-        TvmCell deployCode = GoshLib.buildCommitCode(_code[m_CommitCode], _rootRepo, version);
-        TvmCell state = tvm.buildStateInit({
-            code: deployCode, 
-            contr: Commit,
-            varInit: {_nameCommit: commit}
-        });
-        return address(tvm.hash(state));
+        GoshDao(_goshdao).sendMoneySnap{value : 0.2 ton, flag: 1}(_branch, _rootRepo, _name);
     }
     
-    function TreeAnswer(Request value0, optional(TreeObject) value1, string sha) public senderIs(getTreeAddr(sha)) {
-        if (value1.hasValue() == false) { selfdestruct(giver); return; }
-        if (value1.get().sha256 != value0.sha) { selfdestruct(giver); return; }
+    function returnTreeAnswer(Request value0, optional(TreeObject) value1, string sha) public senderIs(getTreeAddr(sha)) {
+        if (value1.hasValue() == false) { selfdestruct(_systemcontract); return; }
+        if (value1.get().sha256 != value0.sha) { selfdestruct(_systemcontract); return; }
         _ready = true;
     }
     
@@ -124,22 +114,6 @@ contract Snapshot is Modifiers {
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Tree, varInit: {_shaTree: shaTree, _repo: _rootRepo}});
         //return tvm.insertPubkey(stateInit, pubkey);
         return address.makeAddrStd(0, tvm.hash(stateInit));
-    }
-
-    function checkAccess(address pubaddr, address sender, uint128 index) internal view returns(bool) {
-        TvmCell s1 = _composeWalletStateInit(pubaddr, index);
-        address addr = address.makeAddrStd(0, tvm.hash(s1));
-        return addr == sender;
-    }
-
-    function _composeWalletStateInit(address pubaddr, uint128 index) internal view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);
-        TvmCell _contract = tvm.buildStateInit({
-            code: deployCode,
-            contr: GoshWallet,
-            varInit: {_systemcontract : _systemcontract, _goshdao: _goshdao, _index: index}
-        });
-        return _contract;
     }
     
     function isReady(uint256 sha1, uint128 typer) public view minValue(0.15 ton) {
@@ -159,11 +133,11 @@ contract Snapshot is Modifiers {
         getMoney();
         uint256 empty;
         
-        if ((_applying == true) && (msg.sender != _buildDiffAddr(_commits, index1, index2))) {
+        if ((_applying == true) && (msg.sender != GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _commits, index1, index2))) {
             DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty);
             return;
         } else {
-            require(_buildDiffAddr(namecommit, index1, index2) == msg.sender, ERR_SENDER_NO_ALLOWED);
+            require(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, namecommit, index1, index2) == msg.sender, ERR_SENDER_NO_ALLOWED);
             _applying = true; 
             _commits = namecommit;
         }
@@ -216,7 +190,7 @@ contract Snapshot is Modifiers {
 
     function cancelDiff(uint128 index1, uint128 index2, string commit) public {
         commit;
-        require(msg.sender == _buildDiffAddr(_commits, index1, index2), ERR_SENDER_NO_ALLOWED);
+        require(msg.sender == GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _commits, index1, index2), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         _basemaybe = "";
         _snapshot = _oldsnapshot;
@@ -227,7 +201,7 @@ contract Snapshot is Modifiers {
 
     function approve(uint128 index1, uint128 index2, Diff diff) public {
         diff;
-        require(msg.sender == _buildDiffAddr(_commits, index1, index2), ERR_SENDER_NO_ALLOWED);
+        require(msg.sender == GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _commits, index1, index2), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (_baseCommit.empty()) { 
             _baseCommit = _basemaybe; 
@@ -246,16 +220,6 @@ contract Snapshot is Modifiers {
         address addr = address.makeAddrStd(0, tvm.hash(stateInit));
         return addr;
     }
-
-    function _buildDiffAddr(string commit, uint128 index1, uint128 index2) private view returns(address) {
-        TvmCell deployCode = GoshLib.buildDiffCode(_code[m_DiffCode], _rootRepo, version);
-        TvmCell state = tvm.buildStateInit({
-            code: deployCode, 
-            contr: DiffC,
-            varInit: {_nameCommit: commit, _index1: index1, _index2: index2}
-        });
-        return address(tvm.hash(state));
-    }
     
     receive() external {
         if (msg.sender == _goshdao) {
@@ -265,21 +229,21 @@ contract Snapshot is Modifiers {
     
     onBounce(TvmSlice body) external {
         body;
-        if (msg.sender == _buildCommitAddr(_oldcommits)) { selfdestruct(giver); }
+        if (msg.sender == GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits)) { selfdestruct(_systemcontract); }
     }
     
     fallback() external {
-        if (msg.sender == _buildCommitAddr(_oldcommits)) { selfdestruct(giver); }
+        if (msg.sender == GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits)) { selfdestruct(_systemcontract); }
     }
 
     //Selfdestruct
     function destroy(address pubaddr, uint128 index) public view minValue(0.3 ton) accept {
-        require(checkAccess(pubaddr, msg.sender, index), ERR_SENDER_NO_ALLOWED);
-        Repository(_rootRepo).isDeleteSnap{value: 0.4 ton} (_branch, _name);
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        Repository(_rootRepo).isDeleteSnap{value: 0.4 ton, flag: 1} (_branch, _name);
     }
     
     function destroyfinal() public senderIs(_rootRepo) {
-        selfdestruct(giver);
+        selfdestruct(_systemcontract);
     }
 
     //Getters
@@ -289,9 +253,9 @@ contract Snapshot is Modifiers {
         return (_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit, _ready);
     }
     
-    function getSnapshotIn() public view minValue(0.2 ton)
+    function getSnapshotIn() public view minValue(0.5 ton)
     {
-        IObject(msg.sender).returnSnap{value: 0.1 ton}(_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit, _ready);
+        IObject(msg.sender).returnSnap{value: 0.1 ton, flag: 1}(_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit, _ready);
     }
 
     function getName() external view returns(string) {

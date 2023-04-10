@@ -9,7 +9,7 @@ pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 pragma AbiHeader time;
 
-import "./modifiers/modifiers.sol";
+import "./smv/modifiers/modifiers.sol";
 import "systemcontract.sol";
 import "profile.sol";
 
@@ -25,7 +25,7 @@ contract ProfileIndex is Modifiers {
 
     constructor(address profile,
         TvmCell codeProfile    
-    ) public senderIs(profile) {
+    ) senderIs(profile) {
         tvm.accept();
         TvmCell myCode = tvm.code();
         TvmSlice s = tvm.codeSalt(myCode).get().toSlice();

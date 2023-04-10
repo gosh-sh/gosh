@@ -19,6 +19,15 @@
 			]
 		},
 		{
+			"name": "getMoneyFromSystemContract",
+			"inputs": [
+				{"name":"version","type":"string"},
+				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "destroySS",
 			"inputs": [
 				{"name":"version","type":"string"}
@@ -157,6 +166,15 @@
 			"inputs": [
 				{"name":"newcode","type":"cell"},
 				{"name":"cell","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "returnMoney",
+			"inputs": [
+				{"name":"destination","type":"address"},
+				{"name":"value","type":"uint128"}
 			],
 			"outputs": [
 			]

@@ -10,7 +10,7 @@ pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 pragma AbiHeader time;
 
-import "./modifiers/modifiers.sol";
+import "./smv/modifiers/modifiers.sol";
 import "./libraries/GoshLib.sol";
 import "goshwallet.sol";
 import "systemcontract.sol";
@@ -60,7 +60,7 @@ contract Profile is Modifiers {
         TvmCell codeProfile,
         TvmCell codeIndex,
         uint256 pubkey
-    ) public internalMsg {
+    ) internalMsg {
         require(checkName(_name), ERR_WRONG_NAME);
         _systemcontract = msg.sender;
         _code[m_ProfileDaoCode] = codeProfileDao;
@@ -73,11 +73,11 @@ contract Profile is Modifiers {
     }
     
     function _incMaskValue(uint32 mask, uint8 index) inline private pure returns (uint32) {
-        return mask + (1 << (uint32(index)));
+        return uint32(mask + (1 << (uint32(index))));
     }
 
     function _decMaskValue(uint32 mask, uint8 index) inline private pure returns (uint32) {
-        return mask - (1 << (uint32(index)));
+        return uint32(mask - (1 << (uint32(index))));
     }
     
     function _checkBit(uint32 mask, uint8 index) inline private pure returns (bool) {
@@ -97,14 +97,14 @@ contract Profile is Modifiers {
     }
     
     function _generateId() inline private pure returns (uint64) {
-        return (uint64(now) << 32) | (tx.timestamp & 0xFFFFFFFF);
+        return (uint64(block.timestamp) << 32) | (tx.timestamp & 0xFFFFFFFF);
     }
     
     function confirmTransaction(uint64 id) public onlyOwnerPubkeyList  accept saveMsg {        
         require(_messages.exists(id), ERR_NOTHING_TO_CONFIRM);      
         require(_isConfirmed(_messages[id].mask, _owners[msg.pubkey()]) == false, ERR_ALREADY_CONFIRMED);
         getMoney();
-        if (_messages[id].expiredAt < now) { delete _messages[id]; return; }
+        if (_messages[id].expiredAt < block.timestamp) { delete _messages[id]; return; }
         _messages[id].mask = _incMaskValue(_messages[id].mask, _owners[msg.pubkey()]);
         _messages[id].signsReceived += 1;
         if (_messages[id].signsReceived != _needcustodians) { return; }
@@ -120,12 +120,12 @@ contract Profile is Modifiers {
     function clearExpired(uint64 index) public senderIs(address(this))  accept saveMsg {  
         MessageProfile obj;   
         if ((index == 0) && (_messages.exists(index) == true)) {
-            if (_messages[index].expiredAt < now) { delete _messages[index]; }  
+            if (_messages[index].expiredAt < block.timestamp) { delete _messages[index]; }  
         }
         optional(uint64, MessageProfile) res = _messages.next(index);
         if (res.hasValue()) {
             (index, obj) = res.get();
-            if (obj.expiredAt < now) { delete _messages[index]; }    
+            if (obj.expiredAt < block.timestamp) { delete _messages[index]; }    
             this.clearExpired{value: 0.1 ton, flag: 1}(index);
         }
     }
@@ -139,7 +139,7 @@ contract Profile is Modifiers {
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(8, now + _expTime, mask, 1, null, null, null, null, null, time, null);
+        _messages[_generateId()] = MessageProfile(8, block.timestamp + _expTime, mask, 1, null, null, null, null, null, time, null);
     }
 
     
@@ -155,7 +155,7 @@ contract Profile is Modifiers {
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(7, now + _expTime, mask, 1, null, null, null, null, need, null, null);
+        _messages[_generateId()] = MessageProfile(7, block.timestamp + _expTime, mask, 1, null, null, null, null, need, null, null);
     }
 
     function addPubkey(uint256 pubkey) public onlyOwnerPubkeyList  accept saveMsg {
@@ -168,7 +168,7 @@ contract Profile is Modifiers {
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(1, now + _expTime, mask, 1, pubkey, null, null, null, null, null, null);
+        _messages[_generateId()] = MessageProfile(1, block.timestamp + _expTime, mask, 1, pubkey, null, null, null, null, null, null);
     }
 
     function deletePubkey(uint256 pubkey) public onlyOwnerPubkeyList  accept saveMsg {
@@ -181,7 +181,7 @@ contract Profile is Modifiers {
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(2, now + _expTime, mask, 1, pubkey, null, null, null, null, null, null);
+        _messages[_generateId()] = MessageProfile(2, block.timestamp + _expTime, mask, 1, pubkey, null, null, null, null, null, null);
     }
     
     function _addPubkey(uint256 pubkey) private  accept  {
@@ -215,7 +215,7 @@ contract Profile is Modifiers {
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(3, now + _expTime, mask, 1, pubkey, wallet, null, null, null, null, null);
+        _messages[_generateId()] = MessageProfile(3, block.timestamp + _expTime, mask, 1, pubkey, wallet, null, null, null, null, null);
     }
     
     function _turnOn(address wallet, uint256 pubkey) private accept {
@@ -237,7 +237,7 @@ contract Profile is Modifiers {
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(4, now + _expTime, mask, 1, null, wallet, null, null, null, null, null);
+        _messages[_generateId()] = MessageProfile(4, block.timestamp + _expTime, mask, 1, null, wallet, null, null, null, null, null);
     }
 
     function deployDao(address systemcontract, string name, address[] pubmem) public onlyOwnerPubkeyList  accept saveMsg {
@@ -250,7 +250,7 @@ contract Profile is Modifiers {
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(5, now + _expTime, mask, 1, null, systemcontract, name, null, null, null, pubmem);
+        _messages[_generateId()] = MessageProfile(5, block.timestamp + _expTime, mask, 1, null, systemcontract, name, null, null, null, pubmem);
     }
     
     function _deployDao(address systemcontract, string name, optional(address) previous, address[] pubmem) private view  accept  {
@@ -300,7 +300,7 @@ contract Profile is Modifiers {
 
     //Money part
     function getMoney() private {
-        if (now - timeMoney > 3600) { _flag = false; timeMoney = now; }
+        if (block.timestamp - timeMoney > 3600) { _flag = false; timeMoney = block.timestamp; }
         if (_flag == true) { return; }
         if (address(this).balance > 1000 ton) { return; }
         _flag = true;
