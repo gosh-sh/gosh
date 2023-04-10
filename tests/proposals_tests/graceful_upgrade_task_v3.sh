@@ -3,7 +3,6 @@ set -e
 set -o pipefail
 set -x
 
-. ./util.sh
 
 #Deploy DAO v3
 #creat task
@@ -16,10 +15,12 @@ set -x
 
 FIRST_VERSION=v3_x
 SECOND_VERSION=v4_x
-#./node_se_scripts/deploy.sh $FIRST_VERSION
-#. set-vars.sh $FIRST_VERSION
-#./upgrade_tests/set_up.sh $FIRST_VERSION $SECOND_VERSION
+./node_se_scripts/deploy.sh $FIRST_VERSION
+. set-vars.sh $FIRST_VERSION
+./upgrade_tests/set_up.sh $FIRST_VERSION $SECOND_VERSION
 #exit 0
+
+. ./util.sh
 
 REPO_NAME=prop_repo02
 DAO_NAME="dao-prop-test02_$(date +%s)"
@@ -168,7 +169,7 @@ OLD_VERSION=3.0.0
 
 upgrade_task_proposal
 OLD_TASK_ADDR=$TASK_ADDR
-TASK_ADDR=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTaskAddr --abi $WALLET_ABI_1 --nametask $TASK_NAME --repoName $REPO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
+TASK_ADDR=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTaskAddr --abi $WALLET_ABI_1 --nametask $TASK_NAME --reponame $REPO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
 wait_account_active $TASK_ADDR
 
 OLD_TASK_STATUS=$(tonos-cli -j account $OLD_TASK_ADDR | jq '."'$OLD_TASK_ADDR'".acc_type')

@@ -62,8 +62,8 @@ pipeline {
                 }
             }
             steps {
-                buildDispatcher()
-                //buildDispatcherDebug()
+                //buildDispatcher()
+                buildDispatcherDebug()
             }
         }
         stage('Build: Git Helper') {
@@ -73,8 +73,8 @@ pipeline {
                 }
             }
             steps {
-                runFunctionSet('buildRemoteGosh')
-                //runFunctionSet('buildRemoteGoshDebug')
+                //runFunctionSet('buildRemoteGosh')
+                runFunctionSet('buildRemoteGoshDebug')
             }
         }
 
@@ -239,11 +239,11 @@ def buildDispatcherDebug() {
                 rm -rf darwin-*
                 rm -rf windows-*
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 574 --path linux-amd64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 574 --path darwin-amd64
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 574 --path windows-amd64
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 574 --path linux-arm64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 574 --path darwin-arm64
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 614 --path linux-amd64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 614 --path darwin-amd64
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 614 --path windows-amd64
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 614 --path linux-arm64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 614 --path darwin-arm64
             '''
         }
     }
@@ -290,30 +290,29 @@ def buildRemoteGoshDebug(version) {
 
                 cd ${WORKSPACE}
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 576 --path linux-amd64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 576 --path darwin-amd64
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 576 --path windows-amd64
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 576 --path linux-arm64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 576 --path darwin-arm64
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 618 --path linux-amd64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 618 --path darwin-amd64
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 618 --path windows-amd64
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 618 --path linux-arm64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 618 --path darwin-arm64
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 578 --path linux-amd64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 578 --path darwin-amd64
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 578 --path windows-amd64
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 578 --path linux-arm64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 578 --path darwin-arm64
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 617 --path linux-amd64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 617 --path darwin-amd64
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 617 --path windows-amd64
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 617 --path linux-arm64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 617 --path darwin-arm64
 
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 616 --path linux-amd64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 616 --path darwin-amd64
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 616 --path windows-amd64
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 616 --path linux-arm64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 616 --path darwin-arm64
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 577 --path linux-amd64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 577 --path darwin-amd64
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 577 --path windows-amd64
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 577 --path linux-arm64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 577 --path darwin-arm64
-
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 575 --path linux-amd64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 575 --path darwin-amd64
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 575 --path windows-amd64
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 575 --path linux-arm64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 575 --path darwin-arm64
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 615 --path linux-amd64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 615 --path darwin-amd64
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 615 --path windows-amd64
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 615 --path linux-arm64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 615 --path darwin-arm64
             """
         }
     }
@@ -402,7 +401,6 @@ def deployStage(version, index, port) {
     sh "cp -r ${version} ${version}_workspace_${index}"
     env.version = version
     dir("${WORKSPACE}/${version}_workspace_${index}/contracts/multisig") {
-        sh "make build-contracts-docker"
         sh "make generate-docker NETWORK=http://localnode:${port}"
         env.giverAddr = sh(returnStdout: true, script: 'cat Giver.addr').trim()
         sh """
@@ -411,7 +409,7 @@ def deployStage(version, index, port) {
         sh 'make deploy-docker EXTRA_DOCKER_ARGS="--network host --add-host localnode:127.0.0.1"'
     }
     dir("${WORKSPACE}/${version}_workspace_${index}/contracts/gosh") {
-        sh 'make prepare-docker && make build-contracts-docker && make deploy-docker EXTRA_DOCKER_ARGS="--network host --add-host localnode:127.0.0.1"'
+        sh 'make prepare-docker && make deploy-docker EXTRA_DOCKER_ARGS="--network host --add-host localnode:127.0.0.1"'
     }
 }
 
