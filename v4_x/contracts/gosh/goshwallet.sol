@@ -1595,7 +1595,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function sendTokenToNewVersionAuto5(string newversion) public senderIs(_systemcontract) accept {
         optional(address) newwallet;
-        unlockVotingIn(0);
+        if (_lockedBalance != 0) {
+            unlockVotingIn(0); 
+        }
         if (m_pseudoDAOBalance == 0) { return; }
         SystemContract(_systemcontract).sendTokenToNewVersion2{value : 0.2 ton, flag: 1}(_pubaddr, _nameDao, _index, newwallet, m_pseudoDAOBalance, newversion);
         m_pseudoDAOBalance = 0;     
