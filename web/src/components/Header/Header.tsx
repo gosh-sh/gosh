@@ -11,11 +11,14 @@ import { appModalStateAtom } from '../../store/app.state'
 import MDDocumentModal from '../Modal/MDDocument/MDDocumentModal'
 import { useUser } from 'react-gosh'
 import { onExternalLinkClick } from '../../helpers'
+import Alert from '../Alert/Alert'
+import { useState } from 'react'
 
 const Header = () => {
     const user = useUser()
     const location = useLocation()
     const setModal = useSetRecoilState(appModalStateAtom)
+    const [alertShow, setAlertShow] = useState<boolean>(true)
 
     return (
         <header>
@@ -34,7 +37,7 @@ const Header = () => {
                         </Link>
 
                         <div className="flex items-center gap-x-4 sm:gap-x-34px ml-4">
-                            {process.env.REACT_APP_ISDOCKEREXT === 'true' && (
+                            {import.meta.env.REACT_APP_ISDOCKEREXT === 'true' && (
                                 <>
                                     <Link
                                         to="/containers"
@@ -148,16 +151,20 @@ const Header = () => {
                 )}
             </Disclosure>
 
-            {user.persist.phrase && (
+            {user.persist.phrase && alertShow && (
                 <div className="container">
-                    <div className="bg-red-ff3b30 text-white px-5 py-4 rounded-xl mt-6">
-                        <FontAwesomeIcon icon={faExclamationTriangle} className="mr-3" />
+                    <Alert
+                        variant="danger"
+                        dismiss
+                        className="mt-6"
+                        onDismiss={() => setAlertShow(false)}
+                    >
                         Please, DO NOT sign out, go to the{' '}
                         <Link to={'/a/settings'} className="underline">
                             Settings
                         </Link>{' '}
                         page now and backup your seed phrase
-                    </div>
+                    </Alert>
                 </div>
             )}
         </header>
