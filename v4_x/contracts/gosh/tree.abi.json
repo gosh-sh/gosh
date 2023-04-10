@@ -8,7 +8,6 @@
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
 				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"data","type":"map(uint256,tuple)"},
-				{"name":"ipfs","type":"optional(string)"},
 				{"name":"rootGosh","type":"address"},
 				{"name":"goshdao","type":"address"},
 				{"name":"WalletCode","type":"cell"},
@@ -17,7 +16,6 @@
 				{"name":"codeCommit","type":"cell"},
 				{"name":"SnapshotCode","type":"cell"},
 				{"name":"number","type":"uint128"},
-				{"name":"isFinal","type":"bool"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -38,15 +36,6 @@
 			"inputs": [
 				{"name":"index","type":"uint256"},
 				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"tree1","type":"map(uint256,tuple)"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setFinishMark",
-			"inputs": [
-				{"name":"pubaddr","type":"address"},
-				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -148,10 +137,9 @@
 			"outputs": [
 				{"name":"value0","type":"bool"},
 				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"value1","type":"map(uint256,tuple)"},
-				{"name":"value2","type":"optional(string)"},
-				{"name":"value3","type":"uint256"},
-				{"name":"value4","type":"string"},
-				{"name":"value5","type":"address"}
+				{"name":"value2","type":"uint256"},
+				{"name":"value3","type":"string"},
+				{"name":"value4","type":"address"}
 			]
 		},
 		{
@@ -166,8 +154,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"value0","type":"map(uint256,tuple)"},
-				{"name":"value1","type":"optional(string)"}
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"value0","type":"map(uint256,tuple)"}
 			]
 		},
 		{
@@ -213,7 +200,6 @@
 		{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"_tree","type":"map(uint256,tuple)"},
 		{"name":"_shaTree","type":"string"},
 		{"name":"_repo","type":"address"},
-		{"name":"_ipfs","type":"optional(string)"},
 		{"name":"_pubaddr","type":"address"},
 		{"name":"_systemcontract","type":"address"},
 		{"name":"_goshdao","type":"address"},
