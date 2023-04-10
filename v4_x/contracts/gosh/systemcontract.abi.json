@@ -71,6 +71,28 @@
 			]
 		},
 		{
+			"name": "sendTokenToNewVersionAuto2",
+			"inputs": [
+				{"name":"newversion","type":"string"},
+				{"name":"previousversion","type":"string"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"namedao","type":"string"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokenToNewVersionAuto4",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"dao","type":"string"},
+				{"name":"newversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "fromInitUpgrade3",
 			"inputs": [
 				{"name":"name","type":"string"},

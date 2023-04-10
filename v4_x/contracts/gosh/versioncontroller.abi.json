@@ -36,6 +36,17 @@
 			]
 		},
 		{
+			"name": "sendTokenToNewVersionAuto3",
+			"inputs": [
+				{"name":"version","type":"string"},
+				{"name":"previousversion","type":"string"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"namedao","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setSystemContractCode",
 			"inputs": [
 				{"name":"code","type":"cell"},

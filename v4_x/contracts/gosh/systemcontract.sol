@@ -80,6 +80,14 @@ contract SystemContract is Modifiers {
         GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), dao), pubaddr, 0)).sendTokenToNewVersion5{value : 0.3 ton, flag: 1}(grant);
     }
 
+    function sendTokenToNewVersionAuto2(string newversion, string previousversion, address  pubaddr, string namedao, uint128 index) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), pubaddr, index)) accept {
+        VersionController(_versionController).sendTokenToNewVersionAuto3{value : 0.3 ton, flag: 1}(newversion, previousversion, pubaddr, namedao);
+    }  
+    
+    function sendTokenToNewVersionAuto4(address  pubaddr, string dao, string newversion) public view senderIs(_versionController) accept {
+        GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), dao), pubaddr, 0)).sendTokenToNewVersionAuto5{value : 0.3 ton, flag: 1}(newversion);
+    }
+
 
     function fromInitUpgrade3(string name, string namedao, string nameCommit, address commit, string ver, string branch, address newcommit) public view {
         address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao);

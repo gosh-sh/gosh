@@ -1586,6 +1586,21 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         SystemContract(_systemcontract).sendTokenToNewVersion2{value : 0.2 ton, flag: 1}(_pubaddr, _nameDao, _index, newwallet, grant, newversion);
         getMoney();
     }
+
+    function sendTokenToNewVersionAuto() public onlyOwnerAddress(_pubaddr)  accept saveMsg { 
+        SystemContract(_systemcontract).sendTokenToNewVersionAuto2{value : 0.2 ton, flag: 1}(version, "4.0.0", _pubaddr, _nameDao, _index);
+//        SystemContract(_systemcontract).sendTokenToNewVersionAuto2{value : 0.2 ton, flag: 1}(version, "5.0.0", _pubaddr, _nameDao, _index);
+        getMoney();
+    }
+
+    function sendTokenToNewVersionAuto5(string newversion) public senderIs(_systemcontract) accept {
+        optional(address) newwallet;
+        unlockVotingIn(0);
+        if (m_pseudoDAOBalance == 0) { return; }
+        SystemContract(_systemcontract).sendTokenToNewVersion2{value : 0.2 ton, flag: 1}(_pubaddr, _nameDao, _index, newwallet, m_pseudoDAOBalance, newversion);
+        m_pseudoDAOBalance = 0;     
+        getMoney();
+    }
     
     function sendTokenToNewVersionIn(optional(address) newwallet, uint128 grant, string newversion) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
         require(grant <= m_pseudoDAOBalance, ERR_TOO_LOW_BALANCE);

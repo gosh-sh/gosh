@@ -1115,6 +1115,21 @@
 			]
 		},
 		{
+			"name": "sendTokenToNewVersionAuto",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokenToNewVersionAuto5",
+			"inputs": [
+				{"name":"newversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "sendTokenToNewVersionIn",
 			"inputs": [
 				{"name":"newwallet","type":"optional(address)"},
