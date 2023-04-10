@@ -81,7 +81,7 @@ contract Tree is Modifiers {
 
     function addTreeself(uint256 index, mapping(uint256 => TreeObject) tree1) public senderIs(address(this)){
         tvm.accept();
-        require(_isReady == false, ERR_PROCCESS_END);
+        if (_isReady == true) { return; }
         optional(uint256, TreeObject) res = tree1.next(index);
         if (res.hasValue()) {
             TreeObject obj;
@@ -281,6 +281,7 @@ contract Tree is Modifiers {
     }
 
     function destroy(address pubaddr, uint128 index) public {
+        require(_isReady == false, ERR_PROCCESS_END);
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         selfdestruct(_systemcontract);
     }

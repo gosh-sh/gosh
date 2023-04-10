@@ -10,7 +10,7 @@ set -o pipefail
 SIGNER="__gosh" # will be created automatically
 GIVER_SIGNER="__giver" # will be created automatically
 GOSH_PATH="../../gosh"
-SMV_PATH="../smv"
+SMV_PATH="$GOSH_PATH/smv"
 VERSIONCONTROLLER_ABI="$GOSH_PATH/versioncontroller.abi.json"
 SYSTEMCONTRACT_ABI="$GOSH_PATH/systemcontract.abi.json"
 GOSH_REPO_ROOT_PATH=/opt/gosh/contracts

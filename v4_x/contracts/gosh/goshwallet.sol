@@ -1661,6 +1661,15 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _deployTree(repoName, shaTree, datatree, number);
     }
 
+    function destroyTree(
+        string repoName,
+        string shaTree
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], shaTree, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).destroy{value: 0.2 ton, flag: 1}(_pubaddr, _index);
+    }
+
     function deployAddTree(
         string repoName,
         string shaTree,
@@ -1668,13 +1677,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        Tree(getTreeAddr(shaTree, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).addTree{value: 0.2 ton, flag: 1}(_pubaddr, _index, datatree);
-    }
-
-    function getTreeAddr(string shaTree, address rootRepo) internal view returns(address) {
-        TvmCell deployCode = GoshLib.buildTreeCode(_code[m_TreeCode], version);
-        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Tree, varInit: {_shaTree: shaTree, _repo: rootRepo}});
-        return address.makeAddrStd(0, tvm.hash(stateInit));
+        Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], shaTree, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).addTree{value: 0.2 ton, flag: 1}(_pubaddr, _index, datatree);
     }
 
     function _deployTree(
