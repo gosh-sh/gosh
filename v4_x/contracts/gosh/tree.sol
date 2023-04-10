@@ -26,7 +26,6 @@ contract Tree is Modifiers {
     mapping(uint256 => TreeObject) _tree;
     string static _shaTree;
     address static _repo;
-    optional(string) _ipfs;
     address _pubaddr;
     address _systemcontract;
     address _goshdao;
@@ -47,7 +46,6 @@ contract Tree is Modifiers {
     constructor(
         address pubaddr,
         mapping(uint256 => TreeObject) data,
-        optional(string) ipfs,
         address rootGosh,
         address goshdao,
         TvmCell WalletCode,
@@ -56,7 +54,6 @@ contract Tree is Modifiers {
         TvmCell codeCommit,
         TvmCell SnapshotCode,
         uint128 number,
-        bool isFinal,
         uint128 index) {
         require(_shaTree != "", ERR_NO_DATA);
         tvm.accept();
@@ -65,14 +62,12 @@ contract Tree is Modifiers {
         _pubaddr = pubaddr;
         _systemcontract = rootGosh;
         _goshdao = goshdao;
-        _isReady = isFinal;
         _neednumber = number;
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
-        _ipfs = ipfs;
         _code[m_DiffCode] = codeDiff;
         _code[m_TreeCode] = codeTree;
         _code[m_CommitCode] = codeCommit;
-        _tree = data;
+        this.addTreeself{value: 0.2 ton, flag: 1}(uint256(0), data);
         getMoney();
     }
 
@@ -93,17 +88,14 @@ contract Tree is Modifiers {
             (index, obj) = res.get();
             if (_tree.exists(index) == false) { 
                 _number += 1; 
+                if (_neednumber == _number) {
+                    _isReady = true;   
+                }
             }
             _tree[index] = obj;
             this.addTreeself{value: 0.2 ton, flag: 1}(index, tree1);
         }
     }
-
-    function setFinishMark(address pubaddr, uint128 index) public {
-        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
-        require(_neednumber == _number, ERR_WRONG_DATA);
-        _isReady = true;        
-    } 
 
     function checkFull(string namecommit, address repo, string branch, uint128 typer) public senderIs(GoshLib.calculateCommitAddress(_code[m_CommitCode], repo, namecommit)) {
         require(_check == false, ERR_PROCCESS_IS_EXIST);
@@ -294,16 +286,16 @@ contract Tree is Modifiers {
     }
 
     //Getters
-    function getDetails() external view returns(bool, mapping(uint256 => TreeObject), optional(string), uint256, string, address){
-        return (_isReady, _tree, _ipfs, _shaTreeLocal, _shaTree, _pubaddr);
+    function getDetails() external view returns(bool, mapping(uint256 => TreeObject), uint256, string, address){
+        return (_isReady, _tree, _shaTreeLocal, _shaTree, _pubaddr);
     }
         
     function getTreeIn() public view minValue(0.5 ton) {
-        IObject(msg.sender).returnTree{value: 0.1 ton, flag: 1}(_tree, _ipfs, _shaTreeLocal, _shaTree, _pubaddr);
+        IObject(msg.sender).returnTree{value: 0.1 ton, flag: 1}(_tree, _shaTreeLocal, _shaTree, _pubaddr);
     }
 
-    function gettree() external view returns(mapping(uint256 => TreeObject), optional(string)) {
-        return (_tree, _ipfs);
+    function gettree() external view returns(mapping(uint256 => TreeObject)) {
+        return (_tree);
     }
 
     function getsha() external view returns(uint256, string) {
