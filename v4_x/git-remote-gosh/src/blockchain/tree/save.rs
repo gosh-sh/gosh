@@ -28,10 +28,7 @@ pub struct DeployTreeArgs {
     pub repo_name: String,
     #[serde(rename = "datatree")]
     nodes: HashMap<String, TreeNode>,
-    ipfs: Option<String>,
     number: u128,
-    #[serde(rename = "isFinal")]
-    pub is_final: bool,
 }
 
 #[derive(Serialize, Debug)]
@@ -96,9 +93,7 @@ impl DeployTree for Everscale {
                 sha: sha.to_owned(),
                 repo_name: repo_name.to_owned(),
                 nodes: chunk,
-                ipfs: None, // !!!
-                number: (nodes.len() - TREE_NODES_CHUNK_MAX_SIZE) as u128,
-                is_final: false,
+                number: nodes_cnt as u128,
             };
             tracing::trace!("DeployTreeArgs: {params:?}");
             let mut attempts = 0;
@@ -112,12 +107,14 @@ impl DeployTree for Everscale {
                 .await
                 .map(|_| ())?;
                 let res = wait_contracts_deployed(self, &[tree_address.clone()]).await;
-                if res.is_ok() {
-                    break;
-                }
                 attempts += 1;
-                if attempts == MAX_REDEPLOY_ATTEMPTS && res.is_err() {
-                    res?;
+                if res.is_ok() {
+                    if res.unwrap().len() == 0 { // we have no contracts to wait for
+                        break;
+                    }
+                }
+                if attempts == MAX_REDEPLOY_ATTEMPTS {
+                    return Err(anyhow::format_err!("Failed to deploy tree"));
                 }
             }
             let mut attempts = 0;
@@ -152,44 +149,42 @@ impl DeployTree for Everscale {
                     break;
                 }
                 attempts += 1;
-                if attempts == MAX_REDEPLOY_ATTEMPTS && res.is_err() {
-                    res?;
+                if attempts == MAX_REDEPLOY_ATTEMPTS {
+                    return Err(anyhow::format_err!("Failed to load all tree chunks"));
                 }
             }
 
-            let mut attempts = 0;
-            let params = SetTreeFinishMarkArgs {
-                sha: sha.to_owned(),
-                repo_name: repo_name.to_owned(),
-            };
-            while attempts < MAX_REDEPLOY_ATTEMPTS {
-                tracing::trace!("SetTreeFinishMarkArgs: {params:?}");
-                let res = self
-                    .send_message(
-                        wallet_contract.deref(),
-                        "setTreeFinishMark",
-                        Some(serde_json::to_value(params.clone())?),
-                        None,
-                    )
-                    .await
-                    .map(|_| ());
-                if res.is_ok() {
-                    break;
-                }
-                attempts += 1;
-                if attempts == MAX_REDEPLOY_ATTEMPTS && res.is_err() {
-                    res?;
-                }
-            }
+            // let mut attempts = 0;
+            // let params = SetTreeFinishMarkArgs {
+            //     sha: sha.to_owned(),
+            //     repo_name: repo_name.to_owned(),
+            // };
+            // while attempts < MAX_REDEPLOY_ATTEMPTS {
+            //     tracing::trace!("SetTreeFinishMarkArgs: {params:?}");
+            //     let res = self
+            //         .send_message(
+            //             wallet_contract.deref(),
+            //             "setTreeFinishMark",
+            //             Some(serde_json::to_value(params.clone())?),
+            //             None,
+            //         )
+            //         .await
+            //         .map(|_| ());
+            //     if res.is_ok() {
+            //         break;
+            //     }
+            //     attempts += 1;
+            //     if attempts == MAX_REDEPLOY_ATTEMPTS && res.is_err() {
+            //         res?;
+            //     }
+            // }
             Ok(())
         } else {
             let params = DeployTreeArgs {
                 sha: sha.to_owned(),
                 repo_name: repo_name.to_owned(),
                 nodes: nodes.to_owned(),
-                ipfs: None, // !!!
                 number: 0,
-                is_final: true,
             };
             tracing::trace!("DeployTreeArgs: {params:?}");
             self.send_message(
