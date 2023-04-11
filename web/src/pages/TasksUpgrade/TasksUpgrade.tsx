@@ -193,11 +193,17 @@ const TasksUpgradePage = () => {
                 throw new GoshError('Tasks have already been upgraded')
             }
 
+            const prevDao = await dao.adapter.getPrevDao()
+            if (!prevDao) {
+                throw new GoshError('Previous DAO is undefined')
+            }
+
             let isEvent = false
-            if (dao.details.version === '3.0.0') {
+            const prevVersion = prevDao.getVersion()
+            if (prevVersion === '2.0.0') {
                 const result = await _upgrade_from_2()
                 isEvent = result.isEvent
-            } else if (dao.details.version === '4.0.0') {
+            } else {
                 const result = await _upgrade_from_3()
                 isEvent = result.isEvent
             }
