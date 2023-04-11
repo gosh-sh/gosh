@@ -235,7 +235,7 @@ contract Tree is Modifiers {
     }
 
     function getShaInfoTree(string sha, Request value0) public {
-        require(_isReady == false, ERR_PROCCESS_END);
+        require(_isReady == true, ERR_PROCCESS_END);
         require(msg.sender == GoshLib.calculateTreeAddress(_code[m_TreeCode], sha, _repo), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         getShaInfo(value0);

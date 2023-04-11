@@ -3814,18 +3814,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Deploy rest tree chunks
         const restTreeItems = isDeployNeeded ? treeItems.slice(1) : treeItems
-        const chunks = splitByChunk(restTreeItems, 10)
-        for (const chunk of chunks) {
-            await Promise.all(
-                chunk.map(async (datatree) => {
-                    await wallet!.run('deployAddTree', {
-                        repoName,
-                        shaTree: hash,
-                        datatree,
-                    })
-                }),
-            )
-        }
+        await executeByChunk(restTreeItems, 10, async (datatree) => {
+            await wallet!.run('deployAddTree', {
+                repoName,
+                shaTree: hash,
+                datatree,
+            })
+        })
 
         // Wait for tree is ready
         const waitReady = await whileFinite(async () => {
