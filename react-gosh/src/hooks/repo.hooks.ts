@@ -941,9 +941,10 @@ function useMergeRequest(
     repo: IGoshRepositoryAdapter,
     options: {
         showDiffNum?: number
+        squash?: boolean
     },
 ) {
-    const { showDiffNum = 5 } = options
+    const { showDiffNum = 5, squash = true } = options
     const { updateBranches } = useBranches(repo)
     const { destroy: deleteBranch, progress: branchProgress } = useBranchManagement(
         dao,
@@ -974,7 +975,10 @@ function useMergeRequest(
         const { deleteSrcBranch, ...rest } = options
         const { name: srcCommit, version: srcVersion } = srcBranch!.commit
         await _pushUpgrade(srcBranch!.name, srcCommit, srcVersion)
-        await _push(title, buildProgress.items, { ...rest, parent: srcBranch!.name })
+        await _push(title, buildProgress.items, {
+            ...rest,
+            parent: squash ? undefined : srcBranch!.name,
+        })
         if (deleteSrcBranch) {
             await deleteBranch(srcBranch!.name)
             await updateBranches()
