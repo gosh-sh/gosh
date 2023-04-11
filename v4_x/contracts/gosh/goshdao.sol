@@ -173,7 +173,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function getPreviousInfo(string name) public internalMsg view {
         require(_nameDao == name, ERR_WRONG_DAO);
         tvm.accept();
-        TvmCell a = abi.encode(_wallets, _hashtag, _my_wallets, _daoMembers, _reserve, _allbalance, _totalsupply, _versions);
+        TvmCell a = abi.encode(_allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _wallets, _hashtag, _my_wallets, _daoMembers, _reserve, _allbalance, _totalsupply, _versions);
         GoshDao(msg.sender).getPreviousInfoVersion{value: 0.1 ton, flag: 1}(version, a);
     }
     
@@ -187,7 +187,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             (wallets, hashtag, _reserve, , _totalsupply , _versions) = abi.decode(a, (mapping(uint256 => MemberToken), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string)));
             _versions[tvm.hash(version)] = version;
             uint256 zero;
-            this.returnWalletsVersion{value: 0.1 ton}(ver, zero, wallets, hashtag);
+            this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
         }        
         if (ver == "3.0.0"){
             mapping(uint256 => MemberToken) wallets;
@@ -195,7 +195,16 @@ contract GoshDao is Modifiers, TokenRootOwner {
             (wallets, hashtag, _my_wallets, _daoMembers, _reserve, , _totalsupply , _versions) = abi.decode(a, (mapping(uint256 => MemberToken), mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string)));
             _versions[tvm.hash(version)] = version;
             uint256 zero;
-            this.returnWalletsVersion{value: 0.1 ton}(ver, zero, wallets, hashtag);
+            this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
+            GoshDao(_previous.get()).getDaoIn{value: 0.3 ton, flag: 1}();
+        }
+        if (ver == "4.0.0"){
+            mapping(uint256 => MemberToken) wallets;
+            mapping(uint256 => string) hashtag;
+            ( _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, wallets, hashtag, _my_wallets, _daoMembers, _reserve, , _totalsupply , _versions) = abi.decode(a, (bool, bool, bool, bool, mapping(uint256 => MemberToken), mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string)));
+            _versions[tvm.hash(version)] = version;
+            uint256 zero;
+            this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
             GoshDao(_previous.get()).getDaoIn{value: 0.3 ton, flag: 1}();
         }
     }
@@ -216,14 +225,14 @@ contract GoshDao is Modifiers, TokenRootOwner {
         uint256 zero;
         _versions[tvm.hash(version)] = version;
         _versions[tvm.hash("1.0.0")] = "1.0.0";
-        this.returnWallets{value: 0.1 ton}(zero, wallets);
+        this.returnWallets{value: 0.1 ton, flag: 1}(zero, wallets);
     }
     
     function returnWalletsVersion(string ver, uint256 key, mapping(uint256 => MemberToken) wallets, mapping(uint256 => string) tags) public internalMsg senderIs(address(this)) accept {
         uint256 zero;
         if (ver == "2.0.0"){
             optional(uint256, MemberToken) res = wallets.next(key);
-            if ((key != zero) && (res.hasValue() == false)) { this.smvdeploytagin{value:0.2 ton}(address.makeAddrStd(0, key), tags.values()); }
+            if ((key != zero) && (res.hasValue() == false)) { this.smvdeploytagin{value:0.2 ton, flag: 1}(address.makeAddrStd(0, key), tags.values()); }
             if (res.hasValue()) {
             	MemberToken pub;
             	(key, pub) = res.get();
@@ -239,12 +248,12 @@ contract GoshDao is Modifiers, TokenRootOwner {
                 a2.push(true);
                 uint128[] a3;
                 a3.push(count);
-                this.changeAllowanceIn{value:0.1 ton}(a1, a2, a3, 0);
+                this.changeAllowanceIn{value:0.1 ton, flag: 1}(a1, a2, a3, 0);
             }
         }
         if (ver == "3.0.0"){
             optional(uint256, MemberToken) res = wallets.next(key);
-            if ((key != zero) && (res.hasValue() == false)) { this.smvdeploytagin{value:0.2 ton}(address.makeAddrStd(0, key), tags.values()); }
+            if ((key != zero) && (res.hasValue() == false)) { this.smvdeploytagin{value:0.2 ton, flag: 1}(address.makeAddrStd(0, key), tags.values()); }
             if (res.hasValue()) {
             	MemberToken pub;
             	(key, pub) = res.get();
@@ -266,7 +275,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
                 a2.push(true);
                 uint128[] a3;
                 a3.push(count);
-                this.changeAllowanceIn{value:0.1 ton}(a1, a2, a3, 0);
+                this.changeAllowanceIn{value:0.1 ton, flag: 1}(a1, a2, a3, 0);
             }
         }
         getMoney();
@@ -565,7 +574,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         new Task{
             stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1
         }(data1, data2, data1);
-        this.deployTaskTag{value:0.1 ton}(repo, address.makeAddrStd(0, tvm.hash(s1)), hashtag, msg.sender);  
+        this.deployTaskTag{value:0.1 ton, flag: 1}(repo, address.makeAddrStd(0, tvm.hash(s1)), hashtag, msg.sender);  
     	getMoney();	
     }
     
@@ -579,7 +588,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         new Task{
             stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1
         }(data1, data1, data);
-        this.deployTaskTag{value:0.1 ton}(repo, address.makeAddrStd(0, tvm.hash(s1)), hashtag, msg.sender);  
+        this.deployTaskTag{value:0.1 ton, flag: 1}(repo, address.makeAddrStd(0, tvm.hash(s1)), hashtag, msg.sender);  
     	getMoney();	
     }
     
@@ -684,7 +693,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     function changeAllowance (address pubaddrs, uint128 index, address[] pubaddr, bool[] increase, uint128[] grant) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddrs, index))  accept
     {
-        this.changeAllowanceIn2{value:0.1 ton}(pubaddr, increase, grant, 0);
+        this.changeAllowanceIn2{value:0.1 ton, flag: 1}(pubaddr, increase, grant, 0);
     }
     
     function changeAllowanceIn (address[] pubaddr, bool[] increase, uint128[] grant, uint128 index) public senderIs(address(this))  accept
@@ -704,7 +713,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             _allbalance -= grant[index];
             GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr[index], 0)).addDoubt{value: 0.1 ton, flag: 1}(grant[index]);
         }
-        this.changeAllowanceIn{value: 0.2 ton}(pubaddr, increase, grant, index + 1);
+        this.changeAllowanceIn{value: 0.2 ton, flag: 1}(pubaddr, increase, grant, index + 1);
     }
     
     function changeAllowanceIn2 (address[] pubaddr, bool[] increase, uint128[] grant, uint128 index) public senderIs(address(this))  accept
@@ -724,7 +733,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             _allbalance -= grant[index];
             GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr[index], 0)).addDoubt{value: 0.1 ton, flag: 1}(grant[index]);
         }
-        this.changeAllowanceIn2{value: 0.2 ton}(pubaddr, increase, grant, index + 1);
+        this.changeAllowanceIn2{value: 0.2 ton, flag: 1}(pubaddr, increase, grant, index + 1);
     }
     
     function returnAllowance (uint128 grant, address pubaddr, uint128 index) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index))  accept
@@ -753,11 +762,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
  
     function addVoteTokenPub (address pub, address pubaddr, uint128 index, uint128 grant) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index))  accept
     {   
-        this.addVoteTokenPub2{value: 0.1 ton}(pub, grant);
+        this.addVoteTokenPub2{value: 0.1 ton, flag: 1}(pub, grant);
     }
     
     function addVoteTokenPub2 (address pub, uint128 grant) public pure senderIs(address(this))  accept  {    
-        this.addVoteTokenPub3{value: 0.1 ton}(pub, grant);
+        this.addVoteTokenPub3{value: 0.1 ton, flag: 1}(pub, grant);
     } 
     
     function addVoteTokenPub3 (address pub, uint128 grant) public senderIs(address(this)) accept {   
@@ -794,7 +803,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         (, uint256 keyaddr) = pubaddr.unpack();
         _wallets[keyaddr] = MemberToken(_lastAccountAddress, _tokenforperson);
         new GoshWallet {
-            stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0
+            stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0, flag: 1
         }(  _versionController, _pubaddr, pubaddr, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
@@ -841,7 +850,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));
         _wallets[keyaddr] = MemberToken(_lastAccountAddress, pubaddr.count);
         new GoshWallet {
-            stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0
+            stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0, flag: 1
         }(  _versionController, _pubaddr, pubaddr.member, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
@@ -866,7 +875,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         TvmCell s1 = GoshLib.composeWalletStateInit(_code[m_WalletCode], _systemcontract, address(this), pubaddr, 0);
         _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));
         new GoshWallet {
-            stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0
+            stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0, flag: 1
         }(  _versionController, _pubaddr, pubaddr, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
@@ -901,7 +910,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         ConfigGrant grant
     ) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index)) accept saveMsg {
         uint128 balance = 0; 
-        this.calculateBalanceAssign{value:0.1 ton}(repoName, nametask, grant, balance, hashtag, 0, msg.sender);
+        this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, hashtag, 0, msg.sender);
      }   
      
      function calculateBalanceAssign(string repoName,
@@ -913,12 +922,12 @@ contract GoshDao is Modifiers, TokenRootOwner {
         uint128 check = 0;
         for (uint128 i = index; i < grant.assign.length; i++){
             check += 1;
-            if (check == 3) { this.calculateBalanceAssign{value:0.1 ton}(repoName, nametask, grant, balance, hashtag, i, sender); return; }
+            if (check == 3) { this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, hashtag, i, sender); return; }
             balance += grant.assign[i].grant;
             if (i != 0) { require(grant.assign[i].lock > grant.assign[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.assign.length) { require(grant.assign[i].grant != 0, ERR_ZERO_GRANT); }
         }       
-        this.calculateBalanceReview{value:0.1 ton}(repoName, nametask, grant, balance, hashtag, 0, sender);
+        this.calculateBalanceReview{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, hashtag, 0, sender);
      }
      
      function calculateBalanceReview(string repoName,
@@ -930,12 +939,12 @@ contract GoshDao is Modifiers, TokenRootOwner {
         uint128 check = 0;
         for (uint128 i = index; i < grant.review.length; i++){
             check += 1;
-            if (check == 3) { this.calculateBalanceReview{value:0.1 ton}(repoName, nametask, grant, balance, hashtag, i, sender); return; }
+            if (check == 3) { this.calculateBalanceReview{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, hashtag, i, sender); return; }
             balance += grant.review[i].grant;
             if (i != 0) { require(grant.review[i].lock > grant.review[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.review.length) { require(grant.review[i].grant != 0, ERR_ZERO_GRANT); }
         }       
-        this.calculateBalanceManager{value:0.1 ton}(repoName, nametask, grant, balance, hashtag, 0, sender);
+        this.calculateBalanceManager{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, hashtag, 0, sender);
       }
       
       function calculateBalanceManager(string repoName,
@@ -947,7 +956,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         uint128 check = 0;
         for (uint128 i = index; i < grant.manager.length; i++){
             check += 1;
-            if (check == 3) { this.calculateBalanceManager{value:0.1 ton}(repoName, nametask, grant, balance, hashtag, i, sender); return; }
+            if (check == 3) { this.calculateBalanceManager{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, hashtag, i, sender); return; }
             balance += grant.manager[i].grant;
             if (i != 0) { require(grant.manager[i].lock > grant.manager[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.manager.length) { require(grant.manager[i].grant != 0, ERR_ZERO_GRANT); }
@@ -962,7 +971,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         new Task{
             stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1
         }(data, data1, data1);
-        this.deployTaskTag{value:0.1 ton}(repo, address.makeAddrStd(0, tvm.hash(s1)), hashtag, sender);
+        this.deployTaskTag{value:0.1 ton, flag: 1}(repo, address.makeAddrStd(0, tvm.hash(s1)), hashtag, sender);
         getMoney();
     }
     

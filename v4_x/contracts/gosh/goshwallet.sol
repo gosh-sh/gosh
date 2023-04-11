@@ -148,7 +148,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _walletcounter += 1;
         TvmCell s1 = GoshLib.composeWalletStateInit(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, _walletcounter - 1);
         new GoshWallet {
-            stateInit: s1, value: 5 ton, wid: 0
+            stateInit: s1, value: 5 ton, wid: 0, flag: 1
         }(  _versionController, _rootpubaddr, _pubaddr, _nameDao, _code[m_DaoCode],
             _code[m_CommitCode],
             _code[m_RepositoryCode],
@@ -205,7 +205,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell deployCode = GoshLib.buildSignatureCode(_code[m_contentSignature], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: ContentSignature, varInit: {_commit : commit, _label : label, _systemcontract : _systemcontract, _goshdao : _goshdao}});
         new ContentSignature{
-            stateInit: s1, value: 5 ton, wid: 0
+            stateInit: s1, value: 5 ton, wid: 0, flag: 1
         }(_pubaddr, _code[m_WalletCode], content, _index);
         getMoney();
     }
@@ -828,7 +828,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _walletcounter += 1;
         TvmCell s1 = GoshLib.composeWalletStateInit(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, _walletcounter - 1);
         new GoshWallet {
-            stateInit: s1, value: 60 ton, wid: 0
+            stateInit: s1, value: 60 ton, wid: 0, flag: 1
         }(  _versionController,_rootpubaddr, _pubaddr, _nameDao, _code[m_DaoCode],
             _code[m_CommitCode],
             _code[m_RepositoryCode],
@@ -1488,7 +1488,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function addVoteToken(
         uint128 grant
     ) public senderIs(_goshdao) accept saveMsg {
-        GoshDao(_goshdao).requestMint {value: SMVConstants.ACTION_FEE} (tip3VotingLocker, _pubaddr, grant, _index);
+        GoshDao(_goshdao).requestMint {value: SMVConstants.ACTION_FEE, flag: 1} (tip3VotingLocker, _pubaddr, grant, _index);
         _lockedBalance += grant;
         getMoney();
     }
