@@ -97,7 +97,7 @@ contract Task is Modifiers{
             (name, _repoName, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance) = abi.decode(data, (string, string, bool, ConfigCommitBase[], ConfigGrant, uint128, uint128, uint128, uint128, uint128, mapping(address => uint128), mapping(address => uint128), mapping(address => uint128), uint128, uint128, uint128, uint128, uint128, uint128, bool, bool, bool, uint128, uint128, uint128, uint128));
             _repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, _repoName);
             address zero;
-            this.checkdaoMember{value:0.1 ton}(_candidates[_indexFinal].daoMembers, zero);
+            this.checkdaoMember{value:0.1 ton, flag: 1}(_candidates[_indexFinal].daoMembers, zero);
             require(name == _nametask, ERR_WRONG_DATA);       
     }
     
@@ -132,7 +132,7 @@ contract Task is Modifiers{
             _managers[addr] = _managers[key];
             delete _managers[key];
         }
-        this.checkdaoMember{value:0.1 ton}(daoMember, key);
+        this.checkdaoMember{value:0.1 ton, flag: 1}(daoMember, key);
     }
 
     function isReady(ConfigCommitBase commit) public senderIs(_repo) {
@@ -178,15 +178,15 @@ contract Task is Modifiers{
         tvm.accept();
         if (m_assign == typegrant) {
             require(_candidates[_indexFinal].pubaddrassign.exists(pubaddr), ERR_ASSIGN_NOT_EXIST);
-            this.getGrantAssign{value: 0.2 ton}(pubaddr);
+            this.getGrantAssign{value: 0.2 ton, flag: 1}(pubaddr);
         }
         if (m_review == typegrant) {
             require(_candidates[_indexFinal].pubaddrreview.exists(pubaddr), ERR_REVIEW_NOT_EXIST);
-            this.getGrantReview{value: 0.2 ton}(pubaddr);
+            this.getGrantReview{value: 0.2 ton, flag: 1}(pubaddr);
         }
         if (m_manager == typegrant) {
             require(_candidates[_indexFinal].pubaddrmanager.exists(pubaddr), ERR_MANAGER_NOT_EXIST);
-            this.getGrantManager{value: 0.2 ton}(pubaddr);
+            this.getGrantManager{value: 0.2 ton, flag: 1}(pubaddr);
         }    
     }
     
@@ -195,7 +195,7 @@ contract Task is Modifiers{
         uint128 check = 0;
         for (uint128 i = _lastassign; i < _grant.assign.length; i++){
             check += 1;
-            if (check == 3) { this.getGrantAssign{value: 0.2 ton}(pubaddr); return; }
+            if (check == 3) { this.getGrantAssign{value: 0.2 ton, flag: 1}(pubaddr); return; }
             if (block.timestamp >= _grant.assign[i].lock + _locktime) { 
                 _fullAssign += _grant.assign[i].grant; 
                 _grant.assign[i].grant = 0; 
@@ -219,7 +219,7 @@ contract Task is Modifiers{
         uint128 check = 0;
         for (uint128 i = _lastreview; i < _grant.review.length; i++){
             check += 1;
-            if (check == 3) { this.getGrantReview{value: 0.2 ton}(pubaddr); return; }
+            if (check == 3) { this.getGrantReview{value: 0.2 ton, flag: 1}(pubaddr); return; }
             if (block.timestamp >= _grant.review[i].lock + _locktime) { 
                 _fullReview += _grant.review[i].grant; 
                 _grant.review[i].grant = 0; 
@@ -243,7 +243,7 @@ contract Task is Modifiers{
         uint128 check = 0;
         for (uint128 i = _lastmanager; i < _grant.manager.length; i++){
             check += 1;
-            if (check == 3) { this.getGrantManager{value: 0.2 ton}(pubaddr); return; }
+            if (check == 3) { this.getGrantManager{value: 0.2 ton, flag: 1}(pubaddr); return; }
             if (block.timestamp >= _grant.manager[i].lock + _locktime) { 
                 _fullManager += _grant.manager[i].grant; 
                 _grant.manager[i].grant = 0; 
