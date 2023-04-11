@@ -3294,7 +3294,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
         const { value0 } = await this.auth.wallet0.runLocal('getTaskAddr', {
-            repoName: await this.getName(),
+            reponame: await this.getName(),
             nametask: name,
         })
         return new GoshTask(this.client, value0)
