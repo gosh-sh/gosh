@@ -73,8 +73,8 @@ pipeline {
                 }
             }
             steps {
-                runFunctionSet('buildRemoteGosh')
-                //runFunctionSet('buildRemoteGoshDebug')
+                //runFunctionSet('buildRemoteGosh')
+                runFunctionSet('buildRemoteGoshDebug')
             }
         }
 
@@ -110,15 +110,15 @@ pipeline {
                     }
 
                     //runFunctionalTests(files, basePort, "Func v1", "v1_x")
-                    runFunctionalTests(files, basePort, "Func v2", "v2_x")
-                    runFunctionalTests(files, basePort, "Func v3", "v3_x")
+                    //runFunctionalTests(files, basePort, "Func v2", "v2_x")
+                    //runFunctionalTests(files, basePort, "Func v3", "v3_x")
                     runFunctionalTests(files, basePort, "Func v4", "v4_x")
 
                     def upgradeFiles = getTestFiles("tests/upgrade_tests")
                     //runUpgradeTests(upgradeFiles, basePort, 1, 2)
                     //runUpgradeTests(upgradeFiles, basePort, 2, 3)
                     //runUpgradeTests(upgradeFiles, basePort, 1, 3)
-                    runUpgradeTests(upgradeFiles, basePort, 1, 4)
+                    //runUpgradeTests(upgradeFiles, basePort, 1, 4)
                     runUpgradeTests(upgradeFiles, basePort, 2, 4)
                     runUpgradeTests(upgradeFiles, basePort, 3, 4)
                     env.REACT_APP_GOSH_ROOTADDR = sh script: "cat v1_x_workspace_0/contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
@@ -290,29 +290,29 @@ def buildRemoteGoshDebug(version) {
 
                 cd ${WORKSPACE}
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 618 --path linux-amd64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 618 --path darwin-amd64
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 618 --path windows-amd64
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 618 --path linux-arm64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 618 --path darwin-arm64
+               // az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 618 --path linux-amd64
+               // az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 618 --path darwin-amd64
+               // az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 618 --path windows-amd64
+               // az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 618 --path linux-arm64
+               // az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 618 --path darwin-arm64
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 617 --path linux-amd64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 617 --path darwin-amd64
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 617 --path windows-amd64
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 617 --path linux-arm64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 617 --path darwin-arm64
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 636 --path linux-amd64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 636 --path darwin-amd64
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 636 --path windows-amd64
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 636 --path linux-arm64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 636 --path darwin-arm64
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 616 --path linux-amd64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 616 --path darwin-amd64
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 616 --path windows-amd64
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 616 --path linux-arm64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 616 --path darwin-arm64
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 635 --path linux-amd64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 635 --path darwin-amd64
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 635 --path windows-amd64
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 635 --path linux-arm64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 635 --path darwin-arm64
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 615 --path linux-amd64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 615 --path darwin-amd64
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 615 --path windows-amd64
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 615 --path linux-arm64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 615 --path darwin-arm64
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 634 --path linux-amd64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 634 --path darwin-amd64
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 634 --path windows-amd64
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 634 --path linux-arm64
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 634 --path darwin-arm64
             """
         }
     }

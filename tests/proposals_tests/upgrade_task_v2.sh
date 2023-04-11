@@ -26,9 +26,9 @@ set -x
 #./upgrade_tests/set_up.sh v2_x v3_x
 #exit 0
 
-REPO_NAME=prop_repo01
-DAO_NAME="dao-prop-test01_$(date +%s)"
-NEW_REPO_PATH=prop_repo01_v2
+REPO_NAME=prop_repo05
+DAO_NAME="dao-prop_$(date +%s)"
+NEW_REPO_PATH=prop_repo05_v2
 COMMIT_ABI="../v2_x/contracts/gosh/commit.abi.json"
 SNAPSHOT_ABI="../v2_x/contracts/gosh/snapshot.abi.json"
 TASK_ABI="../v2_x/contracts/gosh/task.abi.json"

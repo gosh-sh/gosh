@@ -22,9 +22,9 @@ SECOND_VERSION=v4_x
 
 . ./util.sh
 
-REPO_NAME=prop_repo02
-DAO_NAME="dao-prop-test02_$(date +%s)"
-NEW_REPO_PATH=prop_repo02_v2
+REPO_NAME=prop_repo04
+DAO_NAME="dao-prop_$(date +%s)"
+NEW_REPO_PATH=prop_repo04_v2
 COMMIT_ABI="../$FIRST_VERSION/contracts/gosh/commit.abi.json"
 SNAPSHOT_ABI="../$FIRST_VERSION/contracts/gosh/snapshot.abi.json"
 TASK_ABI="../$FIRST_VERSION/contracts/gosh/task.abi.json"
