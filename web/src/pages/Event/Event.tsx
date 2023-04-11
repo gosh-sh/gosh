@@ -100,8 +100,8 @@ const EventPage = () => {
                     </div>
                 </div>
             </div>
-            <div className="mt-8 flex flex-wrap gap-4 justify-between">
-                <div className="grow">
+            <div className="mt-8 row flex-wrap">
+                <div className="col !basis-full md:!basis-0">
                     {event.data.comment && (
                         <div className="border border-gray-e6edff rounded-xl px-4 py-5 mb-6">
                             <h3 className="mb-3 text-xl font-medium">
@@ -226,7 +226,7 @@ const EventPage = () => {
                     </div>
                 </div>
 
-                <div className="basis-4/12">
+                <div className="col !max-w-full md:!max-w-side-right-md lg:!max-w-side-right">
                     <div className="border border-gray-e6edff rounded-xl p-5">
                         {(dao.details.isEventProgressOn || event.status?.completed) && (
                             <EventProgressBar votes={event.votes} />
