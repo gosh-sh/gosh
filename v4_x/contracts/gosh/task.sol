@@ -100,6 +100,7 @@ contract Task is Modifiers{
             if (_ready == true) { 
                 this.checkdaoMember{value:0.1 ton, flag: 1}(_candidates[_indexFinal].daoMembers, zero);
             } 
+            else { _waitForUpdate = false; }
             require(name == _nametask, ERR_WRONG_DATA);       
     }
     
