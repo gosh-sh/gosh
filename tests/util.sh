@@ -553,6 +553,49 @@ function add_dao_to_dao {
 
 }
 
+function add_members_to_dao {
+  echo "***** start proposal for add members to dao *****"
+  echo "Number of members $MEMBERS_CNT"
+  PARAMS="{\"pubaddr\":["
+  i=1
+  ADDR_TEMPLATE="0:f04965b9fe7366b81aa2c44e9cfd7056a13170d9cf1bf4509db6c5627782eb"
+  DAO="["
+  while [[ $i -le $MEMBERS_CNT ]]
+  do
+    echo "generate member #$i"
+    INDEX=$(printf '%02d' $i)
+    PARAMS="$PARAMS{\"member\":\""$ADDR_TEMPLATE""$INDEX"\",\"count\":0}"
+    DAO="$DAO""null"
+    if [ "$i" != "$MEMBERS_CNT" ]; then
+      PARAMS="$PARAMS,"
+      DAO="$DAO,"
+    fi
+    ((i = i + 1))
+  done
+  DAO="$DAO]"
+  PARAMS_START="$PARAMS],\"dao\":$DAO,\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
+  echo "PARAMS_START=$PARAMS_START"
+  tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForDeployWalletDao $PARAMS_START
+  NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
+  echo "NOW_ARG=$NOW_ARG"
+  PARAMS_GET_CELL="$PARAMS],\"dao\":$DAO,\"comment\":\"\",\"time\":$NOW_ARG}"
+  echo "PARAMS_GET_CELL=$PARAMS_GET_CELL"
+  TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellDeployWalletDao \
+    $PARAMS_GET_CELL | sed -n '/value0/ p' | cut -d'"' -f 4)
+  sleep 10
+
+  PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
+        --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
+        "{\"data\":\"$TVMCELL\"}" \
+         --decode-c6 | grep value0 \
+        | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+  vote_for_proposal
+
+  sleep 10
+
+}
+
 function child_dao_ask_granted {
   echo "***** start proposal for ask dao reward *****"
 
@@ -628,3 +671,6 @@ function dao_transfer_tokens {
   sleep 10
 }
 
+function get_number_of_members {
+  MEMBERS_LEN=$(tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getDetails | grep -c member)
+}
