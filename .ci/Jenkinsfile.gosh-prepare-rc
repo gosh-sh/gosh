@@ -289,13 +289,7 @@ def buildRemoteGoshDebug(version) {
                 set -ex
 
                 cd ${WORKSPACE}
-
-               // az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 618 --path linux-amd64
-               // az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 618 --path darwin-amd64
-               // az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 618 --path windows-amd64
-               // az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 618 --path linux-arm64
-               // az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 618 --path darwin-arm64
-
+                
                 az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 636 --path linux-amd64
                 az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 636 --path darwin-amd64
                 az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 636 --path windows-amd64
