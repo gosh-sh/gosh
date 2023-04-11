@@ -2,7 +2,7 @@ import { Form, Formik } from 'formik'
 import { classNames, TSmvEvent } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { toast } from 'react-toastify'
-import { ToastError } from '../../../../components/Toast'
+import { ToastError, ToastSuccess } from '../../../../components/Toast'
 import { Button } from '../../../../components/Form'
 
 type TEventReviewFormProps = {
@@ -20,7 +20,14 @@ const EventReviewForm = (props: TEventReviewFormProps) => {
     const onSubmit = async (values: TFormValues) => {
         try {
             await dao.sendEventReview({ event: event.address, decision: values.accept })
-            toast.success('Review accepted. Event details will be updated soon')
+            toast.success(
+                <ToastSuccess
+                    message={{
+                        title: 'Review accepted',
+                        content: 'Event details will be updated soon',
+                    }}
+                />,
+            )
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
