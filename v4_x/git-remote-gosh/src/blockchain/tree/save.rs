@@ -75,10 +75,10 @@ impl DeployTree for Everscale {
     ) -> anyhow::Result<()> {
         let wallet_contract = wallet.take_one().await?;
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
+        let nodes_cnt = nodes.len();
         let result = if nodes.len() > TREE_NODES_CHUNK_MAX_SIZE {
             tracing::trace!("Start tree upload by chunks");
             let mut repo_contract = self.repo_contract().clone();
-            let nodes_cnt = nodes.len();
             let tree_address =
                 Tree::calculate_address(&Arc::clone(self.client()), &mut repo_contract, sha)
                     .await?;
@@ -154,37 +154,13 @@ impl DeployTree for Everscale {
                 }
             }
 
-            // let mut attempts = 0;
-            // let params = SetTreeFinishMarkArgs {
-            //     sha: sha.to_owned(),
-            //     repo_name: repo_name.to_owned(),
-            // };
-            // while attempts < MAX_REDEPLOY_ATTEMPTS {
-            //     tracing::trace!("SetTreeFinishMarkArgs: {params:?}");
-            //     let res = self
-            //         .send_message(
-            //             wallet_contract.deref(),
-            //             "setTreeFinishMark",
-            //             Some(serde_json::to_value(params.clone())?),
-            //             None,
-            //         )
-            //         .await
-            //         .map(|_| ());
-            //     if res.is_ok() {
-            //         break;
-            //     }
-            //     attempts += 1;
-            //     if attempts == MAX_REDEPLOY_ATTEMPTS && res.is_err() {
-            //         res?;
-            //     }
-            // }
             Ok(())
         } else {
             let params = DeployTreeArgs {
                 sha: sha.to_owned(),
                 repo_name: repo_name.to_owned(),
                 nodes: nodes.to_owned(),
-                number: 0,
+                number: nodes_cnt as u128,
             };
             tracing::trace!("DeployTreeArgs: {params:?}");
             self.send_message(
