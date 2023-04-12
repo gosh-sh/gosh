@@ -1137,6 +1137,14 @@
 			]
 		},
 		{
+			"name": "sendTokenToNewVersionAutoTree",
+			"inputs": [
+				{"name":"key","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "sendTokenToNewVersionAuto5",
 			"inputs": [
 				{"name":"newversion","type":"string"}
