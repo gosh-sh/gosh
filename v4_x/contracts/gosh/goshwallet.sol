@@ -1587,9 +1587,29 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
-    function sendTokenToNewVersionAuto() public onlyOwnerPubkeyOptional(_access) accept saveMsg {
-        SystemContract(_systemcontract).sendTokenToNewVersionAuto2{value : 0.2 ton, flag: 1}(version, "4.0.0", _pubaddr, _nameDao, _index);
-//        SystemContract(_systemcontract).sendTokenToNewVersionAuto2{value : 0.2 ton, flag: 1}(version, "5.0.0", _pubaddr, _nameDao, _index);
+    function sendTokenToNewVersionAuto() public onlyOwnerPubkeyOptional(_access)  accept saveMsg { 
+        this.sendTokenToNewVersionAutoTree{value: 0.2 ton, flag: 1}(0);
+        getMoney();
+    }
+
+    function daoSendTokenToNewVersionAuto(address wallet) public onlyOwnerPubkeyOptional(_access)  accept saveMsg { 
+        GoshDao(_goshdao).daoSendTokenToNewVersionAuto1{value: 0.2 ton, flag: 1}(_pubaddr, _index, wallet);
+        getMoney();
+    }
+
+    function daoSendTokenToNewVersionAuto2() public onlyOwnerAddress(_pubaddr) accept saveMsg { 
+        this.sendTokenToNewVersionAutoTree{value: 0.2 ton, flag: 1}(0);
+        getMoney();
+    }
+
+    function sendTokenToNewVersionAutoTree(uint256 key) public senderIs(address(this))  accept saveMsg { 
+        string ver;
+        optional(uint256, string) res = _versions.next(key);
+        if (res.hasValue() == false) { return; }
+        (key, ver) = res.get();
+        this.sendTokenToNewVersionAutoTree{value: 0.2 ton, flag: 1}(key);
+        if ((ver == version) || (ver == "1.0.0") || (ver == "2.0.0") || (ver == "3.0.0")) { return; }
+        SystemContract(_systemcontract).sendTokenToNewVersionAuto2{value : 0.2 ton, flag: 1}(version, ver, _pubaddr, _nameDao, _index);
         getMoney();
     }
 

@@ -114,9 +114,8 @@ const TasksUpgradePage = () => {
         return { isEvent: taskDeployCells.length > 0 }
     }
 
-    const _upgrade_from_3 = async () => {
-        // Get prev (3.0) DAO adapter
-        const ver = '3.0.0'
+    const _upgrade_from_v = async (ver: string) => {
+        // Get version DAO adapter
         const vgosh = GoshAdapterFactory.create(ver)
         const vdao = await vgosh.getDao({ name: dao.details.name, useAuth: false })
 
@@ -193,12 +192,18 @@ const TasksUpgradePage = () => {
                 throw new GoshError('Tasks have already been upgraded')
             }
 
+            const prevDao = await dao.adapter.getPrevDao()
+            if (!prevDao) {
+                throw new GoshError('Previous DAO is undefined')
+            }
+
             let isEvent = false
-            if (dao.details.version === '3.0.0') {
+            const prevVersion = prevDao.getVersion()
+            if (prevVersion === '2.0.0') {
                 const result = await _upgrade_from_2()
                 isEvent = result.isEvent
-            } else if (dao.details.version === '4.0.0') {
-                const result = await _upgrade_from_3()
+            } else {
+                const result = await _upgrade_from_v(prevVersion)
                 isEvent = result.isEvent
             }
 

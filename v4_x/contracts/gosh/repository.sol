@@ -90,7 +90,7 @@ contract Repository is Modifiers{
             Repository(answer).checkUpdateRepoVer5{value : 0.15 ton, flag: 1}(version, a);
             return;
         }
-        a = abi.encode(true, _Branches, _protectedBranch, _head, _hashtag);
+        a = abi.encode(true, _Branches, _protectedBranch, _head, _hashtag, _description);
         Repository(answer).checkUpdateRepoVer5{value : 0.15 ton, flag: 1}(version, a);
     }
 
@@ -104,20 +104,26 @@ contract Repository is Modifiers{
     
     function checkUpdateRepoVer5(string ver, TvmCell a) public senderIs(_previousversion.get().addr) accept {
         if (ver == "2.0.0"){
-            (bool ans, mapping(uint256 => Item) Branches, mapping(uint256 => bool) protectedBranch, string head, mapping(uint256 => string) hashtag) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => bool), string, mapping(uint256 => string)));
+            mapping(uint256 => string) hashtag;
+            bool ans;
+            (ans, _Branches, _protectedBranch, _head, hashtag) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => bool), string, mapping(uint256 => string)));
             if (ans == false) { selfdestruct(_systemcontract); }
-            _Branches = Branches;
-            _protectedBranch = protectedBranch;
-            _head = head;
             this.smvdeployrepotagin{value: 0.1 ton, flag: 1}(hashtag.values());
             return;
         }
-        if ((ver == "3.0.0") || (ver == "4.0.0")){
-            (bool ans, mapping(uint256 => Item) Branches, mapping(uint256 => bool) protectedBranch, string head, mapping(uint256 => string) hashtag) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => bool), string, mapping(uint256 => string)));
+        if ((ver == "3.0.0")){
+            mapping(uint256 => string) hashtag;
+            bool ans;
+            (ans, _Branches, _protectedBranch, _head, hashtag) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => bool), string, mapping(uint256 => string)));
             if (ans == false) { selfdestruct(_systemcontract); }
-            _Branches = Branches;
-            _protectedBranch = protectedBranch;
-            _head = head;
+            this.smvdeployrepotagin{value: 0.1 ton, flag: 1}(hashtag.values());
+            return;
+        }
+        if ((ver == "4.0.0")){
+            mapping(uint256 => string) hashtag;
+            bool ans;
+            (ans, _Branches, _protectedBranch, _head, hashtag, _description) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => bool), string, mapping(uint256 => string), string));
+            if (ans == false) { selfdestruct(_systemcontract); }
             this.smvdeployrepotagin{value: 0.1 ton, flag: 1}(hashtag.values());
             return;
         }
