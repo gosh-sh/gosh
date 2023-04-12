@@ -25,9 +25,6 @@ SECOND_VERSION=v4_x
 REPO_NAME=prop_repo03
 DAO_NAME="dao-prop-child_$(date +%s)"
 NEW_REPO_PATH=prop_repo03_v2
-COMMIT_ABI="../$FIRST_VERSION/contracts/gosh/commit.abi.json"
-SNAPSHOT_ABI="../$FIRST_VERSION/contracts/gosh/snapshot.abi.json"
-TASK_ABI="../$FIRST_VERSION/contracts/gosh/task.abi.json"
 
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
@@ -128,3 +125,5 @@ if [ "$FREE_TOKEN_CNT" != "5" ]; then
   echo Wrong amount of token
   exit 1
 fi
+
+echo "TEST SUCCEEDED"

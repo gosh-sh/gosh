@@ -15,9 +15,9 @@ set -x
 
 FIRST_VERSION=v3_x
 SECOND_VERSION=v4_x
-./node_se_scripts/deploy.sh $FIRST_VERSION
-. set-vars.sh $FIRST_VERSION
-./upgrade_tests/set_up.sh $FIRST_VERSION $SECOND_VERSION
+#./node_se_scripts/deploy.sh $FIRST_VERSION
+#. set-vars.sh $FIRST_VERSION
+#./upgrade_tests/set_up.sh $FIRST_VERSION $SECOND_VERSION
 #exit 0
 
 . ./util.sh
@@ -42,10 +42,24 @@ deploy_DAO_and_repo
 
 mint_tokens_3
 
+TASK_NAME="task0"
+deploy_task_with_proposal_3
+TASK_NAME_0=$TASK_NAME
+if [ "$CUR_VERSION" == "3.0.0" ]; then
+  TASK_ADDR_0=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTaskAddr --abi $WALLET_ABI --nametask $TASK_NAME --repoName $REPO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
+else
+  TASK_ADDR_0=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTaskAddr --abi $WALLET_ABI --nametask $TASK_NAME --reponame $REPO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
+fi
+wait_account_active $TASK_ADDR_0
+
 TASK_NAME="task1"
 deploy_task_with_proposal_3
 
-TASK_ADDR=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTaskAddr --abi $WALLET_ABI --nametask $TASK_NAME --repoName $REPO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
+if [ "$CUR_VERSION" == "3.0.0" ]; then
+  TASK_ADDR=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTaskAddr --abi $WALLET_ABI --nametask $TASK_NAME --repoName $REPO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
+else
+  TASK_ADDR=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTaskAddr --abi $WALLET_ABI --nametask $TASK_NAME --reponame $REPO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
+fi
 wait_account_active $TASK_ADDR
 
 USER_ADDR=$(echo $USER_PROFILE_ADDR | sed -r "s/:/x/")
@@ -76,7 +90,11 @@ cd ..
 BRANCH_NAME=main
 
 #function: deployTree, args: Some(Object {"shaTree": String("3cc611957f6b92c2c77e6d4704d3bcf85a6da915"), "repoName": String("prop_repo01"), "datatree": Object {"0x4b4ccbf84f760ad40b606b57dc874c4414a453d93a5573c39cb382c3c8ccc349": Object {"flags": String("2"), "mode": String("100644"), "typeObj": String("blob"), "name": String("1.txt"), "sha1": String("5b030b5b4adb9d8ee0174925ddbd7e06772b6b21"), "sha256": String("0xcd70f1f599c08be09ff4d7743d075b0cc8b7c8a4a177ab52c36231bcfdd18731")}}, "ipfs": Null})
-tonos-cli callx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m deployTree "{\"shaTree\":\"3cc611957f6b92c2c77e6d4704d3bcf85a6da915\",\"repoName\":\"$REPO_NAME\",\"datatree\":{\"0x4b4ccbf84f760ad40b606b57dc874c4414a453d93a5573c39cb382c3c8ccc349\":{\"flags\":\"2\",\"mode\":\"100644\",\"typeObj\":\"blob\",\"name\":\"1.txt\",\"sha1\":\"5b030b5b4adb9d8ee0174925ddbd7e06772b6b21\",\"sha256\":\"0xcd70f1f599c08be09ff4d7743d075b0cc8b7c8a4a177ab52c36231bcfdd18731\"}},\"ipfs\":null}"
+if [ "$CUR_VERSION" == "3.0.0" ]; then
+  tonos-cli callx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m deployTree "{\"shaTree\":\"3cc611957f6b92c2c77e6d4704d3bcf85a6da915\",\"repoName\":\"$REPO_NAME\",\"datatree\":{\"0x4b4ccbf84f760ad40b606b57dc874c4414a453d93a5573c39cb382c3c8ccc349\":{\"flags\":\"2\",\"mode\":\"100644\",\"typeObj\":\"blob\",\"name\":\"1.txt\",\"sha1\":\"5b030b5b4adb9d8ee0174925ddbd7e06772b6b21\",\"sha256\":\"0xcd70f1f599c08be09ff4d7743d075b0cc8b7c8a4a177ab52c36231bcfdd18731\"}},\"ipfs\":null}"
+else
+  tonos-cli callx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m deployTree "{\"shaTree\":\"3cc611957f6b92c2c77e6d4704d3bcf85a6da915\",\"repoName\":\"$REPO_NAME\",\"datatree\":{\"0x4b4ccbf84f760ad40b606b57dc874c4414a453d93a5573c39cb382c3c8ccc349\":{\"flags\":\"2\",\"mode\":\"100644\",\"typeObj\":\"blob\",\"name\":\"1.txt\",\"sha1\":\"5b030b5b4adb9d8ee0174925ddbd7e06772b6b21\",\"sha256\":\"0xcd70f1f599c08be09ff4d7743d075b0cc8b7c8a4a177ab52c36231bcfdd18731\"}},\"number\":1}"
+fi
 
 TREE_ADDR=$(tonos-cli -j run "$REPO_ADDR" getTreeAddr "{\"treeName\":\"3cc611957f6b92c2c77e6d4704d3bcf85a6da915\"}" --abi "$REPO_ABI" | sed -n '/value0/ p' | cut -d'"' -f 4)
 echo "tree address: $TREE_ADDR"
@@ -191,3 +209,9 @@ if [ "$TOKEN_CNT" != "2" ]; then
   exit 1
 fi
 
+TASK_NAME=$TASK_NAME_0
+upgrade_task_proposal
+TASK_ADDR_0=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTaskAddr --abi $WALLET_ABI_1 --nametask $TASK_NAME --reponame $REPO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
+wait_account_active $TASK_ADDR_0
+
+echo "TEST SUCCEEDED"

@@ -374,7 +374,7 @@ function vote_for_proposal {
 
 function mint_tokens {
     tonos-cli runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
-    echo "***** start proposal for task deploy *****"
+    echo "***** start proposal for mint tokens *****"
     TOKEN=5
     TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellMintToken --token $TOKEN --comment "" | sed -n '/value0/ p' | cut -d'"' -f 4)
     tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForMintDaoReserve \
@@ -398,7 +398,7 @@ function mint_tokens {
 
 function mint_tokens_3 {
     tonos-cli runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
-    echo "***** start proposal for task deploy *****"
+    echo "***** start proposal for mint tokens *****"
     TOKEN="${TOKEN:-5}"
     tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForMintDaoReserve \
       --token $TOKEN --comment "" --num_clients 1 --reviewers []

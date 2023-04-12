@@ -321,3 +321,5 @@ if [ "$TOKEN_CNT" != "1" ]; then
   echo Wrong amount of token
   exit 1
 fi
+
+echo "TEST SUCCEEDED"
