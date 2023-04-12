@@ -251,7 +251,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
                 this.changeAllowanceIn{value:0.1 ton, flag: 1}(a1, a2, a3, 0);
             }
         }
-        if (ver == "3.0.0"){
+        if ((ver == "3.0.0") || (ver == "4.0.0")){
             optional(uint256, MemberToken) res = wallets.next(key);
             if ((key != zero) && (res.hasValue() == false)) { this.smvdeploytagin{value:0.2 ton, flag: 1}(address.makeAddrStd(0, key), tags.values()); }
             if (res.hasValue()) {
