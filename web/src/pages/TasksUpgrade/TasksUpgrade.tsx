@@ -114,9 +114,8 @@ const TasksUpgradePage = () => {
         return { isEvent: taskDeployCells.length > 0 }
     }
 
-    const _upgrade_from_3 = async () => {
-        // Get prev (3.0) DAO adapter
-        const ver = '3.0.0'
+    const _upgrade_from_v = async (ver: string) => {
+        // Get version DAO adapter
         const vgosh = GoshAdapterFactory.create(ver)
         const vdao = await vgosh.getDao({ name: dao.details.name, useAuth: false })
 
@@ -204,7 +203,7 @@ const TasksUpgradePage = () => {
                 const result = await _upgrade_from_2()
                 isEvent = result.isEvent
             } else {
-                const result = await _upgrade_from_3()
+                const result = await _upgrade_from_v(prevVersion)
                 isEvent = result.isEvent
             }
 
