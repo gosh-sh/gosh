@@ -1593,6 +1593,17 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
+    function daoSendTokenToNewVersionAuto(address wallet) public onlyOwnerPubkeyOptional(_access)  accept saveMsg { 
+        GoshDao(_goshdao).daoSendTokenToNewVersionAuto1{value: 0.2 ton, flag: 1}(_pubaddr, _index, wallet);
+        getMoney();
+    }
+
+    function daoSendTokenToNewVersionAuto2() public onlyOwnerAddress(_pubaddr) accept saveMsg { 
+        SystemContract(_systemcontract).sendTokenToNewVersionAuto2{value : 0.2 ton, flag: 1}(version, "4.0.0", _pubaddr, _nameDao, _index);
+//        SystemContract(_systemcontract).sendTokenToNewVersionAuto2{value : 0.2 ton, flag: 1}(version, "5.0.0", _pubaddr, _nameDao, _index);
+        getMoney();
+    }
+
     function sendTokenToNewVersionAuto5(string newversion) public senderIs(_systemcontract) accept {
         optional(address) newwallet;
         if (_lockedBalance != 0) {

@@ -369,6 +369,16 @@
 			]
 		},
 		{
+			"name": "daoSendTokenToNewVersionAuto1",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"wallet","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "daoMulti",
 			"inputs": [
 				{"name":"pub","type":"address"},
