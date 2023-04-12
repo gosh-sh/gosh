@@ -4194,11 +4194,20 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     ) => {
         // Get lib patch
         let patch = Diff.createPatch(treepath, original, modified)
+
         // Format to GOSH patch
         patch = patch.split('\n').slice(4).join('\n')
-        // If remove all file content
-        if (!modified) {
-            patch = patch.replace('\n\\ No newline at end of file', '')
+
+        /**
+         * Custom patch for delete file (`modified` is empty)
+         * If `original` ends with hex byte 0a (int 10, char \n),
+         * remove `\ No newline at end of file` line from lib patch
+         */
+        if (!modified.length) {
+            const hasLF = Buffer.from(original).subarray(-1)[0] === 10
+            if (hasLF) {
+                patch = patch.replace('\\ No newline at end of file\n', '')
+            }
         }
         return patch
     }
