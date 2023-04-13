@@ -611,6 +611,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
                 wallet: details.my_wallets[dao],
             })),
             hasRepoIndex: !!(await this._getSystemRepository()),
+            isUpgraded: details.isRepoUpgraded && _isTaskRedeployed,
         }
     }
 

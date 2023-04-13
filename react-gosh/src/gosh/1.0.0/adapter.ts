@@ -519,6 +519,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             isTaskRedeployed: true,
             isMemberOf: [],
             hasRepoIndex: false,
+            isUpgraded: true,
         }
     }
 
