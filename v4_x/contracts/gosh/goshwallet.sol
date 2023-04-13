@@ -1612,7 +1612,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         optional(uint256, string) res = _versions.next(key);
         if (res.hasValue() == false) { return; }
         (key, ver) = res.get();
-        this.sendTokenToNewVersionAutoTree{value: 0.2 ton, flag: 1}(key);
+        this.daoSendTokenToNewVersionAutoTree{value: 0.2 ton, flag: 1}(namedao, key);
         if ((ver == version) || (ver == "1.0.0") || (ver == "2.0.0") || (ver == "3.0.0")) { return; }
         SystemContract(_systemcontract).daoSendTokenToNewVersionAuto2{value : 0.2 ton, flag: 1}(version, ver, namedao, _pubaddr, _nameDao, _index);
         getMoney();
