@@ -94,6 +94,7 @@ import {
     TDaoTokenDaoLockResult,
     TTaskUpgradeParams,
     TTaskUpgradeResult,
+    TDaoTokenDaoTransferParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -685,8 +686,9 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         address?: TAddress
         index?: number
         create?: boolean
+        keys?: KeyPair
     }): Promise<IGoshWallet> {
-        const { profile, address, index, create } = options
+        const { profile, address, index, create, keys } = options
         if (address) {
             return new GoshWallet(this.client, address)
         }
@@ -695,7 +697,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
         const addr = await this._getWalletAddress(profile, index ?? 0)
-        const wallet = new GoshWallet(this.client, addr)
+        const wallet = new GoshWallet(this.client, addr, { keys })
         if (create && !(await wallet.isDeployed())) {
             await this._createLimitedWallet(profile)
         }
@@ -1428,6 +1430,46 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
                 wallet,
                 isLock,
                 grant: amount,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
+    }
+
+    async transferDaoToken(params: TDaoTokenDaoTransferParams): Promise<void> {
+        const {
+            walletPrev,
+            walletCurr,
+            amount,
+            versionPrev,
+            comment = '',
+            reviewers = [],
+            cell,
+        } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellDaoTransferTokens', {
+                wallet: walletPrev,
+                newwallet: walletCurr,
+                grant: amount,
+                oldversion: versionPrev,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForDaoTransferTokens', {
+                wallet: walletPrev,
+                newwallet: walletCurr,
+                grant: amount,
+                oldversion: versionPrev,
                 comment,
                 reviewers: _reviewers.map(({ wallet }) => wallet),
                 num_clients: await smv.getClientsCount(),
@@ -4762,6 +4804,8 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             return {}
         } else if (type === ESmvEventType.TASK_UPGRADE) {
             fn = 'getUpgradeTaskProposalParams'
+        } else if (type === ESmvEventType.DAO_TOKEN_TRANSFER_FROM_PREV) {
+            fn = 'getDaoTransferTokenProposalParams'
         } else if (type === ESmvEventType.MULTI_PROPOSAL) {
             const { num, data0 } = await event.runLocal('getDataFirst', {}, undefined, {
                 useCachedBoc: true,

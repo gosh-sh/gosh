@@ -301,6 +301,16 @@ type TDaoTokenDaoLockParams = TEventCreateParams & {
     cell?: boolean
 }
 
+type TDaoTokenDaoTransferParams = TEventCreateParams & {
+    walletPrev: TAddress
+    walletCurr: TAddress
+    amount: number
+    versionPrev: string
+    cell?: boolean
+}
+
+type TDaoTokenDaoTransferResult = string | void
+
 type TDaoTokenDaoLockResult = string | void
 
 type TDaoTagCreateParams = TEventCreateParams & {
@@ -427,4 +437,6 @@ export {
     TDaoTokenDaoLockResult,
     TTaskUpgradeParams,
     TTaskUpgradeResult,
+    TDaoTokenDaoTransferParams,
+    TDaoTokenDaoTransferResult,
 }

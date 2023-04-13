@@ -94,6 +94,8 @@ import {
     TDaoTokenDaoLockResult,
     TTaskUpgradeParams,
     TTaskUpgradeResult,
+    TDaoTokenDaoTransferParams,
+    TDaoTokenDaoTransferResult,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -685,8 +687,9 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         address?: TAddress
         index?: number
         create?: boolean
+        keys?: KeyPair
     }): Promise<IGoshWallet> {
-        const { profile, address, index, create } = options
+        const { profile, address, index, create, keys } = options
         if (address) {
             return new GoshWallet(this.client, address)
         }
@@ -695,7 +698,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
         const addr = await this._getWalletAddress(profile, index ?? 0)
-        const wallet = new GoshWallet(this.client, addr)
+        const wallet = new GoshWallet(this.client, addr, { keys })
         if (create && !(await wallet.isDeployed())) {
             await this._createLimitedWallet(profile)
         }
@@ -1433,6 +1436,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
                 num_clients: await smv.getClientsCount(),
             })
         }
+    }
+
+    async transferDaoToken(
+        params: TDaoTokenDaoTransferParams,
+    ): Promise<TDaoTokenDaoTransferResult> {
+        throw new Error('Method is unavailable in current version')
     }
 
     async createTag(params: TDaoTagCreateParams): Promise<TDaoTagCreateResult> {

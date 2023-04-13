@@ -95,6 +95,8 @@ import {
     TDaoTokenDaoLockResult,
     TTaskUpgradeParams,
     TTaskUpgradeResult,
+    TDaoTokenDaoTransferParams,
+    TDaoTokenDaoTransferResult,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -1228,6 +1230,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async lockDaoToken(params: TDaoTokenDaoLockParams): Promise<TDaoTokenDaoLockResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async transferDaoToken(
+        params: TDaoTokenDaoTransferParams,
+    ): Promise<TDaoTokenDaoTransferResult> {
         throw new Error('Method is unavailable in current version')
     }
 
