@@ -1574,7 +1574,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     function deployCustomContract(TvmCell data) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_tombstone == false, ERR_TOMBSTONE);   
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
         SystemContract(_systemcontract).deployCustomData{value : 0.2 ton, flag: 1}(data, _pubaddr, _nameDao, _index);
         getMoney();
     }
@@ -1588,11 +1589,15 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     function sendTokenToNewVersionAuto() public onlyOwnerPubkeyOptional(_access)  accept saveMsg { 
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
         this.sendTokenToNewVersionAutoTree{value: 0.2 ton, flag: 1}(0);
         getMoney();
     }
 
     function daoSendTokenToNewVersionAuto(address wallet) public onlyOwnerPubkeyOptional(_access)  accept saveMsg { 
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
         GoshDao(_goshdao).daoSendTokenToNewVersionAuto1{value: 0.2 ton, flag: 1}(_pubaddr, _index, wallet);
         getMoney();
     }
