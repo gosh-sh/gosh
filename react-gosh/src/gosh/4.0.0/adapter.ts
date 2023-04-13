@@ -3357,7 +3357,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 Buffer.from(modified).byteLength > MAX_ONCHAIN_SIZE
             ) {
                 flagsModified |= EBlobFlag.IPFS
-                if (Buffer.isBuffer(modified)) flagsModified |= EBlobFlag.BINARY
+                if (Buffer.isBuffer(modified)) {
+                    flagsModified |= EBlobFlag.BINARY
+                }
             } else {
                 patch = this._generateBlobDiffPatch(path, modified, original)
                 if (isOriginalIpfs) {
@@ -3409,47 +3411,46 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             return getTreeItemFullPath(item) === bPath
         })
 
-        // Add new line token to modified content
-        let modifiedFix = modified
-        if (!Buffer.isBuffer(modifiedFix)) {
-            const lines = modifiedFix.split('\n')
-            const endLine = lines.slice(-1)[0]
-            if (lines.length === 1 || endLine !== '') {
-                modifiedFix = `${modifiedFix}\n`
-            }
-        }
-        const content = { original, modified: modifiedFix }
-
         // Test cases (add, delete, update, rename)
-        if (!aPath && !bPath) throw new GoshError('Blob has no tree path')
+        if (!aPath && !bPath) {
+            throw new GoshError('Blob has no tree path')
+        }
         if (!aPath && bPath) {
-            if (bItem) throw new GoshError(EGoshError.FILE_EXISTS, { path: bPath })
+            if (bItem) {
+                throw new GoshError(EGoshError.FILE_EXISTS, { path: bPath })
+            }
 
-            const data = await _getData(bPath, { ...content, original: '' }, bItem)
+            const data = await _getData(bPath, { original: '', modified }, bItem)
             return [{ data, status: 0 }]
         }
         if (aPath && !bPath) {
-            if (!aItem) throw new GoshError(EGoshError.FILE_NOT_EXIST, { path: aPath })
+            if (!aItem) {
+                throw new GoshError(EGoshError.FILE_NOT_EXIST, { path: aPath })
+            }
 
-            const data = await _getData(aPath, { ...content, modified: '' }, aItem)
+            const data = await _getData(aPath, { original, modified: '' }, aItem)
             return [{ data, status: 2 }]
         }
         if (aPath === bPath) {
-            if (!aItem) throw new GoshError(EGoshError.FILE_NOT_EXIST, { path: aPath })
-            if (content.original === content.modified) {
+            if (!aItem) {
+                throw new GoshError(EGoshError.FILE_NOT_EXIST, { path: aPath })
+            }
+            if (original === modified) {
                 throw new GoshError(EGoshError.FILE_UNMODIFIED)
             }
 
-            const data = await _getData(aPath, content, aItem)
+            const data = await _getData(aPath, { original, modified }, aItem)
             return [{ data, status: 1 }]
         }
 
-        if (bItem) throw new GoshError(EGoshError.FILE_EXISTS, { path: bPath })
+        if (bItem) {
+            throw new GoshError(EGoshError.FILE_EXISTS, { path: bPath })
+        }
         return await Promise.all(
             treepath.map(async (path) => {
                 const _content = {
-                    original: path === bPath ? '' : content.original,
-                    modified: path === aPath ? '' : content.modified,
+                    original: path === bPath ? '' : original,
+                    modified: path === aPath ? '' : modified,
                 }
                 const item = path === aPath ? aItem : bItem
                 const data = await _getData(path, _content, item)
@@ -4237,11 +4238,20 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     ) => {
         // Get lib patch
         let patch = Diff.createPatch(treepath, original, modified)
+
         // Format to GOSH patch
         patch = patch.split('\n').slice(4).join('\n')
-        // If remove all file content
-        if (!modified) {
-            patch = patch.replace('\n\\ No newline at end of file', '')
+
+        /**
+         * Custom patch for delete file (`modified` is empty)
+         * If `original` ends with hex byte 0a (int 10, char \n),
+         * remove `\ No newline at end of file` line from lib patch
+         */
+        if (!modified.length) {
+            const hasLF = Buffer.from(original).subarray(-1)[0] === 10
+            if (hasLF) {
+                patch = patch.replace('\\ No newline at end of file\n', '')
+            }
         }
         return patch
     }
