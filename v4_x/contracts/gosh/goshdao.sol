@@ -519,7 +519,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
 
     function daoSendTokenToNewVersionAuto1 (address pub, uint128 index, address wallet) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pub, index))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
-    	GoshWallet(wallet).daoSendTokenToNewVersionAuto2{value:0.2 ton, flag: 1}();   	
+    	GoshWallet(wallet).daoSendTokenToNewVersionAuto2{value:0.2 ton, flag: 1}(_nameDao);   	
     }
     
     function daoMulti (address pub, uint128 index, address wallet, uint128 number, TvmCell proposals, uint128 num_clients, address[] reviewers) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pub, index))  accept {

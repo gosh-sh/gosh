@@ -70,7 +70,10 @@ contract SystemContract is Modifiers {
     function sendTokenToNewVersion2(address  pubaddr, string namedao, uint128 index, optional(address) newwallet, uint128 grant, string newversion) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), pubaddr, index)) accept {
         VersionController(_versionController).sendTokenToNewVersion33{value : 0.3 ton, flag: 1}(grant, newversion, version, pubaddr, namedao, newwallet);
     }
-    
+
+    function daoSendTokenToNewVersion2(address  pubaddrold, address  pubaddr, string namedao, uint128 index, optional(address) newwallet, uint128 grant, string newversion) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), pubaddrold, index)) accept {
+        VersionController(_versionController).sendTokenToNewVersion33{value : 0.3 ton, flag: 1}(grant, newversion, version, pubaddr, namedao, newwallet);
+    }
     
     function sendTokenToNewVersion4(uint128 grant, address  pubaddr, string dao, optional(address) newwallet) public view senderIs(_versionController) accept {
         if (newwallet.hasValue()) { 
@@ -80,9 +83,17 @@ contract SystemContract is Modifiers {
         GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), dao), pubaddr, 0)).sendTokenToNewVersion5{value : 0.3 ton, flag: 1}(grant);
     }
 
+    function daoSendTokenToNewVersionAuto2(string newversion, string previousversion, string namesubdao, address  pubaddr, string namedao, uint128 index) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), pubaddr, index)) accept {
+        VersionController(_versionController).daoSendTokenToNewVersionAuto3{value : 0.3 ton, flag: 1}(newversion, previousversion, namesubdao, pubaddr, namedao);
+    }  
+
     function sendTokenToNewVersionAuto2(string newversion, string previousversion, address  pubaddr, string namedao, uint128 index) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), pubaddr, index)) accept {
         VersionController(_versionController).sendTokenToNewVersionAuto3{value : 0.3 ton, flag: 1}(newversion, previousversion, pubaddr, namedao);
     }  
+
+    function daoSendTokenToNewVersionAuto4(address  pubaddr, string subdao, string dao, string newversion) public view senderIs(_versionController) accept {
+        GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), dao), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), subdao), 0)).daoSendTokenToNewVersionAuto5{value : 0.3 ton, flag: 1}(pubaddr, newversion);
+    }
     
     function sendTokenToNewVersionAuto4(address  pubaddr, string dao, string newversion) public view senderIs(_versionController) accept {
         GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), dao), pubaddr, 0)).sendTokenToNewVersionAuto5{value : 0.3 ton, flag: 1}(newversion);

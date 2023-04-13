@@ -36,6 +36,18 @@
 			]
 		},
 		{
+			"name": "daoSendTokenToNewVersionAuto3",
+			"inputs": [
+				{"name":"version","type":"string"},
+				{"name":"previousversion","type":"string"},
+				{"name":"namesubdao","type":"string"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"namedao","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "sendTokenToNewVersionAuto3",
 			"inputs": [
 				{"name":"version","type":"string"},
