@@ -168,7 +168,7 @@ tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KE
 sleep 5
 tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m unlockVoting --amount 0
 sleep 5
-tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 21 --newversion "4.0.0"
+tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 21 --newversion "$TEST_VERSION1"
 
 sleep 20
 
@@ -183,7 +183,7 @@ tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
 
 sleep 60
 
-OLD_VERSION=3.0.0
+OLD_VERSION=$CUR_VERSION
 
 upgrade_task_proposal
 OLD_TASK_ADDR=$TASK_ADDR

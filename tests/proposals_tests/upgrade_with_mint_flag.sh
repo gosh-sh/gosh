@@ -3,11 +3,11 @@ set -e
 set -o pipefail
 set -x
 
-FIRST_VERSION=v3_x
-SECOND_VERSION=v4_x
-#./node_se_scripts/deploy.sh $FIRST_VERSION
-#. set-vars.sh $FIRST_VERSION
-#./upgrade_tests/set_up.sh $FIRST_VERSION $SECOND_VERSION
+FIRST_VERSION=v4_x
+SECOND_VERSION=v5_x
+./node_se_scripts/deploy.sh $FIRST_VERSION
+. set-vars.sh $FIRST_VERSION
+./upgrade_tests/set_up.sh $FIRST_VERSION $SECOND_VERSION
 
 . ./util.sh
 
@@ -47,7 +47,7 @@ TOTAL_CNT=$((MEMBERS_CNT + 1))
 add_members_to_dao
 
 iter=1
-while [[ $MEMBERS_LEN -le $TOTAL_CNT ]]
+while [[ $MEMBERS_LEN -lt $TOTAL_CNT ]]
 do
   sleep 60
   get_number_of_members
@@ -70,9 +70,9 @@ if [ "$ALLOW_MINT" != "false" ]; then
   echo Mint flag is wrong
   exit 1
 fi
-
+MEMBERS_LEN=0
 iter=1
-while [[ $MEMBERS_LEN -le $TOTAL_CNT ]]
+while [[ $MEMBERS_LEN -lt $TOTAL_CNT ]]
 do
   sleep 60
   get_number_of_members

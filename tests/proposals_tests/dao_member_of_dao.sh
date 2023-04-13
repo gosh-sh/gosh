@@ -28,7 +28,7 @@ NEW_REPO_PATH=prop_repo02_v2
 COMMIT_ABI="../$FIRST_VERSION/contracts/gosh/commit.abi.json"
 SNAPSHOT_ABI="../$FIRST_VERSION/contracts/gosh/snapshot.abi.json"
 TASK_ABI="../$FIRST_VERSION/contracts/gosh/task.abi.json"
-
+OLD_VERSION=$CUR_VERSION
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
 [ -d $NEW_REPO_PATH ] && rm -rf $NEW_REPO_PATH
@@ -205,8 +205,8 @@ sleep 5
 tonos-cli callx --addr "$PARENT_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m unlockVoting --amount 0
 tonos-cli callx --addr "$CHILD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m unlockVoting --amount 0
 sleep 5
-tonos-cli callx --addr "$PARENT_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 20 --newversion "4.0.0"
-tonos-cli callx --addr "$CHILD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 20 --newversion "4.0.0"
+tonos-cli callx --addr "$PARENT_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 20 --newversion "$TEST_VERSION1"
+tonos-cli callx --addr "$CHILD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 20 --newversion "$TEST_VERSION1"
 sleep 60
 
 tonos-cli callx --addr "$NEW_PARENT_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m lockVoting --amount 0
@@ -229,7 +229,7 @@ tonos-cli -j runx --abi $WALLET_ABI --addr $CHILD_WALLET_ADDR -m m_pseudoDAOVote
 
 tonos-cli callx --addr "$CHILD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m daoAskUnlockAfterTombstone --wallet $CHILD_DAO_WALLET_ADDR
 sleep 30
-#tonos-cli callx --addr "$CHILD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendDaoTokenToNewVersion --wallet $CHILD_DAO_WALLET_ADDR --grant 1 --newversion "4.0.0"
+#tonos-cli callx --addr "$CHILD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendDaoTokenToNewVersion --wallet $CHILD_DAO_WALLET_ADDR --grant 1 --newversion "$TEST_VERSION1"
 dao_transfer_tokens
 
 sleep 30
@@ -250,7 +250,6 @@ tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getTokenBalance
 
 sleep 60
 
-OLD_VERSION=3.0.0
 WALLET_ADDR=$NEW_PARENT_WALLET_ADDR
 
 upgrade_task_proposal
@@ -280,7 +279,7 @@ echo "TEST SUCCEEDED"
 #sleep 5
 #tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m unlockVoting --amount 0
 #sleep 5
-#tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 21 --newversion "4.0.0"
+#tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 21 --newversion "$TEST_VERSION1"
 #
 #вывести все токены в парент дао
 #
