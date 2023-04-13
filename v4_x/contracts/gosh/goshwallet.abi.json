@@ -1132,6 +1132,16 @@
 		{
 			"name": "daoSendTokenToNewVersionAuto2",
 			"inputs": [
+				{"name":"namedao","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "daoSendTokenToNewVersionAutoTree",
+			"inputs": [
+				{"name":"namedao","type":"string"},
+				{"name":"key","type":"uint256"}
 			],
 			"outputs": [
 			]
@@ -1140,6 +1150,15 @@
 			"name": "sendTokenToNewVersionAutoTree",
 			"inputs": [
 				{"name":"key","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "daoSendTokenToNewVersionAuto5",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"newversion","type":"string"}
 			],
 			"outputs": [
 			]

@@ -1602,8 +1602,19 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
-    function daoSendTokenToNewVersionAuto2() public onlyOwnerAddress(_pubaddr) accept saveMsg { 
-        this.sendTokenToNewVersionAutoTree{value: 0.2 ton, flag: 1}(0);
+    function daoSendTokenToNewVersionAuto2(string namedao) public onlyOwnerAddress(_pubaddr) accept saveMsg { 
+        this.daoSendTokenToNewVersionAutoTree{value: 0.2 ton, flag: 1}(namedao, 0);
+        getMoney();
+    }
+
+    function daoSendTokenToNewVersionAutoTree(string namedao, uint256 key) public senderIs(address(this))  accept saveMsg { 
+        string ver;
+        optional(uint256, string) res = _versions.next(key);
+        if (res.hasValue() == false) { return; }
+        (key, ver) = res.get();
+        this.sendTokenToNewVersionAutoTree{value: 0.2 ton, flag: 1}(key);
+        if ((ver == version) || (ver == "1.0.0") || (ver == "2.0.0") || (ver == "3.0.0")) { return; }
+        SystemContract(_systemcontract).daoSendTokenToNewVersionAuto2{value : 0.2 ton, flag: 1}(version, ver, namedao, _pubaddr, _nameDao, _index);
         getMoney();
     }
 
@@ -1615,6 +1626,17 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         this.sendTokenToNewVersionAutoTree{value: 0.2 ton, flag: 1}(key);
         if ((ver == version) || (ver == "1.0.0") || (ver == "2.0.0") || (ver == "3.0.0")) { return; }
         SystemContract(_systemcontract).sendTokenToNewVersionAuto2{value : 0.2 ton, flag: 1}(version, ver, _pubaddr, _nameDao, _index);
+        getMoney();
+    }
+
+    function daoSendTokenToNewVersionAuto5(address pubaddr, string newversion) public senderIs(_systemcontract) accept {
+        optional(address) newwallet;
+        if (_lockedBalance != 0) {
+            unlockVotingIn(0); 
+        }
+        if (m_pseudoDAOBalance == 0) { return; }
+        SystemContract(_systemcontract).daoSendTokenToNewVersion2{value : 0.2 ton, flag: 1}(_pubaddr, pubaddr, _nameDao, _index, newwallet, m_pseudoDAOBalance, newversion);
+        m_pseudoDAOBalance = 0;     
         getMoney();
     }
 

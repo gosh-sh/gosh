@@ -43,6 +43,14 @@ contract VersionController is Modifiers {
         delete _SystemContractCode[tvm.hash(version)];
     }
 
+    function daoSendTokenToNewVersionAuto3(string version, string previousversion, string namesubdao, address pubaddr, string namedao) public view {
+        require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        require(_SystemContractCode.exists(tvm.hash(previousversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        require(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey()) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(previousversion)].Value, tvm.pubkey())).daoSendTokenToNewVersionAuto4{value: 0.1 ton, flag: 1}(pubaddr, namesubdao, namedao, version);
+    }
+
     function sendTokenToNewVersionAuto3(string version, string previousversion, address pubaddr, string namedao) public view {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         require(_SystemContractCode.exists(tvm.hash(previousversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
