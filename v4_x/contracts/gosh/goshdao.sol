@@ -112,7 +112,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _profiledao = profiledao;
         _versionController = versionController;
         _pubaddr = pubaddr;
-        _nameDao = name;
+        _nameDao = name; 
+        _versions[tvm.hash(version)] = version;
         _limit_wallets = limit_wallets;
         _code[m_DaoCode] = DaoCode;
         _code[m_WalletCode] = WalletCode;
