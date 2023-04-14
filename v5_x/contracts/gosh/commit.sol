@@ -19,7 +19,7 @@ import "./libraries/GoshLib.sol";
 
 /* Root contract of Commit */
 contract Commit is Modifiers {
-    string constant version = "4.0.0";
+    string constant version = "5.0.0";
 
     address _pubaddr;
     address _rootRepo;
