@@ -40,7 +40,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _ ;
     }
 
-    string constant version = "4.0.0";
+    string constant version = "5.0.0";
     address _versionController;
     address static _systemcontract;
     address _rootpubaddr;

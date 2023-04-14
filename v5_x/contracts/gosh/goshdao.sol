@@ -27,7 +27,7 @@ import "../smv/SMVProposal.sol";
 
 /* Root contract of gosh */
 contract GoshDao is Modifiers, TokenRootOwner {
-    string constant version = "4.0.0";
+    string constant version = "5.0.0";
 
     address _versionController;
     uint128 _limittag = 3;

@@ -20,7 +20,7 @@ import "./libraries/GoshLib.sol";
 
 /* Root contract of Diff */
 contract DiffC is Modifiers {
-    string constant version = "4.0.0";
+    string constant version = "5.0.0";
     
     uint128 static _index1;
     uint128 static _index2;
