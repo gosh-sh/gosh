@@ -259,7 +259,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             	MemberToken pub;
             	(key, pub) = res.get();
 //            	_reserve += pub.count;            	
- 		uint128 count = pub.count;
+ 		        uint128 count = pub.count;
             	pub.count = 0;
 
                 pub.member = address.makeAddrStd(0, key);
