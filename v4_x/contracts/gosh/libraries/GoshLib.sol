@@ -21,7 +21,7 @@ import "../profile.sol";
 import "../profiledao.sol";
 
 library GoshLib {
-    string constant versionLib = "4.0.0";
+    string constant versionLib = "5.0.0";
 
 //Address part
     function calculateTaskAddress(TvmCell code, address goshdao, address repo, string nametask) public returns(address) {
