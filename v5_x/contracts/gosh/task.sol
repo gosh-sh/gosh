@@ -18,7 +18,7 @@ import "repository.sol";
 
 /* Root contract of task */
 contract Task is Modifiers{
-    string constant version = "4.0.0";
+    string constant version = "5.0.0";
     
     string static _nametask;
     string _repoName;
