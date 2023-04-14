@@ -22,7 +22,7 @@ interface IObject {
 }
 
 abstract contract Modifiers is ReplayProtection {   
-    string constant versionModifiers = "4.0.0";
+    string constant versionModifiers = "5.0.0";
     
     //Task  constant
     uint8 constant m_assign = 1;

@@ -10,7 +10,7 @@ import "./errors.sol";
 import "./structs/structs.sol";
 
 abstract contract ReplayProtection is Errors {   
-    string constant versionRP = "4.0.0";
+    string constant versionRP = "5.0.0";
     
     mapping(uint32 => mapping(uint256 => bool)) messages;
     // Iteration count for cleaning mapping `messages`
