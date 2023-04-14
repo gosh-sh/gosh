@@ -60,16 +60,8 @@ async fn main() -> anyhow::Result<()> {
 
     match matches.subcommand() {
         Some(("dispatcher_ini", _)) => {
-            let ini_path = get_ini_path();
-            let path = Path::new(&ini_path);
-            if path.is_absolute() {
-                println!("GOSH dispatcher ini path: {}", ini_path);
-            } else {
-                let mut abs_path = std::env::current_exe()?;
-                abs_path.pop();
-                abs_path.push(path);
-                println!("GOSH dispatcher ini path: {}", abs_path.to_str().unwrap());
-            }
+            let ini_path = get_ini_path()?;
+            println!("GOSH dispatcher ini path: {}", ini_path);
             let possible_versions = load_remote_versions_from_ini()?;
             println!("Remote versions:\n{:#?}", possible_versions);
         }
@@ -187,7 +179,7 @@ async fn dispatcher_main() -> anyhow::Result<()> {
             let mut lines = reader.lines();
             while let Ok(Some(line)) = lines.next_line().await {
                 tracing::trace!("caught output line: {line}");
-                if line.contains(DISPATCHER_ENDL) { // TODO: change to equal
+                if line == DISPATCHER_ENDL {
                     if std::env::var(GOSH_GRPC_CONTAINER).is_ok() {
                         output.push(line.clone());
                     }
@@ -262,7 +254,7 @@ async fn run_binary_with_command(
     Ok((helper.wait().await, result, helper_path))
 }
 
-fn get_ini_path() -> String {
+fn get_ini_path() -> anyhow::Result<String> {
     let path_str = std::env::var("GOSH_INI_PATH").unwrap_or_else(|_| {
         if Path::new(&shellexpand::tilde(INI_LOCATION).to_string()).exists() {
             INI_LOCATION.to_string()
@@ -270,11 +262,20 @@ fn get_ini_path() -> String {
             SHIPPING_INI_PATH.to_string()
         }
     });
-    shellexpand::tilde(&path_str).into_owned()
+    let path_str = shellexpand::tilde(&path_str).into_owned();
+    let path = Path::new(&path_str);
+    if path.is_absolute() {
+        Ok(path_str)
+    } else {
+        let mut abs_path = std::env::current_exe()?;
+        abs_path.pop();
+        abs_path.push(path);
+        Ok(abs_path.to_str().expect("Failed to build dispatcher path").to_owned())
+    }
 }
 
 fn load_remote_versions_from_ini() -> anyhow::Result<Vec<String>> {
-    let path_str = get_ini_path();
+    let path_str = get_ini_path()?;
     let path = Path::new(&path_str).to_owned();
     let file = File::open(path)
         .map_err(|e| format_err!("Failed to read dispatcher ini file {}: {}", path_str, e))?;
@@ -373,7 +374,7 @@ async fn call_helper_after_fail(
         let mut lines = reader.lines();
         while let Ok(Some(line)) = lines.next_line().await {
             tracing::trace!("Caught out line: {line}");
-            if line.contains(DISPATCHER_ENDL) { // TODO: change to equal
+            if line == DISPATCHER_ENDL {
                 if std::env::var(GOSH_GRPC_CONTAINER).is_ok() {
                     output.push(line.clone());
                 }
