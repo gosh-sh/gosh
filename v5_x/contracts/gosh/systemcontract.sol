@@ -24,7 +24,7 @@ import "./libraries/GoshLib.sol";
 
 /* System contract of Gosh version*/
 contract SystemContract is Modifiers {
-    string constant version = "4.0.0";
+    string constant version = "5.0.0";
     
     address _versionController;
     bool _flag = true;
