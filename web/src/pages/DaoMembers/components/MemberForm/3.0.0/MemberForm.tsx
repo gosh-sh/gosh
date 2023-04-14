@@ -11,7 +11,7 @@ import { isValidEmail, supabase, ToastOptionsShortcuts } from '../../../../../he
 import yup from '../../../../../yup-extended'
 import { ToastError } from '../../../../../components/Toast'
 import { Buffer } from 'buffer'
-import clipboardy from 'clipboardy'
+import copyClipboard from 'copy-to-clipboard'
 import AsyncCreatableSelect from 'react-select/async-creatable'
 import { FormikInput, FormikTextarea } from '../../../../../components/Formik'
 
@@ -166,6 +166,7 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
 
     const onCreateInvitationLink = async () => {
         try {
+            // Generate token and write to db
             const token = getInvitationToken()
             await supabase.from('dao_invite').insert({
                 dao_name: dao.details.name,
@@ -174,12 +175,18 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
                 token,
                 token_expired: false,
             })
-            await clipboardy.write(
-                `${window.location.origin}/o/${dao.details.name}/onboarding?token=${token}`,
-            )
-            await getDaoInvites()
 
-            toast.success('Copied', ToastOptionsShortcuts.CopyMessage)
+            // Copy invitation url with token
+            const copyResult = copyClipboard(
+                `${window.location.origin}/o/${dao.details.name}/onboarding?token=${token}`,
+                { format: 'text/plain' },
+            )
+            if (copyResult) {
+                toast.success('Copied', ToastOptionsShortcuts.CopyMessage)
+            }
+
+            // Reload invites list
+            await getDaoInvites()
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
