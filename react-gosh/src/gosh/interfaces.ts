@@ -94,6 +94,10 @@ import {
     TDaoTokenDaoLockResult,
     TTaskUpgradeParams,
     TTaskUpgradeResult,
+    TDaoTokenDaoTransferParams,
+    TDaoTokenDaoTransferResult,
+    TUpgradeVersionControllerParams,
+    TUpgradeVersionControllerResult,
 } from '../types'
 
 interface IGoshAdapter {
@@ -173,6 +177,7 @@ interface IGoshDaoAdapter {
         address?: TAddress
         index?: number
         create?: boolean
+        keys?: KeyPair
     }): Promise<IGoshWallet>
     getReviewers(
         user: TUserParam[],
@@ -216,6 +221,9 @@ interface IGoshDaoAdapter {
         params: TTaskReceiveBountyDaoParams,
     ): Promise<TTaskReceiveBountyDaoResult>
     lockDaoToken(params: TDaoTokenDaoLockParams): Promise<TDaoTokenDaoLockResult>
+    transferDaoToken(
+        params: TDaoTokenDaoTransferParams,
+    ): Promise<TDaoTokenDaoTransferResult>
 
     createTag(params: TDaoTagCreateParams): Promise<TDaoTagCreateResult>
     deleteTag(params: TDaoTagDeleteParams): Promise<TDaoTagDeleteResult>
@@ -244,6 +252,10 @@ interface IGoshDaoAdapter {
 
     createTopic(params: TTopicCreateParams): Promise<void>
     createTopicMessage(params: TTopicMessageCreateParams): Promise<void>
+
+    upgradeVersionController(
+        params: TUpgradeVersionControllerParams,
+    ): Promise<TUpgradeVersionControllerResult>
 }
 
 interface IGoshRepositoryAdapter {

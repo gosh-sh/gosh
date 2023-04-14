@@ -93,6 +93,9 @@ import {
     TDaoTokenDaoLockResult,
     TTaskUpgradeParams,
     TTaskUpgradeResult,
+    TDaoTokenDaoTransferParams,
+    TDaoTokenDaoTransferResult,
+    TUpgradeVersionControllerParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -517,6 +520,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             isTaskRedeployed: true,
             isMemberOf: [],
             hasRepoIndex: false,
+            isUpgraded: true,
         }
     }
 
@@ -778,6 +782,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
+    async transferDaoToken(
+        params: TDaoTokenDaoTransferParams,
+    ): Promise<TDaoTokenDaoTransferResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async createTag(params: TDaoTagCreateParams): Promise<TDaoTagCreateResult> {
         throw new Error('Method is unavailable in current version')
     }
@@ -843,6 +853,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async createTopicMessage(params: TTopicMessageCreateParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async upgradeVersionController(
+        params: TUpgradeVersionControllerParams,
+    ): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 

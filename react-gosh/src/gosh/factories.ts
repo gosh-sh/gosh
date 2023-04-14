@@ -3,6 +3,7 @@ import { GoshError } from '../errors'
 import { GoshAdapter_1_0_0 } from './1.0.0/adapter'
 import { GoshAdapter_2_0_0 } from './2.0.0/adapter'
 import { GoshAdapter_3_0_0 } from './3.0.0/adapter'
+import { GoshAdapter_4_0_0 } from './4.0.0/adapter'
 import { IGoshAdapter } from './interfaces'
 
 class GoshAdapterFactory {
@@ -16,6 +17,8 @@ class GoshAdapterFactory {
                 return GoshAdapter_2_0_0.getInstance(goshroot, versions[version])
             case '3.0.0':
                 return GoshAdapter_3_0_0.getInstance(goshroot, versions[version])
+            case '4.0.0':
+                return GoshAdapter_4_0_0.getInstance(goshroot, versions[version])
             default:
                 throw new GoshError('GoshAdapter is not implemented', { version })
         }

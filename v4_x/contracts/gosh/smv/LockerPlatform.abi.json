@@ -1,0 +1,39 @@
+{
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"goshdao","type":"address"},
+				{"name":"clientCode","type":"cell"},
+				{"name":"amountToLock","type":"uint128"},
+				{"name":"totalVotes","type":"uint128"},
+				{"name":"staticCell","type":"cell"},
+				{"name":"inputCell","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "platform_id",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"platform_id","type":"uint256"}
+			]
+		}
+	],
+	"data": [
+		{"key":1,"name":"platform_id","type":"uint256"}
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestamp","type":"uint64"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"platform_id","type":"uint256"}
+	]
+}

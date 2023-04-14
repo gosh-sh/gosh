@@ -408,8 +408,12 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
         const version = dao.getVersion()
         if (version === '1.0.0') {
             items = await _getMemberList_1_0_0()
-        } else {
+        } else if (version === '2.0.0') {
             items = await _getMemberList_2_0_0()
+        } else if (version === '3.0.0') {
+            items = await _getMemberList_2_0_0()
+        } else {
+            items = await _getMemberList_4_0_0()
         }
 
         setMembers((state) => ({
@@ -458,6 +462,55 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
                     wallet,
                 )
                 balancePrev = Math.max(smvAvailable, smvLocked) + smvBalance
+            }
+
+            return { ...member, user, balance, balancePrev }
+        })
+        return items
+    }
+
+    const _getMemberList_4_0_0 = async () => {
+        const gosh = dao.getGosh()
+        const details = await dao.dao.runLocal('getDetails', {})
+        const smv = await dao.getSmv()
+        const prevDao = await dao.getPrevDao()
+        const prevGosh = prevDao?.getGosh()
+
+        const members = await dao.getMembers()
+        const items = await executeByChunk(members, MAX_PARALLEL_READ, async (member) => {
+            // Resolve user (it can be DAO member which is not upgraded)
+            const profileHex = `0x${member.profile.slice(2)}`
+            const isDaoAsMember = details.daoMembers[profileHex]
+            const user = isDaoAsMember
+                ? { name: isDaoAsMember, type: 'dao' }
+                : await gosh.getUserByAddress(member.profile)
+
+            // Get wallet balance in current DAO version
+            const wallet = await dao.getMemberWallet({ address: member.wallet })
+            const { smvAvailable, smvLocked, smvBalance } = await smv.getDetails(wallet)
+            const balance = Math.max(smvAvailable, smvLocked) + smvBalance
+
+            // Get balance in prev DAO version
+            let balancePrev = 0
+            if (prevDao && prevDao.getVersion() !== '1.0.0') {
+                // Resolve member prev profile address (const for user, dynamic for dao)
+                let memberProfile = member.profile
+                if (user.type === 'dao') {
+                    const daoAsMember = await prevGosh!.getDao({
+                        name: user.name,
+                        useAuth: false,
+                    })
+                    memberProfile = daoAsMember.getAddress()
+                }
+
+                // Get wallet balance for prev DAO version
+                const wallet = await prevDao.getMemberWallet({ profile: memberProfile })
+                if (await wallet.isDeployed()) {
+                    const { smvAvailable, smvLocked, smvBalance } = await smv.getDetails(
+                        wallet,
+                    )
+                    balancePrev = Math.max(smvAvailable, smvLocked) + smvBalance
+                }
             }
 
             return { ...member, user, balance, balancePrev }
