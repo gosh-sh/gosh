@@ -16,7 +16,7 @@ import "goshwallet.sol";
 
 /* Root contract of tag */
 contract Topic is Modifiers{
-    string constant version = "4.0.0";
+    string constant version = "5.0.0";
     string static public _name;
     string static public _content;
     address static public _object;
