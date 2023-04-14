@@ -3,7 +3,7 @@ set -e
 set -o pipefail
 set -x
 
-. ./util.sh
+
 
 #Deploy DAO1 v3
 #Deploy DAO2 v3
@@ -21,6 +21,8 @@ SECOND_VERSION=v4_x
 #. set-vars.sh $FIRST_VERSION
 #./upgrade_tests/set_up.sh $FIRST_VERSION $SECOND_VERSION
 #exit 0
+
+. ./util.sh
 
 REPO_NAME=prop_repo03
 DAO_NAME="dao-prop-child_$(date +%s)"

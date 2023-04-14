@@ -3,8 +3,8 @@ set -e
 set -o pipefail
 set -x
 
-FIRST_VERSION=v4_x
-SECOND_VERSION=v5_x
+#FIRST_VERSION=v4_x
+#SECOND_VERSION=v5_x
 #./node_se_scripts/deploy.sh $FIRST_VERSION
 #. set-vars.sh $FIRST_VERSION
 #./upgrade_tests/set_up.sh $FIRST_VERSION $SECOND_VERSION
@@ -118,12 +118,10 @@ sleep 30
 TOKEN_CNT=$(tonos-cli -j runx --abi $WALLET_ABI_1 --addr $NEW_CHILD_DAO_WALLET_ADDR -m m_pseudoDAOBalance | jq '.m_pseudoDAOBalance' | cut -d'"' -f 2)
 echo "DAO_TOKEN_CNT=$TOKEN_CNT"
 
+if [ "$TOKEN_CNT" != "1" ]; then
+  echo Wrong amount of token
+  exit 1
+fi
 
-tonos-cli callx --addr $NEW_CHILD_WALLET_ADDR --abi $WALLET_ABI_1 --keys $WALLET_KEYS -m daoSendTokenToNewVersionAuto --wallet $NEW_CHILD_DAO_WALLET_ADDR
-
-sleep 30
-
-TOKEN_CNT=$(tonos-cli -j runx --abi $WALLET_ABI_1 --addr $NEW_CHILD_DAO_WALLET_ADDR -m m_pseudoDAOBalance | jq '.m_pseudoDAOBalance' | cut -d'"' -f 2)
-echo "DAO_TOKEN_CNT=$TOKEN_CNT"
 
 echo "TEST SUCCEEDED"
