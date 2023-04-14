@@ -23,7 +23,7 @@ const ExternalListItem = (props: TExternalListItemProps) => {
                         <img src={emptylogo} alt="" className="w-full" />
                     </div>
                 </div>
-                <div className="col">
+                <div className="col overflow-hidden">
                     <div className="mb-3 text-xl font-medium leading-5 truncate">
                         {item.name}
                     </div>

@@ -83,7 +83,7 @@ const DaoMemberListItem = (props: TMemberListItemProps) => {
                                     after: item.balancePrev ? (
                                         <div
                                             className="text-xs text-red-dd3a3a py-2 pr-3"
-                                            data-tooltip-id="member-balance-tip"
+                                            data-tooltip-id={`member-balance-tip-${item.user.type}`}
                                         >
                                             +{item.balancePrev}
                                             <FontAwesomeIcon
@@ -94,13 +94,18 @@ const DaoMemberListItem = (props: TMemberListItemProps) => {
                                     ) : null,
                                 }}
                             />
-                            <Tooltip id="member-balance-tip" clickable>
+                            <Tooltip
+                                id={`member-balance-tip-${item.user.type}`}
+                                clickable
+                            >
                                 <div>Untransferred tokens from previous version</div>
-                                <div>
-                                    <Link to={`/o/${daoName}`} className="underline">
-                                        Transfer
-                                    </Link>
-                                </div>
+                                {item.user.type === 'user' && (
+                                    <div>
+                                        <Link to={`/o/${daoName}`} className="underline">
+                                            Transfer
+                                        </Link>
+                                    </div>
+                                )}
                             </Tooltip>
                         </>
                     ) : (

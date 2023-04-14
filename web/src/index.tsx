@@ -15,7 +15,7 @@ if (import.meta.env.REACT_APP_ISDOCKEREXT === 'true') {
     })
 } else {
     libWebSetup({
-        binaryURL: `/eversdk.wasm?v=ubv73h`,
+        binaryURL: `/eversdk.wasm?v=8aiwbx`,
     })
 }
 

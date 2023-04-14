@@ -94,6 +94,8 @@ import {
     TDaoTokenDaoLockResult,
     TTaskUpgradeParams,
     TTaskUpgradeResult,
+    TDaoTokenDaoTransferParams,
+    TUpgradeVersionControllerParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -609,6 +611,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
                 wallet: details.my_wallets[dao],
             })),
             hasRepoIndex: !!(await this._getSystemRepository()),
+            isUpgraded: details.isRepoUpgraded && _isTaskRedeployed,
         }
     }
 
@@ -685,8 +688,9 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         address?: TAddress
         index?: number
         create?: boolean
+        keys?: KeyPair
     }): Promise<IGoshWallet> {
-        const { profile, address, index, create } = options
+        const { profile, address, index, create, keys } = options
         if (address) {
             return new GoshWallet(this.client, address)
         }
@@ -695,7 +699,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
         const addr = await this._getWalletAddress(profile, index ?? 0)
-        const wallet = new GoshWallet(this.client, addr)
+        const wallet = new GoshWallet(this.client, addr, { keys })
         if (create && !(await wallet.isDeployed())) {
             await this._createLimitedWallet(profile)
         }
@@ -1435,6 +1439,46 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
+    async transferDaoToken(params: TDaoTokenDaoTransferParams): Promise<void> {
+        const {
+            walletPrev,
+            walletCurr,
+            amount,
+            versionPrev,
+            comment = '',
+            reviewers = [],
+            cell,
+        } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellDaoTransferTokens', {
+                wallet: walletPrev,
+                newwallet: walletCurr,
+                grant: amount,
+                oldversion: versionPrev,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForDaoTransferTokens', {
+                wallet: walletPrev,
+                newwallet: walletCurr,
+                grant: amount,
+                oldversion: versionPrev,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
+    }
+
     async createTag(params: TDaoTagCreateParams): Promise<TDaoTagCreateResult> {
         const { tags, comment = '', reviewers = [], alone, cell } = params
 
@@ -1834,6 +1878,27 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
         await this.wallet.run('deployMessage', { topic, message, answer: answerId })
+    }
+
+    async upgradeVersionController(
+        params: TUpgradeVersionControllerParams,
+    ): Promise<void> {
+        const { code, cell, comment = '', reviewers = [] } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
+
+        const _reviewers = await this.getReviewers(reviewers)
+        const smv = await this.getSmv()
+        await smv.validateProposalStart()
+        await this.wallet.run('startProposalForUpgradeVersionController', {
+            UpgradeCode: code,
+            cell,
+            comment,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
+            num_clients: await smv.getClientsCount(),
+        })
     }
 
     private async _isAuthMember(): Promise<boolean> {
@@ -4749,7 +4814,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         } else if (type === ESmvEventType.DAO_TOKEN_DAO_SEND) {
             fn = 'getDaoSendTokenProposalParams'
         } else if (type === ESmvEventType.UPGRADE_VERSION_CONTROLLER) {
-            return {}
+            fn = 'getUpgradeCodeProposalParams'
         } else if (type === ESmvEventType.DAO_REVIEWER) {
             fn = 'getSendReviewProposalParams'
         } else if (type === ESmvEventType.DAO_RECEIVE_BOUNTY) {
@@ -4762,6 +4827,8 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             return {}
         } else if (type === ESmvEventType.TASK_UPGRADE) {
             fn = 'getUpgradeTaskProposalParams'
+        } else if (type === ESmvEventType.DAO_TOKEN_TRANSFER_FROM_PREV) {
+            fn = 'getDaoTransferTokenProposalParams'
         } else if (type === ESmvEventType.MULTI_PROPOSAL) {
             const { num, data0 } = await event.runLocal('getDataFirst', {}, undefined, {
                 useCachedBoc: true,
