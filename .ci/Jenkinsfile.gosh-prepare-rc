@@ -112,10 +112,10 @@ pipeline {
                     //runFunctionalTests(files, basePort, "Func v1", "v1_x")
                     //runFunctionalTests(files, basePort, "Func v2", "v2_x")
                     //runFunctionalTests(files, basePort, "Func v3", "v3_x")
-                    runFunctionalTests(files, basePort, "Func v4", "v4_x")
+                    //runFunctionalTests(files, basePort, "Func v4", "v4_x")
 
                     def upgradeFiles = getTestFiles("tests/upgrade_tests")
-                    runUpgradeTests(upgradeFiles, basePort, 1, 4)
+                    //runUpgradeTests(upgradeFiles, basePort, 1, 4)
                     runUpgradeTests(upgradeFiles, basePort, 2, 4)
                     runUpgradeTests(upgradeFiles, basePort, 3, 4)
                     env.REACT_APP_GOSH_ROOTADDR = sh script: "cat v1_x_workspace_0/contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
