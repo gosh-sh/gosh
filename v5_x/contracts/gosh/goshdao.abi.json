@@ -1232,6 +1232,7 @@
 		{"name":"_rootpubkey","type":"uint256"},
 		{"components":[{"name":"ProjectTokenRoot","type":"address"},{"name":"ReverueTokenRoot","type":"address"},{"name":"RevenueTokenWallet","type":"address"}],"name":"projectTokens","type":"map(address,tuple)"},
 		{"name":"lastWalletDeployed","type":"address"},
+		{"name":"_previousversion","type":"string"},
 		{"name":"_versionController","type":"address"},
 		{"name":"_limittag","type":"uint128"},
 		{"name":"_counttag","type":"uint128"},

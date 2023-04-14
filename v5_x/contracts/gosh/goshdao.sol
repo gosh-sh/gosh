@@ -29,6 +29,7 @@ import "../smv/SMVProposal.sol";
 contract GoshDao is Modifiers, TokenRootOwner {
     string constant version = "5.0.0";
 
+    string _previousversion;
     address _versionController;
     uint128 _limittag = 3;
     uint128 _counttag = 0;
@@ -182,6 +183,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         require(_previous.hasValue() == true, ERR_FIRST_DAO);
         require(_previous.get() == msg.sender, ERR_WRONG_DAO);
         tvm.accept();
+        _previousversion = ver;
         if (ver == "2.0.0"){
             mapping(uint256 => MemberToken) wallets;
             mapping(uint256 => string) hashtag;
@@ -568,6 +570,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function redeployTask (address pub, uint128 index, string repoName, string nametask, string[] hashtag, TvmCell Data) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pub, index))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
     	require(_isTaskRedeployed == false, ERR_WRONG_DATA);
+        require(_previousversion == "2.0.0", ERR_WRONG_DATA);
     	address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName);
         TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});
