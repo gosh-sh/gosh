@@ -5,7 +5,7 @@ set -o pipefail
 set -x
 
 NOW=$(date +%s)
-REPO_NAME="repo20_$NOW"
+REPO_NAME="repo21_$NOW"
 BRANCH=dev
 FILE=last
 
@@ -43,12 +43,12 @@ git commit -m "updated '$FILE'"
 git push -u origin main
 
 git checkout -b $BRANCH
-echo "$BRANCH: $(date +%s)" > $FILE
-git add $FILE
-git commit -m "$BRANCH: update '$FILE'"
+echo "$BRANCH: $(date +%s)" > dev-$FILE
+git add dev-$FILE
+git commit -m "$BRANCH: update 'dev-$FILE'"
 git push -u origin $BRANCH &> trace.log
 
-status=`get_snapshot_status $REPO_ADDR $BRANCH $FILE`
+status=`get_snapshot_status $REPO_ADDR $BRANCH dev-$FILE`
 if [ "$status" != "Active" ]; then
     echo "FAILED: snapshot doesn't exists"
 fi
@@ -58,12 +58,18 @@ git checkout main
 git branch -D $BRANCH
 
 git checkout -b $BRANCH
-echo "$BRANCH: $(date +%s)" > $FILE
-git add $FILE
-git commit -m "$BRANCH: update '$FILE'"
+echo "$BRANCH: $(date +%s)" > dev-$FILE
+git add dev-$FILE
+git commit -m "$BRANCH: update 2 'dev-$FILE'"
 GOSH_TRACE=5 git push -u origin $BRANCH &> trace.log
 grep "push_new_branch_snapshot: deleting snapshot: branch_name=" trace.log
 
+git checkout main
+git merge $BRANCH
+GOSH_TRACE=5 git push -u origin main &> trace-merge.log
+
+cd ..
+GOSH_TRACE=5 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone" &> "clone-${REPO_NAME}.log"
 
 echo "TEST SUCCEEDED"
 
