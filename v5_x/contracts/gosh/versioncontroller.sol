@@ -17,7 +17,7 @@ import "profileindex.sol";
 
 /* Version contract of SystemContract */
 contract VersionController is Modifiers {
-    string constant _version = "4.0.0";
+    string constant _version = "5.0.0";
 
     mapping(uint256 => SystemContractV) _SystemContractCode;
     mapping(uint8 => TvmCell) _code;
