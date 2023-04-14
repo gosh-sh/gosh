@@ -95,6 +95,7 @@ import {
     TTaskUpgradeResult,
     TDaoTokenDaoTransferParams,
     TDaoTokenDaoTransferResult,
+    TUpgradeVersionControllerParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -852,6 +853,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async createTopicMessage(params: TTopicMessageCreateParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async upgradeVersionController(
+        params: TUpgradeVersionControllerParams,
+    ): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 

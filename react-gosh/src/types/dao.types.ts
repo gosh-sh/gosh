@@ -376,6 +376,13 @@ type TIsMemberParams = {
 
 type TIsMemberResult = Promise<boolean>
 
+type TUpgradeVersionControllerParams = TEventCreateParams & {
+    code: string
+    cell: string
+}
+
+type TUpgradeVersionControllerResult = void
+
 export {
     ETaskBounty,
     TDao,
@@ -442,4 +449,6 @@ export {
     TTaskUpgradeResult,
     TDaoTokenDaoTransferParams,
     TDaoTokenDaoTransferResult,
+    TUpgradeVersionControllerParams,
+    TUpgradeVersionControllerResult,
 }

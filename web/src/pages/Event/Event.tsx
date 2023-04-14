@@ -39,6 +39,7 @@ import { DaoReceiveBountyEvent } from './components/DaoReceiveBountyEvent/DaoRec
 import { DaoTokenDaoLockEvent } from './components/DaoTokenDaoLockEvent/DaoTokenDaoLockEvent'
 import { TaskUpgradeEvent } from './components/TaskUpgradeEvent/TaskUpgradeEvent'
 import { DaoTokenDaoTransferEvent } from './components/DaoTokenDaoTransferEvent/DaoTokenDaoTransferEvent'
+import { UpgradeVersionControllerEvent } from './components/UpgradeVersionControllerEvent/UpgradeVersionControllerEvent'
 
 const EventPage = () => {
     const { eventAddr } = useParams()
@@ -112,7 +113,7 @@ const EventPage = () => {
                         </div>
                     )}
 
-                    <div className="border border-gray-e6edff rounded-xl px-4 py-5">
+                    <div className="border border-gray-e6edff rounded-xl px-4 py-5 overflow-hidden">
                         <h3 className="mb-3 text-xl font-medium">Event details</h3>
                         {event.type.kind === ESmvEventType.DAO_MEMBER_ADD && (
                             <MemberAddEvent
@@ -227,6 +228,9 @@ const EventPage = () => {
                         {event.type.kind ===
                             ESmvEventType.DAO_TOKEN_TRANSFER_FROM_PREV && (
                             <DaoTokenDaoTransferEvent data={event.data} />
+                        )}
+                        {event.type.kind === ESmvEventType.UPGRADE_VERSION_CONTROLLER && (
+                            <UpgradeVersionControllerEvent data={event.data} />
                         )}
                     </div>
                 </div>

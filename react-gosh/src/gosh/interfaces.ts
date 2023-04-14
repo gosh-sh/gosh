@@ -96,6 +96,8 @@ import {
     TTaskUpgradeResult,
     TDaoTokenDaoTransferParams,
     TDaoTokenDaoTransferResult,
+    TUpgradeVersionControllerParams,
+    TUpgradeVersionControllerResult,
 } from '../types'
 
 interface IGoshAdapter {
@@ -250,6 +252,10 @@ interface IGoshDaoAdapter {
 
     createTopic(params: TTopicCreateParams): Promise<void>
     createTopicMessage(params: TTopicMessageCreateParams): Promise<void>
+
+    upgradeVersionController(
+        params: TUpgradeVersionControllerParams,
+    ): Promise<TUpgradeVersionControllerResult>
 }
 
 interface IGoshRepositoryAdapter {

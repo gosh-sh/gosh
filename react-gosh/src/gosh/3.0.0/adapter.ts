@@ -96,6 +96,7 @@ import {
     TTaskUpgradeResult,
     TDaoTokenDaoTransferParams,
     TDaoTokenDaoTransferResult,
+    TUpgradeVersionControllerParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -1844,6 +1845,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
         await this.wallet.run('deployMessage', { topic, message, answer: answerId })
+    }
+
+    async upgradeVersionController(
+        params: TUpgradeVersionControllerParams,
+    ): Promise<void> {
+        throw new Error('Method is unavailable in current version')
     }
 
     private async _isAuthMember(): Promise<boolean> {

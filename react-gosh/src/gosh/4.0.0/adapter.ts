@@ -95,6 +95,7 @@ import {
     TTaskUpgradeParams,
     TTaskUpgradeResult,
     TDaoTokenDaoTransferParams,
+    TUpgradeVersionControllerParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -1877,6 +1878,27 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
         await this.wallet.run('deployMessage', { topic, message, answer: answerId })
+    }
+
+    async upgradeVersionController(
+        params: TUpgradeVersionControllerParams,
+    ): Promise<void> {
+        const { code, cell, comment = '', reviewers = [] } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
+
+        const _reviewers = await this.getReviewers(reviewers)
+        const smv = await this.getSmv()
+        await smv.validateProposalStart()
+        await this.wallet.run('startProposalForUpgradeVersionController', {
+            UpgradeCode: code,
+            cell,
+            comment,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
+            num_clients: await smv.getClientsCount(),
+        })
     }
 
     private async _isAuthMember(): Promise<boolean> {
@@ -4792,7 +4814,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         } else if (type === ESmvEventType.DAO_TOKEN_DAO_SEND) {
             fn = 'getDaoSendTokenProposalParams'
         } else if (type === ESmvEventType.UPGRADE_VERSION_CONTROLLER) {
-            return {}
+            fn = 'getUpgradeCodeProposalParams'
         } else if (type === ESmvEventType.DAO_REVIEWER) {
             fn = 'getSendReviewProposalParams'
         } else if (type === ESmvEventType.DAO_RECEIVE_BOUNTY) {
