@@ -14,7 +14,7 @@ import "goshwallet.sol";
 import "./libraries/GoshLib.sol";
 
 contract RepoTagGosh is Modifiers {
-    string constant version = "4.0.0";
+    string constant version = "5.0.0";
     
     address _systemcontract;
     address static _goshdao;
