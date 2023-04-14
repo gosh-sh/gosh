@@ -19,7 +19,7 @@ import "./smv/modifiers/modifiers.sol";
 
 /* Root contract of Repository */
 contract Repository is Modifiers{
-    string constant version = "4.0.0";
+    string constant version = "5.0.0";
 
     optional(AddrVersion) _previousversion;
     address _pubaddr;
