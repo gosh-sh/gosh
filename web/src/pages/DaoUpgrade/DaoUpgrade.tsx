@@ -7,6 +7,7 @@ import { TDaoLayoutOutletContext } from '../DaoLayout'
 import { FormikSelect, FormikTextarea } from '../../components/Formik'
 import { Button } from '../../components/Form'
 import yup from '../../yup-extended'
+import Alert from '../../components/Alert/Alert'
 
 type TFormValues = {
     version: string
@@ -35,12 +36,17 @@ const DaoUpgradePage = () => {
     return (
         <div>
             <h3 className="text-xl font-medium mb-4">Upgrade DAO</h3>
-            <p className="mb-3 text-gray-7c8db5 text-sm">Upgrade DAO to newer version</p>
 
             {!versions?.length && (
-                <p className="text-red-ff3b30 text-sm">
+                <Alert variant="danger" className="mb-4">
                     DAO can not be upgraded: there are no versions ahead
-                </p>
+                </Alert>
+            )}
+            {!dao.details.isUpgraded && (
+                <Alert variant="danger" className="mb-4">
+                    You should complete current DAO upgrade process to upgrade to another
+                    version
+                </Alert>
             )}
 
             <Formik
@@ -56,11 +62,18 @@ const DaoUpgradePage = () => {
             >
                 {({ isSubmitting }) => (
                     <Form>
+                        <p className="mb-3 text-gray-7c8db5 text-sm">
+                            Upgrade DAO to newer version
+                        </p>
                         <div>
                             <Field
                                 name="version"
                                 component={FormikSelect}
-                                disabled={isSubmitting || !versions?.length}
+                                disabled={
+                                    isSubmitting ||
+                                    !versions?.length ||
+                                    !dao.details.isUpgraded
+                                }
                             >
                                 {versions?.map((version, index) => (
                                     <option key={index} value={version}>
@@ -74,7 +87,11 @@ const DaoUpgradePage = () => {
                             <Field
                                 name="comment"
                                 component={FormikTextarea}
-                                disabled={isSubmitting || !versions?.length}
+                                disabled={
+                                    isSubmitting ||
+                                    !versions?.length ||
+                                    !dao.details.isUpgraded
+                                }
                                 placeholder="Leave comment (optional)"
                             />
                         </div>
@@ -82,7 +99,11 @@ const DaoUpgradePage = () => {
                         <div className="mt-4">
                             <Button
                                 type="submit"
-                                disabled={isSubmitting || !versions?.length}
+                                disabled={
+                                    isSubmitting ||
+                                    !versions?.length ||
+                                    !dao.details.isUpgraded
+                                }
                                 isLoading={isSubmitting}
                             >
                                 Create proposal for DAO upgrade

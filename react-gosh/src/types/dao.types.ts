@@ -29,6 +29,7 @@ type TDao = {
     isMemberOf: { dao: TAddress; wallet: TAddress }[]
     hasRepoIndex: boolean
     isMintOnPrevDiff?: boolean
+    isUpgraded: boolean
 }
 
 type TDaoListItem = Omit<
@@ -47,6 +48,7 @@ type TDaoListItem = Omit<
     | 'isTaskRedeployed'
     | 'isMemberOf'
     | 'hasRepoIndex'
+    | 'isUpgraded'
 > & {
     adapter: IGoshDaoAdapter
     members?: { profile: TAddress; wallet: TAddress }[]
@@ -64,6 +66,7 @@ type TDaoListItem = Omit<
     isTaskRedeployed?: boolean
     isMemberOf?: { dao: TAddress; wallet: TAddress }[]
     hasRepoIndex?: boolean
+    isUpgraded?: boolean
 }
 
 type TDaoSupplyDetails = {
@@ -301,6 +304,16 @@ type TDaoTokenDaoLockParams = TEventCreateParams & {
     cell?: boolean
 }
 
+type TDaoTokenDaoTransferParams = TEventCreateParams & {
+    walletPrev: TAddress
+    walletCurr: TAddress
+    amount: number
+    versionPrev: string
+    cell?: boolean
+}
+
+type TDaoTokenDaoTransferResult = string | void
+
 type TDaoTokenDaoLockResult = string | void
 
 type TDaoTagCreateParams = TEventCreateParams & {
@@ -362,6 +375,13 @@ type TIsMemberParams = {
 }
 
 type TIsMemberResult = Promise<boolean>
+
+type TUpgradeVersionControllerParams = TEventCreateParams & {
+    code: string
+    cell: string
+}
+
+type TUpgradeVersionControllerResult = void
 
 export {
     ETaskBounty,
@@ -427,4 +447,8 @@ export {
     TDaoTokenDaoLockResult,
     TTaskUpgradeParams,
     TTaskUpgradeResult,
+    TDaoTokenDaoTransferParams,
+    TDaoTokenDaoTransferResult,
+    TUpgradeVersionControllerParams,
+    TUpgradeVersionControllerResult,
 }

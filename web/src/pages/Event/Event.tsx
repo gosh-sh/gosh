@@ -38,6 +38,8 @@ import { DaoReviewEvent } from './components/DaoReviewEvent/DaoReviewEvent'
 import { DaoReceiveBountyEvent } from './components/DaoReceiveBountyEvent/DaoReceiveBountyEvent'
 import { DaoTokenDaoLockEvent } from './components/DaoTokenDaoLockEvent/DaoTokenDaoLockEvent'
 import { TaskUpgradeEvent } from './components/TaskUpgradeEvent/TaskUpgradeEvent'
+import { DaoTokenDaoTransferEvent } from './components/DaoTokenDaoTransferEvent/DaoTokenDaoTransferEvent'
+import { UpgradeVersionControllerEvent } from './components/UpgradeVersionControllerEvent/UpgradeVersionControllerEvent'
 
 const EventPage = () => {
     const { eventAddr } = useParams()
@@ -100,8 +102,8 @@ const EventPage = () => {
                     </div>
                 </div>
             </div>
-            <div className="mt-8 flex flex-wrap gap-4 justify-between">
-                <div className="grow">
+            <div className="mt-8 row flex-wrap">
+                <div className="col !basis-full md:!basis-0">
                     {event.data.comment && (
                         <div className="border border-gray-e6edff rounded-xl px-4 py-5 mb-6">
                             <h3 className="mb-3 text-xl font-medium">
@@ -111,7 +113,7 @@ const EventPage = () => {
                         </div>
                     )}
 
-                    <div className="border border-gray-e6edff rounded-xl px-4 py-5">
+                    <div className="border border-gray-e6edff rounded-xl px-4 py-5 overflow-hidden">
                         <h3 className="mb-3 text-xl font-medium">Event details</h3>
                         {event.type.kind === ESmvEventType.DAO_MEMBER_ADD && (
                             <MemberAddEvent
@@ -223,10 +225,17 @@ const EventPage = () => {
                         {event.type.kind === ESmvEventType.TASK_UPGRADE && (
                             <TaskUpgradeEvent data={event.data} />
                         )}
+                        {event.type.kind ===
+                            ESmvEventType.DAO_TOKEN_TRANSFER_FROM_PREV && (
+                            <DaoTokenDaoTransferEvent data={event.data} />
+                        )}
+                        {event.type.kind === ESmvEventType.UPGRADE_VERSION_CONTROLLER && (
+                            <UpgradeVersionControllerEvent data={event.data} />
+                        )}
                     </div>
                 </div>
 
-                <div className="basis-4/12">
+                <div className="col !max-w-full md:!max-w-side-right-md lg:!max-w-side-right">
                     <div className="border border-gray-e6edff rounded-xl p-5">
                         {(dao.details.isEventProgressOn || event.status?.completed) && (
                             <EventProgressBar votes={event.votes} />

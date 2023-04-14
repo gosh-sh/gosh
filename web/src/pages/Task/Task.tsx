@@ -91,8 +91,8 @@ const TaskPage = () => {
             {details && (
                 <>
                     <h1 className="mb-8 text-3xl font-medium">{details.name}</h1>
-                    <div className="flex flex-wrap gap-4 justify-between">
-                        <div className="basis-8/12">
+                    <div className="row flex-wrap">
+                        <div className="col !basis-full md:!basis-0">
                             <div className="border border-gray-e6edff rounded-xl p-5">
                                 <div className="flex flex-col gap-y-4">
                                     <div className="flex flex-wrap gap-3">
@@ -183,7 +183,7 @@ const TaskPage = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="grow">
+                        <div className="col !max-w-full md:!max-w-side-right-md lg:!max-w-side-right">
                             <div className="border border-gray-e6edff rounded-xl overflow-hidden">
                                 <div className="p-5">
                                     <div

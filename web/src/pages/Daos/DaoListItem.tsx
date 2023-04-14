@@ -32,7 +32,7 @@ const DaoListItem = (props: TDaoListItemProps) => {
                         />
                     </div>
                 </div>
-                <div className="col">
+                <div className="col overflow-hidden">
                     <div className="mb-3 truncate">
                         <Link
                             to={`/o/${item.name}`}

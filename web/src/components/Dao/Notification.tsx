@@ -47,19 +47,29 @@ const DaoNotification = (props: TDaoNotificationProps) => {
             }
 
             // Check if using latest version of DAO or new version avaiable
-            const latest = Object.keys(AppConfig.versions).reverse()[0]
-            if (dao.details.version !== latest) {
-                const gosh = GoshAdapterFactory.createLatest()
-                const newest = await gosh.getDao({
-                    name: dao.details.name,
-                    useAuth: false,
-                })
-                if (await newest.isDeployed()) {
+            const versions = Object.keys(AppConfig.versions)
+            const currVerIndex = versions.findIndex((v) => v === dao.details.version)
+            const nextVersions = versions.slice(currVerIndex + 1)
+            if (nextVersions.length && nextVersions.indexOf(dao.details.version) < 0) {
+                const next = await Promise.all(
+                    nextVersions.map(async (ver) => {
+                        const gosh = GoshAdapterFactory.create(ver)
+                        const adapter = await gosh.getDao({
+                            name: dao.details.name,
+                            useAuth: false,
+                        })
+                        return await adapter.isDeployed()
+                    }),
+                )
+
+                if (next.some((v) => v === true)) {
                     setMsgType('isNotLatest')
-                } else {
-                    setMsgType('isUpgradeAvailable')
+                    return
                 }
-                return
+                if (dao.details.isUpgraded) {
+                    setMsgType('isUpgradeAvailable')
+                    return
+                }
             }
 
             // Check DAO minting policy

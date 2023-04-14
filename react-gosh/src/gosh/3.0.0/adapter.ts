@@ -94,6 +94,9 @@ import {
     TDaoTokenDaoLockResult,
     TTaskUpgradeParams,
     TTaskUpgradeResult,
+    TDaoTokenDaoTransferParams,
+    TDaoTokenDaoTransferResult,
+    TUpgradeVersionControllerParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -609,6 +612,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
                 wallet: details.my_wallets[dao],
             })),
             hasRepoIndex: !!(await this._getSystemRepository()),
+            isUpgraded: details.isRepoUpgraded && _isTaskRedeployed,
         }
     }
 
@@ -685,8 +689,9 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         address?: TAddress
         index?: number
         create?: boolean
+        keys?: KeyPair
     }): Promise<IGoshWallet> {
-        const { profile, address, index, create } = options
+        const { profile, address, index, create, keys } = options
         if (address) {
             return new GoshWallet(this.client, address)
         }
@@ -695,7 +700,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
         const addr = await this._getWalletAddress(profile, index ?? 0)
-        const wallet = new GoshWallet(this.client, addr)
+        const wallet = new GoshWallet(this.client, addr, { keys })
         if (create && !(await wallet.isDeployed())) {
             await this._createLimitedWallet(profile)
         }
@@ -1435,6 +1440,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
+    async transferDaoToken(
+        params: TDaoTokenDaoTransferParams,
+    ): Promise<TDaoTokenDaoTransferResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async createTag(params: TDaoTagCreateParams): Promise<TDaoTagCreateResult> {
         const { tags, comment = '', reviewers = [], alone, cell } = params
 
@@ -1834,6 +1845,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
         await this.wallet.run('deployMessage', { topic, message, answer: answerId })
+    }
+
+    async upgradeVersionController(
+        params: TUpgradeVersionControllerParams,
+    ): Promise<void> {
+        throw new Error('Method is unavailable in current version')
     }
 
     private async _isAuthMember(): Promise<boolean> {
