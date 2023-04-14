@@ -20,7 +20,7 @@ import "./goshdao.sol";
 
 /* Root contract of Tree */
 contract Tree is Modifiers {
-    string constant version = "4.0.0";
+    string constant version = "5.0.0";
 
     uint256 _shaTreeLocal;
     mapping(uint256 => TreeObject) _tree;
