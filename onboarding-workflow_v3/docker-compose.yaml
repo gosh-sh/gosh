@@ -1,8 +1,8 @@
 version: '3.8'
 
 services:
-  redis-v2:
-    container_name: redis-v2
+  redis-v3:
+    container_name: redis-v3
     image: redis
     restart: always
     healthcheck:
@@ -12,15 +12,15 @@ services:
       retries: 5
 
   send_email:
-    image: gosh-onboarding
+    image: gosh-onboarding-v3
     restart: always
     depends_on:
-      redis-v2:
+      redis-v3:
         condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
-      REDIS_URL: redis://redis-v2:6379
+      REDIS_URL: redis://redis-v3:6379
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
       EMAIL_USERNAME: ${EMAIL_USERNAME}
@@ -30,31 +30,31 @@ services:
       deno run -A ./src/triggers/send_email.ts
 
   create_dao_bot:
-    image: gosh-onboarding
+    image: gosh-onboarding-v3
     restart: always
     depends_on:
-      redis-v2:
+      redis-v3:
         condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
-      REDIS_URL: redis://redis-v2:6379
+      REDIS_URL: redis://redis-v3:6379
       GOSH_VERSION: ${GOSH_VERSION}
     command: >
       deno run -A ./src/triggers/create_dao_bot.ts
 
   create_dao:
-    image: gosh-onboarding
+    image: gosh-onboarding-v3
     restart: always
     depends_on:
-      redis-v2:
+      redis-v3:
         condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
-      REDIS_URL: redis://redis-v2:6379
+      REDIS_URL: redis://redis-v3:6379
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
       GOSH_VERSION: ${GOSH_VERSION}
@@ -62,30 +62,30 @@ services:
       deno run -A ./src/triggers/create_dao.ts
 
   new_users:
-    image: gosh-onboarding
+    image: gosh-onboarding-v3
     restart: always
     depends_on:
-      redis-v2:
+      redis-v3:
         condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
-      REDIS_URL: redis://redis-v2:6379
+      REDIS_URL: redis://redis-v3:6379
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
     command: >
       deno run -A ./src/triggers/new_users.ts
 
   ready_users:
-    image: gosh-onboarding
+    image: gosh-onboarding-v3
     restart: always
     depends_on:
-      redis-v2:
+      redis-v3:
         condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
-      REDIS_URL: redis://redis-v2:6379
+      REDIS_URL: redis://redis-v3:6379
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
       GOSH_VERSION: ${GOSH_VERSION}
@@ -93,45 +93,45 @@ services:
       deno run -A ./src/triggers/ready_users.ts
 
   consumer_check_account:
-    image: gosh-onboarding
+    image: gosh-onboarding-v3
     restart: always
     depends_on:
-      redis-v2:
+      redis-v3:
         condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
-      REDIS_URL: redis://redis-v2:6379
+      REDIS_URL: redis://redis-v3:6379
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
     command: >
       deno run -A ./src/consumers/check_account.ts
 
   consumer_check_wallet_access:
-    image: gosh-onboarding
+    image: gosh-onboarding-v3
     restart: always
     depends_on:
-      redis-v2:
+      redis-v3:
         condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
-      REDIS_URL: redis://redis-v2:6379
+      REDIS_URL: redis://redis-v3:6379
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
     command: >
       deno run -A ./src/consumers/check_wallet_access.ts
 
   consumer_count_git_objects:
-    image: gosh-onboarding
+    image: gosh-onboarding-v3
     restart: always
     depends_on:
-      redis-v2:
+      redis-v3:
         condition: service_healthy
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
-      REDIS_URL: redis://redis-v2:6379
+      REDIS_URL: redis://redis-v3:6379
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
       GOSH_VERSION: ${GOSH_VERSION}
@@ -139,17 +139,17 @@ services:
       deno run -A ./src/consumers/count_git_objects.ts
 
   consumer_create_large_gosh_repo:
-     image: gosh-onboarding
+     image: gosh-onboarding-v3
      restart: always
      depends_on:
-       redis-v2:
+       redis-v3:
          condition: service_healthy
      volumes:
        - './logs:/tmp/logs'
      environment:
        SUPABASE_URL: ${SUPABASE_URL}
        SUPABASE_KEY: ${SUPABASE_KEY}
-       REDIS_URL: redis://redis-v2:6379
+       REDIS_URL: redis://redis-v3:6379
        SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
        GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
        GOSH_VERSION: ${GOSH_VERSION}
@@ -157,17 +157,17 @@ services:
        deno run -A ./src/consumers/create_large_gosh_repo.ts
 
   consumer_create_medium_gosh_repo:
-    image: gosh-onboarding
+    image: gosh-onboarding-v3
     restart: always
     depends_on:
-      redis-v2:
+      redis-v3:
         condition: service_healthy
     volumes:
       - './logs:/tmp/logs'
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
-      REDIS_URL: redis://redis-v2:6379
+      REDIS_URL: redis://redis-v3:6379
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
       GOSH_VERSION: ${GOSH_VERSION}
@@ -175,17 +175,17 @@ services:
       deno run -A ./src/consumers/create_medium_gosh_repo.ts
 
   consumer_create_small_gosh_repo:
-    image: gosh-onboarding
+    image: gosh-onboarding-v3
     restart: always
     depends_on:
-      redis-v2:
+      redis-v3:
         condition: service_healthy
     volumes:
       - './logs:/tmp/logs'
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
-      REDIS_URL: redis://redis-v2:6379
+      REDIS_URL: redis://redis-v3:6379
       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
       GOSH_VERSION: ${GOSH_VERSION}

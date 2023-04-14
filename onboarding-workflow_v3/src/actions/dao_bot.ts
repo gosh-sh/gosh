@@ -125,6 +125,7 @@ export async function initDaoBot(dao_bot: DaoBot) {
         await waitForWalletAccess(wallet_addr, dao_bot.pubkey)
     }
 
+    // TODO: check if we need to do it for v2
     if (GOSH_VERSION !== '1.0.0') {
         await setRepoUpdated(wallet_addr, dao_bot.seed)
     }

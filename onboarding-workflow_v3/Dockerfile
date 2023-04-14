@@ -20,9 +20,7 @@ RUN <<EOF
     git clone --branch "$BRANCH" --depth 1 https://github.com/gosh-sh/gosh.git gosh
     cd gosh
     bash install.sh
-    mv $HOME/.gosh/git-remote-gosh /usr/local/bin/git-remote-gosh
-    mv $HOME/.gosh/git-remote-gosh_v1_0_0 /usr/local/bin/git-remote-gosh_v1_0_0
-    mv $HOME/.gosh/git-remote-gosh_v2_0_0 /usr/local/bin/git-remote-gosh_v2_0_0
+    mv $HOME/.gosh/git-remote-gosh* /usr/local/bin/
     cd ..
     rm -rf gosh
 EOF

@@ -48,6 +48,8 @@ PUSH_DURATION=$((PUSH_END - PUSH_START))
 log "...complete. Push took $(convertsecs $PUSH_DURATION)."
 cd ..
 
+sleep 60
+
 log "Cloning after push\n"
 git clone "gosh://$GOSH_SYSTEM_CONTRACT_ADDR/$GOSH_DAO_NAME/$GOSH_REPO_NAME" "repo_clone"
 
