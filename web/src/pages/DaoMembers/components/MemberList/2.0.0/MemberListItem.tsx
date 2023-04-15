@@ -16,7 +16,11 @@ type TMemberListItemProps = {
     owner: string
     isAuthMember: boolean
     isFetching: boolean
-    onDelete(user: TUserParam): Promise<void>
+    onDelete(user: {
+        user: TUserParam
+        allowance: number
+        profile: string
+    }): Promise<void>
 }
 
 const DaoMemberListItem = (props: TMemberListItemProps) => {
@@ -117,7 +121,13 @@ const DaoMemberListItem = (props: TMemberListItemProps) => {
                         <button
                             type="button"
                             className="hover:text-gray-53596d disabled:opacity-20 disabled:pointer-events-none"
-                            onClick={() => onDelete(item.user)}
+                            onClick={() =>
+                                onDelete({
+                                    user: item.user,
+                                    allowance: item.allowance || 0,
+                                    profile: item.profile,
+                                })
+                            }
                             disabled={isFetching || item.profile === owner}
                         >
                             {isFetching ? (
