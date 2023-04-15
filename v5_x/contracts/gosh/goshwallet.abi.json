@@ -148,6 +148,13 @@
 			]
 		},
 		{
+			"name": "startCheckPaidMembership",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "startProposalForStartPaidMembership",
 			"inputs": [
 				{"name":"value","type":"uint128"},

@@ -304,6 +304,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function getMoney() private {
+        this.checkExpiredTime{value: 0.1 ton, flag: 1}(0);
         if (block.timestamp - timeMoney > 3600) { _flag = false; timeMoney = block.timestamp; }
         if (_flag == true) { return; }
         if (address(this).balance > 100000 ton) { return; }
@@ -772,6 +773,27 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }
         _wallets[keyaddr].count += grant;
         _allbalance += grant;
+    }
+
+    function startCheckPaidMembershipWallet(address pubaddr, uint128 index) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index))  accept
+    {   
+        this.checkExpiredTime{value: 0.1 ton, flag: 1}(0);
+    }  
+
+    function startCheckPaidMembershipService() public onlyOwnerPubkeyOptional(_accessKey)  accept saveMsg
+    {   
+        this.checkExpiredTime{value: 0.1 ton, flag: 1}(0);
+    }      
+
+    function checkExpiredTime(uint256 key) public senderIs(address(this)) {
+        tvm.accept();      
+        if (_wallets.next(key).hasValue() == false) { return; }
+        (,MemberToken worker) = _wallets.next(key).get();
+        if ((worker.expired < block.timestamp) && (worker.expired != 0)) {
+            deleteWalletIn(worker.member);
+        }
+        (, uint256 keyaddr) = worker.member.unpack(); 
+        this.checkExpiredTime{value: 0.1 ton, flag: 1}(keyaddr);
     }
 
     function stopPaidMembership(address pubaddr, uint128 index) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index))  accept

@@ -223,6 +223,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function setLimitedWallet(bool decision, uint128 limitwallet) public senderIs(_goshdao)  accept saveMsg {
+        m_pseudoDAOVoteBalance = 0;
         if (decision == true) {
             _totalDoubt = _lockedBalance;
             updateHeadIn();
@@ -242,6 +243,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function askForLimitedBasic(bool decision, uint128 index) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, index)) {
         _limited = decision;
     }
+
+    function startCheckPaidMembership() public onlyOwnerPubkeyOptional(_access) accept saveMsg
+    {   
+        GoshDao(_goshdao).startCheckPaidMembershipWallet{value: 0.2 ton, flag: 1}(_pubaddr, _index);
+    }  
 
     function startProposalForStartPaidMembership(
         uint128 value, uint128 valuepersubs, uint128 timeforsubs, uint256 keyforservice, 
