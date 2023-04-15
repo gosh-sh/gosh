@@ -455,6 +455,20 @@ function getUpgradeTaskProposalParams () external view
     (proposalKind, taskname, reponame, oldversion, oldtask, hashtag, comment,) = abi.decode(propData, (uint256, string, string, string, address, string[], string, uint32));
 }
 
+function getStartMembershipProposalParams () external view
+         returns(uint proposalKind, uint128 value, uint256 key) 
+{
+
+     (proposalKind, value, key,,) = abi.decode(propData, (uint256, uint128, uint256, string, uint32));
+}
+
+function getStartMembershipProposalParamsData (TvmCell Data) external pure
+         returns(uint proposalKind, uint128 value, uint256 key) 
+{
+
+     (proposalKind, value, key,,) = abi.decode(Data, (uint256, uint128, uint256, string, uint32));
+}
+
 function getDaoVoteProposalParams () external view
          returns(uint proposalKind, address wallet, uint256 platform_id, bool choice, uint128 amount, uint128 num_clients_base, string note) 
 {

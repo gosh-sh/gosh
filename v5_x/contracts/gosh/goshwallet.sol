@@ -243,11 +243,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _limited = decision;
     }
 
-    function startProposalForPaidMembraship(
+    function startProposalForPaidMembership(
         uint128 value, uint256 keyforservice, 
         string comment,
         uint128 num_clients , address[] reviewers
-
     ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_limited == false, ERR_WALLET_LIMITED);
@@ -255,6 +254,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell c = abi.encode(proposalKind, value, keyforservice, comment, block.timestamp);
         _startProposalForOperation(c, START_PAID_MEMBERSHIP_PROPOSAL_START_AFTER, START_PAID_MEMBERSHIP_PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
+    }
+
+    function getCellStartMembership(
+        uint128 value, uint256 keyforservice,
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
+        uint256 proposalKind =  START_PAID_MEMBERSHIP_PROPOSAL_KIND;        
+        if (time.hasValue() == false) { time = block.timestamp; }
+        return abi.encode(proposalKind, value, keyforservice, comment, block.timestamp);
     }
     
     function startProposalForDaoTransferTokens(

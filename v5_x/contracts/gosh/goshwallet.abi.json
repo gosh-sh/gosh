@@ -148,7 +148,7 @@
 			]
 		},
 		{
-			"name": "startProposalForPaidMembraship",
+			"name": "startProposalForPaidMembership",
 			"inputs": [
 				{"name":"value","type":"uint128"},
 				{"name":"keyforservice","type":"uint256"},
@@ -157,6 +157,18 @@
 				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
+			]
+		},
+		{
+			"name": "getCellStartMembership",
+			"inputs": [
+				{"name":"value","type":"uint128"},
+				{"name":"keyforservice","type":"uint256"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
 			]
 		},
 		{

@@ -398,6 +398,27 @@
 			]
 		},
 		{
+			"name": "getStartMembershipProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"value","type":"uint128"},
+				{"name":"key","type":"uint256"}
+			]
+		},
+		{
+			"name": "getStartMembershipProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"value","type":"uint128"},
+				{"name":"key","type":"uint256"}
+			]
+		},
+		{
 			"name": "getDaoVoteProposalParams",
 			"inputs": [
 			],
