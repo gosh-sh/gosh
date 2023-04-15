@@ -774,6 +774,15 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _allbalance += grant;
     }
 
+    function stopPaidMembership(address pubaddr, uint128 index) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index))  accept
+    {   
+        _reserve += _paidMembershipValue;
+        _paidMembershipValue = 0;
+        _accessKey =  null;
+        _valuePerSubs = 0;
+        _timeForSubs = 0;
+    }
+
     function startPaidMembership(address pubaddr, uint128 index, uint128 value, uint128 valuepersubs, uint128 timeforsubs, uint256 keyforservice) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index))  accept
     {   
         require(_reserve >= value, ERR_LOW_TOKEN_RESERVE);

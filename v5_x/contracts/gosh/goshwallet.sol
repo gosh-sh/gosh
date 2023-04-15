@@ -243,7 +243,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _limited = decision;
     }
 
-    function startProposalForPaidMembership(
+    function startProposalForStartPaidMembership(
         uint128 value, uint128 valuepersubs, uint128 timeforsubs, uint256 keyforservice, 
         string comment,
         uint128 num_clients , address[] reviewers
@@ -256,7 +256,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
-    function getCellStartMembership(
+    function getCellStartPaidMembership(
         uint128 value, uint128 valuepersubs, uint128 timeforsubs, uint256 keyforservice,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind =  START_PAID_MEMBERSHIP_PROPOSAL_KIND;        
@@ -264,8 +264,31 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return abi.encode(proposalKind, value, valuepersubs, timeforsubs, keyforservice, comment, block.timestamp);
     }
 
+    function startProposalForStopPaidMembership(
+        string comment,
+        uint128 num_clients , address[] reviewers
+    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        uint256 proposalKind =  STOP_PAID_MEMBERSHIP_PROPOSAL_KIND;
+        TvmCell c = abi.encode(proposalKind, comment, block.timestamp);
+        _startProposalForOperation(c, STOP_PAID_MEMBERSHIP_PROPOSAL_START_AFTER, STOP_PAID_MEMBERSHIP_PROPOSAL_DURATION, num_clients, reviewers);
+        getMoney();
+    }
+
+    function getCellStopPaidMembership(
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
+        uint256 proposalKind =  STOP_PAID_MEMBERSHIP_PROPOSAL_KIND;        
+        if (time.hasValue() == false) { time = block.timestamp; }
+        return abi.encode(proposalKind, comment, block.timestamp);
+    }
+
     function _startPaidMembership(uint128 value, uint128 valuepersubs, uint128 timeforsubs, uint256 keyforservice) private view {
         GoshDao(_goshdao).startPaidMembership{value: 0.2 ton, flag: 1}(_pubaddr, _index, value, valuepersubs, timeforsubs, keyforservice);
+    }
+
+    function _stopPaidMembership() private view {
+        GoshDao(_goshdao).stopPaidMembership{value: 0.2 ton, flag: 1}(_pubaddr, _index);
     }
     
     function startProposalForDaoTransferTokens(
@@ -2502,6 +2525,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == START_PAID_MEMBERSHIP_PROPOSAL_KIND) {
                 (, uint128 value, uint128 valuepersubs, uint128 timeforsubs, uint256 key,,) = abi.decode(propData, (uint256, uint128, uint128, uint128, uint256, string, uint32));                
                 _startPaidMembership(value, valuepersubs, timeforsubs, key);
+            } else 
+            if (kind == STOP_PAID_MEMBERSHIP_PROPOSAL_KIND) {
+                _stopPaidMembership();
             }
         }
     }
@@ -2680,6 +2706,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == START_PAID_MEMBERSHIP_PROPOSAL_KIND) {
                 (, uint128 value, uint128 valuepersubs, uint128 timeforsubs, uint256 key,,) = abi.decode(propData, (uint256, uint128, uint128, uint128, uint256, string, uint32));                
                 _startPaidMembership(value, valuepersubs, timeforsubs, key);
+            } else 
+            if (kind == STOP_PAID_MEMBERSHIP_PROPOSAL_KIND) {
+                _stopPaidMembership();
             }
         }
     }

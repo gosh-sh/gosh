@@ -148,7 +148,7 @@
 			]
 		},
 		{
-			"name": "startProposalForPaidMembership",
+			"name": "startProposalForStartPaidMembership",
 			"inputs": [
 				{"name":"value","type":"uint128"},
 				{"name":"valuepersubs","type":"uint128"},
@@ -162,12 +162,32 @@
 			]
 		},
 		{
-			"name": "getCellStartMembership",
+			"name": "getCellStartPaidMembership",
 			"inputs": [
 				{"name":"value","type":"uint128"},
 				{"name":"valuepersubs","type":"uint128"},
 				{"name":"timeforsubs","type":"uint128"},
 				{"name":"keyforservice","type":"uint256"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "startProposalForStopPaidMembership",
+			"inputs": [
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellStopPaidMembership",
+			"inputs": [
 				{"name":"comment","type":"string"},
 				{"name":"time","type":"optional(uint32)"}
 			],
