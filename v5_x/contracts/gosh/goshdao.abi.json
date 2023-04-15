@@ -85,7 +85,7 @@
 				{"name":"abilityInvite","type":"bool"},
 				{"name":"value5","type":"bool"},
 				{"name":"value6","type":"string"},
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"value7","type":"map(uint256,tuple)"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"value7","type":"map(uint256,tuple)"},
 				{"name":"value8","type":"uint128"},
 				{"name":"value9","type":"uint128"},
 				{"name":"value10","type":"uint128"},
@@ -100,7 +100,7 @@
 		{
 			"name": "getPreviousInfo1",
 			"inputs": [
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
 				{"name":"trash","type":"uint128"}
 			],
 			"outputs": [
@@ -111,7 +111,7 @@
 			"inputs": [
 				{"name":"ver","type":"string"},
 				{"name":"key","type":"uint256"},
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
 				{"name":"tags","type":"map(uint256,string)"}
 			],
 			"outputs": [
@@ -121,7 +121,7 @@
 			"name": "returnWallets",
 			"inputs": [
 				{"name":"key","type":"uint256"},
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"}
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"}
 			],
 			"outputs": [
 			]
@@ -278,7 +278,7 @@
 			"inputs": [
 				{"name":"pub","type":"address"},
 				{"name":"index","type":"uint128"},
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
 				{"name":"dao","type":"optional(string)[]"},
 				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"},
@@ -291,7 +291,7 @@
 			"name": "isAlone",
 			"inputs": [
 				{"name":"token","type":"uint128"},
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
 				{"name":"pub","type":"address"},
 				{"name":"index","type":"uint128"},
 				{"name":"tag","type":"string[]"},
@@ -550,7 +550,7 @@
 		{
 			"name": "deployWallet",
 			"inputs": [
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddrdeploy","type":"tuple[]"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"pubaddrdeploy","type":"tuple[]"},
 				{"name":"dao","type":"optional(string)[]"},
 				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"}
@@ -695,7 +695,7 @@
 		{
 			"name": "deployWallets",
 			"inputs": [
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubmem","type":"tuple[]"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"pubmem","type":"tuple[]"},
 				{"name":"dao","type":"optional(string)[]"},
 				{"name":"index","type":"uint128"}
 			],
@@ -705,7 +705,7 @@
 		{
 			"name": "deployWalletsOutMember",
 			"inputs": [
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubmem","type":"tuple[]"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"pubmem","type":"tuple[]"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -951,7 +951,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"value0","type":"tuple[]"}
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"value0","type":"tuple[]"}
 			]
 		},
 		{
@@ -959,7 +959,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"value0","type":"map(uint256,tuple)"}
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"value0","type":"map(uint256,tuple)"}
 			]
 		},
 		{
@@ -1050,7 +1050,7 @@
 				{"name":"abilityInvite","type":"bool"},
 				{"name":"isRepoUpgraded","type":"bool"},
 				{"name":"nameDao","type":"string"},
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
 				{"name":"reserve","type":"uint128"},
 				{"name":"allbalance","type":"uint128"},
 				{"name":"totalsupply","type":"uint128"},
@@ -1245,7 +1245,7 @@
 		{"name":"_profiledao","type":"address"},
 		{"name":"_nameDao","type":"string"},
 		{"name":"_previous","type":"optional(address)"},
-		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"_wallets","type":"map(uint256,tuple)"},
+		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"_wallets","type":"map(uint256,tuple)"},
 		{"name":"_daoMembers","type":"map(uint256,string)"},
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_hashtag","type":"map(uint256,string)"},
@@ -1266,7 +1266,7 @@
 		{"name":"_hide_voting_results","type":"bool"},
 		{"name":"_allow_discussion_on_proposals","type":"bool"},
 		{"name":"timeMoney","type":"uint128"},
-		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"saveaddr","type":"optional(tuple[])"},
+		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"saveaddr","type":"optional(tuple[])"},
 		{"name":"savedao","type":"optional(optional(string)[])"},
 		{"name":"saveind","type":"optional(uint128)"},
 		{"name":"_reserve","type":"uint128"},

@@ -138,7 +138,7 @@
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
 				{"name":"dao","type":"optional(string)[]"},
 				{"name":"comment","type":"string"}
 			]
@@ -476,7 +476,7 @@
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
 				{"name":"dao","type":"optional(string)[]"},
 				{"name":"comment","type":"string"}
 			]

@@ -148,6 +148,18 @@
 			]
 		},
 		{
+			"name": "startProposalForPaidMembraship",
+			"inputs": [
+				{"name":"value","type":"uint128"},
+				{"name":"keyforservice","type":"uint256"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "startProposalForDaoTransferTokens",
 			"inputs": [
 				{"name":"wallet","type":"address"},
@@ -452,7 +464,7 @@
 		{
 			"name": "AloneDeployWalletDao",
 			"inputs": [
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"}
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"pubaddr","type":"tuple[]"}
 			],
 			"outputs": [
 			]
@@ -584,7 +596,7 @@
 		{
 			"name": "startProposalForDeployWalletDao",
 			"inputs": [
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
 				{"name":"dao","type":"optional(string)[]"},
 				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"},
@@ -596,7 +608,7 @@
 		{
 			"name": "startProposalForDeployWalletDao2",
 			"inputs": [
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
 				{"name":"dao","type":"optional(string)[]"},
 				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"},
@@ -608,7 +620,7 @@
 		{
 			"name": "getCellDeployWalletDao",
 			"inputs": [
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
 				{"name":"dao","type":"optional(string)[]"},
 				{"name":"comment","type":"string"},
 				{"name":"time","type":"optional(uint32)"}

@@ -182,6 +182,9 @@ abstract contract Modifiers is ReplayProtection {
      
     uint32 constant TRANSFER_TO_NEW_VERSION_PROPOSAL_START_AFTER = 0 seconds;
     uint32 constant TRANSFER_TO_NEW_VERSION_PROPOSAL_DURATION = 1 weeks;
+     
+    uint32 constant START_PAID_MEMBERSHIP_PROPOSAL_START_AFTER = 0 seconds;
+    uint32 constant START_PAID_MEMBERSHIP_PROPOSAL_DURATION = 1 weeks;
 
 
 
@@ -224,6 +227,7 @@ abstract contract Modifiers is ReplayProtection {
     uint256 constant TASK_REDEPLOYED_PROPOSAL_KIND = 37;
     uint256 constant TASK_UPGRADE_PROPOSAL_KIND = 38;
     uint256 constant TRANSFER_TO_NEW_VERSION_PROPOSAL_KIND = 39;
+    uint256 constant START_PAID_MEMBERSHIP_PROPOSAL_KIND = 40;
     
     uint128 constant ALONE_DEPLOY_WALLET = 1;
     uint128 constant ALONE_SET_CONFIG = 2;

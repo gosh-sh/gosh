@@ -10,6 +10,7 @@ pragma ever-solidity >=0.66.0;
 struct MemberToken {
     address member;
     uint128 count;
+    uint128 expired;
 }
 struct TreeAnswer {
     address sender;

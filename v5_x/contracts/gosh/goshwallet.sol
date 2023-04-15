@@ -242,6 +242,20 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function askForLimitedBasic(bool decision, uint128 index) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, index)) {
         _limited = decision;
     }
+
+    function startProposalForPaidMembraship(
+        uint128 value, uint256 keyforservice, 
+        string comment,
+        uint128 num_clients , address[] reviewers
+
+    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        uint256 proposalKind =  START_PAID_MEMBERSHIP_PROPOSAL_KIND;
+        TvmCell c = abi.encode(proposalKind, value, keyforservice, comment, block.timestamp);
+        _startProposalForOperation(c, START_PAID_MEMBERSHIP_PROPOSAL_START_AFTER, START_PAID_MEMBERSHIP_PROPOSAL_DURATION, num_clients, reviewers);
+        getMoney();
+    }
     
     function startProposalForDaoTransferTokens(
         address wallet, address newwallet, uint128 grant, string oldversion, 

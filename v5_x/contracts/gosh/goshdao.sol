@@ -763,7 +763,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         (, uint256 keyaddr) = pubaddr.unpack();
         if (_wallets.exists(keyaddr) == false) {
             GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, 0)).setLimitedWallet{value: 0.2 ton, flag: 1}(false, _limit_wallets);
-            _wallets[keyaddr] = MemberToken(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, 0), 0);
+            _wallets[keyaddr] = MemberToken(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, 0), 0, 0);
         }
         _wallets[keyaddr].count += grant;
         _allbalance += grant;
@@ -810,7 +810,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         TvmCell s1 = GoshLib.composeWalletStateInit(_code[m_WalletCode], _systemcontract, address(this), pubaddr, 0);
         _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));
         (, uint256 keyaddr) = pubaddr.unpack();
-        _wallets[keyaddr] = MemberToken(_lastAccountAddress, _tokenforperson);
+        _wallets[keyaddr] = MemberToken(_lastAccountAddress, _tokenforperson, 0);
         new GoshWallet {
             stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0, flag: 1
         }(  _versionController, _pubaddr, pubaddr, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
@@ -857,7 +857,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _allbalance += pubaddr.count;
         TvmCell s1 = GoshLib.composeWalletStateInit(_code[m_WalletCode], _systemcontract, address(this), pubaddr.member, 0);
         _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));
-        _wallets[keyaddr] = MemberToken(_lastAccountAddress, pubaddr.count);
+        _wallets[keyaddr] = MemberToken(_lastAccountAddress, pubaddr.count, 0);
         new GoshWallet {
             stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0, flag: 1
         }(  _versionController, _pubaddr, pubaddr.member, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
