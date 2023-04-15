@@ -768,6 +768,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _wallets[keyaddr].count += grant;
         _allbalance += grant;
     }
+
+    function startPaidMembership(address pubaddr, uint128 index, uint128 value, uint256 keyforservice) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index))  accept
+    {   
+    }
+    
  
     function addVoteTokenPub (address pub, address pubaddr, uint128 index, uint128 grant) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index))  accept
     {   

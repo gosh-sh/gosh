@@ -263,6 +263,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, value, keyforservice, comment, block.timestamp);
     }
+
+    function _startPaidMembership(uint128 value, uint256 keyforservice) private {
+        GoshDao(_goshdao).startPaidMembership{value: 0.2 ton, flag: 1}(_pubaddr, _index, value, keyforservice);
+    }
     
     function startProposalForDaoTransferTokens(
         address wallet, address newwallet, uint128 grant, string oldversion, 
@@ -2494,6 +2498,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == TRANSFER_TO_NEW_VERSION_PROPOSAL_KIND) {
                 (, address wallet, address newwallet, uint128 grant, string oldversion,,) = abi.decode(propData,(uint256, address, address, uint128, string, string, uint32));
                 SystemContract(_systemcontract).DaoTransferToken2{value: 0.2 ton, flag: 1}(_pubaddr, _index, _nameDao, wallet, newwallet, grant, oldversion, version);
+            } else 
+            if (kind == START_PAID_MEMBERSHIP_PROPOSAL_KIND) {
+                (, uint128 value, uint256 key,,) = abi.decode(propData, (uint256, uint128, uint256, string, uint32));                
+                _startPaidMembership(value, key);
             }
         }
     }
@@ -2668,6 +2676,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == TRANSFER_TO_NEW_VERSION_PROPOSAL_KIND) {
                 (, address wallet, address newwallet, uint128 grant, string oldversion,,) = abi.decode(propData,(uint256, address, address, uint128, string, string, uint32));
                 SystemContract(_systemcontract).DaoTransferToken2{value: 0.2 ton, flag: 1}(_pubaddr, _index, _nameDao, wallet, newwallet, grant, oldversion, version);
+            } else 
+            if (kind == START_PAID_MEMBERSHIP_PROPOSAL_KIND) {
+                (, uint128 value, uint256 key,,) = abi.decode(propData, (uint256, uint128, uint256, string, uint32));                
+                _startPaidMembership(value, key);
             }
         }
     }
@@ -2748,7 +2760,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     //Selfdestruct
-    function destroy() public view senderIs(_goshdao) { //TODO
+    function destroy() public view senderIs(_goshdao) { 
         this.destroyWalletAll{value : 0.2 ton, flag: 1}();
     }
 
