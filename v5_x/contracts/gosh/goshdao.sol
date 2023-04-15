@@ -79,6 +79,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
     bool public _isRepoUpgraded = false;
     bool public _abilityInvite = false;
     bool public _isCheck = false;
+
+    uint128 _paidMembershipValue = 0;
+    uint128 _valuePerSubs = 0;
+    uint128 _timeForSubs = 0;
+    optional(uint256) _accessKey;
     
     constructor(
         address versionController,
@@ -769,8 +774,41 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _allbalance += grant;
     }
 
-    function startPaidMembership(address pubaddr, uint128 index, uint128 value, uint256 keyforservice) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index))  accept
+    function startPaidMembership(address pubaddr, uint128 index, uint128 value, uint128 valuepersubs, uint128 timeforsubs, uint256 keyforservice) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index))  accept
     {   
+        require(_reserve >= value, ERR_LOW_TOKEN_RESERVE);
+        _reserve -= value;
+        _paidMembershipValue += value;
+        _accessKey = keyforservice;
+        _valuePerSubs = valuepersubs;
+        _timeForSubs = timeforsubs;
+    }
+
+    function deployMemberFromSubs(address pubaddr, optional(string) isdao) public onlyOwnerPubkeyOptional(_accessKey) accept saveMsg {
+        (, uint256 keyaddr) = pubaddr.unpack(); 
+        if (isdao.hasValue()) {
+            if (GoshLib.calculateDaoAddress(_code[m_DaoCode], _systemcontract, isdao.get()) == pubaddr) { 
+                _daoMembers[keyaddr] = isdao.get(); 
+            }
+        }
+        require(_wallets.exists(keyaddr) == false, ERR_WALLET_EXIST);
+        require(_paidMembershipValue >= _valuePerSubs, ERR_LOW_TOKEN_RESERVE);
+        _paidMembershipValue -= _valuePerSubs;
+        _allbalance += _valuePerSubs;
+        TvmCell s1 = GoshLib.composeWalletStateInit(_code[m_WalletCode], _systemcontract, address(this), pubaddr, 0);
+        _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));
+        _wallets[keyaddr] = MemberToken(_lastAccountAddress, 0, block.timestamp + _timeForSubs);
+        new GoshWallet {
+            stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0, flag: 1
+        }(  _versionController, _pubaddr, pubaddr, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
+            _code[m_RepositoryCode],
+            _code[m_WalletCode],
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _versions, _limit_wallets, null,
+            m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
+            m_SMVClientCode, m_SMVProposalCode, 0, _rootTokenRoot);
+        GoshWallet(_lastAccountAddress).setLimitedWallet{value: 0.2 ton, flag: 1}(false, _limit_wallets);
+        GoshWallet(_lastAccountAddress).addVoteToken{value:0.2 ton, flag: 1}(_valuePerSubs);
+        getMoney();
     }
     
  

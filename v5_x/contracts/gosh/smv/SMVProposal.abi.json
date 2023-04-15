@@ -404,6 +404,8 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"value","type":"uint128"},
+				{"name":"valuepersubs","type":"uint128"},
+				{"name":"timeforsubs","type":"uint128"},
 				{"name":"key","type":"uint256"}
 			]
 		},
@@ -415,6 +417,8 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"value","type":"uint128"},
+				{"name":"valuepersubs","type":"uint128"},
+				{"name":"timeforsubs","type":"uint128"},
 				{"name":"key","type":"uint256"}
 			]
 		},

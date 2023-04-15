@@ -649,7 +649,18 @@
 				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"},
 				{"name":"value","type":"uint128"},
+				{"name":"valuepersubs","type":"uint128"},
+				{"name":"timeforsubs","type":"uint128"},
 				{"name":"keyforservice","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployMemberFromSubs",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"isdao","type":"optional(string)"}
 			],
 			"outputs": [
 			]
@@ -1285,6 +1296,10 @@
 		{"name":"_totalsupply","type":"uint128"},
 		{"name":"_isRepoUpgraded","type":"bool"},
 		{"name":"_abilityInvite","type":"bool"},
-		{"name":"_isCheck","type":"bool"}
+		{"name":"_isCheck","type":"bool"},
+		{"name":"_paidMembershipValue","type":"uint128"},
+		{"name":"_valuePerSubs","type":"uint128"},
+		{"name":"_timeForSubs","type":"uint128"},
+		{"name":"_accessKey","type":"optional(uint256)"}
 	]
 }

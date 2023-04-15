@@ -151,6 +151,8 @@
 			"name": "startProposalForPaidMembership",
 			"inputs": [
 				{"name":"value","type":"uint128"},
+				{"name":"valuepersubs","type":"uint128"},
+				{"name":"timeforsubs","type":"uint128"},
 				{"name":"keyforservice","type":"uint256"},
 				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"},
@@ -163,6 +165,8 @@
 			"name": "getCellStartMembership",
 			"inputs": [
 				{"name":"value","type":"uint128"},
+				{"name":"valuepersubs","type":"uint128"},
+				{"name":"timeforsubs","type":"uint128"},
 				{"name":"keyforservice","type":"uint256"},
 				{"name":"comment","type":"string"},
 				{"name":"time","type":"optional(uint32)"}

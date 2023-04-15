@@ -456,17 +456,17 @@ function getUpgradeTaskProposalParams () external view
 }
 
 function getStartMembershipProposalParams () external view
-         returns(uint proposalKind, uint128 value, uint256 key) 
+         returns(uint proposalKind, uint128 value, uint128 valuepersubs, uint128 timeforsubs, uint256 key) 
 {
 
-     (proposalKind, value, key,,) = abi.decode(propData, (uint256, uint128, uint256, string, uint32));
+     (proposalKind, value, valuepersubs, timeforsubs, key,,) = abi.decode(propData, (uint256, uint128, uint128, uint128, uint256, string, uint32));
 }
 
 function getStartMembershipProposalParamsData (TvmCell Data) external pure
-         returns(uint proposalKind, uint128 value, uint256 key) 
+         returns(uint proposalKind, uint128 value, uint128 valuepersubs, uint128 timeforsubs, uint256 key) 
 {
 
-     (proposalKind, value, key,,) = abi.decode(Data, (uint256, uint128, uint256, string, uint32));
+     (proposalKind, value, valuepersubs, timeforsubs, key,,) = abi.decode(Data, (uint256, uint128, uint128, uint128, uint256, string, uint32));
 }
 
 function getDaoVoteProposalParams () external view
