@@ -458,10 +458,12 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
             let balancePrev = 0
             if (prevDao && prevDao.getVersion() !== '1.0.0') {
                 const wallet = await prevDao.getMemberWallet({ profile: member.profile })
-                const { smvAvailable, smvLocked, smvBalance } = await smv.getDetails(
-                    wallet,
-                )
-                balancePrev = Math.max(smvAvailable, smvLocked) + smvBalance
+                if (await wallet.isDeployed()) {
+                    const { smvAvailable, smvLocked, smvBalance } = await smv.getDetails(
+                        wallet,
+                    )
+                    balancePrev = Math.max(smvAvailable, smvLocked) + smvBalance
+                }
             }
 
             return { ...member, user, balance, balancePrev }
