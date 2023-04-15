@@ -206,14 +206,21 @@ contract GoshDao is Modifiers, TokenRootOwner {
             this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
             GoshDao(_previous.get()).getDaoIn{value: 0.3 ton, flag: 1}();
         }
-        if ((ver == "4.0.0")  || (ver == "5.0.0")) {
+        if (ver == "4.0.0") {
             mapping(uint256 => MemberToken) wallets;
             mapping(uint256 => string) hashtag;
             ( _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, wallets, hashtag, _my_wallets, _daoMembers, _reserve, , _totalsupply , _versions) = abi.decode(a, (bool, bool, bool, bool, mapping(uint256 => MemberToken), mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string)));
             _versions[tvm.hash(version)] = version;
             uint256 zero;
             this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
-            GoshDao(_previous.get()).getDaoIn{value: 0.3 ton, flag: 1}();
+        }
+        if (ver == "5.0.0") {
+            mapping(uint256 => MemberToken) wallets;
+            mapping(uint256 => string) hashtag;
+            ( _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, wallets, hashtag, _my_wallets, _daoMembers, _reserve, , _totalsupply , _versions) = abi.decode(a, (bool, bool, bool, bool, mapping(uint256 => MemberToken), mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string)));
+            _versions[tvm.hash(version)] = version;
+            uint256 zero;
+            this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
         }
     }
 
@@ -1225,11 +1232,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function getDetails() external view returns(address pubaddr, bool allowMint, bool hide_voting_results, bool allow_discussion_on_proposals, bool abilityInvite, bool isRepoUpgraded, string nameDao,
-    mapping(uint256 => MemberToken) wallets, uint128 reserve, uint128 allbalance, uint128 totalsupply, mapping(uint256 => string) hashtag, mapping(uint256 => address) my_wallets, mapping(uint256 => string) daoMembers, bool isCheck) {
-    return (_pubaddr, _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _isRepoUpgraded, _nameDao, _wallets, _reserve, _allbalance, _totalsupply, _hashtag, _my_wallets, _daoMembers, _isCheck);
+    mapping(uint256 => MemberToken) wallets, uint128 reserve, uint128 allbalance, uint128 totalsupply, mapping(uint256 => string) hashtag, mapping(uint256 => address) my_wallets, mapping(uint256 => string) daoMembers, bool isCheck, uint128 paidMembershipValue, uint128 valuePerSubs, uint128 timeForSubs, optional(uint256) accessKey) {
+    return (_pubaddr, _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _isRepoUpgraded, _nameDao, _wallets, _reserve, _allbalance, _totalsupply, _hashtag, _my_wallets, _daoMembers, _isCheck, _paidMembershipValue, _valuePerSubs, _timeForSubs, _accessKey);
     }
     
     function getDaoIn() public view minValue(0.5 ton) {
-        IObject(msg.sender).returnDao{value: 0.1 ton, flag: 1}(_pubaddr, _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _isRepoUpgraded, _nameDao, _wallets, _reserve, _allbalance, _totalsupply, _hashtag, _my_wallets, _daoMembers, _isCheck);
+        IObject(msg.sender).returnDao{value: 0.1 ton, flag: 1}(_pubaddr, _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _isRepoUpgraded, _nameDao, _wallets, _reserve, _allbalance, _totalsupply, _hashtag, _my_wallets, _daoMembers, _isCheck,  _paidMembershipValue, _valuePerSubs, _timeForSubs, _accessKey);
     }
 }

@@ -1112,7 +1112,11 @@
 				{"name":"hashtag","type":"map(uint256,string)"},
 				{"name":"my_wallets","type":"map(uint256,address)"},
 				{"name":"daoMembers","type":"map(uint256,string)"},
-				{"name":"isCheck","type":"bool"}
+				{"name":"isCheck","type":"bool"},
+				{"name":"paidMembershipValue","type":"uint128"},
+				{"name":"valuePerSubs","type":"uint128"},
+				{"name":"timeForSubs","type":"uint128"},
+				{"name":"accessKey","type":"optional(uint256)"}
 			]
 		},
 		{
