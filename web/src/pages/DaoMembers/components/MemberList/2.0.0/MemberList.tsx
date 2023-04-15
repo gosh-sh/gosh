@@ -24,7 +24,13 @@ type TDaoMemeberListProps = {
         getMore: () => void
     }
     removal: {
-        remove: (user: TUserParam[]) => Promise<void>
+        remove: (
+            users: {
+                user: TUserParam
+                allowance: number
+                profile: string
+            }[],
+        ) => Promise<void>
         isFetching: (username: string) => boolean
     }
 }
@@ -40,7 +46,11 @@ const DaoMemeberList = (props: TDaoMemeberListProps) => {
     const updateMember = useDaoMemberUpdate(dao.adapter)
     const { isFetching, items } = members
 
-    const onDelete = async (user: TUserParam) => {
+    const onDelete = async (user: {
+        user: TUserParam
+        allowance: number
+        profile: string
+    }) => {
         if (window.confirm('Delete member?')) {
             try {
                 await removal.remove([user])
