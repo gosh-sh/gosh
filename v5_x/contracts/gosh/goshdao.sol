@@ -796,11 +796,19 @@ contract GoshDao is Modifiers, TokenRootOwner {
         tvm.accept();      
         if (_wallets.next(key).hasValue() == false) { return; }
         (,MemberToken worker) = _wallets.next(key).get();
-        if ((worker.expired < block.timestamp) && (worker.expired != 0)) {
-            deleteWalletIn(worker.member);
-        }
         (, uint256 keyaddr) = worker.member.unpack(); 
+        if ((worker.expired < block.timestamp) && (worker.expired != 0)) {
+            deleteWalletSub(keyaddr);
+        }
         this.checkExpiredTime{value: 0.1 ton, flag: 1}(keyaddr);
+    }
+
+    function deleteWalletSub(uint256 key) private {
+        require(_wallets.exists(key) == true, ERR_WALLET_NOT_EXIST); 
+        GoshWallet(_wallets[key].member).setLimitedWallet{value: 0.2 ton, flag: 1}(true, _limit_wallets);
+        _allbalance -= _wallets[key].count;
+        delete _wallets[key];
+        getMoney();
     }
 
     function stopPaidMembership(address pubaddr, uint128 index) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index))  accept
