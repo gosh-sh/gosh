@@ -168,6 +168,13 @@ contract Commit is Modifiers {
     function SendDiff(string branch, address branchcommit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task, bool isUpgrade) public senderIs(_rootRepo){
         tvm.accept();
         getMoney();
+        Tree(_tree).SendDiff2{value: 0.2 ton, flag: 1}(_nameCommit, branch, branchcommit, number, numberCommits, task, isUpgrade);
+    }
+
+
+    function SendDiff3(string branch, address branchcommit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task, bool isUpgrade) public senderIs(_tree){
+        tvm.accept();
+        getMoney();    
         require(isUpgrade == _initupgrade, ERR_WRONG_UPGRADE_STATUS);
         if (_initupgrade == true) {
             require(_parents[0].addr == branchcommit, ERR_BAD_PARENT);

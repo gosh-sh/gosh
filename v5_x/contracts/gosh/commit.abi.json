@@ -108,6 +108,19 @@
 			]
 		},
 		{
+			"name": "SendDiff3",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"branchcommit","type":"address"},
+				{"name":"number","type":"uint128"},
+				{"name":"numberCommits","type":"uint128"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"task","type":"optional(tuple)"},
+				{"name":"isUpgrade","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "SendDiffSmv",
 			"inputs": [
 				{"name":"branch","type":"string"},
