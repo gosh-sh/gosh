@@ -845,7 +845,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, 0, _rootTokenRoot);
         GoshWallet(_lastAccountAddress).setLimitedWallet{value: 0.2 ton, flag: 1}(false, _limit_wallets);
-        GoshWallet(_lastAccountAddress).addVoteToken{value:0.2 ton, flag: 1}(_valuePerSubs);
+        this.addVoteTokenPub2{value: 0.2 ton, flag: 1}(pubaddr, _valuePerSubs);
         getMoney();
     }
     
