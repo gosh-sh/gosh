@@ -223,8 +223,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function setLimitedWallet(bool decision, uint128 limitwallet) public senderIs(_goshdao)  accept saveMsg {
-        m_pseudoDAOVoteBalance = 0;
         if (decision == true) {
+            m_pseudoDAOVoteBalance = 0;
             _totalDoubt = _lockedBalance;
             updateHeadIn();
             unlockVotingIn(_lockedBalance);
