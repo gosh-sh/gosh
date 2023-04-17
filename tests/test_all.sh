@@ -37,6 +37,7 @@ set -o pipefail
 ./19-push_many_files.test.sh
 ./20-delete-branch.test.sh
 ./21-delete-snapshots.test.sh
+./22-push_many_commits.test.sh
 
 ./clean.sh
 echo "All tests passed"
