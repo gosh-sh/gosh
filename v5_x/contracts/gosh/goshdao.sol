@@ -795,12 +795,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function checkExpiredTime(uint256 key) public senderIs(address(this)) {
         tvm.accept();      
         if (_wallets.next(key).hasValue() == false) { return; }
-        (,MemberToken worker) = _wallets.next(key).get();
-        (, uint256 keyaddr) = worker.member.unpack(); 
+        (uint256 newkey,MemberToken worker) = _wallets.next(key).get();
         if ((worker.expired < block.timestamp) && (worker.expired != 0)) {
-            deleteWalletSub(keyaddr);
+            deleteWalletSub(newkey);
         }
-        this.checkExpiredTime{value: 0.1 ton, flag: 1}(keyaddr);
+        this.checkExpiredTime{value: 0.1 ton, flag: 1}(newkey);
     }
 
     function deleteWalletSub(uint256 key) private {
