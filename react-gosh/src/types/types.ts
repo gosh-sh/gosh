@@ -23,6 +23,8 @@ import {
     TTaskTransferParams,
     TUserParam,
     TTaskUpgradeParams,
+    TDaoStartPaidMembershipParams,
+    TDaoStopPaidMembershipParams,
 } from './dao.types'
 import {
     TRepositoryChangeBranchProtectionParams,
@@ -172,6 +174,14 @@ type TEventMultipleCreateProposalParams = TEventCreateParams & {
         | {
               type: ESmvEventType.TASK_UPGRADE
               params: TTaskUpgradeParams
+          }
+        | {
+              type: ESmvEventType.DAO_START_PAID_MEMBERSHIP
+              params: TDaoStartPaidMembershipParams
+          }
+        | {
+              type: ESmvEventType.DAO_STOP_PAID_MEMBERSHIP
+              params: TDaoStopPaidMembershipParams
           }
     )[]
 }

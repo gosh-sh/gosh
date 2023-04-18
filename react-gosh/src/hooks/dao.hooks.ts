@@ -505,12 +505,10 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
 
                 // Get wallet balance for prev DAO version
                 const wallet = await prevDao.getMemberWallet({ profile: memberProfile })
-                if (await wallet.isDeployed()) {
-                    const { smvAvailable, smvLocked, smvBalance } = await smv.getDetails(
-                        wallet,
-                    )
-                    balancePrev = Math.max(smvAvailable, smvLocked) + smvBalance
-                }
+                const { smvAvailable, smvLocked, smvBalance } = await smv.getDetails(
+                    wallet,
+                )
+                balancePrev = Math.max(smvAvailable, smvLocked) + smvBalance
             }
 
             return { ...member, user, balance, balancePrev }
@@ -594,10 +592,10 @@ function useDaoMemberCreate(dao: IGoshDaoAdapter) {
         }
 
         const memberAddCells: { type: number; params: TDaoMemberCreateParams }[] =
-            clean.map(({ user, comment }) => ({
+            clean.map(({ user, comment, expired }) => ({
                 type: ESmvEventType.DAO_MEMBER_ADD,
                 params: {
-                    members: [{ user, allowance: 0, comment }],
+                    members: [{ user, allowance: 0, comment, expired }],
                 },
             }))
 
@@ -634,10 +632,10 @@ function useDaoMemberCreate(dao: IGoshDaoAdapter) {
         }
 
         const memberAddCells: { type: number; params: TDaoMemberCreateParams }[] =
-            clean.map(({ user, comment }) => ({
+            clean.map(({ user, comment, expired }) => ({
                 type: ESmvEventType.DAO_MEMBER_ADD,
                 params: {
-                    members: [{ user, allowance: 0, comment }],
+                    members: [{ user, allowance: 0, comment, expired }],
                 },
             }))
         const memberAddVotingCells: { type: number; params: TDaoVotingTokenAddParams }[] =

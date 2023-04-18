@@ -28,6 +28,8 @@ import { TaskDeleteEvent } from '../TaskDeleteEvent/TaskDeleteEvent'
 import { TaskTransferCompleteEvent } from '../TaskTransferCompleteEvent/TaskTransferCompleteEvent'
 import { TaskTransferEvent } from '../TaskTransferEvent/TaskTransferEvent'
 import { TaskUpgradeEvent } from '../TaskUpgradeEvent/TaskUpgradeEvent'
+import { DaoStartPaidMembershipEvent } from '../DaoStartPaidMembershipEvent/DaoStartPaidMembershipEvent'
+import { DaoStopPaidMembershipEvent } from '../DaoStopPaidMembershipEvent/DaoStopPaidMembershipEvent'
 
 type TMultiEventProps = {
     version: string
@@ -169,6 +171,14 @@ const MultiEvent = (props: TMultiEventProps) => {
                             )}
                             {data.type.kind === ESmvEventType.TASK_REDEPLOYED && (
                                 <TaskTransferCompleteEvent />
+                            )}
+                            {data.type.kind ===
+                                ESmvEventType.DAO_START_PAID_MEMBERSHIP && (
+                                <DaoStartPaidMembershipEvent data={data} />
+                            )}
+                            {data.type.kind ===
+                                ESmvEventType.DAO_STOP_PAID_MEMBERSHIP && (
+                                <DaoStopPaidMembershipEvent data={data} />
                             )}
                         </div>
                     ))}

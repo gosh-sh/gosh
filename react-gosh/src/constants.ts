@@ -44,4 +44,6 @@ export const SmvEventTypes: { [key: number]: string } = {
     37: 'Redeployed task',
     38: 'Task upgrade',
     39: 'DAO transfer tokens from previous version',
+    40: 'Start paid membership',
+    41: 'Stop paid membership',
 }

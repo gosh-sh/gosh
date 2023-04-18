@@ -98,6 +98,10 @@ import {
     TDaoTokenDaoTransferParams,
     TDaoTokenDaoTransferResult,
     TUpgradeVersionControllerParams,
+    TDaoStartPaidMembershipParams,
+    TDaoStartPaidMembershipResult,
+    TDaoStopPaidMembershipParams,
+    TDaoStopPaidMembershipResult,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -1599,6 +1603,16 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     async upgradeVersionController(
         params: TUpgradeVersionControllerParams,
     ): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async startPaidMembership(
+        params: TDaoStartPaidMembershipParams,
+    ): Promise<TDaoStartPaidMembershipResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async stopPaidMembership(params: TDaoStopPaidMembershipParams): Promise<TDaoStopPaidMembershipResult> {
         throw new Error('Method is unavailable in current version')
     }
 
