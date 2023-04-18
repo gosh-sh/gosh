@@ -41,6 +41,7 @@ git checkout -b dev
 
 echo 222 > 1.txt
 git add *
+sleep 1
 git commit -m dev1
 
 for i in {1..4}; do
@@ -48,6 +49,7 @@ for i in {1..4}; do
       echo "11111$n$n$i" > "$n$i".txt
   done
   git add *
+  sleep 1
   git commit -m "dev$i"
 done
 
@@ -60,10 +62,11 @@ for i in {1..4}; do
       echo "2222$n$n$i" > "2$n$i".txt
   done
   git add *
+  sleep 1
   git commit -m "main$i"
 done
 git remote add gosh gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME
-GOSH_TRACE=5 git push --all gosh &> ../trace2.log
+git push --all gosh
 
 echo "***** cloning repo *****"
 cd ..
@@ -71,13 +74,19 @@ cd ..
 sleep 30
 
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
+cd $REPO_NAME"-clone"
+git checkout master
+cd ..
 
 echo "***** check repo *****"
 DIFF_STATUS=1
 if  diff --brief --recursive $REPO_NAME $REPO_NAME"-clone" --exclude ".git"; then
     DIFF_STATUS=0
+    echo "TEST SUCCEEDED"
+    exit $DIFF_STATUS
 fi
 
+echo "TEST FAILED"
+exit $DIFF_STATUS
 
-echo "TEST SUCCEEDED"
 
