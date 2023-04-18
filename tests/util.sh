@@ -700,3 +700,25 @@ function start_paid_membership {
     vote_for_proposal
 
 }
+
+function stop_paid_membership {
+    echo "***** start proposal for stop paid membership *****"
+    tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForStopPaidMembership \
+      --comment "" --num_clients 1 --reviewers []
+    NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
+    echo "NOW_ARG=$NOW_ARG"
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellStopPaidMembership --comment "" --time $NOW_ARG | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+    echo "TVMCELL=$TVMCELL"
+
+    sleep 10
+
+    PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
+      --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
+      "{\"data\":\"$TVMCELL\"}" \
+       --decode-c6 | grep value0 \
+      | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+    vote_for_proposal
+
+}
