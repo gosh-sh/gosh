@@ -57,7 +57,7 @@ async fn main_internal() -> anyhow::Result<()> {
         .arg(
             Arg::new("version")
                 .long("version")
-                .action(clap::ArgAction::SetTrue)
+                .action(clap::ArgAction::SetTrue),
         )
         .subcommand(
             Command::new("supported_contract_version")
