@@ -269,7 +269,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind =  START_PAID_MEMBERSHIP_PROPOSAL_KIND;        
         if (time.hasValue() == false) { time = block.timestamp; }
-        return abi.encode(proposalKind, value, valuepersubs, timeforsubs, keyforservice, comment, block.timestamp);
+        return abi.encode(proposalKind, value, valuepersubs, timeforsubs, keyforservice, comment, time.get());
     }
 
     function startProposalForStopPaidMembership(
@@ -288,7 +288,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind =  STOP_PAID_MEMBERSHIP_PROPOSAL_KIND;        
         if (time.hasValue() == false) { time = block.timestamp; }
-        return abi.encode(proposalKind, comment, block.timestamp);
+        return abi.encode(proposalKind, comment, time.get());
     }
 
     function _startPaidMembership(uint128 value, uint128 valuepersubs, uint128 timeforsubs, uint256 keyforservice) private view {
