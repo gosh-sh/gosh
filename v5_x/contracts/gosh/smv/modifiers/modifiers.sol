@@ -16,7 +16,7 @@ interface IObject {
     function returnCommit(address, string, string, AddrVersion[], string, bool, bool) external;
     function deployIndex(string, address, uint128, TvmCell) external; 
     function returnDao(address, bool, bool, bool, bool, bool, string, mapping(uint256 => MemberToken), uint128, uint128, uint128, mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), bool, uint128, uint128, uint128, optional(uint256)) external;
-    function returnWallet(uint128, uint128, address, address, uint128, address, uint128, optional(uint256), bool) external;
+    function returnWallet(uint128, uint128, uint128, address, address, uint128, address, uint128, optional(uint256), bool, optional(uint128)) external;
     function returnTag(string, address, string, string, string) external;
     function returnTask(TvmCell) external;
 }

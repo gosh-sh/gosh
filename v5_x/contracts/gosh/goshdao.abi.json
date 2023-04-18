@@ -702,7 +702,8 @@
 			"name": "addVoteTokenPubSub",
 			"inputs": [
 				{"name":"pub","type":"address"},
-				{"name":"grant","type":"uint128"}
+				{"name":"grant","type":"uint128"},
+				{"name":"time","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -711,7 +712,8 @@
 			"name": "addVoteTokenPubSub2",
 			"inputs": [
 				{"name":"pub","type":"address"},
-				{"name":"grant","type":"uint128"}
+				{"name":"grant","type":"uint128"},
+				{"name":"time","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -720,7 +722,8 @@
 			"name": "addVoteTokenPubSub3",
 			"inputs": [
 				{"name":"pub","type":"address"},
-				{"name":"grant","type":"uint128"}
+				{"name":"grant","type":"uint128"},
+				{"name":"time","type":"uint128"}
 			],
 			"outputs": [
 			]

@@ -849,26 +849,26 @@ contract GoshDao is Modifiers, TokenRootOwner {
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _versions, _limit_wallets, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, 0, _rootTokenRoot);
-        this.addVoteTokenPubSub{value: 0.2 ton, flag: 1}(pubaddr, _valuePerSubs);
+        this.addVoteTokenPubSub{value: 0.2 ton, flag: 1}(pubaddr, _valuePerSubs, block.timestamp + _timeForSubs);
         getMoney();
     }
     
-    function addVoteTokenPubSub (address pub, uint128 grant) public pure senderIs(address(this))  accept
+    function addVoteTokenPubSub (address pub, uint128 grant, uint128 time) public pure senderIs(address(this))  accept
     {   
-        this.addVoteTokenPubSub2{value: 0.1 ton, flag: 1}(pub, grant);
+        this.addVoteTokenPubSub2{value: 0.1 ton, flag: 1}(pub, grant, time);
     }
     
-    function addVoteTokenPubSub2 (address pub, uint128 grant) public pure senderIs(address(this))  accept  {    
-        this.addVoteTokenPubSub3{value: 0.1 ton, flag: 1}(pub, grant);
+    function addVoteTokenPubSub2 (address pub, uint128 grant, uint128 time) public pure senderIs(address(this))  accept  {    
+        this.addVoteTokenPubSub3{value: 0.1 ton, flag: 1}(pub, grant, time);
     } 
     
-    function addVoteTokenPubSub3 (address pub, uint128 grant) public senderIs(address(this)) accept { 
+    function addVoteTokenPubSub3 (address pub, uint128 grant, uint128 time) public senderIs(address(this)) accept { 
         require(_paidMembershipValue >= _valuePerSubs, ERR_LOW_TOKEN_RESERVE);  
         (, uint256 keyaddr) = pub.unpack();
         address wallet = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pub, 0);
         GoshWallet(wallet).setLimitedWallet{value: 0.2 ton, flag: 1}(false, _limit_wallets);
         if (_wallets.exists(keyaddr) == false) { return; }
-        GoshWallet(wallet).addVoteToken{value:0.2 ton, flag: 1}(grant);
+        GoshWallet(wallet).addVoteTokenSub{value:0.2 ton, flag: 1}(grant, time);
         _wallets[keyaddr].count += grant;
         _paidMembershipValue -= grant;
         _allbalance += grant;

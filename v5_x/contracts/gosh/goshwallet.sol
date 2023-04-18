@@ -57,6 +57,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     bool public _tombstone = false;
     bool public _limited = true;
+    optional(uint128) _expiredTime;
 
     uint128 timeMoney = 0;
 
@@ -224,6 +225,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     function setLimitedWallet(bool decision, uint128 limitwallet) public senderIs(_goshdao)  accept saveMsg {
         if (decision == true) {
+            _expiredTime = null;
             m_pseudoDAOVoteBalance = 0;
             _totalDoubt = _lockedBalance;
             updateHeadIn();
@@ -908,6 +910,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     //Money part
     function getMoney() private {
+        if (_expiredTime.hasValue()) {
+            if (_expiredTime.get() < block.timestamp){
+                GoshDao(_goshdao).startCheckPaidMembershipWallet{value: 0.2 ton, flag: 1}(_pubaddr, _index);
+            }
+        }
         if (_totalDoubt <= m_pseudoDAOVoteBalance) {
             m_pseudoDAOVoteBalance -= _totalDoubt;
             _totalDoubt = 0;
@@ -1544,6 +1551,16 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public senderIs(_goshdao) accept saveMsg {
         GoshDao(_goshdao).requestMint {value: SMVConstants.ACTION_FEE, flag: 1} (tip3VotingLocker, _pubaddr, grant, _index);
         _lockedBalance += grant;
+        getMoney();
+    }
+
+    function addVoteTokenSub(
+        uint128 grant,
+        uint128 time
+    ) public senderIs(_goshdao) accept saveMsg {
+        GoshDao(_goshdao).requestMint {value: SMVConstants.ACTION_FEE, flag: 1} (tip3VotingLocker, _pubaddr, grant, _index);
+        _lockedBalance += grant;
+        _expiredTime = time;
         getMoney();
     }
     
@@ -2901,12 +2918,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return _tombstone;
     }
     
-    function getDetails() external view  returns(uint128, uint128, address, address, uint128, address, uint128, optional(uint256), bool) {
-        return (m_pseudoDAOBalance, m_pseudoDAOVoteBalance, _goshdao, _rootpubaddr, _limit_wallets, _pubaddr, _walletcounter, _access, _tombstone);
+    function getDetails() external view  returns(uint128, uint128, uint128, address, address, uint128, address, uint128, optional(uint256), bool, optional(uint128)) {
+        return (_lockedBalance, m_pseudoDAOBalance, m_pseudoDAOVoteBalance, _goshdao, _rootpubaddr, _limit_wallets, _pubaddr, _walletcounter, _access, _tombstone, _expiredTime);
     }
     
     function getWalletIn() public view minValue(0.5 ton) {
-        IObject(msg.sender).returnWallet{value: 0.1 ton, flag: 1}(m_pseudoDAOBalance, m_pseudoDAOVoteBalance, _goshdao, _rootpubaddr, _limit_wallets, _pubaddr, _walletcounter, _access, _tombstone);
+        IObject(msg.sender).returnWallet{value: 0.1 ton, flag: 1}(_lockedBalance, m_pseudoDAOBalance, m_pseudoDAOVoteBalance, _goshdao, _rootpubaddr, _limit_wallets, _pubaddr, _walletcounter, _access, _tombstone, _expiredTime);
     }
 
     function AddCell(TvmCell data1, TvmCell data2) external pure returns(TvmCell) {
