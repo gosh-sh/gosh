@@ -202,6 +202,24 @@ function useDao(name: string) {
         }
     }, [updateDetails])
 
+    useEffect(() => {
+        const _checkPaidMembership = async () => {
+            if (!adapter?.wallet || !details?.members.length) {
+                return
+            }
+
+            const now = Math.round(Date.now() / 1000)
+            const anyExpired = details.members.filter(({ expired = 0 }) => {
+                return expired > 0 && now > expired
+            })
+            if (anyExpired.length) {
+                adapter.wallet.run('startCheckPaidMembership', {})
+            }
+        }
+
+        _checkPaidMembership()
+    }, [details?.members, adapter?.wallet])
+
     return {
         adapter,
         details,
