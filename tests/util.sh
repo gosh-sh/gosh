@@ -674,3 +674,29 @@ function dao_transfer_tokens {
 function get_number_of_members {
   MEMBERS_LEN=$(tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getDetails | grep -c member)
 }
+
+function start_paid_membership {
+    echo "***** start proposal for paid membership *****"
+    VALUE=25
+    VALUE_PER_SUB=10
+    TIME_FOR_SUB=60
+    KEY_FOR_SERVICE="0x"$(cat $WALLET_KEYS | jq .public | cut -d '"' -f 2)
+    tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForStartPaidMembership \
+      --value $VALUE --valuepersubs $VALUE_PER_SUB --timeforsubs $TIME_FOR_SUB --keyforservice $KEY_FOR_SERVICE --comment "" --num_clients 1 --reviewers []
+    NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
+    echo "NOW_ARG=$NOW_ARG"
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellStartPaidMembership --value $VALUE --valuepersubs $VALUE_PER_SUB --timeforsubs $TIME_FOR_SUB --keyforservice $KEY_FOR_SERVICE --comment "" --time $NOW_ARG | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+    echo "TVMCELL=$TVMCELL"
+
+    sleep 10
+
+    PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
+      --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
+      "{\"data\":\"$TVMCELL\"}" \
+       --decode-c6 | grep value0 \
+      | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+    vote_for_proposal
+
+}
