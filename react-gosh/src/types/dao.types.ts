@@ -390,13 +390,13 @@ type TDaoStartPaidMembershipParams = TEventCreateParams & {
     valuepersubs: number
     timeforsubs: number
     keyforservice: string
-    cell: string
+    cell?: boolean
 }
 
 type TDaoStartPaidMembershipResult = string | void
 
 type TDaoStopPaidMembershipParams = TEventCreateParams & {
-    cell: string
+    cell?: boolean
 }
 
 type TDaoStopPaidMembershipResult = string | void
