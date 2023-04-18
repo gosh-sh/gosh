@@ -4,7 +4,17 @@ set -e
 
 REPO_OWNER=gosh-sh
 REPO=gosh
-TAG=latest
+if [[ -z "${TAG}" ]]; then
+  echo ""
+  echo "Downloading latest release of git-remote-gosh"
+  echo ""
+  TAG=latest
+else
+  echo ""
+  echo "Downloading git-remote-gosh tag: $TAG"
+  echo ""
+  TAG="tags/$TAG"
+fi
 
 # TODO: get it from one source with binary
 
@@ -53,11 +63,6 @@ if [ ! -f "$HOME"/.gosh/config.json ]; then
 }
 EOF
 fi
-
-# Download release
-echo ""
-echo "Downloading latest release of git-remote-gosh"
-echo ""
 
 # Read asset tags.
 response=$(curl -s "$GH_TAGS")
