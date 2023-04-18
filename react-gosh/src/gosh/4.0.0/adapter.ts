@@ -3797,6 +3797,17 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             snapshotdata: data.snapshotData,
             snapshotipfs: data.snapshotIpfs,
         })
+        const wait = await whileFinite(async () => {
+            return await snapshot.isDeployed()
+        })
+        if (!wait) {
+            throw new GoshError('Deploy snapshot timeout reached', {
+                branch,
+                name: treepath,
+                address: snapshot.address,
+            })
+        }
+
         return snapshot
     }
 
@@ -3943,6 +3954,16 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             index2: 0,
             last: true,
         })
+        const wait = await whileFinite(async () => {
+            return await diffContract.isDeployed()
+        })
+        if (!wait) {
+            throw new GoshError('Deploy diff timeout reached', {
+                branch,
+                index1,
+                address: diffContract.address,
+            })
+        }
     }
 
     private async _deployCommit(
@@ -3974,6 +3995,16 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             tree: tree.address,
             upgrade,
         })
+        const wait = await whileFinite(async () => {
+            return await commitContract.isDeployed()
+        })
+        if (!wait) {
+            throw new GoshError('Deploy commit timeout reached', {
+                branch,
+                name: commit,
+                address: commitContract.address,
+            })
+        }
     }
 
     private async _setCommit(
