@@ -39,6 +39,8 @@ enum ESmvEventType {
     TASK_REDEPLOYED = 37,
     TASK_UPGRADE = 38,
     DAO_TOKEN_TRANSFER_FROM_PREV = 39,
+    DAO_START_PAID_MEMBERSHIP = 40,
+    DAO_STOP_PAID_MEMBERSHIP = 41,
 }
 
 type TSmvDetails = {

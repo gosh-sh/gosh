@@ -592,10 +592,10 @@ function useDaoMemberCreate(dao: IGoshDaoAdapter) {
         }
 
         const memberAddCells: { type: number; params: TDaoMemberCreateParams }[] =
-            clean.map(({ user, comment }) => ({
+            clean.map(({ user, comment, expired }) => ({
                 type: ESmvEventType.DAO_MEMBER_ADD,
                 params: {
-                    members: [{ user, allowance: 0, comment }],
+                    members: [{ user, allowance: 0, comment, expired }],
                 },
             }))
 
@@ -632,10 +632,10 @@ function useDaoMemberCreate(dao: IGoshDaoAdapter) {
         }
 
         const memberAddCells: { type: number; params: TDaoMemberCreateParams }[] =
-            clean.map(({ user, comment }) => ({
+            clean.map(({ user, comment, expired }) => ({
                 type: ESmvEventType.DAO_MEMBER_ADD,
                 params: {
-                    members: [{ user, allowance: 0, comment }],
+                    members: [{ user, allowance: 0, comment, expired }],
                 },
             }))
         const memberAddVotingCells: { type: number; params: TDaoVotingTokenAddParams }[] =

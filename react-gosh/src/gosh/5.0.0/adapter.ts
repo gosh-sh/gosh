@@ -23,7 +23,6 @@ import {
     TSmvEventMinimal,
     TPushBlobData,
     TTaskCommitConfig,
-    TDaoSupplyDetails,
     TDaoMember,
     TTaskDetails,
     TRepositoryCreateParams,
@@ -96,7 +95,6 @@ import {
     TTaskUpgradeParams,
     TTaskUpgradeResult,
     TDaoTokenDaoTransferParams,
-    TDaoTokenDaoTransferResult,
     TUpgradeVersionControllerParams,
     TDaoStartPaidMembershipParams,
     TDaoStartPaidMembershipResult,
@@ -169,12 +167,13 @@ import { GoshHelperTag } from './goshhelpertag'
 import { GoshTopic } from './goshtopic'
 import { GoshAdapterFactory } from '../factories'
 import { GoshProfileDao } from '../goshprofiledao'
+import { GoshRoot } from '../goshroot'
 
-class GoshAdapter_2_0_0 implements IGoshAdapter {
-    private static instance: GoshAdapter_2_0_0
+class GoshAdapter_5_0_0 implements IGoshAdapter {
+    private static instance: GoshAdapter_5_0_0
     private auth?: { username: string; keys: KeyPair }
 
-    static version: string = '2.0.0'
+    static version: string = '5.0.0'
 
     client: TonClient
     goshroot: IGoshRoot
@@ -186,11 +185,11 @@ class GoshAdapter_2_0_0 implements IGoshAdapter {
         this.gosh = new Gosh(this.client, goshaddr)
     }
 
-    static getInstance(goshroot: IGoshRoot, goshaddr: TAddress): GoshAdapter_2_0_0 {
-        if (!GoshAdapter_2_0_0.instance) {
-            GoshAdapter_2_0_0.instance = new GoshAdapter_2_0_0(goshroot, goshaddr)
+    static getInstance(goshroot: IGoshRoot, goshaddr: TAddress): GoshAdapter_5_0_0 {
+        if (!GoshAdapter_5_0_0.instance) {
+            GoshAdapter_5_0_0.instance = new GoshAdapter_5_0_0(goshroot, goshaddr)
         }
-        return GoshAdapter_2_0_0.instance
+        return GoshAdapter_5_0_0.instance
     }
 
     isValidUsername(username: string): TValidationResult {
@@ -230,12 +229,33 @@ class GoshAdapter_2_0_0 implements IGoshAdapter {
         })
     }
 
-    async isValidDao(name: string[]): Promise<{ username: string; address: string }[]> {
-        throw new Error('Method is unavailable in current version')
+    async isValidDao(name: string[]): Promise<{ username: string; address: TAddress }[]> {
+        return await executeByChunk(name, MAX_PARALLEL_READ, async (item) => {
+            item = item.trim()
+            const { valid, reason } = this.isValidDaoName(item)
+            if (!valid) {
+                throw new GoshError(`${item}: ${reason}`)
+            }
+
+            const dao = await this.getDao({ name: item, useAuth: false })
+            if (!(await dao.isDeployed())) {
+                throw new GoshError(`${item}: DAO does not exist`)
+            }
+
+            return { username: item, address: dao.getAddress() }
+        })
     }
 
     async isValidUser(user: TUserParam): Promise<{ user: TUserParam; address: string }> {
-        throw new Error('Method is unavailable in current version')
+        if (user.type === 'dao') {
+            const validated = await this.isValidDao([user.name])
+            return { user, address: validated[0].address }
+        } else if (user.type === 'user') {
+            const validated = await this.isValidProfile([user.name])
+            return { user, address: validated[0].address }
+        } else {
+            throw new GoshError('Incorrect user type', user)
+        }
     }
 
     async setAuth(username: string, keys: KeyPair): Promise<void> {
@@ -247,7 +267,7 @@ class GoshAdapter_2_0_0 implements IGoshAdapter {
     }
 
     getVersion(): string {
-        return GoshAdapter_2_0_0.version
+        return GoshAdapter_5_0_0.version
     }
 
     async getProfile(options: {
@@ -323,8 +343,27 @@ class GoshAdapter_2_0_0 implements IGoshAdapter {
     }
 
     async getUserByAddress(address: string): Promise<TUserParam> {
-        const profile = await this.getProfile({ address })
-        return { name: await profile.getName(), type: 'user' }
+        const base = new GoshRoot(this.client, address)
+
+        let type = null
+        try {
+            const { value0 } = await base.runLocal('getVersion', {}, undefined, {
+                retries: 0,
+            })
+            type = value0
+        } catch {
+            type = 'profile'
+        }
+
+        if (type === 'profile') {
+            const profile = await this.getProfile({ address })
+            return { name: await profile.getName(), type: 'user' }
+        } else if (type === 'goshdao') {
+            const profile = await this.getDao({ address, useAuth: false })
+            return { name: await profile.getName(), type: 'dao' }
+        }
+
+        throw new GoshError('Can not resolve address type', { address })
     }
 
     async getRepository(options: {
@@ -495,8 +534,8 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 
         let pubaddr: string
         if (user) {
-            const validated = await this.gosh.isValidProfile([user.name])
-            pubaddr = validated[0].address
+            const validated = await this.gosh.isValidUser(user)
+            pubaddr = validated.address
         } else if (profile) {
             pubaddr = profile
         } else {
@@ -546,6 +585,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     async getDetails(): Promise<TDao> {
         const details = await this.dao.runLocal('getDetails', {})
         const owner = details.pubaddr
+        const { _isTaskRedeployed } = await this.dao.runLocal('_isTaskRedeployed', {})
 
         return {
             address: this.dao.address,
@@ -559,7 +599,8 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             },
             owner,
             tags: Object.values(details.hashtag),
-            isMintOn: details.allowMint,
+            isMintOn: await this._isMintOn(),
+            isMintOnPrevDiff: await this._isMintOnPrevDiff(),
             isEventProgressOn: !details.hide_voting_results,
             isEventDiscussionOn: details.allow_discussion_on_proposals,
             isAskMembershipOn: details.abilityInvite,
@@ -568,10 +609,13 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             isAuthMember: await this._isAuthMember(),
             isAuthLimited: await this._isAuthLimited(),
             isRepoUpgraded: details.isRepoUpgraded,
-            isTaskRedeployed: true,
-            isMemberOf: [],
+            isTaskRedeployed: _isTaskRedeployed,
+            isMemberOf: Object.keys(details.my_wallets).map((dao) => ({
+                dao: `0:${dao.slice(2)}`,
+                wallet: details.my_wallets[dao],
+            })),
             hasRepoIndex: !!(await this._getSystemRepository()),
-            isUpgraded: details.isRepoUpgraded,
+            isUpgraded: details.isRepoUpgraded && _isTaskRedeployed,
         }
     }
 
@@ -648,8 +692,9 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         address?: TAddress
         index?: number
         create?: boolean
+        keys?: KeyPair
     }): Promise<IGoshWallet> {
-        const { profile, address, index, create } = options
+        const { profile, address, index, create, keys } = options
         if (address) {
             return new GoshWallet(this.client, address)
         }
@@ -658,7 +703,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
         const addr = await this._getWalletAddress(profile, index ?? 0)
-        const wallet = new GoshWallet(this.client, addr)
+        const wallet = new GoshWallet(this.client, addr, { keys })
         if (create && !(await wallet.isDeployed())) {
             await this._createLimitedWallet(profile)
         }
@@ -668,19 +713,19 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     async getReviewers(
         user: TUserParam[],
     ): Promise<{ username: string; profile: string; wallet: string }[]> {
-        const profiles = await this.gosh.isValidProfile(user.map(({ name }) => name))
-        return await executeByChunk(
-            profiles,
-            MAX_PARALLEL_READ,
-            async ({ username, address }) => {
-                const wallet = await this.getMemberWallet({
-                    profile: address,
-                    index: 0,
-                    create: true,
-                })
-                return { username, profile: address, wallet: wallet.address }
-            },
-        )
+        return await executeByChunk(user, MAX_PARALLEL_READ, async (item) => {
+            const profile = await this.gosh.isValidUser(item)
+            const wallet = await this.getMemberWallet({
+                profile: profile.address,
+                index: 0,
+                create: true,
+            })
+            return {
+                username: item.name,
+                profile: profile.address,
+                wallet: wallet.address,
+            }
+        })
     }
 
     async getTaskCodeHash(repository: string): Promise<string> {
@@ -719,20 +764,20 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             const commit = await repository.getCommit({ address: candidate.commit })
             const assigners = await Promise.all(
                 Object.keys(candidate.pubaddrassign).map(async (address) => {
-                    const profile = await this.gosh.getProfile({ address })
-                    return { username: await profile.getName(), address }
+                    const profile = await this.gosh.getUserByAddress(address)
+                    return { username: profile.name, address }
                 }),
             )
             const reviewers = await Promise.all(
                 Object.keys(candidate.pubaddrreview).map(async (address) => {
-                    const profile = await this.gosh.getProfile({ address })
-                    return { username: await profile.getName(), address }
+                    const profile = await this.gosh.getUserByAddress(address)
+                    return { username: profile.name, address }
                 }),
             )
             const managers = await Promise.all(
                 Object.keys(candidate.pubaddrmanager).map(async (address) => {
-                    const profile = await this.gosh.getProfile({ address })
-                    return { username: await profile.getName(), address }
+                    const profile = await this.gosh.getUserByAddress(address)
+                    return { username: profile.name, address }
                 }),
             )
             team = {
@@ -873,9 +918,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
-        // Get members' profiles
-        const usernames = members.map(({ user }) => user.name)
-        const profiles = await this.gosh.isValidProfile(usernames)
+        // Get members profiles
+        const profiles = await Promise.all(
+            members.map(async ({ user }) => {
+                return await this.gosh.isValidUser(user)
+            }),
+        )
 
         // Prepare proposal comment
         const note = []
@@ -886,17 +934,21 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
 
         // Prepare proposal arguments
-        const pubaddr = profiles.map(({ username, address }) => {
-            const found = members.find((item) => item.user.name === username)
+        const daos: (string | null)[] = []
+        const pubaddr = profiles.map(({ user, address }) => {
+            const found = members.find((item) => item.user.name === user.name)
             if (!found) {
-                throw new GoshError(`Member '${username}' not found in arguments`)
+                throw new GoshError(`Member '${user.name}' not found in arguments`)
             }
-            return { member: address, count: found.allowance }
+
+            daos.push(found.user.type === 'dao' ? user.name : null)
+            return { member: address, count: found.allowance, expired: found.expired }
         })
 
         if (cell) {
             const { value0 } = await this.wallet.runLocal('getCellDeployWalletDao', {
                 pubaddr,
+                dao: daos,
                 comment: note.length ? note.join('\n\n') : '',
             })
             return value0
@@ -906,6 +958,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             await smv.validateProposalStart(0)
             await this.wallet.run('startProposalForDeployWalletDao', {
                 pubaddr,
+                dao: daos,
                 comment: note.length ? note.join('\n\n') : '',
                 reviewers: _reviewers.map(({ wallet }) => wallet),
                 num_clients: await smv.getClientsCount(),
@@ -921,7 +974,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
 
         const profiles = await executeByChunk(user, MAX_PARALLEL_READ, async (item) => {
-            const profile = await this.gosh.getProfile({ username: item.name })
+            const profile = await this.gosh.isValidUser(item)
             return profile.address
         })
 
@@ -1119,7 +1172,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
 
         // Get profile by username
-        const profile = (await this.gosh.isValidProfile([user.name]))[0]
+        const profile = await this.gosh.isValidUser(user)
 
         // TODO: May be better to move this to hook
         // Deploy limited wallet if not a DAO member
@@ -1161,7 +1214,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
 
         // Get profile by username
-        const profile = (await this.gosh.isValidProfile([user.name]))[0]
+        const profile = await this.gosh.isValidUser(user)
 
         // TODO: May be better to move this to hook
         // Deploy limited wallet if not a DAO member
@@ -1198,7 +1251,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.WALLET_UNDEFINED)
         }
 
-        const profile = (await this.gosh.isValidProfile([user.name]))[0]
+        const profile = await this.gosh.isValidUser(user)
         const wallet = await this.getMemberWallet({ profile: profile.address })
         if (!(await wallet.isDeployed())) {
             await this._createLimitedWallet(profile.address)
@@ -1218,31 +1271,216 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async sendDaoToken(params: TDaoTokenDaoSendParams): Promise<void> {
-        throw new Error('Method is unavailable in current version')
+        const { wallet, profile, amount, comment = '', reviewers = [], cell } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellForSendDaoToken', {
+                wallet,
+                pubaddr: profile,
+                grant: amount,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForSendDaoToken', {
+                wallet,
+                pubaddr: profile,
+                grant: amount,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
     async voteDao(params: TDaoVoteParams): Promise<TDaoVoteResult> {
-        throw new Error('Method is unavailable in current version')
+        const {
+            wallet,
+            platformId,
+            choice,
+            amount,
+            comment = '',
+            reviewers = [],
+            cell,
+        } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellDaoVote', {
+                wallet,
+                platform_id: platformId,
+                choice,
+                amount,
+                num_clients_base: 0,
+                note: '',
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForDaoVote', {
+                wallet,
+                platform_id: platformId,
+                choice,
+                amount,
+                num_clients_base: 0,
+                note: '',
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
     async reviewDao(params: TDaoReviewParams): Promise<TDaoReviewResult> {
-        throw new Error('Method is unavailable in current version')
+        const {
+            wallet,
+            eventAddress,
+            choice,
+            comment = '',
+            reviewers = [],
+            cell,
+        } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellForDaoReview', {
+                wallet,
+                propaddress: eventAddress,
+                isAccept: choice,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForDaoReview', {
+                wallet,
+                propaddress: eventAddress,
+                isAccept: choice,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
     async receiveTaskBountyDao(
         params: TTaskReceiveBountyDaoParams,
     ): Promise<TTaskReceiveBountyDaoResult> {
-        throw new Error('Method is unavailable in current version')
+        const { wallet, repoName, taskName, comment = '', reviewers = [], cell } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellForDaoAskGrant', {
+                wallet,
+                repoName,
+                taskName,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForDaoAskGrant', {
+                wallet,
+                repoName,
+                taskName,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
     async lockDaoToken(params: TDaoTokenDaoLockParams): Promise<TDaoTokenDaoLockResult> {
-        throw new Error('Method is unavailable in current version')
+        const { wallet, isLock, amount, comment = '', reviewers = [], cell } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellForDaoLockVote', {
+                wallet,
+                isLock,
+                grant: amount,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForDaoLockVote', {
+                wallet,
+                isLock,
+                grant: amount,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
-    async transferDaoToken(
-        params: TDaoTokenDaoTransferParams,
-    ): Promise<TDaoTokenDaoTransferResult> {
-        throw new Error('Method is unavailable in current version')
+    async transferDaoToken(params: TDaoTokenDaoTransferParams): Promise<void> {
+        const {
+            walletPrev,
+            walletCurr,
+            amount,
+            versionPrev,
+            comment = '',
+            reviewers = [],
+            cell,
+        } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellDaoTransferTokens', {
+                wallet: walletPrev,
+                newwallet: walletCurr,
+                grant: amount,
+                oldversion: versionPrev,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForDaoTransferTokens', {
+                wallet: walletPrev,
+                newwallet: walletCurr,
+                grant: amount,
+                oldversion: versionPrev,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
     async createTag(params: TDaoTagCreateParams): Promise<TDaoTagCreateResult> {
@@ -1314,91 +1552,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         const { proposals, reviewers = [] } = params
 
         // Prepare cells
-        const cells = await executeByChunk(proposals, 10, async ({ type, params }) => {
-            if (type === ESmvEventType.REPO_CREATE) {
-                return await this.createRepository({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.BRANCH_LOCK) {
-                const repository = await this.getRepository({ name: params.repository })
-                return await repository.lockBranch({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.BRANCH_UNLOCK) {
-                const repository = await this.getRepository({ name: params.repository })
-                return await repository.unlockBranch({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_MEMBER_ADD) {
-                return await this.createMember({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_MEMBER_DELETE) {
-                return await this.deleteMember({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_UPGRADE) {
-                return await this.upgrade({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.TASK_CREATE) {
-                return await this.createTask({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.TASK_DELETE) {
-                return await this.deleteTask({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_TOKEN_VOTING_ADD) {
-                return await this.addVotingTokens({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_TOKEN_REGULAR_ADD) {
-                return await this.addRegularTokens({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_TOKEN_MINT) {
-                return await this.mint({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_TOKEN_MINT_DISABLE) {
-                return await this.disableMint({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_TAG_ADD) {
-                return await this.createTag({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_TAG_REMOVE) {
-                return await this.deleteTag({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_ALLOWANCE_CHANGE) {
-                return await this.updateMemberAllowance({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.REPO_TAG_ADD) {
-                const repository = await this.getRepository({ name: params.repository })
-                return await repository.createTag({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.REPO_TAG_REMOVE) {
-                const repository = await this.getRepository({ name: params.repository })
-                return await repository.deleteTag({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.REPO_UPDATE_DESCRIPTION) {
-                const repository = await this.getRepository({ name: params.repository })
-                return await repository.updateDescription({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_EVENT_ALLOW_DISCUSSION) {
-                return await this.updateEventAllowDiscussion({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_EVENT_HIDE_PROGRESS) {
-                return await this.updateEventShowProgress({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE) {
-                return await this.updateAskMembershipAllowance({ ...params, cell: true })
-            }
-            return null
-        })
-
-        // Compose cells
-        const clean = cells.filter((cell) => typeof cell === 'string')
-        const count = clean.length
-        for (let i = clean.length - 1; i > 0; i--) {
-            const cellA = clean[i - 1]
-            const cellB = clean[i]
-            const { value0 } = await this.wallet.runLocal('AddCell', {
-                data1: cellA,
-                data2: cellB,
-            })
-            clean.splice(i - 1, 2, value0)
-            await sleep(100)
-        }
+        const { cell, count } = await this._createMultiProposalData(proposals)
 
         // Create proposal
         const _reviewers = await this.getReviewers(reviewers)
@@ -1406,7 +1560,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         await smv.validateProposalStart()
         await this.wallet.run('startMultiProposal', {
             number: count,
-            proposals: clean[0],
+            proposals: cell,
             reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: await smv.getClientsCount(),
         })
@@ -1415,7 +1569,28 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     async createMultiProposalAsDao(
         params: TEventMultipleCreateProposalAsDaoParams,
     ): Promise<void> {
-        throw new Error('Method is unavailable in current version')
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
+        const { wallet, proposals, reviewersBase = [], reviewers = [] } = params
+
+        // Prepare cells
+        const { cell, count } = await this._createMultiProposalData(proposals)
+
+        // Create proposal
+        const _reviewers = await this.getReviewers(reviewers)
+        const _reviewersBase = await this.getReviewers(reviewersBase)
+        const smv = await this.getSmv()
+        await smv.validateProposalStart()
+        await this.wallet.run('startMultiProposalAsDao', {
+            wallet,
+            number: count,
+            proposals: cell,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
+            num_clients: await smv.getClientsCount(),
+            reviewers_base: _reviewersBase.map(({ wallet }) => wallet),
+            num_clients_base: 0,
+        })
     }
 
     async createTask(params: TTaskCreateParams): Promise<TTaskCreateResult> {
@@ -1468,11 +1643,19 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         if (!this.wallet) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
-        await this.wallet.run('askGrantToken', {
-            repoName: repository,
-            nametask: name,
-            typegrant: type,
-        })
+
+        if (!!type) {
+            await this.wallet.run('askGrantToken', {
+                repoName: repository,
+                nametask: name,
+                typegrant: type,
+            })
+        } else {
+            await this.wallet.run('askGrantTokenFull', {
+                repoName: repository,
+                nametask: name,
+            })
+        }
     }
 
     async deleteTask(params: TTaskDeleteParams): Promise<TTaskDeleteResult> {
@@ -1504,17 +1687,118 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async transferTask(params: TTaskTransferParams): Promise<TTaskTransferResult> {
-        throw new Error('Method is unavailable in current version')
+        const { accountData, repoName } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const constructorParams = {
+            nametask: accountData._nametask,
+            repoName,
+            ready: accountData._ready,
+            candidates: accountData._candidates.map((item: any) => ({
+                ...item,
+                daoMembers: {},
+            })),
+            grant: accountData._grant,
+            hashtag: accountData._hashtag,
+            indexFinal: accountData._indexFinal,
+            locktime: accountData._locktime,
+            fullAssign: accountData._fullAssign,
+            fullReview: accountData._fullReview,
+            fullManager: accountData._fullManager,
+            assigners: accountData._assigners,
+            reviewers: accountData._reviewers,
+            managers: accountData._managers,
+            assignfull: accountData._assignfull,
+            reviewfull: accountData._reviewfull,
+            managerfull: accountData._managerfull,
+            assigncomplete: accountData._assigncomplete,
+            reviewcomplete: accountData._reviewcomplete,
+            managercomplete: accountData._managercomplete,
+            allassign: accountData._allassign,
+            allreview: accountData._allreview,
+            allmanager: accountData._allmanager,
+            lastassign: accountData._lastassign,
+            lastreview: accountData._lastreview,
+            lastmanager: accountData._lastmanager,
+            balance: accountData._balance,
+        }
+
+        const { value0: cell } = await this.wallet.runLocal(
+            'getCellForTask',
+            constructorParams,
+        )
+        const { value0 } = await this.wallet.runLocal('getCellForRedeployTask', {
+            reponame: constructorParams.repoName,
+            nametask: constructorParams.nametask,
+            hashtag: constructorParams.hashtag,
+            data: cell,
+            time: null,
+        })
+        return value0
     }
 
     async upgradeTask(params: TTaskUpgradeParams): Promise<TTaskUpgradeResult> {
-        throw new Error('Method is unavailable in current version')
+        const {
+            repoName,
+            taskName,
+            taskPrev,
+            tag,
+            comment = '',
+            reviewers = [],
+            cell,
+        } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellForTaskUpgrade', {
+                reponame: repoName,
+                nametask: taskName,
+                oldversion: taskPrev.version,
+                oldtask: taskPrev.address,
+                hashtag: tag,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForTaskUpgrade', {
+                reponame: repoName,
+                nametask: taskName,
+                oldversion: taskPrev.version,
+                oldtask: taskPrev.address,
+                hashtag: tag,
+                comment: comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
     async upgradeTaskComplete(
         params: TTaskUpgradeCompleteParams,
     ): Promise<TTaskUpgradeCompleteResult> {
-        throw new Error('Method is unavailable in current version')
+        const { cell } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellForRedeployedTask', {
+                time: null,
+            })
+            return value0
+        } else {
+            await this.wallet.run('setRedeployedTask', {})
+        }
     }
 
     async sendEventReview(params: TDaoEventSendReviewParams): Promise<void> {
@@ -1603,17 +1887,90 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     async upgradeVersionController(
         params: TUpgradeVersionControllerParams,
     ): Promise<void> {
-        throw new Error('Method is unavailable in current version')
+        const { code, cell, comment = '', reviewers = [] } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
+
+        const _reviewers = await this.getReviewers(reviewers)
+        const smv = await this.getSmv()
+        await smv.validateProposalStart()
+        await this.wallet.run('startProposalForUpgradeVersionController', {
+            UpgradeCode: code,
+            cell,
+            comment,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
+            num_clients: await smv.getClientsCount(),
+        })
     }
 
     async startPaidMembership(
         params: TDaoStartPaidMembershipParams,
     ): Promise<TDaoStartPaidMembershipResult> {
-        throw new Error('Method is unavailable in current version')
+        const {
+            value,
+            valuepersubs,
+            timeforsubs,
+            keyforservice,
+            comment = '',
+            reviewers = [],
+            cell,
+        } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellStartPaidMembership', {
+                value,
+                valuepersubs,
+                timeforsubs,
+                keyforservice,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForStartPaidMembership', {
+                value,
+                valuepersubs,
+                timeforsubs,
+                keyforservice,
+                comment: comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
-    async stopPaidMembership(params: TDaoStopPaidMembershipParams): Promise<TDaoStopPaidMembershipResult> {
-        throw new Error('Method is unavailable in current version')
+    async stopPaidMembership(
+        params: TDaoStopPaidMembershipParams,
+    ): Promise<TDaoStopPaidMembershipResult> {
+        const { comment = '', reviewers = [], cell } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellStopPaidMembership', {
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForStopPaidMembership', {
+                comment: comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
     private async _isAuthMember(): Promise<boolean> {
@@ -1633,10 +1990,34 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 
     private async _isMintOn(): Promise<boolean> {
         const { _allowMint } = await this.dao.runLocal('_allowMint', {})
+        if (_allowMint) {
+            return await this._isMintOnPrev()
+        }
         return _allowMint
     }
 
-    private _getMembers(mapping: { [key: string]: { member: TAddress; count: string } }) {
+    private async _isMintOnPrev(): Promise<boolean> {
+        const { value0: prevAddr } = await this.dao.runLocal('getPreviousDaoAddr', {})
+        if (!prevAddr) {
+            return true
+        }
+
+        const prevDao = await this.gosh.getDao({ address: prevAddr, useAuth: false })
+        const { value1: prevVer } = await prevDao.dao.runLocal('getVersion', {})
+        if (prevVer !== '1.0.0') {
+            const { _allowMint } = await prevDao.dao.runLocal('_allowMint', {})
+            return _allowMint
+        }
+        return true
+    }
+
+    private async _isMintOnPrevDiff(): Promise<boolean> {
+        const { _allowMint: cur } = await this.dao.runLocal('_allowMint', {})
+        const prev = await this._isMintOnPrev()
+        return cur === true && prev === false
+    }
+
+    private _getMembers(mapping: any) {
         const members = []
         for (const key in mapping) {
             const profile = `0:${key.slice(2)}`
@@ -1644,6 +2025,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
                 profile,
                 wallet: mapping[key].member,
                 allowance: parseInt(mapping[key].count),
+                expired: parseInt(mapping[key].expired),
             })
         }
         return members
@@ -1709,26 +2091,45 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new GoshError('Topic address should be provided')
     }
 
-    private async _getSystemRepository(): Promise<
-        IGoshRepositoryAdapter | null | undefined
-    > {
+    private async _getSystemRepository(
+        version?: string,
+    ): Promise<IGoshRepositoryAdapter | null | undefined> {
+        version = version ?? this.getVersion()
+
+        if (this.systemRepository && this.systemRepository.getVersion() !== version) {
+            const daoName = await this.getName()
+            const adapter = await GoshAdapterFactory.create(version).getRepository({
+                path: `${daoName}/_index`,
+            })
+            if (await adapter.isDeployed()) {
+                this.systemRepository = adapter
+            }
+        }
+
         if (!this.systemRepository) {
-            const repo = await this.getRepository({ name: '_index' })
-            if (await repo.isDeployed()) {
-                this.systemRepository = repo
+            const adapter = await this.getRepository({ name: '_index' })
+            if (await adapter.isDeployed()) {
+                this.systemRepository = adapter
             }
         }
         return this.systemRepository
     }
 
     private async _getSystemBlob(filename: string): Promise<string | null> {
-        const repository = await this._getSystemRepository()
+        let repository = await this._getSystemRepository()
         if (!repository) {
             return null
         }
 
         const branch = await repository.getBranch('main')
-        const tree = await repository.getTree(branch.commit.name, '')
+        if (branch.commit.version !== repository.getVersion()) {
+            repository = await this._getSystemRepository(branch.commit.version)
+            if (!repository) {
+                return null
+            }
+        }
+
+        const tree = await repository.getTree(branch.commit, '')
         const item = tree.items.find((it) => {
             return it.type === 'blob' && it.name.toLowerCase() === filename
         })
@@ -1758,7 +2159,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
 
         await this.dao.run('deployWalletsOutMember', {
-            pubmem: [{ member: profile, count: 0 }],
+            pubmem: [{ member: profile, count: 0, expired: 0 }],
             index: 0,
         })
         const wait = await whileFinite(async () => {
@@ -1790,6 +2191,131 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
                 throw new GoshError('Regular tokens topup failed')
             }
         }
+    }
+
+    private async _createMultiProposalData(
+        proposals: TEventMultipleCreateProposalParams['proposals'],
+    ) {
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
+
+        // Prepare cells
+        const cells = await executeByChunk(proposals, 10, async ({ type, params }) => {
+            if (type === ESmvEventType.REPO_CREATE) {
+                return await this.createRepository({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.BRANCH_LOCK) {
+                const repository = await this.getRepository({ name: params.repository })
+                return await repository.lockBranch({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.BRANCH_UNLOCK) {
+                const repository = await this.getRepository({ name: params.repository })
+                return await repository.unlockBranch({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_MEMBER_ADD) {
+                return await this.createMember({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_MEMBER_DELETE) {
+                return await this.deleteMember({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_UPGRADE) {
+                return await this.upgrade({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.TASK_CREATE) {
+                return await this.createTask({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.TASK_DELETE) {
+                return await this.deleteTask({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_TOKEN_VOTING_ADD) {
+                return await this.addVotingTokens({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_TOKEN_REGULAR_ADD) {
+                return await this.addRegularTokens({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_TOKEN_MINT) {
+                return await this.mint({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_TOKEN_MINT_DISABLE) {
+                return await this.disableMint({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_TAG_ADD) {
+                return await this.createTag({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_TAG_REMOVE) {
+                return await this.deleteTag({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_ALLOWANCE_CHANGE) {
+                return await this.updateMemberAllowance({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.REPO_TAG_ADD) {
+                const repository = await this.getRepository({ name: params.repository })
+                return await repository.createTag({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.REPO_TAG_REMOVE) {
+                const repository = await this.getRepository({ name: params.repository })
+                return await repository.deleteTag({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.REPO_UPDATE_DESCRIPTION) {
+                const repository = await this.getRepository({ name: params.repository })
+                return await repository.updateDescription({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_EVENT_ALLOW_DISCUSSION) {
+                return await this.updateEventAllowDiscussion({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_EVENT_HIDE_PROGRESS) {
+                return await this.updateEventShowProgress({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE) {
+                return await this.updateAskMembershipAllowance({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DELAY) {
+                const { value0 } = await this.wallet!.runLocal('getCellDelay', {})
+                return value0
+            }
+            if (type === ESmvEventType.TASK_REDEPLOY) {
+                return await this.transferTask(params)
+            }
+            if (type === ESmvEventType.TASK_REDEPLOYED) {
+                return await this.upgradeTaskComplete({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_VOTE) {
+                return await this.voteDao({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_TOKEN_DAO_SEND) {
+                return await this.sendDaoToken({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_REVIEWER) {
+                return await this.reviewDao({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_RECEIVE_BOUNTY) {
+                return await this.receiveTaskBountyDao({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_TOKEN_DAO_LOCK) {
+                return await this.lockDaoToken({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.TASK_UPGRADE) {
+                return await this.upgradeTask({ ...params, cell: true })
+            }
+            return null
+        })
+
+        // Compose cells
+        const clean = cells.filter((cell) => typeof cell === 'string')
+        const count = clean.length
+        for (let i = clean.length - 1; i > 0; i--) {
+            const cellA = clean[i - 1]
+            const cellB = clean[i]
+            const { value0 } = await this.wallet.runLocal('AddCell', {
+                data1: cellA,
+                data2: cellB,
+            })
+            clean.splice(i - 1, 2, value0)
+            await sleep(100)
+        }
+
+        return { cell: clean[0], count }
     }
 }
 
@@ -2906,7 +3432,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
         const { value0 } = await this.auth.wallet0.runLocal('getTaskAddr', {
-            repoName: await this.getName(),
+            reponame: await this.getName(),
             nametask: name,
         })
         return new GoshTask(this.client, value0)
@@ -3024,7 +3550,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
 
         // Test cases (add, delete, update, rename)
-        if (!aPath && !bPath) throw new GoshError('Blob has no tree path')
+        if (!aPath && !bPath) {
+            throw new GoshError('Blob has no tree path')
+        }
         if (!aPath && bPath) {
             if (bItem) {
                 throw new GoshError(EGoshError.FILE_EXISTS, { path: bPath })
@@ -3369,18 +3897,31 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     private async _deployTree(items: TTreeItem[], wallet?: IGoshWallet): Promise<void> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        wallet = wallet || this.auth.wallet0
+        const repoName = await this.getName()
 
         // Check if deployed
         const hash = sha1Tree(items, 'sha1')
         const tree = await this._getTree({ name: hash })
-        if (await tree.isDeployed()) return
+        let isDeployNeeded = true
+        if (await tree.isDeployed()) {
+            const { value0: isReady } = await tree.runLocal('getDetails', {})
+            if (isReady) {
+                return
+            }
+            isDeployNeeded = false
+        }
 
-        // Deploy tree
-        const datatree: any = {}
+        // Generate tree items and split by chunks
+        const treeItems: any[] = [{}]
         for (const { flags, mode, type, name, sha1, sha256 } of items) {
+            const chunk = treeItems[treeItems.length - 1]
             const key = await this.gosh.getTvmHash(`${type}:${name}`)
-            datatree[key] = {
+            chunk[key] = {
                 flags: flags.toString(),
                 mode,
                 typeObj: type,
@@ -3388,15 +3929,46 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 sha1,
                 sha256,
             }
+
+            if (Buffer.from(JSON.stringify(chunk)).byteLength >= MAX_ONCHAIN_SIZE) {
+                treeItems.push({})
+            }
         }
 
-        wallet = wallet || this.auth.wallet0
-        await wallet.run('deployTree', {
-            repoName: await this.repo.getName(),
-            shaTree: hash,
-            datatree,
-            ipfs: null,
+        // Deploy main tree
+        if (isDeployNeeded) {
+            await wallet.run('deployTree', {
+                repoName,
+                shaTree: hash,
+                datatree: treeItems[0],
+                number: items.length,
+            })
+            const waitMain = await whileFinite(async () => {
+                return await tree.isDeployed()
+            })
+            if (!waitMain) {
+                throw new GoshError('Deploy first tree chunk timeout reached')
+            }
+        }
+
+        // Deploy rest tree chunks
+        const restTreeItems = isDeployNeeded ? treeItems.slice(1) : treeItems
+        await executeByChunk(restTreeItems, 10, async (datatree) => {
+            await wallet!.run('deployAddTree', {
+                repoName,
+                shaTree: hash,
+                datatree,
+            })
         })
+
+        // Wait for tree is ready
+        const waitReady = await whileFinite(async () => {
+            const { value0: isReady } = await tree.runLocal('getDetails', {})
+            return isReady
+        })
+        if (!waitReady) {
+            throw new GoshError('Deploy tree timeout reached')
+        }
     }
 
     private async _deployDiff(
@@ -3487,6 +4059,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             pubaddrassign: { [address: string]: boolean }
             pubaddrreview: { [address: string]: boolean }
             pubaddrmanager: { [address: string]: boolean }
+            daoMembers: { [address: string]: string }
         },
     ): Promise<void> {
         if (!this.auth) {
@@ -3545,16 +4118,26 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     private async _getTaskCommitConfig(config?: TTaskCommitConfig) {
-        const _getMapping = async (usernames: string[]) => {
-            const clean = usernames.map((item) => item.trim()).filter((item) => !!item)
-            const unique = new Set([...clean])
-            const validated = await this.gosh.isValidProfile(Array.from(unique))
+        const _getMapping = async (users: TUserParam[]) => {
+            const list = users.map((user) => {
+                return `${user.name}.${user.type}`
+            })
+            const unique = users.filter((user, index) => {
+                return list.indexOf(`${user.name}.${user.type}`) === index
+            })
 
             const map: { [address: string]: boolean } = {}
             await Promise.all(
-                validated.map(async (item) => {
-                    await dao.getMemberWallet({ profile: item.address, create: true })
-                    map[item.address] = true
+                unique.map(async (item) => {
+                    const { user, address } = await this.gosh.isValidUser(item)
+                    await dao.getMemberWallet({ profile: address, create: true })
+                    map[address] = true
+                    if (
+                        user.type === 'dao' &&
+                        Object.keys(daoMembers).indexOf(address) < 0
+                    ) {
+                        daoMembers[address] = user.name
+                    }
                 }),
             )
             return map
@@ -3573,15 +4156,17 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             throw new GoshError('Task does not exist', { name: config.task })
         }
 
-        const assigners = await _getMapping(config.assigners as string[])
-        const reviewers = await _getMapping(config.reviewers as string[])
-        const managers = await _getMapping(config.managers as string[])
+        const daoMembers: { [address: string]: string } = {}
+        const assigners = await _getMapping(config.assigners as TUserParam[])
+        const reviewers = await _getMapping(config.reviewers as TUserParam[])
+        const managers = await _getMapping(config.managers as TUserParam[])
 
         return {
             task: task.address,
             pubaddrassign: assigners,
             pubaddrreview: reviewers,
             pubaddrmanager: managers,
+            daoMembers,
         }
     }
 
@@ -3617,12 +4202,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         // Split array for chunks for each wallet
         const walletChunkSize = Math.ceil(array.length / this.subwallets.length)
         const chunks = splitByChunk(array, walletChunkSize)
+        const chunkSize = Math.ceil(MAX_PARALLEL_WRITE / chunks.length)
 
         // Run chunk for each wallet
         const result: Output[] = []
         await Promise.all(
             chunks.map(async (chunk, index) => {
-                const chunkSize = Math.floor(MAX_PARALLEL_WRITE / chunks.length)
                 const subresult = await executeByChunk(
                     chunk,
                     chunkSize,
@@ -3869,12 +4454,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
  * TODO: Move this adapter to DAO adapter
  */
 class GoshSmvAdapter implements IGoshSmvAdapter {
+    private gosh: IGoshAdapter
     private dao: IGoshDao
     private client: TonClient
     private wallet?: IGoshWallet
 
     constructor(gosh: IGoshAdapter, dao: IGoshDao, wallet?: IGoshWallet) {
         this.client = gosh.client
+        this.gosh = gosh
         this.dao = dao
         this.wallet = wallet
     }
@@ -3981,8 +4568,8 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
                     undefined,
                     { useCachedBoc: true },
                 )
-                const profile = new GoshProfile(this.client, value0)
-                return await profile.getName()
+                const profile = await this.gosh.getUserByAddress(value0)
+                return profile.name
             },
         )
         return usernames
@@ -4084,13 +4671,14 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
 
         const allowance = await this._getAuthAllowance()
         if (allowance < min) {
-            throw new GoshError('Allowance too low to start proposal', {
+            throw new GoshError(EGoshError.SMV_NO_ALLOWANCE, {
                 yours: allowance,
                 min,
             })
         }
 
         const regular = await this.getWalletBalance(this.wallet)
+        console.debug('total', total, 'locked', locked, 'regular', regular, 'min', min)
         if (regular >= min - total) {
             await this.transferToSmv(0)
             const check = await whileFinite(async () => {
@@ -4105,7 +4693,11 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             return
         }
 
-        throw new GoshError(EGoshError.SMV_NO_BALANCE)
+        throw new GoshError(EGoshError.SMV_NO_BALANCE, {
+            min,
+            message:
+                "You don't have enough tokens or didn't transfer your tokens from previous version",
+        })
     }
 
     async transferToSmv(amount: number): Promise<void> {
@@ -4291,32 +4883,55 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getChangeAllowDiscussionProposalParams'
         } else if (type === ESmvEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE) {
             fn = 'getAbilityInviteProposalParams'
+        } else if (type === ESmvEventType.DAO_VOTE) {
+            fn = 'getDaoVoteProposalParams'
+        } else if (type === ESmvEventType.DAO_TOKEN_DAO_SEND) {
+            fn = 'getDaoSendTokenProposalParams'
+        } else if (type === ESmvEventType.UPGRADE_VERSION_CONTROLLER) {
+            fn = 'getUpgradeCodeProposalParams'
+        } else if (type === ESmvEventType.DAO_REVIEWER) {
+            fn = 'getSendReviewProposalParams'
+        } else if (type === ESmvEventType.DAO_RECEIVE_BOUNTY) {
+            fn = 'getDaoAskGrantProposalParams'
+        } else if (type === ESmvEventType.DAO_TOKEN_DAO_LOCK) {
+            fn = 'getDaoLockVoteProposalParams'
+        } else if (type === ESmvEventType.TASK_REDEPLOY) {
+            return {}
+        } else if (type === ESmvEventType.TASK_REDEPLOYED) {
+            return {}
+        } else if (type === ESmvEventType.TASK_UPGRADE) {
+            fn = 'getUpgradeTaskProposalParams'
+        } else if (type === ESmvEventType.DAO_TOKEN_TRANSFER_FROM_PREV) {
+            fn = 'getDaoTransferTokenProposalParams'
+        } else if (type === ESmvEventType.DAO_START_PAID_MEMBERSHIP) {
+            fn = 'getStartMembershipProposalParams'
+        } else if (type === ESmvEventType.DAO_STOP_PAID_MEMBERSHIP) {
+            return {}
         } else if (type === ESmvEventType.MULTI_PROPOSAL) {
             const { num, data0 } = await event.runLocal('getDataFirst', {}, undefined, {
                 useCachedBoc: true,
             })
-            const count = parseInt(num)
-            const items = []
-
-            let rest = data0
-            for (let i = 0; i < count; i++) {
-                const { data1: curr, data2: next } = await event.runLocal(
-                    'getHalfData',
-                    { Data: rest },
-                    undefined,
-                    { useCachedBoc: true },
-                )
-                items.push(await this._getMultiEventData(event, curr))
-
-                if (i === count - 2) {
-                    items.push(await this._getMultiEventData(event, next))
-                    break
-                }
-                rest = next
-                await sleep(300)
+            return {
+                details: null,
+                items: await this._parseMultiEventCell(event, parseInt(num), data0),
             }
-
-            return { details: null, items }
+        } else if (type === ESmvEventType.MULTI_PROPOSAL_AS_DAO) {
+            const { number, proposals, ...rest } = await event.runLocal(
+                'getDaoMultiProposalParams',
+                {},
+                undefined,
+                {
+                    useCachedBoc: true,
+                },
+            )
+            return {
+                details: { number, proposals, ...rest },
+                items: await this._parseMultiEventCell(
+                    event,
+                    parseInt(number),
+                    proposals,
+                ),
+            }
         } else {
             throw new GoshError(`Event type "${type}" is unknown`)
         }
@@ -4324,6 +4939,33 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         const decoded = await event.runLocal(fn, {}, undefined, { useCachedBoc: true })
         delete decoded.proposalKind
         return decoded
+    }
+
+    private async _parseMultiEventCell(
+        event: IGoshSmvProposal,
+        count: number,
+        cell: string,
+    ) {
+        const items = []
+
+        let rest = cell
+        for (let i = 0; i < count; i++) {
+            const { data1: curr, data2: next } = await event.runLocal(
+                'getHalfData',
+                { Data: rest },
+                undefined,
+                { useCachedBoc: true },
+            )
+            items.push(await this._getMultiEventData(event, curr))
+
+            if (i === count - 2) {
+                items.push(await this._getMultiEventData(event, next))
+                break
+            }
+            rest = next
+            await sleep(300)
+        }
+        return items
     }
 
     private async _getMultiEventData(event: IGoshSmvProposal, data: string) {
@@ -4381,6 +5023,37 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getTagUpgradeProposalParamsData'
         } else if (kind === ESmvEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE) {
             fn = 'getAbilityInviteProposalParamsData'
+        } else if (kind === ESmvEventType.DELAY) {
+            return { type }
+        } else if (kind === ESmvEventType.DAO_VOTE) {
+            fn = 'getDaoVoteProposalParamsData'
+        } else if (kind === ESmvEventType.DAO_TOKEN_DAO_SEND) {
+            fn = 'getDaoSendTokenProposalParamsData'
+        } else if (kind === ESmvEventType.DAO_REVIEWER) {
+            fn = 'getSendReviewProposalParamsData'
+        } else if (kind === ESmvEventType.DAO_RECEIVE_BOUNTY) {
+            fn = 'getDaoAskGrantProposalParamsData'
+        } else if (kind === ESmvEventType.DAO_TOKEN_DAO_LOCK) {
+            fn = 'getDaoLockVoteProposalParamsData'
+        } else if (kind === ESmvEventType.TASK_REDEPLOY) {
+            const decoded = await event.runLocal(
+                'getRedeployTaskProposalParamsData',
+                { Data: data },
+                undefined,
+                {
+                    useCachedBoc: true,
+                },
+            )
+            data = decoded.data
+            fn = 'getTaskData'
+        } else if (kind === ESmvEventType.TASK_REDEPLOYED) {
+            return { type }
+        } else if (kind === ESmvEventType.TASK_UPGRADE) {
+            fn = 'getUpgradeTaskProposalParamsData'
+        } else if (kind === ESmvEventType.DAO_START_PAID_MEMBERSHIP) {
+            fn = 'getStartMembershipProposalParamsData'
+        } else if (kind === ESmvEventType.DAO_STOP_PAID_MEMBERSHIP) {
+            return { type }
         } else {
             throw new GoshError(`Multi event type "${type}" is unknown`)
         }
@@ -4414,4 +5087,4 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     }
 }
 
-export { GoshAdapter_2_0_0 }
+export { GoshAdapter_5_0_0 }

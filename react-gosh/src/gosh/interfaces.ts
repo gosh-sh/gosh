@@ -98,6 +98,10 @@ import {
     TDaoTokenDaoTransferResult,
     TUpgradeVersionControllerParams,
     TUpgradeVersionControllerResult,
+    TDaoStartPaidMembershipParams,
+    TDaoStartPaidMembershipResult,
+    TDaoStopPaidMembershipParams,
+    TDaoStopPaidMembershipResult,
 } from '../types'
 
 interface IGoshAdapter {
@@ -256,6 +260,13 @@ interface IGoshDaoAdapter {
     upgradeVersionController(
         params: TUpgradeVersionControllerParams,
     ): Promise<TUpgradeVersionControllerResult>
+
+    startPaidMembership(
+        params: TDaoStartPaidMembershipParams,
+    ): Promise<TDaoStartPaidMembershipResult>
+    stopPaidMembership(
+        params: TDaoStopPaidMembershipParams,
+    ): Promise<TDaoStopPaidMembershipResult>
 }
 
 interface IGoshRepositoryAdapter {

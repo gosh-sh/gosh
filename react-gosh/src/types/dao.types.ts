@@ -89,6 +89,7 @@ type TDaoMember = {
     profile: TAddress
     wallet: TAddress
     allowance?: number
+    expired?: number
 }
 
 type TDaoMemberDetails = TDaoMember & {
@@ -194,6 +195,7 @@ type TDaoMemberCreateParams = TEventCreateParams & {
         user: TUserParam
         allowance: number
         comment: string
+        expired: number
     }[]
     cell?: boolean
 }
@@ -383,6 +385,22 @@ type TUpgradeVersionControllerParams = TEventCreateParams & {
 
 type TUpgradeVersionControllerResult = void
 
+type TDaoStartPaidMembershipParams = TEventCreateParams & {
+    value: number
+    valuepersubs: number
+    timeforsubs: number
+    keyforservice: string
+    cell: string
+}
+
+type TDaoStartPaidMembershipResult = string | void
+
+type TDaoStopPaidMembershipParams = TEventCreateParams & {
+    cell: string
+}
+
+type TDaoStopPaidMembershipResult = string | void
+
 export {
     ETaskBounty,
     TDao,
@@ -451,4 +469,8 @@ export {
     TDaoTokenDaoTransferResult,
     TUpgradeVersionControllerParams,
     TUpgradeVersionControllerResult,
+    TDaoStartPaidMembershipParams,
+    TDaoStartPaidMembershipResult,
+    TDaoStopPaidMembershipParams,
+    TDaoStopPaidMembershipResult,
 }

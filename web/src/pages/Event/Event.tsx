@@ -40,6 +40,8 @@ import { DaoTokenDaoLockEvent } from './components/DaoTokenDaoLockEvent/DaoToken
 import { TaskUpgradeEvent } from './components/TaskUpgradeEvent/TaskUpgradeEvent'
 import { DaoTokenDaoTransferEvent } from './components/DaoTokenDaoTransferEvent/DaoTokenDaoTransferEvent'
 import { UpgradeVersionControllerEvent } from './components/UpgradeVersionControllerEvent/UpgradeVersionControllerEvent'
+import { DaoStartPaidMembershipEvent } from './components/DaoStartPaidMembershipEvent/DaoStartPaidMembershipEvent'
+import { DaoStopPaidMembershipEvent } from './components/DaoStopPaidMembershipEvent/DaoStopPaidMembershipEvent'
 
 const EventPage = () => {
     const { eventAddr } = useParams()
@@ -231,6 +233,12 @@ const EventPage = () => {
                         )}
                         {event.type.kind === ESmvEventType.UPGRADE_VERSION_CONTROLLER && (
                             <UpgradeVersionControllerEvent data={event.data} />
+                        )}
+                        {event.type.kind === ESmvEventType.DAO_START_PAID_MEMBERSHIP && (
+                            <DaoStartPaidMembershipEvent data={event.data} />
+                        )}
+                        {event.type.kind === ESmvEventType.DAO_STOP_PAID_MEMBERSHIP && (
+                            <DaoStopPaidMembershipEvent data={event.data} />
                         )}
                     </div>
                 </div>
