@@ -369,7 +369,8 @@ function vote_for_proposal {
 
     sleep 3
 
-    tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m voteFor --platform_id $platform_id --choice true --amount 20 --num_clients 1 --note ""
+    VOTE_TOKENS="${VOTE_TOKENS:-20}"
+    tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m voteFor --platform_id $platform_id --choice true --amount $VOTE_TOKENS --num_clients 1 --note ""
 }
 
 function mint_tokens {
@@ -677,9 +678,9 @@ function get_number_of_members {
 
 function start_paid_membership {
     echo "***** start proposal for paid membership *****"
-    VALUE=25
-    VALUE_PER_SUB=10
-    TIME_FOR_SUB=60
+    VALUE="${VALUE:-25}"
+    VALUE_PER_SUB="${VALUE_PER_SUB:-10}"
+    TIME_FOR_SUB="${TIME_FOR_SUB:-60}"
     KEY_FOR_SERVICE="0x"$(cat $WALLET_KEYS | jq .public | cut -d '"' -f 2)
     tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForStartPaidMembership \
       --value $VALUE --valuepersubs $VALUE_PER_SUB --timeforsubs $TIME_FOR_SUB --keyforservice $KEY_FOR_SERVICE --comment "" --num_clients 1 --reviewers []
