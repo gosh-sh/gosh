@@ -374,7 +374,7 @@ function vote_for_proposal {
 
 function mint_tokens {
     tonos-cli runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
-    echo "***** start proposal for task deploy *****"
+    echo "***** start proposal for mint tokens *****"
     TOKEN=5
     TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellMintToken --token $TOKEN --comment "" | sed -n '/value0/ p' | cut -d'"' -f 4)
     tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForMintDaoReserve \
@@ -398,7 +398,7 @@ function mint_tokens {
 
 function mint_tokens_3 {
     tonos-cli runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
-    echo "***** start proposal for task deploy *****"
+    echo "***** start proposal for mint tokens *****"
     TOKEN="${TOKEN:-5}"
     tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForMintDaoReserve \
       --token $TOKEN --comment "" --num_clients 1 --reviewers []
@@ -553,6 +553,49 @@ function add_dao_to_dao {
 
 }
 
+function add_members_to_dao {
+  echo "***** start proposal for add members to dao *****"
+  echo "Number of members $MEMBERS_CNT"
+  PARAMS="{\"pubaddr\":["
+  i=1
+  ADDR_TEMPLATE="0:f04965b9fe7366b81aa2c44e9cfd7056a13170d9cf1bf4509db6c5627782eb"
+  DAO="["
+  while [[ $i -le $MEMBERS_CNT ]]
+  do
+    echo "generate member #$i"
+    INDEX=$(printf '%02d' $i)
+    PARAMS="$PARAMS{\"member\":\""$ADDR_TEMPLATE""$INDEX"\",\"count\":0}"
+    DAO="$DAO""null"
+    if [ "$i" != "$MEMBERS_CNT" ]; then
+      PARAMS="$PARAMS,"
+      DAO="$DAO,"
+    fi
+    ((i = i + 1))
+  done
+  DAO="$DAO]"
+  PARAMS_START="$PARAMS],\"dao\":$DAO,\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
+  echo "PARAMS_START=$PARAMS_START"
+  tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForDeployWalletDao $PARAMS_START
+  NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
+  echo "NOW_ARG=$NOW_ARG"
+  PARAMS_GET_CELL="$PARAMS],\"dao\":$DAO,\"comment\":\"\",\"time\":$NOW_ARG}"
+  echo "PARAMS_GET_CELL=$PARAMS_GET_CELL"
+  TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellDeployWalletDao \
+    $PARAMS_GET_CELL | sed -n '/value0/ p' | cut -d'"' -f 4)
+  sleep 10
+
+  PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
+        --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
+        "{\"data\":\"$TVMCELL\"}" \
+         --decode-c6 | grep value0 \
+        | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+  vote_for_proposal
+
+  sleep 10
+
+}
+
 function child_dao_ask_granted {
   echo "***** start proposal for ask dao reward *****"
 
@@ -606,7 +649,7 @@ function child_dao_lock_vote {
 function dao_transfer_tokens {
   echo "***** start proposal *****"
   GRANT=2
-  OLD_VERSION=3.0.0
+  OLD_VERSION=$CUR_VERSION
   tonos-cli -j callx --abi $WALLET_ABI --addr $NEW_CHILD_WALLET_ADDR --keys $WALLET_KEYS -m startProposalForDaoTransferTokens \
     "{\"wallet\":\"$CHILD_DAO_WALLET_ADDR\",\"newwallet\":\"$NEW_CHILD_DAO_WALLET_ADDR\",\"grant\":$GRANT,\"oldversion\":\"$OLD_VERSION\",\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
   NOW_ARG=$(tonos-cli -j account $NEW_CHILD_WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
@@ -628,3 +671,6 @@ function dao_transfer_tokens {
   sleep 10
 }
 
+function get_number_of_members {
+  MEMBERS_LEN=$(tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getDetails | grep -c member)
+}

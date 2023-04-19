@@ -17,7 +17,7 @@ set -e
 . ./util.sh
 
 #1
-REPO_NAME=repo8
+REPO_NAME="repo8_$(date +%s)"
 
 [ -d $REPO_NAME"-clone1" ] && rm -rf $REPO_NAME"-clone1"
 [ -d $REPO_NAME"-clone2" ] && rm -rf $REPO_NAME"-clone2"
@@ -97,6 +97,9 @@ echo "***** push $FILE2 into $BRANCH_NAME *****"
 git push -u origin $BRANCH_NAME 2>&1 | grep 'fetch first'
 
 cd ..
+
+sleep 10
+
 
 # 10
 echo "***** cloning repo *****"

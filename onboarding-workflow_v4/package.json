@@ -1,0 +1,5 @@
+{
+    "dependencies": {
+        "@eversdk/lib-web": "^1.41.1"
+    }
+}

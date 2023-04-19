@@ -13,7 +13,7 @@ set -e
 set -o pipefail
 . ./util.sh
 
-REPO_NAME=repo11
+REPO_NAME="repo11_$(date +%s)"
 BRANCH_NAME=main
 TESTS_DIR=`pwd`
 
@@ -65,6 +65,9 @@ sleep 30
 
 echo "***** cloning repo (2) *****"
 cd ..
+
+sleep 10
+
 git clone --recurse-submodules \
     gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 

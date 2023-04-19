@@ -345,4 +345,3 @@ pub async fn load_messages_to(
     };
     Ok((messages, page))
 }
-

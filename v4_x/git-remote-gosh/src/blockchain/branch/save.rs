@@ -1,10 +1,7 @@
-use async_trait::async_trait;
 use crate::blockchain::{
-    call::BlockchainCall,
-    contract::ContractInfo,
-    user_wallet::UserWallet,
-    Everscale,
+    call::BlockchainCall, contract::ContractInfo, user_wallet::UserWallet, Everscale,
 };
+use async_trait::async_trait;
 
 #[derive(Serialize, Debug)]
 struct DeployBranchParams {
@@ -46,11 +43,19 @@ impl DeployBranch for Everscale {
     ) -> anyhow::Result<()> {
         let wallet_contract = wallet.take_zero_wallet().await?;
 
-        let params = DeployBranchParams { repo_name, new_name, from_commit };
+        let params = DeployBranchParams {
+            repo_name,
+            new_name,
+            from_commit,
+        };
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
 
         let result = self
-            .call(&wallet_contract, "deployBranch", Some(serde_json::to_value(params)?))
+            .call(
+                &wallet_contract,
+                "deployBranch",
+                Some(serde_json::to_value(params)?),
+            )
             .await
             .map(|_| ());
         // drop(wallet_contract);
@@ -83,11 +88,18 @@ impl DeleteBranch for Everscale {
         let wallet_contract = wallet.take_zero_wallet().await?;
         tracing::debug!("Acquired wallet: {}", wallet_contract.get_address());
 
-        let params = DeleteBranchParams { repo_name, branch_name };
+        let params = DeleteBranchParams {
+            repo_name,
+            branch_name,
+        };
         tracing::debug!("deleteBranch params: {:?}", params);
 
         let result = self
-            .call(&wallet_contract, "deleteBranch", Some(serde_json::to_value(params)?))
+            .call(
+                &wallet_contract,
+                "deleteBranch",
+                Some(serde_json::to_value(params)?),
+            )
             .await
             .map(|_| ());
 

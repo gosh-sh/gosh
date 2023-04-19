@@ -1,3 +1,4 @@
+use crate::blockchain::AddrVersion;
 use crate::{
     abi as gosh_abi,
     blockchain::{
@@ -19,7 +20,6 @@ use std::time::{Duration, Instant};
 use tokio::time::sleep;
 use ton_client::abi::{DecodedMessageBody, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
-use crate::blockchain::AddrVersion;
 
 #[derive(Serialize, Debug)]
 pub struct DeployCommitParams {
@@ -68,7 +68,7 @@ pub trait BlockchainCommitPusher {
         remote: &Remote,
         dao_addr: &BlockchainContractAddress,
         raw_commit: &str,
-        parents:&Vec<AddrVersion>,
+        parents: &Vec<AddrVersion>,
         upgrade_commit: bool,
     ) -> anyhow::Result<()>;
     async fn notify_commit(

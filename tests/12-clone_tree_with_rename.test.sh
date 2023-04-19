@@ -3,7 +3,7 @@ set -e
 set -o pipefail
 . ./util.sh
 
-REPO_NAME=repo12
+REPO_NAME="repo12_$(date +%s)"
 CLONE_REPO_NAME=repo12_clone
 
 echo "Test ignored need to find alternative to command tree"

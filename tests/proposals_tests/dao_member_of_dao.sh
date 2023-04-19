@@ -22,13 +22,13 @@ SECOND_VERSION=v4_x
 #./upgrade_tests/set_up.sh $FIRST_VERSION $SECOND_VERSION
 #exit 0
 
-REPO_NAME=prop_repo03
-DAO_NAME="dao-prop-child-test03_$(date +%s)"
+REPO_NAME=prop_repo02
+DAO_NAME="dao-prop-child_$(date +%s)"
 NEW_REPO_PATH=prop_repo02_v2
 COMMIT_ABI="../$FIRST_VERSION/contracts/gosh/commit.abi.json"
 SNAPSHOT_ABI="../$FIRST_VERSION/contracts/gosh/snapshot.abi.json"
 TASK_ABI="../$FIRST_VERSION/contracts/gosh/task.abi.json"
-
+OLD_VERSION=$CUR_VERSION
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
 [ -d $NEW_REPO_PATH ] && rm -rf $NEW_REPO_PATH
@@ -42,7 +42,7 @@ CHILD_DAO_NAME=$DAO_NAME
 CHILD_DAO_ADDR=$DAO_ADDR
 CHILD_WALLET_ADDR=$WALLET_ADDR
 
-DAO_NAME="dao-prop-test03_$(date +%s)"
+DAO_NAME="dao-prop_$(date +%s)"
 
 deploy_DAO_and_repo
 
@@ -70,7 +70,11 @@ fi
 TASK_NAME="task1"
 deploy_task_with_proposal_3
 
-TASK_ADDR=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTaskAddr --abi $WALLET_ABI --nametask $TASK_NAME --repoName $REPO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
+if [ "$CUR_VERSION" == "3.0.0" ]; then
+  TASK_ADDR=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTaskAddr --abi $WALLET_ABI --nametask $TASK_NAME --repoName $REPO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
+else
+  TASK_ADDR=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTaskAddr --abi $WALLET_ABI --nametask $TASK_NAME --reponame $REPO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
+fi
 wait_account_active $TASK_ADDR
 
 export OLD_LINK="gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME"
@@ -98,7 +102,11 @@ cd ..
 BRANCH_NAME=main
 
 #function: deployTree, args: Some(Object {"shaTree": String("3cc611957f6b92c2c77e6d4704d3bcf85a6da915"), "repoName": String("prop_repo01"), "datatree": Object {"0x4b4ccbf84f760ad40b606b57dc874c4414a453d93a5573c39cb382c3c8ccc349": Object {"flags": String("2"), "mode": String("100644"), "typeObj": String("blob"), "name": String("1.txt"), "sha1": String("5b030b5b4adb9d8ee0174925ddbd7e06772b6b21"), "sha256": String("0xcd70f1f599c08be09ff4d7743d075b0cc8b7c8a4a177ab52c36231bcfdd18731")}}, "ipfs": Null})
-tonos-cli callx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m deployTree "{\"shaTree\":\"3cc611957f6b92c2c77e6d4704d3bcf85a6da915\",\"repoName\":\"$REPO_NAME\",\"datatree\":{\"0x4b4ccbf84f760ad40b606b57dc874c4414a453d93a5573c39cb382c3c8ccc349\":{\"flags\":\"2\",\"mode\":\"100644\",\"typeObj\":\"blob\",\"name\":\"1.txt\",\"sha1\":\"5b030b5b4adb9d8ee0174925ddbd7e06772b6b21\",\"sha256\":\"0xcd70f1f599c08be09ff4d7743d075b0cc8b7c8a4a177ab52c36231bcfdd18731\"}},\"ipfs\":null}"
+if [ "$CUR_VERSION" == "3.0.0" ]; then
+  tonos-cli callx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m deployTree "{\"shaTree\":\"3cc611957f6b92c2c77e6d4704d3bcf85a6da915\",\"repoName\":\"$REPO_NAME\",\"datatree\":{\"0x4b4ccbf84f760ad40b606b57dc874c4414a453d93a5573c39cb382c3c8ccc349\":{\"flags\":\"2\",\"mode\":\"100644\",\"typeObj\":\"blob\",\"name\":\"1.txt\",\"sha1\":\"5b030b5b4adb9d8ee0174925ddbd7e06772b6b21\",\"sha256\":\"0xcd70f1f599c08be09ff4d7743d075b0cc8b7c8a4a177ab52c36231bcfdd18731\"}},\"ipfs\":null}"
+else
+  tonos-cli callx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m deployTree "{\"shaTree\":\"3cc611957f6b92c2c77e6d4704d3bcf85a6da915\",\"repoName\":\"$REPO_NAME\",\"datatree\":{\"0x4b4ccbf84f760ad40b606b57dc874c4414a453d93a5573c39cb382c3c8ccc349\":{\"flags\":\"2\",\"mode\":\"100644\",\"typeObj\":\"blob\",\"name\":\"1.txt\",\"sha1\":\"5b030b5b4adb9d8ee0174925ddbd7e06772b6b21\",\"sha256\":\"0xcd70f1f599c08be09ff4d7743d075b0cc8b7c8a4a177ab52c36231bcfdd18731\"}},\"number\":1}"
+fi
 
 TREE_ADDR=$(tonos-cli -j run "$REPO_ADDR" getTreeAddr "{\"treeName\":\"3cc611957f6b92c2c77e6d4704d3bcf85a6da915\"}" --abi "$REPO_ABI" | sed -n '/value0/ p' | cut -d'"' -f 4)
 echo "tree address: $TREE_ADDR"
@@ -197,8 +205,8 @@ sleep 5
 tonos-cli callx --addr "$PARENT_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m unlockVoting --amount 0
 tonos-cli callx --addr "$CHILD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m unlockVoting --amount 0
 sleep 5
-tonos-cli callx --addr "$PARENT_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 20 --newversion "4.0.0"
-tonos-cli callx --addr "$CHILD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 20 --newversion "4.0.0"
+tonos-cli callx --addr "$PARENT_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 20 --newversion "$TEST_VERSION1"
+tonos-cli callx --addr "$CHILD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 20 --newversion "$TEST_VERSION1"
 sleep 60
 
 tonos-cli callx --addr "$NEW_PARENT_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m lockVoting --amount 0
@@ -221,7 +229,7 @@ tonos-cli -j runx --abi $WALLET_ABI --addr $CHILD_WALLET_ADDR -m m_pseudoDAOVote
 
 tonos-cli callx --addr "$CHILD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m daoAskUnlockAfterTombstone --wallet $CHILD_DAO_WALLET_ADDR
 sleep 30
-#tonos-cli callx --addr "$CHILD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendDaoTokenToNewVersion --wallet $CHILD_DAO_WALLET_ADDR --grant 1 --newversion "4.0.0"
+#tonos-cli callx --addr "$CHILD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendDaoTokenToNewVersion --wallet $CHILD_DAO_WALLET_ADDR --grant 1 --newversion "$TEST_VERSION1"
 dao_transfer_tokens
 
 sleep 30
@@ -242,12 +250,11 @@ tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getTokenBalance
 
 sleep 60
 
-OLD_VERSION=3.0.0
 WALLET_ADDR=$NEW_PARENT_WALLET_ADDR
 
 upgrade_task_proposal
 OLD_TASK_ADDR=$TASK_ADDR
-TASK_ADDR=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTaskAddr --abi $WALLET_ABI_1 --nametask $TASK_NAME --repoName $REPO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
+TASK_ADDR=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTaskAddr --abi $WALLET_ABI_1 --nametask $TASK_NAME --reponame $REPO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
 wait_account_active $TASK_ADDR
 
 sleep 10
@@ -264,7 +271,7 @@ if [ "$TOKEN_CNT" != "2" ]; then
   exit 1
 fi
 
-
+echo "TEST SUCCEEDED"
 
 
 #до апгрейдв
@@ -272,7 +279,7 @@ fi
 #sleep 5
 #tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m unlockVoting --amount 0
 #sleep 5
-#tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 21 --newversion "4.0.0"
+#tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 21 --newversion "$TEST_VERSION1"
 #
 #вывести все токены в парент дао
 #

@@ -3,7 +3,7 @@ set -e
 set -o pipefail
 . ./util.sh
 
-REPO_NAME=repo2
+REPO_NAME="repo2_$(date +%s)"
 
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
 [ -d $REPO_NAME"-clone" ] && rm -rf $REPO_NAME"-clone"
@@ -44,6 +44,9 @@ git push -u origin $BRANCH_NAME
 
 echo "***** cloning repo *****"
 cd ..
+
+sleep 10
+
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 echo "***** comparing repositories *****"

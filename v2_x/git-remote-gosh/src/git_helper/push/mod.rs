@@ -271,14 +271,24 @@ impl<Blockchain> GitHelper<Blockchain>
         &self,
         from: git_repository::Id<'_>,
     ) -> anyhow::Result<Option<String>> {
+        // TODO: this function works bad and returns ancestors in bad order
+        // A
+        // |\
+        // | B
+        // | C
+        // | D
+        // |/
+        // E
+        // Commits are returned in order A E B C D
+        // We are trying to fix it by sorting by timestamp
         let walk = from
             .ancestors()
             .all()?
             .map(|e| e.expect("all entities should be present"))
             .into_iter();
 
-        let accounts: Vec<_> = walk.map(|a| a.to_string()).collect();
-
+        let mut ids = vec![];
+        let commits: Vec<_> = walk.map(|a| { ids.push(a.clone().to_string()); a.object().unwrap().into_commit() }).collect();
         let query = r#"query($accounts: [String]!) {
             accounts(filter: {
                 id: { in: $accounts }
@@ -291,8 +301,9 @@ impl<Blockchain> GitHelper<Blockchain>
         let client = self.blockchain.client();
         let repo_contract = &mut self.blockchain.repo_contract().clone();
         let mut map_id_addr = Vec::<(String, String)>::new();
+        tracing::trace!("commits={commits:?}");
 
-        for ids in accounts.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {
+        for ids in ids.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {
             let mut addresses = Vec::<BlockchainContractAddress>::new();
             for id in ids {
                 let commit_address = get_commit_address(client, repo_contract, id).await?;
@@ -315,7 +326,16 @@ impl<Blockchain> GitHelper<Blockchain>
 
             let raw_data = result["data"]["accounts"].clone();
             let existing_commits: Vec<AccountStatus> = serde_json::from_value(raw_data)?;
-
+            tracing::trace!("existing_commits={existing_commits:?}");
+            if existing_commits.is_empty() {
+                // Extra case: there are no commits onchain, search for commit with no parents and return it
+                for commit in commits {
+                    if commit.parent_ids().peekable().peek().is_none() {
+                        return Ok(Some(commit.id.to_string()));
+                    }
+                }
+                panic!("Failed to find init commit in the local repo");
+            }
             for commit in map_id_addr.iter().rev() {
                 let mut ex_iter = existing_commits.iter();
                 let pos = ex_iter.position(|x| x.address == commit.1 && x.status == 1);
@@ -864,7 +884,7 @@ impl<Blockchain> GitHelper<Blockchain>
                 tracing::trace!("Get params of undeployed diff: {}", address);
                 let (coord, parallel, is_last) = expected.get(&address).ok_or(anyhow::format_err!("Failed to get diff params"))?.clone();
                 // parallel_diffs_upload_support.push(self, diff).await?;
-                parallel_diffs_upload_support.add_to_push_list(self, &coord, &parallel, is_last);
+                parallel_diffs_upload_support.add_to_push_list(self, &coord, &parallel, is_last).await?;
             }
             parallel_diffs_upload_support.push_dangling(self).await?;
         }
