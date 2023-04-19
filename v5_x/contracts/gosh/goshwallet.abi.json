@@ -157,10 +157,8 @@
 		{
 			"name": "startProposalForStartPaidMembership",
 			"inputs": [
-				{"name":"value","type":"uint128"},
-				{"name":"valuepersubs","type":"uint128"},
-				{"name":"timeforsubs","type":"uint128"},
-				{"name":"keyforservice","type":"uint256"},
+				{"components":[{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"accessKey","type":"uint256"}],"name":"newProgram","type":"tuple"},
+				{"name":"Programindex","type":"uint8"},
 				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"},
 				{"name":"reviewers","type":"address[]"}
@@ -171,10 +169,8 @@
 		{
 			"name": "getCellStartPaidMembership",
 			"inputs": [
-				{"name":"value","type":"uint128"},
-				{"name":"valuepersubs","type":"uint128"},
-				{"name":"timeforsubs","type":"uint128"},
-				{"name":"keyforservice","type":"uint256"},
+				{"components":[{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"accessKey","type":"uint256"}],"name":"newProgram","type":"tuple"},
+				{"name":"Programindex","type":"uint8"},
 				{"name":"comment","type":"string"},
 				{"name":"time","type":"optional(uint32)"}
 			],
@@ -185,6 +181,7 @@
 		{
 			"name": "startProposalForStopPaidMembership",
 			"inputs": [
+				{"name":"Programindex","type":"uint8"},
 				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"},
 				{"name":"reviewers","type":"address[]"}
@@ -195,6 +192,7 @@
 		{
 			"name": "getCellStopPaidMembership",
 			"inputs": [
+				{"name":"Programindex","type":"uint8"},
 				{"name":"comment","type":"string"},
 				{"name":"time","type":"optional(uint32)"}
 			],

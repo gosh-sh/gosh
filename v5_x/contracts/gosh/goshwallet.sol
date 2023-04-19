@@ -252,51 +252,53 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }  
 
     function startProposalForStartPaidMembership(
-        uint128 value, uint128 valuepersubs, uint128 timeforsubs, uint256 keyforservice, 
+        PaidMember newProgram, uint8 Programindex, 
         string comment,
         uint128 num_clients , address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_limited == false, ERR_WALLET_LIMITED);
         uint256 proposalKind =  START_PAID_MEMBERSHIP_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, value, valuepersubs, timeforsubs, keyforservice, comment, block.timestamp);
+        TvmCell c = abi.encode(proposalKind, newProgram, Programindex, comment, block.timestamp);
         _startProposalForOperation(c, START_PAID_MEMBERSHIP_PROPOSAL_START_AFTER, START_PAID_MEMBERSHIP_PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
 
     function getCellStartPaidMembership(
-        uint128 value, uint128 valuepersubs, uint128 timeforsubs, uint256 keyforservice,
+        PaidMember newProgram, uint8 Programindex,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind =  START_PAID_MEMBERSHIP_PROPOSAL_KIND;        
         if (time.hasValue() == false) { time = block.timestamp; }
-        return abi.encode(proposalKind, value, valuepersubs, timeforsubs, keyforservice, comment, time.get());
+        return abi.encode(proposalKind, newProgram, Programindex, comment, time.get());
     }
 
-    function startProposalForStopPaidMembership(
+    function startProposalForStopPaidMembership( 
+        uint8 Programindex,
         string comment,
         uint128 num_clients , address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_limited == false, ERR_WALLET_LIMITED);
         uint256 proposalKind =  STOP_PAID_MEMBERSHIP_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, comment, block.timestamp);
+        TvmCell c = abi.encode(proposalKind, Programindex, comment, block.timestamp);
         _startProposalForOperation(c, STOP_PAID_MEMBERSHIP_PROPOSAL_START_AFTER, STOP_PAID_MEMBERSHIP_PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
 
     function getCellStopPaidMembership(
+        uint8 Programindex,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind =  STOP_PAID_MEMBERSHIP_PROPOSAL_KIND;        
         if (time.hasValue() == false) { time = block.timestamp; }
-        return abi.encode(proposalKind, comment, time.get());
+        return abi.encode(proposalKind, Programindex, comment, time.get());
     }
 
-    function _startPaidMembership(uint128 value, uint128 valuepersubs, uint128 timeforsubs, uint256 keyforservice) private view {
-        GoshDao(_goshdao).startPaidMembership{value: 0.2 ton, flag: 1}(_pubaddr, _index, value, valuepersubs, timeforsubs, keyforservice);
+    function _startPaidMembership(PaidMember newProgram, uint8 Programindex) private view {
+        GoshDao(_goshdao).startPaidMembership{value: 0.2 ton, flag: 1}(_pubaddr, _index, newProgram, Programindex);
     }
 
-    function _stopPaidMembership() private view {
-        GoshDao(_goshdao).stopPaidMembership{value: 0.2 ton, flag: 1}(_pubaddr, _index);
+    function _stopPaidMembership(uint8 Programindex) private view {
+        GoshDao(_goshdao).stopPaidMembership{value: 0.2 ton, flag: 1}(_pubaddr, _index, Programindex);
     }
     
     function startProposalForDaoTransferTokens(
@@ -2546,11 +2548,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 SystemContract(_systemcontract).DaoTransferToken2{value: 0.2 ton, flag: 1}(_pubaddr, _index, _nameDao, wallet, newwallet, grant, oldversion, version);
             } else 
             if (kind == START_PAID_MEMBERSHIP_PROPOSAL_KIND) {
-                (, uint128 value, uint128 valuepersubs, uint128 timeforsubs, uint256 key,,) = abi.decode(propData, (uint256, uint128, uint128, uint128, uint256, string, uint32));                
-                _startPaidMembership(value, valuepersubs, timeforsubs, key);
+                (, PaidMember newProgram, uint8 Programindex,,) = abi.decode(propData, (uint256, PaidMember, uint8, string, uint32));                
+                _startPaidMembership(newProgram, Programindex);
             } else 
-            if (kind == STOP_PAID_MEMBERSHIP_PROPOSAL_KIND) {
-                _stopPaidMembership();
+            if (kind == STOP_PAID_MEMBERSHIP_PROPOSAL_KIND) {            
+                (, uint8 Programindex,,) = abi.decode(propData, (uint256, uint8, string, uint32));               
+                _stopPaidMembership(Programindex);
             }
         }
     }
@@ -2727,11 +2730,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 SystemContract(_systemcontract).DaoTransferToken2{value: 0.2 ton, flag: 1}(_pubaddr, _index, _nameDao, wallet, newwallet, grant, oldversion, version);
             } else 
             if (kind == START_PAID_MEMBERSHIP_PROPOSAL_KIND) {
-                (, uint128 value, uint128 valuepersubs, uint128 timeforsubs, uint256 key,,) = abi.decode(propData, (uint256, uint128, uint128, uint128, uint256, string, uint32));                
-                _startPaidMembership(value, valuepersubs, timeforsubs, key);
+                (, PaidMember newProgram, uint8 Programindex,,) = abi.decode(propData, (uint256, PaidMember, uint8, string, uint32));                
+                _startPaidMembership(newProgram, Programindex);
             } else 
-            if (kind == STOP_PAID_MEMBERSHIP_PROPOSAL_KIND) {
-                _stopPaidMembership();
+            if (kind == STOP_PAID_MEMBERSHIP_PROPOSAL_KIND) {            
+                (, uint8 Programindex,,) = abi.decode(propData, (uint256, uint8, string, uint32));               
+                _stopPaidMembership(Programindex);
             }
         }
     }

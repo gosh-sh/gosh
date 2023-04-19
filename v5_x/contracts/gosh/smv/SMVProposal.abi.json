@@ -403,10 +403,8 @@
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
-				{"name":"value","type":"uint128"},
-				{"name":"valuepersubs","type":"uint128"},
-				{"name":"timeforsubs","type":"uint128"},
-				{"name":"key","type":"uint256"}
+				{"components":[{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"accessKey","type":"uint256"}],"name":"newProgram","type":"tuple"},
+				{"name":"Programindex","type":"uint8"}
 			]
 		},
 		{
@@ -416,10 +414,27 @@
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
-				{"name":"value","type":"uint128"},
-				{"name":"valuepersubs","type":"uint128"},
-				{"name":"timeforsubs","type":"uint128"},
-				{"name":"key","type":"uint256"}
+				{"components":[{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"accessKey","type":"uint256"}],"name":"newProgram","type":"tuple"},
+				{"name":"Programindex","type":"uint8"}
+			]
+		},
+		{
+			"name": "getStopMembershipProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"Programindex","type":"uint8"}
+			]
+		},
+		{
+			"name": "getStopMembershipProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"Programindex","type":"uint8"}
 			]
 		},
 		{

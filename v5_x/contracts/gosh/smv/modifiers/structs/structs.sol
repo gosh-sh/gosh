@@ -7,6 +7,13 @@
 pragma ever-solidity >=0.66.0;
 
 //Structs  
+struct PaidMember {
+    uint128 paidMembershipValue;
+    uint128 valuePerSubs;
+    uint128 timeForSubs;
+    uint256 accessKey;
+}
+
 struct MemberToken {
     address member;
     uint128 count;
