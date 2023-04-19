@@ -1,8 +1,11 @@
+pub mod wait_contracts_deployed;
+
 use super::{BlockchainContractAddress, EverClient, GetVersionResult};
 use crate::blockchain::{get_account_data, run_local, run_static};
 use async_trait::async_trait;
 use serde::{de, Deserialize};
 use std::fmt::Debug;
+
 use ton_client::{abi::Abi, crypto::KeyPair};
 
 // enum AccountType {

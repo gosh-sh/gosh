@@ -3,7 +3,7 @@ set -e
 set -o pipefail
 set -x
 
-. ./util.sh
+
 
 #Deploy DAO1 v3
 #Deploy DAO2 v3
@@ -22,12 +22,11 @@ SECOND_VERSION=v4_x
 #./upgrade_tests/set_up.sh $FIRST_VERSION $SECOND_VERSION
 #exit 0
 
+. ./util.sh
+
 REPO_NAME=prop_repo03
-DAO_NAME="dao-prop-child-test03_$(date +%s)"
-NEW_REPO_PATH=prop_repo02_v2
-COMMIT_ABI="../$FIRST_VERSION/contracts/gosh/commit.abi.json"
-SNAPSHOT_ABI="../$FIRST_VERSION/contracts/gosh/snapshot.abi.json"
-TASK_ABI="../$FIRST_VERSION/contracts/gosh/task.abi.json"
+DAO_NAME="dao-prop-child_$(date +%s)"
+NEW_REPO_PATH=prop_repo03_v2
 
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
@@ -42,7 +41,7 @@ CHILD_DAO_NAME=$DAO_NAME
 CHILD_DAO_ADDR=$DAO_ADDR
 CHILD_WALLET_ADDR=$WALLET_ADDR
 
-DAO_NAME="dao-prop-test03_$(date +%s)"
+DAO_NAME="dao-prop_$(date +%s)"
 
 deploy_DAO_and_repo
 
@@ -128,3 +127,5 @@ if [ "$FREE_TOKEN_CNT" != "5" ]; then
   echo Wrong amount of token
   exit 1
 fi
+
+echo "TEST SUCCEEDED"

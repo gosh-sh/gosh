@@ -26,9 +26,17 @@ git config user.name "My name"
 git branch -m main
 
 echo "***** Generating files *****"
-for n in {1..300}; do
-    dd if=/dev/urandom of=file$( printf %03d "$n" ).bin bs=1 count=$(( RANDOM % 8192 ))
-done
+if [ "$VERSION" == "v4_x" ]; then
+  FILES_CNT=1004
+  for n in {1..1000}; do
+      dd status=none if=/dev/urandom of=file$( printf %03d "$n" ).bin bs=1 count=$(( RANDOM % 8192 ))
+  done
+else
+  FILES_CNT=304
+  for n in {1..300}; do
+      dd status=none if=/dev/urandom of=file$( printf %03d "$n" ).bin bs=1 count=$(( RANDOM % 8192 ))
+  done
+fi
 
 echo $(ls -la | wc -l)
 
@@ -39,13 +47,16 @@ git push -u origin main
 
 echo "***** cloning repo *****"
 cd ..
+
+sleep 60
+
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 echo "***** check repo *****"
 cd "$REPO_NAME-clone"
 
 cur_ver=$(ls -la | wc -l)
-if [ "$cur_ver" != "304" ]; then
+if [ "$cur_ver" != "$FILES_CNT" ]; then
   echo "WRONG NUMBER OF FILES"
   exit 1
 fi

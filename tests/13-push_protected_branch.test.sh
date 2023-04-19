@@ -11,7 +11,7 @@ if true; then
   exit 0
 fi
 
-REPO_NAME=repo13
+REPO_NAME="repo13_$(date +%s)"
 BRANCH_NAME=tester
 
 # delete folders
