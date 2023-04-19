@@ -386,16 +386,18 @@ type TUpgradeVersionControllerParams = TEventCreateParams & {
 type TUpgradeVersionControllerResult = void
 
 type TDaoStartPaidMembershipParams = TEventCreateParams & {
-    value: number
-    valuepersubs: number
-    timeforsubs: number
-    keyforservice: string
+    index: number
+    reserve: number
+    subscriptionAmount: number
+    subscriptionTime: number
+    accessKey: string
     cell?: boolean
 }
 
 type TDaoStartPaidMembershipResult = string | void
 
 type TDaoStopPaidMembershipParams = TEventCreateParams & {
+    index: number
     cell?: boolean
 }
 
