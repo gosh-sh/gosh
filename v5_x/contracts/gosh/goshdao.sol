@@ -190,29 +190,29 @@ contract GoshDao is Modifiers, TokenRootOwner {
         tvm.accept();
         _previousversion = ver;
         if (ver == "2.0.0"){
-            mapping(uint256 => MemberToken) wallets;
+            mapping(uint256 => MemberTokenv4) wallets;
             mapping(uint256 => string) hashtag;
-            (wallets, hashtag, _reserve, , _totalsupply , _versions) = abi.decode(a, (mapping(uint256 => MemberToken), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string)));
+            (wallets, hashtag, _reserve, , _totalsupply , _versions) = abi.decode(a, (mapping(uint256 => MemberTokenv4), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string)));
             _versions[tvm.hash(version)] = version;
             uint256 zero;
-            this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
+            this.returnWalletsVersionv4{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
         }        
         if (ver == "3.0.0"){
-            mapping(uint256 => MemberToken) wallets;
+            mapping(uint256 => MemberTokenv4) wallets;
             mapping(uint256 => string) hashtag;
-            (wallets, hashtag, _my_wallets, _daoMembers, _reserve, , _totalsupply , _versions) = abi.decode(a, (mapping(uint256 => MemberToken), mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string)));
+            (wallets, hashtag, _my_wallets, _daoMembers, _reserve, , _totalsupply , _versions) = abi.decode(a, (mapping(uint256 => MemberTokenv4), mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string)));
             _versions[tvm.hash(version)] = version;
             uint256 zero;
-            this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
+            this.returnWalletsVersionv4{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
             GoshDao(_previous.get()).getDaoIn{value: 0.3 ton, flag: 1}();
         }
         if (ver == "4.0.0") {
-            mapping(uint256 => MemberToken) wallets;
+            mapping(uint256 => MemberTokenv4) wallets;
             mapping(uint256 => string) hashtag;
-            ( _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, wallets, hashtag, _my_wallets, _daoMembers, _reserve, , _totalsupply , _versions) = abi.decode(a, (bool, bool, bool, bool, mapping(uint256 => MemberToken), mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string)));
+            ( _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, wallets, hashtag, _my_wallets, _daoMembers, _reserve, , _totalsupply , _versions) = abi.decode(a, (bool, bool, bool, bool, mapping(uint256 => MemberTokenv4), mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string)));
             _versions[tvm.hash(version)] = version;
             uint256 zero;
-            this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
+            this.returnWalletsVersionv4{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
         }
         if (ver == "5.0.0") {
             mapping(uint256 => MemberToken) wallets;
@@ -242,21 +242,22 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _versions[tvm.hash("1.0.0")] = "1.0.0";
         this.returnWallets{value: 0.1 ton, flag: 1}(zero, wallets);
     }
-    
-    function returnWalletsVersion(string ver, uint256 key, mapping(uint256 => MemberToken) wallets, mapping(uint256 => string) tags) public internalMsg senderIs(address(this)) accept {
+
+    function returnWalletsVersionv4(string ver, uint256 key, mapping(uint256 => MemberTokenv4) wallets, mapping(uint256 => string) tags) public internalMsg senderIs(address(this)) accept {
         uint256 zero;
         if (ver == "2.0.0"){
-            optional(uint256, MemberToken) res = wallets.next(key);
+            optional(uint256, MemberTokenv4) res = wallets.next(key);
             if ((key != zero) && (res.hasValue() == false)) { this.smvdeploytagin{value:0.2 ton, flag: 1}(address.makeAddrStd(0, key), tags.values()); }
             if (res.hasValue()) {
-            	MemberToken pub;
+            	MemberTokenv4 pub;
             	(key, pub) = res.get();
 //            	_reserve += pub.count;            	
- 		uint128 count = pub.count;
+ 		        uint128 count = pub.count;
             	pub.count = 0;
                 pub.member = address.makeAddrStd(0, key);
-            	deployWalletIn(pub);
-                this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, key, wallets, tags);
+                MemberToken pubnew = MemberToken(pub.member, pub.count, 0);
+            	deployWalletIn(pubnew);
+                this.returnWalletsVersionv4{value: 0.1 ton, flag: 1}(ver, key, wallets, tags);
                 address[] a1;
                 a1.push(pub.member);
                 bool[] a2;
@@ -266,7 +267,40 @@ contract GoshDao is Modifiers, TokenRootOwner {
                 this.changeAllowanceIn{value:0.1 ton, flag: 1}(a1, a2, a3, 0);
             }
         }
-        if ((ver == "3.0.0") || (ver == "4.0.0") || (ver == "5.0.0")){
+        if ((ver == "3.0.0") || (ver == "4.0.0")){
+            optional(uint256, MemberTokenv4) res = wallets.next(key);
+            if ((key != zero) && (res.hasValue() == false)) { this.smvdeploytagin{value:0.2 ton, flag: 1}(address.makeAddrStd(0, key), tags.values()); }
+            if (res.hasValue()) {
+            	MemberTokenv4 pub;
+            	(key, pub) = res.get();
+//            	_reserve += pub.count;            	
+ 		        uint128 count = pub.count;
+            	pub.count = 0;
+
+                pub.member = address.makeAddrStd(0, key);
+                MemberToken pubnew = MemberToken(pub.member, pub.count, 0);
+            	deployWalletIn(pubnew);
+            	if (_daoMembers[key] != "") { 
+                    pub.member = GoshLib.calculateDaoAddress(_code[m_DaoCode], _systemcontract, _daoMembers[key]);
+                    (, uint256 addrkey) = pub.member.unpack(); 
+                    _daoMembers[addrkey] = _daoMembers[key];
+                }
+                this.returnWalletsVersionv4{value: 0.1 ton, flag: 1}(ver, key, wallets, tags);
+                address[] a1;
+                a1.push(pub.member);
+                bool[] a2;
+                a2.push(true);
+                uint128[] a3;
+                a3.push(count);
+                this.changeAllowanceIn{value:0.1 ton, flag: 1}(a1, a2, a3, 0);
+            }
+        }
+        getMoney();
+    }
+    
+    function returnWalletsVersion(string ver, uint256 key, mapping(uint256 => MemberToken) wallets, mapping(uint256 => string) tags) public internalMsg senderIs(address(this)) accept {
+        uint256 zero;
+        if (ver == "5.0.0"){
             optional(uint256, MemberToken) res = wallets.next(key);
             if ((key != zero) && (res.hasValue() == false)) { this.smvdeploytagin{value:0.2 ton, flag: 1}(address.makeAddrStd(0, key), tags.values()); }
             if (res.hasValue()) {

@@ -12,6 +12,12 @@ struct MemberToken {
     uint128 count;
     uint128 expired;
 }
+
+struct MemberTokenv4 {
+    address member;
+    uint128 count;
+}
+
 struct TreeAnswer {
     address sender;
     bool isCommit;
