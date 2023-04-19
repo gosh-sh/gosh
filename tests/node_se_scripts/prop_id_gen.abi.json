@@ -89,6 +89,18 @@
 			]
 		},
 		{
+			"name": "getCellForUpgradeVC",
+			"inputs": [
+				{"name":"UpgradeCode","type":"cell"},
+				{"name":"cell","type":"cell"},
+				{"name":"comment","type":"string"},
+				{"name":"_now","type":"uint32"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
 			"name": "constructor",
 			"inputs": [
 			],

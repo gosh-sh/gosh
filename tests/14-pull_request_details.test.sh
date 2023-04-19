@@ -10,7 +10,7 @@ if [ "$1" = "ignore" ]; then
   exit 0
 fi
 
-REPO_NAME=repo14
+REPO_NAME="repo14_$(date +%s)"
 BRANCH_NAME=tester
 
 # delete folders

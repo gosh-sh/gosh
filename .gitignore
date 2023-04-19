@@ -30,5 +30,7 @@ pnpm-lock.yaml
 
 gosh-cli.conf.json
 
+!v4_x/contracts/multisig/GiverV2.keys.json
+!v3_x/contracts/multisig/GiverV2.keys.json
 !v2_x/contracts/multisig/GiverV2.keys.json
 !v1_x/contracts/multisig/GiverV2.keys.json

@@ -16,7 +16,7 @@ set -e
 set -o pipefail
 . ./util.sh
 
-REPO_NAME=repo10
+REPO_NAME="repo10_$(date +%s)"
 
 [ -d $REPO_NAME"-clone1" ] && rm -rf $REPO_NAME"-clone1"
 [ -d $REPO_NAME"-clone2" ] && rm -rf $REPO_NAME"-clone2"
@@ -81,6 +81,8 @@ git push -u origin $BRANCH_NAME 2>&1 | grep "inner_push_diff->save_data_to_ipfs"
 # wait_set_commit $REPO_ADDR $BRANCH_NAME
 
 cd ..
+
+sleep 10
 
 # 9
 echo "***** cloning repo *****"

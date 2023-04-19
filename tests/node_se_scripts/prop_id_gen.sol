@@ -1,5 +1,5 @@
 pragma ever-solidity >=0.5.0;
-import "../../v2_x/contracts/gosh/modifiers/modifiers.sol";
+import "modifiers.sol";
 
 contract TestAddress {
 
@@ -30,6 +30,7 @@ contract TestAddress {
 	uint256 constant CHANGE_HIDE_VOTING_PROPOSAL_KIND = 25;
 	uint256 constant TAG_UPGRADE_PROPOSAL_KIND = 26;
 	uint256 constant ABILITY_INVITE_PROPOSAL_KIND = 27;
+	uint256 constant UPGRADE_CODE_PROPOSAL_KIND = 32;
 
 	uint128 constant ALONE_DEPLOY_WALLET = 1;
 	uint128 constant ALONE_SET_CONFIG = 2;
@@ -129,6 +130,17 @@ contract TestAddress {
 	) external pure returns(uint256) {
 		uint256 proposalKind = MULTI_PROPOSAL_KIND;
 		TvmCell c = abi.encode(proposalKind, number, proposals, _now);
+		return tvm.hash(c);
+	}
+
+	function getCellForUpgradeVC(
+		TvmCell UpgradeCode,
+		TvmCell cell,
+		string comment,
+		uint32 _now
+	) public pure returns (uint256) {
+		uint256 proposalKind = UPGRADE_CODE_PROPOSAL_KIND;
+		TvmCell c = abi.encode(proposalKind, UpgradeCode, cell, comment, _now);
 		return tvm.hash(c);
 	}
 }

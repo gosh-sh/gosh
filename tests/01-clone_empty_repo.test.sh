@@ -3,7 +3,7 @@ set -e
 set -o pipefail
 . ./util.sh
 
-REPO_NAME=repo1
+REPO_NAME="repo1_$(date +%s)"
 
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
 

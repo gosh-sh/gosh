@@ -8,14 +8,14 @@ use crate::{
 };
 use git_odb::{Find, Write};
 
+use crate::blockchain::contract::GoshContract;
+use crate::blockchain::{gosh_abi, GetNameBranchResult};
+use anyhow::format_err;
 use std::{
     collections::{HashSet, VecDeque},
     str::FromStr,
     sync::Arc,
 };
-use anyhow::format_err;
-use crate::blockchain::contract::GoshContract;
-use crate::blockchain::{GetNameBranchResult, gosh_abi};
 
 mod restore_blobs;
 
@@ -155,13 +155,12 @@ where
                                     // Removing prefixing "/" in the path
                                     &file_path[1..],
                                 )
-                                    .await?;
-                                let snapshot_contract = GoshContract::new(&snapshot_address, gosh_abi::SNAPSHOT);
-                                let version: anyhow::Result<serde_json::Value> = snapshot_contract.run_static(
-                                    self.blockchain.client(),
-                                    "getVersion",
-                                    None
-                                ).await;
+                                .await?;
+                                let snapshot_contract =
+                                    GoshContract::new(&snapshot_address, gosh_abi::SNAPSHOT);
+                                let version: anyhow::Result<serde_json::Value> = snapshot_contract
+                                    .run_static(self.blockchain.client(), "getVersion", None)
+                                    .await;
                                 if version.is_err() {
                                     continue;
                                 }
@@ -194,8 +193,14 @@ where
                 guard!(id);
                 let address = &self.calculate_commit_address(&id).await?;
                 let onchain_commit =
-                    blockchain::GoshCommit::load(&self.blockchain.client(), address).await
-                        .map_err(|e| format_err!("Failed to load commit with SHA=\"{}\". Error: {e}", id.to_string()))?;
+                    blockchain::GoshCommit::load(&self.blockchain.client(), address)
+                        .await
+                        .map_err(|e| {
+                            format_err!(
+                                "Failed to load commit with SHA=\"{}\". Error: {e}",
+                                id.to_string()
+                            )
+                        })?;
                 tracing::debug!("loaded onchain commit {}", id);
                 let data = git_object::Data::new(
                     git_object::Kind::Commit,
@@ -208,11 +213,9 @@ where
                 for parent in onchain_commit.parents {
                     let parent = BlockchainContractAddress::new(parent.address);
                     let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
-                    let branch: GetNameBranchResult = parent_contract.run_static(
-                        self.blockchain.client(),
-                        "getNameBranch",
-                        None
-                    ).await?;
+                    let branch: GetNameBranchResult = parent_contract
+                        .run_static(self.blockchain.client(), "getNameBranch", None)
+                        .await?;
                     branches.insert(branch.name);
                 }
 
@@ -246,7 +249,10 @@ where
             break;
         }
         if next_commit_of_prev_version.is_some() {
-            return Err(format_err!("Was trying to call getCommit. SHA=\"{}\"", next_commit_of_prev_version.unwrap()))
+            return Err(format_err!(
+                "Was trying to call getCommit. SHA=\"{}\"",
+                next_commit_of_prev_version.unwrap()
+            ));
         }
 
         Ok(())

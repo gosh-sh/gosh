@@ -83,15 +83,6 @@ where
 
         let context = &mut self.context.clone();
 
-        let ancestor_id = self.ancestor_commit.to_string();
-        let ancestor_address = context.calculate_commit_address(&self.ancestor_commit).await?;
-        let ancestor_data = crate::blockchain::GoshCommit::load(
-            context.blockchain.client(),
-            &ancestor_address
-        )
-        .await
-        .map_err(|e| anyhow::format_err!("Failed to load commit with SHA=\"{}\". Error: {e}", ancestor_id))?;
-
         for entry in snapshots_to_deploy {
             let mut buffer: Vec<u8> = Vec::new();
             let content = self
