@@ -107,6 +107,17 @@
 			]
 		},
 		{
+			"name": "returnWalletsVersionv4",
+			"inputs": [
+				{"name":"ver","type":"string"},
+				{"name":"key","type":"uint256"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
+				{"name":"tags","type":"map(uint256,string)"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "returnWalletsVersion",
 			"inputs": [
 				{"name":"ver","type":"string"},
