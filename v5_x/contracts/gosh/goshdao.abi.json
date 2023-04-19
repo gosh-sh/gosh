@@ -666,6 +666,7 @@
 		{
 			"name": "startCheckPaidMembershipService",
 			"inputs": [
+				{"name":"ProgramIndex","type":"uint8"}
 			],
 			"outputs": [
 			]
@@ -682,7 +683,8 @@
 			"name": "stopPaidMembership",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
-				{"name":"index","type":"uint128"}
+				{"name":"index","type":"uint128"},
+				{"name":"Programindex","type":"uint8"}
 			],
 			"outputs": [
 			]
@@ -692,10 +694,8 @@
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"},
-				{"name":"value","type":"uint128"},
-				{"name":"valuepersubs","type":"uint128"},
-				{"name":"timeforsubs","type":"uint128"},
-				{"name":"keyforservice","type":"uint256"}
+				{"components":[{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"accessKey","type":"uint256"}],"name":"newProgram","type":"tuple"},
+				{"name":"Programindex","type":"uint8"}
 			],
 			"outputs": [
 			]
@@ -704,7 +704,8 @@
 			"name": "deployMemberFromSubs",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
-				{"name":"isdao","type":"optional(string)"}
+				{"name":"isdao","type":"optional(string)"},
+				{"name":"Programindex","type":"uint8"}
 			],
 			"outputs": [
 			]
@@ -714,7 +715,8 @@
 			"inputs": [
 				{"name":"pub","type":"address"},
 				{"name":"grant","type":"uint128"},
-				{"name":"time","type":"uint128"}
+				{"name":"time","type":"uint128"},
+				{"name":"Programindex","type":"uint8"}
 			],
 			"outputs": [
 			]
@@ -724,7 +726,8 @@
 			"inputs": [
 				{"name":"pub","type":"address"},
 				{"name":"grant","type":"uint128"},
-				{"name":"time","type":"uint128"}
+				{"name":"time","type":"uint128"},
+				{"name":"Programindex","type":"uint8"}
 			],
 			"outputs": [
 			]
@@ -734,7 +737,8 @@
 			"inputs": [
 				{"name":"pub","type":"address"},
 				{"name":"grant","type":"uint128"},
-				{"name":"time","type":"uint128"}
+				{"name":"time","type":"uint128"},
+				{"name":"Programindex","type":"uint8"}
 			],
 			"outputs": [
 			]
@@ -1154,10 +1158,7 @@
 				{"name":"my_wallets","type":"map(uint256,address)"},
 				{"name":"daoMembers","type":"map(uint256,string)"},
 				{"name":"isCheck","type":"bool"},
-				{"name":"paidMembershipValue","type":"uint128"},
-				{"name":"valuePerSubs","type":"uint128"},
-				{"name":"timeForSubs","type":"uint128"},
-				{"name":"accessKey","type":"optional(uint256)"}
+				{"components":[{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"accessKey","type":"uint256"}],"name":"paidMembership","type":"map(uint8,tuple)"}
 			]
 		},
 		{
@@ -1375,9 +1376,6 @@
 		{"name":"_isRepoUpgraded","type":"bool"},
 		{"name":"_abilityInvite","type":"bool"},
 		{"name":"_isCheck","type":"bool"},
-		{"name":"_paidMembershipValue","type":"uint128"},
-		{"name":"_valuePerSubs","type":"uint128"},
-		{"name":"_timeForSubs","type":"uint128"},
-		{"name":"_accessKey","type":"optional(uint256)"}
+		{"components":[{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"accessKey","type":"uint256"}],"name":"_paidMembership","type":"map(uint8,tuple)"}
 	]
 }

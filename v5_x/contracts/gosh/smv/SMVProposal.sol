@@ -456,17 +456,31 @@ function getUpgradeTaskProposalParams () external view
 }
 
 function getStartMembershipProposalParams () external view
-         returns(uint proposalKind, uint128 value, uint128 valuepersubs, uint128 timeforsubs, uint256 key) 
+         returns(uint proposalKind, PaidMember newProgram, uint8 Programindex) 
 {
 
-     (proposalKind, value, valuepersubs, timeforsubs, key,,) = abi.decode(propData, (uint256, uint128, uint128, uint128, uint256, string, uint32));
+     (proposalKind, newProgram, Programindex,,) = abi.decode(propData, (uint256, PaidMember, uint8, string, uint32));
 }
 
 function getStartMembershipProposalParamsData (TvmCell Data) external pure
-         returns(uint proposalKind, uint128 value, uint128 valuepersubs, uint128 timeforsubs, uint256 key) 
+         returns(uint proposalKind, PaidMember newProgram, uint8 Programindex) 
 {
 
-     (proposalKind, value, valuepersubs, timeforsubs, key,,) = abi.decode(Data, (uint256, uint128, uint128, uint128, uint256, string, uint32));
+     (proposalKind, newProgram, Programindex,,) = abi.decode(Data, (uint256, PaidMember, uint8, string, uint32));
+}
+
+function getStopMembershipProposalParams () external view
+         returns(uint proposalKind, uint8 Programindex) 
+{
+
+     (proposalKind, Programindex,,) = abi.decode(propData, (uint256, uint8, string, uint32));
+}
+
+function getStopMembershipProposalParamsData (TvmCell Data) external pure
+         returns(uint proposalKind, uint8 Programindex) 
+{
+
+     (proposalKind, Programindex,,) = abi.decode(Data, (uint256, uint8, string, uint32));
 }
 
 function getDaoVoteProposalParams () external view

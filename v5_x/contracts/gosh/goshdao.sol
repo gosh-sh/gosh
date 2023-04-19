@@ -80,10 +80,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     bool public _abilityInvite = false;
     bool public _isCheck = false;
 
-    uint128 _paidMembershipValue = 0;
-    uint128 _valuePerSubs = 0;
-    uint128 _timeForSubs = 0;
-    optional(uint256) _accessKey;
+    mapping(uint8 => PaidMember) _paidMembership;
     
     constructor(
         address versionController,
@@ -821,7 +818,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         this.checkExpiredTime{value: 0.1 ton, flag: 1}(0);
     }  
 
-    function startCheckPaidMembershipService() public onlyOwnerPubkeyOptional(_accessKey)  accept saveMsg
+    function startCheckPaidMembershipService(uint8 ProgramIndex) public onlyOwnerPubkeyOptional(_paidMembership[ProgramIndex].accessKey)  accept saveMsg
     {   
         this.checkExpiredTime{value: 0.1 ton, flag: 1}(0);
     }      
@@ -844,37 +841,38 @@ contract GoshDao is Modifiers, TokenRootOwner {
         getMoney();
     }
 
-    function stopPaidMembership(address pubaddr, uint128 index) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index))  accept
+    function stopPaidMembership(address pubaddr, uint128 index, uint8 Programindex) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index))  accept
     {   
-        _reserve += _paidMembershipValue;
-        _paidMembershipValue = 0;
-        _accessKey =  null;
-        _valuePerSubs = 0;
-        _timeForSubs = 0;
+        require(_paidMembership.exists(Programindex) == true, ERR_PROGRAM_NOT_EXIST);
+        _reserve += _paidMembership[Programindex].paidMembershipValue;
+        delete _paidMembership[Programindex];
     }
 
-    function startPaidMembership(address pubaddr, uint128 index, uint128 value, uint128 valuepersubs, uint128 timeforsubs, uint256 keyforservice) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index))  accept
+    function startPaidMembership(address pubaddr, uint128 index, PaidMember newProgram, uint8 Programindex) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index))  accept
     {   
-        require(_reserve >= value, ERR_LOW_TOKEN_RESERVE);
-        _reserve -= value;
-        _paidMembershipValue += value;
-        _accessKey = keyforservice;
-        _valuePerSubs = valuepersubs;
-        _timeForSubs = timeforsubs;
+        require(_reserve >= newProgram.paidMembershipValue, ERR_LOW_TOKEN_RESERVE);
+//        require(_paidMembership.exists(Programindex) == false, ERR_PROGRAM_EXIST);
+        _reserve -= newProgram.paidMembershipValue;
+        _paidMembership[Programindex].paidMembershipValue += newProgram.paidMembershipValue;
+        _paidMembership[Programindex].accessKey = newProgram.accessKey;
+        _paidMembership[Programindex].valuePerSubs = newProgram.valuePerSubs;
+        _paidMembership[Programindex].timeForSubs = newProgram.timeForSubs;
     }
 
-    function deployMemberFromSubs(address pubaddr, optional(string) isdao) public onlyOwnerPubkeyOptional(_accessKey) accept saveMsg {
+    function deployMemberFromSubs(address pubaddr, optional(string) isdao, uint8 Programindex) public onlyOwnerPubkeyOptional(_paidMembership[Programindex].accessKey) accept saveMsg {
         (, uint256 keyaddr) = pubaddr.unpack(); 
         if (isdao.hasValue()) {
             if (GoshLib.calculateDaoAddress(_code[m_DaoCode], _systemcontract, isdao.get()) == pubaddr) { 
                 _daoMembers[keyaddr] = isdao.get(); 
             }
         }
+        uint128 valuePerSubs = _paidMembership[Programindex].valuePerSubs;
+        uint128 timeForSubs = _paidMembership[Programindex].timeForSubs;
         require(_wallets.exists(keyaddr) == false, ERR_WALLET_EXIST);
-        require(_paidMembershipValue >= _valuePerSubs, ERR_LOW_TOKEN_RESERVE);
+        require(_paidMembership[Programindex].paidMembershipValue >= valuePerSubs, ERR_LOW_TOKEN_RESERVE);
         TvmCell s1 = GoshLib.composeWalletStateInit(_code[m_WalletCode], _systemcontract, address(this), pubaddr, 0);
         _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));
-        _wallets[keyaddr] = MemberToken(_lastAccountAddress, 0, block.timestamp + _timeForSubs);
+        _wallets[keyaddr] = MemberToken(_lastAccountAddress, 0, block.timestamp + timeForSubs);
         new GoshWallet {
             stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0, flag: 1
         }(  _versionController, _pubaddr, pubaddr, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
@@ -883,28 +881,28 @@ contract GoshDao is Modifiers, TokenRootOwner {
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _versions, _limit_wallets, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, 0, _rootTokenRoot);
-        this.addVoteTokenPubSub{value: 0.2 ton, flag: 1}(pubaddr, _valuePerSubs, block.timestamp + _timeForSubs);
+        this.addVoteTokenPubSub{value: 0.2 ton, flag: 1}(pubaddr, valuePerSubs, block.timestamp + timeForSubs, Programindex);
         getMoney();
     }
     
-    function addVoteTokenPubSub (address pub, uint128 grant, uint128 time) public pure senderIs(address(this))  accept
+    function addVoteTokenPubSub (address pub, uint128 grant, uint128 time, uint8 Programindex) public pure senderIs(address(this))  accept
     {   
-        this.addVoteTokenPubSub2{value: 0.1 ton, flag: 1}(pub, grant, time);
+        this.addVoteTokenPubSub2{value: 0.1 ton, flag: 1}(pub, grant, time, Programindex);
     }
     
-    function addVoteTokenPubSub2 (address pub, uint128 grant, uint128 time) public pure senderIs(address(this))  accept  {    
-        this.addVoteTokenPubSub3{value: 0.1 ton, flag: 1}(pub, grant, time);
+    function addVoteTokenPubSub2 (address pub, uint128 grant, uint128 time, uint8 Programindex) public pure senderIs(address(this))  accept  {    
+        this.addVoteTokenPubSub3{value: 0.1 ton, flag: 1}(pub, grant, time, Programindex);
     } 
     
-    function addVoteTokenPubSub3 (address pub, uint128 grant, uint128 time) public senderIs(address(this)) accept { 
-        require(_paidMembershipValue >= _valuePerSubs, ERR_LOW_TOKEN_RESERVE);  
+    function addVoteTokenPubSub3 (address pub, uint128 grant, uint128 time, uint8 Programindex) public senderIs(address(this)) accept { 
+        require(_paidMembership[Programindex].paidMembershipValue >= grant, ERR_LOW_TOKEN_RESERVE);  
         (, uint256 keyaddr) = pub.unpack();
         address wallet = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pub, 0);
         GoshWallet(wallet).setLimitedWallet{value: 0.2 ton, flag: 1}(false, _limit_wallets);
         if (_wallets.exists(keyaddr) == false) { return; }
         GoshWallet(wallet).addVoteTokenSub{value:0.2 ton, flag: 1}(grant, time);
         _wallets[keyaddr].count += grant;
-        _paidMembershipValue -= grant;
+        _paidMembership[Programindex].paidMembershipValue -= grant;
         _allbalance += grant;
     }
     
@@ -1291,11 +1289,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function getDetails() external view returns(address pubaddr, bool allowMint, bool hide_voting_results, bool allow_discussion_on_proposals, bool abilityInvite, bool isRepoUpgraded, string nameDao,
-    mapping(uint256 => MemberToken) wallets, uint128 reserve, uint128 allbalance, uint128 totalsupply, mapping(uint256 => string) hashtag, mapping(uint256 => address) my_wallets, mapping(uint256 => string) daoMembers, bool isCheck, uint128 paidMembershipValue, uint128 valuePerSubs, uint128 timeForSubs, optional(uint256) accessKey) {
-    return (_pubaddr, _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _isRepoUpgraded, _nameDao, _wallets, _reserve, _allbalance, _totalsupply, _hashtag, _my_wallets, _daoMembers, _isCheck, _paidMembershipValue, _valuePerSubs, _timeForSubs, _accessKey);
+    mapping(uint256 => MemberToken) wallets, uint128 reserve, uint128 allbalance, uint128 totalsupply, mapping(uint256 => string) hashtag, mapping(uint256 => address) my_wallets, mapping(uint256 => string) daoMembers, bool isCheck, mapping(uint8 => PaidMember) paidMembership) {
+    return (_pubaddr, _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _isRepoUpgraded, _nameDao, _wallets, _reserve, _allbalance, _totalsupply, _hashtag, _my_wallets, _daoMembers, _isCheck, _paidMembership);
     }
     
     function getDaoIn() public view minValue(0.5 ton) {
-        IObject(msg.sender).returnDao{value: 0.1 ton, flag: 1}(_pubaddr, _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _isRepoUpgraded, _nameDao, _wallets, _reserve, _allbalance, _totalsupply, _hashtag, _my_wallets, _daoMembers, _isCheck,  _paidMembershipValue, _valuePerSubs, _timeForSubs, _accessKey);
+        IObject(msg.sender).returnDao{value: 0.1 ton, flag: 1}(_pubaddr, _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _isRepoUpgraded, _nameDao, _wallets, _reserve, _allbalance, _totalsupply, _hashtag, _my_wallets, _daoMembers, _isCheck, _paidMembership);
     }
 }
