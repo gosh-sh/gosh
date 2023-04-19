@@ -26,9 +26,9 @@ export const onboardingDataAtom = atom<{
         isFetching: boolean
     }
     phrase: string[]
-    email: string
     isEmailPublic: boolean
     username: string
+    emailOther: string
     redirectTo?: string
 }>({
     key: 'OnboardingDataAtom',
@@ -36,9 +36,9 @@ export const onboardingDataAtom = atom<{
         invites: { items: [], isFetching: false },
         organizations: { items: [], isFetching: false },
         phrase: [],
-        email: '',
         isEmailPublic: true,
         username: '',
+        emailOther: '',
     },
 })
 
