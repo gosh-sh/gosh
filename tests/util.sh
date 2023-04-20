@@ -682,11 +682,12 @@ function start_paid_membership {
     VALUE_PER_SUB="${VALUE_PER_SUB:-10}"
     TIME_FOR_SUB="${TIME_FOR_SUB:-60}"
     KEY_FOR_SERVICE="0x"$(cat $WALLET_KEYS | jq .public | cut -d '"' -f 2)
+
     tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForStartPaidMembership \
-      --value $VALUE --valuepersubs $VALUE_PER_SUB --timeforsubs $TIME_FOR_SUB --keyforservice $KEY_FOR_SERVICE --comment "" --num_clients 1 --reviewers []
+      "{\"newProgram\":{\"paidMembershipValue\":$VALUE,\"valuePerSubs\":$VALUE_PER_SUB,\"timeForSubs\":$TIME_FOR_SUB,\"accessKey\":\"$KEY_FOR_SERVICE\"},\"Programindex\":1,\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
     NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
     echo "NOW_ARG=$NOW_ARG"
-    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellStartPaidMembership --value $VALUE --valuepersubs $VALUE_PER_SUB --timeforsubs $TIME_FOR_SUB --keyforservice $KEY_FOR_SERVICE --comment "" --time $NOW_ARG | sed -n '/value0/ p' | cut -d'"' -f 4)
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellStartPaidMembership "{\"newProgram\":{\"paidMembershipValue\":$VALUE,\"valuePerSubs\":$VALUE_PER_SUB,\"timeForSubs\":$TIME_FOR_SUB,\"accessKey\":\"$KEY_FOR_SERVICE\"},\"Programindex\":1,\"comment\":\"\",\"time\":$NOW_ARG}" | sed -n '/value0/ p' | cut -d'"' -f 4)
 
     echo "TVMCELL=$TVMCELL"
 
@@ -705,10 +706,10 @@ function start_paid_membership {
 function stop_paid_membership {
     echo "***** start proposal for stop paid membership *****"
     tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForStopPaidMembership \
-      --comment "" --num_clients 1 --reviewers []
+      --Programindex 1 --comment "" --num_clients 1 --reviewers []
     NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
     echo "NOW_ARG=$NOW_ARG"
-    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellStopPaidMembership --comment "" --time $NOW_ARG | sed -n '/value0/ p' | cut -d'"' -f 4)
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellStopPaidMembership --Programindex 1 --comment "" --time $NOW_ARG | sed -n '/value0/ p' | cut -d'"' -f 4)
 
     echo "TVMCELL=$TVMCELL"
 
