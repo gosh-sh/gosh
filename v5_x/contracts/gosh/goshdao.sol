@@ -20,6 +20,7 @@ import "snapshot.sol";
 import "daotag.sol";
 import "taggosh.sol";
 import "task.sol";
+import "bigtask.sol";
 import "./libraries/GoshLib.sol";
 import "../smv/TokenRootOwner.sol";
 import "../smv/SMVProposal.sol";
@@ -99,6 +100,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         TvmCell codeDiff,
         TvmCell contentSignature,
         TvmCell codeTask,
+        TvmCell codeBigTask,
         TvmCell codedaotag,
         TvmCell coderepotag,
         TvmCell codetopic,
@@ -127,6 +129,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _code[m_TreeCode] = codeTree;
         _code[m_DiffCode] = codeDiff;
         _code[m_TaskCode] = codeTask;
+        _code[m_BigTaskCode] = codeBigTask;
         _code[m_DaoTagCode] = codedaotag;
         _code[m_RepoTagCode] = coderepotag;
         _code[m_TopicCode] = codetopic;
@@ -623,6 +626,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     	code[m_WalletCode] = _code[m_WalletCode];
     	code[m_DaoCode] = _code[m_DaoCode];
     	code[m_RepositoryCode] = _code[m_RepositoryCode];
+        code[m_BigTaskCode] = _code[m_BigTaskCode];
     	optional(TvmCell) data2 = abi.encode(code, Data);
         new Task{
             stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1
@@ -636,11 +640,25 @@ contract GoshDao is Modifiers, TokenRootOwner {
     	address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName);
         TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});
-        optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], hashtag, oldversion, oldtask);
+        optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], hashtag, oldversion, oldtask);
         optional(TvmCell) data1;
         new Task{
             stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1
         }(data1, data1, data);
+        this.deployTaskTag{value:0.1 ton, flag: 1}(repo, address.makeAddrStd(0, tvm.hash(s1)), hashtag, msg.sender);  
+    	getMoney();	
+    }
+
+    function upgradeBigTask (address pub, uint128 index, string nametask, string repoName, string oldversion, address oldtask, string[] hashtag) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pub, index))  accept {
+    	require(_tombstone == false, ERR_TOMBSTONE);
+    	address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName);
+        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});
+        optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_TaskCode], hashtag, oldversion, oldtask);
+        optional(TvmCell) data1;
+        new BigTask{
+            stateInit: s1, value: FEE_DEPLOY_BIGTASK, wid: 0, bounce: true, flag: 1
+        }(data1, data);
         this.deployTaskTag{value:0.1 ton, flag: 1}(repo, address.makeAddrStd(0, tvm.hash(s1)), hashtag, msg.sender);  
     	getMoney();	
     }
@@ -878,7 +896,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }(  _versionController, _pubaddr, pubaddr, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _versions, _limit_wallets, null,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _versions, _limit_wallets, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, 0, _rootTokenRoot);
         this.addVoteTokenPubSub{value: 0.2 ton, flag: 1}(pubaddr, valuePerSubs, block.timestamp + timeForSubs, Programindex);
@@ -954,7 +972,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }(  _versionController, _pubaddr, pubaddr, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _versions, _limit_wallets, null,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _versions, _limit_wallets, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, _tokenforperson, _rootTokenRoot);
         GoshWallet(_lastAccountAddress).setLimitedWallet{value: 0.2 ton, flag: 1}(false, _limit_wallets);
@@ -1001,7 +1019,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }(  _versionController, _pubaddr, pubaddr.member, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _versions, _limit_wallets, null,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _versions, _limit_wallets, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, pubaddr.count, _rootTokenRoot);
         GoshWallet(_lastAccountAddress).setLimitedWallet{value: 0.2 ton, flag: 1}(false, _limit_wallets);
@@ -1026,7 +1044,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }(  _versionController, _pubaddr, pubaddr, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _versions, 1, null,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _versions, 1, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, 0, _rootTokenRoot);
         getMoney();
@@ -1057,68 +1075,101 @@ contract GoshDao is Modifiers, TokenRootOwner {
         ConfigGrant grant
     ) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index)) accept saveMsg {
         uint128 balance = 0; 
-        this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, hashtag, 0, msg.sender);
+        ConfigCommit commit;
+        uint128 freebalance;
+        this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, msg.sender, 0);
+     }   
+
+     function deployBigTask(
+        address pubaddr,
+        uint128 index,
+        string repoName,
+        string nametask,
+        string[] hashtag,
+        ConfigGrant grant,
+        ConfigCommit commit,
+        uint128 freebalance
+    ) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index)) accept saveMsg {
+        uint128 balance = 0; 
+        this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, msg.sender, 1);
      }   
      
      function calculateBalanceAssign(string repoName,
         string nametask,
         ConfigGrant grant,
         uint128 balance,
+        ConfigCommit commit,
+        uint128 freebalance,
         string[] hashtag,
-        uint128 index, address sender) public pure senderIs(address(this)) accept {
+        uint128 index, address sender, uint8 num) public pure senderIs(address(this)) accept {
         uint128 check = 0;
         for (uint128 i = index; i < grant.assign.length; i++){
             check += 1;
-            if (check == 3) { this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, hashtag, i, sender); return; }
+            if (check == 3) { this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, i, sender, num); return; }
             balance += grant.assign[i].grant;
             if (i != 0) { require(grant.assign[i].lock > grant.assign[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.assign.length) { require(grant.assign[i].grant != 0, ERR_ZERO_GRANT); }
         }       
-        this.calculateBalanceReview{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, hashtag, 0, sender);
+        this.calculateBalanceReview{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, sender, num);
      }
      
      function calculateBalanceReview(string repoName,
         string nametask,
         ConfigGrant grant,
         uint128 balance,
+        ConfigCommit commit,
+        uint128 freebalance,
         string[] hashtag,
-        uint128 index, address sender) public pure senderIs(address(this)) accept {
+        uint128 index, address sender, uint8 num) public pure senderIs(address(this)) accept {
         uint128 check = 0;
         for (uint128 i = index; i < grant.review.length; i++){
             check += 1;
-            if (check == 3) { this.calculateBalanceReview{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, hashtag, i, sender); return; }
+            if (check == 3) { this.calculateBalanceReview{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, i, sender, num); return; }
             balance += grant.review[i].grant;
             if (i != 0) { require(grant.review[i].lock > grant.review[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.review.length) { require(grant.review[i].grant != 0, ERR_ZERO_GRANT); }
         }       
-        this.calculateBalanceManager{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, hashtag, 0, sender);
+        this.calculateBalanceManager{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, sender, num);
       }
       
       function calculateBalanceManager(string repoName,
         string nametask,
         ConfigGrant grant,
         uint128 balance,
+        ConfigCommit commit,
+        uint128 freebalance,
         string[] hashtag,
-        uint128 index, address sender) public senderIs(address(this)) accept {
+        uint128 index, address sender, uint8 num) public senderIs(address(this)) accept {
         uint128 check = 0;
         for (uint128 i = index; i < grant.manager.length; i++){
             check += 1;
-            if (check == 3) { this.calculateBalanceManager{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, hashtag, i, sender); return; }
+            if (check == 3) { this.calculateBalanceManager{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, i, sender, num); return; }
             balance += grant.manager[i].grant;
             if (i != 0) { require(grant.manager[i].lock > grant.manager[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.manager.length) { require(grant.manager[i].grant != 0, ERR_ZERO_GRANT); }
         }
-        require(_reserve >= balance, ERR_LOW_TOKEN_RESERVE);
-        _reserve -= balance;
+        require(_reserve >= balance + freebalance, ERR_LOW_TOKEN_RESERVE);
+        _reserve -= balance + freebalance;
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName);
-        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
-        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});
-        optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], grant, balance, hashtag);
-        optional(TvmCell) data1;
-        new Task{
-            stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1
-        }(data, data1, data1);
-        this.deployTaskTag{value:0.1 ton, flag: 1}(repo, address.makeAddrStd(0, tvm.hash(s1)), hashtag, sender);
+        if (num == 1) {
+            TvmCell deployCode = GoshLib.buildBigTaskCode(_code[m_TaskCode], repo, version);
+            TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: BigTask, varInit: {_nametask: nametask, _goshdao: address(this)}});
+            optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_TaskCode], grant, balance, freebalance, hashtag, commit);
+            optional(TvmCell) data1;
+            new BigTask{
+                stateInit: s1, value: FEE_DEPLOY_BIGTASK, wid: 0, bounce: true, flag: 1
+            }(data, data1);
+            this.deployTaskTag{value:0.1 ton, flag: 1}(repo, address.makeAddrStd(0, tvm.hash(s1)), hashtag, sender);
+        } else {
+            TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
+            TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});
+            optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], grant, balance, hashtag);
+            optional(TvmCell) data1;
+            new Task{
+                stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1
+            }(data, data1, data1);        
+            this.deployTaskTag{value:0.1 ton, flag: 1}(repo, address.makeAddrStd(0, tvm.hash(s1)), hashtag, sender);
+        }
         getMoney();
     }
     
@@ -1199,6 +1250,16 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function getTaskAddr(string nametask, string repoName) external view returns(address) {
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName);
         return GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), repo, nametask);
+    }
+
+    function getBigTaskCode(string repoName) external view returns(TvmCell) {
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName);
+        return GoshLib.buildBigTaskCode(_code[m_BigTaskCode], repo, version);
+    }
+
+    function getBigTaskAddr(string nametask, string repoName) external view returns(address) {
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName);
+        return GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], address(this), repo, nametask);
     }
          
     function getDaoTagAddr(string daotag) external view returns(address) {

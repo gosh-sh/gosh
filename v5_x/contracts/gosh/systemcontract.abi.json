@@ -451,6 +451,14 @@
 			]
 		},
 		{
+			"name": "setBigTask",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setSnapshot",
 			"inputs": [
 				{"name":"code","type":"cell"}
@@ -529,6 +537,17 @@
 		},
 		{
 			"name": "getTaskAddr",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"dao","type":"string"},
+				{"name":"repoName","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getBigTaskAddr",
 			"inputs": [
 				{"name":"nametask","type":"string"},
 				{"name":"dao","type":"string"},

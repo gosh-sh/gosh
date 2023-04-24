@@ -47,6 +47,7 @@ abstract contract Modifiers is ReplayProtection {
     uint8 constant m_DaoTagCode = 15;
     uint8 constant m_RepoTagCode = 16;
     uint8 constant m_TopicCode = 17;
+    uint8 constant m_BigTaskCode = 18;
     
     //Deploy constants
     uint128 constant FEE_DEPLOY_DAO = 100000 ton;
@@ -69,6 +70,7 @@ abstract contract Modifiers is ReplayProtection {
     uint128 constant FEE_DEPLOY_DAO_TAG = 7 ton;
     uint128 constant FEE_DEPLOY_REPO_TAG = 7.5 ton;
     uint128 constant FEE_DEPLOY_TASK_TAG = 7.8 ton;
+    uint128 constant FEE_DEPLOY_BIGTASK = 7.9 ton;
     uint128 constant FEE_DEPLOY_TOPIC = 4.8 ton;
     
     //SMV configuration
@@ -188,8 +190,15 @@ abstract contract Modifiers is ReplayProtection {
      
     uint32 constant STOP_PAID_MEMBERSHIP_PROPOSAL_START_AFTER = 0 seconds;
     uint32 constant STOP_PAID_MEMBERSHIP_PROPOSAL_DURATION = 1 weeks;
-
-
+    
+    uint32 constant BIGTASK_DESTROY_PROPOSAL_START_AFTER  = 0 seconds;
+    uint32 constant BIGTASK_DESTROY_PROPOSAL_DURATION  = 1 weeks; 
+    
+    uint32 constant BIGTASK_DEPLOY_PROPOSAL_START_AFTER  = 0 seconds;
+    uint32 constant BIGTASK_DEPLOY_PROPOSAL_DURATION  = 1 weeks; 
+    
+    uint32 constant BIGTASK_UPGRADE_PROPOSAL_START_AFTER  = 0 seconds;
+    uint32 constant BIGTASK_UPGRADE_PROPOSAL_DURATION  = 1 weeks; 
 
     uint256 constant SETCOMMIT_PROPOSAL_KIND = 1;
     uint256 constant ADD_PROTECTED_BRANCH_PROPOSAL_KIND = 2;
@@ -199,7 +208,7 @@ abstract contract Modifiers is ReplayProtection {
     uint256 constant DELETE_WALLET_DAO_PROPOSAL_KIND = 6;
     uint256 constant SET_UPGRADE_PROPOSAL_KIND = 7;
 //    uint256 constant CHANGE_TOKEN_CONFIG_PROPOSAL_KIND = 8;
-//    uint256 constant TASK_PROPOSAL_KIND = 9;
+    uint256 constant BIGTASK_PROPOSAL_KIND = 9;
     uint256 constant TASK_DESTROY_PROPOSAL_KIND = 10;
     uint256 constant TASK_DEPLOY_PROPOSAL_KIND = 11;
     uint256 constant DEPLOY_REPO_PROPOSAL_KIND = 12;
@@ -232,6 +241,10 @@ abstract contract Modifiers is ReplayProtection {
     uint256 constant TRANSFER_TO_NEW_VERSION_PROPOSAL_KIND = 39;
     uint256 constant START_PAID_MEMBERSHIP_PROPOSAL_KIND = 40;
     uint256 constant STOP_PAID_MEMBERSHIP_PROPOSAL_KIND = 41;
+    uint256 constant BIGTASK_DESTROY_PROPOSAL_KIND = 42;
+    uint256 constant BIGTASK_DEPLOY_PROPOSAL_KIND = 43;
+    uint256 constant BIGTASK_APPROVE_PROPOSAL_KIND = 44;
+    uint256 constant BIGTASK_UPGRADE_PROPOSAL_KIND = 45;
     
     uint128 constant ALONE_DEPLOY_WALLET = 1;
     uint128 constant ALONE_SET_CONFIG = 2;

@@ -427,7 +427,6 @@
 		{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"_parents","type":"tuple[]"},
 		{"name":"_systemcontract","type":"address"},
 		{"name":"_tree","type":"address"},
-		{"name":"_branchName","type":"string"},
 		{"name":"_branchCommit","type":"address"},
 		{"name":"_count","type":"uint128"},
 		{"name":"_countready","type":"bool"},
