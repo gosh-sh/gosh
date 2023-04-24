@@ -29,7 +29,8 @@ type TGoshUsernameProps = {
 const GoshUsername = (props: TGoshUsernameProps) => {
     const { signoutOAuth } = props
     const { session } = useRecoilValue(OAuthSessionAtom)
-    const [{ phrase, isEmailPublic }, setOnboarding] = useRecoilState(onboardingDataAtom)
+    const [{ phrase, emailOther, isEmailPublic }, setOnboarding] =
+        useRecoilState(onboardingDataAtom)
     const repositories = useRecoilValue(repositoriesCheckedSelector)
     const { items: invites } = useRecoilValue(daoInvitesSelector)
     const setModal = useSetRecoilState(appModalStateAtom)
@@ -53,6 +54,7 @@ const GoshUsername = (props: TGoshUsernameProps) => {
         pubkey: string,
         authUserId: string,
         email: string | null,
+        emailOther: string | null,
     ) => {
         const { data, error } = await supabase
             .from('users')
@@ -61,6 +63,7 @@ const GoshUsername = (props: TGoshUsernameProps) => {
                 gosh_pubkey: `0x${pubkey}`,
                 auth_user: authUserId,
                 email,
+                email_other: emailOther,
             })
             .select()
             .single()
@@ -119,6 +122,7 @@ const GoshUsername = (props: TGoshUsernameProps) => {
                     keypair.public,
                     session.user.id,
                     isEmailPublic ? session.user.email || null : null,
+                    emailOther || null,
                 )
             }
 

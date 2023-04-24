@@ -760,20 +760,32 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             const commit = await repository.getCommit({ address: candidate.commit })
             const assigners = await Promise.all(
                 Object.keys(candidate.pubaddrassign).map(async (address) => {
-                    const profile = await this.gosh.getUserByAddress(address)
-                    return { username: profile.name, address }
+                    if (candidate.daoMembers[address]) {
+                        return { username: candidate.daoMembers[address], address }
+                    } else {
+                        const profile = await this.gosh.getUserByAddress(address)
+                        return { username: profile.name, address }
+                    }
                 }),
             )
             const reviewers = await Promise.all(
                 Object.keys(candidate.pubaddrreview).map(async (address) => {
-                    const profile = await this.gosh.getUserByAddress(address)
-                    return { username: profile.name, address }
+                    if (candidate.daoMembers[address]) {
+                        return { username: candidate.daoMembers[address], address }
+                    } else {
+                        const profile = await this.gosh.getUserByAddress(address)
+                        return { username: profile.name, address }
+                    }
                 }),
             )
             const managers = await Promise.all(
                 Object.keys(candidate.pubaddrmanager).map(async (address) => {
-                    const profile = await this.gosh.getUserByAddress(address)
-                    return { username: profile.name, address }
+                    if (candidate.daoMembers[address]) {
+                        return { username: candidate.daoMembers[address], address }
+                    } else {
+                        const profile = await this.gosh.getUserByAddress(address)
+                        return { username: profile.name, address }
+                    }
                 }),
             )
             team = {
@@ -3797,6 +3809,17 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             snapshotdata: data.snapshotData,
             snapshotipfs: data.snapshotIpfs,
         })
+        const wait = await whileFinite(async () => {
+            return await snapshot.isDeployed()
+        })
+        if (!wait) {
+            throw new GoshError('Deploy snapshot timeout reached', {
+                branch,
+                name: treepath,
+                address: snapshot.address,
+            })
+        }
+
         return snapshot
     }
 
@@ -3943,6 +3966,16 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             index2: 0,
             last: true,
         })
+        const wait = await whileFinite(async () => {
+            return await diffContract.isDeployed()
+        })
+        if (!wait) {
+            throw new GoshError('Deploy diff timeout reached', {
+                branch,
+                index1,
+                address: diffContract.address,
+            })
+        }
     }
 
     private async _deployCommit(
@@ -3974,6 +4007,16 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             tree: tree.address,
             upgrade,
         })
+        const wait = await whileFinite(async () => {
+            return await commitContract.isDeployed()
+        })
+        if (!wait) {
+            throw new GoshError('Deploy commit timeout reached', {
+                branch,
+                name: commit,
+                address: commitContract.address,
+            })
+        }
     }
 
     private async _setCommit(

@@ -20,8 +20,6 @@ pub struct TreeComponent {
 pub struct Tree {
     #[serde(rename = "value0")]
     pub objects: HashMap<String, TreeComponent>,
-    #[serde(rename = "value1")]
-    ipfs: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]

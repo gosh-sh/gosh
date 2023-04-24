@@ -473,7 +473,7 @@ async fn find_commit(helper: &GitHelper, commit_id: &String) -> anyhow::Result<S
             &mut repo_contract,
             commit_id,
         ).await?;
-        tracing::trace!("commit_address {commit_address}");
+        tracing::trace!("commit_address (sha={commit_id}) {commit_address}");
         let commit_contract = GoshContract::new(&commit_address, gosh_abi::COMMIT);
         let res: anyhow::Result<Value> = commit_contract
             .run_static(helper.blockchain.client(), "getVersion", None)

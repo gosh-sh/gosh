@@ -25,7 +25,7 @@ set -e
 set -o pipefail
 . ./util.sh
 set -x
-REPO_NAME=repo6
+REPO_NAME="repo6_$(date +%s)"
 
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
 [ -d $REPO_NAME"-clone" ] && rm -rf $REPO_NAME"-clone"
@@ -68,6 +68,9 @@ delay 60
 
 echo "***** cloning repo *****"
 cd ..
+
+sleep 10
+
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 # check

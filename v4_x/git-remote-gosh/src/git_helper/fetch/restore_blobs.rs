@@ -145,7 +145,9 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
             unused_message
         } else {
             match messages.next(&es_client).await? {
-                None => { break; },
+                None => {
+                    break;
+                }
                 Some(message) => {
                     if parsed.contains(&message) {
                         break;
@@ -333,8 +335,9 @@ impl BlobsRebuildingPlan {
 
         tracing::info!("Restoring blobs: {:?}", self.snapshot_address_to_blob_sha);
         let visited: Arc<Mutex<HashSet<git_hash::ObjectId>>> = Arc::new(Mutex::new(HashSet::new()));
-        let mut fetched_blobs: FuturesUnordered<tokio::task::JoinHandle<anyhow::Result<HashSet<ObjectId>>>> =
-            FuturesUnordered::new();
+        let mut fetched_blobs: FuturesUnordered<
+            tokio::task::JoinHandle<anyhow::Result<HashSet<ObjectId>>>,
+        > = FuturesUnordered::new();
 
         let mut unvisited_blobs = HashSet::new();
 

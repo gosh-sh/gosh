@@ -17,7 +17,7 @@ set -e
 set -o pipefail
 . ./util.sh
 
-REPO_NAME=repo9
+REPO_NAME="repo9_$(date +%s)"
 
 [ -d $REPO_NAME"-clone1" ] && rm -rf $REPO_NAME"-clone1"
 [ -d $REPO_NAME"-clone2" ] && rm -rf $REPO_NAME"-clone2"
@@ -94,6 +94,9 @@ git push -u origin $BRANCH_NAME
 # wait_set_commit $REPO_ADDR $BRANCH_NAME
 
 cd ..
+
+sleep 10
+
 
 # 11
 echo "***** cloning repo *****"
