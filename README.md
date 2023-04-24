@@ -13,5 +13,5 @@ wget -O - https://raw.githubusercontent.com/gosh-sh/gosh/dev/install.sh | bash -
 By default, script installs latest release to the default path `$HOME/.gosh/`, but you can customize it with env variables:
 
 ```bash
-TAG=3.0.18 BINARY_PATH=/usr/local/bin ./insatll.sh
+TAG=3.0.18 BINARY_PATH=/usr/local/bin ./install.sh
 ```
