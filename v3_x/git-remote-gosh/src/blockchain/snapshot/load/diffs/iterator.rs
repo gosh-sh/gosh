@@ -250,7 +250,7 @@ pub async fn load_messages_to(
     cursor: &Option<String>,
     stop_on: Option<u64>,
 ) -> anyhow::Result<(Vec<DiffMessage>, PageIterator)> {
-    tracing::trace!("load_messages_to: address={address}, cursor={cursor:?}, stop_on={stop_on:?}");
+    tracing::trace!("address={address}, cursor={cursor:?}, stop_on={stop_on:?}");
     let mut subsequent_page_info: Option<String> = None;
     let query = r#"query($addr: String!, $before: String){
       blockchain {
@@ -292,7 +292,7 @@ pub async fn load_messages_to(
         subsequent_page_info = Some(edges.page_info.start_cursor);
     }
 
-    tracing::trace!("Loaded {} message(s) to {}", edges.edges.len(), address);
+    tracing::debug!("snap={address} Loaded {} message(s)", edges.edges.len());
     for elem in edges.edges.iter().rev() {
         let raw_msg = &elem.message;
         if stop_on != None && raw_msg.created_at >= stop_on.unwrap() {
@@ -303,7 +303,7 @@ pub async fn load_messages_to(
             continue;
         }
 
-        tracing::trace!("Decoding message {:?}", raw_msg.id);
+        tracing::debug!("snap={address} Decoding message {:?}", raw_msg.id);
         let decoding_result = decode_message_body(
             Arc::clone(context),
             ParamsOfDecodeMessageBody {
@@ -316,8 +316,8 @@ pub async fn load_messages_to(
         .await;
 
         if let Err(ref e) = decoding_result {
-            tracing::trace!("decode_message_body error: {:#?}", e);
-            tracing::trace!("undecoded message: {:#?}", raw_msg);
+            tracing::trace!("snap={address} decode_message_body error: {:#?}", e);
+            tracing::trace!("snap={address} undecoded message: {:#?}", raw_msg);
             continue;
         }
 
@@ -334,7 +334,7 @@ pub async fn load_messages_to(
         }
     }
 
-    tracing::trace!("Passed {} message(s)", messages.len());
+    tracing::debug!("snap={address} Passed {} message(s)", messages.len());
     let oldest_timestamp = match messages.len() {
         0 => None,
         n => Some(messages[n - 1].created_at),

@@ -70,25 +70,16 @@ async fn write_git_object(
     Ok(object_id)
 }
 
-async fn restore_a_set_of_blobs_from_a_known_snapshot(
+async fn restore_blob_from_snapshot(
     es_client: &EverClient,
     ipfs_endpoint: &str,
     repo: &mut git_repository::Repository,
-    repo_contract: &mut GoshContract,
     snapshot_address: &blockchain::BlockchainContractAddress,
     blobs: &mut HashSet<git_hash::ObjectId>,
     visited: &Arc<Mutex<HashSet<git_hash::ObjectId>>>,
-) -> anyhow::Result<HashSet<git_hash::ObjectId>> {
-    tracing::info!("Iteration in restore: {} -> {:?}", snapshot_address, blobs);
-    {
-        let visited = visited.lock().unwrap();
-        blobs.retain(|e| !visited.contains(e));
-    }
-    tracing::info!("remaining: {:?}", blobs);
-    if blobs.is_empty() {
-        return Ok(blobs.to_owned());
-    }
-
+    last_restored_snapshots: &mut LruCache<ObjectId, Vec<u8>>,
+    strip_lf: bool,
+) -> anyhow::Result<(Option<ObjectId>, Option<ObjectId>)> {
     // In general it is not nice to return tuples since
     // it misses context.
     // However this case seems to be an appropriate balance
@@ -99,30 +90,68 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
         ipfs_endpoint,
         repo,
         snapshot_address,
+        strip_lf,
     )
     .await?;
-    // tracing::trace!("restored_snapshots: {:#?}", current_snapshot_state);
-    let mut last_restored_snapshots: LruCache<ObjectId, Vec<u8>> =
-        LruCache::new(NonZeroUsize::new(2).unwrap());
+    let mut first = None;
     if let Some((blob_id, blob)) = current_snapshot_state.0 {
         {
             let mut visited = visited.lock().unwrap();
             visited.insert(blob_id);
         }
-        last_restored_snapshots.put(blob_id, blob);
+        last_restored_snapshots.put(blob_id, blob.clone());
         blobs.remove(&blob_id);
-    }
+        first = Some(blob_id);
+    };
+    let mut second = None;
     if let Some((blob_id, blob)) = current_snapshot_state.1 {
         {
             let mut visited = visited.lock().unwrap();
             visited.insert(blob_id);
         }
-        last_restored_snapshots.put(blob_id, blob);
+        last_restored_snapshots.put(blob_id, blob.clone());
         blobs.remove(&blob_id);
+        second = Some(blob_id);
+    }
+    Ok((first, second))
+}
+
+async fn restore_a_set_of_blobs_from_a_known_snapshot(
+    es_client: &EverClient,
+    ipfs_endpoint: &str,
+    repo: &mut git_repository::Repository,
+    repo_contract: &mut GoshContract,
+    snapshot_address: &blockchain::BlockchainContractAddress,
+    blobs: &mut HashSet<git_hash::ObjectId>,
+    visited: &Arc<Mutex<HashSet<git_hash::ObjectId>>>,
+) -> anyhow::Result<HashSet<git_hash::ObjectId>> {
+    tracing::debug!("Iteration in restore: {} -> {:?}", snapshot_address, blobs);
+    tracing::debug!("snap={snapshot_address} visited: {:?}", visited);
+    {
+        let visited = visited.lock().unwrap();
+        blobs.retain(|e| !visited.contains(e));
+    }
+    tracing::debug!("snap={snapshot_address} remaining: {:?}", blobs);
+    if blobs.is_empty() {
+        return Ok(blobs.to_owned());
     }
 
+    let mut last_restored_snapshots: LruCache<ObjectId, Vec<u8>> =
+        LruCache::new(NonZeroUsize::new(2).unwrap());
+
+    restore_blob_from_snapshot(
+        es_client,
+        ipfs_endpoint,
+        repo,
+        snapshot_address,
+        blobs,
+        visited,
+        &mut last_restored_snapshots,
+        false
+    ).await?;
+
     tracing::info!(
-        "Expecting to restore blobs: {:?} from {}",
+        "snap={snapshot_address} Expecting to restore blobs: {:?} from {}",
         blobs,
         snapshot_address
     );
@@ -134,8 +163,11 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     let mut preserved_message: Option<DiffMessage> = None;
     let mut transition_content: Option<Vec<u8>> = None;
     let mut parsed = vec![];
+    let mut replacement = None;
+    let mut replacement_processing = false;
     while !blobs.is_empty() {
-        tracing::info!("Still expecting to restore blobs: {:?}", blobs);
+        tracing::debug!("snap={snapshot_address} Still expecting to restore blobs: {:?}", blobs);
+        tracing::debug!("snap={snapshot_address} preserved: {:?}", preserved_message);
 
         // take next a chunk of messages and reverse it on a snapshot
         // remove matching blob ids
@@ -145,21 +177,40 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
             unused_message
         } else {
             match messages.next(&es_client).await? {
-                None => { break; },
+                None => {
+                    tracing::debug!("snap={snapshot_address} Nothing found. Interrupt loop");
+                    break;
+                },
                 Some(message) => {
                     if parsed.contains(&message) {
-                        break;
+                        if !replacement_processing {
+                            tracing::debug!("snap={snapshot_address} Already parsed (1st iteration). Interrupt loop");
+                            replacement_processing = true;
+                            replacement = restore_blob_from_snapshot(
+                                es_client,
+                                ipfs_endpoint,
+                                repo,
+                                snapshot_address,
+                                blobs,
+                                visited,
+                                &mut last_restored_snapshots,
+                                true // try to restore blob with stripped LF
+                            ).await?.0;
+                        } else {
+                            tracing::debug!("snap={snapshot_address} Already parsed (2nd iteration). Interrupt loop");
+                            break;
+                        }
                     }
                     message
                 }
             }
         };
-        tracing::trace!("got message: {:?}", message);
+        tracing::debug!("snap={snapshot_address} got message: {:?}", message);
         parsed.push(message.clone());
         let blob_data: Vec<u8> = if message.diff.remove_ipfs {
             let data = match message.diff.get_patch_data() {
                 Some(content) => content,
-                None => panic!("Broken diff detected: content doesn't exist"),
+                None => panic!("snap={snapshot_address} Broken diff detected: content doesn't exist"),
             };
             data
         } else if let Some(ipfs) = &message.diff.ipfs {
@@ -176,7 +227,14 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
                 .modified_blob_sha1
                 .as_ref()
                 .expect("Option on this should be reverted. It must always be there");
-            let patched_blob_sha = git_hash::ObjectId::from_str(patched_blob_sha)?;
+            let patched_blob_sha = if let Some(replacement_sha) = replacement {
+                tracing::debug!("snap={snapshot_address} replacement found: from={}, to={}", *patched_blob_sha, replacement_sha);
+                replacement = None;
+                git_hash::ObjectId::from_str(&replacement_sha.to_string())?
+            } else {
+                git_hash::ObjectId::from_str(patched_blob_sha)?
+            };
+            tracing::debug!("snap={snapshot_address} patched_blob_sha={}", patched_blob_sha);
             let content = last_restored_snapshots
                 .get(&patched_blob_sha)
                 .expect("It is a sequence of changes. Sha must be correct. Fail otherwise");
@@ -196,7 +254,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
 
         let blob = git_object::Data::new(git_object::Kind::Blob, &blob_data);
         let blob_id = write_git_data(repo, blob).await?;
-        tracing::info!("Restored blob {}", blob_id);
+        tracing::info!("snap={snapshot_address} Restored blob {}", blob_id);
         last_restored_snapshots.put(blob_id, blob_data);
         {
             let mut visited = visited.lock().unwrap();
@@ -270,6 +328,7 @@ impl BlobsRebuildingPlan {
         ipfs_endpoint: &str,
         repo: &mut git_repository::Repository,
         snapshot_address: &BlockchainContractAddress,
+        strip_lf: bool,
     ) -> anyhow::Result<(Option<(ObjectId, Vec<u8>)>, Option<(ObjectId, Vec<u8>)>)> {
         tracing::trace!("restore_snapshot_blob: ipfs_endpoint={ipfs_endpoint}, repo={repo:?}, snapshot_address={snapshot_address}");
         let ipfs_client = build_ipfs(ipfs_endpoint)?;
@@ -278,9 +337,17 @@ impl BlobsRebuildingPlan {
         let snapshot_next_commit_sha = ObjectId::from_str(&snapshot.next_commit);
         let snapshot_current_commit_sha = ObjectId::from_str(&snapshot.current_commit);
         let snapshot_next = if snapshot_next_commit_sha.is_ok() {
+            let content: &[u8] = if strip_lf {
+                match snapshot.next_content.last() {
+                    Some(last) if last == &10 => snapshot.next_content.split_last().unwrap().1,
+                    _ => &snapshot.next_content,
+                }
+            } else {
+                &snapshot.next_content
+            };
             let (blob, blob_data) = convert_snapshot_into_blob(
                 &ipfs_client,
-                &snapshot.next_content,
+                content,
                 &snapshot.next_ipfs,
             )
             .instrument(info_span!("convert_next_snapshot_into_blob").or_current())
@@ -291,9 +358,17 @@ impl BlobsRebuildingPlan {
             None
         };
         let snapshot_current = if snapshot_current_commit_sha.is_ok() {
+            let content: &[u8] = if strip_lf {
+                match snapshot.next_content.last() {
+                    Some(last) if last == &10 => snapshot.next_content.split_last().unwrap().1,
+                    _ => &snapshot.current_content,
+                }
+            } else {
+                &snapshot.current_content
+            };
             let (blob, blob_data) = convert_snapshot_into_blob(
                 &ipfs_client,
-                &snapshot.current_content,
+                content,
                 &snapshot.current_ipfs,
             )
             .instrument(info_span!("convert_current_snapshot_into_blob").or_current())
