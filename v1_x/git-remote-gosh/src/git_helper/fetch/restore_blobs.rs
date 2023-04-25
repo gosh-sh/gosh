@@ -79,7 +79,7 @@ async fn restore_blob_from_snapshot(
     visited: &Arc<Mutex<HashSet<git_hash::ObjectId>>>,
     last_restored_snapshots: &mut LruCache<ObjectId, Vec<u8>>,
     strip_lf: bool,
-) -> anyhow::Result<(Option<ObjectId>, Option<ObjectId>)> {
+) -> anyhow::Result<Option<ObjectId>> {
     // In general it is not nice to return tuples since
     // it misses context.
     // However this case seems to be an appropriate balance
@@ -103,7 +103,6 @@ async fn restore_blob_from_snapshot(
         blobs.remove(&blob_id);
         first = Some(blob_id);
     };
-    let mut second = None;
     if let Some((blob_id, blob)) = current_snapshot_state.1 {
         {
             let mut visited = visited.lock().unwrap();
@@ -111,9 +110,8 @@ async fn restore_blob_from_snapshot(
         }
         last_restored_snapshots.put(blob_id, blob.clone());
         blobs.remove(&blob_id);
-        second = Some(blob_id);
     }
-    Ok((first, second))
+    Ok(first)
 }
 
 async fn restore_a_set_of_blobs_from_a_known_snapshot(
@@ -195,7 +193,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
                                 visited,
                                 &mut last_restored_snapshots,
                                 true // try to restore blob with stripped LF
-                            ).await?.0;
+                            ).await?;
                         } else {
                             tracing::debug!("snap={snapshot_address} Already parsed (2nd iteration). Interrupt loop");
                             break;

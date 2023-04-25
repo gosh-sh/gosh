@@ -70,6 +70,15 @@ where
             iter.as_str()
         };
         tracing::debug!("Calculate branch: {}", branch);
+
+        let context = self.blockchain.client();
+        let remote_branches: Vec<String> = blockchain::branch_list(context, &self.repo_addr)
+            .await?
+            .branch_ref
+            .iter()
+            .map(|b| b.branch_name.clone())
+            .collect();
+
         let mut visited: HashSet<git_hash::ObjectId> = HashSet::new();
         macro_rules! guard {
             ($id:ident) => {
@@ -203,17 +212,24 @@ where
                 );
                 let obj = git_object::Object::from(data.decode()?).into_commit();
                 tracing::debug!("Received commit {}", id);
+
                 let mut branches = HashSet::new();
-                branches.insert(onchain_commit.branch);
-                for parent in onchain_commit.parents {
-                    let parent = BlockchainContractAddress::new(parent.address);
-                    let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
-                    let branch: GetNameBranchResult = parent_contract.run_static(
-                        self.blockchain.client(),
-                        "getNameBranch",
-                        None
-                    ).await?;
-                    branches.insert(branch.name);
+                branches.insert(onchain_commit.branch.clone());
+                // don't collect parent branches for deleted one
+                if remote_branches.contains(&onchain_commit.branch) {
+                    for parent in onchain_commit.parents {
+                        let parent = BlockchainContractAddress::new(parent.address);
+                        let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
+                        let branch: GetNameBranchResult = parent_contract.run_static(
+                            self.blockchain.client(),
+                            "getNameBranch",
+                            None
+                        ).await?;
+                        tracing::debug!("commit={id}: extracted branch {:?}", branch.name);
+                        branches.insert(branch.name);
+                    }
+                } else {
+                    branches.insert(branch.to_owned());
                 }
 
                 let to_load = TreeObjectsQueueItem {

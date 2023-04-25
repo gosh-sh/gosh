@@ -202,7 +202,7 @@ where
             })
             .collect();
 
-        tracing::trace!("Available repo versions: {versions:?}");
+        tracing::trace!("Available system contract versions: {versions:?}");
         let mut available_versions = vec![];
         for version in versions {
             let address = BlockchainContractAddress::new(version.1.clone());
