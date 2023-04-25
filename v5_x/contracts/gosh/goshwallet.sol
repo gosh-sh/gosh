@@ -1626,6 +1626,18 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
+    function _destroyBigTask(
+        string repoName,
+        string nametask
+    ) private {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address taskaddr = GoshLib.calculateBigTaskAddress(_code[m_TaskCode], _goshdao, repo, nametask);
+        BigTask(taskaddr).destroy{value:0.4 ton, flag: 1}(_pubaddr, _index);
+        getMoney();
+    }
+
     function askGrantToken(
         string repoName,
         string nametask,
@@ -2765,7 +2777,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == BIGTASK_DEPLOY_PROPOSAL_KIND) {
                 (, string repoName, string taskName, string[] tag, ConfigGrant grant, ConfigCommit commit, uint128 freebalance, ,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, ConfigCommit, uint128, string, uint32));
                 _deployBigTask(repoName, taskName, tag, grant, commit, freebalance);
-            }
+            } else
+            if (kind == BIGTASK_DESTROY_PROPOSAL_KIND) {
+                (, string taskName, string repoName,) = abi.decode(propData,(uint256, string, string, uint32));
+                _destroyBigTask(taskName, repoName);
+            } 
         }
     }
 
@@ -2959,7 +2975,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == BIGTASK_DEPLOY_PROPOSAL_KIND) {
                 (, string repoName, string taskName, string[] tag, ConfigGrant grant, ConfigCommit commit, uint128 freebalance, ,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, ConfigCommit, uint128, string, uint32));
                 _deployBigTask(repoName, taskName, tag, grant, commit, freebalance);
-            }
+            } else
+            if (kind == BIGTASK_DESTROY_PROPOSAL_KIND) {
+                (, string taskName, string repoName,) = abi.decode(propData,(uint256, string, string, uint32));
+                _destroyBigTask(taskName, repoName);
+            } 
         }
     }
     
