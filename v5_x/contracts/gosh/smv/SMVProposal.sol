@@ -341,6 +341,12 @@ function getGoshDestroyTaskProposalParams () external view
     (proposalKind, reponame, taskname, comment, ) = abi.decode(propData, (uint256, string, string, string, uint32));
 }
 
+function getGoshDestroyBigTaskProposalParams () external view
+         returns( uint256  proposalKind, string reponame, string taskname, string comment)
+{
+    (proposalKind, reponame, taskname, comment, ) = abi.decode(propData, (uint256, string, string, string, uint32));
+}
+
 function getGoshDeployTaskProposalParams () external view
          returns( uint256  proposalKind, string reponame, string taskname, string[] tag, ConfigGrant grant, string comment)
 {
@@ -623,6 +629,12 @@ function getDaoLockVoteProposalParamsData (TvmCell Data) external pure
 }
 
 function getGoshDestroyTaskProposalParamsData (TvmCell Data) external pure
+         returns( uint256  proposalKind, string reponame, string taskname, string comment)
+{
+    (proposalKind, reponame, taskname, comment, ) = abi.decode(Data, (uint256, string, string, string, uint32));
+}
+
+function getGoshDestroyBigTaskProposalParamsData (TvmCell Data) external pure
          returns( uint256  proposalKind, string reponame, string taskname, string comment)
 {
     (proposalKind, reponame, taskname, comment, ) = abi.decode(Data, (uint256, string, string, string, uint32));

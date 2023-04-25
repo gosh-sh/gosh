@@ -188,6 +188,17 @@
 			]
 		},
 		{
+			"name": "getGoshDestroyBigTaskProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"reponame","type":"string"},
+				{"name":"taskname","type":"string"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
 			"name": "getGoshDeployTaskProposalParams",
 			"inputs": [
 			],
@@ -728,6 +739,18 @@
 		},
 		{
 			"name": "getGoshDestroyTaskProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"reponame","type":"string"},
+				{"name":"taskname","type":"string"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getGoshDestroyBigTaskProposalParamsData",
 			"inputs": [
 				{"name":"Data","type":"cell"}
 			],
