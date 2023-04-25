@@ -469,6 +469,42 @@ function getStartMembershipProposalParamsData (TvmCell Data) external pure
      (proposalKind, newProgram, Programindex,,) = abi.decode(Data, (uint256, PaidMember, uint8, string, uint32));
 }
 
+function getBigTaskUpgradeProposalParams () external view
+         returns(uint proposalKind, string taskname, string reponame, string oldversion, address oldtask, string[] hashtag) 
+{
+    (proposalKind, taskname, reponame, oldversion, oldtask, hashtag,,) = abi.decode(propData, (uint256, string, string, string, address, string[], string, uint32));
+}
+
+function getBigTaskUpgradeProposalParamsData (TvmCell Data) external pure
+         returns(uint proposalKind, string taskname, string reponame, string oldversion, address oldtask, string[] hashtag) 
+{
+    (proposalKind, taskname, reponame, oldversion, oldtask, hashtag,,) = abi.decode(Data, (uint256, string, string, string, address, string[], string, uint32));
+}
+
+function getBigTaskProposalParams () external view
+         returns(uint proposalKind, string taskname, string repoName) 
+{
+        (proposalKind, taskname, repoName,) = abi.decode(propData,(uint256, string, string, uint32));
+}
+
+function getBigTaskParamsData (TvmCell Data) external pure
+         returns(uint proposalKind, string taskname, string repoName) 
+{
+        (proposalKind, taskname, repoName,) = abi.decode(Data,(uint256, string, string, uint32));
+}
+
+function getBigTaskDeployProposalParams () external view
+         returns(uint proposalKind, string repoName, string taskName, string[] tag, ConfigGrant grant, ConfigCommit commit, uint128 freebalance) 
+{
+        (proposalKind, repoName, taskName, tag, grant, commit, freebalance, ,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, ConfigCommit, uint128, string, uint32));
+}
+
+function getBigTaskDeployParamsData (TvmCell Data) external pure
+         returns(uint proposalKind, string repoName, string taskName, string[] tag, ConfigGrant grant, ConfigCommit commit, uint128 freebalance) 
+{
+        (proposalKind, repoName, taskName, tag, grant, commit, freebalance, ,) = abi.decode(Data,(uint256, string, string, string[], ConfigGrant, ConfigCommit, uint128, string, uint32));
+}
+
 function getStopMembershipProposalParams () external view
          returns(uint proposalKind, uint8 Programindex) 
 {

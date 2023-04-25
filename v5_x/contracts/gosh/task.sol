@@ -52,9 +52,11 @@ contract Task is Modifiers{
     uint128 _lastreview = 0;
     uint128 _lastmanager = 0;
     uint128 _balance;
+    uint128 _needbalance;
     bool _waitForUpdate = false;
     address _previousVersionAddr;
     string _previousVersion;
+    optional(string) public _bigtask;
     
     constructor(
         optional(TvmCell) defaultData,
@@ -64,7 +66,7 @@ contract Task is Modifiers{
         require(_nametask != "", ERR_NO_DATA);
         tvm.accept();
         if (defaultData.hasValue()) { 
-            (_repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], _grant, _balance, _hashtag) = abi.decode(defaultData.get(),(string, address, TvmCell, TvmCell, TvmCell, TvmCell, ConfigGrant, uint128, string[]));
+            (_repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], _grant, _balance, _needbalance, _hashtag, _bigtask) = abi.decode(defaultData.get(),(string, address, TvmCell, TvmCell, TvmCell, TvmCell, ConfigGrant, uint128, uint128, string[], optional(string)));
             _repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, _repoName);
             return;
         } 
@@ -146,6 +148,17 @@ contract Task is Modifiers{
         tvm.accept();
         this.calculateAssignLength{value : 0.15 ton, flag: 1}(uint128(_candidates.length - 1));
     }
+
+    function isReadyBalance() public {        
+        if (_bigtask.hasValue()) { BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).getGrantSubTask{value: 0.2 ton, flag: 1}(_nametask); }
+        else { return; }
+        require(_waitForUpdate == false, ERR_WRONG_UPGRADE_STATUS);
+        require(_ready == false, ERR_TASK_COMPLETED);
+        if (_bigtask.hasValue() == false) { return; }
+        tvm.accept();
+        _ready = true;
+        _locktime = block.timestamp;
+    }
     
     function calculateAssignLength (uint128 index) public view senderIs(address(this)) accept {   
         require(_waitForUpdate == false, ERR_WRONG_UPGRADE_STATUS); 
@@ -169,7 +182,8 @@ contract Task is Modifiers{
         _assignfull = assignfull;
         _reviewfull = reviewfull;
         _managerfull = managerfull;
-        _indexFinal = index;
+        _indexFinal = index;      
+        if (_bigtask.hasValue()) { return; }
         _ready = true;
         _locktime = block.timestamp;
     }
@@ -180,6 +194,7 @@ contract Task is Modifiers{
         require(block.timestamp >= _locktime, ERR_NOT_READY);
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
+        if (_bigtask.hasValue()) { BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).getGrantSubTask{value: 0.2 ton, flag: 1}(_nametask); }
         if (m_assign == typegrant) {
             require(_candidates[_indexFinal].pubaddrassign.exists(pubaddr), ERR_ASSIGN_NOT_EXIST);
             this.getGrantAssign{value: 0.2 ton, flag: 1}(pubaddr);
@@ -208,6 +223,7 @@ contract Task is Modifiers{
             } else { break; }
         }
         uint128 diff = _fullAssign / _assignfull - _assigners[pubaddr];
+        if (_balance < diff) { return; }
         _balance -= diff;
         if (diff == 0) { return; }
         _assigners[pubaddr] = _fullAssign / _assignfull;
@@ -232,6 +248,7 @@ contract Task is Modifiers{
             } else { break; }
         }
         uint128 diff = _fullReview / _reviewfull - _reviewers[pubaddr];
+        if (_balance < diff) { return; }
         _balance -= diff;
         if (diff == 0) { return; }
         _reviewers[pubaddr] = _fullReview / _reviewfull;
@@ -256,6 +273,7 @@ contract Task is Modifiers{
             } else { break; }
         }
         uint128 diff = _fullManager / _managerfull - _managers[pubaddr];
+        if (_balance < diff) { return; }
         _balance -= diff;
         if (diff == 0) { return; }
         _managers[pubaddr] = _fullManager / _managerfull;
@@ -274,6 +292,12 @@ contract Task is Modifiers{
         GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag, addr);
         selfdestruct(_systemcontract);
     }
+
+    function grantToken(uint128 value) public {
+        if (_bigtask.hasValue()) { BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).getGrantSubTask{value: 0.2 ton, flag: 1}(_nametask); }
+        else { return; }
+        _balance += value;
+    }
     
     //Selfdestruct
     
@@ -284,15 +308,24 @@ contract Task is Modifiers{
         GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag, msg.sender);
         selfdestruct(_systemcontract);
     }
+
+    function destroyBig() public {
+        if (_bigtask.hasValue()) { BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).getGrantSubTask{value: 0.2 ton, flag: 1}(_nametask); }
+        else { return; }
+        require(_ready == false, ERR_TASK_COMPLETED);
+        GoshDao(_goshdao).returnTaskToken{value: 0.2 ton, flag: 1}(_nametask, _repo, _balance);
+        GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag, msg.sender);
+        selfdestruct(_systemcontract);
+    }
     
     //Getters 
     function getTaskIn() public view minValue(0.5 ton) {
-        TvmCell data = abi.encode (_nametask, _repoName, _repo, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance);
+        TvmCell data = abi.encode (_nametask, _repoName, _repo, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance, _needbalance);
         IObject(msg.sender).returnTask{value: 0.1 ton, flag: 1}(data);
     }
        
-    function getStatus() external view returns(string nametask, address repo, ConfigCommitBase[] candidates, ConfigGrant grant, bool ready, uint128 indexFinal, string[] hashtag, uint128 locktime) {
-        return (_nametask, _repo, _candidates, _grant, _ready, _indexFinal, _hashtag, _locktime);
+    function getStatus() external view returns(string nametask, address repo, ConfigCommitBase[] candidates, ConfigGrant grant, bool ready, uint128 indexFinal, string[] hashtag, uint128 locktime, uint128 balance, uint128 needbalance) {
+        return (_nametask, _repo, _candidates, _grant, _ready, _indexFinal, _hashtag, _locktime, _balance, _needbalance);
     }
     function getVersion() external pure returns(string, string) {
         return ("task", version);

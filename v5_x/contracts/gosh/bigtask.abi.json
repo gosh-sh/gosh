@@ -82,9 +82,25 @@
 			]
 		},
 		{
-			"name": "sendReady",
+			"name": "deploySubTask",
 			"inputs": [
-				{"name":"index","type":"uint128"}
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"},
+				{"name":"hashtag","type":"string[]"},
+				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
+				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroySubTask",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"index1","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -124,6 +140,32 @@
 			]
 		},
 		{
+			"name": "getGrantSubTask",
+			"inputs": [
+				{"name":"nametask","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendReady",
+			"inputs": [
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "grantTokenToSubtask",
+			"inputs": [
+				{"name":"diff","type":"uint128"},
+				{"name":"granted","type":"uint128"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "destroy",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
@@ -147,7 +189,7 @@
 				{"name":"nametask","type":"string"},
 				{"name":"repo","type":"address"},
 				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"candidates","type":"tuple[]"},
-				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"}],"name":"grant","type":"tuple"},
+				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
 				{"name":"ready","type":"bool"},
 				{"name":"indexFinal","type":"uint128"},
 				{"name":"hashtag","type":"string[]"},
@@ -185,6 +227,14 @@
 			],
 			"outputs": [
 				{"name":"_managerfull","type":"uint128"}
+			]
+		},
+		{
+			"name": "_subtaskfull",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_subtaskfull","type":"uint128"}
 			]
 		},
 		{
@@ -229,28 +279,37 @@
 		{"name":"_assignfull","type":"uint128"},
 		{"name":"_reviewfull","type":"uint128"},
 		{"name":"_managerfull","type":"uint128"},
+		{"name":"_subtaskfull","type":"uint128"},
 		{"name":"_assigncomplete","type":"uint128"},
 		{"name":"_reviewcomplete","type":"uint128"},
 		{"name":"_managercomplete","type":"uint128"},
+		{"name":"_subtaskcomplete","type":"uint128"},
 		{"name":"_allassign","type":"bool"},
 		{"name":"_allreview","type":"bool"},
 		{"name":"_allmanager","type":"bool"},
+		{"name":"_allsubtask","type":"bool"},
 		{"name":"_lastassign","type":"uint128"},
 		{"name":"_lastreview","type":"uint128"},
 		{"name":"_lastmanager","type":"uint128"},
+		{"name":"_lastsubtask","type":"uint128"},
 		{"name":"_balance","type":"uint128"},
 		{"name":"_freebalance","type":"uint128"},
 		{"name":"_waitForUpdate","type":"bool"},
 		{"name":"_previousVersionAddr","type":"address"},
 		{"name":"_previousVersion","type":"string"},
 		{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"_candidates","type":"tuple[]"},
-		{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"}],"name":"_grant","type":"tuple"},
+		{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"_grant","type":"tuple"},
 		{"name":"_hashtag","type":"string[]"},
 		{"name":"_indexFinal","type":"uint128"},
 		{"name":"_locktime","type":"uint128"},
 		{"name":"_fullAssign","type":"uint128"},
 		{"name":"_fullReview","type":"uint128"},
 		{"name":"_fullManager","type":"uint128"},
-		{"name":"_subtask","type":"string[]"}
+		{"name":"_fullSubtask","type":"uint128"},
+		{"name":"_subtaskgranted","type":"uint128"},
+		{"name":"_fullSubtaskValue","type":"uint128"},
+		{"name":"_subtask","type":"string[]"},
+		{"name":"_subtaskvalue","type":"uint128[]"},
+		{"name":"_subtasskbalance","type":"uint128"}
 	]
 }
