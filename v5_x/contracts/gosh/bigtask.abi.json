@@ -193,7 +193,9 @@
 				{"name":"ready","type":"bool"},
 				{"name":"indexFinal","type":"uint128"},
 				{"name":"hashtag","type":"string[]"},
-				{"name":"locktime","type":"uint128"}
+				{"name":"locktime","type":"uint128"},
+				{"name":"subtask","type":"string[]"},
+				{"name":"subtaskvalue","type":"uint128[]"}
 			]
 		},
 		{

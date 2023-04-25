@@ -143,7 +143,7 @@ contract Task is Modifiers{
 
     function isReady(ConfigCommitBase commit) public senderIs(_repo) {
         require(_waitForUpdate == false, ERR_WRONG_UPGRADE_STATUS);
-        require(_ready == false, ERR_TASK_COMPLETED);
+        require(((_ready == false) || (_candidates.length == 0)), ERR_TASK_COMPLETED); 
         _candidates.push(commit);
         tvm.accept();
         this.calculateAssignLength{value : 0.15 ton, flag: 1}(uint128(_candidates.length - 1));
@@ -223,7 +223,7 @@ contract Task is Modifiers{
             } else { break; }
         }
         uint128 diff = _fullAssign / _assignfull - _assigners[pubaddr];
-        if (_balance < diff) { return; }
+        if (_balance < diff) { diff  = _balance; }
         _balance -= diff;
         if (diff == 0) { return; }
         _assigners[pubaddr] = _fullAssign / _assignfull;
@@ -250,7 +250,7 @@ contract Task is Modifiers{
         uint128 diff = _fullReview / _reviewfull - _reviewers[pubaddr];
         if (_balance < diff) { return; }
         _balance -= diff;
-        if (diff == 0) { return; }
+        if (diff == 0) { diff  = _balance; }
         _reviewers[pubaddr] = _fullReview / _reviewfull;
         if ((_allreview == true) && (diff != 0)) { _reviewcomplete += 1; }
         address addr = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, 0);
@@ -273,7 +273,7 @@ contract Task is Modifiers{
             } else { break; }
         }
         uint128 diff = _fullManager / _managerfull - _managers[pubaddr];
-        if (_balance < diff) { return; }
+        if (_balance < diff) { diff  = _balance; }
         _balance -= diff;
         if (diff == 0) { return; }
         _managers[pubaddr] = _fullManager / _managerfull;
@@ -324,8 +324,8 @@ contract Task is Modifiers{
         IObject(msg.sender).returnTask{value: 0.1 ton, flag: 1}(data);
     }
        
-    function getStatus() external view returns(string nametask, address repo, ConfigCommitBase[] candidates, ConfigGrant grant, bool ready, uint128 indexFinal, string[] hashtag, uint128 locktime, uint128 balance, uint128 needbalance) {
-        return (_nametask, _repo, _candidates, _grant, _ready, _indexFinal, _hashtag, _locktime, _balance, _needbalance);
+    function getStatus() external view returns(string nametask, address repo, ConfigCommitBase[] candidates, ConfigGrant grant, bool ready, uint128 indexFinal, string[] hashtag, uint128 locktime, uint128 balance, uint128 needbalance, optional(string) bigtask) {
+        return (_nametask, _repo, _candidates, _grant, _ready, _indexFinal, _hashtag, _locktime, _balance, _needbalance, _bigtask);
     }
     function getVersion() external pure returns(string, string) {
         return ("task", version);

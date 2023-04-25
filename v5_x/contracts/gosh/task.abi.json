@@ -159,7 +159,8 @@
 				{"name":"hashtag","type":"string[]"},
 				{"name":"locktime","type":"uint128"},
 				{"name":"balance","type":"uint128"},
-				{"name":"needbalance","type":"uint128"}
+				{"name":"needbalance","type":"uint128"},
+				{"name":"bigtask","type":"optional(string)"}
 			]
 		},
 		{
