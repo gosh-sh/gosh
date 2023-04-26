@@ -10,8 +10,8 @@ set -x
 #push the branch
 #last commit of main should be upgraded and pushed with branch main but not the new branch
 
-FIRST_VERSION=v2_x
-SECOND_VERSION=v4_x
+#FIRST_VERSION=v2_x
+#SECOND_VERSION=v4_x
 #./node_se_scripts/deploy.sh $FIRST_VERSION
 #. set-vars.sh $FIRST_VERSION
 #./upgrade_tests/set_up.sh $FIRST_VERSION $SECOND_VERSION
@@ -82,7 +82,20 @@ git push -u origin dev2
 
 cd ..
 
+sleep 30
+
 echo "***** cloning old version repo *****"
 git clone "$LINK" "${REPO_NAME}_clone"
+
+cd "${REPO_NAME}_clone"
+
+git checkout dev2
+
+content=$(cat dev.txt)
+if [ "$content" != "dev2" ]; then
+  echo "WRONG CONTENT"
+  exit 1
+fi
+echo "GOOD CONTENT"
 
 echo "TEST_SUCCEEDED"
