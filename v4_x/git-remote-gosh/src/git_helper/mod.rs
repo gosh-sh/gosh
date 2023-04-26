@@ -434,20 +434,21 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
                     let error_str = e.to_string();
                     if error_str.contains("Was trying to call getCommit") {
                         tracing::trace!("Fetch error: {error_str}");
-                        let sha = if error_str.contains("SHA=") {
-                            error_str
+                        let (sha, version) = if error_str.contains("SHA=") {
+                            let extracted = error_str
                                 .trim_start_matches(|c| c != '\"')
                                 .trim_end_matches(|c| c != '\"')
-                                .replace(['\"'], "")
+                                .replace(['\"'], "");
+                            let pair = extracted.split(",").collect::<Vec<&str>>().clone();
+                            (pair[0].to_owned(), pair[1].to_owned())
                         } else {
-                            sha.to_owned()
+                            (sha.to_owned(), helper.find_commit(&sha.clone().to_owned()).await?.0)
                         };
                         // let previous: Value = helper
                         //     .blockchain
                         //     .repo_contract()
                         //     .read_state(helper.blockchain.client(), "getPrevious", None)
                         //     .await?;
-                        let version = helper.find_commit(&sha).await?.0;
                         let out_str = format!("dispatcher {version} fetch {sha} {name}");
                         stdout.write_all(format!("{out_str}\n").as_bytes()).await?;
                         return Ok(());

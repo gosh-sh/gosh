@@ -246,8 +246,8 @@ where
                     for parent_id in &obj.parents {
                         commits_queue.push_back(*parent_id);
                     }
+                    dangling_commits.push(obj);
                 }
-                dangling_commits.push(obj);
                 continue;
             }
 
@@ -261,7 +261,10 @@ where
             break;
         }
         if next_commit_of_prev_version.is_some() {
-            return Err(format_err!("Was trying to call getCommit. SHA=\"{}\"", next_commit_of_prev_version.unwrap()))
+            return Err(format_err!(
+                "Was trying to call getCommit. SHA=\"{}\"",
+                next_commit_of_prev_version.unwrap()
+            ));
         }
 
         Ok(())

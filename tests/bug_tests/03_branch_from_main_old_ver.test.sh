@@ -68,7 +68,6 @@ echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
 sleep 3
 
-
 cd "$REPO_NAME"
 
 git checkout -b dev2
@@ -84,6 +83,6 @@ git push -u origin dev2
 cd ..
 
 echo "***** cloning old version repo *****"
-git clone "$LINK" "$REPO_NAME""_clone"
+git clone "$LINK" "${REPO_NAME}_clone"
 
 echo "TEST_SUCCEEDED"
