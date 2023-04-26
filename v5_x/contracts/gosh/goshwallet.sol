@@ -2651,7 +2651,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 _destroyTask(taskName, repoName);
             }  else
             if (kind == TASK_DEPLOY_PROPOSAL_KIND) {
-                (, string taskName, string repoName, string[] tag, ConfigGrant grant,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, uint32));
+                (, string taskName, string repoName, string[] tag, ConfigGrant grant,,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, string, uint32));
                 _deployTask(taskName, repoName, tag, grant);
             }  else
 
@@ -2853,7 +2853,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 _destroyTask(taskName, repoName);
             }  else
             if (kind == TASK_DEPLOY_PROPOSAL_KIND) {
-                (, string taskName, string repoName, string[] tag, ConfigGrant grant,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, uint32));
+                (, string taskName, string repoName, string[] tag, ConfigGrant grant,,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, string, uint32));
                 _deployTask(taskName, repoName, tag, grant);
             }  else
             if (kind == DEPLOY_REPO_PROPOSAL_KIND) {
