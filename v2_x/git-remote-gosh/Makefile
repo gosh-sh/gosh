@@ -43,11 +43,11 @@ copy_abi: clear_abi
 
 .PHONY: build
 build: copy_abi clear_screen
-	GOSH_BUILD_VERSION=`git describe --tags` cargo build --release --bin git-remote-gosh --target=${TARGET_ARCH}
+	cargo build --release --bin git-remote-gosh --target=${TARGET_ARCH}
 
 .PHONY: install
 install: copy_abi clear_screen
-	GOSH_BUILD_VERSION=`git describe --tags` cargo install --path .
+	cargo install --path .
 	./scripts/set_version.sh
 
 .PHONY: install_for_test
