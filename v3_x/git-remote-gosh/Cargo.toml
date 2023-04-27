@@ -20,6 +20,10 @@ version = '3.1.18'
 debug = 1
 inherits = 'release'
 
+[profile.release]
+panic = "abort"
+strip = true
+
 [dev-dependencies]
 mockall = '^0'
 
