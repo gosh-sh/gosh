@@ -4,6 +4,16 @@ set -o pipefail
 . ./util.sh
 set -x
 
+# Create repo
+# Add file to 'main' branch
+# Create branch 'test'
+# Squash 'test' into 'main' using "their"-strategy
+# Create branch 'dev' from 'test'
+# Delete branch 'test' from remote
+# Delete snapshots belonging to the 'test'
+# Squash 'dev' into 'main' using "their"-strategy
+# Despite the removal of snapshots (branch 'test'), the cloning of the repository should pass
+
 NOW=$(date +%s)
 REPO_NAME="repo23_$NOW"
 BRANCH_1=test
