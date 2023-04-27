@@ -1,5 +1,5 @@
 [[bin]]
-name = 'git-remote-gosh_unknown'
+name = 'git-remote-gosh_v4_0_0'
 path = 'src/bin/main.rs'
 
 [lib]
