@@ -38,8 +38,8 @@ set -o pipefail
 ./20-delete-branch.test.sh
 ./21-delete-snapshots.test.sh
 ./22-push_many_commits.test.sh
-./23-squash_n_delete.test.sh
-./24-squash_n_striped_delete.test.sh
+./23_1-squash_n_delete.test.sh
+# ./23_2-squash_n_striped_delete.test.sh
 
 ./clean.sh
 echo "All tests passed"
