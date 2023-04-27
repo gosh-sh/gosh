@@ -1,6 +1,6 @@
 [package]
 name = "git-remote-gosh"
-version = "4.0.1"
+version = "4.1.18"
 edition = "2021"
 keywords = ['git-remote', 'git', 'gosh']
 
