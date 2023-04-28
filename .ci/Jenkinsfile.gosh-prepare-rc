@@ -321,7 +321,7 @@ def archiveAzureArtifacts() {
             #!/bin/bash
             set -ex
 
-            rm -rf git-remote-gosh-*.tar git-remote-gosh-*.exe
+            rm -rf git-remote-gosh-*.tar.gz git-remote-gosh-*.exe
             chmod +x linux-a*/*
             chmod +x darwin-a*/*
 
@@ -333,10 +333,10 @@ def archiveAzureArtifacts() {
             cp linux-amd64/dispatcher.ini linux-arm64
             cp linux-amd64/dispatcher.ini darwin-arm64
             cp linux-amd64/dispatcher.ini windows-amd64
-            tar -cvf git-remote-gosh-linux-amd64.tar -C linux-amd64 $(ls -A linux-amd64)
-            tar -cvf git-remote-gosh-darwin-amd64.tar -C darwin-amd64 $(ls -A darwin-amd64)
-            tar -cvf git-remote-gosh-linux-arm64.tar -C linux-arm64 $(ls -A linux-arm64)
-            tar -cvf git-remote-gosh-darwin-arm64.tar -C darwin-arm64 $(ls -A darwin-arm64)  
+            tar -czvf git-remote-gosh-linux-amd64.tar.gz -C linux-amd64 $(ls -A linux-amd64)
+            tar -czvf git-remote-gosh-darwin-amd64.tar.gz -C darwin-amd64 $(ls -A darwin-amd64)
+            tar -czvf git-remote-gosh-linux-arm64.tar.gz -C linux-arm64 $(ls -A linux-arm64)
+            tar -czvf git-remote-gosh-darwin-arm64.tar.gz -C darwin-arm64 $(ls -A darwin-arm64)  
             cd windows-amd64 && zip -r git-remote-gosh-windows-amd64.zip ./* && cp git-remote-gosh-windows-amd64.zip ../
         '''
     }
@@ -565,10 +565,10 @@ def prereleaseBinaries() {
             dir('.ci/scripts') {
                 withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
                     sh './create-github-release.sh $TOKEN ${APP_VERSION} ${COMMIT}'
-                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-linux-amd64.tar'
-                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-darwin-amd64.tar'
-                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-linux-arm64.tar'
-                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-darwin-arm64.tar'
+                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-linux-amd64.tar.gz'
+                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-darwin-amd64.tar.gz'
+                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-linux-arm64.tar.gz'
+                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-darwin-arm64.tar.gz'
                     sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-windows-amd64.zip'
                 }
             }
@@ -629,7 +629,7 @@ def webTestsList() {
                             sed -i 's/VERSION_PLACEHOLDER/${APP_VERSION}/g' snap/snapcraft.yaml
                             chmod +x snap/git-remote-gosh
                             cd snap
-                            tar -cvf git-remote-gosh.tar git-remote-gosh
+                            tar -czvf git-remote-gosh.tar.gz git-remote-gosh
                             snapcraft clean --use-lxd
                             snapcraft --use-lxd
                             snapcraft upload git-remote-gosh_${APP_VERSION}_amd64.snap --release=candidate
