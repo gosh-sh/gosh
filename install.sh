@@ -11,15 +11,15 @@ RELEASE=rc-3.0.18
 # Check OS and architecture
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
     if [[ $(uname -m) == "x86_64" ]]; then
-        TAR="git-remote-gosh-linux-amd64.tar"
+        TAR="git-remote-gosh-linux-amd64.tar.gz"
     else
-        TAR="git-remote-gosh-linux-arm64.tar"
+        TAR="git-remote-gosh-linux-arm64.tar.gz"
     fi
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     if [[ $(uname -m) == "x86_64" ]]; then
-        TAR="git-remote-gosh-darwin-amd64.tar"
+        TAR="git-remote-gosh-darwin-amd64.tar.gz"
     else
-        TAR="git-remote-gosh-darwin-arm64.tar"
+        TAR="git-remote-gosh-darwin-arm64.tar.gz"
     fi
 else
     echo "Only \"MacOS\" and \"Linux\" are supported - not \"$OSTYPE\""
@@ -53,7 +53,7 @@ eval $(echo "$response" | grep -C3 "name.:.\+$TAR" | grep -w id | tr : = | tr -c
 wget --content-disposition --no-cookie -q --header "Accept: application/octet-stream" "$GH_REPO/releases/assets/$id" --show-progress
 
 # unpack
-tar -xf $TAR
+tar -xvzf $TAR
 rm -f $TAR
 
 mv git-remote-gosh $HOME/.gosh/
