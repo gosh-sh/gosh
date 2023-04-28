@@ -4,7 +4,7 @@ set -e
 
 REPO_OWNER=gosh-sh
 REPO=gosh
-RELEASE=rc-3.0.18
+RELEASE=rc-4.1.18
 
 # TODO: get it from one source with binary
 
