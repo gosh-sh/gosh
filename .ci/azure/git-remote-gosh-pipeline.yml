@@ -30,6 +30,12 @@ steps:
     echo "$(versionNo)/git-remote-gosh/target/aarch64-unknown-linux-gnu/release/git-remote-gosh_$(VERSION)"
   displayName: Get supported_contract_version
 
+  # Check version
+- bash: |
+    echo $(VERSION)
+    echo "$(versionNo)/git-remote-gosh/target/aarch64-unknown-linux-gnu/release/git-remote-gosh_$(VERSION)"
+  displayName: Check
+
 ##################################################
 # Pre-requirements
 # Linux
