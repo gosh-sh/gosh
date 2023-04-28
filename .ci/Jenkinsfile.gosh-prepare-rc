@@ -286,7 +286,7 @@ def buildRemoteGoshDebug(version) {
                 set -ex
 
                 cd ${WORKSPACE}
-                VSTS_ARTIFACTTOOL_DISABLE_HARDLINKS = '1'
+                export VSTS_ARTIFACTTOOL_DISABLE_HARDLINKS=1
                 az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 769 --path linux-amd64
                 az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 769 --path darwin-amd64
                 az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 769 --path windows-amd64
