@@ -15,7 +15,7 @@ LABEL org.opencontainers.image.title="Gosh" \
     com.docker.desktop.extension.api.version=">=0.2.1" \
     com.docker.desktop.extension.icon="http://icons.gosh.run/Gosh%20icon%20-%20black.svg" \
     com.docker.extension.detailed-description=${detailed_description} \
-    com.docker.extension.publisher-url="https://www.gosh.sh" \
+    com.docker.extension.publisher-url="https://gosh.sh" \
     com.docker.extension.changelog=${this_version_updates}
 
 RUN <<EOF
