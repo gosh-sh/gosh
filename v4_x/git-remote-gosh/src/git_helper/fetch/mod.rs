@@ -203,20 +203,19 @@ where
             if let Some(id) = commits_queue.pop_front() {
                 guard!(id);
                 let address = &self.calculate_commit_address(&id).await?;
-                let prev_repo: GetPreviousResult = self.blockchain
-                    .repo_contract()
-                    .read_state(self.blockchain.client(), "getPrevious", None)
-                    .await?;
                 let onchain_commit =
-                    blockchain::GoshCommit::load(&self.blockchain.client(), address)
-                        .await
-                        .map_err(|e| {
-                            format_err!(
+                    match blockchain::GoshCommit::load(&self.blockchain.client(), address)
+                        .await {
+                        Ok(commit) => commit,
+                        Err(e) => {
+                            let (version, _) = self.find_commit(&id.to_string()).await?;
+                            return Err(format_err!(
                                 "Failed to load commit with SHA=\"{},{}\". Error: {e}",
                                 id.to_string(),
-                                prev_repo.previous.map(|val| val.version).unwrap(),
-                            )
-                        })?;
+                                version,
+                            ));
+                        }
+                    };
                 tracing::debug!("branch={branch}: loaded onchain commit {}", id);
                 tracing::debug!("branch={branch} commit={id} addr={address}: data {:?}", onchain_commit);
                 let data = git_object::Data::new(
