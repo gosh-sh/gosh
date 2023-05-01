@@ -14,8 +14,9 @@ use std::{
     sync::Arc,
 };
 use anyhow::format_err;
-use crate::blockchain::contract::GoshContract;
+use crate::blockchain::contract::{ContractRead, GoshContract};
 use crate::blockchain::{GetNameBranchResult, gosh_abi};
+use crate::git_helper::push::GetPreviousResult;
 
 mod restore_blobs;
 
@@ -202,9 +203,20 @@ where
             if let Some(id) = commits_queue.pop_front() {
                 guard!(id);
                 let address = &self.calculate_commit_address(&id).await?;
+                let prev_repo: GetPreviousResult = self.blockchain
+                    .repo_contract()
+                    .read_state(self.blockchain.client(), "getPrevious", None)
+                    .await?;
                 let onchain_commit =
-                    blockchain::GoshCommit::load(&self.blockchain.client(), address).await
-                        .map_err(|e| format_err!("Failed to load commit with SHA=\"{}\". Error: {e}", id.to_string()))?;
+                    blockchain::GoshCommit::load(&self.blockchain.client(), address)
+                        .await
+                        .map_err(|e| {
+                            format_err!(
+                                "Failed to load commit with SHA=\"{},{}\". Error: {e}",
+                                id.to_string(),
+                                prev_repo.previous.map(|val| val.version).unwrap(),
+                            )
+                        })?;
                 tracing::debug!("branch={branch}: loaded onchain commit {}", id);
                 tracing::debug!("branch={branch} commit={id}: data {:?}", onchain_commit);
                 let data = git_object::Data::new(

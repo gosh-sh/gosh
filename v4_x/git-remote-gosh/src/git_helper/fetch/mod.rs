@@ -8,7 +8,7 @@ use crate::{
 };
 use git_odb::{Find, Write};
 
-use crate::blockchain::contract::GoshContract;
+use crate::blockchain::contract::{ContractRead, GoshContract};
 use crate::blockchain::{gosh_abi, GetNameBranchResult};
 use anyhow::format_err;
 use std::{
@@ -16,6 +16,7 @@ use std::{
     str::FromStr,
     sync::Arc,
 };
+use crate::git_helper::push::GetPreviousResult;
 
 mod restore_blobs;
 
@@ -201,13 +202,18 @@ where
             if let Some(id) = commits_queue.pop_front() {
                 guard!(id);
                 let address = &self.calculate_commit_address(&id).await?;
+                let prev_repo: GetPreviousResult = self.blockchain
+                    .repo_contract()
+                    .read_state(self.blockchain.client(), "getPrevious", None)
+                    .await?;
                 let onchain_commit =
                     blockchain::GoshCommit::load(&self.blockchain.client(), address)
                         .await
                         .map_err(|e| {
                             format_err!(
-                                "Failed to load commit with SHA=\"{}\". Error: {e}",
-                                id.to_string()
+                                "Failed to load commit with SHA=\"{},{}\". Error: {e}",
+                                id.to_string(),
+                                prev_repo.previous.map(|val| val.version).unwrap(),
                             )
                         })?;
                 tracing::debug!("branch={branch}: loaded onchain commit {}", id);
