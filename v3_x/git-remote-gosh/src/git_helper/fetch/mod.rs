@@ -200,6 +200,7 @@ where
                 dangling_trees.clear();
             }
 
+            tracing::trace!("commits_queue={:?}", commits_queue);
             if let Some(id) = commits_queue.pop_front() {
                 guard!(id);
                 let address = &self.calculate_commit_address(&id).await?;
@@ -253,10 +254,12 @@ where
                 tracing::debug!("New tree root: {}", &to_load.oid);
                 tree_obj_queue.push_back(to_load);
                 if onchain_commit.initupgrade {
-                    if !obj.parents.is_empty() {
-                        let prev_version = onchain_commit.parents[0].clone().version;
-                        next_commit_of_prev_version = Some((id, prev_version));
-                    }
+                    // Object can be first in the tree and have no parents
+                    // if !obj.parents.is_empty() {
+                    let prev_version = onchain_commit.parents[0].clone().version;
+                    next_commit_of_prev_version = Some((id, prev_version));
+                    tracing::trace!("next_commit_of_prev_version={:?}", next_commit_of_prev_version);
+                    // }
                 } else {
                     for parent_id in &obj.parents {
                         commits_queue.push_back(*parent_id);
