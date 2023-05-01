@@ -73,8 +73,8 @@ pipeline {
                 }
             }
             steps {
-                //runFunctionSet('buildRemoteGosh')
-                runFunctionSet('buildRemoteGoshDebug')
+                runFunctionSet('buildRemoteGosh')
+                //runFunctionSet('buildRemoteGoshDebug')
             }
         }
 
@@ -115,8 +115,8 @@ pipeline {
                     //runFunctionalTests(files, basePort, "Func v4", "v4_x")
 
                     def upgradeFiles = getTestFiles("tests/upgrade_tests")
-                    //runUpgradeTests(upgradeFiles, basePort, 1, 4)
-                    //runUpgradeTests(upgradeFiles, basePort, 2, 4)
+                    runUpgradeTests(upgradeFiles, basePort, 1, 4)
+                    runUpgradeTests(upgradeFiles, basePort, 2, 4)
                     runUpgradeTests(upgradeFiles, basePort, 3, 4)
                     env.REACT_APP_GOSH_ROOTADDR = sh script: "cat v1_x_workspace_0/contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
                     env.REACT_APP_GOSH = sh script: "cat v1_x_workspace_0/contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
