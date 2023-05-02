@@ -48,11 +48,7 @@ if [ ! -f "$HOME"/.gosh/config.json ]; then
   "primary-network": "mainnet",
   "networks": {
     "mainnet": {
-      "user-wallet": {
-        "profile": "user_name",
-        "pubkey": "00000000000000000000",
-        "secret": "00000000000000000000"
-      },
+      "user-wallet": null,
       "endpoints": [
         "https://bhs01.network.gosh.sh",
         "https://eri01.network.gosh.sh",
