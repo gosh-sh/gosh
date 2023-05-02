@@ -32,6 +32,20 @@ function get_snapshot_status {
     echo $status
 }
 
+function delete_snapshot {
+    repo_addr=$1
+    branch=$2
+    file_path=$3
+
+    echo Deleting snapshot: branch=$2, file=$3 ...
+    params='{"branch": "'"$branch"'", "name": "'"$file_path"'"}'
+    snapshot_addr=`tonos-cli -j -u $NETWORK run $repo_addr getSnapshotAddr "$params" --abi ../$REPO_ABI | jq -r .value0`
+    echo Got snapshot address: $snapshot_addr
+    tonos-cli -u $NETWORK call --abi ../$WALLET_ABI --sign ../$WALLET_KEYS $WALLET_ADDR deleteSnapshot \
+      "{\"snap\":\"$snapshot_addr\"}" || exit 1
+    echo Deleted snapshot: branch=$2, file=$3 - OK
+}
+
 function wait_account_active {
     stop_at=$((SECONDS+120))
     contract_addr=$1

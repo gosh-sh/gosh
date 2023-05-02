@@ -133,6 +133,10 @@ impl DiffMessagesIterator {
                     &file_path,
                 )
                 .await?;
+                let snapshot_contract =
+                    GoshContract::new(original_snapshot.clone(), crate::abi::SNAPSHOT);
+                let snapshot_is_active = snapshot_contract.is_active(client).await?;
+                tracing::trace!("snap={original_snapshot} is {}", if snapshot_is_active { "ACTIVE" } else { "NON_ACTIVE" });
                 tracing::info!(
                     "First commit in this branch to the file {} is {} and it was branched from {} -> snapshot addr: {}",
                     file_path,
@@ -141,13 +145,17 @@ impl DiffMessagesIterator {
                     original_snapshot
                 );
                 // generate filter
-                let created_at: u64 = crate::blockchain::commit::get_set_commit_created_at_time(
-                    client,
-                    repo_contract,
-                    &original_commit,
-                    &original_branch,
-                )
-                .await?;
+                let created_at: u64 = if snapshot_is_active {
+                    crate::blockchain::commit::get_set_commit_created_at_time(
+                        client,
+                        repo_contract,
+                        &original_commit,
+                        &original_branch,
+                    )
+                    .await?
+                } else {
+                    0u64
+                };
                 Some(NextChunk::JumpToAnotherBranchSnapshot(
                     original_snapshot,
                     created_at,
@@ -166,7 +174,7 @@ impl DiffMessagesIterator {
                 ignore_commits_created_after,
             )) => {
                 tracing::info!(
-                    "Jumping to another branch: {} - commit {}",
+                    "Jumping to another branch: {} - ignore commits after {}",
                     snapshot_address,
                     ignore_commits_created_after
                 );
@@ -178,26 +186,32 @@ impl DiffMessagesIterator {
                 let mut index = None;
                 let mut next_page_info = None;
                 while index.is_none() {
-                    tracing::info!("loading messages");
+                    tracing::info!("snap={address}: loading messages...");
                     let (buffer, page) = load_messages_to(client, &address, &cursor, None).await?;
+                    tracing::debug!("snap={address}: loaded buffer for iterator: {:?}", buffer);
                     for (i, item) in buffer.iter().enumerate() {
+                        tracing::debug!("snap={address}: check item: {:?}", item);
                         if &item.created_at <= ignore_commits_created_after {
+                            tracing::debug!("snap={address}: item[{i}] matched {} <= {ignore_commits_created_after}", item.created_at);
                             index = Some(i);
                             break;
                         }
                     }
                     self.buffer = buffer;
+                    tracing::info!("snap={address}: after update buffer index is {:?}", index);
                     if index.is_none() {
-                        tracing::info!("Expected commit was not found");
+                        tracing::info!("snap={address}: Expected commit was not found");
                         if page.cursor.is_some() {
                             cursor = page.cursor;
                         } else {
                             // Do not panic but stop search, because this commit can be found in the other branch
-                            tracing::info!("We reached the end of the messages queue to a snapshot and were not able to find original commit there.");
+                            tracing::info!("snap={address}: We reached the end of the messages queue to a snapshot and were not able to find original commit there.");
+                            tracing::info!("snap={address}: before return index is {:?}, buffer_cursor={}", index, self.buffer_cursor);
+                            self.buffer_cursor = 0;
                             return Ok(LoadStatus::StopSearch);
                         }
                     } else {
-                        tracing::info!("Commit found at {}", index.unwrap());
+                        tracing::info!("snap={address}: Commit found at {}", index.unwrap());
                         next_page_info = page.cursor;
                     }
                 }
@@ -233,7 +247,6 @@ impl DiffMessagesIterator {
 
     #[instrument(level = "info", skip_all)]
     fn try_take_next_item(&mut self) -> Option<DiffMessage> {
-        tracing::trace!("try_take_next_item = {:?}", self);
         if self.buffer_cursor >= self.buffer.len() {
             return None;
         }

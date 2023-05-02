@@ -133,6 +133,10 @@ impl DiffMessagesIterator {
                     &file_path,
                 )
                 .await?;
+                let snapshot_contract =
+                    GoshContract::new(original_snapshot.clone(), crate::abi::SNAPSHOT);
+                let snapshot_is_active = snapshot_contract.is_active(client).await?;
+                tracing::trace!("snap={original_snapshot} is {}", if snapshot_is_active { "ACTIVE" } else { "NON_ACTIVE" });
                 tracing::info!(
                     "First commit in this branch to the file {} is {} and it was branched from {} -> snapshot addr: {}",
                     file_path,
@@ -141,13 +145,17 @@ impl DiffMessagesIterator {
                     original_snapshot
                 );
                 // generate filter
-                let created_at: u64 = crate::blockchain::commit::get_set_commit_created_at_time(
-                    client,
-                    repo_contract,
-                    &original_commit,
-                    &original_branch,
-                )
-                .await?;
+                let created_at: u64 = if snapshot_is_active {
+                    crate::blockchain::commit::get_set_commit_created_at_time(
+                        client,
+                        repo_contract,
+                        &original_commit,
+                        &original_branch,
+                    )
+                    .await?
+                } else {
+                    0u64
+                };
                 Some(NextChunk::JumpToAnotherBranchSnapshot(
                     original_snapshot,
                     created_at,
@@ -193,7 +201,9 @@ impl DiffMessagesIterator {
                             cursor = page.cursor;
                         } else {
                             // Do not panic but stop search, because this commit can be found in the other branch
-                            tracing::info!("We reached the end of the messages queue to a snapshot and were not able to find original commit there.");
+                            tracing::info!("snap={address}: We reached the end of the messages queue to a snapshot and were not able to find original commit there.");
+                            tracing::info!("snap={address}: before return index is {:?}, buffer_cursor={}", index, self.buffer_cursor);
+                            self.buffer_cursor = 0;
                             return Ok(LoadStatus::StopSearch);
                         }
                     } else {

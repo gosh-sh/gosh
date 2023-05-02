@@ -21,20 +21,24 @@ fi
 # Check OS and architecture
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
     if [[ $(uname -m) == "x86_64" ]]; then
-        TAR="git-remote-gosh-linux-amd64.tar"
+        TAR="git-remote-gosh-linux-amd64.tar.gz"
     else
-        TAR="git-remote-gosh-linux-arm64.tar"
+        TAR="git-remote-gosh-linux-arm64.tar.gz"
     fi
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     if [[ $(uname -m) == "x86_64" ]]; then
-        TAR="git-remote-gosh-darwin-amd64.tar"
+        TAR="git-remote-gosh-darwin-amd64.tar.gz"
     else
-        TAR="git-remote-gosh-darwin-arm64.tar"
+        TAR="git-remote-gosh-darwin-arm64.tar.gz"
     fi
 else
     echo "Only \"MacOS\" and \"Linux\" are supported - not \"$OSTYPE\""
     exit 1
 fi
+
+OLD_TAR="${TAR%.*}"
+[ -d $TAR ] && rm $TAR
+[ -d $OLD_TAR ] && rm $OLD_TAR
 
 GH_API="https://api.github.com"
 GH_REPO="$GH_API/repos/${REPO_OWNER}/${REPO}"
@@ -48,11 +52,7 @@ if [ ! -f "$HOME"/.gosh/config.json ]; then
   "primary-network": "mainnet",
   "networks": {
     "mainnet": {
-      "user-wallet": {
-        "profile": "user_name",
-        "pubkey": "00000000000000000000",
-        "secret": "00000000000000000000"
-      },
+      "user-wallet": null,
       "endpoints": [
         "https://bhs01.network.gosh.sh",
         "https://eri01.network.gosh.sh",
@@ -70,15 +70,24 @@ response=$(curl -s "$GH_TAGS")
 # Get ID of the asset based on given name.
 eval $(echo "$response" | grep -C3 "name.:.\+$TAR" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
 [ "$id" ] || {
+  OLD=TRUE
+  eval $(echo "$response" | grep -C3 "name.:.\+$OLD_TAR" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
+  [ "$id" ] || {
     echo "Error: Failed to get asset id, response: $response" | awk 'length($0)<100' >&2
     exit 1
+  }
 }
 
 wget --content-disposition --no-cookie -q --header "Accept: application/octet-stream" "$GH_REPO/releases/assets/$id" --show-progress
 
 # unpack
-tar -xf $TAR
-rm -f $TAR
+if [[ -z "${OLD}" ]]; then
+  tar -xvzf $TAR
+  rm -f $TAR
+else
+  tar -xf $OLD_TAR
+  rm -f $OLD_TAR
+fi
 
 DEFAULT_PATH=$HOME/.gosh/
 BINARY_PATH="${BINARY_PATH:-$DEFAULT_PATH}"

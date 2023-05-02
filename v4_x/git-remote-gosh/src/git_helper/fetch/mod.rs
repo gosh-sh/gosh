@@ -8,7 +8,7 @@ use crate::{
 };
 use git_odb::{Find, Write};
 
-use crate::blockchain::contract::GoshContract;
+use crate::blockchain::contract::{ContractRead, GoshContract};
 use crate::blockchain::{gosh_abi, GetNameBranchResult};
 use anyhow::format_err;
 use std::{
@@ -16,6 +16,7 @@ use std::{
     str::FromStr,
     sync::Arc,
 };
+use crate::git_helper::push::GetPreviousResult;
 
 mod restore_blobs;
 
@@ -70,6 +71,15 @@ where
             iter.as_str()
         };
         tracing::debug!("Calculate branch: {}", branch);
+
+        let context = self.blockchain.client();
+        let remote_branches: Vec<String> = blockchain::branch_list(context, &self.repo_addr)
+            .await?
+            .branch_ref
+            .iter()
+            .map(|b| b.branch_name.clone())
+            .collect();
+
         let mut visited: HashSet<git_hash::ObjectId> = HashSet::new();
         macro_rules! guard {
             ($id:ident) => {
@@ -102,17 +112,17 @@ where
         let mut next_commit_of_prev_version = None;
         loop {
             if blobs_restore_plan.is_available() {
-                tracing::debug!("Restoring blobs");
+                tracing::debug!("branch={branch}: Restoring blobs");
                 blobs_restore_plan.restore(self).await?;
                 blobs_restore_plan = restore_blobs::BlobsRebuildingPlan::new();
                 continue;
             }
             if let Some(tree_node_to_load) = tree_obj_queue.pop_front() {
-                tracing::debug!("Loading tree: {:?}", tree_node_to_load);
+                tracing::debug!("branch={branch}: Loading tree: {:?}", tree_node_to_load);
                 let id = tree_node_to_load.oid;
-                tracing::debug!("Loading tree: {}", id);
+                tracing::debug!("branch={branch}: Loading tree: {}", id);
                 guard!(id);
-                tracing::debug!("Ok. Guard passed. Loading tree: {}", id);
+                tracing::debug!("branch={branch}: Ok. Guard passed. Loading tree: {}", id);
                 let path_to_node = tree_node_to_load.path;
                 let tree_object_id = format!("{}", tree_node_to_load.oid);
                 let mut repo_contract = self.blockchain.repo_contract().clone();
@@ -127,12 +137,12 @@ where
                     blockchain::Tree::load(&self.blockchain.client(), &address).await?;
                 let tree_object: git_object::Tree = onchain_tree_object.into();
 
-                tracing::debug!("Tree obj parsed {}", id);
+                tracing::debug!("branch={branch}: Tree obj parsed {}", id);
                 for entry in &tree_object.entries {
                     let oid = entry.oid;
                     match entry.mode {
                         git_object::tree::EntryMode::Tree => {
-                            tracing::debug!("Tree entry: tree {}->{}", id, oid);
+                            tracing::debug!("branch={branch}: Tree entry: tree {}->{}", id, oid);
                             let to_load = TreeObjectsQueueItem {
                                 path: format!("{}/{}", path_to_node, entry.filename),
                                 oid,
@@ -143,7 +153,7 @@ where
                         git_object::tree::EntryMode::Commit => (),
                         git_object::tree::EntryMode::Blob
                         | git_object::tree::EntryMode::BlobExecutable => {
-                            tracing::debug!("Tree entry: blob {}->{}", id, oid);
+                            tracing::debug!("branch={branch}: Tree entry: blob {}->{}", id, oid);
                             let file_path = format!("{}/{}", path_to_node, entry.filename);
                             for branch in tree_node_to_load.branches.iter() {
                                 let mut repo_contract = self.blockchain.repo_contract().clone();
@@ -165,7 +175,7 @@ where
                                     continue;
                                 }
                                 tracing::debug!(
-                                    "Adding a blob to search for. Path: {}, id: {}, snapshot: {}",
+                                    "branch={branch}: Adding a blob to search for. Path: {}, id: {}, snapshot: {}",
                                     file_path,
                                     oid,
                                     snapshot_address
@@ -174,7 +184,7 @@ where
                             }
                         }
                         _ => {
-                            tracing::debug!("IT MUST BE NOTED!");
+                            tracing::debug!("branch={branch}: IT MUST BE NOTED!");
                             panic!();
                         }
                     }
@@ -189,19 +199,25 @@ where
                 dangling_trees.clear();
             }
 
+            tracing::trace!("commits_queue={:?}", commits_queue);
             if let Some(id) = commits_queue.pop_front() {
                 guard!(id);
                 let address = &self.calculate_commit_address(&id).await?;
                 let onchain_commit =
-                    blockchain::GoshCommit::load(&self.blockchain.client(), address)
-                        .await
-                        .map_err(|e| {
-                            format_err!(
-                                "Failed to load commit with SHA=\"{}\". Error: {e}",
-                                id.to_string()
-                            )
-                        })?;
-                tracing::debug!("loaded onchain commit {}", id);
+                    match blockchain::GoshCommit::load(&self.blockchain.client(), address)
+                        .await {
+                        Ok(commit) => commit,
+                        Err(e) => {
+                            let (version, _) = self.find_commit(&id.to_string()).await?;
+                            return Err(format_err!(
+                                "Failed to load commit with SHA=\"{},{}\". Error: {e}",
+                                id.to_string(),
+                                version,
+                            ));
+                        }
+                    };
+                tracing::debug!("branch={branch}: loaded onchain commit {}", id);
+                tracing::debug!("branch={branch} commit={id} addr={address}: data {:?}", onchain_commit);
                 let data = git_object::Data::new(
                     git_object::Kind::Commit,
                     onchain_commit.content.as_bytes(),
@@ -209,14 +225,24 @@ where
                 let obj = git_object::Object::from(data.decode()?).into_commit();
                 tracing::debug!("Received commit {}", id);
                 let mut branches = HashSet::new();
-                branches.insert(onchain_commit.branch);
-                for parent in onchain_commit.parents {
-                    let parent = BlockchainContractAddress::new(parent.address);
-                    let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
-                    let branch: GetNameBranchResult = parent_contract
-                        .run_static(self.blockchain.client(), "getNameBranch", None)
-                        .await?;
-                    branches.insert(branch.name);
+                branches.insert(onchain_commit.branch.clone());
+
+                tracing::debug!("branch={branch}: existing remote branches: {:?}", remote_branches);
+                // don't collect parent branches for deleted one
+                if remote_branches.contains(&onchain_commit.branch) {
+                    for parent in onchain_commit.parents.clone() {
+                        let parent = BlockchainContractAddress::new(parent.address);
+                        let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
+                        let branch: GetNameBranchResult = parent_contract.run_static(
+                            self.blockchain.client(),
+                            "getNameBranch",
+                            None
+                        ).await?;
+                        tracing::debug!("commit={id}: extracted branch {:?}", branch.name);
+                        branches.insert(branch.name);
+                    }
+                } else {
+                    branches.insert(branch.to_owned());
                 }
 
                 let to_load = TreeObjectsQueueItem {
@@ -227,15 +253,18 @@ where
                 tracing::debug!("New tree root: {}", &to_load.oid);
                 tree_obj_queue.push_back(to_load);
                 if onchain_commit.initupgrade {
-                    if !obj.parents.is_empty() {
-                        next_commit_of_prev_version = Some(obj.parents[0].clone());
-                    }
+                    // Object can be first in the tree and have no parents
+                    // if !obj.parents.is_empty() {
+                        let prev_version = onchain_commit.parents[0].clone().version;
+                        next_commit_of_prev_version = Some((id, prev_version));
+                        tracing::trace!("next_commit_of_prev_version={:?}", next_commit_of_prev_version);
+                    // }
                 } else {
                     for parent_id in &obj.parents {
                         commits_queue.push_back(*parent_id);
                     }
+                    dangling_commits.push(obj);
                 }
-                dangling_commits.push(obj);
                 continue;
             }
 
@@ -249,10 +278,8 @@ where
             break;
         }
         if next_commit_of_prev_version.is_some() {
-            return Err(format_err!(
-                "Was trying to call getCommit. SHA=\"{}\"",
-                next_commit_of_prev_version.unwrap()
-            ));
+            let (sha, version) = next_commit_of_prev_version.unwrap();
+            return Err(format_err!("Was trying to call getCommit. SHA=\"{sha},{version}\""));
         }
 
         Ok(())
