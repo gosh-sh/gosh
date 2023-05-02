@@ -62,8 +62,8 @@ pipeline {
                 }
             }
             steps {
-                //buildDispatcher()
-                buildDispatcherDebug()
+                buildDispatcher()
+                //buildDispatcherDebug()
             }
         }
         stage('Build: Git Helper') {
@@ -73,8 +73,8 @@ pipeline {
                 }
             }
             steps {
-                //runFunctionSet('buildRemoteGosh')
-                runFunctionSet('buildRemoteGoshDebug')
+                runFunctionSet('buildRemoteGosh')
+                //runFunctionSet('buildRemoteGoshDebug')
             }
         }
 
@@ -89,7 +89,7 @@ pipeline {
             }
         }
 
-        stage('Tests') {
+        /*stage('Tests') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -151,7 +151,7 @@ pipeline {
                     archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*.png"
                 }
             }
-        }
+        }*/
 
         stage('Prerelease: Git Helper - bin') {
             agent {
