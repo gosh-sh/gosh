@@ -36,6 +36,10 @@ else
     exit 1
 fi
 
+OLD_TAR="${TAR%.*}"
+[ -d $TAR ] && rm $TAR
+[ -d $OLD_TAR ] && rm $OLD_TAR
+
 GH_API="https://api.github.com"
 GH_REPO="$GH_API/repos/${REPO_OWNER}/${REPO}"
 GH_TAGS="$GH_REPO/releases/$TAG"
@@ -66,15 +70,24 @@ response=$(curl -s "$GH_TAGS")
 # Get ID of the asset based on given name.
 eval $(echo "$response" | grep -C3 "name.:.\+$TAR" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
 [ "$id" ] || {
+  OLD=TRUE
+  eval $(echo "$response" | grep -C3 "name.:.\+$OLD_TAR" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
+  [ "$id" ] || {
     echo "Error: Failed to get asset id, response: $response" | awk 'length($0)<100' >&2
     exit 1
+  }
 }
 
 wget --content-disposition --no-cookie -q --header "Accept: application/octet-stream" "$GH_REPO/releases/assets/$id" --show-progress
 
 # unpack
-tar -xvzf $TAR
-rm -f $TAR
+if [[ -z "${OLD}" ]]; then
+  tar -xvzf $TAR
+  rm -f $TAR
+else
+  tar -xf $OLD_TAR
+  rm -f $OLD_TAR
+fi
 
 DEFAULT_PATH=$HOME/.gosh/
 BINARY_PATH="${BINARY_PATH:-$DEFAULT_PATH}"
