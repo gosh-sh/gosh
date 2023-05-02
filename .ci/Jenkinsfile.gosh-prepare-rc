@@ -27,6 +27,7 @@ pipeline {
     parameters {
         gitParameter branchFilter: 'origin/(.*)', defaultValue: 'dev', name: 'sha1', type: 'PT_BRANCH', quickFilterEnabled: true
         booleanParam name: 'DRYRUN', defaultValue: true, description: 'If enabled, will NOT publish pre-release artifacts to Github and Dockerhub.'
+        booleanParam name: 'TEST_WEB', defaultValue: true, description: 'If enabled, will execute web tests.'
     }
 
     stages {
@@ -89,7 +90,7 @@ pipeline {
             }
         }
 
-        /*stage('Tests') {
+        stage('Tests') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -125,6 +126,7 @@ pipeline {
         }
 
         stage('Web: deploy') {
+            when { expression { return params.TEST_WEB } }
             agent {
                 node {
                     label 'jenkins-main'
@@ -136,6 +138,7 @@ pipeline {
         }
         
         stage('Tests: Web') {
+            when { expression { return params.TEST_WEB } }
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -151,7 +154,7 @@ pipeline {
                     archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*.png"
                 }
             }
-        }*/
+        }
 
         stage('Prerelease: Git Helper - bin') {
             agent {
