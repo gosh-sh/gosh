@@ -41,7 +41,7 @@ set -o pipefail
 ./22-push_many_commits.test.sh
 ./23_1-squash_n_delete.test.sh
 ./24_several_branches_from_one_commit.test.sh
-./25_empty_commit.sh
+./25_empty_commit.test.sh
 # ./23_2-squash_n_striped_delete.test.sh
 
 ./clean.sh
