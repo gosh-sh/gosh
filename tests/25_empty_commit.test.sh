@@ -5,6 +5,7 @@ set -o pipefail
 set -x
 
 # Test 25 push an 'empty' commit. Now test fails because tree contract can't have 0 files in it and doesn't finish the internal check
+# It checks that git commit feature '--allow-empty' is correctly handled on GOSH.
 # 1. Push an empty commit to the main branch
 # 2. Create a dev branch from the empty commit form main and  push a commit to it
 # 3. Push a commit to the main branch

@@ -5,6 +5,9 @@ set -o pipefail
 set -x
 
 # Test 19_1 pushes many files not to ipfs
+# It checks that contracts correctly work with big amount of files, especially that they don't exceed their balances
+# while processing big amount of diffs (that's why it is important to have files not in ipfs) and correctly ask for
+# balance top ups.
 # 1. Create main branch and push init commit to it
 # 2. Create dev branch and push a big amount of files to one commit
 # 3. Clone the repo and check dev branch to have an appropriate number of files

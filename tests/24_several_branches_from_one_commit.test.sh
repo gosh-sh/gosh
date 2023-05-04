@@ -5,6 +5,8 @@ set -o pipefail
 set -x
 
 # Test 24 pushes several branches starting from the one commit
+# It checks that several branches can be created from the one commit.
+# Branches add file with the same name to be sure that trees does not concurrent and block each other.
 # 1. Create main branch and push init commit to it
 # 2. Create dev1 branch from main and push one commit to it
 # 3. Create dev2 branch from main and push one commit to it
