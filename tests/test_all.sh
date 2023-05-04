@@ -42,7 +42,6 @@ set -o pipefail
 ./23_1-squash_n_delete.test.sh
 ./24_several_branches_from_one_commit.test.sh
 ./25_empty_commit.test.sh
-# ./23_2-squash_n_striped_delete.test.sh
 
 ./clean.sh
 echo "All tests passed"

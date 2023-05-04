@@ -4,6 +4,13 @@ set -o pipefail
 . ./util.sh
 set -x
 
+# Test 24 pushes several branches starting from the one commit
+# 1. Create main branch and push init commit to it
+# 2. Create dev1 branch from main and push one commit to it
+# 3. Create dev2 branch from main and push one commit to it
+# 4. Clone the repo and check dev1 and dev2 branches to have correct files
+
+
 REPO_NAME="repo24_$(date +%s)"
 
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME

@@ -4,6 +4,11 @@ set -o pipefail
 . ./util.sh
 set -x
 
+# Test 19_1 pushes many files not to ipfs
+# 1. Create main branch and push init commit to it
+# 2. Create dev branch and push a big amount of files to one commit
+# 3. Clone the repo and check dev branch to have an appropriate number of files
+
 REPO_NAME="repo19_$(date +%s)"
 
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME

@@ -4,6 +4,12 @@ set -o pipefail
 . ./util.sh
 set -x
 
+# Test 25 push an 'empty' commit. Now test fails because tree contract can't have 0 files in it and doesn't finish the internal check
+# 1. Push an empty commit to the main branch
+# 2. Create a dev branch from the empty commit form main and  push a commit to it
+# 3. Push a commit to the main branch
+# 4. Clone the repo and check the dev branch to have the correct content
+
 # ignore to wait for fixes
 echo "Test is ignored"
 exit 0
