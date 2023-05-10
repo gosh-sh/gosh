@@ -134,7 +134,7 @@ impl ParallelDiffsUploadSupport {
             );
         self.expecting_deployed_contacts_addresses.insert(
             diff_contract_address,
-            (diff_coordinates.to_owned(), parallel_diff.to_owned(), true),
+            (diff_coordinates.to_owned(), parallel_diff.to_owned(), is_last),
         );
         Ok(())
     }
