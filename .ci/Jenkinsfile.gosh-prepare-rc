@@ -63,8 +63,8 @@ pipeline {
                 }
             }
             steps {
-                //buildDispatcher()
-                buildDispatcherDebug()
+                buildDispatcher()
+                //buildDispatcherDebug()
             }
         }
         stage('Build: Git Helper') {
@@ -74,8 +74,8 @@ pipeline {
                 }
             }
             steps {
-                //runFunctionSet('buildRemoteGosh')
-                runFunctionSet('buildRemoteGoshDebug')
+                runFunctionSet('buildRemoteGosh')
+                //runFunctionSet('buildRemoteGoshDebug')
             }
         }
 
@@ -268,11 +268,11 @@ def buildDispatcherDebug() {
                 rm -rf darwin-*
                 rm -rf windows-*
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 812 --path linux-amd64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 812 --path darwin-amd64
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 812 --path windows-amd64
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 812 --path linux-arm64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 812 --path darwin-arm64
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 812 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 812 --path darwin-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 812 --path windows-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 812 --path linux-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 812 --path darwin-arm64 && sleep 2
             '''
         }
     }
@@ -300,11 +300,11 @@ def buildRemoteGosh(version) {
 
                 cd ${WORKSPACE}
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id \$PIPELINE_1_ID --path linux-amd64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id \$PIPELINE_1_ID --path darwin-amd64
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id \$PIPELINE_1_ID --path windows-amd64
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id \$PIPELINE_1_ID --path linux-arm64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id \$PIPELINE_1_ID --path darwin-arm64
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id \$PIPELINE_1_ID --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id \$PIPELINE_1_ID --path darwin-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id \$PIPELINE_1_ID --path windows-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id \$PIPELINE_1_ID --path linux-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id \$PIPELINE_1_ID --path darwin-arm64 && sleep 2
             """
         }
     }
