@@ -109,7 +109,7 @@ pipeline {
                     def batches = []
                     for (int i = 0; i < files.size(); i += batchSize) {
                         def end = Math.min(i + batchSize, files.size())
-                        batches.add(files.subList(i, end))
+                        batches.add(new ArrayList(files.subList(i, end)))  // <-- Modified
                     }
 
                     for (int j = 0; j < batches.size(); j++) {
@@ -131,7 +131,7 @@ pipeline {
                     def upgradeBatches = []
                     for (int i = 0; i < upgradeFiles.size(); i += batchSize) {
                         def end = Math.min(i + batchSize, upgradeFiles.size())
-                        upgradeBatches.add(upgradeFiles.subList(i, end))
+                        upgradeBatches.add(new ArrayList(upgradeFiles.subList(i, end)))  // <-- Modified
                     }
 
                     for (int j = 0; j < upgradeBatches.size(); j++) {
