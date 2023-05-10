@@ -134,6 +134,12 @@ contract Tree is Modifiers {
             }
             this.checkTree{value: 0.2 ton, flag: 1}(index, path, typer);
         }
+        if (_needAnswer == 0) {
+            if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, true, typer); }
+            else { Commit(_checkaddr).treeAccept{value: 0.1 ton, flag: 1}(_checkbranch, typer); }
+            _check = false;
+            _needAnswer = 0;
+        }
     }
 
     function answerIs(string name, bool _ready, uint128 typer) public senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, _checkbranch, name)) {
