@@ -173,7 +173,7 @@ contract Tree is Modifiers {
         require(_isReady == true, ERR_PROCCESS_END);
         tvm.accept();
         getMoney();
-        if (_check == true) { return; }
+        if (_check == false) { return; }
         if (_needAnswer > 0) { return; }
         if (res == false) {
             if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false, typer); }
