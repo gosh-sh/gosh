@@ -120,7 +120,7 @@ pipeline {
                         runFunctionalTests(batch, basePort + (j * batchSize), "Func v2", "v2_x") // Adjust basePort based on batch
                         runFunctionalTests(batch, basePort + (j * batchSize), "Func v3", "v3_x") // Adjust basePort based on batch
                         runFunctionalTests(batch, basePort + (j * batchSize), "Func v4", "v4_x") // Adjust basePort based on batch
-                        sh "docker ps -a --filter name=localnode-* -aq | grep -v \"$$(docker ps -a --filter name=localnode-9000 -q)\" | xargs docker rm -f"
+                        sh 'docker ps -a --filter name=localnode-* -aq | grep -v "$(docker ps -a --filter name=localnode-9000 -q)" | xargs docker rm -f'
                     }
 
                     def upgradeFiles = getTestFiles("tests/upgrade_tests")
@@ -137,7 +137,7 @@ pipeline {
                         runUpgradeTests(batch, basePort + (j * batchSize), 1, 4)
                         runUpgradeTests(batch, basePort + (j * batchSize), 2, 4)
                         runUpgradeTests(batch, basePort + (j * batchSize), 3, 4)
-                        sh "docker ps -a --filter name=localnode-* -aq | grep -v \"$$(docker ps -a --filter name=localnode-9000 -q)\" | xargs docker rm -f"
+                        sh 'docker ps -a --filter name=localnode-* -aq | grep -v "$(docker ps -a --filter name=localnode-9000 -q)" | xargs docker rm -f'
                     }
 
                     env.REACT_APP_GOSH_ROOTADDR = sh script: "cat v1_x_workspace_0/contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
