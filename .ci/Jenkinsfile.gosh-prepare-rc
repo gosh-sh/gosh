@@ -400,25 +400,18 @@ def getTestFiles(testsDir) {
 }
 
 def deployVersion(version, files, basePort) {
-    def batches = files.collate(10) // Create batches of 10
+    def containerStages = [:]
 
-    for (int j = 0; j < batches.size(); j++) {
-        def batch = batches[j]
-        def containerStages = [:]
-
-        for (int i = 0; i < batch.size(); i++) {
-            def port = basePort + (j * 10) + i // Adjust basePort based on batch
-            def index = i
-            containerStages["Deploy ${version} ${i}"] = {
-                stage("Deploy ${version} ${index}") {
-                    deployStage(version, index, port)
-                }
+    for (int i = 0; i < files.size(); i++) {
+        def port = basePort + i
+        def index = i
+        containerStages["Deploy ${version} ${i}"] = {
+            stage("Deploy ${version} ${index}") {
+                deployStage(version, index, port)
             }
         }
-
-        // Now run the stages in this batch in parallel
-        parallel containerStages
     }
+    parallel containerStages
 }
 
 def deployStage(version, index, port) {
