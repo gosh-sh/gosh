@@ -174,7 +174,6 @@ contract Tree is Modifiers {
         tvm.accept();
         getMoney();
         if (_check == false) { return; }
-        if (_needAnswer > 0) { return; }
         if (res == false) {
             if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false, typer); }
             _check = false;
