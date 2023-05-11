@@ -32,10 +32,13 @@ git config user.email "foo@bar.com"
 git config user.name "My name"
 git branch -m main
 
-echo file > file.toml
+echo file1 > file.toml
+echo file4 > file0
 mkdir file
 echo blabla > file/1.txt
 echo blablabla > file/2.txt
+echo bla > bin
+echo foo > bin.d
 git add *
 git commit -m main
 git push -u origin main
