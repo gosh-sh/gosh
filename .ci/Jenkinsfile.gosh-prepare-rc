@@ -16,6 +16,8 @@ def runFunctionSet(function_name) {
     parallel(running_set)
 }
 
+def batchSize = 15
+
 pipeline {
     agent none
     //triggers {
@@ -105,7 +107,6 @@ pipeline {
                     def nodes = getNodesCount()
                     def versions = ["v1_x", "v2_x", "v3_x", "v4_x"]
 
-                    def batchSize = 15
                     def batches = []
                     for (int i = 0; i < files.size(); i += batchSize) {
                         def end = Math.min(i + batchSize, files.size())
@@ -246,11 +247,11 @@ def buildDispatcher() {
                 rm -rf darwin-*
                 rm -rf windows-*
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id $PIPELINE_2_ID --path linux-amd64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id $PIPELINE_2_ID --path darwin-amd64
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id $PIPELINE_2_ID --path windows-amd64
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id $PIPELINE_2_ID --path linux-arm64
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id $PIPELINE_2_ID --path darwin-arm64
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id $PIPELINE_2_ID --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id $PIPELINE_2_ID --path darwin-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id $PIPELINE_2_ID --path windows-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id $PIPELINE_2_ID --path linux-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id $PIPELINE_2_ID --path darwin-arm64 && sleep 2
             '''
         }
     }
