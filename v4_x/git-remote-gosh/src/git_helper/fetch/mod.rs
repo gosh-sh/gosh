@@ -189,10 +189,12 @@ where
                         }
                     }
                 }
+                tracing::trace!("Push to dangling tree: {}", tree_object_id);
                 dangling_trees.push(tree_object);
                 continue;
             }
             if !dangling_trees.is_empty() {
+                tracing::trace!("Writing dangling trees");
                 for obj in dangling_trees.iter().rev() {
                     self.write_git_object(obj).await?;
                 }
@@ -263,12 +265,14 @@ where
                     for parent_id in &obj.parents {
                         commits_queue.push_back(*parent_id);
                     }
+                    tracing::trace!("Push to dangling commits: {}", id);
                     dangling_commits.push(obj);
                 }
                 continue;
             }
 
             if !dangling_commits.is_empty() {
+                tracing::trace!("Writing dangling commits");
                 for obj in dangling_commits.iter().rev() {
                     self.write_git_object(obj).await?;
                 }
