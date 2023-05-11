@@ -50,7 +50,6 @@ echo "***** cloning repo *****"
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 
 echo "***** check repo *****"
-cd "$REPO_NAME-clone"
 
 echo "***** comparing repositories *****"
 DIFF_STATUS=1
