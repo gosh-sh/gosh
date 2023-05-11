@@ -16,6 +16,7 @@ import "./daotag.sol";
 import "./tag.sol";
 import "./systemcontract.sol";
 import "./task.sol";
+import "./bigtask.sol";
 import "./tree.sol";
 import "./goshwallet.sol";
 import "./profile.sol";
@@ -76,6 +77,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell codeDiff,
         TvmCell contentSignature,
         TvmCell codeTask,
+        TvmCell codeBigTask,
         TvmCell codedaotag,
         TvmCell coderepotag,
         TvmCell topiccode,
@@ -110,6 +112,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _code[m_DiffCode] = codeDiff;
         _code[m_contentSignature] = contentSignature;
         _code[m_TaskCode] = codeTask;
+        _code[m_BigTaskCode] = codeBigTask;
         _code[m_DaoTagCode] = codedaotag;
         _code[m_RepoTagCode] = coderepotag;
         _code[m_TopicCode] = topiccode;
@@ -154,7 +157,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             _code[m_CommitCode],
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _versions, _limit_wallets, _access,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _versions, _limit_wallets, _access,
             m_lockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, DEFAULT_DAO_BALANCE, m_tokenRoot);
         GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, _walletcounter - 1)).askForLimitedBasic{value : 0.1 ton, flag: 1}(_limited, 0);
@@ -891,7 +894,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             _code[m_CommitCode],
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode],  _code[m_TopicCode], _versions, _limit_wallets, _access,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode],  _code[m_DaoTagCode], _code[m_RepoTagCode],  _code[m_TopicCode], _versions, _limit_wallets, _access,
             m_lockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, DEFAULT_DAO_BALANCE, m_tokenRoot);
         this.deployWalletIn{value: 0.1 ton, flag: 1}();
@@ -1007,6 +1010,78 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string comment,
         optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = TASK_UPGRADE_PROPOSAL_KIND;
+        if (time.hasValue() == false) { time = block.timestamp; }
+        return abi.encode(proposalKind, nametask, reponame, oldversion, oldtask, hashtag, comment, time.get());      
+    }
+
+    function startProposalForBigTaskConfirm(
+        string taskName,
+        string repoName,
+        string comment,
+        uint128 num_clients, 
+        address[] reviewers
+    ) public onlyOwnerPubkeyOptional(_access)  {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        tvm.accept();
+        _saveMsg();
+        uint256 proposalKind = BIGTASK_PROPOSAL_KIND;
+        TvmCell c = abi.encode(proposalKind, repoName, taskName, comment, block.timestamp);
+        _startProposalForOperation(c, TASK_PROPOSAL_START_AFTER, TASK_PROPOSAL_DURATION, num_clients, reviewers);
+        getMoney();
+    }
+   
+    function getCellTaskConfirm(
+        string taskName,
+        string repoName,
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
+        uint256 proposalKind = BIGTASK_PROPOSAL_KIND;
+        if (time.hasValue() == false) { time = block.timestamp; }
+        return abi.encode(proposalKind, repoName, taskName, comment, time.get());
+    }
+
+    function _confirmTask(
+        string repoName,
+        string nametask
+    ) private {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        TvmCell deployCode = GoshLib.buildBigTaskCode(_code[m_BigTaskCode], repo, version);
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: BigTask, varInit: {_nametask: nametask}});
+        address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
+        BigTask(taskaddr).approveReady{value:0.3 ton}(_pubaddr, _index);
+        getMoney();
+    } 
+
+    function startProposalForBigTaskUpgrade(
+        string nametask,
+        string reponame,
+        string oldversion,
+        address oldtask,
+        string[] hashtag,
+        string comment,
+        uint128 num_clients , address[] reviewers
+    ) public onlyOwnerPubkeyOptional(_access) accept {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        _saveMsg();
+
+        uint256 proposalKind = BIGTASK_UPGRADE_PROPOSAL_KIND;
+        TvmCell c = abi.encode(proposalKind, nametask, reponame, oldversion, oldtask, hashtag, comment, block.timestamp);
+
+        _startProposalForOperation(c, TASK_UPGRADE_PROPOSAL_START_AFTER, TASK_UPGRADE_PROPOSAL_DURATION, num_clients, reviewers);
+
+        getMoney();
+    }
+
+    function getCellForBigTaskUpgrade(string nametask,
+        string reponame,
+        string oldversion,
+        address oldtask,
+        string[] hashtag,
+        string comment,
+        optional(uint32) time) external pure returns(TvmCell) {
+        uint256 proposalKind = BIGTASK_UPGRADE_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, nametask, reponame, oldversion, oldtask, hashtag, comment, time.get());      
     }
@@ -1422,6 +1497,45 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     //Task part
+    function deployTaskFromBigTask(
+        string namebigtask,
+        string repoName,
+        string nametask,
+        string[] hashtag,
+        ConfigGrant grant,
+        uint128 value
+    ) public senderIs(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))) accept {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        GoshDao(_goshdao).deployTask{value: 0.3 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, value, namebigtask);
+        getMoney();
+    }
+
+    function deploySubTask(
+        string namebigtask, 
+        string repoName,
+        string nametask,
+        string[] hashtag,
+        ConfigGrant grant,
+        uint128 value
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        BigTask(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).deploySubTask{value: 0.1 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, value);
+        getMoney();
+    }
+
+    function destroySubTask(
+        string namebigtask, 
+        string repoName,
+        uint128 index
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        BigTask(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).destroySubTask{value: 0.1 ton, flag: 1}(_pubaddr, _index, index);
+        getMoney();
+    }
+
     function _deployTask(
         string repoName,
         string nametask,
@@ -1430,7 +1544,21 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) private {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        GoshDao(_goshdao).deployTask{value: 0.3 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant);
+        GoshDao(_goshdao).deployTask{value: 0.3 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, 0, null);
+        getMoney();
+    }
+
+    function _deployBigTask(
+        string repoName,
+        string nametask,
+        string[] hashtag,
+        ConfigGrant grant,
+        ConfigCommit commit,
+        uint128 freebalance
+    ) private {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        GoshDao(_goshdao).deployBigTask{value: 0.3 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, commit, freebalance);
         getMoney();
     }
     
@@ -1495,6 +1623,18 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
         address taskaddr = GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, repo, nametask);
         Task(taskaddr).destroy{value:0.4 ton, flag: 1}(_pubaddr, _index);
+        getMoney();
+    }
+
+    function _destroyBigTask(
+        string repoName,
+        string nametask
+    ) private {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address taskaddr = GoshLib.calculateBigTaskAddress(_code[m_TaskCode], _goshdao, repo, nametask);
+        BigTask(taskaddr).destroy{value:0.4 ton, flag: 1}(_pubaddr, _index);
         getMoney();
     }
 
@@ -1768,6 +1908,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     function getTaskAddr(string nametask, address repo) private view returns(address) {
         address taskaddr = GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, repo, nametask);
+        return taskaddr;
+    }
+
+    function getBigTaskAddr(string nametask, address repo) private view returns(address) {
+        address taskaddr = GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, repo, nametask);
         return taskaddr;
     }
 /*
@@ -2304,6 +2449,72 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return abi.encode(proposalKind, wallet, number, proposals, num_clients_base, reviewers_base, time.get());
     }
 
+    function startProposalForBigTaskDestroy(
+        string taskName,
+        string repoName,
+        string comment,
+        uint128 num_clients , address[] reviewers
+    ) public onlyOwnerPubkeyOptional(_access)  {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        tvm.accept();
+        _saveMsg();
+
+        uint256 proposalKind = BIGTASK_DESTROY_PROPOSAL_KIND;
+        TvmCell c = abi.encode(proposalKind, repoName, taskName, comment, block.timestamp);
+        _startProposalForOperation(c, BIGTASK_DESTROY_PROPOSAL_START_AFTER, BIGTASK_DESTROY_PROPOSAL_DURATION, num_clients, reviewers);
+        getMoney();
+    }
+    
+    function getCellBigTaskDestroy(
+        string taskName,
+        string repoName,
+        string comment,
+        optional(uint32) time) external pure returns(TvmCell) {
+        uint256 proposalKind = BIGTASK_DESTROY_PROPOSAL_KIND;
+        if (time.hasValue() == false) { time = block.timestamp; }
+        return abi.encode(proposalKind, repoName, taskName, comment, time.get());
+    }
+
+    function startProposalForBigTaskDeploy(
+        string taskName,
+        string repoName,
+        string[] tag,
+        ConfigGrant grant,
+        ConfigCommit assignersdata,
+        uint128 freebalance,
+        string comment,
+        uint128 num_clients , address[] reviewers
+    ) public onlyOwnerPubkeyOptional(_access)  {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        require(grant.assign.length <= 150, ERR_TOO_MANY_VESTING_TIME);
+        require(grant.review.length <= 150, ERR_TOO_MANY_VESTING_TIME);
+        require(grant.manager.length <= 150, ERR_TOO_MANY_VESTING_TIME);
+        require(tag.length  <= _limittag, ERR_TOO_MANY_TAGS);
+        tvm.accept();
+        _saveMsg();
+
+        uint256 proposalKind = BIGTASK_DEPLOY_PROPOSAL_KIND;
+        TvmCell c = abi.encode(proposalKind, repoName, taskName, tag, grant, assignersdata, freebalance, comment, block.timestamp);
+        _startProposalForOperation(c, BIGTASK_DEPLOY_PROPOSAL_START_AFTER, BIGTASK_DEPLOY_PROPOSAL_DURATION, num_clients, reviewers);
+        getMoney();
+    }
+    
+    function getCellBigTaskDeploy(
+        string taskName,
+        string repoName,
+        string[] tag,
+        ConfigGrant grant,
+        ConfigCommit assignersdata,
+        uint128 freebalance,
+        string comment,
+        optional(uint32) time) external pure returns(TvmCell) {
+        uint256 proposalKind = BIGTASK_DEPLOY_PROPOSAL_KIND;
+        if (time.hasValue() == false) { time = block.timestamp; }
+        return abi.encode(proposalKind, repoName, taskName, tag, grant, assignersdata, freebalance, comment, time.get());
+    }
+
     function startProposalForTaskDeploy(
         string taskName,
         string repoName,
@@ -2440,7 +2651,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 _destroyTask(taskName, repoName);
             }  else
             if (kind == TASK_DEPLOY_PROPOSAL_KIND) {
-                (, string taskName, string repoName, string[] tag, ConfigGrant grant,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, uint32));
+                (, string taskName, string repoName, string[] tag, ConfigGrant grant,,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, string, uint32));
                 _deployTask(taskName, repoName, tag, grant);
             }  else
 
@@ -2554,7 +2765,23 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == STOP_PAID_MEMBERSHIP_PROPOSAL_KIND) {            
                 (, uint8 Programindex,,) = abi.decode(propData, (uint256, uint8, string, uint32));               
                 _stopPaidMembership(Programindex);
-            }
+            } else
+            if (kind == BIGTASK_UPGRADE_PROPOSAL_KIND) {
+                (, string taskname, string reponame, string oldversion, address oldtask, string[] hashtag,,) = abi.decode(propData, (uint256, string, string, string, address, string[], string, uint32));
+                GoshDao(_goshdao).upgradeBigTask{value: 0.1 ton, flag: 1}(_pubaddr, _index, taskname, reponame, oldversion, oldtask, hashtag);   
+            } else
+            if (kind == BIGTASK_PROPOSAL_KIND) {
+                (, string taskName, string repoName,) = abi.decode(propData,(uint256, string, string, uint32));
+                _confirmTask(taskName, repoName);
+            } else 
+            if (kind == BIGTASK_DEPLOY_PROPOSAL_KIND) {
+                (, string repoName, string taskName, string[] tag, ConfigGrant grant, ConfigCommit commit, uint128 freebalance, ,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, ConfigCommit, uint128, string, uint32));
+                _deployBigTask(repoName, taskName, tag, grant, commit, freebalance);
+            } else
+            if (kind == BIGTASK_DESTROY_PROPOSAL_KIND) {
+                (, string taskName, string repoName,) = abi.decode(propData,(uint256, string, string, uint32));
+                _destroyBigTask(taskName, repoName);
+            } 
         }
     }
 
@@ -2626,7 +2853,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 _destroyTask(taskName, repoName);
             }  else
             if (kind == TASK_DEPLOY_PROPOSAL_KIND) {
-                (, string taskName, string repoName, string[] tag, ConfigGrant grant,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, uint32));
+                (, string taskName, string repoName, string[] tag, ConfigGrant grant,,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, string, uint32));
                 _deployTask(taskName, repoName, tag, grant);
             }  else
             if (kind == DEPLOY_REPO_PROPOSAL_KIND) {
@@ -2736,7 +2963,23 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == STOP_PAID_MEMBERSHIP_PROPOSAL_KIND) {            
                 (, uint8 Programindex,,) = abi.decode(propData, (uint256, uint8, string, uint32));               
                 _stopPaidMembership(Programindex);
-            }
+            } else
+            if (kind == BIGTASK_UPGRADE_PROPOSAL_KIND) {
+                (, string taskname, string reponame, string oldversion, address oldtask, string[] hashtag,,) = abi.decode(propData, (uint256, string, string, string, address, string[], string, uint32));
+                GoshDao(_goshdao).upgradeBigTask{value: 0.1 ton, flag: 1}(_pubaddr, _index, taskname, reponame, oldversion, oldtask, hashtag);   
+            } else
+            if (kind == BIGTASK_PROPOSAL_KIND) {
+                (, string taskName, string repoName,) = abi.decode(propData,(uint256, string, string, uint32));
+                _confirmTask(taskName, repoName);
+            } else 
+            if (kind == BIGTASK_DEPLOY_PROPOSAL_KIND) {
+                (, string repoName, string taskName, string[] tag, ConfigGrant grant, ConfigCommit commit, uint128 freebalance, ,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, ConfigCommit, uint128, string, uint32));
+                _deployBigTask(repoName, taskName, tag, grant, commit, freebalance);
+            } else
+            if (kind == BIGTASK_DESTROY_PROPOSAL_KIND) {
+                (, string taskName, string repoName,) = abi.decode(propData,(uint256, string, string, uint32));
+                _destroyBigTask(taskName, repoName);
+            } 
         }
     }
     
@@ -2876,6 +3119,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function getTaskAddr(string nametask, string reponame) external view returns(address) {
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, reponame);
         return GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, repo, nametask);
+    }
+
+    function getBigTaskAddr(string nametask, string reponame) external view returns(address) {
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, reponame);
+        return GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, repo, nametask);
     }
 
     function getSnapshotAddr(string branch, address repo, string name) external view returns(address) {

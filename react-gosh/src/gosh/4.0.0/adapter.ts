@@ -764,20 +764,32 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             const commit = await repository.getCommit({ address: candidate.commit })
             const assigners = await Promise.all(
                 Object.keys(candidate.pubaddrassign).map(async (address) => {
-                    const profile = await this.gosh.getUserByAddress(address)
-                    return { username: profile.name, address }
+                    if (candidate.daoMembers[address]) {
+                        return { username: candidate.daoMembers[address], address }
+                    } else {
+                        const profile = await this.gosh.getUserByAddress(address)
+                        return { username: profile.name, address }
+                    }
                 }),
             )
             const reviewers = await Promise.all(
                 Object.keys(candidate.pubaddrreview).map(async (address) => {
-                    const profile = await this.gosh.getUserByAddress(address)
-                    return { username: profile.name, address }
+                    if (candidate.daoMembers[address]) {
+                        return { username: candidate.daoMembers[address], address }
+                    } else {
+                        const profile = await this.gosh.getUserByAddress(address)
+                        return { username: profile.name, address }
+                    }
                 }),
             )
             const managers = await Promise.all(
                 Object.keys(candidate.pubaddrmanager).map(async (address) => {
-                    const profile = await this.gosh.getUserByAddress(address)
-                    return { username: profile.name, address }
+                    if (candidate.daoMembers[address]) {
+                        return { username: candidate.daoMembers[address], address }
+                    } else {
+                        const profile = await this.gosh.getUserByAddress(address)
+                        return { username: profile.name, address }
+                    }
                 }),
             )
             team = {

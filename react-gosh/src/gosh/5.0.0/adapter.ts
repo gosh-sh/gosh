@@ -764,20 +764,32 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             const commit = await repository.getCommit({ address: candidate.commit })
             const assigners = await Promise.all(
                 Object.keys(candidate.pubaddrassign).map(async (address) => {
-                    const profile = await this.gosh.getUserByAddress(address)
-                    return { username: profile.name, address }
+                    if (candidate.daoMembers[address]) {
+                        return { username: candidate.daoMembers[address], address }
+                    } else {
+                        const profile = await this.gosh.getUserByAddress(address)
+                        return { username: profile.name, address }
+                    }
                 }),
             )
             const reviewers = await Promise.all(
                 Object.keys(candidate.pubaddrreview).map(async (address) => {
-                    const profile = await this.gosh.getUserByAddress(address)
-                    return { username: profile.name, address }
+                    if (candidate.daoMembers[address]) {
+                        return { username: candidate.daoMembers[address], address }
+                    } else {
+                        const profile = await this.gosh.getUserByAddress(address)
+                        return { username: profile.name, address }
+                    }
                 }),
             )
             const managers = await Promise.all(
                 Object.keys(candidate.pubaddrmanager).map(async (address) => {
-                    const profile = await this.gosh.getUserByAddress(address)
-                    return { username: profile.name, address }
+                    if (candidate.daoMembers[address]) {
+                        return { username: candidate.daoMembers[address], address }
+                    } else {
+                        const profile = await this.gosh.getUserByAddress(address)
+                        return { username: profile.name, address }
+                    }
                 }),
             )
             team = {
@@ -1909,14 +1921,24 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         params: TDaoStartPaidMembershipParams,
     ): Promise<TDaoStartPaidMembershipResult> {
         const {
-            value,
-            valuepersubs,
-            timeforsubs,
-            keyforservice,
+            index,
+            reserve,
+            subscriptionAmount,
+            subscriptionTime,
+            accessKey,
             comment = '',
             reviewers = [],
             cell,
         } = params
+        const programParams = {
+            newProgram: {
+                paidMembershipValue: reserve,
+                valuePerSubs: subscriptionAmount,
+                timeForSubs: subscriptionTime,
+                accessKey: accessKey,
+            },
+            Programindex: index,
+        }
 
         if (!this.wallet) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
@@ -1924,10 +1946,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 
         if (cell) {
             const { value0 } = await this.wallet.runLocal('getCellStartPaidMembership', {
-                value,
-                valuepersubs,
-                timeforsubs,
-                keyforservice,
+                ...programParams,
                 comment,
             })
             return value0
@@ -1936,10 +1955,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             const smv = await this.getSmv()
             await smv.validateProposalStart()
             await this.wallet.run('startProposalForStartPaidMembership', {
-                value,
-                valuepersubs,
-                timeforsubs,
-                keyforservice,
+                ...programParams,
                 comment: comment,
                 reviewers: _reviewers.map(({ wallet }) => wallet),
                 num_clients: await smv.getClientsCount(),
@@ -1950,7 +1966,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     async stopPaidMembership(
         params: TDaoStopPaidMembershipParams,
     ): Promise<TDaoStopPaidMembershipResult> {
-        const { comment = '', reviewers = [], cell } = params
+        const { index, comment = '', reviewers = [], cell } = params
 
         if (!this.wallet) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
@@ -1958,6 +1974,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 
         if (cell) {
             const { value0 } = await this.wallet.runLocal('getCellStopPaidMembership', {
+                Programindex: index,
                 comment,
             })
             return value0
@@ -1966,6 +1983,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             const smv = await this.getSmv()
             await smv.validateProposalStart()
             await this.wallet.run('startProposalForStopPaidMembership', {
+                Programindex: index,
                 comment: comment,
                 reviewers: _reviewers.map(({ wallet }) => wallet),
                 num_clients: await smv.getClientsCount(),
@@ -2297,6 +2315,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             }
             if (type === ESmvEventType.TASK_UPGRADE) {
                 return await this.upgradeTask({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_START_PAID_MEMBERSHIP) {
+                return await this.startPaidMembership({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_STOP_PAID_MEMBERSHIP) {
+                return await this.stopPaidMembership({ ...params, cell: true })
             }
             return null
         })
@@ -4906,7 +4930,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         } else if (type === ESmvEventType.DAO_START_PAID_MEMBERSHIP) {
             fn = 'getStartMembershipProposalParams'
         } else if (type === ESmvEventType.DAO_STOP_PAID_MEMBERSHIP) {
-            return {}
+            fn = 'getStopMembershipProposalParams'
         } else if (type === ESmvEventType.MULTI_PROPOSAL) {
             const { num, data0 } = await event.runLocal('getDataFirst', {}, undefined, {
                 useCachedBoc: true,
@@ -5053,7 +5077,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         } else if (kind === ESmvEventType.DAO_START_PAID_MEMBERSHIP) {
             fn = 'getStartMembershipProposalParamsData'
         } else if (kind === ESmvEventType.DAO_STOP_PAID_MEMBERSHIP) {
-            return { type }
+            fn = 'getStopMembershipProposalParamsData'
         } else {
             throw new GoshError(`Multi event type "${type}" is unknown`)
         }

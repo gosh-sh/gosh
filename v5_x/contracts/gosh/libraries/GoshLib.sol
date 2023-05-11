@@ -29,6 +29,11 @@ library GoshLib {
         return address.makeAddrStd(0, tvm.hash(stateInit));    
     } 
 
+    function calculateBigTaskAddress(TvmCell code, address goshdao, address repo, string nametask) public returns(address) {
+        TvmCell stateInit = composeTaskStateInit(code, goshdao, repo, nametask);
+        return address.makeAddrStd(0, tvm.hash(stateInit));    
+    } 
+
     function calculateProfileIndexAddress(TvmCell code, address versionController, uint256 pubkey, string name) public returns(address) {
         TvmCell stateInit = composeProfileIndexStateInit(code, versionController, pubkey, name);
         return address.makeAddrStd(0, tvm.hash(stateInit));    
@@ -180,6 +185,11 @@ library GoshLib {
 
     function composeTaskStateInit(TvmCell code, address goshdao, address repo, string nametask) public returns(TvmCell) {
         TvmCell deployCode = buildTaskCode(code, repo, versionLib);
+        return tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: goshdao}});
+    }  
+
+    function composeBigTaskStateInit(TvmCell code, address goshdao, address repo, string nametask) public returns(TvmCell) {
+        TvmCell deployCode = buildBigTaskCode(code, repo, versionLib);
         return tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: goshdao}});
     }        
 
@@ -360,6 +370,20 @@ library GoshLib {
     }
     
     function buildTaskCode(
+        TvmCell originalCode,
+        address repo,
+        string version
+    ) public returns (TvmCell) {
+        TvmBuilder b;
+        b.store(repo);
+        b.store(version);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        return tvm.setCodeSalt(originalCode, b.toCell());
+    }
+
+    function buildBigTaskCode(
         TvmCell originalCode,
         address repo,
         string version

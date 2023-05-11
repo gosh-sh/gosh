@@ -17,7 +17,9 @@ import ListEmpty from './ListEmpty'
 import GithubRepositories from './GithubRepositories'
 import OAuthProfile from './OAuthProfile'
 import PreviousStep from './PreviousStep'
-import { Checkbox } from '../../../components/Form'
+import { Formik, Form, Field } from 'formik'
+import { FormikCheckbox, FormikInput } from '../../../components/Formik'
+import yup from '../../../yup-extended'
 
 type TGithubOrganizationsProps = {
     signoutOAuth(): Promise<void>
@@ -26,15 +28,12 @@ type TGithubOrganizationsProps = {
 const GithubOrganizations = (props: TGithubOrganizationsProps) => {
     const { signoutOAuth } = props
     const { session } = useRecoilValue(OAuthSessionAtom)
-    const [{ isEmailPublic }, setOnboarding] = useRecoilState(onboardingDataAtom)
+    const [{ isEmailPublic, emailOther }, setOnboarding] =
+        useRecoilState(onboardingDataAtom)
     const [organizations, setOrganizations] = useRecoilState(organizationsSelector)
     const { items: invites } = useRecoilValue(daoInvitesSelector)
     const octokit = useRecoilValue(octokitSelector)
     const repositoriesChecked = useRecoilValue(repositoriesCheckedSelector)
-
-    const onPublicEmailChange = () => {
-        setOnboarding((state) => ({ ...state, isEmailPublic: !state.isEmailPublic }))
-    }
 
     const onOrganizationClick = (id: number | string) => {
         setOrganizations((state) => ({
@@ -49,8 +48,13 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
         setOnboarding((state) => ({ ...state, step: 'invites' }))
     }
 
-    const onContinueClick = () => {
-        setOnboarding((state) => ({ ...state, step: 'phrase' }))
+    const onContinueClick = (values: any) => {
+        setOnboarding((state) => ({
+            ...state,
+            isEmailPublic: values.is_email_public,
+            emailOther: values.email_other,
+            step: 'phrase',
+        }))
     }
 
     const getOrganizations = useCallback(async () => {
@@ -130,31 +134,56 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                     </span>
                 </p>
 
-                <div className="mt-8">
-                    <label className="flex flex-nowrap items-center gap-x-3">
-                        <div>
-                            <Checkbox
-                                checked={isEmailPublic}
-                                onChange={onPublicEmailChange}
-                                label={
-                                    <div className="text-sm leading-normal">
-                                        Enable other GOSH users to find me by email{' '}
-                                        {session?.user.email} (optional)
-                                    </div>
-                                }
-                            />
-                        </div>
-                    </label>
-                </div>
-
-                <button
-                    type="button"
-                    className="aside-step__btn-upload"
-                    onClick={onContinueClick}
-                    disabled={!repositoriesChecked.length}
+                <Formik
+                    initialValues={{
+                        email_other: emailOther,
+                        is_email_public: isEmailPublic,
+                    }}
+                    validationSchema={yup.object().shape({
+                        email: yup.string().email(),
+                    })}
+                    onSubmit={onContinueClick}
+                    enableReinitialize
                 >
-                    Upload
-                </button>
+                    {() => (
+                        <Form>
+                            <div className="mt-8">
+                                <Field
+                                    name="is_email_public"
+                                    type="checkbox"
+                                    component={FormikCheckbox}
+                                    inputProps={{
+                                        label: (
+                                            <div className="text-sm leading-normal">
+                                                Enable other GOSH users to find me by
+                                                email {session?.user.email} (optional)
+                                            </div>
+                                        ),
+                                    }}
+                                />
+                            </div>
+
+                            <div className="mt-8">
+                                <Field
+                                    name="email_other"
+                                    type="email"
+                                    component={FormikInput}
+                                    autoComplete="off"
+                                    placeholder="Email for notifications"
+                                    help="You can input another email to send notifications to"
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                className="aside-step__btn-upload"
+                                disabled={!repositoriesChecked.length}
+                            >
+                                Upload
+                            </button>
+                        </Form>
+                    )}
+                </Formik>
 
                 {!repositoriesChecked.length &&
                     !!invites.filter((i) => i.accepted === true).length && (

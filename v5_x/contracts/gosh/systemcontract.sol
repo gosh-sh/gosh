@@ -178,6 +178,7 @@ contract SystemContract is Modifiers {
             _code[m_DiffCode],
             _code[m_contentSignature],
             _code[m_TaskCode],
+            _code[m_BigTaskCode],
             _code[m_DaoTagCode],
             _code[m_RepoTagCode],
             _code[m_TopicCode],
@@ -320,6 +321,11 @@ contract SystemContract is Modifiers {
         require(_flag == true, ERR_GOSH_UPDATE);
         _code[m_TaskCode] = code;
     }   
+
+    function setBigTask(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
+        _code[m_BigTaskCode] = code;
+    }   
     
     function setSnapshot(TvmCell code) public  onlyOwner accept {
         require(_flag == true, ERR_GOSH_UPDATE);
@@ -371,6 +377,13 @@ contract SystemContract is Modifiers {
         address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), dao);
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, repoName);
         address taskaddr = GoshLib.calculateTaskAddress(_code[m_TaskCode], addr, repo, nametask);
+        return taskaddr;
+    }
+
+    function getBigTaskAddr(string nametask, string dao, string repoName) external view returns(address) {
+        address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), dao);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, repoName);
+        address taskaddr = GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], addr, repo, nametask);
         return taskaddr;
     }
 

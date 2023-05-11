@@ -75,10 +75,12 @@ struct ConfigPair {
     uint128 grant;
     uint128 lock;
 }
+
 struct ConfigGrant {
     ConfigPair[] assign;
     ConfigPair[] review;
     ConfigPair[] manager;
+    ConfigPair[] subtask;
 }
 
 struct ConfigCommit {

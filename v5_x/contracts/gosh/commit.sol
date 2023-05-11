@@ -33,7 +33,6 @@ contract Commit is Modifiers {
     AddrVersion[] _parents;
     address _systemcontract;
     address _tree;
-    string _branchName;
     address _branchCommit;
     uint128 _count;
     bool _countready = false;

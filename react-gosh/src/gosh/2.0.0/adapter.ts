@@ -1612,7 +1612,9 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
-    async stopPaidMembership(params: TDaoStopPaidMembershipParams): Promise<TDaoStopPaidMembershipResult> {
+    async stopPaidMembership(
+        params: TDaoStopPaidMembershipParams,
+    ): Promise<TDaoStopPaidMembershipResult> {
         throw new Error('Method is unavailable in current version')
     }
 

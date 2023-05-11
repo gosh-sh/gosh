@@ -7,7 +7,9 @@ import {
     TAddress,
     TDaoCreateProgress,
     TDaoListItem,
+    TDaoMemberAllowanceUpdateParams,
     TDaoMemberCreateParams,
+    TDaoMemberDeleteParams,
     TDaoMemberDetails,
     TDaoMintTokenParams,
     TDaoVotingTokenAddParams,
@@ -476,10 +478,12 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
             let balancePrev = 0
             if (prevDao && prevDao.getVersion() !== '1.0.0') {
                 const wallet = await prevDao.getMemberWallet({ profile: member.profile })
-                const { smvAvailable, smvLocked, smvBalance } = await smv.getDetails(
-                    wallet,
-                )
-                balancePrev = Math.max(smvAvailable, smvLocked) + smvBalance
+                if (await wallet.isDeployed()) {
+                    const { smvAvailable, smvLocked, smvBalance } = await smv.getDetails(
+                        wallet,
+                    )
+                    balancePrev = Math.max(smvAvailable, smvLocked) + smvBalance
+                }
             }
 
             return { ...member, user, balance, balancePrev }
@@ -523,10 +527,12 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
 
                 // Get wallet balance for prev DAO version
                 const wallet = await prevDao.getMemberWallet({ profile: memberProfile })
-                const { smvAvailable, smvLocked, smvBalance } = await smv.getDetails(
-                    wallet,
-                )
-                balancePrev = Math.max(smvAvailable, smvLocked) + smvBalance
+                if (await wallet.isDeployed()) {
+                    const { smvAvailable, smvLocked, smvBalance } = await smv.getDetails(
+                        wallet,
+                    )
+                    balancePrev = Math.max(smvAvailable, smvLocked) + smvBalance
+                }
             }
 
             return { ...member, user, balance, balancePrev }
@@ -676,15 +682,59 @@ function useDaoMemberCreate(dao: IGoshDaoAdapter) {
 
 function useDaoMemberDelete(dao: IGoshDaoAdapter) {
     const [fetching, setFetching] = useState<string[]>([])
+    const version = dao.getVersion()
 
     const isFetching = (username: string) => fetching.indexOf(username) >= 0
 
-    const remove = async (user: TUserParam[]) => {
-        const nameList = user.map(({ name }) => name)
+    const _remove_1_0_0 = async (
+        users: { user: TUserParam; allowance: number; profile: string }[],
+    ) => {
+        const nameList = users.map(({ user }) => user.name)
 
         setFetching((state) => [...state, ...nameList])
-        await dao.deleteMember({ user })
+        await dao.deleteMember({ user: users.map(({ user }) => user) })
         setFetching((state) => state.filter((item) => nameList.indexOf(item) < 0))
+    }
+
+    const _remove_2_0_0 = async (
+        users: { user: TUserParam; allowance: number; profile: string }[],
+    ) => {
+        const nameList = users.map(({ user }) => user.name)
+
+        setFetching((state) => [...state, ...nameList])
+
+        const memberUpdateAllowanceCells: {
+            type: number
+            params: TDaoMemberAllowanceUpdateParams
+        }[] = users.map((item) => ({
+            type: ESmvEventType.DAO_ALLOWANCE_CHANGE,
+            params: {
+                members: [
+                    { profile: item.profile, increase: false, amount: item.allowance },
+                ],
+            },
+        }))
+
+        const memberRemoveCells: { type: number; params: TDaoMemberDeleteParams }[] =
+            users.map((item) => ({
+                type: ESmvEventType.DAO_MEMBER_DELETE,
+                params: { user: [item.user] },
+            }))
+
+        await dao.createMultiProposal({
+            proposals: [...memberUpdateAllowanceCells, ...memberRemoveCells],
+        })
+
+        setFetching((state) => state.filter((item) => nameList.indexOf(item) < 0))
+    }
+
+    const remove = async (
+        users: { user: TUserParam; allowance: number; profile: string }[],
+    ) => {
+        if (version === '1.0.0') {
+            return await _remove_1_0_0(users)
+        }
+        return await _remove_2_0_0(users)
     }
 
     return { remove, isFetching }
