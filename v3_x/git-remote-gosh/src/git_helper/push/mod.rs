@@ -357,7 +357,7 @@ where
         remote_branch_name: &str,
         local_branch_name: &str,
     ) -> anyhow::Result<()> {
-        tracing::trace!("check_parents object_id:{object_id} remote_branch_name:{remote_branch_name}, local_branch_name:{local_branch_name}");
+        tracing::trace!("check_parents object_id: {object_id} remote_branch_name: {remote_branch_name}, local_branch_name: {local_branch_name}");
         let mut buffer: Vec<u8> = Vec::new();
         let commit = self
             .local_repository()

@@ -304,17 +304,32 @@ where
         .to_owned();
 
         let client = self.blockchain.client();
-        let repo_contract = &mut self.blockchain.repo_contract().clone();
-        let mut map_id_addr = Vec::<(String, String)>::new();
+        let mut map_id_addr = Vec::<(String, Vec<String>)>::new();
         tracing::trace!("commits={commits:?}");
 
-        for ids in ids.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {
+        let mut repo_versions = self.get_repo_versions(true).await?;
+        repo_versions.pop();
+        tracing::trace!("Repo versions {repo_versions:?}");
+        let mut repo_contracts: Vec<_> = repo_versions.iter()
+            .map(|addr_str| {
+                let mut iter = addr_str.split(' ');
+                let _: &str = iter.next().unwrap();
+                let repo_address: &str = iter.next().unwrap();
+                let repo_address = BlockchainContractAddress::new(repo_address.to_string());
+                GoshContract::new(&repo_address, gosh_abi::REPO)
+            }).collect();
+        // search for commits in all repo versions
+        for ids in ids.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY / repo_contracts.len()) {
             let mut addresses = Vec::<BlockchainContractAddress>::new();
             for id in ids {
-                let commit_address = get_commit_address(client, repo_contract, id).await?;
-                // let (version, commit_address) = self.find_commit(id).await?;
-                addresses.push(commit_address.clone());
-                map_id_addr.push((id.to_owned(), String::from(commit_address)));
+                let mut commits = vec![];
+                for repo_contract in repo_contracts.iter_mut() {
+                    let commit_address = get_commit_address(client, repo_contract, id).await?;
+                    // let (version, commit_address) = self.find_commit(id).await?;
+                    addresses.push(commit_address.clone());
+                    commits.push(String::from(commit_address));
+                }
+                map_id_addr.push((id.to_owned(), commits));
             }
             let result = ton_client::net::query(
                 Arc::clone(client),
@@ -341,7 +356,7 @@ where
             }
             for commit in map_id_addr.iter().rev() {
                 let mut ex_iter = existing_commits.iter();
-                let pos = ex_iter.position(|x| x.address == commit.1 && x.status == 1);
+                let pos = ex_iter.position(|x|  commit.1.contains(&x.address) && x.status == 1);
 
                 if pos.is_none() {
                     return Ok(Some(commit.0.clone()));
@@ -359,7 +374,7 @@ where
         remote_branch_name: &str,
         local_branch_name: &str,
     ) -> anyhow::Result<()> {
-        tracing::trace!("check_parents object_id:{object_id} remote_branch_name:{remote_branch_name}, local_branch_name:{local_branch_name}");
+        tracing::trace!("check_parents object_id: {object_id} remote_branch_name: {remote_branch_name}, local_branch_name: {local_branch_name}");
         let mut buffer: Vec<u8> = Vec::new();
         let commit = self
             .local_repository()
@@ -751,6 +766,7 @@ where
             .remote_rev_parse(&self.repo_addr, remote_branch_name)
             .await?
             .map(|pair| pair.0);
+        tracing::trace!("remote_commit_addr={remote_commit_addr:?}");
 
         // 2. Find ancestor commit in local repo
 
@@ -764,11 +780,13 @@ where
                 // this means a branch is created and all initial states are filled there
                 ("".to_owned(), None)
             };
+        tracing::trace!("ancestor_commit_id={ancestor_commit_id:?}");
         let mut ancestor_commit_object = if ancestor_commit_id != "" {
             Some(ObjectId::from_str(&ancestor_commit_id)?)
         } else {
             None
         };
+        tracing::trace!("ancestor_commit_object={ancestor_commit_object:?}");
 
         // if ancestor_commit_id != "" {
         //     self.check_and_upgrade_previous_commit(
@@ -783,6 +801,7 @@ where
             .local_repository()
             .find_reference(local_ref)?
             .into_fully_peeled_id()?;
+        tracing::trace!("latest_commit={latest_commit:?}");
         // get list of git objects in local repo, excluding ancestor ones
         // TODO: list of commits is not in right order in case of merge commit with commits at the same time
         //
@@ -802,8 +821,11 @@ where
             //    if it doesn't
             let originating_commit = self.find_ancestor_commit(latest_commit).await?.unwrap();
             let originating_commit = git_hash::ObjectId::from_str(&originating_commit)?;
-
+            tracing::trace!("originating_commit={originating_commit:?}");
+            self.check_parents(originating_commit, remote_branch_name, local_branch_name)
+                .await?;
             let branching_point = self.get_parent_id(&originating_commit)?;
+            tracing::trace!("branching_point={branching_point:?}");
             ancestor_commit_object = Some(branching_point);
             let mut create_branch_op =
                 CreateBranchOperation::new(branching_point, remote_branch_name, self);
@@ -820,7 +842,14 @@ where
                     ancestor_commit_object
                 }
             };
+            tracing::trace!("prev_commit_id={prev_commit_id:?}");
         }
+
+        let latest_commit = self
+            .local_repository()
+            .find_reference(local_ref)?
+            .into_fully_peeled_id()?;
+        tracing::trace!("latest_commit={latest_commit:?}");
         // get list of git objects in local repo, excluding ancestor ones
         let commit_and_tree_list =
             get_list_of_commit_objects(latest_commit, ancestor_commit_object)?;
@@ -843,10 +872,12 @@ where
         tracing::trace!("latest commit id {latest_commit_id}");
         let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
 
+        tracing::trace!("List of objects: {commit_and_tree_list:?}");
         // iterate through the git objects list and push them
         for oid in &commit_and_tree_list {
             let object_id = git_hash::ObjectId::from_str(oid)?;
             let object_kind = self.local_repository().find_object(object_id)?.kind;
+            tracing::trace!("Push object: {object_id:?} {object_kind:?}");
             match object_kind {
                 git_object::Kind::Commit => {
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)

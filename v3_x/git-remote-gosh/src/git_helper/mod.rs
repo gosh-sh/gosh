@@ -202,7 +202,7 @@ where
             })
             .collect();
 
-        tracing::trace!("Available repo versions: {versions:?}");
+        tracing::trace!("Available system contract versions: {versions:?}");
         let mut available_versions = vec![];
         for version in versions {
             let address = BlockchainContractAddress::new(version.1.clone());
@@ -305,7 +305,7 @@ where
                 &mut repo_contract,
                 commit_id,
             ).await?;
-            tracing::trace!("commit_address {commit_address}");
+            tracing::trace!("commit_address (sha={commit_id}) {commit_address}");
             let commit_contract = GoshContract::new(&commit_address, gosh_abi::COMMIT);
             let res: anyhow::Result<Value> = commit_contract
                 .run_static(self.blockchain.client(), "getVersion", None)
@@ -430,20 +430,21 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
                     let error_str = e.to_string();
                     if error_str.contains("Was trying to call getCommit") {
                         tracing::trace!("Fetch error: {error_str}");
-                        let sha = if error_str.contains("SHA=") {
-                            error_str
+                        let (sha, version) = if error_str.contains("SHA=") {
+                            let extracted = error_str
                                 .trim_start_matches(|c| c != '\"')
                                 .trim_end_matches(|c| c != '\"')
-                                .replace(['\"'],"")
+                                .replace(['\"'], "");
+                            let pair = extracted.split(",").collect::<Vec<&str>>().clone();
+                            (pair[0].to_owned(), pair[1].to_owned())
                         } else {
-                            sha.to_owned()
+                            (sha.to_owned(), helper.find_commit(&sha.clone().to_owned()).await?.0)
                         };
                         // let previous: Value = helper
                         //     .blockchain
                         //     .repo_contract()
                         //     .read_state(helper.blockchain.client(), "getPrevious", None)
                         //     .await?;
-                        let version = helper.find_commit(&sha).await?.0;
                         let out_str = format!("dispatcher {version} fetch {sha} {name}");
                         stdout.write_all(format!("{out_str}\n").as_bytes()).await?;
                         return Ok(());

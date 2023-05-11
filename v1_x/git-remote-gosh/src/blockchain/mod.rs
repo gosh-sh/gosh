@@ -294,7 +294,7 @@ async fn run_local(
     args: Option<serde_json::Value>,
 ) -> anyhow::Result<serde_json::Value> {
     tracing::trace!("internal run_local start");
-    tracing::trace!("read_state: function_name={function_name}, args={args:?}");
+    tracing::trace!("read_state: contract={} function_name={function_name}, args={args:?}", contract.address);
     let filter = Some(serde_json::json!({
         "id": { "eq": contract.address }
     }));
