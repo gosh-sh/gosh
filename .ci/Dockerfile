@@ -3,7 +3,7 @@ FROM    ubuntu:latest
 ENV     EVERDEV_VERSION=latest
 ENV     EVERDEV_SOL_COMPILER_VERSION=0.62.0
 ENV     EVERDEV_TVM_LINKER_VERSION=0.15.55
-ENV     EVERDEV_TONOS_CLI_VERSION=latest
+ENV     EVERDEV_TONOS_CLI_VERSION=0.34.1
 ENV	DEBIAN_FRONTEND=noninteractive
 ENV     NODEJS_VERSION=16.17.0
 ENV     PATH=/usr/local/lib/nodejs/node-v${NODEJS_VERSION}-linux-x64/bin:${PATH}
@@ -22,8 +22,8 @@ RUN	apt update -y &&\
         usermod -aG docker jenkins &&\
         chown -R jenkins: /home/jenkins &&\
         chown -R jenkins: /usr/local/lib/nodejs &&\
-	wget http://nz2.archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.17_amd64.deb &&\
-	dpkg -i libssl1.1_1.1.1f-1ubuntu2.17_amd64.deb &&\
+	wget http://nz2.archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.18_amd64.deb &&\
+	dpkg -i libssl1.1_1.1.1f-1ubuntu2.18_amd64.deb &&\
         apt -y clean
 
 RUN 	apt install openssl
