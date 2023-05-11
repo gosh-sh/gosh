@@ -95,6 +95,11 @@ contract Tree is Modifiers {
             _tree[index] = obj;
             this.addTreeself{value: 0.2 ton, flag: 1}(index, tree1);
         }
+        else {
+            if (_neednumber == _number) {
+                _isReady = true;   
+            }
+        }
     }
 
     function SendDiff2(string namecommit, string branch, address branchcommit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task, bool isUpgrade) public senderIs(GoshLib.calculateCommitAddress(_code[m_CommitCode], _repo, namecommit)){
