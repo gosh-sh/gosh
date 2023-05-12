@@ -414,7 +414,7 @@
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
-				{"components":[{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"accessKey","type":"uint256"}],"name":"newProgram","type":"tuple"},
+				{"components":[{"name":"fiatValue","type":"uint128"},{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"details","type":"string"},{"name":"accessKey","type":"uint256"}],"name":"newProgram","type":"tuple"},
 				{"name":"Programindex","type":"uint8"}
 			]
 		},
@@ -425,7 +425,7 @@
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
-				{"components":[{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"accessKey","type":"uint256"}],"name":"newProgram","type":"tuple"},
+				{"components":[{"name":"fiatValue","type":"uint128"},{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"details","type":"string"},{"name":"accessKey","type":"uint256"}],"name":"newProgram","type":"tuple"},
 				{"name":"Programindex","type":"uint8"}
 			]
 		},
