@@ -39,15 +39,14 @@ log "...clone complete. Cloned from github in $((CLONE_END - CLONE_START)) secon
 # ---------
 export GOSH_CONFIG_PATH
 log "Check if repo was already uploaded"
-if git clone "gosh://$GOSH_SYSTEM_CONTRACT_ADDR/$GOSH_DAO_NAME/$GOSH_REPO_NAME" "repo_clone"; then
-  log "Repo already exists on GOSH. Compare it with the original"
-  if  diff --brief --recursive "repo" "repo_clone" --exclude ".git" --no-dereference; then
-      log "Repos are equal"
-      exit 0
-  fi
-  log "Repos are not equal. Trying to upload it again"
-  rm -rf "repo_clone"
+git clone "gosh://$GOSH_SYSTEM_CONTRACT_ADDR/$GOSH_DAO_NAME/$GOSH_REPO_NAME" "repo_clone" || true
+log "Repo already exists on GOSH. Compare it with the original"
+if  diff --brief --recursive "repo" "repo_clone" --exclude ".git" --no-dereference; then
+    log "Repos are equal"
+    exit 0
 fi
+log "Repos are not equal. Trying to upload it again"
+rm -rf "repo_clone"
 
 # ---------
 log "Pushing github repo to gosh...\n________________"
