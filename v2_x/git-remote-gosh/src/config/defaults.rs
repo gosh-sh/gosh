@@ -8,7 +8,7 @@ pub const IPFS_HTTP_ENDPOINT: &str = "https://ipfs.network.gosh.sh";
 pub const CONFIG_LOCATION: &str = "~/.gosh/config.json";
 
 #[cfg(target_family = "windows")]
-pub const CONFIG_LOCATION: &str = "$HOME/.gosh/config.json";
+pub const CONFIG_LOCATION: &str = "~\\.gosh\\config.json";
 
 pub static NETWORK_ENDPOINTS: Lazy<HashMap<String, Vec<String>>> = Lazy::new(|| {
     HashMap::from([
