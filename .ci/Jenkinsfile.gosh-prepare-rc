@@ -65,8 +65,8 @@ pipeline {
                 }
             }
             steps {
-                //buildDispatcher()
-                buildDispatcherDebug()
+                buildDispatcher()
+                //buildDispatcherDebug()
             }
         }
         stage('Build: Git Helper') {
@@ -76,8 +76,8 @@ pipeline {
                 }
             }
             steps {
-                //runFunctionSet('buildRemoteGosh')
-                runFunctionSet('buildRemoteGoshDebug')
+                runFunctionSet('buildRemoteGosh')
+                //runFunctionSet('buildRemoteGoshDebug')
             }
         }
 
@@ -92,7 +92,7 @@ pipeline {
             }
         }
 
-        /*stage('Tests') {
+        stage('Tests') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -184,7 +184,7 @@ pipeline {
                     archiveArtifacts artifacts: "monitoring/gosh-mon/test-errors/*.png"
                 }
             }
-        }*/
+        }
 
         stage('Prerelease: Git Helper - bin') {
             agent {
@@ -269,11 +269,11 @@ def buildDispatcherDebug() {
                 rm -rf darwin-*
                 rm -rf windows-*
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 842 --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 842 --path darwin-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 842 --path windows-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 842 --path linux-arm64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 842 --path darwin-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 812 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 812 --path darwin-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 812 --path windows-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 812 --path linux-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 812 --path darwin-arm64 && sleep 2
             '''
         }
     }
@@ -320,29 +320,29 @@ def buildRemoteGoshDebug(version) {
 
                 cd ${WORKSPACE}
                 export VSTS_ARTIFACTTOOL_DISABLE_HARDLINKS=1
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 843 --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 843 --path darwin-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 843 --path windows-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 843 --path linux-arm64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 843 --path darwin-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 813 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 813 --path darwin-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 813 --path windows-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 813 --path linux-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 813 --path darwin-arm64 && sleep 2
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 844 --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 844 --path darwin-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 844 --path windows-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 844 --path linux-arm64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 844 --path darwin-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 814 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 814 --path darwin-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 814 --path windows-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 814 --path linux-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 814 --path darwin-arm64 && sleep 2
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 845 --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 845 --path darwin-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 845 --path windows-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 845 --path linux-arm64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 845 --path darwin-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 815 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 815 --path darwin-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 815 --path windows-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 815 --path linux-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 815 --path darwin-arm64 && sleep 2
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 846 --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 846 --path darwin-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 846 --path windows-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 846 --path linux-arm64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 846 --path darwin-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 816 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 816 --path darwin-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 816 --path windows-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 816 --path linux-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 816 --path darwin-arm64 && sleep 2
             """
         }
     }
