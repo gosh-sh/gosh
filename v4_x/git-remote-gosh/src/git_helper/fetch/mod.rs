@@ -175,7 +175,8 @@ where
                         }
                         git_object::tree::EntryMode::Commit => (),
                         git_object::tree::EntryMode::Blob
-                        | git_object::tree::EntryMode::BlobExecutable => {
+                        | git_object::tree::EntryMode::BlobExecutable
+                        | git_object::tree::EntryMode::Link => {
                             tracing::debug!("branch={branch}: Tree entry: blob {}->{}", id, oid);
                             let file_path = format!("{}/{}", path_to_node, entry.filename);
                             for branch in tree_node_to_load.branches.iter() {
