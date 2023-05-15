@@ -64,7 +64,7 @@ const BlobPage = () => {
             )}
             {blob.isFetching && <Loader className="text-sm">Loading file...</Loader>}
             {blob.path && !blob.isFetching && (
-                <div className="border rounded overflow-hidden">
+                <div className="border rounded-xl overflow-clip">
                     <div className="flex bg-gray-100 px-3 py-1 border-b justify-end items-center">
                         {!Buffer.isBuffer(blob.content) ? (
                             <>
@@ -107,7 +107,7 @@ const BlobPage = () => {
                             </Link>
                         )}
                     </div>
-                    <BlobPreview filename={blob.path} value={blob.content} />
+                    <BlobPreview filename={blob.path} value={blob.content} commentsOn />
                 </div>
             )}
         </>

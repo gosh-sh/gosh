@@ -387,43 +387,16 @@ for those elements which require gradient border color
     }
 }
 
-/** Line numbers for highlight.js */
-.code-line {
-    &__number {
-        @apply block absolute p-0 w-11;
-    }
-
-    &__number a {
-        @apply block
-            leading-5
-            text-right
-            px-2
-            py-px
-            bg-white
-            text-black/20 hover:text-black/80;
-        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
-        font-size: 0.8125rem;
-    }
-
-    &__content {
-        @apply pl-14;
-    }
-
-    &--selected {
-        @apply bg-gray-e5e5f9;
-    }
-
-    &--selected &__number > a {
-        @apply text-black bg-gray-e5e5f9;
-    }
-}
-
 /* Technique to disable line numbers from being selected and copied.
    Checkout this post for more details http://codepen.io/danoc/pen/ByGKZv */
 [data-pseudo-content]::before,
 [data-pseudo-content--before]::before,
 [data-pseudo-content--after]::after {
     content: attr(data-pseudo-content);
+}
+
+.d2h-diff-table {
+    @apply text-xs;
 }
 
 .signup {
