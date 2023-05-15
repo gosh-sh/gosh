@@ -345,7 +345,6 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function getMoney() private {
-        this.checkExpiredTime{value: 0.1 ton, flag: 1}(0);
         if (block.timestamp - timeMoney > 3600) { _flag = false; timeMoney = block.timestamp; }
         if (_flag == true) { return; }
         if (address(this).balance > 100000 ton) { return; }
