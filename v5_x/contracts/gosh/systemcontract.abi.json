@@ -536,6 +536,19 @@
 			]
 		},
 		{
+			"name": "getCommentAddr",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"content","type":"string"},
+				{"name":"object","type":"address"},
+				{"name":"dao","type":"address"},
+				{"name":"metadata","type":"optional(string)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "getTaskAddr",
 			"inputs": [
 				{"name":"nametask","type":"string"},

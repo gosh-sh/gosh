@@ -372,6 +372,10 @@ contract SystemContract is Modifiers {
     function getTopicAddr(string name, string content, address object, address dao) external view returns(address) {
         return GoshLib.calculateTopicAddress(_code[m_TopicCode], dao, name, content, object);
     }
+
+    function getCommentAddr(string name, string content, address object, address dao, optional(string) metadata) external view returns(address) {
+        return GoshLib.calculateCommentAddress(_code[m_TopicCode], dao, name, content, object, metadata);
+    }
     
     function getTaskAddr(string nametask, string dao, string repoName) external view returns(address) {
         address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), dao);

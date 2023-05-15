@@ -28,6 +28,16 @@
 			]
 		},
 		{
+			"name": "resolveTopic",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"status","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getObject",
 			"inputs": [
 			],
@@ -36,7 +46,9 @@
 				{"name":"value1","type":"string"},
 				{"name":"value2","type":"address"},
 				{"name":"value3","type":"address"},
-				{"name":"value4","type":"address"}
+				{"name":"value4","type":"address"},
+				{"name":"value5","type":"optional(string)"},
+				{"name":"value6","type":"bool"}
 			]
 		},
 		{
@@ -71,12 +83,29 @@
 			"outputs": [
 				{"name":"_object","type":"address"}
 			]
+		},
+		{
+			"name": "_metadata",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_metadata","type":"optional(string)"}
+			]
+		},
+		{
+			"name": "_resolved",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_resolved","type":"bool"}
+			]
 		}
 	],
 	"data": [
 		{"key":1,"name":"_name","type":"string"},
 		{"key":2,"name":"_content","type":"string"},
-		{"key":3,"name":"_object","type":"address"}
+		{"key":3,"name":"_object","type":"address"},
+		{"key":4,"name":"_metadata","type":"optional(string)"}
 	],
 	"events": [
 	],
@@ -89,6 +118,8 @@
 		{"name":"_name","type":"string"},
 		{"name":"_content","type":"string"},
 		{"name":"_object","type":"address"},
+		{"name":"_metadata","type":"optional(string)"},
+		{"name":"_resolved","type":"bool"},
 		{"name":"_systemcontract","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_code","type":"map(uint8,cell)"}

@@ -718,11 +718,31 @@
 			]
 		},
 		{
+			"name": "deployComment",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"content","type":"string"},
+				{"name":"object","type":"address"},
+				{"name":"metadata","type":"optional(string)"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployMessage",
 			"inputs": [
 				{"name":"topic","type":"address"},
 				{"name":"answer","type":"optional(uint256)"},
 				{"name":"message","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setResolveTopic",
+			"inputs": [
+				{"name":"topic","type":"address"},
+				{"name":"status","type":"bool"}
 			],
 			"outputs": [
 			]

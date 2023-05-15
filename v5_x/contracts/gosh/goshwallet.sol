@@ -941,11 +941,25 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         new Topic {stateInit: s1, value: FEE_DEPLOY_TOPIC, wid: 0, flag: 1}(
             _pubaddr, _index, _systemcontract, _goshdao, object, _code[m_WalletCode]);
     }
+
+    function deployComment(string name, string content, address object, optional(string) metadata) public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        TvmCell s1 = GoshLib.composeCommentStateInit(_code[m_TopicCode], _goshdao, name, content, object, metadata);
+        new Topic {stateInit: s1, value: FEE_DEPLOY_TOPIC, wid: 0, flag: 1}(
+            _pubaddr, _index, _systemcontract, _goshdao, object, _code[m_WalletCode]);
+    }
     
     function deployMessage(address topic, optional(uint256) answer, string message) public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
         Topic(topic).acceptMessage{value:0.1 ton, flag: 1}(_pubaddr, _index, answer, message);
+    }    
+
+    function setResolveTopic (address topic, bool status) public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        Topic(topic).resolveTopic{value:0.1 ton, flag: 1}(_pubaddr, _index, status);
     }       
     
     function setCheckDao() public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {

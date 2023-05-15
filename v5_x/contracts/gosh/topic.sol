@@ -20,6 +20,8 @@ contract Topic is Modifiers{
     string static public _name;
     string static public _content;
     address static public _object;
+    optional(string) static public _metadata;
+    bool public _resolved;
     address _systemcontract;
     address _goshdao;
     mapping(uint8 => TvmCell) _code;
@@ -43,13 +45,19 @@ contract Topic is Modifiers{
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         answer; message;
     }
-    
-    //Getters
-    function getObject() external view returns(string, string, address, address, address) {
-        return (_name, _content, _object, _systemcontract, _goshdao);
+
+    function resolveTopic(address pubaddr, uint128 index, bool status) public {
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        _resolved = status;
     }
     
-    function getVersion() external pure returns(string, string) {
+    //Getters
+    function getObject() external view returns(string, string, address, address, address, optional(string), bool) {
+        return (_name, _content, _object, _systemcontract, _goshdao, _metadata, _resolved);
+    }
+    
+    function getVersion() external view returns(string, string) {
+        if (_metadata.hasValue()) { return ("comment", version); }
         return ("topic", version);
     }
 }
