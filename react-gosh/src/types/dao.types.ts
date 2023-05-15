@@ -387,10 +387,12 @@ type TUpgradeVersionControllerResult = void
 
 type TDaoStartPaidMembershipParams = TEventCreateParams & {
     index: number
+    cost: { value: number; decimals: number }
     reserve: number
     subscriptionAmount: number
     subscriptionTime: number
     accessKey: string
+    details: string
     cell?: boolean
 }
 
