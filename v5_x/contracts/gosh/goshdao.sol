@@ -875,6 +875,9 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _paidMembership[Programindex].accessKey = newProgram.accessKey;
         _paidMembership[Programindex].valuePerSubs = newProgram.valuePerSubs;
         _paidMembership[Programindex].timeForSubs = newProgram.timeForSubs;
+        _paidMembership[Programindex].fiatValue = newProgram.fiatValue;
+        _paidMembership[Programindex].decimals = newProgram.decimals;
+        _paidMembership[Programindex].details = newProgram.details;
     }
 
     function deployMemberFromSubs(address pubaddr, optional(string) isdao, uint8 Programindex) public onlyOwnerPubkeyOptional(_paidMembership[Programindex].accessKey) accept saveMsg {
