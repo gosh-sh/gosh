@@ -143,9 +143,9 @@ pipeline {
                             deployVersion(version, batch, basePort + (j * batchSize))
                         }
 
-                        runUpgradeTests(batch, basePort + (j * batchSize), 1, 4)
-                        runUpgradeTests(batch, basePort + (j * batchSize), 2, 4)
                         runUpgradeTests(batch, basePort + (j * batchSize), 3, 4)
+                        runUpgradeTests(batch, basePort + (j * batchSize), 2, 4)
+                        runUpgradeTests(batch, basePort + (j * batchSize), 1, 4)
                         sh 'docker ps -a --filter name=localnode-* -aq | grep -v "$(docker ps -a --filter name=localnode-9000 -q)" | xargs docker rm -f'
                     }
 

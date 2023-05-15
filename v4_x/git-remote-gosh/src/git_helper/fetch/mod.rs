@@ -277,7 +277,6 @@ where
                     branches,
                 };
                 tracing::debug!("New tree root: {}", &to_load.oid);
-                tree_obj_queue.push_back(to_load);
                 if onchain_commit.initupgrade {
                     // Object can be first in the tree and have no parents
                     // if !obj.parents.is_empty() {
@@ -286,6 +285,7 @@ where
                         tracing::trace!("next_commit_of_prev_version={:?}", next_commit_of_prev_version);
                     // }
                 } else {
+                    tree_obj_queue.push_back(to_load);
                     for parent_id in &obj.parents {
                         commits_queue.push_back(*parent_id);
                     }
