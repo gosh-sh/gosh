@@ -368,6 +368,12 @@ contract SystemContract is Modifiers {
             _code[m_TopicCode], dao, version
         );
     }
+
+    function getCommentCode(address dao) external view returns(TvmCell) {
+        return GoshLib.buildCommentCode(
+            _code[m_TopicCode], dao, version
+        );
+    }
     
     function getTopicAddr(string name, string content, address object, address dao) external view returns(address) {
         return GoshLib.calculateTopicAddress(_code[m_TopicCode], dao, name, content, object);

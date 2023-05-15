@@ -524,6 +524,15 @@
 			]
 		},
 		{
+			"name": "getCommentCode",
+			"inputs": [
+				{"name":"dao","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "getTopicAddr",
 			"inputs": [
 				{"name":"name","type":"string"},
