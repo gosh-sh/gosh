@@ -1922,20 +1922,25 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     ): Promise<TDaoStartPaidMembershipResult> {
         const {
             index,
+            cost,
             reserve,
             subscriptionAmount,
             subscriptionTime,
             accessKey,
+            details,
             comment = '',
             reviewers = [],
             cell,
         } = params
         const programParams = {
             newProgram: {
+                fiatValue: cost.value,
+                decimals: cost.decimals,
                 paidMembershipValue: reserve,
                 valuePerSubs: subscriptionAmount,
                 timeForSubs: subscriptionTime,
                 accessKey: accessKey,
+                details,
             },
             Programindex: index,
         }

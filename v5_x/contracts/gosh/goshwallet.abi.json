@@ -158,7 +158,7 @@
 		{
 			"name": "startProposalForStartPaidMembership",
 			"inputs": [
-				{"components":[{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"accessKey","type":"uint256"}],"name":"newProgram","type":"tuple"},
+				{"components":[{"name":"fiatValue","type":"uint128"},{"name":"decimals","type":"uint128"},{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"details","type":"string"},{"name":"accessKey","type":"uint256"}],"name":"newProgram","type":"tuple"},
 				{"name":"Programindex","type":"uint8"},
 				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"},
@@ -170,7 +170,7 @@
 		{
 			"name": "getCellStartPaidMembership",
 			"inputs": [
-				{"components":[{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"accessKey","type":"uint256"}],"name":"newProgram","type":"tuple"},
+				{"components":[{"name":"fiatValue","type":"uint128"},{"name":"decimals","type":"uint128"},{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"details","type":"string"},{"name":"accessKey","type":"uint256"}],"name":"newProgram","type":"tuple"},
 				{"name":"Programindex","type":"uint8"},
 				{"name":"comment","type":"string"},
 				{"name":"time","type":"optional(uint32)"}
@@ -718,11 +718,31 @@
 			]
 		},
 		{
+			"name": "deployComment",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"content","type":"string"},
+				{"name":"object","type":"address"},
+				{"name":"metadata","type":"optional(string)"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployMessage",
 			"inputs": [
 				{"name":"topic","type":"address"},
 				{"name":"answer","type":"optional(uint256)"},
 				{"name":"message","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setResolveTopic",
+			"inputs": [
+				{"name":"topic","type":"address"},
+				{"name":"status","type":"bool"}
 			],
 			"outputs": [
 			]

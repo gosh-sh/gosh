@@ -368,9 +368,19 @@ contract SystemContract is Modifiers {
             _code[m_TopicCode], dao, version
         );
     }
+
+    function getCommentCode(address dao) external view returns(TvmCell) {
+        return GoshLib.buildCommentCode(
+            _code[m_TopicCode], dao, version
+        );
+    }
     
     function getTopicAddr(string name, string content, address object, address dao) external view returns(address) {
         return GoshLib.calculateTopicAddress(_code[m_TopicCode], dao, name, content, object);
+    }
+
+    function getCommentAddr(string name, string content, address object, address dao, optional(string) metadata) external view returns(address) {
+        return GoshLib.calculateCommentAddress(_code[m_TopicCode], dao, name, content, object, metadata);
     }
     
     function getTaskAddr(string nametask, string dao, string repoName) external view returns(address) {

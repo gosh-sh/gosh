@@ -345,7 +345,6 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function getMoney() private {
-        this.checkExpiredTime{value: 0.1 ton, flag: 1}(0);
         if (block.timestamp - timeMoney > 3600) { _flag = false; timeMoney = block.timestamp; }
         if (_flag == true) { return; }
         if (address(this).balance > 100000 ton) { return; }
@@ -875,6 +874,9 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _paidMembership[Programindex].accessKey = newProgram.accessKey;
         _paidMembership[Programindex].valuePerSubs = newProgram.valuePerSubs;
         _paidMembership[Programindex].timeForSubs = newProgram.timeForSubs;
+        _paidMembership[Programindex].fiatValue = newProgram.fiatValue;
+        _paidMembership[Programindex].decimals = newProgram.decimals;
+        _paidMembership[Programindex].details = newProgram.details;
     }
 
     function deployMemberFromSubs(address pubaddr, optional(string) isdao, uint8 Programindex) public onlyOwnerPubkeyOptional(_paidMembership[Programindex].accessKey) accept saveMsg {
@@ -1013,7 +1015,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _allbalance += pubaddr.count;
         TvmCell s1 = GoshLib.composeWalletStateInit(_code[m_WalletCode], _systemcontract, address(this), pubaddr.member, 0);
         _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));
-        _wallets[keyaddr] = MemberToken(_lastAccountAddress, pubaddr.count, 0);
+        _wallets[keyaddr] = MemberToken(_lastAccountAddress, pubaddr.count, pubaddr.expired);
         new GoshWallet {
             stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0, flag: 1
         }(  _versionController, _pubaddr, pubaddr.member, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
