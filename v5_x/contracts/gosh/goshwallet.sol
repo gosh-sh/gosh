@@ -942,10 +942,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             _pubaddr, _index, _systemcontract, _goshdao, object, _code[m_WalletCode]);
     }
 
-    function deployComment(string name, string content, address object, optional(string) metadata) public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
+    function deployComment(string name, string content, address object, optional(string) metadata, optional(string) commit, optional(string) nameoffile) public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        TvmCell s1 = GoshLib.composeCommentStateInit(_code[m_TopicCode], _goshdao, name, content, object, metadata);
+        TvmCell s1 = GoshLib.composeCommentStateInit(_code[m_TopicCode], _goshdao, name, content, object, metadata, commit, nameoffile);
         new Topic {stateInit: s1, value: FEE_DEPLOY_TOPIC, wid: 0, flag: 1}(
             _pubaddr, _index, _systemcontract, _goshdao, object, _code[m_WalletCode]);
     }

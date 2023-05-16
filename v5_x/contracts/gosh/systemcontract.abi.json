@@ -526,7 +526,10 @@
 		{
 			"name": "getCommentCode",
 			"inputs": [
-				{"name":"dao","type":"address"}
+				{"name":"dao","type":"address"},
+				{"name":"object","type":"address"},
+				{"name":"commit","type":"optional(string)"},
+				{"name":"nameoffile","type":"optional(string)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -551,7 +554,9 @@
 				{"name":"content","type":"string"},
 				{"name":"object","type":"address"},
 				{"name":"dao","type":"address"},
-				{"name":"metadata","type":"optional(string)"}
+				{"name":"metadata","type":"optional(string)"},
+				{"name":"commit","type":"optional(string)"},
+				{"name":"nameoffile","type":"optional(string)"}
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}

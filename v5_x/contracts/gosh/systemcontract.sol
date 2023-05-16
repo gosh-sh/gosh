@@ -369,9 +369,9 @@ contract SystemContract is Modifiers {
         );
     }
 
-    function getCommentCode(address dao) external view returns(TvmCell) {
+    function getCommentCode(address dao, address object, optional(string) commit, optional(string) nameoffile) external view returns(TvmCell) {
         return GoshLib.buildCommentCode(
-            _code[m_TopicCode], dao, version
+            _code[m_TopicCode], dao, object, commit, nameoffile, version
         );
     }
     
@@ -379,8 +379,8 @@ contract SystemContract is Modifiers {
         return GoshLib.calculateTopicAddress(_code[m_TopicCode], dao, name, content, object);
     }
 
-    function getCommentAddr(string name, string content, address object, address dao, optional(string) metadata) external view returns(address) {
-        return GoshLib.calculateCommentAddress(_code[m_TopicCode], dao, name, content, object, metadata);
+    function getCommentAddr(string name, string content, address object, address dao, optional(string) metadata, optional(string) commit, optional(string) nameoffile) external view returns(address) {
+        return GoshLib.calculateCommentAddress(_code[m_TopicCode], dao, name, content, object, metadata, commit, nameoffile);
     }
     
     function getTaskAddr(string nametask, string dao, string repoName) external view returns(address) {

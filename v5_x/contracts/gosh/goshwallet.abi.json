@@ -723,7 +723,9 @@
 				{"name":"name","type":"string"},
 				{"name":"content","type":"string"},
 				{"name":"object","type":"address"},
-				{"name":"metadata","type":"optional(string)"}
+				{"name":"metadata","type":"optional(string)"},
+				{"name":"commit","type":"optional(string)"},
+				{"name":"nameoffile","type":"optional(string)"}
 			],
 			"outputs": [
 			]

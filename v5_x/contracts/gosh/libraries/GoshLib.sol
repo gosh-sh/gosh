@@ -129,8 +129,8 @@ library GoshLib {
         return address.makeAddrStd(0, tvm.hash(s1));
     }
 
-    function calculateCommentAddress(TvmCell code, address goshdao, string name, string content, address object, optional(string) metadata) public returns(address) {
-        TvmCell s1 = composeCommentStateInit(code, goshdao, name, content, object, metadata);
+    function calculateCommentAddress(TvmCell code, address goshdao, string name, string content, address object, optional(string) metadata, optional(string) commit, optional(string) nameoffile) public returns(address) {
+        TvmCell s1 = composeCommentStateInit(code, goshdao, name, content, object, metadata, commit, nameoffile);
         return address.makeAddrStd(0, tvm.hash(s1));
     }
 
@@ -258,9 +258,9 @@ library GoshLib {
         });
     }
 
-    function composeCommentStateInit(TvmCell code, address goshdao, string name, string content, address object, optional(string) metadata) public returns(TvmCell) {
+    function composeCommentStateInit(TvmCell code, address goshdao, string name, string content, address object, optional(string) metadata, optional(string) commit, optional(string) nameoffile) public returns(TvmCell) {
         TvmCell deployCode = buildCommentCode(
-            code, goshdao, versionLib
+            code, goshdao, object, commit, nameoffile, versionLib
         );
         return tvm.buildStateInit({
             code: deployCode,
@@ -596,11 +596,17 @@ library GoshLib {
     function buildCommentCode(
         TvmCell originalCode,
         address dao,
+        address file,
+        optional(string) commit,
+        optional(string) name,
         string versionc
     ) public returns (TvmCell) {
         TvmBuilder b;
         b.store("COMMENT");
         b.store(dao);
+        b.store(file);
+        b.store(commit);
+        b.store(name);
         b.store(versionc);
         uint256 hash = tvm.hash(b.toCell());
         delete b;
