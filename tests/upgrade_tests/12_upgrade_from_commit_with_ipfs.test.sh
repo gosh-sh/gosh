@@ -5,6 +5,15 @@ set -o pipefail
 
 set -x
 
+# Test 12.
+# This test checks that commit with ipfs data can be successfully upgraded.
+# 1. Deploy repo
+# 2. Create a binary file, commit it and push
+# 3. Upgrade the repo
+# 4. Push and commit changes to the binary file
+# 5. Clone the repo
+# 6. Check binary file state
+
 if [ "$1" = "ignore" ]; then
   echo "Test $0 ignored"
   exit 0
