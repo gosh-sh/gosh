@@ -65,8 +65,8 @@ pipeline {
                 }
             }
             steps {
-                //buildDispatcher()
-                buildDispatcherDebug()
+                buildDispatcher()
+                //buildDispatcherDebug()
             }
         }
         stage('Build: Git Helper') {
@@ -76,8 +76,8 @@ pipeline {
                 }
             }
             steps {
-                //runFunctionSet('buildRemoteGosh')
-                runFunctionSet('buildRemoteGoshDebug')
+                runFunctionSet('buildRemoteGosh')
+                //runFunctionSet('buildRemoteGoshDebug')
             }
         }
 
@@ -113,7 +113,7 @@ pipeline {
                         batches.add(new ArrayList(files.subList(i, end)))  // <-- Modified
                     }
 
-                    /*for (int j = 0; j < batches.size(); j++) {
+                    for (int j = 0; j < batches.size(); j++) {
                         def batch = batches[j]
                         
                         for (version in versions) {
@@ -126,7 +126,7 @@ pipeline {
                         runFunctionalTests(batch, basePort + (j * batchSize), "Func v3", "v3_x")
                         runFunctionalTests(batch, basePort + (j * batchSize), "Func v4", "v4_x")
                         sh 'docker ps -a --filter name=localnode-* -aq | grep -v "$(docker ps -a --filter name=localnode-9000 -q)" | xargs docker rm -f'
-                    }*/
+                    }
 
                     def upgradeFiles = getTestFiles("tests/upgrade_tests").toList()
                     def upgradeBatches = []
