@@ -264,12 +264,12 @@ where
                     branches,
                 };
                 tracing::debug!("New tree root: {}", &to_load.oid);
-                tree_obj_queue.push_back(to_load);
                 if onchain_commit.initupgrade {
                     if !obj.parents.is_empty() {
                         next_commit_of_prev_version = Some(obj.parents[0].clone());
                     }
                 } else {
+                    tree_obj_queue.push_back(to_load);
                     for parent_id in &obj.parents {
                         commits_queue.push_back(*parent_id);
                     }
