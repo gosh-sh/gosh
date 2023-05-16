@@ -56,7 +56,9 @@
 				{"name":"value3","type":"address"},
 				{"name":"value4","type":"address"},
 				{"name":"value5","type":"optional(string)"},
-				{"name":"value6","type":"bool"}
+				{"name":"value6","type":"bool"},
+				{"name":"value7","type":"address"},
+				{"name":"value8","type":"uint32"}
 			]
 		},
 		{
@@ -127,6 +129,7 @@
 		{"name":"_content","type":"string"},
 		{"name":"_object","type":"address"},
 		{"name":"_author","type":"address"},
+		{"name":"_createdAt","type":"uint32"},
 		{"name":"_metadata","type":"optional(string)"},
 		{"name":"_resolved","type":"bool"},
 		{"name":"_systemcontract","type":"address"},
