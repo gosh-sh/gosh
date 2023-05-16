@@ -38,6 +38,14 @@
 			]
 		},
 		{
+			"name": "destroyTopic",
+			"inputs": [
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getObject",
 			"inputs": [
 			],
@@ -118,6 +126,7 @@
 		{"name":"_name","type":"string"},
 		{"name":"_content","type":"string"},
 		{"name":"_object","type":"address"},
+		{"name":"_author","type":"address"},
 		{"name":"_metadata","type":"optional(string)"},
 		{"name":"_resolved","type":"bool"},
 		{"name":"_systemcontract","type":"address"},

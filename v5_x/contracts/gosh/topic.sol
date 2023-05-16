@@ -20,6 +20,7 @@ contract Topic is Modifiers{
     string static public _name;
     string static public _content;
     address static public _object;
+    address _author;
     optional(string) static public _metadata;
     bool public _resolved;
     address _systemcontract;
@@ -38,6 +39,7 @@ contract Topic is Modifiers{
         _systemcontract = goshaddr;
         _goshdao = goshdao;
         _object = object;
+        _author = pubaddr;
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
     }
     
@@ -49,6 +51,11 @@ contract Topic is Modifiers{
     function resolveTopic(address pubaddr, uint128 index, bool status) public {
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         _resolved = status;
+    }
+
+    function destroyTopic(uint128 index) public {
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _author, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        selfdestruct(_systemcontract);
     }
     
     //Getters

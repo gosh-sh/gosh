@@ -960,7 +960,13 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
         Topic(topic).resolveTopic{value:0.1 ton, flag: 1}(_pubaddr, _index, status);
-    }       
+    } 
+
+    function destroyTopic (address topic) public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        Topic(topic).destroyTopic{value:0.1 ton, flag: 1}(_index);
+    }         
     
     function setCheckDao() public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
         require(_tombstone == false, ERR_TOMBSTONE);

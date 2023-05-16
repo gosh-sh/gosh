@@ -748,6 +748,14 @@
 			]
 		},
 		{
+			"name": "destroyTopic",
+			"inputs": [
+				{"name":"topic","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setCheckDao",
 			"inputs": [
 			],
