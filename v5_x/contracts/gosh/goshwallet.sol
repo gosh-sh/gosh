@@ -1067,9 +1067,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
-        TvmCell deployCode = GoshLib.buildBigTaskCode(_code[m_BigTaskCode], repo, version);
-        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: BigTask, varInit: {_nametask: nametask}});
-        address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
+        address taskaddr = GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, repo, nametask);
         BigTask(taskaddr).approveReady{value:0.3 ton}(_pubaddr, _index);
         getMoney();
     } 
