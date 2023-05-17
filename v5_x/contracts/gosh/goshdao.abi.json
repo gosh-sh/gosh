@@ -946,6 +946,17 @@
 			]
 		},
 		{
+			"name": "destroyTaskTagBig",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"tag","type":"string[]"},
+				{"name":"sender","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "destroyTaskTag2",
 			"inputs": [
 				{"name":"nametask","type":"string"},
@@ -979,6 +990,16 @@
 		},
 		{
 			"name": "returnTaskToken",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"token","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "returnTaskTokenBig",
 			"inputs": [
 				{"name":"nametask","type":"string"},
 				{"name":"repo","type":"address"},

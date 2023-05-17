@@ -1201,6 +1201,12 @@ contract GoshDao is Modifiers, TokenRootOwner {
             GoshWallet(sender).destroyTaskTag{value:0.2 ton, flag: 1}(repo, msg.sender, tag[t]);   	
         }
     }
+
+    function destroyTaskTagBig (string nametask, address repo, string[] tag, address sender) public view senderIs(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], address(this), repo, nametask))  accept {
+        for (uint8 t = 0; t < tag.length; t++){ 
+            GoshWallet(sender).destroyTaskTag{value:0.2 ton, flag: 1}(repo, msg.sender, tag[t]);   	
+        }
+    }
     
     function destroyTaskTag2 (string nametask, address repo, string[] tag) public view senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), repo, nametask))  accept {
         uint256 keyaddr;       
@@ -1221,6 +1227,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function returnTaskToken(string nametask, address repo, uint128 token) public senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), repo, nametask)) accept {
+        _reserve += token;
+    }
+
+    function returnTaskTokenBig(string nametask, address repo, uint128 token) public senderIs(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], address(this), repo, nametask)) accept {
         _reserve += token;
     }
     
