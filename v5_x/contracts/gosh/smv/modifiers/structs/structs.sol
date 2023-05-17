@@ -7,6 +7,11 @@
 pragma ever-solidity >=0.66.0;
 
 //Structs  
+struct Subtask {
+    uint128 value;
+    string name;
+}
+
 struct PaidMember {
     uint128 fiatValue;
     uint128 decimals;

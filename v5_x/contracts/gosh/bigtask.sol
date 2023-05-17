@@ -63,8 +63,7 @@ contract BigTask is Modifiers{
     uint128 _fullSubtask = 0;
     uint128 _subtaskgranted = 0;
     uint128 _fullSubtaskValue = 0;
-    mapping(uint128 => string) _subtask;
-    uint128[] _subtaskvalue;
+    mapping(uint128 => Subtask) _subtask;
     uint128 _subtasskbalance = 0;
     uint128 _subtasksize = 0;
 
@@ -97,7 +96,7 @@ contract BigTask is Modifiers{
 
     function getUpgradeData(TvmCell data) public senderIs(_previousVersionAddr) accept {
             string name;
-            (name, _repoName, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance, _freebalance, _subtask, _subtasskbalance) = abi.decode(data, (string, string, bool, ConfigCommit[], ConfigGrant, uint128, uint128, uint128, uint128, uint128, mapping(address => uint128), mapping(address => uint128), mapping(address => uint128), uint128, uint128, uint128, uint128, uint128, uint128, bool, bool, bool, uint128, uint128, uint128, uint128, uint128, mapping(uint128 => string), uint128));
+            (name, _repoName, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance, _freebalance, _subtask, _subtasskbalance) = abi.decode(data, (string, string, bool, ConfigCommit[], ConfigGrant, uint128, uint128, uint128, uint128, uint128, mapping(address => uint128), mapping(address => uint128), mapping(address => uint128), uint128, uint128, uint128, uint128, uint128, uint128, bool, bool, bool, uint128, uint128, uint128, uint128, uint128, mapping(uint128 => Subtask), uint128));
             _repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, _repoName);
             address zero;
             if (_ready == true) {
@@ -188,8 +187,7 @@ contract BigTask is Modifiers{
         if ((_candidates[_indexFinal].pubaddrassign.exists(pubaddr) == false) && (_candidates[_indexFinal].pubaddrreview.exists(pubaddr) == false) && (_candidates[_indexFinal].pubaddrmanager.exists(pubaddr) == false)) { return; }
         if (_fullSubtaskValue + value > _freebalance) { return; }
         _fullSubtaskValue += value;
-        _subtaskvalue.push(value);
-        _subtask[_subtasksize] = nametask;
+        _subtask[_subtasksize] = Subtask(value, nametask);
         _subtasksize += 1;
         GoshWallet(msg.sender).deployTaskFromBigTask{value: 0.1 ton}(_nametask, repoName, nametask, hashtag, grant, value);
     }
@@ -198,8 +196,7 @@ contract BigTask is Modifiers{
         uint128 index,
         uint128 index1) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
         require(_ready == false, ERR_TASK_COMPLETED);
-        Task(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, _subtask[index])).destroyBig();
-        delete _subtaskvalue[index1];
+        Task(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, _subtask[index].name)).destroyBig{value: 0.1 ton, flag: 1}();
         delete _subtask[index1];
     }
 
@@ -322,7 +319,7 @@ contract BigTask is Modifiers{
     function sendReady(uint128 index) public view senderIs(address(this)) accept {
         if (index > _subtasksize - 1) { return; }
         if (_subtask.exists(index)) {
-            Task(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, _subtask[index])).isReadyBalance{value: 0.2 ton, flag: 1}();
+            Task(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, _subtask[index].name)).isReadyBalance{value: 0.2 ton, flag: 1}();
         }
         this.sendReady{value: 0.1 ton, flag: 1}(index + 1);
     }
@@ -330,11 +327,11 @@ contract BigTask is Modifiers{
     function grantTokenToSubtask(uint128 diff, uint128 granted, uint128 index) public senderIs(address(this)) accept {
         if (index > _subtasksize - 1) { _fullSubtask += diff - granted; return; }
         this.grantTokenToSubtask{value: 0.1 ton, flag: 1}(diff, granted, index + 1);
-        uint128 sm = diff * _subtaskvalue[index];
+        uint128 sm = diff * _subtask[index].value;
         sm /= _fullSubtaskValue;
         granted += sm;
         if (granted > diff) { return; }
-        Task(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, _subtask[index])).grantToken(sm);
+        Task(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, _subtask[index].name)).grantToken(sm);
     }
 
     function checkempty(address addr) private {
@@ -363,8 +360,8 @@ contract BigTask is Modifiers{
         IObject(msg.sender).returnTask{value: 0.1 ton, flag: 1}(data);
     }
 
-    function getStatus() external view returns(string nametask, address repo, ConfigCommit[] candidates, ConfigGrant grant, bool ready, uint128 indexFinal, string[] hashtag, uint128 locktime, mapping(uint128 => string) subtask, uint128[] subtaskvalue) {
-        return (_nametask, _repo, _candidates, _grant, _ready, _indexFinal, _hashtag, _locktime, _subtask, _subtaskvalue);
+    function getStatus() external view returns(string nametask, address repo, ConfigCommit[] candidates, ConfigGrant grant, bool ready, uint128 indexFinal, string[] hashtag, uint128 locktime, mapping(uint128 => Subtask) subtask) {
+        return (_nametask, _repo, _candidates, _grant, _ready, _indexFinal, _hashtag, _locktime, _subtask);
     }
     function getVersion() external pure returns(string, string) {
         return ("bigtask", version);
