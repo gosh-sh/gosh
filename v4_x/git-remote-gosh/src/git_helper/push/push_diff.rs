@@ -359,7 +359,7 @@ where
             true
         }
     };
-    let (content, commit_id) = if upgrade {
+    let (content, commit_id, ipfs) = if upgrade {
         tracing::trace!("generate content for upgrade snapshot");
         let repo_addr: GetPreviousResult = blockchain
             .repo_contract()
@@ -379,35 +379,39 @@ where
             &branch_name,
             &file_path,
         )
-        .await?;
+            .await?;
         let snapshot = Snapshot::load(blockchain.client(), &snapshot_addr).await?;
-        let content: Vec<u8> = ton_client::utils::compress_zstd(&snapshot.current_content, None)?;
-        tracing::trace!("Previous snapshot content: {content:?}");
-        let mut content_string = "".to_string();
-        for byte in content {
-            content_string.push_str(&format!("{:02x}", byte));
-        }
-        tracing::trace!("content_string: {content_string:?}");
+        if snapshot.current_ipfs.is_some() {
+            ("".to_string(), commit_id, snapshot.current_ipfs)
+        } else {
+            let content: Vec<u8> = ton_client::utils::compress_zstd(&snapshot.current_content, None)?;
+            tracing::trace!("Previous snapshot content: {content:?}");
+            let mut content_string = "".to_string();
+            for byte in content {
+                content_string.push_str(&format!("{:02x}", byte));
+            }
+            tracing::trace!("content_string: {content_string:?}");
 
-        // If we deploy snapshot with content we have to wait for commit to be deployed first
-        // because snapshot with content will call commit for check
+            // If we deploy snapshot with content we have to wait for commit to be deployed first
+            // because snapshot with content will call commit for check
 
-        let mut repo_contract = blockchain.repo_contract().clone();
-        let new_commit =
-            get_commit_address(&blockchain.client(), &mut repo_contract, &commit_id).await?;
-        tracing::trace!("start waiting for commit to be ready, address: {new_commit}");
-        let undeployed = wait_contracts_deployed(&blockchain, &vec![new_commit]).await?;
-        if !undeployed.is_empty() {
-            anyhow::bail!(
+            let mut repo_contract = blockchain.repo_contract().clone();
+            let new_commit =
+                get_commit_address(&blockchain.client(), &mut repo_contract, &commit_id).await?;
+            tracing::trace!("start waiting for commit to be ready, address: {new_commit}");
+            let undeployed = wait_contracts_deployed(&blockchain, &vec![new_commit]).await?;
+            if !undeployed.is_empty() {
+                anyhow::bail!(
                 "Commit was not deployed in expected time: {}",
                 undeployed[0]
             );
-        }
-        tracing::trace!("commit is ready");
+            }
+            tracing::trace!("commit is ready");
 
-        (content_string, commit_id)
+            (content_string, commit_id, None)
+        }
     } else {
-        ("".to_string(), "".to_string())
+        ("".to_string(), "".to_string(), None)
     };
     RetryIf::spawn(
         default_retry_strategy(),
@@ -420,7 +424,7 @@ where
                     commit_id.clone(),
                     file_path.clone(),
                     content.clone(),
-                    None,
+                    ipfs.clone(),
                 )
                 .await
         },
