@@ -194,7 +194,7 @@
 				{"name":"indexFinal","type":"uint128"},
 				{"name":"hashtag","type":"string[]"},
 				{"name":"locktime","type":"uint128"},
-				{"name":"subtask","type":"string[]"},
+				{"name":"subtask","type":"map(uint128,string)"},
 				{"name":"subtaskvalue","type":"uint128[]"}
 			]
 		},
@@ -310,8 +310,9 @@
 		{"name":"_fullSubtask","type":"uint128"},
 		{"name":"_subtaskgranted","type":"uint128"},
 		{"name":"_fullSubtaskValue","type":"uint128"},
-		{"name":"_subtask","type":"string[]"},
+		{"name":"_subtask","type":"map(uint128,string)"},
 		{"name":"_subtaskvalue","type":"uint128[]"},
-		{"name":"_subtasskbalance","type":"uint128"}
+		{"name":"_subtasskbalance","type":"uint128"},
+		{"name":"_subtasksize","type":"uint128"}
 	]
 }
