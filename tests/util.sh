@@ -698,10 +698,10 @@ function start_paid_membership {
     KEY_FOR_SERVICE="0x"$(cat $WALLET_KEYS | jq .public | cut -d '"' -f 2)
 
     tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForStartPaidMembership \
-      "{\"newProgram\":{\"paidMembershipValue\":$VALUE,\"valuePerSubs\":$VALUE_PER_SUB,\"timeForSubs\":$TIME_FOR_SUB,\"accessKey\":\"$KEY_FOR_SERVICE\"},\"Programindex\":1,\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
+      "{\"newProgram\":{\"fiatValue\":0,\"decimals\":0,\"paidMembershipValue\":$VALUE,\"valuePerSubs\":$VALUE_PER_SUB,\"timeForSubs\":$TIME_FOR_SUB,\"details\":\"\",\"accessKey\":\"$KEY_FOR_SERVICE\"},\"Programindex\":1,\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
     NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
     echo "NOW_ARG=$NOW_ARG"
-    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellStartPaidMembership "{\"newProgram\":{\"paidMembershipValue\":$VALUE,\"valuePerSubs\":$VALUE_PER_SUB,\"timeForSubs\":$TIME_FOR_SUB,\"accessKey\":\"$KEY_FOR_SERVICE\"},\"Programindex\":1,\"comment\":\"\",\"time\":$NOW_ARG}" | sed -n '/value0/ p' | cut -d'"' -f 4)
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellStartPaidMembership "{\"newProgram\":{\"fiatValue\":0,\"decimals\":0,\"paidMembershipValue\":$VALUE,\"valuePerSubs\":$VALUE_PER_SUB,\"timeForSubs\":$TIME_FOR_SUB,\"details\":\"\",\"accessKey\":\"$KEY_FOR_SERVICE\"},\"Programindex\":1,\"comment\":\"\",\"time\":$NOW_ARG}" | sed -n '/value0/ p' | cut -d'"' -f 4)
 
     echo "TVMCELL=$TVMCELL"
 
