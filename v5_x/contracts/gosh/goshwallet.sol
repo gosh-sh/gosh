@@ -1682,6 +1682,33 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         Task(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, 3, _index);
         getMoney();
     }
+
+    function askGrantBigToken(
+        string repoName,
+        string nametask,
+        uint128 typegrant
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address taskaddr = GoshLib.calculateBigTaskAddress(_code[m_TaskCode], _goshdao, repo, nametask);
+        BigTask(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, typegrant, _index);
+        getMoney();
+    }
+    
+    function askGrantBigTokenFull(
+        string repoName,
+        string nametask
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address taskaddr = GoshLib.calculateBigTaskAddress(_code[m_TaskCode], _goshdao, repo, nametask);
+        BigTask(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, 1, _index);
+        BigTask(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, 2, _index);
+        BigTask(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, 3, _index);
+        getMoney();
+    }
     
     function askGrantTokenFullIn(
         string repoName,

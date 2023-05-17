@@ -1179,6 +1179,25 @@
 			]
 		},
 		{
+			"name": "askGrantBigToken",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"},
+				{"name":"typegrant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "askGrantBigTokenFull",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "askGrantTokenFullIn",
 			"inputs": [
 				{"name":"repoName","type":"string"},
