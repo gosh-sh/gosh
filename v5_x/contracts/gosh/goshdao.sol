@@ -1169,7 +1169,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _reserve -= balance + freebalance;
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName);
         if (num == 1) {
-            TvmCell deployCode = GoshLib.buildBigTaskCode(_code[m_TaskCode], repo, version);
+            TvmCell deployCode = GoshLib.buildBigTaskCode(_code[m_BigTaskCode], repo, version);
             TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: BigTask, varInit: {_nametask: nametask, _goshdao: address(this)}});
             optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_TaskCode], grant, balance, freebalance, hashtag, commit);
             optional(TvmCell) data1;
