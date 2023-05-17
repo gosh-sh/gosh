@@ -3,37 +3,40 @@ import { getIdenticonAvatar } from '../../../helpers'
 type TLineNumberProps = {
     num: number
     threads: any[]
-    threadIconProps: React.HTMLAttributes<HTMLDivElement>
+    threadIconProps: React.HTMLAttributes<HTMLImageElement>
     lineNumberProps: React.ButtonHTMLAttributes<HTMLButtonElement>
+    commentsOn?: boolean
 }
 
 const getThreadAvatar = (seed: string) => {
-    return `url('${getIdenticonAvatar({ seed, radius: 20 }).toDataUriSync()}')`
+    return getIdenticonAvatar({ seed, radius: 20 }).toDataUriSync()
 }
 
 const LineNumber = (props: TLineNumberProps) => {
-    const { num, threads, threadIconProps, lineNumberProps } = props
+    const { num, threads, threadIconProps, lineNumberProps, commentsOn } = props
 
     return (
         <td className="p-0 w-14">
             <div className="flex flex-nowrap items-center">
-                <div>
-                    {threads.map((thread, i) => (
-                        <div
-                            key={i}
-                            data-id={thread.id}
-                            className="rounded-full w-4 h-4 bg-contain bg-center bg-no-repeat
-                                cursor-pointer mx-2 bg-gray-fafafd
+                {commentsOn && (
+                    <div className="flex flex-nowrap items-center justify-start">
+                        {threads.map((thread, i) => (
+                            <div
+                                key={i}
+                                className="rounded-full w-4 h-4 bg-contain bg-center bg-no-repeat
+                                cursor-pointer bg-gray-fafafd overflow-hidden
                                 hover:scale-125 transition-transform"
-                            style={{
-                                backgroundImage: getThreadAvatar(
-                                    thread.comments[0].username,
-                                ),
-                            }}
-                            {...threadIconProps}
-                        ></div>
-                    ))}
-                </div>
+                            >
+                                <img
+                                    data-id={thread.id}
+                                    src={getThreadAvatar(thread.content.username)}
+                                    className="w-full"
+                                    {...threadIconProps}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
                 <div className="grow text-end">
                     <button
                         data-pseudo-content={num}

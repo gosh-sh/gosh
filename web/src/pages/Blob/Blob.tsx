@@ -16,6 +16,7 @@ import FileDownload from '../../components/FileDownload'
 import { BranchSelect } from '../../components/Branches'
 import { ButtonLink } from '../../components/Form'
 import Loader from '../../components/Loader'
+import { CodeComments } from '../../components/Blob/Comments'
 
 const BlobPage = () => {
     const treepath = useParams()['*']
@@ -64,50 +65,61 @@ const BlobPage = () => {
             )}
             {blob.isFetching && <Loader className="text-sm">Loading file...</Loader>}
             {blob.path && !blob.isFetching && (
-                <div className="border rounded-xl overflow-clip">
-                    <div className="flex bg-gray-100 px-3 py-1 border-b justify-end items-center">
-                        {!Buffer.isBuffer(blob.content) ? (
-                            <>
-                                <CopyClipboard
-                                    componentProps={{
-                                        text: blob.content || '',
-                                    }}
-                                    iconContainerClassName="text-extblack/60 hover:text-extblack p-1"
-                                    iconProps={{
-                                        size: 'sm',
-                                    }}
-                                    testId="btn-blob-copy"
+                <div className="flex items-start">
+                    <div className="grow border rounded-xl overflow-hidden">
+                        <div className="flex bg-gray-100 px-3 py-1 border-b justify-end items-center">
+                            {!Buffer.isBuffer(blob.content) ? (
+                                <>
+                                    <CopyClipboard
+                                        componentProps={{
+                                            text: blob.content || '',
+                                        }}
+                                        iconContainerClassName="text-extblack/60 hover:text-extblack p-1"
+                                        iconProps={{
+                                            size: 'sm',
+                                        }}
+                                        testId="btn-blob-copy"
+                                    />
+                                    {!branch?.isProtected && dao.details.isAuthMember && (
+                                        <Link
+                                            to={`/o/${daoName}/r/${repoName}/blobs/update/${branchName}/${treepath}`}
+                                            className="text-extblack/60 hover:text-extblack p-1 ml-2"
+                                            test-id="link-blob-edit"
+                                        >
+                                            <FontAwesomeIcon icon={faPencil} size="sm" />
+                                        </Link>
+                                    )}
+                                </>
+                            ) : (
+                                <FileDownload
+                                    name={treepath}
+                                    content={blob.content}
+                                    label={<FontAwesomeIcon icon={faFloppyDisk} />}
+                                    test-id="btn-blob-download"
                                 />
-                                {!branch?.isProtected && dao.details.isAuthMember && (
-                                    <Link
-                                        to={`/o/${daoName}/r/${repoName}/blobs/update/${branchName}/${treepath}`}
-                                        className="text-extblack/60 hover:text-extblack p-1 ml-2"
-                                        test-id="link-blob-edit"
-                                    >
-                                        <FontAwesomeIcon icon={faPencil} size="sm" />
-                                    </Link>
-                                )}
-                            </>
-                        ) : (
-                            <FileDownload
-                                name={treepath}
-                                content={blob.content}
-                                label={<FontAwesomeIcon icon={faFloppyDisk} />}
-                                test-id="btn-blob-download"
-                            />
-                        )}
+                            )}
 
-                        {!branch?.isProtected && dao.details.isAuthMember && (
-                            <Link
-                                to={`/o/${daoName}/r/${repoName}/blobs/delete/${branchName}/${treepath}`}
-                                className="text-rose-700/60 hover:text-rose-700 p-1 ml-2"
-                                test-id="link-blob-delete"
-                            >
-                                <FontAwesomeIcon icon={faTrash} size="sm" />
-                            </Link>
-                        )}
+                            {!branch?.isProtected && dao.details.isAuthMember && (
+                                <Link
+                                    to={`/o/${daoName}/r/${repoName}/blobs/delete/${branchName}/${treepath}`}
+                                    className="text-rose-700/60 hover:text-rose-700 p-1 ml-2"
+                                    test-id="link-blob-delete"
+                                >
+                                    <FontAwesomeIcon icon={faTrash} size="sm" />
+                                </Link>
+                            )}
+                        </div>
+                        <BlobPreview
+                            address={blob.address}
+                            filename={blob.path}
+                            commit={blob.commit}
+                            value={blob.content}
+                            commentsOn
+                        />
                     </div>
-                    <BlobPreview filename={blob.path} value={blob.content} commentsOn />
+                    <div className="sticky top-3 shrink-0 w-72 bg-white pl-3">
+                        <CodeComments filename={blob.path} />
+                    </div>
                 </div>
             )}
         </>

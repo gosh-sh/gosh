@@ -102,6 +102,14 @@ import {
     TDaoStartPaidMembershipResult,
     TDaoStopPaidMembershipParams,
     TDaoStopPaidMembershipResult,
+    TCodeCommentThreadCreateParams,
+    TCodeCommentThreadCreateResult,
+    TCodeCommentThreadGetCodeParams,
+    TCodeCommentThreadGetCodeResult,
+    TCodeCommentThreadGetParams,
+    TCodeCommentThreadGetResult,
+    TCodeCommentCreateParams,
+    TCodeCommentCreateResult,
 } from '../types'
 
 interface IGoshAdapter {
@@ -193,6 +201,13 @@ interface IGoshDaoAdapter {
     getTopicCodeHash(): Promise<string>
     getTopic(params: { address?: TAddress }): Promise<TTopic>
 
+    getCodeCommetThreadCodeHash(
+        params: TCodeCommentThreadGetCodeParams,
+    ): Promise<TCodeCommentThreadGetCodeResult>
+    getCodeCommentThread(
+        params: TCodeCommentThreadGetParams,
+    ): Promise<TCodeCommentThreadGetResult>
+
     getSmv(): Promise<IGoshSmvAdapter>
     getPrevDao(): Promise<IGoshDaoAdapter | null>
 
@@ -267,6 +282,11 @@ interface IGoshDaoAdapter {
     stopPaidMembership(
         params: TDaoStopPaidMembershipParams,
     ): Promise<TDaoStopPaidMembershipResult>
+
+    createCodeCommentThread(
+        params: TCodeCommentThreadCreateParams,
+    ): Promise<TCodeCommentThreadCreateResult>
+    createCodeComment(params: TCodeCommentCreateParams): Promise<TCodeCommentCreateResult>
 }
 
 interface IGoshRepositoryAdapter {
@@ -289,6 +309,7 @@ interface IGoshRepositoryAdapter {
         fullpath?: string
         address?: TAddress
     }): Promise<{
+        address: string
         onchain: { commit: string; content: string }
         content: string | Buffer
         ipfs: boolean

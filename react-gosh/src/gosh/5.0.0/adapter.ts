@@ -100,6 +100,14 @@ import {
     TDaoStartPaidMembershipResult,
     TDaoStopPaidMembershipParams,
     TDaoStopPaidMembershipResult,
+    TCodeCommentThreadCreateParams,
+    TCodeCommentThreadCreateResult,
+    TCodeCommentThreadGetCodeParams,
+    TCodeCommentThreadGetCodeResult,
+    TCodeCommentThreadGetParams,
+    TCodeCommentThreadGetResult,
+    TCodeCommentCreateParams,
+    TCodeCommentCreateResult,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -811,6 +819,37 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             confirmedAt: details.locktime,
             tags: tagsClean,
             tagsRaw: details.hashtag,
+        }
+    }
+
+    async getCodeCommetThreadCodeHash(
+        params: TCodeCommentThreadGetCodeParams,
+    ): Promise<TCodeCommentThreadGetCodeResult> {
+        const { daoAddress, objectAddress, commitName, filename } = params
+        const { value0 } = await this.gosh.gosh.runLocal('getCommentCode', {
+            dao: daoAddress,
+            object: objectAddress,
+            commit: commitName,
+            nameoffile: filename,
+        })
+        const { hash } = await this.client.boc.get_boc_hash({ boc: value0 })
+        return hash
+    }
+
+    async getCodeCommentThread(
+        params: TCodeCommentThreadGetParams,
+    ): Promise<TCodeCommentThreadGetResult> {
+        const thread = await this._getCodeCommentThread({ address: params.address })
+        const data = await thread.runLocal('getObject', {})
+        return {
+            account: thread,
+            address: thread.address,
+            name: data.value0,
+            content: data.value1,
+            metadata: JSON.parse(data.value5),
+            isResolved: data.value6,
+            createdBy: data.value7,
+            createdAt: parseInt(data.value8),
         }
     }
 
@@ -1996,6 +2035,44 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
+    async createCodeCommentThread(
+        params: TCodeCommentThreadCreateParams,
+    ): Promise<TCodeCommentThreadCreateResult> {
+        const { name, content, object, metadata, commit, filename } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const thread = await this._getCodeCommentThread({ createParams: params })
+        if (await thread.isDeployed()) {
+            return thread
+        }
+
+        await this.wallet.run('deployComment', {
+            name,
+            content,
+            object,
+            metadata: JSON.stringify(metadata),
+            commit,
+            nameoffile: filename,
+        })
+        return thread
+    }
+
+    async createCodeComment(
+        params: TCodeCommentCreateParams,
+    ): Promise<TCodeCommentCreateResult> {
+        const { threadAddress, message, answerId } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+        return await this.wallet.run('deployMessage', {
+            topic: threadAddress,
+            message,
+            answerId,
+        })
+    }
+
     private async _isAuthMember(): Promise<boolean> {
         if (!this.profile) {
             return false
@@ -2112,6 +2189,30 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             return new GoshTopic(this.client, address)
         }
         throw new GoshError('Topic address should be provided')
+    }
+
+    private async _getCodeCommentThread(params: {
+        address?: string
+        createParams?: TCodeCommentThreadCreateParams
+    }) {
+        const { address, createParams } = params
+        if (address) {
+            return new GoshTopic(this.client, address)
+        }
+
+        if (!createParams) {
+            throw new GoshError(
+                'Params error',
+                'Either `address` or create params should be provided',
+            )
+        }
+        const { value0 } = await this.gosh.gosh.runLocal('getCommentAddr', {
+            ...createParams,
+            dao: this.getAddress(),
+            metadata: JSON.stringify(createParams.metadata),
+            nameoffile: createParams.filename,
+        })
+        return new GoshTopic(this.client, value0)
     }
 
     private async _getSystemRepository(
@@ -2473,6 +2574,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         fullpath?: string
         address?: TAddress
     }): Promise<{
+        address: string
         onchain: { commit: string; content: string }
         content: string | Buffer
         ipfs: boolean
@@ -2521,7 +2623,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             result.ipfs = true
         }
 
-        return result
+        return { ...result, address: snapshot.address }
     }
 
     async getCommit(options: { name?: string; address?: TAddress }): Promise<TCommit> {
