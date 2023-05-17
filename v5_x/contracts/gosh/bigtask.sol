@@ -363,6 +363,6 @@ contract BigTask is Modifiers{
         return (_nametask, _repo, _candidates, _grant, _ready, _indexFinal, _hashtag, _locktime, _subtask, _subtaskvalue);
     }
     function getVersion() external pure returns(string, string) {
-        return ("task", version);
+        return ("bigtask", version);
     }
 }

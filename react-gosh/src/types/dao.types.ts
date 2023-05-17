@@ -387,10 +387,12 @@ type TUpgradeVersionControllerResult = void
 
 type TDaoStartPaidMembershipParams = TEventCreateParams & {
     index: number
+    cost: { value: number; decimals: number }
     reserve: number
     subscriptionAmount: number
     subscriptionTime: number
     accessKey: string
+    details: string
     cell?: boolean
 }
 
@@ -402,6 +404,52 @@ type TDaoStopPaidMembershipParams = TEventCreateParams & {
 }
 
 type TDaoStopPaidMembershipResult = string | void
+
+type TCodeCommentThreadCreateParams = {
+    name: string
+    content: string
+    object: string
+    metadata: {
+        startLine: number
+        endLine: number
+    }
+    commit: string
+    filename: string
+}
+
+type TCodeCommentThreadCreateResult = IGoshTopic
+
+type TCodeCommentThreadGetCodeParams = {
+    daoAddress: string
+    objectAddress: string
+    commitName: string
+    filename: string
+}
+
+type TCodeCommentThreadGetCodeResult = string
+
+type TCodeCommentThreadGetParams = {
+    address: string
+}
+
+type TCodeCommentThreadGetResult = {
+    account: IGoshTopic
+    address: string
+    name: string
+    content: string
+    metadata: TCodeCommentThreadCreateParams['metadata']
+    isResolved: boolean
+    createdBy: string
+    createdAt: number
+}
+
+type TCodeCommentCreateParams = {
+    threadAddress: TAddress
+    message: string
+    answerId?: string
+}
+
+type TCodeCommentCreateResult = any
 
 export {
     ETaskBounty,
@@ -475,4 +523,12 @@ export {
     TDaoStartPaidMembershipResult,
     TDaoStopPaidMembershipParams,
     TDaoStopPaidMembershipResult,
+    TCodeCommentThreadCreateParams,
+    TCodeCommentThreadCreateResult,
+    TCodeCommentThreadGetCodeParams,
+    TCodeCommentThreadGetCodeResult,
+    TCodeCommentThreadGetParams,
+    TCodeCommentThreadGetResult,
+    TCodeCommentCreateParams,
+    TCodeCommentCreateResult,
 }

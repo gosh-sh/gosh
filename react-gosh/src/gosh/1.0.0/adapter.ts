@@ -100,6 +100,13 @@ import {
     TDaoStartPaidMembershipResult,
     TDaoStopPaidMembershipParams,
     TDaoStopPaidMembershipResult,
+    TCodeCommentThreadCreateParams,
+    TCodeCommentThreadGetCodeParams,
+    TCodeCommentThreadGetCodeResult,
+    TCodeCommentThreadGetParams,
+    TCodeCommentThreadGetResult,
+    TCodeCommentCreateParams,
+    TCodeCommentThreadCreateResult,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -632,6 +639,18 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
+    async getCodeCommetThreadCodeHash(
+        params: TCodeCommentThreadGetCodeParams,
+    ): Promise<TCodeCommentThreadGetCodeResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async getCodeCommentThread(
+        params: TCodeCommentThreadGetParams,
+    ): Promise<TCodeCommentThreadGetResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async getSmv(): Promise<IGoshSmvAdapter> {
         return new GoshSmvAdapter(this.gosh, this.dao, this.wallet)
     }
@@ -878,6 +897,16 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
+    async createCodeCommentThread(
+        params: TCodeCommentThreadCreateParams,
+    ): Promise<TCodeCommentThreadCreateResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createCodeComment(params: TCodeCommentCreateParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     private async _isAuthMember(): Promise<boolean> {
         if (!this.profile) {
             return false
@@ -1035,6 +1064,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         fullpath?: string
         address?: TAddress
     }): Promise<{
+        address: string
         onchain: { commit: string; content: string }
         content: string | Buffer
         ipfs: boolean
@@ -1083,7 +1113,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             result.ipfs = true
         }
 
-        return result
+        return { ...result, address: snapshot.address }
     }
 
     async getCommit(options: { name?: string; address?: TAddress }): Promise<TCommit> {

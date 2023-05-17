@@ -35,6 +35,7 @@ export default {
                 'green-34c759': '#34c759',
                 'green-deecdc': '#deecdc',
                 'red-ff3b30': '#ff3b30',
+                'yellow-faedcc': '#faedcc',
             },
             backgroundImage: {
                 'button-border':

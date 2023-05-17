@@ -320,6 +320,7 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                                         <BlobPreview
                                             filename={values.name}
                                             value={values.content}
+                                            commentsOn={false}
                                         />
                                     </Tab.Panel>
                                 </Tab.Panels>

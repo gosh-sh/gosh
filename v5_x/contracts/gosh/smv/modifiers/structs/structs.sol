@@ -8,9 +8,12 @@ pragma ever-solidity >=0.66.0;
 
 //Structs  
 struct PaidMember {
+    uint128 fiatValue;
+    uint128 decimals;
     uint128 paidMembershipValue;
     uint128 valuePerSubs;
     uint128 timeForSubs;
+    string details;
     uint256 accessKey;
 }
 

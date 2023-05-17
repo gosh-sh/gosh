@@ -180,7 +180,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function getPreviousInfo(string name) public internalMsg view {
         require(_nameDao == name, ERR_WRONG_DAO);
         tvm.accept();
-        TvmCell a = abi.encode(_allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _wallets, _hashtag, _my_wallets, _daoMembers, _reserve, _allbalance, _totalsupply, _versions);
+        TvmCell a = abi.encode(_allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _wallets, _hashtag, _my_wallets, _daoMembers, _reserve, _allbalance, _totalsupply, _versions, _paidMembership);
         GoshDao(msg.sender).getPreviousInfoVersion{value: 0.1 ton, flag: 1}(version, a);
     }
     
@@ -217,11 +217,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (ver == "5.0.0") {
             mapping(uint256 => MemberToken) wallets;
             mapping(uint256 => string) hashtag;
-            ( _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, wallets, hashtag, _my_wallets, _daoMembers, _reserve, , _totalsupply , _versions) = abi.decode(a, (bool, bool, bool, bool, mapping(uint256 => MemberToken), mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string)));
+            ( _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, wallets, hashtag, _my_wallets, _daoMembers, _reserve, , _totalsupply , _versions, _paidMembership) = abi.decode(a, (bool, bool, bool, bool, mapping(uint256 => MemberToken), mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string), mapping(uint8 => PaidMember)));
             _versions[tvm.hash(version)] = version;
             uint256 zero;
             this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
-        }
+        } 
     }
 
     function returnDao(address, bool allowMint, bool hide_voting_results, bool allow_discussion_on_proposals, bool abilityInvite, bool, string, mapping(uint256 => MemberToken), uint128, uint128, uint128, mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), bool) public senderIs(_previous.get()) accept {
@@ -345,7 +345,6 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function getMoney() private {
-        this.checkExpiredTime{value: 0.1 ton, flag: 1}(0);
         if (block.timestamp - timeMoney > 3600) { _flag = false; timeMoney = block.timestamp; }
         if (_flag == true) { return; }
         if (address(this).balance > 100000 ton) { return; }
@@ -875,6 +874,9 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _paidMembership[Programindex].accessKey = newProgram.accessKey;
         _paidMembership[Programindex].valuePerSubs = newProgram.valuePerSubs;
         _paidMembership[Programindex].timeForSubs = newProgram.timeForSubs;
+        _paidMembership[Programindex].fiatValue = newProgram.fiatValue;
+        _paidMembership[Programindex].decimals = newProgram.decimals;
+        _paidMembership[Programindex].details = newProgram.details;
     }
 
     function deployMemberFromSubs(address pubaddr, optional(string) isdao, uint8 Programindex) public onlyOwnerPubkeyOptional(_paidMembership[Programindex].accessKey) accept saveMsg {
@@ -1013,7 +1015,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _allbalance += pubaddr.count;
         TvmCell s1 = GoshLib.composeWalletStateInit(_code[m_WalletCode], _systemcontract, address(this), pubaddr.member, 0);
         _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));
-        _wallets[keyaddr] = MemberToken(_lastAccountAddress, pubaddr.count, 0);
+        _wallets[keyaddr] = MemberToken(_lastAccountAddress, pubaddr.count, pubaddr.expired);
         new GoshWallet {
             stateInit: s1, value: FEE_DEPLOY_WALLET, wid: 0, flag: 1
         }(  _versionController, _pubaddr, pubaddr.member, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
@@ -1167,7 +1169,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _reserve -= balance + freebalance;
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName);
         if (num == 1) {
-            TvmCell deployCode = GoshLib.buildBigTaskCode(_code[m_TaskCode], repo, version);
+            TvmCell deployCode = GoshLib.buildBigTaskCode(_code[m_BigTaskCode], repo, version);
             TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: BigTask, varInit: {_nametask: nametask, _goshdao: address(this)}});
             optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_TaskCode], grant, balance, freebalance, hashtag, commit);
             optional(TvmCell) data1;

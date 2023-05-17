@@ -129,6 +129,11 @@ library GoshLib {
         return address.makeAddrStd(0, tvm.hash(s1));
     }
 
+    function calculateCommentAddress(TvmCell code, address goshdao, string name, string content, address object, optional(string) metadata, optional(string) commit, optional(string) nameoffile) public returns(address) {
+        TvmCell s1 = composeCommentStateInit(code, goshdao, name, content, object, metadata, commit, nameoffile);
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
+
     function calculateProfileAddress(TvmCell code, address versionController, string name) public returns(address) {
         TvmCell s1 = composeProfileStateInit(code, versionController, name);
         return address.makeAddrStd(0, tvm.hash(s1));
@@ -250,6 +255,17 @@ library GoshLib {
             code: deployCode,
             contr: Topic,
             varInit: {_name: name, _content: content, _object: object}
+        });
+    }
+
+    function composeCommentStateInit(TvmCell code, address goshdao, string name, string content, address object, optional(string) metadata, optional(string) commit, optional(string) nameoffile) public returns(TvmCell) {
+        TvmCell deployCode = buildCommentCode(
+            code, goshdao, object, commit, nameoffile, versionLib
+        );
+        return tvm.buildStateInit({
+            code: deployCode,
+            contr: Topic,
+            varInit: {_name: name, _content: content, _object: object, _metadata: metadata}
         });
     }
 
@@ -570,6 +586,27 @@ library GoshLib {
         TvmBuilder b;
         b.store("TOPIC");
         b.store(dao);
+        b.store(versionc);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        return tvm.setCodeSalt(originalCode, b.toCell());
+    }
+
+    function buildCommentCode(
+        TvmCell originalCode,
+        address dao,
+        address file,
+        optional(string) commit,
+        optional(string) name,
+        string versionc
+    ) public returns (TvmCell) {
+        TvmBuilder b;
+        b.store("COMMENT");
+        b.store(dao);
+        b.store(file);
+        b.store(commit);
+        b.store(name);
         b.store(versionc);
         uint256 hash = tvm.hash(b.toCell());
         delete b;
