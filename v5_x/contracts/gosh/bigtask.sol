@@ -338,7 +338,7 @@ contract BigTask is Modifiers{
         if (_assigncomplete != _assignfull) { return; }
         if (_reviewcomplete != _reviewfull) { return; }
         if (_managercomplete != _managerfull) { return; }
-        if (_subtaskcomplete != _subtaskfull) { return; }
+        if ((_subtaskcomplete != _subtaskfull) && (_subtasksize != 0)) { return; }
         GoshDao(_goshdao).returnTaskToken{value: 0.2 ton, flag: 1}(_nametask, _repo, _balance + _freebalance);
         GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag, addr);
         selfdestruct(_systemcontract);
