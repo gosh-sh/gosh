@@ -243,8 +243,7 @@ abstract contract Modifiers is ReplayProtection {
     uint256 constant STOP_PAID_MEMBERSHIP_PROPOSAL_KIND = 41;
     uint256 constant BIGTASK_DESTROY_PROPOSAL_KIND = 42;
     uint256 constant BIGTASK_DEPLOY_PROPOSAL_KIND = 43;
-    uint256 constant BIGTASK_APPROVE_PROPOSAL_KIND = 44;
-    uint256 constant BIGTASK_UPGRADE_PROPOSAL_KIND = 45;
+    uint256 constant BIGTASK_UPGRADE_PROPOSAL_KIND = 44;
     
     uint128 constant ALONE_DEPLOY_WALLET = 1;
     uint128 constant ALONE_SET_CONFIG = 2;
