@@ -196,7 +196,7 @@ contract BigTask is Modifiers{
         uint128 index,
         uint128 index1) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
         require(_ready == false, ERR_TASK_COMPLETED);
-        Task(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, _subtask[index].name)).destroyBig{value: 0.1 ton, flag: 1}();
+        Task(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, _subtask[index1].name)).destroyBig{value: 0.1 ton, flag: 1}();
         delete _subtask[index1];
     }
 
