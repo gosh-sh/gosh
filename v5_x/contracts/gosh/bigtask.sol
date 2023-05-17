@@ -182,7 +182,7 @@ contract BigTask is Modifiers{
         string[] hashtag,
         ConfigGrant grant,
         uint128 value ) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
-        if (_subtask.length >= 10) { return; }        
+        if (_subtask.length >= 50) { return; }        
         require(_ready == false, ERR_TASK_COMPLETED);
         if ((_candidates[_indexFinal].pubaddrassign.exists(pubaddr) == false) && (_candidates[_indexFinal].pubaddrreview.exists(pubaddr) == false) && (_candidates[_indexFinal].pubaddrmanager.exists(pubaddr) == false)) { return; }
         if (_fullSubtaskValue + value > _freebalance) { return; }
