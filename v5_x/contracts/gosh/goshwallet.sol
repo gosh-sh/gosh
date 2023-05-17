@@ -2533,8 +2533,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        require(grant.assign.length <= 150, ERR_TOO_MANY_VESTING_TIME);
-        require(grant.review.length <= 150, ERR_TOO_MANY_VESTING_TIME);
+        require(grant.assign.length == 0, ERR_TOO_MANY_VESTING_TIME);
+        require(grant.review.length == 0, ERR_TOO_MANY_VESTING_TIME);
         require(grant.manager.length <= 150, ERR_TOO_MANY_VESTING_TIME);
         require(tag.length  <= _limittag, ERR_TOO_MANY_TAGS);
         tvm.accept();
