@@ -102,7 +102,7 @@ struct ConfigCommit {
 struct ConfigCommitBase {
     address task;
     optional(address) commit;
-    uint128 number_commit;
+    optional(uint128) number_commit;
     mapping(address => bool) pubaddrassign;
     mapping(address => bool) pubaddrreview;
     mapping(address => bool) pubaddrmanager;
