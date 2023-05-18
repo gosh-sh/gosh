@@ -336,10 +336,10 @@ contract BigTask is Modifiers{
     }
 
     function checkempty(address addr) private {
-        if (_assigncomplete != _assignfull) { return; }
-        if (_reviewcomplete != _reviewfull) { return; }
-        if (_managercomplete != _managerfull) { return; }
-        if ((_subtaskcomplete != _subtaskfull) && (_subtasksize != 0)) { return; }
+        if (_assigncomplete < _assignfull) { return; }
+        if (_reviewcomplete < _reviewfull) { return; }
+        if (_managercomplete < _managerfull) { return; }
+        if ((_subtaskcomplete < _subtaskfull) && (_subtasksize != 0)) { return; }
         GoshDao(_goshdao).returnTaskTokenBig{value: 0.2 ton, flag: 1}(_nametask, _repo, _balance + _freebalance);
         GoshDao(_goshdao).destroyTaskTagBig{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag, addr);
         selfdestruct(_systemcontract);

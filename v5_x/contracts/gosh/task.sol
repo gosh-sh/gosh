@@ -57,7 +57,7 @@ contract Task is Modifiers{
     bool _waitForUpdate = false;
     address _previousVersionAddr;
     string _previousVersion;
-    
+
     optional(string) public _bigtask;
     
     constructor(
@@ -296,9 +296,9 @@ contract Task is Modifiers{
     }
     
     function checkempty(address addr) private {
-        if (_assigncomplete != _assignfull) { return; }
-        if (_reviewcomplete != _reviewfull) { return; }
-        if (_managercomplete != _managerfull) { return; }
+        if (_assigncomplete < _assignfull) { return; }
+        if (_reviewcomplete < _reviewfull) { return; }
+        if (_managercomplete < _managerfull) { return; }
         GoshDao(_goshdao).returnTaskToken{value: 0.2 ton, flag: 1}(_nametask, _repo, _balance);
         GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag, addr);
         selfdestruct(_systemcontract);
