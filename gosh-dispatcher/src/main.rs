@@ -213,7 +213,7 @@ async fn dispatcher_main() -> anyhow::Result<()> {
             tracing::trace!("Loop finished with: {code:?}");
             if let Some(code) = code.code() {
                 if code != 0 {
-                    return Err(format_err!("Remote status error: {code}"));
+                    std::process::exit(code);
                 }
             }
             break;
@@ -231,6 +231,7 @@ async fn run_binary_with_command(
         .args(args.clone())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
         .spawn()?;
     let mut stdin = helper
         .stdin
