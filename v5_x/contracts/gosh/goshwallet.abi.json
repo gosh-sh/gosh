@@ -1219,6 +1219,16 @@
 			]
 		},
 		{
+			"name": "grantTokenBig",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "addVoteToken",
 			"inputs": [
 				{"name":"grant","type":"uint128"}

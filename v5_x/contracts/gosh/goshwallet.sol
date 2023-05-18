@@ -1735,6 +1735,15 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         m_pseudoDAOBalance += grant;
         getMoney();
     }
+
+    function grantTokenBig(
+        string nametask,
+        address repo,
+        uint128 grant
+    ) public senderIs(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, repo, nametask)) accept saveMsg {
+        m_pseudoDAOBalance += grant;
+        getMoney();
+    }
     
     function addVoteToken(
         uint128 grant
