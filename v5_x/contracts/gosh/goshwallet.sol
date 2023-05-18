@@ -1694,7 +1694,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
-        address taskaddr = GoshLib.calculateBigTaskAddress(_code[m_TaskCode], _goshdao, repo, nametask);
+        address taskaddr = GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, repo, nametask);
         BigTask(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, typegrant, _index);
         getMoney();
     }
@@ -1706,7 +1706,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
-        address taskaddr = GoshLib.calculateBigTaskAddress(_code[m_TaskCode], _goshdao, repo, nametask);
+        address taskaddr = GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, repo, nametask);
         BigTask(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, 1, _index);
         BigTask(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, 2, _index);
         BigTask(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, 3, _index);
