@@ -57,6 +57,7 @@ contract Task is Modifiers{
     bool _waitForUpdate = false;
     address _previousVersionAddr;
     string _previousVersion;
+    
     optional(string) public _bigtask;
     
     constructor(
