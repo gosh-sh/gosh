@@ -29,6 +29,7 @@ contract Task is Modifiers{
     address static _goshdao;
     mapping(uint8 => TvmCell) _code;
     ConfigCommitBase[] _candidates;   
+    bool _isFix = false;
     ConfigGrant _grant;   
     string[] public _hashtag;
     uint128 _indexFinal;
@@ -72,7 +73,8 @@ contract Task is Modifiers{
             if (workers.hasValue()) {  
                 require((_bigtask.hasValue() == true), ERR_WRONG_DATA); 
                 _candidates.push(workers.get());
-                this.calculateAssignLength{value : 0.15 ton, flag: 1}(uint128(_candidates.length - 1));
+                _isFix = true;
+//                this.calculateAssignLength{value : 0.15 ton, flag: 1}(uint128(_candidates.length - 1));
             }
             return;
         } 
@@ -149,11 +151,12 @@ contract Task is Modifiers{
 
     function isReady(ConfigCommitBase commit) public senderIs(_repo) {
         require(_waitForUpdate == false, ERR_WRONG_UPGRADE_STATUS);
-        require(((_ready == false) || (_candidates.length == 0)), ERR_TASK_COMPLETED); 
-        require(((_bigtask.hasValue() == false) || (_candidates.length == 0)), ERR_TASK_COMPLETED); 
+        require(((_ready == false)), ERR_TASK_COMPLETED); 
+        require(((_isFix == false) || (_candidates.length == 0)), ERR_TASK_COMPLETED); 
         _candidates.push(commit);
         tvm.accept();
-        this.calculateAssignLength{value : 0.15 ton, flag: 1}(uint128(_candidates.length - 1));
+        if (_isFix == true) { this.calculateAssignLength{value : 0.15 ton, flag: 1}(uint128(0)); }
+        else { this.calculateAssignLength{value : 0.15 ton, flag: 1}(uint128(_candidates.length - 1)); }
     }
 
     function isReadyBalance() public {        
