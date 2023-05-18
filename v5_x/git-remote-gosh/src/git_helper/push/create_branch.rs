@@ -1,7 +1,10 @@
 use std::{fmt::Debug, str::FromStr};
 
 use crate::{
-    blockchain::{branch::DeployBranch, user_wallet::WalletError, Snapshot},
+    blockchain::{
+        branch::DeployBranch, snapshot::wait_snapshots_readiness::wait_snapshots_readiness,
+        user_wallet::WalletError, Snapshot, BlockchainContractAddress,
+    },
     git_helper::GitHelper,
 };
 use git_hash::ObjectId;
@@ -85,6 +88,7 @@ where
         let mut snapshot_handlers = JoinSet::new();
 
         let context = &mut self.context.clone();
+        let mut expected_readiness_for = Vec::<BlockchainContractAddress>::new();
 
         for entry in snapshots_to_deploy {
             let mut buffer: Vec<u8> = Vec::new();
@@ -111,6 +115,7 @@ where
                 &file_path,
             )
             .await?;
+            expected_readiness_for.push(expected_snapshot_addr.clone());
 
             let remote_network = self.context.remote.network.clone();
             let dao_addr = self.context.dao_addr.clone();
@@ -158,6 +163,15 @@ where
         while let Some(finished_task) = snapshot_handlers.join_next().await {
             let result: Result<anyhow::Result<()>, JoinError> = finished_task;
             result??;
+        }
+
+        let result =
+            wait_snapshots_readiness(&self.context.blockchain, &expected_readiness_for).await?;
+        if !result.is_empty() {
+            anyhow::bail!(
+                "Some ({}) of snapshot contracts aren't ready",
+                result.len()
+            );
         }
         Ok(())
     }
