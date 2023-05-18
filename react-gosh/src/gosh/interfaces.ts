@@ -110,6 +110,18 @@ import {
     TCodeCommentThreadGetResult,
     TCodeCommentCreateParams,
     TCodeCommentCreateResult,
+    TBigTaskCreateParams,
+    TBigTaskCreateResult,
+    TSubTaskCreateParams,
+    TSubTaskCreateResult,
+    TSubTaskDeleteParams,
+    TSubTaskDeleteResult,
+    TBigTaskApproveParams,
+    TBigTaskApproveResult,
+    TBigTaskDeleteParams,
+    TBigTaskDeleteResult,
+    TBigTaskUpgradeParams,
+    TBigTaskUpgradeResult,
 } from '../types'
 
 interface IGoshAdapter {
@@ -260,6 +272,14 @@ interface IGoshDaoAdapter {
     upgradeTaskComplete(
         params: TTaskUpgradeCompleteParams,
     ): Promise<TTaskUpgradeCompleteResult>
+
+    createBigTask(params: TBigTaskCreateParams): Promise<TBigTaskCreateResult>
+    approveBigTask(params: TBigTaskApproveParams): Promise<TBigTaskApproveResult>
+    deleteBigTask(params: TBigTaskDeleteParams): Promise<TBigTaskDeleteResult>
+    receiveBigTaskBounty(params: TTaskReceiveBountyParams): Promise<void>
+    upgradeBigTask(params: TBigTaskUpgradeParams): Promise<TBigTaskUpgradeResult>
+    createSubTask(params: TSubTaskCreateParams): Promise<TSubTaskCreateResult>
+    deleteSubTask(params: TSubTaskDeleteParams): Promise<TSubTaskDeleteResult>
 
     sendEventReview(params: TDaoEventSendReviewParams): Promise<void>
     updateEventShowProgress(
@@ -551,6 +571,10 @@ interface IGoshTask extends IContract {
     address: TAddress
 }
 
+interface IGoshBigTask extends IContract {
+    address: TAddress
+}
+
 interface IGoshHelperTag extends IContract {
     address: TAddress
 }
@@ -599,6 +623,7 @@ export {
     IGoshTree,
     IGoshCommitTag,
     IGoshTask,
+    IGoshBigTask,
     IGoshHelperTag,
     IGoshTopic,
     IGoshContentSignature,

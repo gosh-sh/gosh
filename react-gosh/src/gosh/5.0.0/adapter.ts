@@ -108,6 +108,17 @@ import {
     TCodeCommentThreadGetResult,
     TCodeCommentCreateParams,
     TCodeCommentCreateResult,
+    TBigTaskCreateParams,
+    TBigTaskCreateResult,
+    TSubTaskCreateParams,
+    TSubTaskDeleteParams,
+    TSubTaskDeleteResult,
+    TBigTaskApproveParams,
+    TBigTaskApproveResult,
+    TBigTaskDeleteParams,
+    TBigTaskDeleteResult,
+    TBigTaskUpgradeParams,
+    TBigTaskUpgradeResult,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -131,6 +142,7 @@ import {
     IGoshHelperTag,
     IGoshTopic,
     IGoshProfileDao,
+    IGoshBigTask,
 } from '../interfaces'
 import { Gosh } from './gosh'
 import { GoshDao } from './goshdao'
@@ -157,6 +169,7 @@ import { GoshCommitTag } from './goshcommittag'
 import * as Diff from 'diff'
 import { GoshDiff } from './goshdiff'
 import {
+    BIGTASK_TAG,
     MAX_ONCHAIN_SIZE,
     MAX_PARALLEL_READ,
     MAX_PARALLEL_WRITE,
@@ -176,6 +189,7 @@ import { GoshTopic } from './goshtopic'
 import { GoshAdapterFactory } from '../factories'
 import { GoshProfileDao } from '../goshprofiledao'
 import { GoshRoot } from '../goshroot'
+import { GoshBigTask } from './goshbigtask'
 
 class GoshAdapter_5_0_0 implements IGoshAdapter {
     private static instance: GoshAdapter_5_0_0
@@ -769,7 +783,9 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         let team
         if (details.candidates.length) {
             const candidate = details.candidates[0]
-            const commit = await repository.getCommit({ address: candidate.commit })
+            const commit = candidate.commit
+                ? await repository.getCommit({ address: candidate.commit })
+                : undefined
             const assigners = await Promise.all(
                 Object.keys(candidate.pubaddrassign).map(async (address) => {
                     if (candidate.daoMembers[address]) {
@@ -801,7 +817,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
                 }),
             )
             team = {
-                commit: { branch: commit.branch, name: commit.name },
+                commit: commit ? { branch: commit.branch, name: commit.name } : undefined,
                 assigners,
                 reviewers,
                 managers,
@@ -1650,6 +1666,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             name,
             config,
             tags = [],
+            candidates,
             comment = '',
             reviewers = [],
             cell,
@@ -1663,13 +1680,25 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError('Task already exists', { name })
         }
 
-        const tagList = [SYSTEM_TAG, ...tags]
+        const _candidates = candidates
+            ? {
+                  task: _task.address,
+                  commit: candidates.commitAddress,
+                  number_commit: candidates.commitCount,
+                  pubaddrassign: candidates.pubaddrassign,
+                  pubaddrreview: candidates.pubaddrreview,
+                  pubaddrmanager: candidates.pubaddrmanager,
+                  daoMembers: candidates.daoMembers,
+              }
+            : undefined
+        const _tags = [SYSTEM_TAG, ...tags]
         if (cell) {
             const { value0 } = await this.wallet.runLocal('getCellTaskDeploy', {
                 repoName: repository,
                 taskName: name,
                 grant: config,
-                tag: tagList,
+                tag: _tags,
+                workers: _candidates,
                 comment,
             })
             return value0
@@ -1681,7 +1710,8 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
                 repoName: repository,
                 taskName: name,
                 grant: config,
-                tag: tagList,
+                tag: _tags,
+                workers: _candidates,
                 comment,
                 reviewers: _reviewers.map(({ wallet }) => wallet),
                 num_clients: await smv.getClientsCount(),
@@ -1850,6 +1880,227 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         } else {
             await this.wallet.run('setRedeployedTask', {})
         }
+    }
+
+    async createBigTask(params: TBigTaskCreateParams): Promise<TBigTaskCreateResult> {
+        const {
+            repositoryName,
+            name,
+            config,
+            assigners,
+            balance,
+            tags = [],
+            comment = '',
+            reviewers = [],
+            cell,
+        } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const _task = await this._getBigTask({ repositoryName, name })
+        if (await _task.isDeployed()) {
+            throw new GoshError('Task already exists', { name })
+        }
+
+        const _tags = [BIGTASK_TAG, ...tags]
+        const assignersData = { task: _task.address, ...assigners }
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellBigTaskDeploy', {
+                repoName: repositoryName,
+                taskName: name,
+                grant: config,
+                assignersdata: assignersData,
+                freebalance: balance,
+                tag: _tags,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForBigTaskDeploy', {
+                repoName: repositoryName,
+                taskName: name,
+                grant: config,
+                assignersdata: assignersData,
+                freebalance: balance,
+                tag: _tags,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
+    }
+
+    async approveBigTask(params: TBigTaskApproveParams): Promise<TBigTaskApproveResult> {
+        const { repositoryName, name, comment = '', reviewers = [], cell } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellTaskConfirm', {
+                repoName: repositoryName,
+                taskName: name,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForBigTaskConfirm', {
+                repoName: repositoryName,
+                taskName: name,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
+    }
+
+    async deleteBigTask(params: TBigTaskDeleteParams): Promise<TBigTaskDeleteResult> {
+        const { repositoryName, name, comment = '', reviewers = [], cell } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellBigTaskDestroy', {
+                repoName: repositoryName,
+                taskName: name,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForBigTaskDestroy', {
+                repoName: repositoryName,
+                taskName: name,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
+    }
+
+    async receiveBigTaskBounty(params: TTaskReceiveBountyParams): Promise<void> {
+        const { repository, name, type } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (!!type) {
+            await this.wallet.run('askGrantBigToken', {
+                repoName: repository,
+                nametask: name,
+                typegrant: type,
+            })
+        } else {
+            await this.wallet.run('askGrantBigTokenFull', {
+                repoName: repository,
+                nametask: name,
+            })
+        }
+    }
+
+    async upgradeBigTask(params: TBigTaskUpgradeParams): Promise<TBigTaskUpgradeResult> {
+        const {
+            repositoryName,
+            name,
+            prevVersion,
+            prevAddress,
+            tags = [],
+            comment = '',
+            reviewers = [],
+            cell,
+        } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const _tags = [BIGTASK_TAG, ...tags]
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellForBigTaskUpgrade', {
+                reponame: repositoryName,
+                nametask: name,
+                oldversion: prevVersion,
+                oldtask: prevAddress,
+                hashtag: _tags,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForBigTaskUpgrade', {
+                reponame: repositoryName,
+                nametask: name,
+                oldversion: prevVersion,
+                oldtask: prevAddress,
+                hashtag: _tags,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
+    }
+
+    async createSubTask(params: TSubTaskCreateParams): Promise<void> {
+        const {
+            repositoryName,
+            bigtaskName,
+            name,
+            config,
+            balance,
+            tags = [],
+            candidates,
+        } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const _name = `${bigtaskName}:${name}`
+        const _task = await this._getTask({ repository: repositoryName, name: _name })
+        const _candidates = candidates
+            ? {
+                  task: _task.address,
+                  commit: candidates.commitAddress,
+                  number_commit: candidates.commitCount,
+                  pubaddrassign: candidates.pubaddrassign,
+                  pubaddrreview: candidates.pubaddrreview,
+                  pubaddrmanager: candidates.pubaddrmanager,
+                  daoMembers: candidates.daoMembers,
+              }
+            : undefined
+        const _tags = [SYSTEM_TAG, ...tags]
+        await this.wallet.run('deploySubTask', {
+            namebigtask: bigtaskName,
+            repoName: repositoryName,
+            nametask: _name,
+            hashtag: _tags,
+            workers: _candidates,
+            grant: config,
+            value: balance,
+        })
+    }
+
+    async deleteSubTask(params: TSubTaskDeleteParams): Promise<TSubTaskDeleteResult> {
+        const { repositoryName, bigtaskName, index } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        await this.wallet.run('destroySubTask', {
+            repoName: repositoryName,
+            namebigtask: bigtaskName,
+            index,
+        })
     }
 
     async sendEventReview(params: TDaoEventSendReviewParams): Promise<void> {
@@ -2183,6 +2434,29 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return new GoshTask(this.client, value0)
     }
 
+    private async _getBigTask(options: {
+        address?: TAddress
+        repositoryName?: string
+        name?: string
+    }): Promise<IGoshBigTask> {
+        const { repositoryName, name, address } = options
+
+        if (address) {
+            return new GoshBigTask(this.client, address)
+        }
+        if (!repositoryName || !name) {
+            throw new GoshError(
+                'Either task address or repository and task name should be provided',
+            )
+        }
+        const { value0 } = await this.gosh.gosh.runLocal('getBigTaskAddr', {
+            dao: await this.getName(),
+            repoName: repositoryName,
+            nametask: name,
+        })
+        return new GoshTask(this.client, value0)
+    }
+
     private async _getTopic(params: { address?: TAddress }): Promise<IGoshTopic> {
         const { address } = params
         if (address) {
@@ -2427,6 +2701,18 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             }
             if (type === ESmvEventType.DAO_STOP_PAID_MEMBERSHIP) {
                 return await this.stopPaidMembership({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.BIGTASK_CREATE) {
+                return await this.createBigTask({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.BIGTASK_APPROVE) {
+                return await this.approveBigTask({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.BIGTASK_DELETE) {
+                return await this.deleteBigTask({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.BIGTASK_UPGRADE) {
+                return await this.upgradeBigTask({ ...params, cell: true })
             }
             return null
         })
@@ -5011,8 +5297,6 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getGoshSetCommitProposalParams'
         } else if (type === ESmvEventType.DAO_CONFIG_CHANGE) {
             fn = 'getGoshSetConfigDaoProposalParams'
-        } else if (type === ESmvEventType.TASK_CONFIRM) {
-            fn = 'getGoshConfirmTaskProposalParams'
         } else if (type === ESmvEventType.TASK_DELETE) {
             fn = 'getGoshDestroyTaskProposalParams'
         } else if (type === ESmvEventType.TASK_CREATE) {
@@ -5069,6 +5353,14 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getStartMembershipProposalParams'
         } else if (type === ESmvEventType.DAO_STOP_PAID_MEMBERSHIP) {
             fn = 'getStopMembershipProposalParams'
+        } else if (type === ESmvEventType.BIGTASK_CREATE) {
+            fn = 'getBigTaskDeployProposalParams'
+        } else if (type === ESmvEventType.BIGTASK_APPROVE) {
+            fn = 'getBigTaskProposalParams'
+        } else if (type === ESmvEventType.BIGTASK_DELETE) {
+            fn = 'getGoshDestroyBigTaskProposalParams'
+        } else if (type === ESmvEventType.BIGTASK_UPGRADE) {
+            fn = 'getBigTaskUpgradeProposalParams'
         } else if (type === ESmvEventType.MULTI_PROPOSAL) {
             const { num, data0 } = await event.runLocal('getDataFirst', {}, undefined, {
                 useCachedBoc: true,
@@ -5216,6 +5508,14 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getStartMembershipProposalParamsData'
         } else if (kind === ESmvEventType.DAO_STOP_PAID_MEMBERSHIP) {
             fn = 'getStopMembershipProposalParamsData'
+        } else if (kind === ESmvEventType.BIGTASK_CREATE) {
+            fn = 'getBigTaskDeployParamsData'
+        } else if (kind === ESmvEventType.BIGTASK_APPROVE) {
+            fn = 'getBigTaskParamsData'
+        } else if (kind === ESmvEventType.BIGTASK_DELETE) {
+            fn = 'getGoshDestroyBigTaskProposalParamsData'
+        } else if (kind === ESmvEventType.BIGTASK_UPGRADE) {
+            fn = 'getBigTaskUpgradeProposalParamsData'
         } else {
             throw new GoshError(`Multi event type "${type}" is unknown`)
         }

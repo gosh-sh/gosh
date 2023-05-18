@@ -30,18 +30,22 @@ import {
     RepoTagRemoveEvent,
     RepoDescriptionEvent,
     MultiEvent,
+    DaoVoteEvent,
+    DaoTokenDaoSendEvent,
+    DaoReviewEvent,
+    DaoReceiveBountyEvent,
+    DaoTokenDaoLockEvent,
+    TaskUpgradeEvent,
+    DaoTokenDaoTransferEvent,
+    UpgradeVersionControllerEvent,
+    DaoStartPaidMembershipEvent,
+    DaoStopPaidMembershipEvent,
+    BigTaskCreateEvent,
+    BigTaskApproveEvent,
+    BigTaskDeleteEvent,
+    BigTaskUpgradeEvent,
 } from './components'
 import { Tooltip } from 'react-tooltip'
-import { DaoVoteEvent } from './components/DaoVoteEvent/DaoVoteEvent'
-import { DaoTokenDaoSendEvent } from './components/DaoTokenDaoSendEvent/DaoTokenDaoSendEvent'
-import { DaoReviewEvent } from './components/DaoReviewEvent/DaoReviewEvent'
-import { DaoReceiveBountyEvent } from './components/DaoReceiveBountyEvent/DaoReceiveBountyEvent'
-import { DaoTokenDaoLockEvent } from './components/DaoTokenDaoLockEvent/DaoTokenDaoLockEvent'
-import { TaskUpgradeEvent } from './components/TaskUpgradeEvent/TaskUpgradeEvent'
-import { DaoTokenDaoTransferEvent } from './components/DaoTokenDaoTransferEvent/DaoTokenDaoTransferEvent'
-import { UpgradeVersionControllerEvent } from './components/UpgradeVersionControllerEvent/UpgradeVersionControllerEvent'
-import { DaoStartPaidMembershipEvent } from './components/DaoStartPaidMembershipEvent/DaoStartPaidMembershipEvent'
-import { DaoStopPaidMembershipEvent } from './components/DaoStopPaidMembershipEvent/DaoStopPaidMembershipEvent'
 
 const EventPage = () => {
     const { eventAddr } = useParams()
@@ -239,6 +243,18 @@ const EventPage = () => {
                         )}
                         {event.type.kind === ESmvEventType.DAO_STOP_PAID_MEMBERSHIP && (
                             <DaoStopPaidMembershipEvent data={event.data} />
+                        )}
+                        {event.type.kind === ESmvEventType.BIGTASK_CREATE && (
+                            <BigTaskCreateEvent data={event.data} />
+                        )}
+                        {event.type.kind === ESmvEventType.BIGTASK_APPROVE && (
+                            <BigTaskApproveEvent data={event.data} />
+                        )}
+                        {event.type.kind === ESmvEventType.BIGTASK_DELETE && (
+                            <BigTaskDeleteEvent data={event.data} />
+                        )}
+                        {event.type.kind === ESmvEventType.BIGTASK_UPGRADE && (
+                            <BigTaskUpgradeEvent data={event.data} />
                         )}
                     </div>
                 </div>

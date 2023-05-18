@@ -113,7 +113,7 @@ type TTaskDetails = {
     name: string
     repository: string
     team?: {
-        commit: {
+        commit?: {
             branch: string
             name: string
         }
@@ -133,15 +133,90 @@ type TTaskListItem = TTaskDetails & {
     isLoadDetailsFired?: boolean
 }
 
+type TTaskGrant = {
+    assign: { grant: number; lock: number }[]
+    review: { grant: number; lock: number }[]
+    manager: { grant: number; lock: number }[]
+    subtask: { grant: number; lock: number }[]
+}
+
+type TTaskAssigner = {
+    pubaddrassign: { [address: string]: boolean }
+    pubaddrreview: { [address: string]: boolean }
+    pubaddrmanager: { [address: string]: boolean }
+    daoMembers: { [address: string]: string }
+}
+
+type TTaskCandidate = TTaskAssigner & {
+    commitAddress?: string
+    commitCount?: string
+}
+
+type TBigTaskCreateParams = TEventCreateParams & {
+    repositoryName: string
+    name: string
+    config: TTaskGrant
+    assigners: TTaskAssigner
+    balance: number
+    tags?: string[]
+    cell?: boolean
+}
+
+type TBigTaskCreateResult = Promise<void | string>
+
+type TBigTaskApproveParams = TEventCreateParams & {
+    repositoryName: string
+    name: string
+    cell?: boolean
+}
+
+type TBigTaskApproveResult = void | string
+
+type TBigTaskDeleteParams = TEventCreateParams & {
+    repositoryName: string
+    name: string
+    cell?: boolean
+}
+
+type TBigTaskDeleteResult = void | string
+
+type TBigTaskUpgradeParams = TEventCreateParams & {
+    repositoryName: string
+    name: string
+    prevVersion: string
+    prevAddress: string
+    tags?: string[]
+    cell?: boolean
+}
+
+type TBigTaskUpgradeResult = void | string
+
+type TSubTaskDeleteParams = {
+    repositoryName: string
+    bigtaskName: string
+    index: number
+}
+
+type TSubTaskDeleteResult = void
+
+type TSubTaskCreateParams = {
+    repositoryName: string
+    bigtaskName: string
+    name: string
+    config: TTaskGrant
+    balance: number
+    tags?: string[]
+    candidates?: TTaskCandidate
+}
+
+type TSubTaskCreateResult = void
+
 type TTaskCreateParams = TEventCreateParams & {
     repository: string
     name: string
-    config: {
-        assign: { grant: number; lock: number }[]
-        review: { grant: number; lock: number }[]
-        manager: { grant: number; lock: number }[]
-    }
+    config: TTaskGrant
     tags?: string[]
+    candidates?: TTaskCandidate
     cell?: boolean
 }
 
@@ -463,6 +538,18 @@ export {
     TUserParam,
     TTaskDetails,
     TTaskListItem,
+    TBigTaskCreateParams,
+    TBigTaskCreateResult,
+    TBigTaskApproveParams,
+    TBigTaskApproveResult,
+    TBigTaskDeleteParams,
+    TBigTaskDeleteResult,
+    TBigTaskUpgradeParams,
+    TBigTaskUpgradeResult,
+    TSubTaskCreateParams,
+    TSubTaskCreateResult,
+    TSubTaskDeleteParams,
+    TSubTaskDeleteResult,
     TTaskCreateParams,
     TTaskCreateResult,
     TTaskDeleteParams,

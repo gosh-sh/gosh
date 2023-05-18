@@ -107,6 +107,16 @@ import {
     TCodeCommentThreadGetResult,
     TCodeCommentCreateParams,
     TCodeCommentThreadCreateResult,
+    TBigTaskCreateParams,
+    TBigTaskCreateResult,
+    TSubTaskCreateParams,
+    TSubTaskDeleteParams,
+    TBigTaskApproveParams,
+    TBigTaskApproveResult,
+    TBigTaskDeleteParams,
+    TBigTaskDeleteResult,
+    TBigTaskUpgradeParams,
+    TBigTaskUpgradeResult,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -852,6 +862,34 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     async upgradeTaskComplete(
         params: TTaskUpgradeCompleteParams,
     ): Promise<TTaskUpgradeCompleteResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createBigTask(params: TBigTaskCreateParams): Promise<TBigTaskCreateResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async approveBigTask(params: TBigTaskApproveParams): Promise<TBigTaskApproveResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async deleteBigTask(params: TBigTaskDeleteParams): Promise<TBigTaskDeleteResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async receiveBigTaskBounty(params: TTaskReceiveBountyParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async upgradeBigTask(params: TBigTaskUpgradeParams): Promise<TBigTaskUpgradeResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createSubTask(params: TSubTaskCreateParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async deleteSubTask(params: TSubTaskDeleteParams): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
