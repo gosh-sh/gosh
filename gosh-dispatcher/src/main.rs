@@ -231,6 +231,7 @@ async fn run_binary_with_command(
         .args(args.clone())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
         .spawn()?;
     let mut stdin = helper
         .stdin
