@@ -326,7 +326,7 @@ contract BigTask is Modifiers{
     }
 
     function grantTokenToSubtask(uint128 diff, uint128 granted, uint128 index) public senderIs(address(this)) accept {
-        if (index > _subtasksize - 1) { _fullSubtask += diff - granted; return; }
+        if (index > _subtasksize - 1) { _subtaskgranted -= diff - granted; return; }
         this.grantTokenToSubtask{value: 0.1 ton, flag: 1}(diff, granted, index + 1);
         uint128 sm = diff * _subtask[index].value;
         sm /= _fullSubtaskValue;
@@ -336,10 +336,10 @@ contract BigTask is Modifiers{
     }
 
     function checkempty(address addr) private {
-        if (_assigncomplete < _assignfull) { return; }
-        if (_reviewcomplete < _reviewfull) { return; }
-        if (_managercomplete < _managerfull) { return; }
-        if ((_subtaskcomplete < _subtaskfull) && (_subtasksize != 0)) { return; }
+        if (_assigncomplete != _assignfull) { return; }
+        if (_reviewcomplete != _reviewfull) { return; }
+        if (_managercomplete != _managerfull) { return; }
+        if ((_subtaskcomplete != _subtaskfull) && (_subtasksize != 0)) { return; }
         GoshDao(_goshdao).returnTaskTokenBig{value: 0.2 ton, flag: 1}(_nametask, _repo, _balance + _freebalance);
         GoshDao(_goshdao).destroyTaskTagBig{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag, addr);
         selfdestruct(_systemcontract);
