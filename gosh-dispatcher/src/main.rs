@@ -143,7 +143,7 @@ async fn dispatcher_main() -> anyhow::Result<()> {
     tracing::trace!("Highest repository version: {highest:?}");
     if highest.is_none() {
         return Err(format_err!(
-            "Failed to query the highest repository version."
+            "Failed to query the highest repository version. Please check that your local GOSH config has valid network settings."
         ));
     }
     let (repo_version, system_contract_address) = highest.unwrap();
