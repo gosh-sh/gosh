@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [4.1.19] - 2023-05-12
+### Bug fixes
+Fixed several bugs with clone command: 
+ - Wrong order of entries in git tree
+ - Added missing git entry type to object handling
+
 ## [4.1.19] - 2023-05-02
 ### Changed
 New versions of GOSH contracts and remote were added. 

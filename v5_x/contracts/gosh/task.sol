@@ -144,6 +144,7 @@ contract Task is Modifiers{
     function isReady(ConfigCommitBase commit) public senderIs(_repo) {
         require(_waitForUpdate == false, ERR_WRONG_UPGRADE_STATUS);
         require(((_ready == false) || (_candidates.length == 0)), ERR_TASK_COMPLETED); 
+        require(((_bigtask.hasValue() == false) || (_candidates.length == 0)), ERR_TASK_COMPLETED); 
         _candidates.push(commit);
         tvm.accept();
         this.calculateAssignLength{value : 0.15 ton, flag: 1}(uint128(_candidates.length - 1));

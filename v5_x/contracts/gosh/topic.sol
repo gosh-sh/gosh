@@ -20,6 +20,8 @@ contract Topic is Modifiers{
     string static public _name;
     string static public _content;
     address static public _object;
+    address _author;
+    uint32 _createdAt;
     optional(string) static public _metadata;
     bool public _resolved;
     address _systemcontract;
@@ -38,6 +40,8 @@ contract Topic is Modifiers{
         _systemcontract = goshaddr;
         _goshdao = goshdao;
         _object = object;
+        _author = pubaddr;
+        _createdAt = block.timestamp;
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
     }
     
@@ -50,10 +54,15 @@ contract Topic is Modifiers{
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         _resolved = status;
     }
+
+    function destroyTopic(uint128 index) public {
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _author, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        selfdestruct(_systemcontract);
+    }
     
     //Getters
-    function getObject() external view returns(string, string, address, address, address, optional(string), bool) {
-        return (_name, _content, _object, _systemcontract, _goshdao, _metadata, _resolved);
+    function getObject() external view returns(string, string, address, address, address, optional(string), bool, address, uint32) {
+        return (_name, _content, _object, _systemcontract, _goshdao, _metadata, _resolved, _author, _createdAt);
     }
     
     function getVersion() external view returns(string, string) {

@@ -453,6 +453,8 @@ function useTree(dao: string, repo: string, commit?: TCommit, treepath?: string)
 function useBlob(dao: string, repo: string, branch?: string, path?: string) {
     const { branch: branchData } = useBranches(undefined, branch)
     const [blob, setBlob] = useState<{
+        address?: string
+        commit?: string
         path?: string
         content?: string | Buffer
         isFetching: boolean
@@ -473,12 +475,14 @@ function useBlob(dao: string, repo: string, branch?: string, path?: string) {
 
             const gosh = GoshAdapterFactory.create(branchData.commit.version)
             const adapter = await gosh.getRepository({ path: `${dao}/${repo}` })
-            const { content } = await adapter.getBlob({
+            const { address, content, onchain } = await adapter.getBlob({
                 commit: branchData.commit.name,
                 fullpath: `${branchData.name}/${path}`,
             })
             setBlob((state) => ({
                 ...state,
+                address,
+                commit: onchain.commit,
                 path,
                 content,
                 isFetching: false,

@@ -31,3 +31,5 @@ pnpm-lock.yaml
 gosh-cli.conf.json
 
 !GiverV2.keys.json
+
+target/
