@@ -181,7 +181,8 @@ contract BigTask is Modifiers{
         string nametask,
         string[] hashtag,
         ConfigGrant grant,
-        uint128 value ) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
+        uint128 value,
+        optional(ConfigCommitBase) workers ) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
         if (_subtasksize >= 100) { return; }
         require(_ready == false, ERR_TASK_COMPLETED);
         if ((_candidates[_indexFinal].pubaddrassign.exists(pubaddr) == false) && (_candidates[_indexFinal].pubaddrreview.exists(pubaddr) == false) && (_candidates[_indexFinal].pubaddrmanager.exists(pubaddr) == false)) { return; }
@@ -189,7 +190,7 @@ contract BigTask is Modifiers{
         _fullSubtaskValue += value;
         _subtask[_subtasksize] = Subtask(value, nametask);
         _subtasksize += 1;
-        GoshWallet(msg.sender).deployTaskFromBigTask{value: 0.1 ton}(_nametask, repoName, nametask, hashtag, grant, value);
+        GoshWallet(msg.sender).deployTaskFromBigTask{value: 0.1 ton}(_nametask, repoName, nametask, hashtag, grant, value, workers);
     }
 
     function destroySubTask(address pubaddr,

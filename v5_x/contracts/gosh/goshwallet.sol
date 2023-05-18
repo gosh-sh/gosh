@@ -1521,11 +1521,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string nametask,
         string[] hashtag,
         ConfigGrant grant,
-        uint128 value
+        uint128 value,
+        optional(ConfigCommitBase) workers
     ) public senderIs(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))) accept {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        GoshDao(_goshdao).deployTask{value: 0.3 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, value, namebigtask);
+        GoshDao(_goshdao).deployTask{value: 0.3 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, value, namebigtask, workers);
         getMoney();
     }
 
@@ -1535,11 +1536,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string nametask,
         string[] hashtag,
         ConfigGrant grant,
-        uint128 value
+        uint128 value,
+        optional(ConfigCommitBase) workers
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        BigTask(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).deploySubTask{value: 0.1 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, value);
+        BigTask(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).deploySubTask{value: 0.1 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, value, workers);
         getMoney();
     }
 
@@ -1558,11 +1560,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string repoName,
         string nametask,
         string[] hashtag,
-        ConfigGrant grant
+        ConfigGrant grant,
+        optional(ConfigCommitBase) workers
     ) private {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        GoshDao(_goshdao).deployTask{value: 0.3 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, 0, null);
+        GoshDao(_goshdao).deployTask{value: 0.3 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, 0, null, workers);
         getMoney();
     }
 
@@ -2565,6 +2568,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string repoName,
         string[] tag,
         ConfigGrant grant,
+        optional(ConfigCommitBase) workers,
         string comment,
         uint128 num_clients , address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access)  {
@@ -2578,7 +2582,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _saveMsg();
 
         uint256 proposalKind = TASK_DEPLOY_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, repoName, taskName, tag, grant, comment, block.timestamp);
+        TvmCell c = abi.encode(proposalKind, repoName, taskName, tag, grant, workers, comment, block.timestamp);
         _startProposalForOperation(c, TASK_DEPLOY_PROPOSAL_START_AFTER, TASK_DEPLOY_PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
@@ -2588,11 +2592,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string repoName,
         string[] tag,
         ConfigGrant grant,
+        optional(ConfigCommitBase) workers,
         string comment,
         optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = TASK_DEPLOY_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
-        return abi.encode(proposalKind, repoName, taskName, tag, grant, comment, time.get());
+        return abi.encode(proposalKind, repoName, taskName, tag, grant, workers, comment, time.get());
     }
 
     function startProposalForDeleteProtectedBranch(
@@ -2696,8 +2701,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 _destroyTask(taskName, repoName);
             }  else
             if (kind == TASK_DEPLOY_PROPOSAL_KIND) {
-                (, string taskName, string repoName, string[] tag, ConfigGrant grant,,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, string, uint32));
-                _deployTask(taskName, repoName, tag, grant);
+                (, string taskName, string repoName, string[] tag, ConfigGrant grant, optional(ConfigCommitBase) workers,,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, optional(ConfigCommitBase), string, uint32));
+                _deployTask(taskName, repoName, tag, grant, workers);
             }  else
 
             if (kind == DEPLOY_REPO_PROPOSAL_KIND) {
@@ -2898,8 +2903,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 _destroyTask(taskName, repoName);
             }  else
             if (kind == TASK_DEPLOY_PROPOSAL_KIND) {
-                (, string taskName, string repoName, string[] tag, ConfigGrant grant,,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, string, uint32));
-                _deployTask(taskName, repoName, tag, grant);
+                (, string taskName, string repoName, string[] tag, ConfigGrant grant,optional(ConfigCommitBase) workers,,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, optional(ConfigCommitBase), string, uint32));
+                _deployTask(taskName, repoName, tag, grant, workers);
             }  else
             if (kind == DEPLOY_REPO_PROPOSAL_KIND) {
                 (, string repoName, string descr, optional(AddrVersion) previous, ) = abi.decode(propData,(uint256, string, string, optional(AddrVersion), uint32));
