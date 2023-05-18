@@ -152,7 +152,7 @@ contract Task is Modifiers{
     function isReady(ConfigCommitBase commit) public senderIs(_repo) {
         require(_waitForUpdate == false, ERR_WRONG_UPGRADE_STATUS);
         require(((_ready == false)), ERR_TASK_COMPLETED); 
-        require(((_isFix == false) || (_candidates.length == 0)), ERR_TASK_COMPLETED); 
+        require(((_isFix == true) || (_candidates.length == 0)), ERR_TASK_COMPLETED); 
         _candidates.push(commit);
         tvm.accept();
         if (_isFix == true) { this.calculateAssignLength{value : 0.15 ton, flag: 1}(uint128(0)); }
