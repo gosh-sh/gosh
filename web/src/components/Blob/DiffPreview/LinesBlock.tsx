@@ -235,7 +235,7 @@ const LinesBlock = (props: TLinesBlockProps) => {
                             className="relative group pl-4"
                             onMouseEnter={() => setMouseDown(false)}
                         >
-                            {commentsOn && (
+                            {dao.details.isAuthMember && commentsOn && (
                                 <div
                                     className={classNames(
                                         'absolute hidden left-0 rounded-full w-5 h-5 mx-2 cursor-pointer',

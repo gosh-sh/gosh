@@ -263,37 +263,39 @@ const CodeComments = (props: TCodeCommentsProps) => {
                                 <CommentBlock key={i} comment={item} />
                             ))}
                         </div>
-                        <div className="mt-1">
-                            <Formik
-                                initialValues={{ thread_id: thread.id, comment: '' }}
-                                onSubmit={onAddCommentSubmit}
-                                enableReinitialize
-                            >
-                                {({ isSubmitting }) => (
-                                    <Form>
-                                        <div>
-                                            <Field
-                                                name="comment"
-                                                component={FormikTextarea}
-                                                placeholder="Say something"
-                                                autoComplete="off"
-                                            />
-                                        </div>
-                                        <div className="text-end">
-                                            <Button
-                                                type="submit"
-                                                variant="custom"
-                                                className="text-xs text-gray-7c8db5"
-                                                disabled={isSubmitting}
-                                                isLoading={isSubmitting}
-                                            >
-                                                Submit
-                                            </Button>
-                                        </div>
-                                    </Form>
-                                )}
-                            </Formik>
-                        </div>
+                        {dao.details.isAuthMember && (
+                            <div className="mt-1">
+                                <Formik
+                                    initialValues={{ thread_id: thread.id, comment: '' }}
+                                    onSubmit={onAddCommentSubmit}
+                                    enableReinitialize
+                                >
+                                    {({ isSubmitting }) => (
+                                        <Form>
+                                            <div>
+                                                <Field
+                                                    name="comment"
+                                                    component={FormikTextarea}
+                                                    placeholder="Say something"
+                                                    autoComplete="off"
+                                                />
+                                            </div>
+                                            <div className="text-end">
+                                                <Button
+                                                    type="submit"
+                                                    variant="custom"
+                                                    className="text-xs text-gray-7c8db5"
+                                                    disabled={isSubmitting}
+                                                    isLoading={isSubmitting}
+                                                >
+                                                    Submit
+                                                </Button>
+                                            </div>
+                                        </Form>
+                                    )}
+                                </Formik>
+                            </div>
+                        )}
                     </div>
                 </div>
             ))}

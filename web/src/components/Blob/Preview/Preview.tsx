@@ -177,7 +177,7 @@ const BlobPreview = (props: TBlobPreviewProps) => {
                                 }}
                             />
                             <LineContent
-                                commentsOn={commentsOn}
+                                commentsOn={dao.details.isAuthMember && commentsOn}
                                 content={tdContent}
                                 showForm={commentFormLine.line === number}
                                 containerProps={{
