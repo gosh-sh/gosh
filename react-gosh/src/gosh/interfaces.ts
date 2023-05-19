@@ -122,6 +122,8 @@ import {
     TBigTaskDeleteResult,
     TBigTaskUpgradeParams,
     TBigTaskUpgradeResult,
+    TCodeCommentThreadResdolveParams,
+    TCodeCommentThreadResolveResult,
 } from '../types'
 
 interface IGoshAdapter {
@@ -306,6 +308,9 @@ interface IGoshDaoAdapter {
     createCodeCommentThread(
         params: TCodeCommentThreadCreateParams,
     ): Promise<TCodeCommentThreadCreateResult>
+    resolveCodeCommentThread(
+        params: TCodeCommentThreadResdolveParams,
+    ): Promise<TCodeCommentThreadResolveResult>
     createCodeComment(params: TCodeCommentCreateParams): Promise<TCodeCommentCreateResult>
 }
 

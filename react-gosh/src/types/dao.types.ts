@@ -487,6 +487,7 @@ type TCodeCommentThreadCreateParams = {
     metadata: {
         startLine: number
         endLine: number
+        commit: string
     }
     commit: string
     filename: string
@@ -517,6 +518,13 @@ type TCodeCommentThreadGetResult = {
     createdBy: string
     createdAt: number
 }
+
+type TCodeCommentThreadResdolveParams = {
+    address: string
+    resolved: boolean
+}
+
+type TCodeCommentThreadResolveResult = void
 
 type TCodeCommentCreateParams = {
     threadAddress: TAddress
@@ -614,6 +622,8 @@ export {
     TCodeCommentThreadCreateResult,
     TCodeCommentThreadGetCodeParams,
     TCodeCommentThreadGetCodeResult,
+    TCodeCommentThreadResdolveParams,
+    TCodeCommentThreadResolveResult,
     TCodeCommentThreadGetParams,
     TCodeCommentThreadGetResult,
     TCodeCommentCreateParams,

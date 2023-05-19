@@ -11,6 +11,7 @@ import LineNumber from './LineNumber'
 import LineContent from './LineContent'
 import { useOutletContext } from 'react-router-dom'
 import { TDaoLayoutOutletContext } from '../../../pages/DaoLayout'
+import { FormikHelpers } from 'formik'
 
 type TBlobPreviewProps = {
     address?: string
@@ -26,13 +27,13 @@ const BlobPreview = (props: TBlobPreviewProps) => {
         address,
         filename = '',
         value = '',
-        commit,
+        commit = '',
         className,
         commentsOn = false,
     } = props
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const {
-        items,
+        threads,
         selectedLines,
         commentFormLine,
         getThreads,
@@ -47,19 +48,24 @@ const BlobPreview = (props: TBlobPreviewProps) => {
         dao: dao.adapter,
         objectAddress: address,
         filename,
-        commitName: commit,
+        commits: [commit],
     })
     const [mouseDown, setMouseDown] = useState<boolean>(false)
 
-    const onAddCommentSubmit = async (values: { comment: string }) => {
+    const onAddCommentSubmit = async (
+        values: { comment: string },
+        helpers: FormikHelpers<any>,
+    ) => {
         try {
             await submitComment({
                 content: values.comment,
                 metadata: {
                     startLine: selectedLines.lines[0],
                     endLine: selectedLines.lines.slice(-1)[0],
+                    commit,
                 },
             })
+            helpers.resetForm()
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
@@ -121,7 +127,9 @@ const BlobPreview = (props: TBlobPreviewProps) => {
                 {highlighted.map((line, index) => {
                     const number = index + 1
                     const tdContent = !line || line === '</span>' ? '&nbsp;' : line
-                    const lineThreads = items.filter((item) => item.startLine === number)
+                    const lineThreads = threads.items.filter(
+                        (item) => item.startLine === number,
+                    )
                     return (
                         <tr
                             key={index}
@@ -152,16 +160,16 @@ const BlobPreview = (props: TBlobPreviewProps) => {
                                 }}
                                 lineNumberProps={{
                                     onClick: () => {
-                                        toggleLineSelection(number)
+                                        toggleLineSelection(number, commit)
                                     },
                                     onMouseDown: () => {
-                                        toggleLineSelection(number)
+                                        toggleLineSelection(number, commit)
                                         setMouseDown(true)
                                     },
                                     onMouseUp: () => setMouseDown(false),
                                     onMouseEnter: () => {
                                         if (mouseDown) {
-                                            toggleLineSelection(number, {
+                                            toggleLineSelection(number, commit, {
                                                 multiple: mouseDown,
                                             })
                                         }
@@ -171,15 +179,12 @@ const BlobPreview = (props: TBlobPreviewProps) => {
                             <LineContent
                                 commentsOn={commentsOn}
                                 content={tdContent}
-                                showForm={commentFormLine === number}
-                                showFormDir={
-                                    number > highlighted.length - 6 ? 'up' : 'down'
-                                }
+                                showForm={commentFormLine.line === number}
                                 containerProps={{
                                     onMouseEnter: () => setMouseDown(false),
                                 }}
                                 commentButtonProps={{
-                                    onClick: () => toggleLineForm(number),
+                                    onClick: () => toggleLineForm(number, commit),
                                 }}
                                 onCommentFormReset={resetLinesSelection}
                                 onCommentFormSubmit={onAddCommentSubmit}

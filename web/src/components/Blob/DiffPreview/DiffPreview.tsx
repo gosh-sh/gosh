@@ -1,11 +1,14 @@
-import { useState, useId, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Buffer } from 'buffer'
 import * as Diff from 'diff'
 import * as Diff2Html from 'diff2html'
-import Spinner from '../../Spinner'
 import { Button } from '../../Form'
 import { CodeComments } from '../Comments'
 import LinesBlock from './LinesBlock'
+import { TCommit } from 'react-gosh'
+import { useOutletContext } from 'react-router-dom'
+import { TDaoLayoutOutletContext } from '../../../pages/DaoLayout'
+import { useBlobComments } from '../../../hooks/codecomment.hooks'
 
 type TBlobDiffPreviewProps = {
     className?: string
@@ -14,34 +17,34 @@ type TBlobDiffPreviewProps = {
     modified?: string | Buffer
     isDiffLoaded?: boolean
     isDiffFetching?: boolean
+    commentsOn?: boolean
+    commit: TCommit
+    address: string
 
     getDiff(): void
 }
 
 const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
     const {
-        className,
         filename = 'unknown',
         original = '',
         modified = '',
         isDiffLoaded = false,
         isDiffFetching = false,
+        commentsOn,
+        commit,
+        address,
         getDiff,
     } = props
-    const uniqueId = useId()
+    const { dao } = useOutletContext<TDaoLayoutOutletContext>()
+    const { getThreads } = useBlobComments({
+        dao: dao.adapter,
+        objectAddress: address,
+        filename,
+        commits: [commit.parents[0].name, commit.name],
+    })
     const [isDiffShort, setIsDiffShort] = useState<boolean>(true)
     const [mouseDown, setMouseDown] = useState<boolean>(false)
-
-    const getDiffButton = (
-        <button
-            id={`${uniqueId}get-diff`}
-            className="!block text-sm mx-auto px-3 py-1.5 my-4 text-black font-medium underline underline-offset-4 decoration-dashed"
-            disabled={isDiffFetching}
-        >
-            {isDiffFetching && <Spinner className="mr-2" size="sm" />}
-            Load diff
-        </button>
-    )
 
     const onDiffToggle = () => {
         setIsDiffShort(!isDiffShort)
@@ -63,7 +66,7 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
             undefined,
             undefined,
             {
-                context: isDiffShort ? 3 : 20000,
+                context: isDiffShort ? 5 : 20000,
             },
         )
         const _diff = Diff2Html.parse(patch)
@@ -71,34 +74,61 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
         for (const item of _diff) {
             _blocks.push(...item.blocks)
         }
-        console.debug('Diff', _diff)
-        console.debug('Blocks', _blocks)
         return _blocks
     }, [filename, original, modified, isDiffShort])
 
+    useEffect(() => {
+        if (commentsOn && isDiffLoaded) {
+            getThreads()
+        }
+    }, [commentsOn, isDiffLoaded])
+
     return (
-        <div className="overflow-clip border border-gray-e6edff rounded-xl">
-            <div className="flex items-center justify-between px-3 py-1 border-b border-b-gray-e6edff bg-gray-fafafd">
-                <div className="text-xs">{filename}</div>
-                <div>
-                    <Button
-                        variant="custom"
-                        className="text-xs underline underline-offset-2 decoration-1 decoration-dashed !px-0 !py-1"
-                        onClick={onDiffToggle}
-                    >
-                        {isDiffShort ? 'Expand' : 'Collapse'}
-                    </Button>
+        <div className="flex items-start">
+            <div className="grow border border-gray-e6edff rounded-xl overflow-hidden">
+                <div className="flex items-center justify-between px-3 py-1 border-b border-b-gray-e6edff bg-gray-fafafd">
+                    <div className="text-xs">{filename}</div>
+                    {isDiffLoaded && (
+                        <div>
+                            <Button
+                                variant="custom"
+                                className="text-xs underline underline-offset-2 decoration-1 decoration-dashed !px-0 !py-1"
+                                onClick={onDiffToggle}
+                            >
+                                {isDiffShort ? 'Expand' : 'Collapse'}
+                            </Button>
+                        </div>
+                    )}
                 </div>
-            </div>
-            <div className="flex items-start">
-                <div className="grow text-xs">
+                <div className="text-xs">
+                    {isBuffer && (
+                        <div className="text-center py-3">Binary data not shown</div>
+                    )}
+                    {isDiffLoaded && !diff.length && (
+                        <div className="text-center py-3">File without changes</div>
+                    )}
+                    {!isDiffLoaded && (
+                        <div className="text-center py-3">
+                            <Button
+                                variant="custom"
+                                disabled={isDiffFetching}
+                                isLoading={isDiffFetching}
+                                onClick={getDiff}
+                            >
+                                Load diff
+                            </Button>
+                        </div>
+                    )}
                     <table className="w-full" onMouseLeave={() => setMouseDown(false)}>
                         <tbody>
                             {diff.map((block, i) => (
                                 <LinesBlock
                                     key={i}
                                     filename={filename}
+                                    commit={commit}
                                     block={block}
+                                    address={address}
+                                    commentsOn={commentsOn}
                                     mouseDown={mouseDown}
                                     setMouseDown={setMouseDown}
                                 />
@@ -106,11 +136,12 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
                         </tbody>
                     </table>
                 </div>
-
-                <div className="shrink-0 w-72 bg-white p-2">
+            </div>
+            {commentsOn && (
+                <div className="sticky top-3 shrink-0 w-72 bg-white pl-3">
                     <CodeComments filename={filename} />
                 </div>
-            </div>
+            )}
         </div>
     )
 }

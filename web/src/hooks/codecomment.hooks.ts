@@ -15,33 +15,48 @@ export function useBlobComments(params: {
     dao: IGoshDaoAdapter
     filename: string
     objectAddress?: string
-    commitName?: string
+    commits?: string[]
 }) {
-    const { dao, objectAddress, filename, commitName } = params
+    const { dao, objectAddress, filename, commits = [] } = params
     const { user } = useUser()
     const [threads, setThreads] = useRecoilState(blobCommentsAtom)
     const resetThreads = useResetRecoilState(blobCommentsAtom)
 
     const getThreads = async () => {
-        if (!objectAddress || !commitName) {
+        if (!objectAddress || !commits.length) {
             return
         }
 
-        const codeHash = await dao.getCodeCommetThreadCodeHash({
-            daoAddress: dao.getAddress(),
-            objectAddress,
-            commitName,
-            filename,
-        })
+        setThreads((state) => ({
+            ...state,
+            [filename]: {
+                ...state[filename],
+                threads: {
+                    isFetching: true,
+                    items: [],
+                },
+            },
+        }))
+
+        const codeHashList = await Promise.all(
+            commits.map(async (name) => {
+                return dao.getCodeCommetThreadCodeHash({
+                    daoAddress: dao.getAddress(),
+                    objectAddress,
+                    commitName: name,
+                    filename,
+                })
+            }),
+        )
         const accounts = await getAllAccounts({
-            filters: [`code_hash: {eq:"${codeHash}"}`],
+            filters: [`code_hash: {in: ${JSON.stringify(codeHashList)} }`],
         })
         const items = await executeByChunk(
             accounts,
             MAX_PARALLEL_READ,
             async ({ id }) => {
                 const thread = await dao.getCodeCommentThread({ address: id })
-                const comments = await getMessages(thread.account, {})
+                const comments = await _getMessages(thread.account, {})
                 const createdBy = await dao.getGosh().getUserByAddress(thread.createdBy)
                 return { thread, createdBy, comments }
             },
@@ -52,88 +67,113 @@ export function useBlobComments(params: {
             ...state,
             [filename]: {
                 ...state[filename],
-                threads: items
-                    .sort((a, b) => {
-                        return a.thread.metadata.startLine - b.thread.metadata.endLine
-                    })
-                    .map(({ thread, createdBy, comments }, index) => ({
-                        id: thread.address,
-                        type: 'context',
-                        startLine: thread.metadata.startLine,
-                        endLine: thread.metadata.endLine,
-                        prev: items[index - 1]?.thread.address,
-                        next: items[index + 1]?.thread.address,
-                        isOpen: false,
-                        isActive: false,
-                        content: {
-                            id: '',
-                            username: createdBy.name,
-                            datetime: new Date(thread.createdAt * 1000).toLocaleString(),
-                            content: thread.content,
-                        },
-                        comments: {
-                            isFetching: false,
-                            cursor: comments.cursor,
-                            hasNext: comments.hasNext || false,
-                            items: comments.items,
-                        },
-                    })),
+                threads: {
+                    isFetching: false,
+                    items: items
+                        .sort((a, b) => {
+                            return a.thread.metadata.startLine - b.thread.metadata.endLine
+                        })
+                        .map(({ thread, createdBy, comments }, index) => ({
+                            id: thread.address,
+                            commit: thread.metadata.commit,
+                            startLine: thread.metadata.startLine,
+                            endLine: thread.metadata.endLine,
+                            prev: items[index - 1]?.thread.address,
+                            next: items[index + 1]?.thread.address,
+                            isResolved: thread.isResolved,
+                            isOpen: false,
+                            isActive: false,
+                            content: {
+                                id: '',
+                                username: createdBy.name,
+                                datetime: new Date(
+                                    thread.createdAt * 1000,
+                                ).toLocaleString(),
+                                content: thread.content,
+                            },
+                            comments: {
+                                isFetching: false,
+                                cursor: comments.cursor,
+                                hasNext: comments.hasNext || false,
+                                items: comments.items,
+                            },
+                        })),
+                },
             },
         }))
     }
 
     const hoverThread = (id: string, hover: boolean) => {
-        const thread = threads[filename].threads.find((item) => item.id === id)
+        const thread = threads[filename].threads.items.find((item) => item.id === id)
         if (!thread) {
             return
         }
 
-        const lines: never[] = []
-        for (let i = thread.startLine; i <= thread.endLine; i++) {
-            lines.push(i as never)
-        }
+        const lines = _getThreadLines({ start: thread.startLine, end: thread.endLine })
+        const hasOpenedThreads = Object.keys(threads).some((filename) => {
+            return threads[filename].threads.items.some((v) => v.isOpen)
+        })
         setThreads((state) => ({
             ...state,
             [filename]: {
                 ...state[filename],
-                selectedLines: { type: thread.type, lines: hover ? lines : [] },
-                threads: state[filename].threads.map((item) => {
-                    if (item.id !== thread.id) {
-                        return { ...item, isActive: false }
-                    }
-                    return { ...item, isActive: !item.isActive }
-                }),
+                selectedLines: hasOpenedThreads
+                    ? state[filename].selectedLines
+                    : { commit: thread.commit, lines: hover ? lines : [] },
+                threads: {
+                    ...state[filename].threads,
+                    items: state[filename].threads.items.map((item) => {
+                        if (item.id !== thread.id) {
+                            return { ...item, isActive: false }
+                        }
+                        return { ...item, isActive: !item.isActive }
+                    }),
+                },
             },
         }))
     }
 
     const toggleThread = (id: string) => {
+        const thread = threads[filename].threads.items.find((item) => item.id === id)
+        if (!thread) {
+            return
+        }
+
+        const lines = _getThreadLines({ start: thread.startLine, end: thread.endLine })
         setThreads((state) => ({
             ...state,
             [filename]: {
                 ...state[filename],
-                threads: state[filename].threads.map((item) => {
-                    if (item.id !== id) {
-                        return { ...item, isOpen: false, isActive: false }
-                    }
-                    return { ...item, isOpen: !item.isOpen, isActive: !item.isActive }
-                }),
+                selectedLines: {
+                    commit: thread.commit,
+                    lines: !thread.isOpen ? lines : [],
+                },
+                threads: {
+                    ...state[filename].threads,
+                    items: state[filename].threads.items.map((item) => {
+                        if (item.id !== thread.id) {
+                            return { ...item, isOpen: false, isActive: false }
+                        }
+                        return { ...item, isOpen: !item.isOpen, isActive: !item.isActive }
+                    }),
+                },
             },
         }))
     }
 
     const toggleLineSelection = (
         line: number,
-        options?: { multiple?: boolean; type?: 'context' | 'prev' | 'curr' },
+        commit: string,
+        options?: { multiple?: boolean },
     ) => {
-        const { multiple, type = 'context' } = options || {}
+        const { multiple } = options || {}
         if (multiple) {
             setThreads((state) => ({
                 ...state,
                 [filename]: {
                     ...state[filename],
                     selectedLines: {
-                        type,
+                        commit,
                         lines: [...state[filename].selectedLines.lines, line],
                     },
                 },
@@ -143,13 +183,13 @@ export function useBlobComments(params: {
                 ...state,
                 [filename]: {
                     ...state[filename],
-                    selectedLines: { type, lines: [line] },
+                    selectedLines: { commit, lines: [line] },
                 },
             }))
         }
     }
 
-    const toggleLineForm = (line: number) => {
+    const toggleLineForm = (line: number, commit: string) => {
         const foundIndex = threads[filename].selectedLines.lines.findIndex(
             (v) => v === line,
         )
@@ -159,11 +199,11 @@ export function useBlobComments(params: {
             [filename]: {
                 ...state[filename],
                 selectedLines: {
-                    type: 'context',
+                    commit,
                     lines:
                         foundIndex < 0 ? [position] : state[filename].selectedLines.lines,
                 },
-                commentFormLine: position,
+                commentFormLine: { commit, line: position },
             },
         }))
     }
@@ -173,8 +213,27 @@ export function useBlobComments(params: {
             ...state,
             [filename]: {
                 ...state[filename],
-                selectedLines: { type: 'context', lines: [] },
-                commentFormLine: 0,
+                selectedLines: { commit: '', lines: [] },
+                commentFormLine: { commit: '', line: 0 },
+            },
+        }))
+    }
+
+    const resolveThread = async (id: string, resolved: boolean) => {
+        await dao.resolveCodeCommentThread({ address: id, resolved })
+        setThreads((state) => ({
+            ...state,
+            [filename]: {
+                ...state[filename],
+                threads: {
+                    ...state[filename].threads,
+                    items: state[filename].threads.items.map((item) => {
+                        if (item.id !== id) {
+                            return item
+                        }
+                        return { ...item, isResolved: resolved }
+                    }),
+                },
             },
         }))
     }
@@ -190,40 +249,41 @@ export function useBlobComments(params: {
                 threadAddress: id,
                 message: content,
             })
+            await resolveThread(id, false)
 
             // Update state
             setThreads((state) => ({
                 ...state,
                 [filename]: {
                     ...state[filename],
-                    threads: state[filename].threads.map((item) => {
-                        if (item.id !== id) {
-                            return item
-                        }
-                        return {
-                            ...item,
-                            comments: {
-                                ...item.comments,
-                                items: [
-                                    ...item.comments.items,
-                                    {
-                                        id: transaction.out_msgs[0],
-                                        username: user.username!,
-                                        datetime: new Date().toLocaleString(),
-                                        content,
-                                    },
-                                ],
-                            },
-                        }
-                    }),
+                    threads: {
+                        ...state[filename].threads,
+                        items: state[filename].threads.items.map((item) => {
+                            if (item.id !== id) {
+                                return item
+                            }
+                            return {
+                                ...item,
+                                comments: {
+                                    ...item.comments,
+                                    items: [
+                                        ...item.comments.items,
+                                        {
+                                            id: transaction.out_msgs[0],
+                                            username: user.username!,
+                                            datetime: new Date().toLocaleString(),
+                                            content,
+                                        },
+                                    ],
+                                },
+                            }
+                        }),
+                    },
                 },
             }))
         } else {
             if (!objectAddress) {
                 throw new GoshError('`object` is required')
-            }
-            if (!commitName) {
-                throw new GoshError('`commit` is required')
             }
             if (!metadata) {
                 throw new GoshError('`metadata` is required')
@@ -233,7 +293,7 @@ export function useBlobComments(params: {
                 object: objectAddress,
                 content,
                 metadata,
-                commit: commitName,
+                commit: metadata.commit,
                 filename,
             })
 
@@ -242,53 +302,101 @@ export function useBlobComments(params: {
                 ...state,
                 [filename]: {
                     ...state[filename],
-                    threads: [
+                    threads: {
                         ...state[filename].threads,
-                        {
-                            id: thread.address,
-                            type: 'context',
-                            startLine: metadata?.startLine || 0,
-                            endLine: metadata?.endLine || 0,
-                            prev: state[filename].threads.slice(-1)[0].id,
-                            next: null,
-                            isOpen: false,
-                            isActive: false,
-                            content: {
-                                id: '',
-                                username: user.username!,
-                                datetime: new Date().toLocaleString(),
-                                content,
+                        items: [
+                            ...state[filename].threads.items,
+                            {
+                                id: thread.address,
+                                commit: metadata.commit,
+                                startLine: metadata?.startLine || 0,
+                                endLine: metadata?.endLine || 0,
+                                prev:
+                                    state[filename].threads.items.slice(-1)[0]?.id ||
+                                    null,
+                                next: null,
+                                isResolved: false,
+                                isOpen: false,
+                                isActive: false,
+                                content: {
+                                    id: '',
+                                    username: user.username!,
+                                    datetime: new Date().toLocaleString(),
+                                    content,
+                                },
+                                comments: {
+                                    isFetching: false,
+                                    hasNext: false,
+                                    items: [],
+                                },
                             },
-                            comments: {
-                                isFetching: false,
-                                hasNext: false,
-                                items: [],
-                            },
-                        },
-                    ],
+                        ],
+                    },
                 },
             }))
             resetLinesSelection()
         }
     }
 
-    const getMessages = async (
+    const getCommentsNext = async (threadId: string) => {
+        const thread = threads[filename].threads.items.find(
+            (item) => item.id === threadId,
+        )
+        if (!thread) {
+            return
+        }
+
+        setThreads((state) => ({
+            ...state,
+            [filename]: {
+                ...state[filename],
+                threads: {
+                    ...state[filename].threads,
+                    items: state[filename].threads.items.map((item) => {
+                        if (item.id !== thread.id) {
+                            return item
+                        }
+                        return {
+                            ...item,
+                            comments: { ...item.comments, isFetching: true },
+                        }
+                    }),
+                },
+            },
+        }))
+
+        const { account } = await dao.getCodeCommentThread({ address: thread.id })
+        const result = await _getMessages(account, { from: thread.comments.cursor })
+
+        setThreads((state) => ({
+            ...state,
+            [filename]: {
+                ...state[filename],
+                threads: {
+                    ...state[filename].threads,
+                    items: state[filename].threads.items.map((item) => {
+                        if (item.id !== thread.id) {
+                            return item
+                        }
+                        return {
+                            ...item,
+                            comments: {
+                                isFetching: false,
+                                cursor: result.cursor,
+                                hasNext: result.hasNext || false,
+                                items: [...result.items, ...item.comments.items],
+                            },
+                        }
+                    }),
+                },
+            },
+        }))
+    }
+
+    const _getMessages = async (
         thread: IGoshTopic,
         params: { from?: string; count?: number },
     ) => {
-        // setThreads((state) => ({
-        //     ...state,
-        //     [filename]: {
-        //         ...state[filename],
-        //         threads: state[filename].threads.map((item) => {
-        //             if (item.id !== thread.address) {
-        //                 return item
-        //             }
-        //             return { ...item, comments: { ...item.comments, isFetching: true } }
-        //         }),
-        //     },
-        // }))
-
         const { messages, cursor, hasNext } = await thread.getMessages(
             {
                 msgType: ['IntIn'],
@@ -313,40 +421,16 @@ export function useBlobComments(params: {
                     content: decoded.value.message,
                 })),
         )
-
         return { items: comments, cursor, hasNext }
+    }
 
-        // setThreads((state) => ({
-        //     ...state,
-        //     [filename]: {
-        //         ...state[filename],
-        //         threads: state[filename].threads.map((item) => {
-        //             if (item.id !== thread.address) {
-        //                 return item
-        //             }
-
-        //             const comments = messages
-        //                 .filter(
-        //                     ({ decoded }) => decoded && decoded.name === 'acceptMessage',
-        //                 )
-        //                 .map(({ message, decoded }) => ({
-        //                     id: message.id.replace('message/', ''),
-        //                     username: 'todo',
-        //                     datetime: 'todo',
-        //                     content: decoded.value.message,
-        //                 }))
-        //             return {
-        //                 ...item,
-        //                 comments: {
-        //                     isFetching: false,
-        //                     cursor,
-        //                     hasNext: hasNext || false,
-        //                     items: [...comments, ...item.comments.items],
-        //                 },
-        //             }
-        //         }),
-        //     },
-        // }))
+    const _getThreadLines = (params: { start: number; end: number }) => {
+        const { start, end } = params
+        const lines: number[] = []
+        for (let i = start; i <= end; i++) {
+            lines.push(i)
+        }
+        return lines
     }
 
     useEffect(() => {
@@ -356,21 +440,23 @@ export function useBlobComments(params: {
                 ...state,
                 [filename]: {
                     ...state[filename],
-                    selectedLines: { type: 'context', lines: [] },
-                    commentFormLine: 0,
-                    threads: [],
+                    selectedLines: { commit: '', lines: [] },
+                    commentFormLine: { commit: '', line: 0 },
+                    threads: { isFetching: true, items: [] },
                 },
             }))
         }
     }, [filename])
 
     return {
-        items: threads[filename]?.threads || [],
+        threads: threads[filename]?.threads || { isFetching: false, items: [] },
         selectedLines: threads[filename]?.selectedLines || {},
         commentFormLine: threads[filename]?.commentFormLine || 0,
         getThreads,
         hoverThread,
         toggleThread,
+        resolveThread,
+        getCommentsNext,
         submitComment,
         toggleLineSelection,
         toggleLineForm,

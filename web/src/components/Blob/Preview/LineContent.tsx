@@ -9,11 +9,10 @@ type TLineContentProps = {
     commentsOn?: boolean
     content: string
     showForm: boolean
-    showFormDir: 'up' | 'down'
     containerProps?: React.HTMLAttributes<HTMLTableCellElement>
     commentButtonProps?: React.HTMLAttributes<HTMLDivElement>
     onCommentFormReset?(): void
-    onCommentFormSubmit?(values: any): void
+    onCommentFormSubmit?(values: any, helpers: any): void
 }
 
 const LineContent = (props: TLineContentProps) => {
@@ -21,7 +20,6 @@ const LineContent = (props: TLineContentProps) => {
         commentsOn,
         content,
         showForm,
-        showFormDir,
         containerProps,
         commentButtonProps,
         onCommentFormReset,
@@ -51,10 +49,9 @@ const LineContent = (props: TLineContentProps) => {
             {commentsOn && onCommentFormSubmit && (
                 <div
                     className={classNames(
-                        showForm ? 'absolute' : 'hidden',
-                        showFormDir === 'up' ? 'bottom-4' : 'top-4',
-                        'left-8 w-72 max-h-screen overflow-hidden bg-white z-50',
-                        'border border-gray-e6edff rounded-xl',
+                        showForm ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0',
+                        'w-full md:w-1/2 overflow-hidden bg-white',
+                        'border border-gray-e6edff rounded-xl transition-all',
                     )}
                 >
                     <Formik

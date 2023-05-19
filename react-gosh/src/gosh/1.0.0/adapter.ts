@@ -117,6 +117,7 @@ import {
     TBigTaskDeleteResult,
     TBigTaskUpgradeParams,
     TBigTaskUpgradeResult,
+    TCodeCommentThreadResdolveParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -941,6 +942,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
+    async resolveCodeCommentThread(
+        params: TCodeCommentThreadResdolveParams,
+    ): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async createCodeComment(params: TCodeCommentCreateParams): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
@@ -1177,6 +1184,18 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             })
         })
 
+        const _parents = await Promise.all(
+            parents.map(async (item: any) => {
+                const _commit = await this._getCommit({ address: item.addr })
+                const { value0 } = await _commit.runLocal('getNameCommit', {})
+                return {
+                    address: item.addr,
+                    version: item.version,
+                    name: value0,
+                }
+            }),
+        )
+
         return {
             address: commit.address,
             name: sha,
@@ -1187,10 +1206,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             message: parsed.message,
             author: parsed.author,
             committer: parsed.committer,
-            parents: parents.map((address: string) => ({
-                address,
-                version: commit.version,
-            })),
+            parents: _parents,
             version: commit.version,
             initupgrade,
         }
@@ -1396,7 +1412,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 commit: {
                     ...object,
                     tree: ZERO_COMMIT,
-                    parents: [{ address: object.address, version: object.version }],
+                    parents: [
+                        {
+                            address: object.address,
+                            version: object.version,
+                            name: object.name,
+                        },
+                    ],
                 },
                 tree: {},
                 blobs: [],
@@ -1409,7 +1431,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return {
             commit: {
                 ...object,
-                parents: [{ address: object.address, version: object.version }],
+                parents: [
+                    {
+                        address: object.address,
+                        version: object.version,
+                        name: object.name,
+                    },
+                ],
             },
             tree,
             blobs,
