@@ -162,7 +162,7 @@ impl BlockchainCommitPusher for Everscale {
         // drop(wallet_contract);
         tracing::trace!("setCommit msg id: {:?}", result.message_id);
 
-        let start = Instant::now();
+        let mut start = Instant::now();
         let timeout = Duration::from_secs(*crate::config::SET_COMMIT_TIMEOUT);
 
         let mut repo_contract = self.repo_contract.clone();
@@ -191,15 +191,19 @@ impl BlockchainCommitPusher for Everscale {
                     _ => from_lt = found.1,
                 };
             } else {
-                from_lt = found.1;
+                if from_lt != found.1 {
+                    from_lt = found.1;
+                    tracing::debug!("Reset timer");
+                    start = Instant::now();
+                }
             }
 
             if start.elapsed() > timeout {
-                break;
+                bail!("Time is up. Fix and retry");
             }
-            sleep(Duration::from_secs(10)).await;
+            sleep(Duration::from_secs(5)).await;
         }
-        tracing::info!("Time spent on `set_commit` is: {:?}", start.elapsed());
+        tracing::info!("Branch `{branch}` has been updated");
         Ok(())
     }
 }
@@ -241,8 +245,9 @@ pub async fn find_messages(
     let raw_messages = result["data"]["messages"].clone();
     let messages: Vec<Message> = serde_json::from_value(raw_messages)?;
 
-    let mut last_lt = 0u64;
+    let mut last_lt = from_lt;
     for message in messages.iter() {
+        last_lt = message.created_lt;
         if message.bounced || message.body.is_none() {
             continue;
         }
@@ -273,7 +278,6 @@ pub async fn find_messages(
                 return Ok((Some(decoded.clone()), message.created_lt));
             }
         }
-        last_lt = message.created_lt;
     }
     Ok((None, last_lt))
 }
