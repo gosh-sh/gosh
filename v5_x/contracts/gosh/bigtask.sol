@@ -312,7 +312,6 @@ contract BigTask is Modifiers{
         uint128 diff = _fullSubtask - _subtaskgranted;
         if (diff == 0) { return; }
         _subtaskgranted = _fullSubtask;
-        if ((_allsubtask == true) && (diff != 0)) { _subtaskcomplete += 1; }
         this.grantTokenToSubtask{value: 0.1 ton, flag: 1}(diff, 0, 0);
         return;
     }
@@ -326,7 +325,11 @@ contract BigTask is Modifiers{
     }
 
     function grantTokenToSubtask(uint128 diff, uint128 granted, uint128 index) public senderIs(address(this)) accept {
-        if (index > _subtasksize - 1) { _subtaskgranted -= diff - granted; return; }
+        if (index > _subtasksize - 1) { 
+            _subtaskgranted -= diff - granted; 
+            if ((_allsubtask == true) && (diff == granted)) { _subtaskcomplete += 1; }
+            return; 
+        }
         this.grantTokenToSubtask{value: 0.1 ton, flag: 1}(diff, granted, index + 1);
         uint128 sm = diff * _subtask[index].value;
         sm /= _fullSubtaskValue;
