@@ -1170,7 +1170,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }
         require(_reserve >= balance + freebalance, ERR_LOW_TOKEN_RESERVE);
         if (bigtask.hasValue()) { require(value == balance, ERR_WRONG_LOCK); }
-        _reserve -= balance + freebalance;
+        if ((bigtask.hasValue() == false) || (num == 1)) { _reserve -= balance + freebalance; }
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName);
         if (num == 1) {
             TvmCell deployCode = GoshLib.buildBigTaskCode(_code[m_BigTaskCode], repo, version);
@@ -1184,7 +1184,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         } else {
             TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
             TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});
-            optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], grant, balance, uint128(0), hashtag, bigtask, workers);
+            optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], grant, uint128(0), balance, hashtag, bigtask, workers);
             optional(TvmCell) data1;
             new Task{
                 stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1

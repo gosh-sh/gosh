@@ -304,7 +304,7 @@ contract Task is Modifiers{
         selfdestruct(_systemcontract);
     }
 
-    function grantToken(uint128 value) public {
+    function grantToken(uint128 value) public senderIs(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())) accept {
         if (_bigtask.hasValue()) { BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).getGrantSubTask{value: 0.2 ton, flag: 1}(_nametask); }
         else { return; }
         _balance += value;

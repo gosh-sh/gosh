@@ -330,11 +330,11 @@ contract BigTask is Modifiers{
             if ((_allsubtask == true) && (diff == granted)) { _subtaskcomplete += 1; }
             return; 
         }
-        this.grantTokenToSubtask{value: 0.1 ton, flag: 1}(diff, granted, index + 1);
         uint128 sm = diff * _subtask[index].value;
         sm /= _fullSubtaskValue;
         granted += sm;
         if (granted > diff) { return; }
+        this.grantTokenToSubtask{value: 0.1 ton, flag: 1}(diff, granted, index + 1);
         Task(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, _subtask[index].name)).grantToken(sm);
     }
 
