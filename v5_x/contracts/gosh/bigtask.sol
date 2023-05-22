@@ -350,12 +350,24 @@ contract BigTask is Modifiers{
 
     //Selfdestruct
 
-    function destroy(address pubaddr, uint128 index) public {
+    function destroy(address pubaddr, uint128 index) public view {
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         require(_ready == false, ERR_TASK_COMPLETED);
+        tvm.accept();
         GoshDao(_goshdao).returnTaskTokenBig{value: 0.2 ton, flag: 1}(_nametask, _repo, _freebalance + _balance - _subtaskgranted);
         GoshDao(_goshdao).destroyTaskTagBig{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag, msg.sender);
-        selfdestruct(_systemcontract);
+        this.destroySubTaskIn{value: 0.1 ton, flag: 1}(0);
+    }
+
+    function destroySubTaskIn(
+        uint128 index1) public senderIs(address(this)) accept {
+        require(_ready == false, ERR_TASK_COMPLETED);
+        if (_subtask.exists(index1)){
+            Task(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, _subtask[index1].name)).destroyBig{value: 0.1 ton, flag: 1}();
+            delete _subtask[index1];
+        }
+        this.destroySubTaskIn{value: 0.1 ton, flag: 1}(index1 + 1);
+        if (index1 >= _subtasksize) { selfdestruct(_systemcontract); }
     }
 
     //Getters

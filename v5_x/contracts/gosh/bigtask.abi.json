@@ -176,6 +176,14 @@
 			]
 		},
 		{
+			"name": "destroySubTaskIn",
+			"inputs": [
+				{"name":"index1","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getTaskIn",
 			"inputs": [
 			],
