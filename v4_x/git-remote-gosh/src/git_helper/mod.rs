@@ -1,5 +1,6 @@
 #![allow(unused_variables)]
 
+use std::collections::HashMap;
 use std::env;
 
 use serde_json::Value;
@@ -429,32 +430,17 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
             }
             (Some("fetch"), Some(sha), Some(name)) => {
                 is_batching_fetch_in_progress = true;
-                let fetch_result = helper.fetch(sha, name).await;
-                if let Err(e) = fetch_result {
-                    let error_str = e.to_string();
-                    if error_str.contains("Was trying to call getCommit") {
-                        tracing::trace!("Fetch error: {error_str}");
-                        let (sha, version) = if error_str.contains("SHA=") {
-                            let extracted = error_str
-                                .trim_start_matches(|c| c != '\"')
-                                .trim_end_matches(|c| c != '\"')
-                                .replace(['\"'], "");
-                            let pair = extracted.split(",").collect::<Vec<&str>>().clone();
-                            (pair[0].to_owned(), pair[1].to_owned())
-                        } else {
-                            (sha.to_owned(), helper.find_commit(&sha.clone().to_owned()).await?.0)
-                        };
-                        // let previous: Value = helper
-                        //     .blockchain
-                        //     .repo_contract()
-                        //     .read_state(helper.blockchain.client(), "getPrevious", None)
-                        //     .await?;
-                        let out_str = format!("dispatcher {version} fetch {sha} {name}");
-                        stdout.write_all(format!("{out_str}\n").as_bytes()).await?;
-                        return Ok(());
-                    } else {
-                        return Err(e);
+                let fetch_result = helper.fetch(sha, name).await?;
+                if !fetch_result.is_empty() {
+                    tracing::trace!("Fetch result: {fetch_result:?}");
+                    let mut map: HashMap<String, Vec<String>> = HashMap::new();
+                    for (version, sha) in fetch_result {
+                        map.entry(version).or_insert(vec![]).push(sha);
                     }
+                    let map = format!("{map:?}").replace(" ", "");
+                    let out_str = format!("dispatcher fetch {name} {map}");
+                    stdout.write_all(format!("{out_str}\n").as_bytes()).await?;
+                    return Ok(());
                 }
                 if dispatcher_call {
                     stdout

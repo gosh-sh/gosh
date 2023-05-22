@@ -18,6 +18,7 @@ use std::{
 };
 use std::io::Write as IoWrite;
 use bstr::ByteSlice;
+use clap::builder::Str;
 use git_object::tree::EntryMode;
 use crate::git_helper::push::GetPreviousResult;
 
@@ -82,7 +83,7 @@ where
     }
 
     #[instrument(level = "debug", skip_all)]
-    pub async fn fetch_ref(&mut self, sha: &str, name: &str) -> anyhow::Result<()> {
+    pub async fn fetch_ref(&mut self, sha: &str, name: &str) -> anyhow::Result<Vec<(String, String)>> {
         const REFS_HEAD_PREFIX: &str = "refs/heads/";
         if !name.starts_with(REFS_HEAD_PREFIX) {
             anyhow::bail!("Error. Can not fetch an object without refs/heads/ prefix");
@@ -130,9 +131,10 @@ where
         let mut blobs_restore_plan = restore_blobs::BlobsRebuildingPlan::new();
         let sha = git_hash::ObjectId::from_str(sha)?;
         commits_queue.push_back(sha);
+
         let mut dangling_trees = vec![];
         let mut dangling_commits = vec![];
-        let mut next_commit_of_prev_version = None;
+        let mut next_commit_of_prev_version = vec![];
         loop {
             if blobs_restore_plan.is_available() {
                 tracing::debug!("branch={branch}: Restoring blobs");
@@ -235,11 +237,9 @@ where
                         Ok(commit) => commit,
                         Err(e) => {
                             let (version, _) = self.find_commit(&id.to_string()).await?;
-                            return Err(format_err!(
-                                "Failed to load commit with SHA=\"{},{}\". Error: {e}",
-                                id.to_string(),
-                                version,
-                            ));
+                            tracing::trace!("push to next_commit_of_prev_version=({},{})", id, version);
+                            next_commit_of_prev_version.push((version, id.to_string()));
+                            continue;
                         }
                     };
                 tracing::debug!("branch={branch}: loaded onchain commit {}", id);
@@ -281,8 +281,8 @@ where
                     // Object can be first in the tree and have no parents
                     // if !obj.parents.is_empty() {
                         let prev_version = onchain_commit.parents[0].clone().version;
-                        next_commit_of_prev_version = Some((id, prev_version));
-                        tracing::trace!("next_commit_of_prev_version={:?}", next_commit_of_prev_version);
+                        tracing::trace!("push to next_commit_of_prev_version=({},{})", id, prev_version);
+                        next_commit_of_prev_version.push((prev_version, id.to_string()));
                     // }
                 } else {
                     tree_obj_queue.push_back(to_load);
@@ -305,16 +305,13 @@ where
             }
             break;
         }
-        if next_commit_of_prev_version.is_some() {
-            let (sha, version) = next_commit_of_prev_version.unwrap();
-            return Err(format_err!("Was trying to call getCommit. SHA=\"{sha},{version}\""));
-        }
+        tracing::trace!("next_commit_of_prev_version={:?}", next_commit_of_prev_version);
 
-        Ok(())
+        Ok(next_commit_of_prev_version)
     }
 
     #[instrument(level = "trace", skip_all)]
-    pub async fn fetch_tag(&mut self, sha: &str, tag_name: &str) -> anyhow::Result<()> {
+    pub async fn fetch_tag(&mut self, sha: &str, tag_name: &str) -> anyhow::Result<Vec<(String, String)>> {
         let client = self.blockchain.client();
         let GetContractCodeResult { code } =
             get_contract_code(client, &self.repo_addr, blockchain::ContractKind::Tag).await?;
@@ -335,11 +332,11 @@ where
             let tag_id = store.write_buf(tag_object.kind, tag_object.data)?;
         }
 
-        Ok(())
+        Ok(vec![])
     }
 
     #[instrument(level = "trace", skip_all)]
-    pub async fn fetch(&mut self, sha: &str, name: &str) -> anyhow::Result<()> {
+    pub async fn fetch(&mut self, sha: &str, name: &str) -> anyhow::Result<Vec<(String, String)>> {
         tracing::debug!("fetch: sha={sha} ref={name}");
         let splitted: Vec<&str> = name.rsplitn(2, '/').collect();
         let result = match splitted[..] {
