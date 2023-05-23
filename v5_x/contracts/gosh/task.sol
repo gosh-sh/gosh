@@ -167,6 +167,7 @@ contract Task is Modifiers{
         require(_waitForUpdate == false, ERR_WRONG_UPGRADE_STATUS);
         require(_ready == false, ERR_TASK_COMPLETED);
         if (_bigtask.hasValue() == false) { return; }
+        BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).getGrantSubTask{value: 0.2 ton, flag: 1}(_nametask);
         tvm.accept();
         _ready = true;
         _locktime = block.timestamp;

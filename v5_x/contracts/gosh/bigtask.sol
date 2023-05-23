@@ -353,7 +353,7 @@ contract BigTask is Modifiers{
         granted += sm;
         if (granted > diff) { return; }
         this.grantTokenToSubtask{value: 0.1 ton, flag: 1}(diff, granted, index + 1);
-        Task(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, _subtask[index].name)).grantToken{value: 0.2 ton, flag: 1}(sm);
+        if (sm != 0) { Task(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, _subtask[index].name)).grantToken{value: 0.2 ton, flag: 1}(sm); }
     }
 
     function checkempty(address addr) private {
