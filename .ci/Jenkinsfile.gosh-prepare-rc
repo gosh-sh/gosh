@@ -67,8 +67,8 @@ pipeline {
                 }
             }
             steps {
-                //buildDispatcher()
-                buildDispatcherDebug()
+                buildDispatcher()
+                //buildDispatcherDebug()
             }
         }
         stage('Build: Git Helper') {
@@ -78,8 +78,8 @@ pipeline {
                 }
             }
             steps {
-                //runFunctionSet('buildRemoteGosh')
-                runFunctionSet('buildRemoteGoshDebug')
+                runFunctionSet('buildRemoteGosh')
+                //runFunctionSet('buildRemoteGoshDebug')
             }
         }
 
@@ -145,7 +145,7 @@ pipeline {
                 script {
                     sh "rm -rf tests_workspace_*"
                     def basePort = 9000
-                    def versions = ["v1_x", "v2_x", "v3_x"]
+                    def versions = ["v1_x", "v2_x", "v3_x", "v4_x"]
 
                     def upgradeFiles = getTestFiles("tests/upgrade_tests").toList()
                     def upgradeBatches = []
