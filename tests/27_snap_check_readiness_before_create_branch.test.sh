@@ -8,7 +8,7 @@ set -x
 #           This is a prerequisite for the successful creation of a branch.
 # works only for versions greater than 1
 
-if [ "$VERSION" == "v1_x" ]; then
+if [[ "$VERSION" == *"v1_x"* ]]; then
   echo "Test is ignored for v1"
   exit 0
 fi

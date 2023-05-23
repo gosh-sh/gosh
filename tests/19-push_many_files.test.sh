@@ -26,7 +26,7 @@ git config user.name "My name"
 git branch -m main
 
 echo "***** Generating files *****"
-if [ "$VERSION" == "v4_x" ]; then
+if [[ "$VERSION" == *"v4_x"* ]]; then
   FILES_CNT=1004
   for n in {1..1000}; do
       dd status=none if=/dev/urandom of=file$( printf %03d "$n" ).bin bs=1 count=$(( RANDOM % 8192 ))
