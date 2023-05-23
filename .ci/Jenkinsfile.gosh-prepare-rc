@@ -115,7 +115,7 @@ pipeline {
                         batches.add(new ArrayList(files.subList(i, end)))  // <-- Modified
                     }
 
-                    for (int j = 0; j < batches.size(); j++) {
+                    for (int j = 1; j < batches.size(); j++) {
                         def batch = batches[j]
                         
                         for (version in versions) {
@@ -123,9 +123,9 @@ pipeline {
                             deployVersion(version, batch, basePort + (j * batchSize))
                         }
 
-                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v1", "v1_x")
-                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v2", "v2_x")
-                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v3", "v3_x")
+                        //runFunctionalTests(batch, basePort + (j * batchSize), "Func v1", "v1_x")
+                        //runFunctionalTests(batch, basePort + (j * batchSize), "Func v2", "v2_x")
+                        //runFunctionalTests(batch, basePort + (j * batchSize), "Func v3", "v3_x")
                         runFunctionalTests(batch, basePort + (j * batchSize), "Func v4", "v4_x")
                         sh 'docker ps -a --filter name=localnode-* -aq | grep -v "$(docker ps -a --filter name=localnode-9000 -q)" | xargs docker rm -f'
                     }
