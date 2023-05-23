@@ -30,6 +30,8 @@ pipeline {
         gitParameter branchFilter: 'origin/(.*)', defaultValue: 'dev', name: 'sha1', type: 'PT_BRANCH', quickFilterEnabled: true
         booleanParam name: 'DRYRUN', defaultValue: true, description: 'If enabled, will NOT publish pre-release artifacts to Github and Dockerhub.'
         booleanParam name: 'TEST_WEB', defaultValue: true, description: 'If enabled, will execute web tests.'
+        booleanParam name: 'TEST_FUNC', defaultValue: true, description: 'If enabled, will execute func tests.'
+        booleanParam name: 'TEST_UPGRADE', defaultValue: true, description: 'If enabled, will execute upgrade tests.'
     }
 
     stages {
@@ -92,7 +94,8 @@ pipeline {
             }
         }
 
-        stage('Tests') {
+        stage('Tests: Func') {
+            when { expression { return params.TEST_FUNC } }
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -104,7 +107,6 @@ pipeline {
                     sh "rm -rf tests_workspace_*"
                     def basePort = 9000
                     def files = getTestFiles("tests").toList()
-                    def nodes = getNodesCount()
                     def versions = ["v1_x", "v2_x", "v3_x", "v4_x"]
 
                     def batches = []
@@ -113,7 +115,7 @@ pipeline {
                         batches.add(new ArrayList(files.subList(i, end)))  // <-- Modified
                     }
 
-                    for (int j = 1; j < batches.size(); j++) {
+                    for (int j = 0; j < batches.size(); j++) {
                         def batch = batches[j]
                         
                         for (version in versions) {
@@ -127,6 +129,23 @@ pipeline {
                         runFunctionalTests(batch, basePort + (j * batchSize), "Func v4", "v4_x")
                         sh 'docker ps -a --filter name=localnode-* -aq | grep -v "$(docker ps -a --filter name=localnode-9000 -q)" | xargs docker rm -f'
                     }
+                }
+            }
+        }
+
+        stage('Tests: Upgrade') {
+            when { expression { return params.TEST_UPGRADE } }
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network host -v /root/jenkins-main/workspace:/tmp --add-host localnode:127.0.0.1'
+                }
+            }
+            steps {
+                script {
+                    sh "rm -rf tests_workspace_*"
+                    def basePort = 9000
+                    def versions = ["v1_x", "v2_x", "v3_x]
 
                     def upgradeFiles = getTestFiles("tests/upgrade_tests").toList()
                     def upgradeBatches = []
@@ -376,21 +395,6 @@ def archiveAzureArtifacts() {
 }
 
 // FUNCTIONAL TESTS & DEPLOYS
-
-def getNodesCount() {
-    def filesTestsDir = []
-    def filesUpgrTestsDir = []
-
-    filesTestsDir = sh(script: 'ls tests/*.test.sh', returnStdout: true).trim().split('\n')
-    filesUpgrTestsDir = sh(script: "ls tests/upgrade_tests/*.test.sh", returnStdout: true).trim().split('\n')
-
-    // Compare the number of files in both directories and return the larger array
-    if (filesTestsDir.size() > filesUpgrTestsDir.size()) {
-        return filesTestsDir
-    } else {
-        return filesUpgrTestsDir
-    }
-}
 
 def getTestFiles(testsDir) {
     def files
