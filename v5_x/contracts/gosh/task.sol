@@ -77,6 +77,9 @@ contract Task is Modifiers{
                 _isFix = true;
 //                this.calculateAssignLength{value : 0.15 ton, flag: 1}(uint128(_candidates.length - 1));
             }
+            if (_bigtask.hasValue()) {
+                BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).deploySubTaskFinal{value: 0.2 ton, flag: 1}(_nametask, _needbalance);
+            }
             return;
         } 
         if (extraData.hasValue() == true) {

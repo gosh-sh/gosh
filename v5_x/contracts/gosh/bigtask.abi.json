@@ -97,6 +97,15 @@
 			]
 		},
 		{
+			"name": "deploySubTaskFinal",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "destroySubTask",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},

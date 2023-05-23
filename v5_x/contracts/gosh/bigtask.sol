@@ -193,10 +193,31 @@ contract BigTask is Modifiers{
         GoshWallet(msg.sender).deployTaskFromBigTask{value: 0.1 ton}(_nametask, repoName, nametask, hashtag, grant, value, workers);
     }
 
+    function deploySubTaskFinal(
+        string nametask,
+        uint128 value) public senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, nametask)) accept {
+        if (_subtasksize >= 100) { 
+            Task(msg.sender).destroyBig{value: 0.1 ton, flag: 1}();
+            return; 
+        }
+        if(_ready == true) { 
+            Task(msg.sender).destroyBig{value: 0.1 ton, flag: 1}();
+            return; 
+        }
+        if (_fullSubtaskValue + value > _freebalance)  { 
+            Task(msg.sender).destroyBig{value: 0.1 ton, flag: 1}();
+            return; 
+        }
+        _fullSubtaskValue += value;
+        _subtask[_subtasksize] = Subtask(value, nametask);
+        _subtasksize += 1;
+    }
+
     function destroySubTask(address pubaddr,
         uint128 index,
         uint128 index1) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
         require(_ready == false, ERR_TASK_COMPLETED);
+        _fullSubtaskValue -= _subtask[index1].value;
         Task(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, _subtask[index1].name)).destroyBig{value: 0.1 ton, flag: 1}();
         delete _subtask[index1];
     }
