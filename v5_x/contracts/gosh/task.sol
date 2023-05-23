@@ -164,8 +164,6 @@ contract Task is Modifiers{
     }
 
     function isReadyBalance() public {        
-        if (_bigtask.hasValue()) { BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).getGrantSubTask{value: 0.2 ton, flag: 1}(_nametask); }
-        else { return; }
         require(_waitForUpdate == false, ERR_WRONG_UPGRADE_STATUS);
         require(_ready == false, ERR_TASK_COMPLETED);
         if (_bigtask.hasValue() == false) { return; }
