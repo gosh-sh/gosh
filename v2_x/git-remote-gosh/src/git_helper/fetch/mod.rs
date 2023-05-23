@@ -19,6 +19,7 @@ use git_object::tree::EntryMode;
 use anyhow::format_err;
 use crate::blockchain::contract::GoshContract;
 use crate::blockchain::{GetNameBranchResult, gosh_abi};
+use clap::builder::Str;
 
 mod restore_blobs;
 
@@ -81,7 +82,7 @@ where
     }
 
     #[instrument(level = "debug", skip_all)]
-    pub async fn fetch_ref(&mut self, sha: &str, name: &str) -> anyhow::Result<()> {
+    pub async fn fetch_ref(&mut self, sha: &str, name: &str) -> anyhow::Result<Vec<(String, String)>> {
         const REFS_HEAD_PREFIX: &str = "refs/heads/";
         if !name.starts_with(REFS_HEAD_PREFIX) {
             anyhow::bail!("Error. Can not fetch an object without refs/heads/ prefix");
@@ -131,7 +132,7 @@ where
         commits_queue.push_back(sha);
         let mut dangling_trees = vec![];
         let mut dangling_commits = vec![];
-        let mut next_commit_of_prev_version = None;
+        let mut next_commit_of_prev_version = vec![];
         loop {
             if blobs_restore_plan.is_available() {
                 tracing::debug!("Restoring blobs");
@@ -229,8 +230,16 @@ where
                 guard!(id);
                 let address = &self.calculate_commit_address(&id).await?;
                 let onchain_commit =
-                    blockchain::GoshCommit::load(&self.blockchain.client(), address).await
-                        .map_err(|e| format_err!("Failed to load commit with SHA=\"{}\". Error: {e}", id.to_string()))?;
+                    match blockchain::GoshCommit::load(&self.blockchain.client(), address)
+                        .await {
+                        Ok(commit) => commit,
+                        Err(e) => {
+                            let (version, _) = self.find_commit(&id.to_string()).await?;
+                            tracing::trace!("push to next_commit_of_prev_version=({},{})", id, version);
+                            next_commit_of_prev_version.push((version, id.to_string()));
+                            continue;
+                        }
+                    };
                 tracing::debug!("loaded onchain commit {}", id);
                 let data = git_object::Data::new(
                     git_object::Kind::Commit,
@@ -243,7 +252,7 @@ where
                 branches.insert(onchain_commit.branch.clone());
                 // don't collect parent branches for deleted one
                 if remote_branches.contains(&onchain_commit.branch) {
-                    for parent in onchain_commit.parents {
+                    for parent in onchain_commit.parents.clone() {
                         let parent = BlockchainContractAddress::new(parent.address);
                         let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
                         let branch: GetNameBranchResult = parent_contract.run_static(
@@ -265,9 +274,11 @@ where
                 };
                 tracing::debug!("New tree root: {}", &to_load.oid);
                 if onchain_commit.initupgrade {
-                    if !obj.parents.is_empty() {
-                        next_commit_of_prev_version = Some(obj.parents[0].clone());
-                    }
+                    //if !obj.parents.is_empty() {
+                        let prev_version = onchain_commit.parents[0].clone().version;
+                        tracing::trace!("push to next_commit_of_prev_version=({},{})", id, prev_version);
+                        next_commit_of_prev_version.push((prev_version, id.to_string()));
+                    //}
                 } else {
                     tree_obj_queue.push_back(to_load);
                     for parent_id in &obj.parents {
@@ -289,15 +300,13 @@ where
             }
             break;
         }
-        if next_commit_of_prev_version.is_some() {
-            return Err(format_err!("Was trying to call getCommit. SHA=\"{}\"", next_commit_of_prev_version.unwrap()))
-        }
+        tracing::trace!("next_commit_of_prev_version={:?}", next_commit_of_prev_version);
 
-        Ok(())
+        Ok(next_commit_of_prev_version)
     }
 
     #[instrument(level = "trace", skip_all)]
-    pub async fn fetch_tag(&mut self, sha: &str, tag_name: &str) -> anyhow::Result<()> {
+    pub async fn fetch_tag(&mut self, sha: &str, tag_name: &str) -> anyhow::Result<Vec<(String, String)>> {
         let client = self.blockchain.client();
         let GetContractCodeResult { code } =
             get_contract_code(client, &self.repo_addr, blockchain::ContractKind::Tag).await?;
@@ -318,11 +327,11 @@ where
             let tag_id = store.write_buf(tag_object.kind, tag_object.data)?;
         }
 
-        Ok(())
+        Ok(vec![])
     }
 
     #[instrument(level = "trace", skip_all)]
-    pub async fn fetch(&mut self, sha: &str, name: &str) -> anyhow::Result<()> {
+    pub async fn fetch(&mut self, sha: &str, name: &str) -> anyhow::Result<Vec<(String, String)>> {
         tracing::debug!("fetch: sha={sha} ref={name}");
         let splitted: Vec<&str> = name.rsplitn(2, '/').collect();
         let result = match splitted[..] {
