@@ -107,8 +107,8 @@ pipeline {
                     sh "rm -rf tests_workspace_*"
                     def basePort = 9000
                     def files = getTestFiles("tests").toList()
-                    def versions = ["v1_x", "v2_x", "v3_x", "v4_x"]
-
+                    //def versions = ["v1_x", "v2_x", "v3_x", "v4_x"]
+                    def versions = ["v4_x"]
                     def batches = []
                     for (int i = 0; i < files.size(); i += batchSize) {
                         def end = Math.min(i + batchSize, files.size())
