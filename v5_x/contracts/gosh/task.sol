@@ -103,7 +103,7 @@ contract Task is Modifiers{
     function sendData(address toSend) public senderIs(_goshdao) accept {
         TvmCell data = abi.encode (_nametask, _repoName, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance);
         Task(toSend).getUpgradeData{value: 0.1 ton, flag: 1}(data);
-        GoshDao(_goshdao).destroyTaskTag2{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag);
+        GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag);
         selfdestruct(_systemcontract);
     }
     

@@ -1201,29 +1201,18 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function destroyTaskTag (string nametask, address repo, string[] tag) public view senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), repo, nametask))  accept {
-        uint256 keyaddr;       
-        require(_wallets.next(keyaddr).hasValue() == true, ERR_NO_DATA);
-        (,MemberToken worker) = _wallets.next(keyaddr).get();
         for (uint8 t = 0; t < tag.length; t++){ 
-            GoshWallet(worker.member).destroyTaskTag{value:0.2 ton, flag: 1}(repo, msg.sender, tag[t]);   	
+            RepoTagGosh(GoshLib.calculateTaskTagGoshAddress(_code[m_RepoTagCode], _versionController, address(this), repo, msg.sender, tag[t])).destroy { value: 0.1 ton, flag: 1}(_pubaddr, 0);
+            RepoTagGosh(GoshLib.calculateTaskTagDaoAddress(_code[m_RepoTagCode], _versionController, address(this), repo, msg.sender, tag[t])).destroy { value: 0.1 ton, flag: 1}(_pubaddr, 0);
+            RepoTagGosh(GoshLib.calculateTaskTagRepoAddress(_code[m_RepoTagCode], _versionController, address(this), repo, msg.sender, tag[t])).destroy { value: 0.1 ton, flag: 1}(_pubaddr, 0);
         }
     }
 
     function destroyTaskTagBig (string nametask, address repo, string[] tag) public view senderIs(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], address(this), repo, nametask))  accept {
-        uint256 keyaddr;       
-        require(_wallets.next(keyaddr).hasValue() == true, ERR_NO_DATA);
-        (,MemberToken worker) = _wallets.next(keyaddr).get();
         for (uint8 t = 0; t < tag.length; t++){ 
-            GoshWallet(worker.member).destroyTaskTag{value:0.2 ton, flag: 1}(repo, msg.sender, tag[t]);   	
-        }
-    }
-    
-    function destroyTaskTag2 (string nametask, address repo, string[] tag) public view senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), repo, nametask))  accept {
-        uint256 keyaddr;       
-        require(_wallets.next(keyaddr).hasValue() == true, ERR_NO_DATA);
-        (,MemberToken worker) = _wallets.next(keyaddr).get();
-        for (uint8 t = 0; t < tag.length; t++){ 
-            GoshWallet(worker.member).destroyTaskTag{value:0.2 ton, flag: 1}(repo, msg.sender, tag[t]);   	
+            RepoTagGosh(GoshLib.calculateTaskTagGoshAddress(_code[m_RepoTagCode], _versionController, address(this), repo, msg.sender, tag[t])).destroy { value: 0.1 ton, flag: 1}(_pubaddr, 0);
+            RepoTagGosh(GoshLib.calculateTaskTagDaoAddress(_code[m_RepoTagCode], _versionController, address(this), repo, msg.sender, tag[t])).destroy { value: 0.1 ton, flag: 1}(_pubaddr, 0);
+            RepoTagGosh(GoshLib.calculateTaskTagRepoAddress(_code[m_RepoTagCode], _versionController, address(this), repo, msg.sender, tag[t])).destroy { value: 0.1 ton, flag: 1}(_pubaddr, 0);
         }
     }
     
