@@ -178,6 +178,7 @@ impl GoshRemote {
             }
             output.push(line.clone());
         }
+        self.try_wait().await?;
         Ok(output)
     }
 }

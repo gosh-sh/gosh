@@ -173,11 +173,14 @@ impl BlockchainCommitPusher for Everscale {
         .await?;
         let commit_contract = GoshContract::new(commit_address.clone(), gosh_abi::COMMIT);
 
-        let filter = vec![
+        let mut filter = vec![
             "allCorrect".to_owned(),
             "cancelCommit".to_owned(),
             "NotCorrectRepo".to_owned(),
         ];
+        if is_upgrade {
+            filter.push("treeAccept".to_owned());
+        }
         let mut from_lt = 0;
 
         loop {
@@ -185,6 +188,7 @@ impl BlockchainCommitPusher for Everscale {
             if let Some(message) = found.0 {
                 match message.name.as_str() {
                     "allCorrect" => break,
+                    "treeAccept" => break,
                     "cancelCommit" => bail!("Push failed. Fix and retry"),
                     "NotCorrectRepo" => bail!("Push failed. Fetch first"),
                     _ => from_lt = found.1,
