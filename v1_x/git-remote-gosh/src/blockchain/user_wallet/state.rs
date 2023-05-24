@@ -127,7 +127,7 @@ impl UserWalletMirrors {
         // write lock
         {
             let wallet_config = blockchain.wallet_config().clone().ok_or(anyhow::anyhow!(
-                "Local GOSH config does not contain user data. Please go to the web version and copy GOSH config from settings."
+                "user wallet config does not exist or invalid"
             ))?;
             let zero_contract: GoshContract = inner_calls::get_user_wallet(
                 blockchain,
