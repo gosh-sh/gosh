@@ -66,6 +66,7 @@ contract BigTask is Modifiers{
     mapping(uint128 => Subtask) _subtask;
     uint128 _subtasskbalance = 0;
     uint128 _subtasksize = 0;
+    uint128 _destroyedSubTask = 0;
 
     constructor(
         optional(TvmCell) defaultData,
@@ -208,6 +209,17 @@ contract BigTask is Modifiers{
         _fullSubtaskValue += value;
         _subtask[_subtasksize] = Subtask(value, nametask);
         _subtasksize += 1;
+    }
+
+    function destroySubTaskFinal(
+        string nametask) public senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, nametask)) accept {
+        _destroyedSubTask += 1;
+        address key;
+        optional(address, bool) res = _candidates[_indexFinal].pubaddrmanager.next(key);
+        if (res.hasValue()) { 
+            (key, ) = res.get();
+            checkempty(key);
+        }
     }
 
     function destroySubTask(address pubaddr,
@@ -361,6 +373,7 @@ contract BigTask is Modifiers{
         if (_reviewcomplete != _reviewfull) { return; }
         if (_managercomplete != _managerfull) { return; }
         if ((_subtaskcomplete != _subtaskfull) && (_subtasksize != 0)) { return; }
+        if (_subtasksize != _destroyedSubTask) { return; }
         GoshDao(_goshdao).returnTaskTokenBig{value: 0.2 ton, flag: 1}(_nametask, _repo, _freebalance + _balance - _subtaskgranted);
         GoshDao(_goshdao).destroyTaskTagBig{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag, addr);
         selfdestruct(_systemcontract);

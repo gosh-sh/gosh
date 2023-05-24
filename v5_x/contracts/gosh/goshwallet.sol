@@ -2548,6 +2548,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(grant.assign.length == 0, ERR_TOO_MANY_VESTING_TIME);
         require(grant.review.length == 0, ERR_TOO_MANY_VESTING_TIME);
         require(grant.manager.length <= 150, ERR_TOO_MANY_VESTING_TIME);
+        require(grant.manager.length > 0, ERR_TOO_MANY_VESTING_TIME);
         require(tag.length  <= _limittag, ERR_TOO_MANY_TAGS);
         tvm.accept();
         _saveMsg();
