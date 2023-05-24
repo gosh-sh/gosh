@@ -221,8 +221,7 @@ contract BigTask is Modifiers{
         address key;
         optional(address, bool) res = _candidates[_indexFinal].pubaddrmanager.next(key);
         if (res.hasValue()) { 
-            (key, ) = res.get();
-            checkempty(key);
+            checkempty();
         }
     }
 
@@ -246,7 +245,7 @@ contract BigTask is Modifiers{
         require(block.timestamp >= _locktime, ERR_NOT_READY);
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        checkempty(msg.sender);
+        checkempty();
         if (m_assign == typegrant) {
             require(_candidates[_indexFinal].pubaddrassign.exists(pubaddr), ERR_ASSIGN_NOT_EXIST);
             this.getGrantAssign{value: 0.2 ton, flag: 1}(pubaddr);
@@ -281,7 +280,7 @@ contract BigTask is Modifiers{
         if ((_allassign == true) && (diff != 0)) { _assigncomplete += 1; }
         address addr = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, 0);
         GoshWallet(addr).grantTokenBig{value: 0.1 ton, flag: 1}(_nametask, _repo, diff);
-        checkempty(addr);
+        checkempty();
         return;
     }
 
@@ -305,7 +304,7 @@ contract BigTask is Modifiers{
         if ((_allreview == true) && (diff != 0)) { _reviewcomplete += 1; }
         address addr = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, 0);
         GoshWallet(addr).grantTokenBig{value: 0.1 ton, flag: 1}(_nametask, _repo, diff);
-        checkempty(addr);
+        checkempty();
         return;
     }
 
@@ -329,7 +328,7 @@ contract BigTask is Modifiers{
         if ((_allmanager == true) && (diff != 0)) { _managercomplete += 1; }
         address addr = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, 0);
         GoshWallet(addr).grantTokenBig{value: 0.1 ton, flag: 1}(_nametask, _repo, diff);
-        checkempty(addr);
+        checkempty();
         return;
     }
 
@@ -377,14 +376,14 @@ contract BigTask is Modifiers{
         if (sm != 0) { Task(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, _subtask[index].name)).grantToken{value: 0.2 ton, flag: 1}(sm); }
     }
 
-    function checkempty(address addr) private {
+    function checkempty() private {
         if (_assigncomplete != _assignfull) { return; }
         if (_reviewcomplete != _reviewfull) { return; }
         if (_managercomplete != _managerfull) { return; }
         if ((_subtaskcomplete != _subtaskfull) && (_subtasksize != 0)) { return; }
         if (_subtasksize != _destroyedSubTask) { return; }
         GoshDao(_goshdao).returnTaskTokenBig{value: 0.2 ton, flag: 1}(_nametask, _repo, _freebalance + _balance - _subtaskgranted);
-        GoshDao(_goshdao).destroyTaskTagBig{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag, addr);
+        GoshDao(_goshdao).destroyTaskTagBig{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag);
         selfdestruct(_systemcontract);
     }
 
@@ -395,7 +394,7 @@ contract BigTask is Modifiers{
         require(_ready == false, ERR_TASK_COMPLETED);
         tvm.accept();
         GoshDao(_goshdao).returnTaskTokenBig{value: 0.2 ton, flag: 1}(_nametask, _repo, _freebalance + _balance - _subtaskgranted);
-        GoshDao(_goshdao).destroyTaskTagBig{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag, msg.sender);
+        GoshDao(_goshdao).destroyTaskTagBig{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag);
         this.destroySubTaskIn{value: 0.1 ton, flag: 1}(0);
     }
 

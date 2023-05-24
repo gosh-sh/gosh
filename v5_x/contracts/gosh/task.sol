@@ -243,7 +243,7 @@ contract Task is Modifiers{
         if ((_allassign == true) && (diff != 0)) { _assigncomplete += 1; }
         address addr = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, 0);
         GoshWallet(addr).grantToken{value: 0.1 ton, flag: 1}(_nametask, _repo, diff);
-        checkempty(addr);
+        checkempty();
         return;
     }
     
@@ -268,7 +268,7 @@ contract Task is Modifiers{
         if ((_allreview == true) && (diff != 0)) { _reviewcomplete += 1; }
         address addr = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, 0);
         GoshWallet(addr).grantToken{value: 0.1 ton, flag: 1}(_nametask, _repo, diff);
-        checkempty(addr);
+        checkempty();
         return;
     }
     
@@ -293,16 +293,16 @@ contract Task is Modifiers{
         if ((_allmanager == true) && (diff != 0)) { _managercomplete += 1; }
         address addr = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, 0);
         GoshWallet(addr).grantToken{value: 0.1 ton, flag: 1}(_nametask, _repo, diff);
-        checkempty(addr);
+        checkempty();
         return;
     }
     
-    function checkempty(address addr) private {
+    function checkempty() private {
         if (_assigncomplete != _assignfull) { return; }
         if (_reviewcomplete != _reviewfull) { return; }
         if (_managercomplete != _managerfull) { return; }
         GoshDao(_goshdao).returnTaskToken{value: 0.2 ton, flag: 1}(_nametask, _repo, _balance);
-        GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag, addr);
+        GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag);
         if (_bigtask.hasValue()) {
             if (_assignfull + _reviewfull + _managerfull > 0) {
                 BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).destroySubTaskFinal{value: 0.2 ton, flag: 1}(_nametask, true);
@@ -325,7 +325,7 @@ contract Task is Modifiers{
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         require(_ready == false, ERR_TASK_COMPLETED);
         GoshDao(_goshdao).returnTaskToken{value: 0.2 ton, flag: 1}(_nametask, _repo, _balance);
-        GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag, msg.sender);
+        GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag);
         if (_assignfull + _reviewfull + _managerfull > 0) {
             BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).destroySubTaskFinal{value: 0.2 ton, flag: 1}(_nametask, true);
         } else {
@@ -344,7 +344,7 @@ contract Task is Modifiers{
             BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).destroySubTaskFinal{value: 0.2 ton, flag: 1}(_nametask, false);            
         }
         GoshDao(_goshdao).returnTaskToken{value: 0.2 ton, flag: 1}(_nametask, _repo, _balance);
-        GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag, msg.sender);
+        GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag);
         selfdestruct(_systemcontract);
     }
     

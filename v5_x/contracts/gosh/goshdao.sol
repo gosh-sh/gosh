@@ -1200,15 +1200,21 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }
     }
     
-    function destroyTaskTag (string nametask, address repo, string[] tag, address sender) public view senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), repo, nametask))  accept {
+    function destroyTaskTag (string nametask, address repo, string[] tag) public view senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), repo, nametask))  accept {
+        uint256 keyaddr;       
+        require(_wallets.next(keyaddr).hasValue() == true, ERR_NO_DATA);
+        (,MemberToken worker) = _wallets.next(keyaddr).get();
         for (uint8 t = 0; t < tag.length; t++){ 
-            GoshWallet(sender).destroyTaskTag{value:0.2 ton, flag: 1}(repo, msg.sender, tag[t]);   	
+            GoshWallet(worker.member).destroyTaskTag{value:0.2 ton, flag: 1}(repo, msg.sender, tag[t]);   	
         }
     }
 
-    function destroyTaskTagBig (string nametask, address repo, string[] tag, address sender) public view senderIs(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], address(this), repo, nametask))  accept {
+    function destroyTaskTagBig (string nametask, address repo, string[] tag) public view senderIs(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], address(this), repo, nametask))  accept {
+        uint256 keyaddr;       
+        require(_wallets.next(keyaddr).hasValue() == true, ERR_NO_DATA);
+        (,MemberToken worker) = _wallets.next(keyaddr).get();
         for (uint8 t = 0; t < tag.length; t++){ 
-            GoshWallet(sender).destroyTaskTag{value:0.2 ton, flag: 1}(repo, msg.sender, tag[t]);   	
+            GoshWallet(worker.member).destroyTaskTag{value:0.2 ton, flag: 1}(repo, msg.sender, tag[t]);   	
         }
     }
     
