@@ -406,8 +406,8 @@ contract BigTask is Modifiers{
             Task(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, _subtask[index1].name)).destroyBig{value: 0.1 ton, flag: 1}();
             delete _subtask[index1];
         }
+        if (index1 >= _subtasksize) { selfdestruct(_systemcontract); return; }
         this.destroySubTaskIn{value: 0.1 ton, flag: 1}(index1 + 1);
-        if (index1 >= _subtasksize) { selfdestruct(_systemcontract); }
     }
 
     //Getters
