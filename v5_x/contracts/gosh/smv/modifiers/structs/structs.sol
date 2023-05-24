@@ -7,6 +7,11 @@
 pragma ever-solidity >=0.66.0;
 
 //Structs  
+struct Subtask {
+    uint128 value;
+    string name;
+}
+
 struct PaidMember {
     uint128 fiatValue;
     uint128 decimals;
@@ -96,8 +101,8 @@ struct ConfigCommit {
 
 struct ConfigCommitBase {
     address task;
-    address commit;
-    uint128 number_commit;
+    optional(address) commit;
+    optional(uint128) number_commit;
     mapping(address => bool) pubaddrassign;
     mapping(address => bool) pubaddrreview;
     mapping(address => bool) pubaddrmanager;

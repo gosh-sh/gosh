@@ -29,6 +29,7 @@ contract Task is Modifiers{
     address static _goshdao;
     mapping(uint8 => TvmCell) _code;
     ConfigCommitBase[] _candidates;   
+    bool _isFix = false;
     ConfigGrant _grant;   
     string[] public _hashtag;
     uint128 _indexFinal;
@@ -56,6 +57,7 @@ contract Task is Modifiers{
     bool _waitForUpdate = false;
     address _previousVersionAddr;
     string _previousVersion;
+    
     optional(string) public _bigtask;
     
     constructor(
@@ -66,8 +68,18 @@ contract Task is Modifiers{
         require(_nametask != "", ERR_NO_DATA);
         tvm.accept();
         if (defaultData.hasValue()) { 
-            (_repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], _grant, _balance, _needbalance, _hashtag, _bigtask) = abi.decode(defaultData.get(),(string, address, TvmCell, TvmCell, TvmCell, TvmCell, ConfigGrant, uint128, uint128, string[], optional(string)));
+            optional(ConfigCommitBase) workers;
+            (_repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], _grant, _balance, _needbalance, _hashtag, _bigtask, workers) = abi.decode(defaultData.get(),(string, address, TvmCell, TvmCell, TvmCell, TvmCell, ConfigGrant, uint128, uint128, string[], optional(string), optional(ConfigCommitBase)));
             _repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, _repoName);
+            if (workers.hasValue()) {  
+                require((_bigtask.hasValue() == true), ERR_WRONG_DATA); 
+                _candidates.push(workers.get());
+                _isFix = true;
+//                this.calculateAssignLength{value : 0.15 ton, flag: 1}(uint128(_candidates.length - 1));
+            }
+            if (_bigtask.hasValue()) {
+                BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).deploySubTaskFinal{value: 0.2 ton, flag: 1}(_nametask, _needbalance);
+            }
             return;
         } 
         if (extraData.hasValue() == true) {
@@ -143,19 +155,18 @@ contract Task is Modifiers{
 
     function isReady(ConfigCommitBase commit) public senderIs(_repo) {
         require(_waitForUpdate == false, ERR_WRONG_UPGRADE_STATUS);
-        require(((_ready == false) || (_candidates.length == 0)), ERR_TASK_COMPLETED); 
-        require(((_bigtask.hasValue() == false) || (_candidates.length == 0)), ERR_TASK_COMPLETED); 
+        require(((_ready == false)), ERR_TASK_COMPLETED); 
+        require(((_isFix == true) || (_candidates.length == 0)), ERR_TASK_COMPLETED); 
         _candidates.push(commit);
         tvm.accept();
-        this.calculateAssignLength{value : 0.15 ton, flag: 1}(uint128(_candidates.length - 1));
+        if (_isFix == true) { this.calculateAssignLength{value : 0.15 ton, flag: 1}(uint128(0)); }
+        else { this.calculateAssignLength{value : 0.15 ton, flag: 1}(uint128(_candidates.length - 1)); }
     }
 
-    function isReadyBalance() public {        
-        if (_bigtask.hasValue()) { BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).getGrantSubTask{value: 0.2 ton, flag: 1}(_nametask); }
-        else { return; }
+    function isReadyBalance() public senderIs(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())) accept {        
         require(_waitForUpdate == false, ERR_WRONG_UPGRADE_STATUS);
         require(_ready == false, ERR_TASK_COMPLETED);
-        if (_bigtask.hasValue() == false) { return; }
+        BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).getGrantSubTask{value: 0.2 ton, flag: 1}(_nametask);
         tvm.accept();
         _ready = true;
         _locktime = block.timestamp;
@@ -184,6 +195,7 @@ contract Task is Modifiers{
         _reviewfull = reviewfull;
         _managerfull = managerfull;
         _indexFinal = index;      
+        if (_bigtask.hasValue()) { BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).approvedSub{value: 0.2 ton, flag: 1}(_nametask); }
         if (_bigtask.hasValue()) { return; }
         _ready = true;
         _locktime = block.timestamp;
@@ -291,10 +303,17 @@ contract Task is Modifiers{
         if (_managercomplete != _managerfull) { return; }
         GoshDao(_goshdao).returnTaskToken{value: 0.2 ton, flag: 1}(_nametask, _repo, _balance);
         GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag, addr);
+        if (_bigtask.hasValue()) {
+            if (_assignfull + _reviewfull + _managerfull > 0) {
+                BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).destroySubTaskFinal{value: 0.2 ton, flag: 1}(_nametask, true);
+            } else {
+                BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).destroySubTaskFinal{value: 0.2 ton, flag: 1}(_nametask, false);
+            }
+        }
         selfdestruct(_systemcontract);
     }
 
-    function grantToken(uint128 value) public {
+    function grantToken(uint128 value) public senderIs(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())) accept {
         if (_bigtask.hasValue()) { BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).getGrantSubTask{value: 0.2 ton, flag: 1}(_nametask); }
         else { return; }
         _balance += value;
@@ -307,12 +326,16 @@ contract Task is Modifiers{
         require(_ready == false, ERR_TASK_COMPLETED);
         GoshDao(_goshdao).returnTaskToken{value: 0.2 ton, flag: 1}(_nametask, _repo, _balance);
         GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag, msg.sender);
+        if (_assignfull + _reviewfull + _managerfull > 0) {
+            BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).destroySubTaskFinal{value: 0.2 ton, flag: 1}(_nametask, true);
+        } else {
+            BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).destroySubTaskFinal{value: 0.2 ton, flag: 1}(_nametask, false);            
+        }
         selfdestruct(_systemcontract);
     }
 
     function destroyBig() public {
-        if (_bigtask.hasValue()) { BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).getGrantSubTask{value: 0.2 ton, flag: 1}(_nametask); }
-        else { return; }
+        require(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get()) == msg.sender, ERR_SENDER_NO_ALLOWED);
         require(_ready == false, ERR_TASK_COMPLETED);
         GoshDao(_goshdao).returnTaskToken{value: 0.2 ton, flag: 1}(_nametask, _repo, _balance);
         GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag, msg.sender);

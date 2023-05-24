@@ -108,6 +108,17 @@ import {
     TCodeCommentThreadGetResult,
     TCodeCommentCreateParams,
     TCodeCommentThreadCreateResult,
+    TBigTaskCreateParams,
+    TBigTaskCreateResult,
+    TSubTaskCreateParams,
+    TSubTaskDeleteParams,
+    TBigTaskApproveParams,
+    TBigTaskApproveResult,
+    TBigTaskDeleteParams,
+    TBigTaskDeleteResult,
+    TBigTaskUpgradeParams,
+    TBigTaskUpgradeResult,
+    TCodeCommentThreadResdolveParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -1787,6 +1798,34 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
+    async createBigTask(params: TBigTaskCreateParams): Promise<TBigTaskCreateResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async approveBigTask(params: TBigTaskApproveParams): Promise<TBigTaskApproveResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async deleteBigTask(params: TBigTaskDeleteParams): Promise<TBigTaskDeleteResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async receiveBigTaskBounty(params: TTaskReceiveBountyParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async upgradeBigTask(params: TBigTaskUpgradeParams): Promise<TBigTaskUpgradeResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createSubTask(params: TSubTaskCreateParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async deleteSubTask(params: TSubTaskDeleteParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async sendEventReview(params: TDaoEventSendReviewParams): Promise<void> {
         const { event, decision } = params
 
@@ -1891,6 +1930,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     async createCodeCommentThread(
         params: TCodeCommentThreadCreateParams,
     ): Promise<TCodeCommentThreadCreateResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async resolveCodeCommentThread(
+        params: TCodeCommentThreadResdolveParams,
+    ): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 
@@ -2445,6 +2490,18 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             })
         })
 
+        const _parents = await Promise.all(
+            parents.map(async (item: any) => {
+                const _commit = await this._getCommit({ address: item.addr })
+                const { value0 } = await _commit.runLocal('getNameCommit', {})
+                return {
+                    address: item.addr,
+                    version: item.version,
+                    name: value0,
+                }
+            }),
+        )
+
         return {
             address: commit.address,
             name: sha,
@@ -2455,10 +2512,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             message: parsed.message,
             author: parsed.author,
             committer: parsed.committer,
-            parents: parents.map((item: any) => ({
-                address: item.addr,
-                version: item.version,
-            })),
+            parents: _parents,
             version: commit.version,
             initupgrade,
         }
@@ -2700,7 +2754,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 commit: {
                     ...object,
                     tree: ZERO_COMMIT,
-                    parents: [{ address: object.address, version: object.version }],
+                    parents: [
+                        {
+                            address: object.address,
+                            version: object.version,
+                            name: object.name,
+                        },
+                    ],
                 },
                 tree: {},
                 blobs: [],
@@ -2713,7 +2773,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return {
             commit: {
                 ...object,
-                parents: [{ address: object.address, version: object.version }],
+                parents: [
+                    {
+                        address: object.address,
+                        version: object.version,
+                        name: object.name,
+                    },
+                ],
             },
             tree,
             blobs,
@@ -4769,8 +4835,6 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getGoshSetCommitProposalParams'
         } else if (type === ESmvEventType.DAO_CONFIG_CHANGE) {
             fn = 'getGoshSetConfigDaoProposalParams'
-        } else if (type === ESmvEventType.TASK_CONFIRM) {
-            fn = 'getGoshConfirmTaskProposalParams'
         } else if (type === ESmvEventType.TASK_DELETE) {
             fn = 'getGoshDestroyTaskProposalParams'
         } else if (type === ESmvEventType.TASK_CREATE) {

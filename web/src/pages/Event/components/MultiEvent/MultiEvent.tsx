@@ -30,6 +30,10 @@ import { TaskTransferEvent } from '../TaskTransferEvent/TaskTransferEvent'
 import { TaskUpgradeEvent } from '../TaskUpgradeEvent/TaskUpgradeEvent'
 import { DaoStartPaidMembershipEvent } from '../DaoStartPaidMembershipEvent/DaoStartPaidMembershipEvent'
 import { DaoStopPaidMembershipEvent } from '../DaoStopPaidMembershipEvent/DaoStopPaidMembershipEvent'
+import { BigTaskCreateEvent } from '../BigTaskCreateEvent/BigTaskCreateEvent'
+import { BigTaskApproveEvent } from '../BigTaskApproveEvent/BigTaskApproveEvent'
+import { BigTaskDeleteEvent } from '../BigTaskDeleteEvent/BigTaskDeleteEvent'
+import { BigTaskUpgradeEvent } from '../BigTaskUpgradeEvent/BigTaskUpgradeEvent'
 
 type TMultiEventProps = {
     version: string
@@ -179,6 +183,18 @@ const MultiEvent = (props: TMultiEventProps) => {
                             {data.type.kind ===
                                 ESmvEventType.DAO_STOP_PAID_MEMBERSHIP && (
                                 <DaoStopPaidMembershipEvent data={data} />
+                            )}
+                            {data.type.kind === ESmvEventType.BIGTASK_CREATE && (
+                                <BigTaskCreateEvent data={data} />
+                            )}
+                            {data.type.kind === ESmvEventType.BIGTASK_APPROVE && (
+                                <BigTaskApproveEvent data={data} />
+                            )}
+                            {data.type.kind === ESmvEventType.BIGTASK_DELETE && (
+                                <BigTaskDeleteEvent data={data} />
+                            )}
+                            {data.type.kind === ESmvEventType.BIGTASK_UPGRADE && (
+                                <BigTaskUpgradeEvent data={data} />
                             )}
                         </div>
                     ))}

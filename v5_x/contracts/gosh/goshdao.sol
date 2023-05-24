@@ -1076,12 +1076,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
         string[] hashtag,
         ConfigGrant grant,
         uint128 value,
-        optional(string) bigtask
+        optional(string) bigtask,
+        optional(ConfigCommitBase) workers
     ) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index)) accept saveMsg {
         uint128 balance = 0; 
         ConfigCommit commit;
         uint128 freebalance;
-        this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, msg.sender, 0, value, bigtask);
+        this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, msg.sender, 0, value, bigtask, workers);
      }   
 
      function deployBigTask(
@@ -1095,7 +1096,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         uint128 freebalance
     ) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index)) accept saveMsg {
         uint128 balance = 0; 
-        this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, msg.sender, 1, 0, null);
+        this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, msg.sender, 1, 0, null, null);
      }   
      
      function calculateBalanceAssign(string repoName,
@@ -1109,16 +1110,17 @@ contract GoshDao is Modifiers, TokenRootOwner {
         address sender, 
         uint8 num,
         uint128 value,
-        optional(string) bigtask) public pure senderIs(address(this)) accept {
+        optional(string) bigtask,
+        optional(ConfigCommitBase) workers) public pure senderIs(address(this)) accept {
         uint128 check = 0;
         for (uint128 i = index; i < grant.assign.length; i++){
             check += 1;
-            if (check == 3) { this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, i, sender, num, value, bigtask); return; }
+            if (check == 3) { this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, i, sender, num, value, bigtask, workers); return; }
             balance += grant.assign[i].grant;
             if (i != 0) { require(grant.assign[i].lock > grant.assign[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.assign.length) { require(grant.assign[i].grant != 0, ERR_ZERO_GRANT); }
         }       
-        this.calculateBalanceReview{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, sender, num, value, bigtask);
+        this.calculateBalanceReview{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, sender, num, value, bigtask, workers);
      }
      
      function calculateBalanceReview(string repoName,
@@ -1132,16 +1134,17 @@ contract GoshDao is Modifiers, TokenRootOwner {
         address sender, 
         uint8 num,
         uint128 value,
-        optional(string) bigtask) public pure senderIs(address(this)) accept {
+        optional(string) bigtask,
+        optional(ConfigCommitBase) workers) public pure senderIs(address(this)) accept {
         uint128 check = 0;
         for (uint128 i = index; i < grant.review.length; i++){
             check += 1;
-            if (check == 3) { this.calculateBalanceReview{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, i, sender, num, value, bigtask); return; }
+            if (check == 3) { this.calculateBalanceReview{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, i, sender, num, value, bigtask, workers); return; }
             balance += grant.review[i].grant;
             if (i != 0) { require(grant.review[i].lock > grant.review[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.review.length) { require(grant.review[i].grant != 0, ERR_ZERO_GRANT); }
         }       
-        this.calculateBalanceManager{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, sender, num, value, bigtask);
+        this.calculateBalanceManager{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, sender, num, value, bigtask, workers);
       }
       
       function calculateBalanceManager(string repoName,
@@ -1155,18 +1158,19 @@ contract GoshDao is Modifiers, TokenRootOwner {
         address sender, 
         uint8 num,      
         uint128 value,
-        optional(string) bigtask) public senderIs(address(this)) accept {
+        optional(string) bigtask,
+        optional(ConfigCommitBase) workers) public senderIs(address(this)) accept {
         uint128 check = 0;
         for (uint128 i = index; i < grant.manager.length; i++){
             check += 1;
-            if (check == 3) { this.calculateBalanceManager{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, i, sender, num, value, bigtask); return; }
+            if (check == 3) { this.calculateBalanceManager{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, i, sender, num, value, bigtask, workers); return; }
             balance += grant.manager[i].grant;
             if (i != 0) { require(grant.manager[i].lock > grant.manager[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.manager.length) { require(grant.manager[i].grant != 0, ERR_ZERO_GRANT); }
         }
         require(_reserve >= balance + freebalance, ERR_LOW_TOKEN_RESERVE);
         if (bigtask.hasValue()) { require(value == balance, ERR_WRONG_LOCK); }
-        _reserve -= balance + freebalance;
+        if ((bigtask.hasValue() == false) || (num == 1)) { _reserve -= balance + freebalance; }
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName);
         if (num == 1) {
             TvmCell deployCode = GoshLib.buildBigTaskCode(_code[m_BigTaskCode], repo, version);
@@ -1180,7 +1184,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         } else {
             TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
             TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});
-            optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], grant, balance, uint128(0), hashtag, bigtask);
+            optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], grant, uint128(0), balance, hashtag, bigtask, workers);
             optional(TvmCell) data1;
             new Task{
                 stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1
@@ -1197,6 +1201,12 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function destroyTaskTag (string nametask, address repo, string[] tag, address sender) public view senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), repo, nametask))  accept {
+        for (uint8 t = 0; t < tag.length; t++){ 
+            GoshWallet(sender).destroyTaskTag{value:0.2 ton, flag: 1}(repo, msg.sender, tag[t]);   	
+        }
+    }
+
+    function destroyTaskTagBig (string nametask, address repo, string[] tag, address sender) public view senderIs(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], address(this), repo, nametask))  accept {
         for (uint8 t = 0; t < tag.length; t++){ 
             GoshWallet(sender).destroyTaskTag{value:0.2 ton, flag: 1}(repo, msg.sender, tag[t]);   	
         }
@@ -1221,6 +1231,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function returnTaskToken(string nametask, address repo, uint128 token) public senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), repo, nametask)) accept {
+        _reserve += token;
+    }
+
+    function returnTaskTokenBig(string nametask, address repo, uint128 token) public senderIs(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], address(this), repo, nametask)) accept {
         _reserve += token;
     }
     

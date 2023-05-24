@@ -90,7 +90,34 @@
 				{"name":"nametask","type":"string"},
 				{"name":"hashtag","type":"string[]"},
 				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
+				{"name":"value","type":"uint128"},
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deploySubTaskFinal",
+			"inputs": [
+				{"name":"nametask","type":"string"},
 				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroySubTaskFinal",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"ready","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "approvedSub",
+			"inputs": [
+				{"name":"nametask","type":"string"}
 			],
 			"outputs": [
 			]
@@ -175,6 +202,14 @@
 			]
 		},
 		{
+			"name": "destroySubTaskIn",
+			"inputs": [
+				{"name":"index1","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getTaskIn",
 			"inputs": [
 			],
@@ -194,8 +229,7 @@
 				{"name":"indexFinal","type":"uint128"},
 				{"name":"hashtag","type":"string[]"},
 				{"name":"locktime","type":"uint128"},
-				{"name":"subtask","type":"string[]"},
-				{"name":"subtaskvalue","type":"uint128[]"}
+				{"components":[{"name":"value","type":"uint128"},{"name":"name","type":"string"}],"name":"subtask","type":"map(uint128,tuple)"}
 			]
 		},
 		{
@@ -310,8 +344,10 @@
 		{"name":"_fullSubtask","type":"uint128"},
 		{"name":"_subtaskgranted","type":"uint128"},
 		{"name":"_fullSubtaskValue","type":"uint128"},
-		{"name":"_subtask","type":"string[]"},
-		{"name":"_subtaskvalue","type":"uint128[]"},
-		{"name":"_subtasskbalance","type":"uint128"}
+		{"components":[{"name":"value","type":"uint128"},{"name":"name","type":"string"}],"name":"_subtask","type":"map(uint128,tuple)"},
+		{"name":"_subtasskbalance","type":"uint128"},
+		{"name":"_subtasksize","type":"uint128"},
+		{"name":"_destroyedSubTask","type":"uint128"},
+		{"name":"_approvedSubTask","type":"uint128"}
 	]
 }

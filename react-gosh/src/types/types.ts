@@ -25,6 +25,10 @@ import {
     TTaskUpgradeParams,
     TDaoStartPaidMembershipParams,
     TDaoStopPaidMembershipParams,
+    TBigTaskCreateParams,
+    TBigTaskApproveParams,
+    TBigTaskDeleteParams,
+    TBigTaskUpgradeParams,
 } from './dao.types'
 import {
     TRepositoryChangeBranchProtectionParams,
@@ -182,6 +186,22 @@ type TEventMultipleCreateProposalParams = TEventCreateParams & {
         | {
               type: ESmvEventType.DAO_STOP_PAID_MEMBERSHIP
               params: TDaoStopPaidMembershipParams
+          }
+        | {
+              type: ESmvEventType.BIGTASK_CREATE
+              params: TBigTaskCreateParams
+          }
+        | {
+              type: ESmvEventType.BIGTASK_APPROVE
+              params: TBigTaskApproveParams
+          }
+        | {
+              type: ESmvEventType.BIGTASK_DELETE
+              params: TBigTaskDeleteParams
+          }
+        | {
+              type: ESmvEventType.BIGTASK_UPGRADE
+              params: TBigTaskUpgradeParams
           }
     )[]
 }

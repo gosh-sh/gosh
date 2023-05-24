@@ -11,6 +11,9 @@ import { toast } from 'react-toastify'
 import { ToastError } from '../Toast'
 import { FormikTextarea } from '../Formik'
 import { useRef } from 'react'
+import { faCheckCircle } from '@fortawesome/free-regular-svg-icons'
+import { Tooltip } from 'react-tooltip'
+import Loader from '../Loader/Loader'
 
 const CommentBlock = (props: any) => {
     const { comment, className } = props
@@ -45,7 +48,14 @@ type TCodeCommentsProps = {
 const CodeComments = (props: TCodeCommentsProps) => {
     const { filename } = props
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
-    const { items, toggleThread, hoverThread, submitComment } = useBlobComments({
+    const {
+        threads,
+        toggleThread,
+        hoverThread,
+        resolveThread,
+        getCommentsNext,
+        submitComment,
+    } = useBlobComments({
         dao: dao.adapter,
         filename,
     })
@@ -55,6 +65,16 @@ const CodeComments = (props: TCodeCommentsProps) => {
         if (id) {
             toggleThread(id)
             scrollComments(id)
+        }
+    }
+
+    const onThreadResolve = async (values: { id: string }) => {
+        const { id } = values
+        try {
+            await resolveThread(id, true)
+        } catch (e: any) {
+            console.error(e.message)
+            toast.error(<ToastError error={e} />)
         }
     }
 
@@ -85,17 +105,29 @@ const CodeComments = (props: TCodeCommentsProps) => {
 
     return (
         <div className="flex flex-col gap-3">
-            {!items.length && (
+            {threads.isFetching && (
+                <Loader className="text-center text-sm">Fetching comments</Loader>
+            )}
+            {!threads.isFetching && !threads.items.length && (
                 <div className="text-sm text-gray-7c8db5 text-center p-4">
                     No comments yet
                 </div>
             )}
-            {items.map((thread, index) => (
-                <div key={index} className="relative">
+            {threads.items.map((thread, index) => (
+                <div
+                    key={index}
+                    className={classNames(
+                        'flex flex-nowrap items-start overflow-hidden',
+                        thread.isResolved ? 'opacity-60' : null,
+                    )}
+                >
                     <div
                         className={classNames(
-                            'border-gray-e6edff border rounded-xl p-2 overflow-clip',
-                            thread.isActive ? 'border-blue-348eff' : null,
+                            'basis-full shrink-0 border-gray-e6edff border rounded-xl p-2',
+                            'transition-all duration-300',
+                            thread.isOpen
+                                ? '-translate-x-full opacity-0'
+                                : 'translate-x-0 opacity-100',
                         )}
                         onMouseEnter={() => hoverThread(thread.id, true)}
                         onMouseLeave={() => hoverThread(thread.id, false)}
@@ -133,12 +165,11 @@ const CodeComments = (props: TCodeCommentsProps) => {
 
                     <div
                         className={classNames(
-                            thread.isOpen
-                                ? 'opacity-100 z-50 -translate-x-6'
-                                : 'opacity-0 -z-50 translate-x-0',
-                            'absolute top-5 w-full',
-                            'border-gray-e6edff border rounded-xl p-2 bg-white',
+                            'basis-full shrink-0 border-gray-e6edff border rounded-xl p-2 bg-white',
                             'transition-all duration-300',
+                            thread.isOpen
+                                ? '-translate-x-full !border-blue-348eff max-h-screen opacity-100'
+                                : 'translate-x-0 max-h-0 opacity-0',
                         )}
                     >
                         <div className="flex flex-nowrap justify-between items-center border-b border-b-gray-e6edff">
@@ -161,9 +192,48 @@ const CodeComments = (props: TCodeCommentsProps) => {
                                 </Button>
                             </div>
                             <div>
+                                {!thread.isResolved && (
+                                    <div className="inline-block">
+                                        <Formik
+                                            initialValues={{ id: thread.id }}
+                                            onSubmit={onThreadResolve}
+                                            enableReinitialize
+                                        >
+                                            {({ isSubmitting }) => (
+                                                <Form>
+                                                    <Button
+                                                        type="submit"
+                                                        variant="custom"
+                                                        className={classNames(
+                                                            '!p-1 text-gray-7c8db5',
+                                                            !thread.isOpen
+                                                                ? 'pointer-events-none'
+                                                                : null,
+                                                        )}
+                                                        data-tooltip-id={`tip-resolve-${thread.id}`}
+                                                        data-tooltip-content="Resolve thread"
+                                                        disabled={isSubmitting}
+                                                        isLoading={isSubmitting}
+                                                    >
+                                                        {!isSubmitting && (
+                                                            <FontAwesomeIcon
+                                                                icon={faCheckCircle}
+                                                            />
+                                                        )}
+                                                    </Button>
+                                                </Form>
+                                            )}
+                                        </Formik>
+                                        <Tooltip
+                                            id={`tip-resolve-${thread.id}`}
+                                            clickable
+                                            className="z-50"
+                                        />
+                                    </div>
+                                )}
                                 <Button
                                     variant="custom"
-                                    className="!p-1 text-gray-7c8db5"
+                                    className="ml-2 !p-1 text-gray-7c8db5"
                                     onClick={() => onThreadToggle(thread.id)}
                                 >
                                     <FontAwesomeIcon icon={faTimes} />
@@ -178,41 +248,54 @@ const CodeComments = (props: TCodeCommentsProps) => {
                                 comment={thread.content}
                                 className="bg-gray-fafafd"
                             />
+                            {thread.comments.hasNext && (
+                                <Button
+                                    variant="custom"
+                                    className="mt-2 text-xs text-gray-7c8db5"
+                                    disabled={thread.comments.isFetching}
+                                    isLoading={thread.comments.isFetching}
+                                    onClick={() => getCommentsNext(thread.id)}
+                                >
+                                    Load previous comments
+                                </Button>
+                            )}
                             {thread.comments.items.map((item, i) => (
                                 <CommentBlock key={i} comment={item} />
                             ))}
                         </div>
-                        <div className="mt-1">
-                            <Formik
-                                initialValues={{ thread_id: thread.id, comment: '' }}
-                                onSubmit={onAddCommentSubmit}
-                                enableReinitialize
-                            >
-                                {({ isSubmitting }) => (
-                                    <Form>
-                                        <div>
-                                            <Field
-                                                name="comment"
-                                                component={FormikTextarea}
-                                                placeholder="Say something"
-                                                autoComplete="off"
-                                            />
-                                        </div>
-                                        <div className="text-end">
-                                            <Button
-                                                type="submit"
-                                                variant="custom"
-                                                className="text-xs text-gray-7c8db5"
-                                                disabled={isSubmitting}
-                                                isLoading={isSubmitting}
-                                            >
-                                                Submit
-                                            </Button>
-                                        </div>
-                                    </Form>
-                                )}
-                            </Formik>
-                        </div>
+                        {dao.details.isAuthMember && (
+                            <div className="mt-1">
+                                <Formik
+                                    initialValues={{ thread_id: thread.id, comment: '' }}
+                                    onSubmit={onAddCommentSubmit}
+                                    enableReinitialize
+                                >
+                                    {({ isSubmitting }) => (
+                                        <Form>
+                                            <div>
+                                                <Field
+                                                    name="comment"
+                                                    component={FormikTextarea}
+                                                    placeholder="Say something"
+                                                    autoComplete="off"
+                                                />
+                                            </div>
+                                            <div className="text-end">
+                                                <Button
+                                                    type="submit"
+                                                    variant="custom"
+                                                    className="text-xs text-gray-7c8db5"
+                                                    disabled={isSubmitting}
+                                                    isLoading={isSubmitting}
+                                                >
+                                                    Submit
+                                                </Button>
+                                            </div>
+                                        </Form>
+                                    )}
+                                </Formik>
+                            </div>
+                        )}
                     </div>
                 </div>
             ))}
