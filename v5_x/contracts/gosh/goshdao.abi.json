@@ -970,7 +970,29 @@
 			]
 		},
 		{
+			"name": "checkOldBigTaskVersion",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"string"},
+				{"name":"previous","type":"string"},
+				{"name":"previousaddr","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "checkOldTaskVersion5",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"string"},
+				{"name":"previous","type":"address"},
+				{"name":"answer","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkOldBigTaskVersion5",
 			"inputs": [
 				{"name":"nametask","type":"string"},
 				{"name":"repo","type":"string"},

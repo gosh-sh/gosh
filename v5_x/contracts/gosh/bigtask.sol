@@ -85,7 +85,7 @@ contract BigTask is Modifiers{
         require(previousVersion.hasValue() == true, ERR_WRONG_DATA);
         (_repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_TaskCode], _hashtag, _previousVersion, _previousVersionAddr) = abi.decode(previousVersion.get(),(string, address, TvmCell, TvmCell, TvmCell, TvmCell, string[], string, address));
         _repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, _repoName);
-        GoshDao(_goshdao).checkOldTaskVersion{value: 0.2 ton, flag: 1}(_nametask, _repoName, _previousVersion, _previousVersionAddr);
+        GoshDao(_goshdao).checkOldBigTaskVersion{value: 0.2 ton, flag: 1}(_nametask, _repoName, _previousVersion, _previousVersionAddr);
         _waitForUpdate = true;
     }
 

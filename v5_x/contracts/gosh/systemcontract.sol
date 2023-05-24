@@ -225,6 +225,18 @@ contract SystemContract is Modifiers {
         address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), name);
         GoshDao(addr).checkOldTaskVersion5{value : 0.31 ton, flag: 1}(nametask, repo, previousaddr, answer);
     }
+
+    function checkOldBigTaskVersion2(string name, string nametask, string repo, string previous, address previousaddr, address answer) public view {
+        address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), name);
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        VersionController(_versionController).checkOldBigTaskVersion3{value : 0.3 ton, flag: 1}(name, nametask, repo, previous, previousaddr, version, answer);
+    }
+    
+    function checkOldBigTaskVersion4(string name, string nametask, string repo, address previousaddr, address answer) public view senderIs(_versionController) accept {
+        address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), name);
+        GoshDao(addr).checkOldBigTaskVersion5{value : 0.31 ton, flag: 1}(nametask, repo, previousaddr, answer);
+    }
     
     function deployCustomData(TvmCell data0, address pubaddr, string namedao, uint128 index) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), pubaddr, index)) accept {
         data0;

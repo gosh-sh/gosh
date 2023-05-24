@@ -1219,10 +1219,19 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function checkOldTaskVersion (string nametask, string repo, string previous, address previousaddr) public view senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repo), nametask))  accept {        
         SystemContract(_systemcontract).checkOldTaskVersion2{value : 0.2 ton, flag: 1}(_nameDao, nametask, repo, previous, previousaddr, msg.sender);
     }
+
+    function checkOldBigTaskVersion (string nametask, string repo, string previous, address previousaddr) public view senderIs(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], address(this), GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repo), nametask))  accept {        
+        SystemContract(_systemcontract).checkOldBigTaskVersion2{value : 0.2 ton, flag: 1}(_nameDao, nametask, repo, previous, previousaddr, msg.sender);
+    }
     
     function checkOldTaskVersion5 (string nametask, string repo, address previous, address answer) public view senderIs(_systemcontract)  accept {       
         require(previous ==  GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repo), nametask), ERR_WRONG_DATA);
         Task(previous).sendData{value:0.2 ton, flag: 1}(answer);
+    }
+
+    function checkOldBigTaskVersion5 (string nametask, string repo, address previous, address answer) public view senderIs(_systemcontract)  accept {       
+        require(previous ==  GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], address(this), GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repo), nametask), ERR_WRONG_DATA);
+        BigTask(previous).sendData{value:0.2 ton, flag: 1}(answer);
     }
     
     function returnTaskToken(string nametask, address repo, uint128 token) public senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), repo, nametask)) accept {
