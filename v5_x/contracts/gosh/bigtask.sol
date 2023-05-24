@@ -67,6 +67,7 @@ contract BigTask is Modifiers{
     uint128 _subtasskbalance = 0;
     uint128 _subtasksize = 0;
     uint128 _destroyedSubTask = 0;
+    uint128 _approvedSubTask = 0;
 
     constructor(
         optional(TvmCell) defaultData,
@@ -172,6 +173,7 @@ contract BigTask is Modifiers{
     }
 
     function approveReady(address pubaddr, uint128 index) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
+        if (_approvedSubTask != _subtasksize) { return; }
         _ready = true;
         _locktime = block.timestamp;
         this.sendReady{value: 0.1 ton, flag: 1}(0);
@@ -212,14 +214,21 @@ contract BigTask is Modifiers{
     }
 
     function destroySubTaskFinal(
-        string nametask) public senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, nametask)) accept {
+        string nametask,
+        bool ready) public senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, nametask)) accept {
         _destroyedSubTask += 1;
+        if (ready == false) { _approvedSubTask += 1; }
         address key;
         optional(address, bool) res = _candidates[_indexFinal].pubaddrmanager.next(key);
         if (res.hasValue()) { 
             (key, ) = res.get();
             checkempty(key);
         }
+    }
+
+    function approvedSub(
+        string nametask) public senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, nametask)) accept {
+        if (_ready == false) { _approvedSubTask += 1; }
     }
 
     function destroySubTask(address pubaddr,

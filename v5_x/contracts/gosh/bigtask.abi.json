@@ -108,6 +108,15 @@
 		{
 			"name": "destroySubTaskFinal",
 			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"ready","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "approvedSub",
+			"inputs": [
 				{"name":"nametask","type":"string"}
 			],
 			"outputs": [
@@ -338,6 +347,7 @@
 		{"components":[{"name":"value","type":"uint128"},{"name":"name","type":"string"}],"name":"_subtask","type":"map(uint128,tuple)"},
 		{"name":"_subtasskbalance","type":"uint128"},
 		{"name":"_subtasksize","type":"uint128"},
-		{"name":"_destroyedSubTask","type":"uint128"}
+		{"name":"_destroyedSubTask","type":"uint128"},
+		{"name":"_approvedSubTask","type":"uint128"}
 	]
 }
