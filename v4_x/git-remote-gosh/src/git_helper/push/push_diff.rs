@@ -1,3 +1,5 @@
+use std::time::Duration;
+use tokio::time::sleep;
 use crate::blockchain::user_wallet::{UserWallet, WalletError};
 use crate::ipfs::build_ipfs;
 
@@ -25,6 +27,8 @@ use super::utilities::retry::default_retry_strategy;
 
 // const PUSH_DIFF_MAX_TRIES: i32 = 3;
 // const PUSH_SNAPSHOT_MAX_TRIES: i32 = 3;
+
+const WAIT_FOR_DELETE_SNAPSHOT_TRIES: i32 = 20;
 
 enum BlobDst {
     Ipfs(String),
@@ -299,6 +303,20 @@ pub async fn push_new_branch_snapshot(
         blockchain
             .delete_snapshot(&wallet, expected_addr.clone())
             .await?;
+
+        let mut attempt = 0;
+        tracing::trace!("wait for snapshot to be not active: {expected_addr}");
+        loop {
+            attempt += 1;
+            if attempt == WAIT_FOR_DELETE_SNAPSHOT_TRIES {
+                anyhow::bail!("Failed to delete snapshot: {expected_addr}");
+            }
+            if !snapshot_contract.is_active(blockchain.client()).await? {
+                tracing::trace!("Snapshot is deleted: {expected_addr}");
+                break;
+            }
+            sleep(Duration::from_secs(5)).await;
+        }
     }
 
     let (content, ipfs) = if is_going_to_ipfs(original_content) {
