@@ -651,7 +651,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function upgradeBigTask (address pub, uint128 index, string nametask, string repoName, string oldversion, address oldtask, string[] hashtag) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pub, index))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
     	address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName);
-        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
+        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_BigTaskCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});
         optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_TaskCode], hashtag, oldversion, oldtask);
         optional(TvmCell) data1;
