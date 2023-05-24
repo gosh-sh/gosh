@@ -1096,8 +1096,34 @@ contract GoshDao is Modifiers, TokenRootOwner {
         uint128 freebalance
     ) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index)) accept saveMsg {
         uint128 balance = 0; 
-        this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, msg.sender, 1, 0, null, null);
-     }   
+        this.calculateBalanceSubtask{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, msg.sender, 1, 0, null, null);
+     }  
+
+     function calculateBalanceSubtask(string repoName,
+        string nametask,
+        ConfigGrant grant,
+        uint128 balance,
+        ConfigCommit commit,
+        uint128 freebalance,
+        string[] hashtag,
+        uint128 index, 
+        address sender, 
+        uint8 num,
+        uint128 value,
+        optional(string) bigtask,
+        optional(ConfigCommitBase) workers) public pure senderIs(address(this)) accept {
+        uint128 check = 0;
+        for (uint128 i = index; i < grant.assign.length; i++){
+            check += 1;
+            if (check == 3) { this.calculateBalanceSubtask{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, i, sender, num, value, bigtask, workers); return; }
+            balance += grant.subtask[i].grant;
+            if (i != 0) { require(grant.subtask[i].lock > grant.subtask[i - 1].lock, ERR_WRONG_LOCK); }
+            if (i == grant.assign.length) { require(grant.subtask[i].grant != 0, ERR_ZERO_GRANT); }
+        }       
+        if (balance != freebalance) { return; }
+        balance = 0;
+        this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, sender, num, value, bigtask, workers);
+     } 
      
      function calculateBalanceAssign(string repoName,
         string nametask,
