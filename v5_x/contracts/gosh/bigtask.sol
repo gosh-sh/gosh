@@ -416,8 +416,8 @@ contract BigTask is Modifiers{
         IObject(msg.sender).returnTask{value: 0.1 ton, flag: 1}(data);
     }
 
-    function getStatus() external view returns(string nametask, address repo, ConfigCommit[] candidates, ConfigGrant grant, bool ready, uint128 indexFinal, string[] hashtag, uint128 locktime, mapping(uint128 => Subtask) subtask) {
-        return (_nametask, _repo, _candidates, _grant, _ready, _indexFinal, _hashtag, _locktime, _subtask);
+    function getStatus() external view returns(string nametask, address repo, ConfigCommit[] candidates, ConfigGrant grant, bool ready, uint128 indexFinal, string[] hashtag, uint128 locktime, mapping(uint128 => Subtask) subtask, uint128 fullSubtaskValue) {
+        return (_nametask, _repo, _candidates, _grant, _ready, _indexFinal, _hashtag, _locktime, _subtask, _fullSubtaskValue);
     }
     function getVersion() external pure returns(string, string) {
         return ("bigtask", version);
