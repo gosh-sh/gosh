@@ -1113,12 +1113,12 @@ contract GoshDao is Modifiers, TokenRootOwner {
         optional(string) bigtask,
         optional(ConfigCommitBase) workers) public pure senderIs(address(this)) accept {
         uint128 check = 0;
-        for (uint128 i = index; i < grant.assign.length; i++){
+        for (uint128 i = index; i < grant.subtask.length; i++){
             check += 1;
             if (check == 3) { this.calculateBalanceSubtask{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, i, sender, num, value, bigtask, workers); return; }
             balance += grant.subtask[i].grant;
             if (i != 0) { require(grant.subtask[i].lock > grant.subtask[i - 1].lock, ERR_WRONG_LOCK); }
-            if (i == grant.assign.length) { require(grant.subtask[i].grant != 0, ERR_ZERO_GRANT); }
+            if (i == grant.subtask.length) { require(grant.subtask[i].grant != 0, ERR_ZERO_GRANT); }
         }       
         if (balance != freebalance) { return; }
         balance = 0;
