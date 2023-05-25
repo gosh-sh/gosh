@@ -125,9 +125,11 @@ contract Task is Modifiers{
             string name;
             ConfigGrantOldv3 grant;
             ConfigCommitBaseOldv3[] candidates;
+            ConfigCommitBase[] emptyCand;
             ConfigPair[] emptyPairs;
             (name, _repoName, _ready, candidates, grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance) = abi.decode(data, (string, string, bool, ConfigCommitBaseOldv3[], ConfigGrantOldv3, uint128, uint128, uint128, uint128, uint128, mapping(address => uint128), mapping(address => uint128), mapping(address => uint128), uint128, uint128, uint128, uint128, uint128, uint128, bool, bool, bool, uint128, uint128, uint128, uint128));
             _grant = ConfigGrant(grant.assign, grant.review, grant.manager, emptyPairs);
+            _candidates = emptyCand;
             if (candidates.length != 0) { 
                 _candidates.push(ConfigCommitBase(candidates[_indexFinal].task, candidates[_indexFinal].commit, candidates[_indexFinal].number_commit, candidates[_indexFinal].pubaddrassign, candidates[_indexFinal].pubaddrreview, candidates[_indexFinal].pubaddrmanager, candidates[_indexFinal].daoMembers));
                 _indexFinal = 0;
