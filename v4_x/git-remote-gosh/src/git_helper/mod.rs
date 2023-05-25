@@ -42,6 +42,7 @@ pub struct GitHelper<
     pub repo_addr: BlockchainContractAddress,
     local_repository: Arc<git_repository::Repository>,
     cache: Arc<CacheProxy>,
+    upgraded_commits: Vec<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -145,6 +146,7 @@ where
             repo_addr,
             local_repository,
             cache: Arc::new(cache),
+            upgraded_commits: vec![],
         })
     }
 
@@ -520,6 +522,7 @@ pub mod tests {
             repo_addr,
             local_repository,
             cache,
+            upgraded_commits: vec![],
         }
     }
 }

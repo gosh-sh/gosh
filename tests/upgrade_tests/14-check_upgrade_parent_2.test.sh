@@ -10,18 +10,21 @@ set -x
 # 1. Deploy repo
 # 2. Push several commits
 # 3. Upgrade the repo
-# 4. Push commits to the main branch
-# 5. Push a branch starting from the old commit
-# 6. Clone the repo
+# 4. Create the following structure of commits
+#   new3
+#  /    \
+# new1 new2
+#  \    /
+#   old
 
 if [ "$1" = "ignore" ]; then
   echo "Test $0 ignored"
   exit 0
 fi
 
-REPO_NAME=upgrade_repo13
-DAO_NAME="dao-upgrade-test13_$(date +%s)"
-NEW_REPO_PATH=upgrade_repo13_v2
+REPO_NAME=upgrade_repo14
+DAO_NAME="dao-upgrade-test14_$(date +%s)"
+NEW_REPO_PATH=upgrade_repo14_v2
 
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
@@ -51,16 +54,7 @@ echo 2222 > 1.txt
 git add 1.txt
 git commit -m old_main2
 
-echo 222 > 2.txt
-git add 2.txt
-git commit -m old_main3
 git push -u origin main
-
-git checkout -b dev $COMMIT_ID
-echo 3333 > 3.txt
-git add 3.txt
-git commit -m dev1
-git push -u origin dev
 
 cd ..
 
@@ -81,25 +75,18 @@ export NEW_LINK="gosh://$SYSTEM_CONTRACT_ADDR_1/$DAO_NAME/$REPO_NAME"
 echo "NEW_LINK=$NEW_LINK"
 
 cd $REPO_NAME
+git checkout -b dev
+echo 3333 > 3.txt
+git add 3.txt
+git commit -m dev1
+
 git checkout main
 
 echo 1111 > 1.txt
 git add 1.txt
 git commit -m main4
 
-echo 1111 > 2.txt
-git add 2.txt
-git commit -m main5
-
-echo "***** create branch heading to old commit *****"
-git checkout dev
-echo 4444 > 4.txt
-git add 4.txt
-git commit -m dev2
-
-git checkout main
 git merge dev -m merge
-git branch -D dev
 
 git push -u origin main
 
@@ -111,8 +98,8 @@ git clone $NEW_LINK $NEW_REPO_PATH
 echo "***** push to new version *****"
 cd $NEW_REPO_PATH
 
-cur_ver=$(cat 4.txt)
-if [ $cur_ver != "4444" ]; then
+cur_ver=$(cat 3.txt)
+if [ $cur_ver != "3333" ]; then
   echo "WRONG VERSION"
   exit 1
 fi
