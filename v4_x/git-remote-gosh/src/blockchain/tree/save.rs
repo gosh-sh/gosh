@@ -1,7 +1,10 @@
 use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
-use crate::blockchain::contract::{ContractInfo, GoshContract};
+use crate::blockchain::contract::ContractInfo;
 use crate::blockchain::user_wallet::UserWallet;
-use crate::blockchain::{call::BlockchainCall, BlockchainService, Everscale, GoshBlobBitFlags, Tree, BlockchainContractAddress};
+use crate::blockchain::{
+    call::BlockchainCall, BlockchainContractAddress, BlockchainService, Everscale,
+    GoshBlobBitFlags, Tree,
+};
 use async_trait::async_trait;
 use git_object;
 use git_object::tree;
@@ -109,7 +112,8 @@ impl DeployTree for Everscale {
                 let res = wait_contracts_deployed(self, &[tree_address.clone()]).await;
                 attempts += 1;
                 if res.is_ok() {
-                    if res.unwrap().len() == 0 { // we have no contracts to wait for
+                    if res.unwrap().len() == 0 {
+                        // we have no contracts to wait for
                         break;
                     }
                 }
@@ -134,15 +138,14 @@ impl DeployTree for Everscale {
                         nodes: chunk,
                     };
                     tracing::trace!("DeployAddTreeArgs: {params:?}");
-                    self
-                        .send_message(
-                            wallet_contract.deref(),
-                            "deployAddTree",
-                            Some(serde_json::to_value(params)?),
-                            None,
-                        )
-                        .await
-                        .map(|_| ())?;
+                    self.send_message(
+                        wallet_contract.deref(),
+                        "deployAddTree",
+                        Some(serde_json::to_value(params)?),
+                        None,
+                    )
+                    .await
+                    .map(|_| ())?;
                 }
                 let res = wait_for_all_chunks_to_be_loaded(self, &tree_address, nodes_cnt).await;
                 if res.is_ok() {
@@ -216,15 +219,22 @@ async fn wait_for_all_chunks_to_be_loaded<B>(
 where
     B: BlockchainService + 'static,
 {
-    tracing::trace!("wait_for_all_chunks_to_be_loaded: tree_addr={:?}", tree_address);
+    tracing::trace!(
+        "wait_for_all_chunks_to_be_loaded: tree_addr={:?}",
+        tree_address
+    );
     let mut counter = 0;
     while counter <= MAX_RETRIES_FOR_CHUNKS_TO_APPEAR {
         tracing::trace!("wait_for_all_chunks_to_be_loaded iteration: {counter}");
         let tree = Tree::load(blockchain.client(), tree_address).await?;
         tracing::trace!("Tree objects state: {:?}", tree);
-        tracing::trace!("Tree map length: {:?} (waiting length = {})", tree.objects.len(), nodes_cnt);
+        tracing::trace!(
+            "Tree map length: {:?} (waiting length = {})",
+            tree.objects.len(),
+            nodes_cnt
+        );
         if tree.objects.len() == nodes_cnt {
-            return Ok(())
+            return Ok(());
         }
         counter += 1;
         tokio::time::sleep(std::time::Duration::from_secs(3)).await;

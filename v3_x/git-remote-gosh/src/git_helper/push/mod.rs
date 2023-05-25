@@ -3,21 +3,20 @@ use crate::{
     blockchain::{
         branch::DeleteBranch,
         contract::{ContractRead, GoshContract},
-        ZERO_SHA, MAX_ACCOUNTS_ADDRESSES_PER_QUERY,
-        AddrVersion, BlockchainContractAddress, BlockchainService,
-        GetNameCommitResult, get_commit_address, gosh_abi,
+        get_commit_address, gosh_abi, AddrVersion, BlockchainContractAddress, BlockchainService,
+        GetNameCommitResult, MAX_ACCOUNTS_ADDRESSES_PER_QUERY, ZERO_SHA,
     },
     git_helper::push::create_branch::CreateBranchOperation,
 };
 use git_hash::{self, ObjectId};
 use git_odb::Find;
-use ton_client::net::ParamsOfQuery;
 use std::{
     collections::{HashMap, HashSet},
     str::FromStr,
     sync::Arc,
     vec::Vec,
 };
+use ton_client::net::ParamsOfQuery;
 
 use tokio::sync::Semaphore;
 
@@ -32,11 +31,14 @@ use push_tag::push_tag;
 mod delete_tag;
 mod parallel_snapshot_upload_support;
 
+use crate::blockchain::{branch_list, get_commit_by_addr};
+use crate::git_helper::push::parallel_snapshot_upload_support::{
+    ParallelCommit, ParallelCommitUploadSupport, ParallelSnapshot, ParallelSnapshotUploadSupport,
+    ParallelTreeUploadSupport,
+};
 use delete_tag::delete_tag;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 use push_tree::push_tree;
-use crate::git_helper::push::parallel_snapshot_upload_support::{ParallelCommit, ParallelCommitUploadSupport, ParallelSnapshot, ParallelSnapshotUploadSupport, ParallelTreeUploadSupport};
-use crate::blockchain::{branch_list, get_commit_by_addr};
 
 static PARALLEL_PUSH_LIMIT: usize = 1 << 6;
 
@@ -137,14 +139,12 @@ where
             let branch_name = branch_name.to_string();
             let file_path = file_path.to_string();
             let commit_str = commit_id.to_string();
-            parallel_snapshot_uploads.add_to_push_list(self,
-                ParallelSnapshot::new(
-                    branch_name,
-                    file_path,
-                    upgrade_commit,
-                    commit_str,
+            parallel_snapshot_uploads
+                .add_to_push_list(
+                    self,
+                    ParallelSnapshot::new(branch_name, file_path, upgrade_commit, commit_str),
                 )
-            ).await?;
+                .await?;
         }
 
         let file_diff =
@@ -259,7 +259,9 @@ where
         //     .unwrap();
         // TODO: get commit can fail due to changes in versions
         let commit_contract = GoshContract::new(&remote_commit_addr, gosh_abi::COMMIT);
-        let sha: GetNameCommitResult = commit_contract.run_static(self.blockchain.client(), "getNameCommit", None).await?;
+        let sha: GetNameCommitResult = commit_contract
+            .run_static(self.blockchain.client(), "getNameCommit", None)
+            .await?;
         tracing::trace!("Commit sha: {sha:?}");
         let sha = sha.name;
         let prev_commit_id = Some(ObjectId::from_str(&sha)?);
@@ -296,7 +298,12 @@ where
             .into_iter();
 
         let mut ids = vec![];
-        let commits: Vec<_> = walk.map(|a| { ids.push(a.clone().to_string()); a.object().unwrap().into_commit() }).collect();
+        let commits: Vec<_> = walk
+            .map(|a| {
+                ids.push(a.clone().to_string());
+                a.object().unwrap().into_commit()
+            })
+            .collect();
         let query = r#"query($accounts: [String]!) {
             accounts(filter: {
                 id: { in: $accounts }
@@ -323,9 +330,7 @@ where
                 Arc::clone(client),
                 ParamsOfQuery {
                     query: query.clone(),
-                    variables: Some(serde_json::json!({
-                        "accounts": addresses
-                    })),
+                    variables: Some(serde_json::json!({ "accounts": addresses })),
                     ..Default::default()
                 },
             )
@@ -349,7 +354,7 @@ where
                 let pos = ex_iter.position(|x| x.address == commit.1 && x.status == 1);
 
                 if pos.is_none() {
-                    return Ok(Some(commit.0.clone()))
+                    return Ok(Some(commit.0.clone()));
                 }
             }
         }
@@ -387,12 +392,16 @@ where
                 &mut repo_contract,
                 &id.to_string(),
             )
-                .await?;
+            .await?;
             tracing::trace!("parent address: {parent}");
             let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
 
             if let Err(_) = parent_contract.get_version(self.blockchain.client()).await {
-                let undeployed = ParallelDiffsUploadSupport::wait_contracts_deployed(&self.blockchain, &[parent]).await;
+                let undeployed = ParallelDiffsUploadSupport::wait_contracts_deployed(
+                    &self.blockchain,
+                    &[parent],
+                )
+                .await;
                 if undeployed.is_err() || !undeployed.unwrap().is_empty() {
                     tracing::trace!("Failed to call parent");
                     let right_commit_address = if let Ok(res) = self.find_commit(&id).await {
@@ -403,14 +412,19 @@ where
                         // just skip check in this case
                         return Ok(());
                     };
-                    let commit_contract = GoshContract::new(&right_commit_address, gosh_abi::COMMIT);
-                    let branch: GetNameCommitResult = commit_contract.run_static(
-                        self.blockchain.client(),
-                        "getNameBranch",
-                        None,
-                    ).await?;
+                    let commit_contract =
+                        GoshContract::new(&right_commit_address, gosh_abi::COMMIT);
+                    let branch: GetNameCommitResult = commit_contract
+                        .run_static(self.blockchain.client(), "getNameBranch", None)
+                        .await?;
                     // TODO: local and remote branch are set equal here it can be wrong
-                    self.check_and_upgrade_previous_commit(id.to_string(), &branch.name, &branch.name, set_commit).await?;
+                    self.check_and_upgrade_previous_commit(
+                        id.to_string(),
+                        &branch.name,
+                        &branch.name,
+                        set_commit,
+                    )
+                    .await?;
                 }
             }
         }
@@ -465,8 +479,14 @@ where
             )
             .await?;
             let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
-            let version = parent_contract.get_version(self.blockchain.client()).await.unwrap_or(env!("BUILD_SUPPORTED_VERSION").to_string());
-            parents.push(AddrVersion { address: parent, version });
+            let version = parent_contract
+                .get_version(self.blockchain.client())
+                .await
+                .unwrap_or(env!("BUILD_SUPPORTED_VERSION").to_string());
+            parents.push(AddrVersion {
+                address: parent,
+                version,
+            });
         }
         if upgrade_commit && !parents_for_upgrade.is_empty() {
             parents = parents_for_upgrade;
@@ -481,8 +501,20 @@ where
             let tree_addr = tree_addr.clone();
             let branch_name = remote_branch_name.to_owned().clone();
 
-            push_commits.add_to_push_list(self, ParallelCommit::new(object_id, branch_name, tree_addr, raw_commit, parents, upgrade_commit), push_semaphore.clone()).await?;
-
+            push_commits
+                .add_to_push_list(
+                    self,
+                    ParallelCommit::new(
+                        object_id,
+                        branch_name,
+                        tree_addr,
+                        raw_commit,
+                        parents,
+                        upgrade_commit,
+                    ),
+                    push_semaphore.clone(),
+                )
+                .await?;
         }
 
         let tree_diff = utilities::build_tree_diff_from_commits(
@@ -558,7 +590,7 @@ where
             &mut repo_contract,
             &ancestor_commit,
         )
-            .await?;
+        .await?;
         tracing::trace!("ancestor address: {ancestor_address}");
 
         // 2) Check that ancestor contract exists
@@ -583,8 +615,12 @@ where
         tracing::trace!("prev repo addr: {previous:?}");
 
         // 4) Get address of the ancestor commit of previous version
-        let previous_repo_addr = previous.previous.clone()
-            .ok_or(anyhow::format_err!("Failed to get previous version of the repo"))?
+        let previous_repo_addr = previous
+            .previous
+            .clone()
+            .ok_or(anyhow::format_err!(
+                "Failed to get previous version of the repo"
+            ))?
             .address;
         let mut prev_repo_contract = GoshContract::new(&previous_repo_addr, gosh_abi::REPO);
         let prev_ancestor_address = get_commit_address(
@@ -592,7 +628,7 @@ where
             &mut prev_repo_contract,
             &ancestor_commit,
         )
-            .await?;
+        .await?;
         tracing::trace!("prev ver ancestor commit address: {prev_ancestor_address}");
 
         // 5) get previous version commit data
@@ -602,9 +638,10 @@ where
         // tracing::trace!("Prev version commit data: {commit:?}");
 
         // 6) For new version ancestor commit set parent to the ancestor commit of previous version
-        let parents_for_upgrade = vec![
-            AddrVersion { address: prev_ancestor_address.clone(), version: previous.previous.unwrap().version}
-        ];
+        let parents_for_upgrade = vec![AddrVersion {
+            address: prev_ancestor_address.clone(),
+            version: previous.previous.unwrap().version,
+        }];
         let ancestor_id = self
             .local_repository()
             .find_object(ObjectId::from_str(&ancestor_commit)?)?
@@ -630,7 +667,7 @@ where
         tracing::trace!("List of commit objects: {commit_objects_list:?}");
 
         // 9) push objects
-        let mut push_commits= ParallelCommitUploadSupport::new();
+        let mut push_commits = ParallelCommitUploadSupport::new();
         let push_semaphore = Arc::new(Semaphore::new(PARALLEL_PUSH_LIMIT));
         // let mut parallel_snapshot_uploads: JoinSet<anyhow::Result<()>> = JoinSet::new();
         let mut parallel_tree_uploads = ParallelTreeUploadSupport::new();
@@ -700,19 +737,17 @@ where
             .wait_all_diffs(self.blockchain.clone())
             .await?;
 
-
         if set_commit {
-            let branches = branch_list(
-                self.blockchain.client(),
-                &self.repo_addr
-            ).await?;
+            let branches = branch_list(self.blockchain.client(), &self.repo_addr).await?;
             for branch_ref in branches.branch_ref {
                 if branch_ref.branch_name == local_branch_name {
-                    let commit = get_commit_by_addr(
-                        self.blockchain.client(),
-                        &branch_ref.commit_address
-                    ).await?
-                        .ok_or(anyhow::format_err!("Failed to load last commit in the branch: {}", &branch_ref.commit_address))?;
+                    let commit =
+                        get_commit_by_addr(self.blockchain.client(), &branch_ref.commit_address)
+                            .await?
+                            .ok_or(anyhow::format_err!(
+                                "Failed to load last commit in the branch: {}",
+                                &branch_ref.commit_address
+                            ))?;
                     if commit.sha == latest_commit_id.to_string() {
                         // 10) call set commit to the new version of the ancestor commit
                         self.blockchain
@@ -809,7 +844,7 @@ where
                     ancestor_commit_id = branching_point.to_string().clone();
                     parents_of_commits.insert(
                         originating_commit.to_hex().to_string(),
-                        vec![ancestor_commit_id]
+                        vec![ancestor_commit_id],
                     );
                     ancestor_commit_object
                 }
@@ -844,12 +879,8 @@ where
             match object_kind {
                 git_object::Kind::Commit => {
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)
-                    self.check_parents(
-                        object_id,
-                        remote_branch_name,
-                        local_branch_name,
-                        true,
-                    ).await?;
+                    self.check_parents(object_id, remote_branch_name, local_branch_name, true)
+                        .await?;
                     self.push_commit_object(
                         oid,
                         object_id,
@@ -913,9 +944,14 @@ where
             parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
             for address in expected_contracts.clone() {
                 tracing::trace!("Get params of undeployed diff: {}", address);
-                let (coord, parallel, is_last) = expected.get(&address).ok_or(anyhow::format_err!("Failed to get diff params"))?.clone();
+                let (coord, parallel, is_last) = expected
+                    .get(&address)
+                    .ok_or(anyhow::format_err!("Failed to get diff params"))?
+                    .clone();
                 // parallel_diffs_upload_support.push(self, diff).await?;
-                parallel_diffs_upload_support.add_to_push_list(self, &coord, &parallel, is_last).await?;
+                parallel_diffs_upload_support
+                    .add_to_push_list(self, &coord, &parallel, is_last)
+                    .await?;
             }
             parallel_diffs_upload_support.push_dangling(self).await?;
         }
@@ -942,13 +978,24 @@ where
             let expected = parallel_snapshot_uploads.get_expected().to_owned();
             parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
             for address in expected_contracts.clone() {
-                let snapshot = expected.get(&address).ok_or(anyhow::format_err!("Failed to get diff params"))?.clone();
-                tracing::trace!("Get params of undeployed snapshot: {} {:?}", address, snapshot);
-                parallel_snapshot_uploads.add_to_push_list(self, snapshot).await?;
+                let snapshot = expected
+                    .get(&address)
+                    .ok_or(anyhow::format_err!("Failed to get diff params"))?
+                    .clone();
+                tracing::trace!(
+                    "Get params of undeployed snapshot: {} {:?}",
+                    address,
+                    snapshot
+                );
+                parallel_snapshot_uploads
+                    .add_to_push_list(self, snapshot)
+                    .await?;
             }
         }
         if attempts == 3 {
-            anyhow::bail!("Failed to deploy all snapshots. Undeployed snapshots: {expected_contracts:?}")
+            anyhow::bail!(
+                "Failed to deploy all snapshots. Undeployed snapshots: {expected_contracts:?}"
+            )
         }
 
         let mut attempts = 0;
@@ -970,9 +1017,18 @@ where
             let expected = parallel_tree_uploads.get_expected().to_owned();
             parallel_tree_uploads = ParallelTreeUploadSupport::new();
             for address in expected_contracts.clone() {
-                let tree = expected.get(&address).ok_or(anyhow::format_err!("Failed to get diff params"))?.clone();
-                tracing::trace!("Get params of undeployed tree: {} {:?}", address, tree.tree_id);
-                parallel_tree_uploads.add_to_push_list(self, tree, push_semaphore.clone()).await?;
+                let tree = expected
+                    .get(&address)
+                    .ok_or(anyhow::format_err!("Failed to get diff params"))?
+                    .clone();
+                tracing::trace!(
+                    "Get params of undeployed tree: {} {:?}",
+                    address,
+                    tree.tree_id
+                );
+                parallel_tree_uploads
+                    .add_to_push_list(self, tree, push_semaphore.clone())
+                    .await?;
             }
         }
         if attempts == 3 {
@@ -998,13 +1054,24 @@ where
             let expected = push_commits.get_expected().to_owned();
             push_commits = ParallelCommitUploadSupport::new();
             for address in expected_contracts.clone() {
-                let commit = expected.get(&address).ok_or(anyhow::format_err!("Failed to get diff params"))?.clone();
-                tracing::trace!("Get params of undeployed tree: {} {:?}", address, commit.commit_id);
-                push_commits.add_to_push_list(self, commit, push_semaphore.clone()).await?;
+                let commit = expected
+                    .get(&address)
+                    .ok_or(anyhow::format_err!("Failed to get diff params"))?
+                    .clone();
+                tracing::trace!(
+                    "Get params of undeployed tree: {} {:?}",
+                    address,
+                    commit.commit_id
+                );
+                push_commits
+                    .add_to_push_list(self, commit, push_semaphore.clone())
+                    .await?;
             }
         }
         if attempts == 3 {
-            anyhow::bail!("Failed to deploy all commits. Undeployed commits: {expected_contracts:?}")
+            anyhow::bail!(
+                "Failed to deploy all commits. Undeployed commits: {expected_contracts:?}"
+            )
         }
 
         // 9. Set commit (move HEAD)
@@ -1099,7 +1166,9 @@ where
             .await
             .map_err(|_| anyhow::format_err!("Seems like you are not a member of DAO. Only DAO members can push to the repositories."))?;
         tracing::trace!("Zero wallet address: {:?}", wallet.address);
-        let res: GetLimitedResult = wallet.run_static(self.blockchain.client(), "_limited", None).await?;
+        let res: GetLimitedResult = wallet
+            .run_static(self.blockchain.client(), "_limited", None)
+            .await?;
         tracing::trace!("wallet _limited: {:?}", res);
         if res.limited {
             anyhow::bail!("Seems like you are not a member of DAO. Only DAO members can push to the repositories.");
@@ -1117,15 +1186,11 @@ where
             ["", remote_tag] if remote_tag.starts_with("refs/tags") => {
                 self.delete_remote_tag(remote_tag).await?
             }
-            ["", remote_ref] => {
-                self.delete_remote_ref(remote_ref).await?
-            },
+            ["", remote_ref] => self.delete_remote_ref(remote_ref).await?,
             [local_tag, remote_tag] if local_tag.starts_with("refs/tags") => {
                 self.push_ref_tag(local_tag, remote_tag).await?
             }
-            [local_ref, remote_ref] => {
-                self.push_ref(local_ref, remote_ref).await?
-            },
+            [local_ref, remote_ref] => self.push_ref(local_ref, remote_ref).await?,
             _ => unreachable!(),
         };
         tracing::debug!("push ref result: {result}");
@@ -1136,17 +1201,17 @@ where
         let branch_name: &str = get_ref_name(remote_ref)?;
 
         let wallet = self
-                .blockchain
-                .user_wallet(&self.dao_addr, &self.remote.network)
-                .await?;
-
-            DeleteBranch::delete_branch(
-                &self.blockchain,
-                &wallet,
-                self.remote.repo.clone(),
-                branch_name.to_string(),
-            )
+            .blockchain
+            .user_wallet(&self.dao_addr, &self.remote.network)
             .await?;
+
+        DeleteBranch::delete_branch(
+            &self.blockchain,
+            &wallet,
+            self.remote.repo.clone(),
+            branch_name.to_string(),
+        )
+        .await?;
         Ok(format!("ok {remote_ref}\n"))
     }
 

@@ -15,8 +15,7 @@ where
     B: BlockchainService + 'static,
 {
     tracing::trace!("wait_snapshots_until_ready: snapshots={addresses:?}");
-    let mut current_status =
-        JoinSet::<anyhow::Result<Vec<BlockchainContractAddress>>>::new();
+    let mut current_status = JoinSet::<anyhow::Result<Vec<BlockchainContractAddress>>>::new();
 
     let mut expected_snapshots = Vec::from(addresses);
     let b = blockchain.clone();
@@ -34,8 +33,7 @@ where
                 }
                 let mut not_ready = Vec::<BlockchainContractAddress>::new();
                 for snapshot_addr in expected_snapshots.clone() {
-                    match Snapshot::load(b.client(), &snapshot_addr).await
-                    {
+                    match Snapshot::load(b.client(), &snapshot_addr).await {
                         Ok(snapshot) => {
                             if !snapshot.ready_for_diffs {
                                 not_ready.push(snapshot_addr.clone());

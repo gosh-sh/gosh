@@ -1,8 +1,11 @@
-use std::time::Duration;
-use tokio::time::sleep;
 use crate::blockchain::user_wallet::{UserWallet, WalletError};
 use crate::ipfs::build_ipfs;
+use std::time::Duration;
+use tokio::time::sleep;
 
+use crate::blockchain::get_commit_address;
+use crate::git_helper::push::parallel_diffs_upload_support::ParallelDiffsUploadSupport;
+use crate::git_helper::push::GetPreviousResult;
 use crate::{
     blockchain::{
         contract::{ContractRead, GoshContract},
@@ -18,9 +21,6 @@ use crate::{
 };
 use tokio_retry::RetryIf;
 use ton_client::utils::compress_zstd;
-use crate::blockchain::get_commit_address;
-use crate::git_helper::push::GetPreviousResult;
-use crate::git_helper::push::parallel_diffs_upload_support::ParallelDiffsUploadSupport;
 
 use super::is_going_to_ipfs;
 use super::utilities::retry::default_retry_strategy;
@@ -384,8 +384,11 @@ where
             .repo_contract()
             .read_state(blockchain.client(), "getPrevious", None)
             .await?;
-        let repo_addr = repo_addr.previous
-            .ok_or(anyhow::format_err!("Failed to get address of previous version"))?
+        let repo_addr = repo_addr
+            .previous
+            .ok_or(anyhow::format_err!(
+                "Failed to get address of previous version"
+            ))?
             .address;
         tracing::trace!("Previous repo addr: {repo_addr}");
         let mut repo_contract = GoshContract::new(&repo_addr, gosh_abi::REPO);
@@ -409,16 +412,10 @@ where
         // because snapshot with content will call commit for check
 
         let mut repo_contract = blockchain.repo_contract().clone();
-        let new_commit = get_commit_address(
-            &blockchain.client(),
-            &mut repo_contract,
-            &commit_id,
-        ).await?;
+        let new_commit =
+            get_commit_address(&blockchain.client(), &mut repo_contract, &commit_id).await?;
         tracing::trace!("start waiting for commit to be ready, address: {new_commit}");
-        ParallelDiffsUploadSupport::wait_contracts_deployed(
-            &blockchain,
-            &vec![new_commit],
-        ).await?;
+        ParallelDiffsUploadSupport::wait_contracts_deployed(&blockchain, &vec![new_commit]).await?;
         tracing::trace!("commit is ready");
 
         (content_string, commit_id)

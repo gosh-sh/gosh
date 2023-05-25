@@ -1,5 +1,5 @@
 use crate::{
-    blockchain::{tree::TreeNode, BlockchainContractAddress, BlockchainService, tvm_hash},
+    blockchain::{tree::TreeNode, tvm_hash, BlockchainContractAddress, BlockchainService},
     git_helper::GitHelper,
 };
 use git_hash::ObjectId;
@@ -14,8 +14,10 @@ use std::{
 use crate::cache::Cache;
 
 use super::is_going_to_ipfs;
+use crate::git_helper::push::parallel_snapshot_upload_support::{
+    ParallelTree, ParallelTreeUploadSupport,
+};
 use tokio::sync::Semaphore;
-use crate::git_helper::push::parallel_snapshot_upload_support::{ParallelTree, ParallelTreeUploadSupport};
 
 const MARKER_FLAG: u32 = 1u32;
 
@@ -66,7 +68,7 @@ async fn construct_tree_node(
         &context.blockchain.client(),
         format!("{}:{}", type_obj, file_name).as_bytes(),
     )
-        .await?;
+    .await?;
     Ok((format!("0x{}", key), tree_node))
 }
 
@@ -115,7 +117,13 @@ pub async fn push_tree(
         let repo = context.remote.repo.clone();
         let cache = context.cache.clone();
 
-        handlers.add_to_push_list(context, ParallelTree::new(tree_id, tree_nodes), push_semaphore.clone()).await?;
+        handlers
+            .add_to_push_list(
+                context,
+                ParallelTree::new(tree_id, tree_nodes),
+                push_semaphore.clone(),
+            )
+            .await?;
     }
     Ok(())
 }

@@ -32,6 +32,7 @@ mod delete_tag;
 mod parallel_snapshot_upload_support;
 
 use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
+use crate::blockchain::{branch_list, get_commit_by_addr};
 use crate::git_helper::push::parallel_snapshot_upload_support::{
     ParallelCommit, ParallelCommitUploadSupport, ParallelSnapshot, ParallelSnapshotUploadSupport,
     ParallelTreeUploadSupport,
@@ -39,7 +40,6 @@ use crate::git_helper::push::parallel_snapshot_upload_support::{
 use delete_tag::delete_tag;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 use push_tree::push_tree;
-use crate::blockchain::{branch_list, get_commit_by_addr};
 
 static PARALLEL_PUSH_LIMIT: usize = 1 << 6;
 static MAX_REDEPLOY_ATTEMPTS: i32 = 3;
@@ -300,7 +300,12 @@ where
             .into_iter();
 
         let mut ids = vec![];
-        let commits: Vec<_> = walk.map(|a| { ids.push(a.clone().to_string()); a.object().unwrap().into_commit() }).collect();
+        let commits: Vec<_> = walk
+            .map(|a| {
+                ids.push(a.clone().to_string());
+                a.object().unwrap().into_commit()
+            })
+            .collect();
         let query = r#"query($accounts: [String]!) {
             accounts(filter: {
                 id: { in: $accounts }
@@ -317,14 +322,16 @@ where
         let mut repo_versions = self.get_repo_versions(true).await?;
         repo_versions.pop();
         tracing::trace!("Repo versions {repo_versions:?}");
-        let mut repo_contracts: Vec<_> = repo_versions.iter()
+        let mut repo_contracts: Vec<_> = repo_versions
+            .iter()
             .map(|addr_str| {
                 let mut iter = addr_str.split(' ');
                 let _: &str = iter.next().unwrap();
                 let repo_address: &str = iter.next().unwrap();
                 let repo_address = BlockchainContractAddress::new(repo_address.to_string());
                 GoshContract::new(&repo_address, gosh_abi::REPO)
-            }).collect();
+            })
+            .collect();
         // search for commits in all repo versions
         for ids in ids.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY / repo_contracts.len()) {
             let mut addresses = Vec::<BlockchainContractAddress>::new();
@@ -363,7 +370,7 @@ where
             }
             for commit in map_id_addr.iter().rev() {
                 let mut ex_iter = existing_commits.iter();
-                let pos = ex_iter.position(|x|  commit.1.contains(&x.address) && x.status == 1);
+                let pos = ex_iter.position(|x| commit.1.contains(&x.address) && x.status == 1);
 
                 if pos.is_none() {
                     return Ok(Some(commit.0.clone()));
@@ -746,17 +753,16 @@ where
             .await?;
 
         if set_commit {
-            let branches = branch_list(
-                self.blockchain.client(),
-                &self.repo_addr
-            ).await?;
+            let branches = branch_list(self.blockchain.client(), &self.repo_addr).await?;
             for branch_ref in branches.branch_ref {
                 if branch_ref.branch_name == local_branch_name {
-                    let commit = get_commit_by_addr(
-                        self.blockchain.client(),
-                        &branch_ref.commit_address
-                    ).await?
-                        .ok_or(anyhow::format_err!("Failed to load last commit in the branch: {}", &branch_ref.commit_address))?;
+                    let commit =
+                        get_commit_by_addr(self.blockchain.client(), &branch_ref.commit_address)
+                            .await?
+                            .ok_or(anyhow::format_err!(
+                                "Failed to load last commit in the branch: {}",
+                                &branch_ref.commit_address
+                            ))?;
                     if commit.sha == latest_commit_id.to_string() {
                         // 10) call set commit to the new version of the ancestor commit
                         self.blockchain
@@ -845,8 +851,13 @@ where
             let originating_commit = self.find_ancestor_commit(latest_commit).await?.unwrap();
             let originating_commit = git_hash::ObjectId::from_str(&originating_commit)?;
             tracing::trace!("originating_commit={originating_commit:?}");
-            self.check_parents(originating_commit, remote_branch_name, local_branch_name, false)
-                .await?;
+            self.check_parents(
+                originating_commit,
+                remote_branch_name,
+                local_branch_name,
+                false,
+            )
+            .await?;
             let branching_point = self.get_parent_id(&originating_commit)?;
             tracing::trace!("branching_point={branching_point:?}");
             ancestor_commit_object = Some(branching_point);
@@ -1010,7 +1021,9 @@ where
                     .ok_or(anyhow::format_err!("Failed to get diff params"))?
                     .clone();
                 // parallel_diffs_upload_support.push(self, diff).await?;
-                parallel_diffs_upload_support.add_to_push_list(self, &coord, &parallel, is_last).await?;
+                parallel_diffs_upload_support
+                    .add_to_push_list(self, &coord, &parallel, is_last)
+                    .await?;
             }
             parallel_diffs_upload_support.push_dangling(self).await?;
         }
@@ -1188,7 +1201,9 @@ where
             .await
             .map_err(|_| anyhow::format_err!("Seems like you are not a member of DAO. Only DAO members can push to the repositories."))?;
         tracing::trace!("Zero wallet address: {:?}", wallet.address);
-        let res: GetLimitedResult = wallet.run_static(self.blockchain.client(), "_limited", None).await?;
+        let res: GetLimitedResult = wallet
+            .run_static(self.blockchain.client(), "_limited", None)
+            .await?;
         tracing::trace!("wallet _limited: {:?}", res);
         if res.limited {
             anyhow::bail!("Seems like you are not a member of DAO. Only DAO members can push to the repositories.");

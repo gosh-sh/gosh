@@ -3,12 +3,12 @@ use super::{
     commit::save::BlockchainCommitPusher,
     contract::ContractRead,
     get_contracts_blocks,
-    snapshot::save::{DeployDiff, DeployNewSnapshot, DeleteSnapshot},
+    snapshot::save::{DeleteSnapshot, DeployDiff, DeployNewSnapshot},
     tag::save::Tagging,
     tree::DeployTree,
     user_wallet::BlockchainUserWalletService,
-    AddrVersion, BlockchainContractAddress, EverClient, Everscale, GetAddrBranchResult,
-    GetBoolResult, GoshCommit, GoshContract,
+    BlockchainContractAddress, EverClient, Everscale, GetAddrBranchResult, GetBoolResult,
+    GoshCommit, GoshContract,
 };
 use crate::abi as gosh_abi;
 use async_trait::async_trait;
