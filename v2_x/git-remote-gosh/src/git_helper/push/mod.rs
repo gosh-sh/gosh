@@ -740,14 +740,13 @@ where
             let branches = branch_list(self.blockchain.client(), &self.repo_addr).await?;
             for branch_ref in branches.branch_ref {
                 if branch_ref.branch_name == local_branch_name {
-                    let commit =
-                        get_commit_by_addr(self.blockchain.client(), &branch_ref.commit_address)
-                            .await?
-                            .ok_or(anyhow::format_err!(
-                                "Failed to load last commit in the branch: {}",
-                                &branch_ref.commit_address
-                            ))?;
-                    if commit.sha == latest_commit_id.to_string() {
+                    let commit_contract =
+                        GoshContract::new(&branch_ref.commit_address, gosh_abi::COMMIT);
+                    let sha: GetNameCommitResult = commit_contract
+                        .run_static(self.blockchain.client(), "getNameCommit", None)
+                        .await?;
+                    tracing::trace!("Commit sha: {sha:?}");
+                    if sha.name == latest_commit_id.to_string() {
                         // 10) call set commit to the new version of the ancestor commit
                         self.blockchain
                             .notify_commit(
