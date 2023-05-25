@@ -91,6 +91,13 @@ struct ConfigGrant {
     ConfigPair[] subtask;
 }
 
+struct ConfigGrantOldv3 {
+    ConfigPair[] assign;
+    ConfigPair[] review;
+    ConfigPair[] manager;
+    ConfigPair[] subtask;
+}
+
 struct ConfigCommit {
     address task;
     mapping(address => bool) pubaddrassign;
