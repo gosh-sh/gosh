@@ -95,7 +95,6 @@ struct ConfigGrantOldv3 {
     ConfigPair[] assign;
     ConfigPair[] review;
     ConfigPair[] manager;
-    ConfigPair[] subtask;
 }
 
 struct ConfigCommit {
