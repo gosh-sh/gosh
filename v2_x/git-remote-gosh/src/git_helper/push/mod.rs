@@ -35,6 +35,7 @@ use delete_tag::delete_tag;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 use push_tree::push_tree;
 use crate::git_helper::push::parallel_snapshot_upload_support::{ParallelCommit, ParallelCommitUploadSupport, ParallelSnapshot, ParallelSnapshotUploadSupport, ParallelTreeUploadSupport};
+use crate::blockchain::{branch_list, get_commit_by_addr};
 
 static PARALLEL_PUSH_LIMIT: usize = 1 << 6;
 
@@ -361,6 +362,7 @@ impl<Blockchain> GitHelper<Blockchain>
         object_id: ObjectId,
         remote_branch_name: &str,
         local_branch_name: &str,
+        set_commit: bool,
     ) -> anyhow::Result<()> {
         tracing::trace!("check_parents object_id: {object_id} remote_branch_name: {remote_branch_name}, local_branch_name: {local_branch_name}");
         let mut buffer: Vec<u8> = Vec::new();
@@ -407,7 +409,7 @@ impl<Blockchain> GitHelper<Blockchain>
                         None,
                     ).await?;
                     // TODO: local and remote branch are set equal here it can be wrong
-                    self.check_and_upgrade_previous_commit(id.to_string(), &branch.name, &branch.name).await?;
+                    self.check_and_upgrade_previous_commit(id.to_string(), &branch.name, &branch.name, set_commit).await?;
                 }
             }
         }
@@ -536,6 +538,7 @@ impl<Blockchain> GitHelper<Blockchain>
         ancestor_commit: String,
         local_branch_name: &str,
         remote_branch_name: &str,
+        set_commit: bool,
     ) -> anyhow::Result<()> {
         // check in cur repo if account with commit exists   eg call get version
         // if not found need to init upgrade commit
@@ -619,6 +622,10 @@ impl<Blockchain> GitHelper<Blockchain>
         // 8) Get list of objects to push with the ancestor commit
         tracing::trace!("Find objects till: {till_id:?}");
         let commit_objects_list = get_list_of_commit_objects(ancestor_id, till_id)?;
+        if self.upgraded_commits.contains(&commit_objects_list[0]) {
+            return Ok(());
+        }
+
         tracing::trace!("List of commit objects: {commit_objects_list:?}");
 
         // 9) push objects
@@ -645,6 +652,7 @@ impl<Blockchain> GitHelper<Blockchain>
             let object_kind = self.local_repository().find_object(object_id)?.kind;
             match object_kind {
                 git_object::Kind::Commit => {
+                    self.upgraded_commits.push(oid.to_string());
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)
                     self.push_commit_object(
                         oid,
@@ -692,18 +700,36 @@ impl<Blockchain> GitHelper<Blockchain>
             .await?;
 
 
-        // 10) call set commit to the new version of the ancestor commit
-        self.blockchain
-            .notify_commit(
-                &latest_commit_id,
-                local_branch_name,
-                1,
-                1,
-                &self.remote,
-                &self.dao_addr,
-                true,
-            )
-            .await?;
+
+        if set_commit {
+            let branches = branch_list(
+                self.blockchain.client(),
+                &self.repo_addr
+            ).await?;
+            for branch_ref in branches.branch_ref {
+                if branch_ref.branch_name == local_branch_name {
+                    let commit = get_commit_by_addr(
+                        self.blockchain.client(),
+                        &branch_ref.commit_address
+                    ).await?
+                        .ok_or(anyhow::format_err!("Failed to load last commit in the branch: {}", &branch_ref.commit_address))?;
+                    if commit.sha == latest_commit_id.to_string() {
+                        // 10) call set commit to the new version of the ancestor commit
+                        self.blockchain
+                            .notify_commit(
+                                &latest_commit_id,
+                                local_branch_name,
+                                1,
+                                1,
+                                &self.remote,
+                                &self.dao_addr,
+                                true,
+                            )
+                            .await?;
+                    }
+                }
+            }
+        }
 
         Ok(())
     }
@@ -746,15 +772,6 @@ impl<Blockchain> GitHelper<Blockchain>
         } else {
             None
         };
-
-        // if ancestor_commit_id != "" {
-        //     self.check_and_upgrade_previous_commit(
-        //         ancestor_commit_id.clone(),
-        //         local_branch_name,
-        //         remote_branch_name,
-        //     )
-        //     .await?;
-        // }
 
         let latest_commit = self
             .local_repository()
@@ -824,6 +841,7 @@ impl<Blockchain> GitHelper<Blockchain>
                         object_id,
                         remote_branch_name,
                         local_branch_name,
+                        true,
                     ).await?;
                     self.push_commit_object(
                         oid,

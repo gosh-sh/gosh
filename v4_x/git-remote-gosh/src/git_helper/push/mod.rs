@@ -904,8 +904,6 @@ where
             match object_kind {
                 git_object::Kind::Commit => {
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)
-                    // TODO: wrong to set true always, mb only for left child in fork
-                    // first step can be to check if it the last in branch in repo
                     self.check_parents(object_id, remote_branch_name, local_branch_name, true)
                         .await?;
                     self.push_commit_object(
