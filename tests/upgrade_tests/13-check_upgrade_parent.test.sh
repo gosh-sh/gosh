@@ -14,6 +14,12 @@ set -x
 # 5. Push a branch starting from the old commit
 # 6. Clone the repo
 
+# TODO: add test when fork starts from old commit
+#
+# new1 new2
+#  \    /
+#   old
+
 if [ "$1" = "ignore" ]; then
   echo "Test $0 ignored"
   exit 0
@@ -96,16 +102,17 @@ git checkout dev
 echo 4444 > 4.txt
 git add 4.txt
 git commit -m dev2
+git push -u origin dev
 
 git checkout main
 git merge dev -m merge
 
-git push -u origin main
+GOSH_TRACE=5 git push -u origin main &> test_13.log
 
 cd ..
 
 echo "***** cloning repo with new link *****"
-git clone $NEW_LINK $NEW_REPO_PATH
+GOSH_TRACE=5 git clone $NEW_LINK $NEW_REPO_PATH &> test_13.log
 
 echo "***** push to new version *****"
 cd $NEW_REPO_PATH
