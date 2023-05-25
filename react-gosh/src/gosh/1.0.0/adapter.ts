@@ -642,6 +642,13 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
+    async getBigTask(options: {
+        name?: string | undefined
+        address?: string | undefined
+    }): Promise<TTaskDetails> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async getTopicCodeHash(): Promise<string> {
         throw new Error('Method is unavailable in current version')
     }

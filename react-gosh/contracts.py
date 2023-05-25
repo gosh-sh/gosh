@@ -97,6 +97,7 @@ CONTRACTS = {
         'gosh/commit',
         'gosh/snapshot',
         'gosh/tag',
+        'gosh/bigtask',
         'gosh/task',
         'gosh/diff',
         'gosh/tree',

@@ -124,6 +124,7 @@ import {
     TBigTaskUpgradeResult,
     TCodeCommentThreadResdolveParams,
     TCodeCommentThreadResolveResult,
+    TBigTaskDetails,
 } from '../types'
 
 interface IGoshAdapter {
@@ -211,6 +212,7 @@ interface IGoshDaoAdapter {
 
     getTaskCodeHash(repository: string): Promise<string>
     getTask(options: { name?: string; address?: TAddress }): Promise<TTaskDetails>
+    getBigTask(options: { name?: string; address?: TAddress }): Promise<TBigTaskDetails>
 
     getTopicCodeHash(): Promise<string>
     getTopic(params: { address?: TAddress }): Promise<TTopic>

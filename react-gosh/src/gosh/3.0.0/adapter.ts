@@ -821,6 +821,13 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
+    async getBigTask(options: {
+        name?: string | undefined
+        address?: string | undefined
+    }): Promise<TTaskDetails> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async getTopicCodeHash(): Promise<string> {
         const { value0 } = await this.gosh.gosh.runLocal(
             'getTopicCode',
