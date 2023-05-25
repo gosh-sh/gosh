@@ -277,7 +277,7 @@ contract BigTask is Modifiers{
         uint128 diff = _fullAssign / _assignfull - _assigners[pubaddr];
         _balance -= diff;
         if (diff == 0) { return; }
-        _assigners[pubaddr] = _fullAssign / _assignfull;
+        _assigners[pubaddr] += diff;
         if ((_allassign == true) && (diff != 0)) { _assigncomplete += 1; }
         address addr = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, 0);
         GoshWallet(addr).grantTokenBig{value: 0.1 ton, flag: 1}(_nametask, _repo, diff);
@@ -301,7 +301,7 @@ contract BigTask is Modifiers{
         uint128 diff = _fullReview / _reviewfull - _reviewers[pubaddr];
         _balance -= diff;
         if (diff == 0) { return; }
-        _reviewers[pubaddr] = _fullReview / _reviewfull;
+        _reviewers[pubaddr] += diff;
         if ((_allreview == true) && (diff != 0)) { _reviewcomplete += 1; }
         address addr = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, 0);
         GoshWallet(addr).grantTokenBig{value: 0.1 ton, flag: 1}(_nametask, _repo, diff);
@@ -325,7 +325,7 @@ contract BigTask is Modifiers{
         uint128 diff = _fullManager / _managerfull - _managers[pubaddr];
         _balance -= diff;
         if (diff == 0) { return; }
-        _managers[pubaddr] = _fullManager / _managerfull;
+        _managers[pubaddr] += diff;
         if ((_allmanager == true) && (diff != 0)) { _managercomplete += 1; }
         address addr = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, 0);
         GoshWallet(addr).grantTokenBig{value: 0.1 ton, flag: 1}(_nametask, _repo, diff);
