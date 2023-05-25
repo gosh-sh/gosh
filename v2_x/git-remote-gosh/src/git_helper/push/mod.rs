@@ -72,6 +72,12 @@ pub struct AccountStatus {
     pub status: u8,
 }
 
+#[derive(Deserialize, Debug)]
+struct GetLimitedResult {
+    #[serde(rename = "_limited")]
+    pub limited: bool,
+}
+
 impl<Blockchain> GitHelper<Blockchain>
     where
         Blockchain: BlockchainService + 'static,
@@ -1063,9 +1069,29 @@ impl<Blockchain> GitHelper<Blockchain>
         Ok(result_ok)
     }
 
+    async fn check_if_wallet_is_limited(&self) -> anyhow::Result<()> {
+        tracing::trace!("start check whether wallet is limited");
+        let wallet = self
+            .blockchain
+            .user_wallet(&self.dao_addr, &self.remote.network)
+            .await?
+            .take_zero_wallet()
+            .await
+            .map_err(|_| anyhow::format_err!("Seems like you are not a member of DAO. Only DAO members can push to the repositories."))?;
+        tracing::trace!("Zero wallet address: {:?}", wallet.address);
+        let res: GetLimitedResult = wallet.run_static(self.blockchain.client(), "_limited", None).await?;
+        tracing::trace!("wallet _limited: {:?}", res);
+        if res.limited {
+            anyhow::bail!("Seems like you are not a member of DAO. Only DAO members can push to the repositories.");
+        }
+        tracing::trace!("wallet is valid");
+        Ok(())
+    }
+
     #[instrument(level = "trace", skip_all)]
     pub async fn push(&mut self, refs: &str) -> anyhow::Result<String> {
         tracing::debug!("push: refs={refs}");
+        self.check_if_wallet_is_limited().await?;
         let splitted: Vec<&str> = refs.split(':').collect();
         let result = match splitted.as_slice() {
             ["", remote_tag] if remote_tag.starts_with("refs/tags") => {
