@@ -6,7 +6,7 @@
  */
 pragma ever-solidity >=0.66.0;
 
-//Structs  
+//Structs
 struct Subtask {
     uint128 value;
     string name;
@@ -109,6 +109,16 @@ struct ConfigCommitBase {
     address task;
     optional(address) commit;
     optional(uint128) number_commit;
+    mapping(address => bool) pubaddrassign;
+    mapping(address => bool) pubaddrreview;
+    mapping(address => bool) pubaddrmanager;
+    mapping(address => string) daoMembers;
+}
+
+struct ConfigCommitBaseOldv3 {
+    address task;
+    address commit;
+    uint128 number_commit;
     mapping(address => bool) pubaddrassign;
     mapping(address => bool) pubaddrreview;
     mapping(address => bool) pubaddrmanager;
