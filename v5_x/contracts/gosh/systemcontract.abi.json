@@ -610,6 +610,17 @@
 			]
 		},
 		{
+			"name": "getTagAddress",
+			"inputs": [
+				{"name":"daoName","type":"string"},
+				{"name":"repoName","type":"string"},
+				{"name":"tagName","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "getContentAddress",
 			"inputs": [
 				{"name":"repoName","type":"string"},
