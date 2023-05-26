@@ -74,7 +74,7 @@ const RepoPullRequestEvent = (props: TRepoPullRequestEventProps) => {
                 ({ item, current, previous, showDiff, isFetching }, index) => (
                     <div key={index} className="my-5 relative">
                         <BlobDiffPreview
-                            commentsOn
+                            commentsOn={dao.details.version >= '5.0.0'}
                             filename={item.treepath}
                             modified={current}
                             original={previous}
