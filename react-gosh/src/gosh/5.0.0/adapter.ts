@@ -145,6 +145,7 @@ import {
     IGoshTopic,
     IGoshProfileDao,
     IGoshBigTask,
+    IGoshCommitTag,
 } from '../interfaces'
 import { Gosh } from './gosh'
 import { GoshDao } from './goshdao'
@@ -479,6 +480,32 @@ class GoshAdapter_5_0_0 implements IGoshAdapter {
 
     async getHelperTag(address: string): Promise<IGoshHelperTag> {
         return new GoshHelperTag(this.client, address)
+    }
+
+    async getCommitTag(params: {
+        address?: string | undefined
+        data?: { daoName: string; repoName: string; tagName: string } | undefined
+    }): Promise<IGoshCommitTag> {
+        const { address, data } = params
+
+        if (address) {
+            return new GoshCommitTag(this.client, address)
+        }
+
+        if (data) {
+            const { daoName, repoName, tagName } = data
+            const { value0 } = await this.gosh.runLocal('getTagAddress', {
+                daoName,
+                repoName,
+                tagName,
+            })
+            return new GoshCommitTag(this.client, value0)
+        }
+
+        throw new GoshError(
+            'Get commit tag error',
+            'Either address or data should be provided',
+        )
     }
 
     async deployProfile(username: string, pubkey: string): Promise<IGoshProfile> {

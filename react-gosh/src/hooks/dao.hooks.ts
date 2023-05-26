@@ -22,9 +22,14 @@ import {
 import { EGoshError, GoshError } from '../errors'
 import { AppConfig } from '../appconfig'
 import { useProfile, useUser } from './user.hooks'
-import { IGoshDaoAdapter, IGoshRepositoryAdapter } from '../gosh/interfaces'
+import {
+    IGoshDaoAdapter,
+    IGoshRepositoryAdapter,
+    IGoshSmvAdapter,
+    IGoshWallet,
+} from '../gosh/interfaces'
 import { GoshAdapterFactory } from '../gosh'
-import { MAX_PARALLEL_READ, SYSTEM_TAG } from '../constants'
+import { DAO_TOKEN_TRANSFER_TAG, MAX_PARALLEL_READ, SYSTEM_TAG } from '../constants'
 
 function useDaoList(perPage: number) {
     const profile = useProfile()
@@ -401,6 +406,128 @@ function useDaoUpgrade(dao: IGoshDaoAdapter) {
     }
 
     return { versions, upgrade }
+}
+
+function useDaoAutoTokenTransfer(dao?: IGoshDaoAdapter) {
+    const { user } = useUser()
+
+    const getUntransferredTokens = async (
+        _ver: string,
+        _smv: IGoshSmvAdapter,
+        _wallet: IGoshWallet,
+    ) => {
+        if (_ver < '3.0.0') {
+            const { smvAvailable, smvLocked, smvBalance } = await _smv.getDetails(_wallet)
+            return Math.max(smvAvailable, smvLocked) + smvBalance
+        } else {
+            const { m_pseudoDAOBalance } = await _wallet.runLocal(
+                'm_pseudoDAOBalance',
+                {},
+            )
+            const { _lockedBalance } = await _wallet.runLocal('_lockedBalance', {})
+            return parseInt(m_pseudoDAOBalance) + parseInt(_lockedBalance)
+        }
+    }
+
+    const transferTokens = async (
+        _dao: IGoshDaoAdapter,
+        _profile: string,
+        _to_dao_ver: string,
+    ) => {
+        const wallet = await _dao.getMemberWallet({ profile: _profile })
+        if (!(await wallet.isDeployed())) {
+            return 0
+        }
+
+        const version = _dao.getVersion()
+        const smv = await _dao.getSmv()
+        const untransferred = await getUntransferredTokens(version, smv, wallet)
+        if (untransferred > 0) {
+            await smv.releaseAll()
+            await smv.transferToWallet(0)
+            await _dao.wallet?.run('sendTokenToNewVersion', {
+                grant: untransferred,
+                newversion: _to_dao_ver,
+            })
+        }
+        return untransferred
+    }
+
+    const checkTokens = async () => {
+        try {
+            const { username, profile, keys } = user
+            const stopTransferTagName = `${DAO_TOKEN_TRANSFER_TAG}:${username}`
+            if (!profile || !username || !keys || !dao) {
+                return { retry: true }
+            }
+            if (dao.getVersion() < '5.0.0') {
+                return { retry: false }
+            }
+            if (!(await dao.wallet?.isDeployed())) {
+                return { retry: true }
+            }
+
+            // Check for stop transfer tag
+            const stopTransferTag = await dao.getGosh().getCommitTag({
+                data: {
+                    daoName: await dao.getName(),
+                    repoName: DAO_TOKEN_TRANSFER_TAG,
+                    tagName: stopTransferTagName,
+                },
+            })
+            if (await stopTransferTag.isDeployed()) {
+                return { retry: false }
+            }
+
+            // Transfer tokens from all prev dao versions
+            let untransferred = 0
+            let prevDao = await dao.getPrevDao()
+            while (prevDao) {
+                if (prevDao.getVersion() === '1.0.0') {
+                    break
+                }
+                await prevDao.setAuth(username, keys)
+                untransferred += await transferTokens(prevDao, profile, dao.getVersion())
+                prevDao = await prevDao.getPrevDao()
+            }
+
+            // Deploy stop transfer tag
+            if (untransferred === 0) {
+                await dao.wallet?.run('deployTag', {
+                    repoName: DAO_TOKEN_TRANSFER_TAG,
+                    nametag: stopTransferTagName,
+                    nameCommit: username,
+                    commit: profile,
+                    content: '',
+                })
+                return { retry: false }
+            }
+            return { retry: true }
+        } catch (e: any) {
+            console.error(e.message)
+            return { retry: true }
+        }
+    }
+
+    useEffect(() => {
+        let isIntervalBusy = false
+        const interval = setInterval(async () => {
+            if (isIntervalBusy) {
+                return
+            }
+
+            isIntervalBusy = true
+            const { retry } = await checkTokens()
+            isIntervalBusy = false
+            if (!retry) {
+                clearInterval(interval)
+            }
+        }, 10000)
+
+        return () => {
+            clearInterval(interval)
+        }
+    }, [dao?.getAddress()])
 }
 
 function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
@@ -1295,6 +1422,7 @@ export {
     useDao,
     useDaoCreate,
     useDaoUpgrade,
+    useDaoAutoTokenTransfer,
     useDaoMemberList,
     useDaoMemberCreate,
     useDaoMemberDelete,

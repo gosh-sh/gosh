@@ -170,6 +170,10 @@ interface IGoshAdapter {
         tag: string,
     ): Promise<string>
     getHelperTag(address: TAddress): Promise<IGoshHelperTag>
+    getCommitTag(params: {
+        address?: string
+        data?: { daoName: string; repoName: string; tagName: string }
+    }): Promise<IGoshCommitTag>
 
     deployProfile(username: string, pubkey: string): Promise<IGoshProfile>
 }
