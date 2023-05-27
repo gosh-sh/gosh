@@ -555,12 +555,12 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
         const version = dao.getVersion()
         if (version === '1.0.0') {
             items = await _getMemberList_1_0_0()
-        } else if (version === '2.0.0') {
+        } else if (version < '4.0.0') {
             items = await _getMemberList_2_0_0()
-        } else if (version === '3.0.0') {
-            items = await _getMemberList_2_0_0()
-        } else {
+        } else if (version < '5.0.0') {
             items = await _getMemberList_4_0_0()
+        } else {
+            items = await _getMemberList_5_0_0()
         }
 
         setMembers((state) => ({
@@ -660,6 +660,38 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
                     )
                     balancePrev = Math.max(smvAvailable, smvLocked) + smvBalance
                 }
+            }
+
+            return { ...member, user, balance, balancePrev }
+        })
+        return items
+    }
+
+    const _getMemberList_5_0_0 = async () => {
+        const gosh = dao.getGosh()
+        const details = await dao.dao.runLocal('getDetails', {})
+        const prevDao = await dao.getPrevDao()
+
+        const members = await dao.getMembers()
+        const items = await executeByChunk(members, MAX_PARALLEL_READ, async (member) => {
+            // Resolve user (it can be DAO member which is not upgraded)
+            const profileHex = `0x${member.profile.slice(2)}`
+            const isDaoAsMember = details.daoMembers[profileHex]
+            const user = isDaoAsMember
+                ? { name: isDaoAsMember, type: 'dao' }
+                : await gosh.getUserByAddress(member.profile)
+
+            // Get wallet balance in current DAO version
+            const wallet = await dao.getMemberWallet({ address: member.wallet })
+            const { m_pseudoDAOBalance } = await wallet.runLocal('m_pseudoDAOBalance', {})
+            const { _lockedBalance } = await wallet.runLocal('_lockedBalance', {})
+            const balance = parseInt(m_pseudoDAOBalance) + parseInt(_lockedBalance)
+
+            // If member has karma but has no token balance, it means that
+            // member might not transferred tokens from previous DAO versions
+            let balancePrev = 0
+            if (prevDao && prevDao.getVersion() !== '1.0.0') {
+                balancePrev = (member.allowance ?? 0) > balance ? 1 : 0
             }
 
             return { ...member, user, balance, balancePrev }
