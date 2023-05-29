@@ -29,6 +29,7 @@ steps:
 # Pre-requirements
 # Linux
 - script: |
+    set -ex
     sudo apt install -y protobuf-compiler
   condition: eq( variables['Agent.OS'], 'Linux' )
   displayName: Install pre-requirements Linux
@@ -47,7 +48,7 @@ steps:
 # Rust setup
 # Linux and macOS
 - script: |
-    set -e
+    set -ex
     curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUSTUP_TOOLCHAIN
     echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
   env:
@@ -69,8 +70,9 @@ steps:
 # Build
 # Linux
 - script: |
+    set -ex
     cargo build --release
-    sudo apt install -y build-essential g++-x86-64-linux-gnu libc6-dev-amd64-cross g++-aarch64-linux-gnu libc6-dev-arm64-cross
+    sudo apt install -y build-essential g++-x86-64-linux-gnu libc6-dev-amd64-cross g++-aarch64-linux-gnu libc6-dev-arm64-cross gcc-aarch64-linux-gnu
     rustup target add aarch64-unknown-linux-gnu
     cargo build --release --target aarch64-unknown-linux-gnu
     ls target/aarch64-unknown-linux-gnu
@@ -86,6 +88,7 @@ steps:
   displayName: Build Linux 
 # Mac
 - script: |
+    set -ex
     cargo build --release
     rustup target add aarch64-apple-darwin
     cargo build --release --target aarch64-apple-darwin
