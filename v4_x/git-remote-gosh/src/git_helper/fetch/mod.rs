@@ -235,7 +235,7 @@ where
                     match blockchain::GoshCommit::load(&self.blockchain.client(), address).await {
                         Ok(commit) => commit,
                         Err(e) => {
-                            let (version, _) = self.find_commit(&id.to_string()).await?;
+                            let version = self.find_commit(&id.to_string()).await?.version;
                             tracing::trace!(
                                 "push to next_commit_of_prev_version=({},{})",
                                 id,
