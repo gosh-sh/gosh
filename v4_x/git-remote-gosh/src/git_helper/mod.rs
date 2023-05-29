@@ -467,7 +467,7 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
             (Some("gosh_get_all_repo_versions"), None, None) => {
                 let repo_versions = helper.get_repo_versions();
                 let mut res: Vec<String> = repo_versions.iter().map(|ver|
-                    format!("{} {}", ver.version, ver.system_address)
+                    format!("{} {}", ver.version, String::from(ver.system_address.clone()))
                 ).collect();
                 res.push("".to_string());
                 res
