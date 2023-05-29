@@ -89,6 +89,7 @@ steps:
 # Linux
 - script: |
     set -ex
+    sudo apt update -y
     cargo build --release
     sudo apt install -y build-essential g++-x86-64-linux-gnu libc6-dev-amd64-cross g++-aarch64-linux-gnu libc6-dev-arm64-cross gcc-aarch64-linux-gnu
     rustup target add aarch64-unknown-linux-gnu 
