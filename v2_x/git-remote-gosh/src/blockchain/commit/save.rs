@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::{
     abi as gosh_abi,
     blockchain::{
@@ -181,21 +182,21 @@ impl BlockchainCommitPusher for Everscale {
         if is_upgrade {
             filter.push("treeAccept".to_owned());
         }
-        let mut from_lt = 0;
-
+        let mut processed_messages = HashMap::new();
         loop {
             let found = find_messages(self, &commit_contract, &filter, from_lt).await?;
+            let found = find_messages(self, &commit_contract, &filter, &mut processed_messages).await?;
+            tracing::trace!("did found new messages for {}: {}", commit_contract.address, found.1);
             if let Some(message) = found.0 {
                 match message.name.as_str() {
                     "allCorrect" => break,
                     "treeAccept" => break,
                     "cancelCommit" => bail!("Push failed. Fix and retry"),
                     "NotCorrectRepo" => bail!("Push failed. Fetch first"),
-                    _ => from_lt = found.1,
+                    _ => {},
                 };
             } else {
-                if from_lt != found.1 {
-                    from_lt = found.1;
+                if found.1 {
                     tracing::debug!("Reset timer");
                     start = Instant::now();
                 }
@@ -211,47 +212,78 @@ impl BlockchainCommitPusher for Everscale {
     }
 }
 
-#[instrument(level = "info", skip_all)]
-pub async fn find_messages(
+
+pub async fn query_all_messages(
     context: &Everscale,
     contract: &GoshContract,
-    filter: &Vec<String>,
-    from_lt: u64,
-) -> anyhow::Result<(Option<DecodedMessageBody>, u64)> {
+) -> anyhow::Result<Vec<Message>> {
     tracing::trace!(
-        "find_messages: contract.address={}, filter={filter:?}, from_lt={from_lt}",
+        "find_messages: contract.address={}",
         contract.address
     );
     let query = r#"query($contract: String!, $from: String) {
         messages(filter: {
             dst: { eq: $contract },
             created_lt: { gt: $from }
-        }) {
+        }
+        orderBy: [
+            {
+                path: "created_lt"
+                direction: ASC
+            }
+        ]
+        limit: 50
+        ) {
             id body created_lt bounced
         }
     }"#
-    .to_string();
+        .to_string();
+    let mut from = 0u64;
     let dst_address = String::from(contract.get_address().clone());
-    let result = ton_client::net::query(
-        Arc::clone(&context.ever_client),
-        ParamsOfQuery {
-            query,
-            variables: Some(serde_json::json!({
-                "contract": dst_address,
-                "from": from_lt.to_string()
-            })),
-            ..Default::default()
-        },
-    )
-    .await
-    .map(|r| r.result)?;
-    let raw_messages = result["data"]["messages"].clone();
-    let messages: Vec<Message> = serde_json::from_value(raw_messages)?;
+    let mut result_messages = vec![];
 
-    let mut last_lt = from_lt;
+    loop {
+        let result = ton_client::net::query(
+            Arc::clone(&context.ever_client),
+            ParamsOfQuery {
+                query: query.clone(),
+                variables: Some(serde_json::json!({
+                "contract": dst_address.clone(),
+                "from": from.to_string()
+            })),
+                ..Default::default()
+            },
+        )
+            .await
+            .map(|r| r.result)?;
+        let raw_messages = result["data"]["messages"].clone();
+        let mut messages: Vec<Message> = serde_json::from_value(raw_messages)?;
+        if messages.is_empty() {
+            break;
+        }
+        from = messages.last().unwrap().created_lt;
+        result_messages.append(&mut messages);
+    }
+    tracing::trace!("Found {} messages to {}", result_messages.len(), dst_address);
+    Ok(result_messages)
+}
+
+
+#[instrument(level = "info", skip_all)]
+pub async fn find_messages(
+    context: &Everscale,
+    contract: &GoshContract,
+    filter: &Vec<String>,
+    already_processed_messages: &mut HashMap<String, bool>,
+) -> anyhow::Result<(Option<DecodedMessageBody>, bool)> {
+    tracing::trace!("find_messages start contract:{}, processed_len:{}", contract.address, already_processed_messages.len());
+    let messages = query_all_messages(context, contract).await?;
+    let mut got_new_messages = false;
     for message in messages.iter() {
-        last_lt = message.created_lt;
         if message.bounced || message.body.is_none() {
+            continue;
+        }
+        if already_processed_messages.contains_key(&message.id) {
             continue;
         }
 
@@ -264,7 +296,9 @@ pub async fn find_messages(
                 ..Default::default()
             },
         )
-        .await;
+            .await;
+        got_new_messages = true;
+        already_processed_messages.insert(message.id.clone(), true);
 
         if let Err(ref e) = decoding_result {
             tracing::trace!("decode_message_body error: {:#?}", e);
@@ -278,11 +312,11 @@ pub async fn find_messages(
         if filter.contains(&decoded.name) {
             let trx_status = is_transaction_ok(context, &message.id).await?;
             if trx_status {
-                return Ok((Some(decoded.clone()), message.created_lt));
+                return Ok((Some(decoded.clone()), got_new_messages));
             }
         }
     }
-    Ok((None, last_lt))
+    Ok((None, got_new_messages))
 }
 
 #[instrument(level = "info", skip_all)]
