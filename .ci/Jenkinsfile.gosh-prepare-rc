@@ -499,7 +499,7 @@ def runSingleUpgradeTest(script, index, port, from, to) {
             export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
             ./set-vars.sh v${from}_x_workspace_${index} http://localnode:${port}
             ./upgrade_tests/set_up.sh v${from}_x_workspace_${index} v${to}_x_workspace_${index}
-            ./upgrade_tests/${script}
+            GOSH_TRACE=5 ./upgrade_tests/${script} &> trace_upgrade_${index}.log
         """
     }
 }
