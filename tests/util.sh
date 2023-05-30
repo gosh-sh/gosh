@@ -11,6 +11,16 @@ function delay {
     sleep $sleep_for
 }
 
+function get_repo_addr {
+    dao=${1:-$DAO_NAME}
+    repo=${2:-REPO_NAME}
+
+    params=$(jq -n --arg name "${REPO_NAME}" --arg dao "${DAO_NAME}" '$ARGS.named')
+
+    tonos-cli -j -u $NETWORK run $SYSTEM_CONTRACT_ADDR --abi $SYSTEM_CONTRACT_ABI \
+      getAddrRepository "${params}"  | jq -r .value0
+}
+
 function list_branches {
     repo_addr=$1
     tonos-cli -j -u $NETWORK run $repo_addr getAllAddress {} --abi ../$REPO_ABI | jq -r '.value0[].branchname'
@@ -19,6 +29,19 @@ function list_branches {
 function get_account_status {
     contract_addr=$1
     tonos-cli -j -u $NETWORK account $contract_addr | jq -r '."'"$contract_addr"'".acc_type'
+}
+
+function get_account_last_paid {
+    contract_addr=$1
+    tonos-cli -j -u $NETWORK account $contract_addr | jq -r '."'"$contract_addr"'".last_paid'
+}
+
+function get_wallet_details {
+    tonos-cli -j -u $NETWORK run $WALLET_ADDR --abi $WALLET_ABI getDetails {}
+}
+
+function get_wallet_token_balance {
+    get_wallet_details | jq -r .value1
 }
 
 function get_snapshot_status {
@@ -93,6 +116,25 @@ function wait_set_commit {
     fi
 }
 
+function get_dao_token_balance {
+    tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
+}
+
+function get_dao_token_reserve {
+    get_dao_token_balance | jq -r .value0
+}
+
+function calculate_prop_id {
+    tvmcell=$1
+
+    PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
+        --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
+        "{\"data\":\"$TVMCELL\"}" \
+        --decode-c6 | grep value0 | jq -r .value0)
+
+    echo $PROP_ID
+}
+
 function deploy_DAO {
   echo "Deploy DAO"
   echo "DAO_NAME=$DAO_NAME"
@@ -140,7 +182,7 @@ function deploy_DAO_and_repo {
 
   echo "***** repo deploy *****"
   deploy_repo
-  REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
+  REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | jq -r .value0)
   echo "REPO_ADDR=$REPO_ADDR"
 
   echo "***** awaiting repo deploy *****"
@@ -321,12 +363,14 @@ function wait_account_balance {
 
 function deploy_repo {
   if [[ $VERSION =~ "v1_x" ]]; then
-    tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
-      "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1
+    RESULT=$(tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
+      "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1)
   else
-    tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \
-      "{\"nameRepo\":\"$REPO_NAME\",\"descr\":\"\",\"previous\":null}" || exit 1
+    RESULT=$(tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \
+      "{\"nameRepo\":\"$REPO_NAME\",\"descr\":\"\",\"previous\":null}" || exit 1)
   fi
+  # ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | jq -r .value0)
+  # echo $ADDR
 }
 
 function deploy_task_with_proposal {

@@ -5,6 +5,7 @@ export const MAX_PARALLEL_READ = 600
 export const MAX_PARALLEL_WRITE = 200
 export const SYSTEM_TAG = '___!system!___'
 export const BIGTASK_TAG = '___!bigtask!___'
+export const DAO_TOKEN_TRANSFER_TAG = '___!daotokentransfer!___'
 
 export const SmvEventTypes: { [key: number]: string } = {
     1: 'Pull request',

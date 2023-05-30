@@ -160,6 +160,20 @@
 			]
 		},
 		{
+			"name": "checkOldBigTaskVersion3",
+			"inputs": [
+				{"name":"namedao","type":"string"},
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"string"},
+				{"name":"previous","type":"string"},
+				{"name":"previousaddr","type":"address"},
+				{"name":"version","type":"string"},
+				{"name":"answer","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "DaoTransferToken3",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},

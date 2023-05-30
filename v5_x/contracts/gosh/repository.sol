@@ -101,7 +101,7 @@ contract Repository is Modifiers{
         _head = head;
         _ready = true;
     }
-    
+
     function checkUpdateRepoVer5(string ver, TvmCell a) public senderIs(_previousversion.get().addr) accept {
         if (ver == "2.0.0"){
             mapping(uint256 => string) hashtag;
@@ -128,14 +128,14 @@ contract Repository is Modifiers{
             return;
         }
     }
-    
+
     function smvdeployrepotagin (string[] tag) public senderIs(address(this)) accept {
         require(tag.length + _counttag <= _limittag, ERR_TOO_MANY_TAGS);
-        for (uint8 t = 0; t < tag.length; t++){     
+        for (uint8 t = 0; t < tag.length; t++){
             if (_hashtag.exists(tvm.hash(tag[t]))) { continue; }
             _counttag++;
             _hashtag[tvm.hash(tag[t])] = tag[t];
-            GoshWallet(_creator).deployRepoTag{value:0.2 ton, flag: 1}(_name, tag[t]);   	
+            GoshWallet(_creator).deployRepoTag{value:0.2 ton, flag: 1}(_name, tag[t]);
         }
         _ready = true;
     }
@@ -175,7 +175,7 @@ contract Repository is Modifiers{
     }
 
     function isCorrectCommit(string namecommit, string branch, address commit) public view {
-        if ((_Branches[tvm.hash(branch)].commitaddr == getCommitAddr(namecommit)) && (commit == _Branches[tvm.hash(branch)].commitaddr)) {
+        if (commit == _Branches[tvm.hash(branch)].commitaddr) {
             Repository(msg.sender).correctCommit{value: 0.1 ton, bounce: true, flag: 1}(namecommit, branch);
         }
     }
@@ -194,7 +194,7 @@ contract Repository is Modifiers{
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         _description = descr;
     }
-    
+
     //Diff part
     function SendDiff(string branch, address commit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task, bool isUpgrade) public view senderIs(address(this)){
         tvm.accept();
@@ -237,17 +237,17 @@ contract Repository is Modifiers{
         Commit(getCommitAddr(namecommit)).allCorrect{value: 0.1 ton, flag: 1}(number);
     }
 
-    function fromInitUpgrade2(string nameCommit, address commit, string ver, string branch) public view senderIs(getCommitAddr(nameCommit)) accept {       
+    function fromInitUpgrade2(string nameCommit, address commit, string ver, string branch) public view senderIs(getCommitAddr(nameCommit)) accept {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         if (_previousversion.hasValue() == false) { Commit(msg.sender).stopUpgrade{value:0.1 ton, flag: 1}();  return; }
         SystemContract(_systemcontract).fromInitUpgrade3{value: 0.3 ton, bounce: true, flag: 1}(_name, _nameDao, nameCommit, commit, ver, branch, msg.sender);
     }
-    
-    function fromInitUpgrade6(string nameCommit, address commit, string branch, address newcommit) public view senderIs(_systemcontract) accept {       
+
+    function fromInitUpgrade6(string nameCommit, address commit, string branch, address newcommit) public view senderIs(_systemcontract) accept {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         Commit(getCommitAddr(nameCommit)).fromInitUpgrade{value: 0.1 ton, flag: 1}(commit, branch, newcommit);
     }
-    
+
     function setHEAD(address pubaddr, string nameBranch, uint128 index) public {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
@@ -293,33 +293,33 @@ contract Repository is Modifiers{
             return;
         }
     }
-    
+
     function isDeleteSnap(string branch, string name) public view minValue(0.2 ton) senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], address(this), branch, name)){
         tvm.accept();
         require(_Branches.exists(tvm.hash(branch)) == false, ERR_BRANCH_EXIST);
         Snapshot(msg.sender).destroyfinal{value:0.1 ton, flag: 1}();
     }
-    
+
     function smvdeployrepotag (address pub, uint128 index, string[] tag) public accept {
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pub, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         require(tag.length + _counttag <= _limittag, ERR_TOO_MANY_TAGS);
-        for (uint8 t = 0; t < tag.length; t++){     
+        for (uint8 t = 0; t < tag.length; t++){
             if (_hashtag.exists(tvm.hash(tag[t]))) { continue; }
             _counttag++;
             _hashtag[tvm.hash(tag[t])] = tag[t];
             address addr = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pub, index);
-            GoshWallet(addr).deployRepoTag{value:0.2 ton, flag: 1}(_name, tag[t]);   	
+            GoshWallet(addr).deployRepoTag{value:0.2 ton, flag: 1}(_name, tag[t]);
         }
     }
-    
+
     function smvdestroyrepotag (address pub, uint128 index, string[] tag) public accept {
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pub, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
-        for (uint8 t = 0; t < tag.length; t++){     
+        for (uint8 t = 0; t < tag.length; t++){
             if (_hashtag.exists(tvm.hash(tag[t])) == false) { continue; }
             _counttag--;
             delete _hashtag[tvm.hash(tag[t])];
             address addr = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pub, index);
-            GoshWallet(addr).destroyRepoTag{value:0.2 ton, flag: 1}(_name, tag[t]);   	
+            GoshWallet(addr).destroyRepoTag{value:0.2 ton, flag: 1}(_name, tag[t]);
         }
     }
 
@@ -375,7 +375,7 @@ contract Repository is Modifiers{
     function getDiffAddr (string commitName, uint128 index1, uint128 index2) external view returns(address) {
         return GoshLib.calculateDiffAddress(_code[m_DiffCode], address(this), commitName, index1, index2);
     }
-    
+
     function getTags() external view returns(mapping(uint256 => string)) {
         return _hashtag;
     }
@@ -419,7 +419,7 @@ contract Repository is Modifiers{
     function getReady() external view returns(bool) {
         return _ready;
     }
-    
+
     function getDetails() external view returns(string description, string name, Item[] alladress, string head, mapping(uint256 => string) hashtag, bool ready)
     {
         Item[] AllBranches;
@@ -428,8 +428,8 @@ contract Repository is Modifiers{
             AllBranches.push(value);
         }
         return (_description, _name, AllBranches, _head, _hashtag, _ready);
-    }    
-        
+    }
+
     function getRepositoryIn() public view minValue(0.5 ton) {
         Item[] AllBranches;
         for ((uint256 key, Item value) : _Branches) {

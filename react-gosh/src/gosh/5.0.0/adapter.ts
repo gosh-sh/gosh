@@ -120,6 +120,7 @@ import {
     TBigTaskUpgradeParams,
     TBigTaskUpgradeResult,
     TCodeCommentThreadResdolveParams,
+    TBigTaskDetails,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -144,6 +145,7 @@ import {
     IGoshTopic,
     IGoshProfileDao,
     IGoshBigTask,
+    IGoshCommitTag,
 } from '../interfaces'
 import { Gosh } from './gosh'
 import { GoshDao } from './goshdao'
@@ -480,6 +482,32 @@ class GoshAdapter_5_0_0 implements IGoshAdapter {
         return new GoshHelperTag(this.client, address)
     }
 
+    async getCommitTag(params: {
+        address?: string | undefined
+        data?: { daoName: string; repoName: string; tagName: string } | undefined
+    }): Promise<IGoshCommitTag> {
+        const { address, data } = params
+
+        if (address) {
+            return new GoshCommitTag(this.client, address)
+        }
+
+        if (data) {
+            const { daoName, repoName, tagName } = data
+            const { value0 } = await this.gosh.runLocal('getTagAddress', {
+                daoName,
+                repoName,
+                tagName,
+            })
+            return new GoshCommitTag(this.client, value0)
+        }
+
+        throw new GoshError(
+            'Get commit tag error',
+            'Either address or data should be provided',
+        )
+    }
+
     async deployProfile(username: string, pubkey: string): Promise<IGoshProfile> {
         // Get profile and check it's status
         const profile = await this.getProfile({ username })
@@ -776,6 +804,83 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         // Clean tags
         const tagsClean = [...details.hashtag]
         const _systemTagIndex = tagsClean.findIndex((item: string) => item === SYSTEM_TAG)
+        if (_systemTagIndex >= 0) {
+            tagsClean.splice(_systemTagIndex, 1)
+        }
+
+        // Parse candidates
+        let team
+        if (details.candidates.length) {
+            const candidate = details.candidates[0]
+            const commit = candidate.commit
+                ? await repository.getCommit({ address: candidate.commit })
+                : undefined
+            const assigners = await Promise.all(
+                Object.keys(candidate.pubaddrassign).map(async (address) => {
+                    if (candidate.daoMembers[address]) {
+                        return { username: candidate.daoMembers[address], address }
+                    } else {
+                        const profile = await this.gosh.getUserByAddress(address)
+                        return { username: profile.name, address }
+                    }
+                }),
+            )
+            const reviewers = await Promise.all(
+                Object.keys(candidate.pubaddrreview).map(async (address) => {
+                    if (candidate.daoMembers[address]) {
+                        return { username: candidate.daoMembers[address], address }
+                    } else {
+                        const profile = await this.gosh.getUserByAddress(address)
+                        return { username: profile.name, address }
+                    }
+                }),
+            )
+            const managers = await Promise.all(
+                Object.keys(candidate.pubaddrmanager).map(async (address) => {
+                    if (candidate.daoMembers[address]) {
+                        return { username: candidate.daoMembers[address], address }
+                    } else {
+                        const profile = await this.gosh.getUserByAddress(address)
+                        return { username: profile.name, address }
+                    }
+                }),
+            )
+            team = {
+                commit: commit ? { branch: commit.branch, name: commit.name } : undefined,
+                assigners,
+                reviewers,
+                managers,
+            }
+        }
+
+        return {
+            account: task,
+            address: task.address,
+            name: details.nametask,
+            repository: await repository.getName(),
+            team,
+            config: details.grant,
+            confirmed: details.ready,
+            confirmedAt: details.locktime,
+            tags: tagsClean,
+            tagsRaw: details.hashtag,
+        }
+    }
+
+    async getBigTask(options: {
+        repository?: string
+        name?: string
+        address?: TAddress
+    }): Promise<TBigTaskDetails> {
+        const task = await this._getBigTask(options)
+        const details = await task.runLocal('getStatus', {})
+        const repository = await this.getRepository({ address: details.repo })
+
+        // Clean tags
+        const tagsClean = [...details.hashtag]
+        const _systemTagIndex = tagsClean.findIndex(
+            (item: string) => item === BIGTASK_TAG,
+        )
         if (_systemTagIndex >= 0) {
             tagsClean.splice(_systemTagIndex, 1)
         }
@@ -1783,7 +1888,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
                 ...item,
                 daoMembers: {},
             })),
-            grant: accountData._grant,
+            grant: { ...accountData._grant, subtask: [] },
             hashtag: accountData._hashtag,
             indexFinal: accountData._indexFinal,
             locktime: accountData._locktime,
@@ -2024,14 +2129,13 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
-        const _tags = [BIGTASK_TAG, ...tags]
         if (cell) {
             const { value0 } = await this.wallet.runLocal('getCellForBigTaskUpgrade', {
                 reponame: repositoryName,
                 nametask: name,
                 oldversion: prevVersion,
                 oldtask: prevAddress,
-                hashtag: _tags,
+                hashtag: tags,
                 comment,
             })
             return value0
@@ -2044,7 +2148,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
                 nametask: name,
                 oldversion: prevVersion,
                 oldtask: prevAddress,
-                hashtag: _tags,
+                hashtag: tags,
                 comment,
                 reviewers: _reviewers.map(({ wallet }) => wallet),
                 num_clients: await smv.getClientsCount(),

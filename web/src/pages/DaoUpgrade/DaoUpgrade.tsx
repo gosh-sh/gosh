@@ -51,7 +51,7 @@ const DaoUpgradePage = () => {
 
             <Formik
                 initialValues={{
-                    version: versions ? versions[0] : '',
+                    version: versions ? versions.slice(-1)[0] : '',
                     comment: '',
                 }}
                 onSubmit={onDaoUpgrade}

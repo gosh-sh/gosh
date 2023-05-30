@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
-import { classNames, useDao, TDao, shortString } from 'react-gosh'
+import {
+    classNames,
+    useDao,
+    TDao,
+    shortString,
+    useDaoAutoTokenTransfer,
+} from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import Loader from '../components/Loader'
 import CopyClipboard from '../components/CopyClipboard'
@@ -18,6 +24,7 @@ export type TDaoLayoutOutletContext = {
 const DaoLayout = () => {
     const { daoName } = useParams()
     const dao = useDao(daoName!)
+    useDaoAutoTokenTransfer(dao.adapter)
     const [description, setDescription] = useState<{
         isFetching: boolean
         content: string | null

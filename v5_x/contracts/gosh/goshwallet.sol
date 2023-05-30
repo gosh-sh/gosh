@@ -1068,7 +1068,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
         address taskaddr = GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, repo, nametask);
-        BigTask(taskaddr).approveReady{value:0.3 ton}(_pubaddr, _index);
+        BigTask(taskaddr).approveReady{value:1 ton}(_pubaddr, _index);
         getMoney();
     } 
 
@@ -1526,7 +1526,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public senderIs(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))) accept {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        GoshDao(_goshdao).deployTask{value: 0.3 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, value, namebigtask, workers);
+        GoshDao(_goshdao).deployTask{value: 1 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, value, namebigtask, workers);
         getMoney();
     }
 
@@ -1541,7 +1541,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        BigTask(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).deploySubTask{value: 0.1 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, value, workers);
+        BigTask(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).deploySubTask{value: 1 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, value, workers);
         getMoney();
     }
 
@@ -1552,7 +1552,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        BigTask(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).destroySubTask{value: 0.1 ton, flag: 1}(_pubaddr, _index, index);
+        BigTask(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).destroySubTask{value: 1 ton, flag: 1}(_pubaddr, _index, index);
         getMoney();
     }
 
@@ -1695,7 +1695,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
         address taskaddr = GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, repo, nametask);
-        BigTask(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, typegrant, _index);
+        BigTask(taskaddr).getGrant{value:2 ton, flag: 1}(_pubaddr, typegrant, _index);
         getMoney();
     }
     
@@ -1707,9 +1707,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
         address taskaddr = GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, repo, nametask);
-        BigTask(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, 1, _index);
-        BigTask(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, 2, _index);
-        BigTask(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, 3, _index);
+        BigTask(taskaddr).getGrant{value:1 ton, flag: 1}(_pubaddr, 1, _index);
+        BigTask(taskaddr).getGrant{value:1 ton, flag: 1}(_pubaddr, 2, _index);
+        BigTask(taskaddr).getGrant{value:1 ton, flag: 1}(_pubaddr, 3, _index);
         getMoney();
     }
     

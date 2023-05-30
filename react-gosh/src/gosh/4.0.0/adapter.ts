@@ -141,6 +141,7 @@ import {
     IGoshHelperTag,
     IGoshTopic,
     IGoshProfileDao,
+    IGoshCommitTag,
 } from '../interfaces'
 import { Gosh } from './gosh'
 import { GoshDao } from './goshdao'
@@ -473,6 +474,13 @@ class GoshAdapter_4_0_0 implements IGoshAdapter {
 
     async getHelperTag(address: string): Promise<IGoshHelperTag> {
         return new GoshHelperTag(this.client, address)
+    }
+
+    async getCommitTag(params: {
+        address?: string | undefined
+        data?: { daoName: string; repoName: string; tagName: string } | undefined
+    }): Promise<IGoshCommitTag> {
+        throw new Error('Method is unavailable in current version')
     }
 
     async deployProfile(username: string, pubkey: string): Promise<IGoshProfile> {
@@ -830,6 +838,13 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             tags: tagsClean,
             tagsRaw: details.hashtag,
         }
+    }
+
+    async getBigTask(options: {
+        name?: string | undefined
+        address?: string | undefined
+    }): Promise<TTaskDetails> {
+        throw new Error('Method is unavailable in current version')
     }
 
     async getTopicCodeHash(): Promise<string> {

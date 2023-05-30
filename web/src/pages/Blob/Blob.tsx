@@ -114,12 +114,14 @@ const BlobPage = () => {
                             filename={blob.path}
                             commit={blob.commit}
                             value={blob.content}
-                            commentsOn
+                            commentsOn={dao.details.version >= '5.0.0'}
                         />
                     </div>
-                    <div className="sticky top-3 shrink-0 w-72 bg-white pl-3">
-                        <CodeComments filename={blob.path} />
-                    </div>
+                    {dao.details.version >= '5.0.0' && (
+                        <div className="sticky top-3 shrink-0 w-72 bg-white pl-3">
+                            <CodeComments filename={blob.path} />
+                        </div>
+                    )}
                 </div>
             )}
         </>

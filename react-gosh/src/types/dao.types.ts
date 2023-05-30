@@ -128,6 +128,8 @@ type TTaskDetails = {
     tagsRaw: string[]
 }
 
+type TBigTaskDetails = TTaskDetails
+
 type TTaskListItem = TTaskDetails & {
     adapter: IGoshDaoAdapter
     isLoadDetailsFired?: boolean
@@ -545,6 +547,7 @@ export {
     TWalletDetails,
     TUserParam,
     TTaskDetails,
+    TBigTaskDetails,
     TTaskListItem,
     TBigTaskCreateParams,
     TBigTaskCreateResult,

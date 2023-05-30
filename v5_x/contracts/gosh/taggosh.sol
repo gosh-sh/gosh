@@ -38,7 +38,7 @@ contract RepoTagGosh is Modifiers {
     
     //Selfdestruct
     function destroy(address pubaddr, uint128 index) public {
-        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        if (msg.sender != _goshdao) { require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED); }
         selfdestruct(_systemcontract);
     }
     

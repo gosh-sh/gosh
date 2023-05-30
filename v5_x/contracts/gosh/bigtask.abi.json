@@ -229,7 +229,8 @@
 				{"name":"indexFinal","type":"uint128"},
 				{"name":"hashtag","type":"string[]"},
 				{"name":"locktime","type":"uint128"},
-				{"components":[{"name":"value","type":"uint128"},{"name":"name","type":"string"}],"name":"subtask","type":"map(uint128,tuple)"}
+				{"components":[{"name":"value","type":"uint128"},{"name":"name","type":"string"}],"name":"subtask","type":"map(uint128,tuple)"},
+				{"name":"fullSubtaskValue","type":"uint128"}
 			]
 		},
 		{

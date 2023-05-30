@@ -22,6 +22,15 @@
 			]
 		},
 		{
+			"name": "getUpgradeDataVersion",
+			"inputs": [
+				{"name":"data","type":"cell"},
+				{"name":"ver","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getUpgradeData",
 			"inputs": [
 				{"name":"data","type":"cell"}

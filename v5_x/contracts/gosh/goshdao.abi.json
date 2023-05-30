@@ -868,6 +868,26 @@
 			]
 		},
 		{
+			"name": "calculateBalanceSubtask",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"},
+				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
+				{"name":"balance","type":"uint128"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"commit","type":"tuple"},
+				{"name":"freebalance","type":"uint128"},
+				{"name":"hashtag","type":"string[]"},
+				{"name":"index","type":"uint128"},
+				{"name":"sender","type":"address"},
+				{"name":"num","type":"uint8"},
+				{"name":"value","type":"uint128"},
+				{"name":"bigtask","type":"optional(string)"},
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "calculateBalanceAssign",
 			"inputs": [
 				{"name":"repoName","type":"string"},
@@ -943,25 +963,13 @@
 			"inputs": [
 				{"name":"nametask","type":"string"},
 				{"name":"repo","type":"address"},
-				{"name":"tag","type":"string[]"},
-				{"name":"sender","type":"address"}
+				{"name":"tag","type":"string[]"}
 			],
 			"outputs": [
 			]
 		},
 		{
 			"name": "destroyTaskTagBig",
-			"inputs": [
-				{"name":"nametask","type":"string"},
-				{"name":"repo","type":"address"},
-				{"name":"tag","type":"string[]"},
-				{"name":"sender","type":"address"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "destroyTaskTag2",
 			"inputs": [
 				{"name":"nametask","type":"string"},
 				{"name":"repo","type":"address"},
@@ -982,7 +990,29 @@
 			]
 		},
 		{
+			"name": "checkOldBigTaskVersion",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"string"},
+				{"name":"previous","type":"string"},
+				{"name":"previousaddr","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "checkOldTaskVersion5",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"string"},
+				{"name":"previous","type":"address"},
+				{"name":"answer","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkOldBigTaskVersion5",
 			"inputs": [
 				{"name":"nametask","type":"string"},
 				{"name":"repo","type":"string"},

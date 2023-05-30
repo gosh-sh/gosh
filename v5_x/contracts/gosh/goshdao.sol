@@ -651,7 +651,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function upgradeBigTask (address pub, uint128 index, string nametask, string repoName, string oldversion, address oldtask, string[] hashtag) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pub, index))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
     	address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName);
-        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
+        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_BigTaskCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});
         optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_TaskCode], hashtag, oldversion, oldtask);
         optional(TvmCell) data1;
@@ -1096,8 +1096,34 @@ contract GoshDao is Modifiers, TokenRootOwner {
         uint128 freebalance
     ) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index)) accept saveMsg {
         uint128 balance = 0; 
-        this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, msg.sender, 1, 0, null, null);
-     }   
+        this.calculateBalanceSubtask{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, msg.sender, 1, 0, null, null);
+     }  
+
+     function calculateBalanceSubtask(string repoName,
+        string nametask,
+        ConfigGrant grant,
+        uint128 balance,
+        ConfigCommit commit,
+        uint128 freebalance,
+        string[] hashtag,
+        uint128 index, 
+        address sender, 
+        uint8 num,
+        uint128 value,
+        optional(string) bigtask,
+        optional(ConfigCommitBase) workers) public pure senderIs(address(this)) accept {
+        uint128 check = 0;
+        for (uint128 i = index; i < grant.subtask.length; i++){
+            check += 1;
+            if (check == 3) { this.calculateBalanceSubtask{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, i, sender, num, value, bigtask, workers); return; }
+            balance += grant.subtask[i].grant;
+            if (i != 0) { require(grant.subtask[i].lock > grant.subtask[i - 1].lock, ERR_WRONG_LOCK); }
+            if (i == grant.subtask.length) { require(grant.subtask[i].grant != 0, ERR_ZERO_GRANT); }
+        }       
+        if (balance != freebalance) { return; }
+        balance = 0;
+        this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, sender, num, value, bigtask, workers);
+     } 
      
      function calculateBalanceAssign(string repoName,
         string nametask,
@@ -1200,34 +1226,38 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }
     }
     
-    function destroyTaskTag (string nametask, address repo, string[] tag, address sender) public view senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), repo, nametask))  accept {
+    function destroyTaskTag (string nametask, address repo, string[] tag) public view senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), repo, nametask))  accept {
         for (uint8 t = 0; t < tag.length; t++){ 
-            GoshWallet(sender).destroyTaskTag{value:0.2 ton, flag: 1}(repo, msg.sender, tag[t]);   	
+            RepoTagGosh(GoshLib.calculateTaskTagGoshAddress(_code[m_RepoTagCode], _versionController, address(this), repo, msg.sender, tag[t])).destroy { value: 0.1 ton, flag: 1}(_pubaddr, 0);
+            RepoTagGosh(GoshLib.calculateTaskTagDaoAddress(_code[m_RepoTagCode], _versionController, address(this), repo, msg.sender, tag[t])).destroy { value: 0.1 ton, flag: 1}(_pubaddr, 0);
+            RepoTagGosh(GoshLib.calculateTaskTagRepoAddress(_code[m_RepoTagCode], _versionController, address(this), repo, msg.sender, tag[t])).destroy { value: 0.1 ton, flag: 1}(_pubaddr, 0);
         }
     }
 
-    function destroyTaskTagBig (string nametask, address repo, string[] tag, address sender) public view senderIs(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], address(this), repo, nametask))  accept {
+    function destroyTaskTagBig (string nametask, address repo, string[] tag) public view senderIs(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], address(this), repo, nametask))  accept {
         for (uint8 t = 0; t < tag.length; t++){ 
-            GoshWallet(sender).destroyTaskTag{value:0.2 ton, flag: 1}(repo, msg.sender, tag[t]);   	
-        }
-    }
-    
-    function destroyTaskTag2 (string nametask, address repo, string[] tag) public view senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), repo, nametask))  accept {
-        uint256 keyaddr;       
-        require(_wallets.next(keyaddr).hasValue() == true, ERR_NO_DATA);
-        (,MemberToken worker) = _wallets.next(keyaddr).get();
-        for (uint8 t = 0; t < tag.length; t++){ 
-            GoshWallet(worker.member).destroyTaskTag{value:0.2 ton, flag: 1}(repo, msg.sender, tag[t]);   	
+            RepoTagGosh(GoshLib.calculateTaskTagGoshAddress(_code[m_RepoTagCode], _versionController, address(this), repo, msg.sender, tag[t])).destroy { value: 0.1 ton, flag: 1}(_pubaddr, 0);
+            RepoTagGosh(GoshLib.calculateTaskTagDaoAddress(_code[m_RepoTagCode], _versionController, address(this), repo, msg.sender, tag[t])).destroy { value: 0.1 ton, flag: 1}(_pubaddr, 0);
+            RepoTagGosh(GoshLib.calculateTaskTagRepoAddress(_code[m_RepoTagCode], _versionController, address(this), repo, msg.sender, tag[t])).destroy { value: 0.1 ton, flag: 1}(_pubaddr, 0);
         }
     }
     
     function checkOldTaskVersion (string nametask, string repo, string previous, address previousaddr) public view senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repo), nametask))  accept {        
         SystemContract(_systemcontract).checkOldTaskVersion2{value : 0.2 ton, flag: 1}(_nameDao, nametask, repo, previous, previousaddr, msg.sender);
     }
+
+    function checkOldBigTaskVersion (string nametask, string repo, string previous, address previousaddr) public view senderIs(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], address(this), GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repo), nametask))  accept {        
+        SystemContract(_systemcontract).checkOldBigTaskVersion2{value : 0.2 ton, flag: 1}(_nameDao, nametask, repo, previous, previousaddr, msg.sender);
+    }
     
     function checkOldTaskVersion5 (string nametask, string repo, address previous, address answer) public view senderIs(_systemcontract)  accept {       
         require(previous ==  GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repo), nametask), ERR_WRONG_DATA);
         Task(previous).sendData{value:0.2 ton, flag: 1}(answer);
+    }
+
+    function checkOldBigTaskVersion5 (string nametask, string repo, address previous, address answer) public view senderIs(_systemcontract)  accept {       
+        require(previous ==  GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], address(this), GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repo), nametask), ERR_WRONG_DATA);
+        BigTask(previous).sendData{value:0.2 ton, flag: 1}(answer);
     }
     
     function returnTaskToken(string nametask, address repo, uint128 token) public senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), repo, nametask)) accept {

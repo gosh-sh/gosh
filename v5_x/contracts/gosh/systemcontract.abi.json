@@ -290,6 +290,31 @@
 			]
 		},
 		{
+			"name": "checkOldBigTaskVersion2",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"string"},
+				{"name":"previous","type":"string"},
+				{"name":"previousaddr","type":"address"},
+				{"name":"answer","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkOldBigTaskVersion4",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"string"},
+				{"name":"previousaddr","type":"address"},
+				{"name":"answer","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployCustomData",
 			"inputs": [
 				{"name":"data0","type":"cell"},
@@ -579,6 +604,17 @@
 				{"name":"nametask","type":"string"},
 				{"name":"dao","type":"string"},
 				{"name":"repoName","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getTagAddress",
+			"inputs": [
+				{"name":"daoName","type":"string"},
+				{"name":"repoName","type":"string"},
+				{"name":"tagName","type":"string"}
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}

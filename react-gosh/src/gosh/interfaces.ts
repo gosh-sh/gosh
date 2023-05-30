@@ -124,6 +124,7 @@ import {
     TBigTaskUpgradeResult,
     TCodeCommentThreadResdolveParams,
     TCodeCommentThreadResolveResult,
+    TBigTaskDetails,
 } from '../types'
 
 interface IGoshAdapter {
@@ -169,6 +170,10 @@ interface IGoshAdapter {
         tag: string,
     ): Promise<string>
     getHelperTag(address: TAddress): Promise<IGoshHelperTag>
+    getCommitTag(params: {
+        address?: string
+        data?: { daoName: string; repoName: string; tagName: string }
+    }): Promise<IGoshCommitTag>
 
     deployProfile(username: string, pubkey: string): Promise<IGoshProfile>
 }
@@ -211,6 +216,7 @@ interface IGoshDaoAdapter {
 
     getTaskCodeHash(repository: string): Promise<string>
     getTask(options: { name?: string; address?: TAddress }): Promise<TTaskDetails>
+    getBigTask(options: { name?: string; address?: TAddress }): Promise<TBigTaskDetails>
 
     getTopicCodeHash(): Promise<string>
     getTopic(params: { address?: TAddress }): Promise<TTopic>

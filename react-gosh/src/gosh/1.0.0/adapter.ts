@@ -139,6 +139,7 @@ import {
     IGoshSmvProposal,
     IGoshHelperTag,
     IGoshProfileDao,
+    IGoshCommitTag,
 } from '../interfaces'
 import { Gosh } from './gosh'
 import { GoshDao } from './goshdao'
@@ -392,6 +393,13 @@ class GoshAdapter_1_0_0 implements IGoshAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
+    async getCommitTag(params: {
+        address?: string | undefined
+        data?: { daoName: string; repoName: string; tagName: string } | undefined
+    }): Promise<IGoshCommitTag> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async deployProfile(username: string, pubkey: string): Promise<IGoshProfile> {
         // Get profile and check it's status
         const profile = await this.getProfile({ username })
@@ -639,6 +647,13 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async getTask(options: { name?: string; address?: TAddress }): Promise<TTaskDetails> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async getBigTask(options: {
+        name?: string | undefined
+        address?: string | undefined
+    }): Promise<TTaskDetails> {
         throw new Error('Method is unavailable in current version')
     }
 
