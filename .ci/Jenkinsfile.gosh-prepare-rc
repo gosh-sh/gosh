@@ -470,7 +470,8 @@ def runSingleFunctionalTest(script, index, port, version) {
         sh """
             export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
             ./set-vars.sh ${version}_workspace_${index} http://localnode:${port}
-            GOSH_TRACE=5 ./${script} &> trace_${index}.log
+            export GOSH_TRACE=5
+            ./${script}
         """
     }
 }
@@ -499,7 +500,8 @@ def runSingleUpgradeTest(script, index, port, from, to) {
             export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
             ./set-vars.sh v${from}_x_workspace_${index} http://localnode:${port}
             ./upgrade_tests/set_up.sh v${from}_x_workspace_${index} v${to}_x_workspace_${index}
-            GOSH_TRACE=5 ./upgrade_tests/${script} &> trace_upgrade_${index}.log
+            export GOSH_TRACE=5
+            ./upgrade_tests/${script}
         """
     }
 }
