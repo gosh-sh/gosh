@@ -67,8 +67,8 @@ pipeline {
                 }
             }
             steps {
-                buildDispatcher()
-                //buildDispatcherDebug()
+                //buildDispatcher()
+                buildDispatcherDebug()
             }
         }
         stage('Build: Git Helper') {
@@ -78,8 +78,8 @@ pipeline {
                 }
             }
             steps {
-                runFunctionSet('buildRemoteGosh')
-                //runFunctionSet('buildRemoteGoshDebug')
+                //runFunctionSet('buildRemoteGosh')
+                runFunctionSet('buildRemoteGoshDebug')
             }
         }
 
@@ -287,11 +287,11 @@ def buildDispatcherDebug() {
                 rm -rf darwin-*
                 rm -rf windows-*
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 967 --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 967 --path darwin-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 967 --path windows-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 967 --path linux-arm64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 967 --path darwin-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 972 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 972 --path darwin-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 972 --path windows-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 972 --path linux-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 972 --path darwin-arm64 && sleep 2
             '''
         }
     }
@@ -338,29 +338,29 @@ def buildRemoteGoshDebug(version) {
 
                 cd ${WORKSPACE}
                 export VSTS_ARTIFACTTOOL_DISABLE_HARDLINKS=1
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 968 --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 968 --path darwin-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 968 --path windows-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 968 --path linux-arm64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 968 --path darwin-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 973 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 973 --path darwin-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 973 --path windows-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 973 --path linux-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 973 --path darwin-arm64 && sleep 2
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 969 --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 969 --path darwin-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 969 --path windows-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 969 --path linux-arm64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 969 --path darwin-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 974 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 974 --path darwin-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 974 --path windows-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 974 --path linux-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 974 --path darwin-arm64 && sleep 2
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 970 --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 970 --path darwin-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 970 --path windows-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 970 --path linux-arm64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 970 --path darwin-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 975 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 975 --path darwin-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 975 --path windows-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 975 --path linux-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 975 --path darwin-arm64 && sleep 2
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 971 --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 971 --path darwin-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 971 --path windows-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 971 --path linux-arm64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 971 --path darwin-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 976 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 976 --path darwin-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 976 --path windows-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 976 --path linux-arm64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 976 --path darwin-arm64 && sleep 2
             """
         }
     }
@@ -470,7 +470,7 @@ def runSingleFunctionalTest(script, index, port, version) {
         sh """
             export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
             ./set-vars.sh ${version}_workspace_${index} http://localnode:${port}
-            ./${script}
+            GOSH_TRACE=5 ./${script} &> trace_${index}.log
         """
     }
 }
