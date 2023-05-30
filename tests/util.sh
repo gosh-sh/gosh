@@ -11,6 +11,16 @@ function delay {
     sleep $sleep_for
 }
 
+function get_repo_addr {
+    dao=${1:-$DAO_NAME}
+    repo=${2:-REPO_NAME}
+
+    params=$(jq -n --arg name "${REPO_NAME}" --arg dao "${DAO_NAME}" '$ARGS.named')
+
+    tonos-cli -j -u $NETWORK run $SYSTEM_CONTRACT_ADDR --abi $SYSTEM_CONTRACT_ABI \
+      getAddrRepository "${params}"  | jq -r .value0
+}
+
 function list_branches {
     repo_addr=$1
     tonos-cli -j -u $NETWORK run $repo_addr getAllAddress {} --abi ../$REPO_ABI | jq -r '.value0[].branchname'
@@ -19,6 +29,19 @@ function list_branches {
 function get_account_status {
     contract_addr=$1
     tonos-cli -j -u $NETWORK account $contract_addr | jq -r '."'"$contract_addr"'".acc_type'
+}
+
+function get_account_last_paid {
+    contract_addr=$1
+    tonos-cli -j -u $NETWORK account $contract_addr | jq -r '."'"$contract_addr"'".last_paid'
+}
+
+function get_wallet_details {
+    tonos-cli -j -u $NETWORK run $WALLET_ADDR --abi $WALLET_ABI getDetails {}
+}
+
+function get_wallet_token_balance {
+    get_wallet_details | jq -r .value1
 }
 
 function get_snapshot_status {
@@ -30,6 +53,20 @@ function get_snapshot_status {
     snapshot_addr=`tonos-cli -j -u $NETWORK run $repo_addr getSnapshotAddr "$params" --abi ../$REPO_ABI | jq -r .value0`
     status=`get_account_status $snapshot_addr`
     echo $status
+}
+
+function delete_snapshot {
+    repo_addr=$1
+    branch=$2
+    file_path=$3
+
+    echo Deleting snapshot: branch=$2, file=$3 ...
+    params='{"branch": "'"$branch"'", "name": "'"$file_path"'"}'
+    snapshot_addr=`tonos-cli -j -u $NETWORK run $repo_addr getSnapshotAddr "$params" --abi ../$REPO_ABI | jq -r .value0`
+    echo Got snapshot address: $snapshot_addr
+    tonos-cli -u $NETWORK call --abi ../$WALLET_ABI --sign ../$WALLET_KEYS $WALLET_ADDR deleteSnapshot \
+      "{\"snap\":\"$snapshot_addr\"}" || exit 1
+    echo Deleted snapshot: branch=$2, file=$3 - OK
 }
 
 function wait_account_active {
@@ -79,6 +116,25 @@ function wait_set_commit {
     fi
 }
 
+function get_dao_token_balance {
+    tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
+}
+
+function get_dao_token_reserve {
+    get_dao_token_balance | jq -r .value0
+}
+
+function calculate_prop_id {
+    tvmcell=$1
+
+    PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
+        --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
+        "{\"data\":\"$TVMCELL\"}" \
+        --decode-c6 | grep value0 | jq -r .value0)
+
+    echo $PROP_ID
+}
+
 function deploy_DAO {
   echo "Deploy DAO"
   echo "DAO_NAME=$DAO_NAME"
@@ -126,7 +182,7 @@ function deploy_DAO_and_repo {
 
   echo "***** repo deploy *****"
   deploy_repo
-  REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
+  REPO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | jq -r .value0)
   echo "REPO_ADDR=$REPO_ADDR"
 
   echo "***** awaiting repo deploy *****"
@@ -307,12 +363,14 @@ function wait_account_balance {
 
 function deploy_repo {
   if [[ $VERSION =~ "v1_x" ]]; then
-    tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
-      "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1
+    RESULT=$(tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
+      "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1)
   else
-    tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \
-      "{\"nameRepo\":\"$REPO_NAME\",\"descr\":\"\",\"previous\":null}" || exit 1
+    RESULT=$(tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \
+      "{\"nameRepo\":\"$REPO_NAME\",\"descr\":\"\",\"previous\":null}" || exit 1)
   fi
+  # ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | jq -r .value0)
+  # echo $ADDR
 }
 
 function deploy_task_with_proposal {
@@ -369,7 +427,8 @@ function vote_for_proposal {
 
     sleep 3
 
-    tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m voteFor --platform_id $platform_id --choice true --amount 20 --num_clients 1 --note ""
+    VOTE_TOKENS="${VOTE_TOKENS:-20}"
+    tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m voteFor --platform_id $platform_id --choice true --amount $VOTE_TOKENS --num_clients 1 --note ""
 }
 
 function mint_tokens {
@@ -673,4 +732,53 @@ function dao_transfer_tokens {
 
 function get_number_of_members {
   MEMBERS_LEN=$(tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getDetails | grep -c member)
+}
+
+function start_paid_membership {
+    echo "***** start proposal for paid membership *****"
+    VALUE="${VALUE:-25}"
+    VALUE_PER_SUB="${VALUE_PER_SUB:-10}"
+    TIME_FOR_SUB="${TIME_FOR_SUB:-60}"
+    KEY_FOR_SERVICE="0x"$(cat $WALLET_KEYS | jq .public | cut -d '"' -f 2)
+
+    tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForStartPaidMembership \
+      "{\"newProgram\":{\"fiatValue\":0,\"decimals\":0,\"paidMembershipValue\":$VALUE,\"valuePerSubs\":$VALUE_PER_SUB,\"timeForSubs\":$TIME_FOR_SUB,\"details\":\"\",\"accessKey\":\"$KEY_FOR_SERVICE\"},\"Programindex\":1,\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
+    NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
+    echo "NOW_ARG=$NOW_ARG"
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellStartPaidMembership "{\"newProgram\":{\"fiatValue\":0,\"decimals\":0,\"paidMembershipValue\":$VALUE,\"valuePerSubs\":$VALUE_PER_SUB,\"timeForSubs\":$TIME_FOR_SUB,\"details\":\"\",\"accessKey\":\"$KEY_FOR_SERVICE\"},\"Programindex\":1,\"comment\":\"\",\"time\":$NOW_ARG}" | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+    echo "TVMCELL=$TVMCELL"
+
+    sleep 10
+
+    PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
+      --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
+      "{\"data\":\"$TVMCELL\"}" \
+       --decode-c6 | grep value0 \
+      | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+    vote_for_proposal
+
+}
+
+function stop_paid_membership {
+    echo "***** start proposal for stop paid membership *****"
+    tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForStopPaidMembership \
+      --Programindex 1 --comment "" --num_clients 1 --reviewers []
+    NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
+    echo "NOW_ARG=$NOW_ARG"
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellStopPaidMembership --Programindex 1 --comment "" --time $NOW_ARG | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+    echo "TVMCELL=$TVMCELL"
+
+    sleep 10
+
+    PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
+      --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
+      "{\"data\":\"$TVMCELL\"}" \
+       --decode-c6 | grep value0 \
+      | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+    vote_for_proposal
+
 }
