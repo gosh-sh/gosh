@@ -40,6 +40,7 @@ use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 use push_tree::push_tree;
 
 static PARALLEL_PUSH_LIMIT: usize = 1 << 6;
+static MAX_REDEPLOY_ATTEMPTS: i32 = 3;
 
 #[derive(Default)]
 struct PushBlobStatistics {
