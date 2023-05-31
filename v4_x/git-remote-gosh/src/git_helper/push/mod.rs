@@ -1143,7 +1143,7 @@ where
             parents_of_commits,
             &latest_commit_id.clone().to_string(),
             &ancestor_commit_id,
-        );
+        ); // TODO: this number can be wrong with slow network
         self.blockchain
             .notify_commit(
                 &latest_commit_id,
