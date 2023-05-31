@@ -185,7 +185,7 @@ impl BlockchainCommitPusher for Everscale {
         let mut processed_messages = HashMap::new();
         loop {
             let found = find_messages(self, &commit_contract, &filter, &mut processed_messages).await?;
-            tracing::trace!("did found new messages for {}: {}", commit_contract.address, found.1);
+            tracing::trace!("did find new messages for {}: {}", commit_contract.address, found.1);
             if let Some(message) = found.0 {
                 match message.name.as_str() {
                     "allCorrect" => break,
