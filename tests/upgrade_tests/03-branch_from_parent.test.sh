@@ -40,6 +40,8 @@ git commit -m test
 git push -u origin main
 PARENT_COMMIT_ID=$(git rev-parse --short HEAD)
 
+sleep 30
+
 echo "***** Pushing file to the repo *****"
 echo test > 2.txt
 git add 2.txt
