@@ -92,6 +92,8 @@ git push -u origin main
 
 cd ..
 
+sleep 30
+
 echo "***** cloning repo with new link *****"
 git clone $NEW_LINK $NEW_REPO_PATH
 
