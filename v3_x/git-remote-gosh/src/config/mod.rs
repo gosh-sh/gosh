@@ -9,10 +9,14 @@ use std::{
 mod defaults;
 
 pub const IPFS_CONTENT_THRESHOLD: usize = 63 * 1024; // 63kb (1kb buffer)
-pub const SET_COMMIT_TIMEOUT: &u64 = &179; // in secs
+pub const SET_COMMIT_TIMEOUT: &u64 = 60; // in secs
 pub const DEPLOY_CONTRACT_TIMEOUT: &u64 = &180; // in secs
 
 const USE_CACHE_ENV_VARIABLE_NAME: &str = "GOSH_USE_CACHE";
+
+fn default_timeout() -> u64 {
+    SET_COMMIT_TIMEOUT
+}
 
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct UserWalletConfig {
@@ -29,6 +33,8 @@ pub struct NetworkConfig {
     // ensure_added_network_does_not_drop_defaults
     #[serde(default = "std::vec::Vec::<String>::new")]
     endpoints: Vec<String>,
+    #[serde(default = "default_timeout")]
+    timeout: u64,
 }
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
@@ -62,6 +68,7 @@ impl Default for Config {
                     let network_config = NetworkConfig {
                         user_wallet: None,
                         endpoints: endpoints.to_vec(),
+                        timeout: default_timeout(),
                     };
                     (network.to_owned(), network_config)
                 })
@@ -81,7 +88,8 @@ impl Config {
     }
 
     fn load<TReader: Read + Sized>(config_reader: TReader) -> anyhow::Result<Self> {
-        let config: Config = serde_json::from_reader(config_reader)?;
+        let config: Config = serde_json::from_reader(config_reader)
+            .map_err(|e| anyhow::format_err!("Failed to parse GOSH config: {e}"))?;
         Ok(config)
     }
 
@@ -100,6 +108,13 @@ impl Config {
 
     pub fn use_cache(&self) -> Option<String> {
         env::var(USE_CACHE_ENV_VARIABLE_NAME).ok()
+    }
+
+    pub fn get_primary_network_timeout(&self) -> u64 {
+        match self.networks.get(&self.primary_network) {
+            Some(net_config) => net_config.timeout,
+            _ => default_timeout()
+        }
     }
 
     #[instrument(level = "info", skip_all)]

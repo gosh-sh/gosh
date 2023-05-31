@@ -798,6 +798,7 @@ where
                                 &self.remote,
                                 &self.dao_addr,
                                 true,
+                                &self.config,
                             )
                             .await?;
                     }
@@ -1153,6 +1154,7 @@ where
                 &self.remote,
                 &self.dao_addr,
                 false,
+                &self.config,
             )
             .await?;
 

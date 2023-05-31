@@ -20,6 +20,9 @@ use std::time::{Duration, Instant};
 use tokio::time::sleep;
 use ton_client::abi::{DecodedMessageBody, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
+use crate::config::Config;
+
+const GOSH_REMOTE_WAIT_TIMEOUT_ENV: &str = "GOSH_REMOTE_WAIT_TIMEOUT";
 
 #[derive(Serialize, Debug)]
 pub struct DeployCommitParams {
@@ -79,6 +82,7 @@ pub trait BlockchainCommitPusher {
         number_of_commits: u64,
         remote: &Remote,
         dao_addr: &BlockchainContractAddress,
+        config: &Config,
     ) -> anyhow::Result<()>;
 }
 
@@ -141,6 +145,7 @@ impl BlockchainCommitPusher for Everscale {
         number_of_commits: u64,
         remote: &Remote,
         dao_addr: &BlockchainContractAddress,
+        config: &Config,
     ) -> anyhow::Result<()> {
         tracing::trace!("notify_commit: commit_id={commit_id}, branch={branch}, number_of_files_changed={number_of_files_changed}, number_of_commits={number_of_commits}, remote={remote:?}, dao_addr={dao_addr}");
         let wallet = self.user_wallet(&dao_addr, &remote.network).await?;
@@ -161,7 +166,11 @@ impl BlockchainCommitPusher for Everscale {
         tracing::trace!("setCommit msg id: {:?}", result.message_id);
 
         let mut start = Instant::now();
-        let timeout = Duration::from_secs(*crate::config::SET_COMMIT_TIMEOUT);
+        let timeout = std::env::var(GOSH_REMOTE_WAIT_TIMEOUT_ENV).ok()
+            .map(|time| u64::from_str_radix(&time, 10).ok()).flatten()
+            .unwrap_or(config.get_primary_network_timeout());
+        tracing::trace!("Set commit timeout: {} sec", timeout);
+        let timeout = Duration::from_secs(timeout);
 
         let mut repo_contract = self.repo_contract.clone();
         let commit_address = get_commit_address(

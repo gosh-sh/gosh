@@ -723,6 +723,7 @@ where
                 1,
                 &self.remote,
                 &self.dao_addr,
+                &self.config,
             )
             .await?;
 
@@ -929,6 +930,7 @@ where
                 number_of_commits,
                 &self.remote,
                 &self.dao_addr,
+                &self.config,
             )
             .await?;
 

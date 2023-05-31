@@ -67,8 +67,8 @@ pipeline {
                 }
             }
             steps {
-                //buildDispatcher()
-                buildDispatcherDebug()
+                buildDispatcher()
+                //buildDispatcherDebug()
             }
         }
         stage('Build: Git Helper') {
@@ -78,8 +78,8 @@ pipeline {
                 }
             }
             steps {
-                //runFunctionSet('buildRemoteGosh')
-                runFunctionSet('buildRemoteGoshDebug')
+                runFunctionSet('buildRemoteGosh')
+                //runFunctionSet('buildRemoteGoshDebug')
             }
         }
 
@@ -114,7 +114,7 @@ pipeline {
                         batches.add(new ArrayList(files.subList(i, end)))  // <-- Modified
                     }
 
-                    for (int j = 1; j < batches.size(); j++) {
+                    for (int j = 0; j < batches.size(); j++) {
                         def batch = batches[j]
                         
                         for (version in versions) {

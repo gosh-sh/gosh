@@ -296,6 +296,7 @@ pub mod tests {
                 remote: &Remote,
                 dao_addr: &BlockchainContractAddress,
                 is_upgrade: bool,
+                config: &Config,
             ) -> anyhow::Result<()>;
         }
 
