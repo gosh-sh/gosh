@@ -317,7 +317,7 @@ def buildRemoteGosh(version) {
 
                 # 1 = git-remote-gosh
                 if [ ${DRYRUN} = "true" ]; then
-                    PIPELINE_1_ID=\$(az pipelines build queue --definition-id 1 --branch ${COMMIT} --project gosh --variables versionNo=${version},DRYRUN=true | jq .id)
+                    PIPELINE_1_ID=\$(az pipelines build queue --definition-id 1 --branch ${COMMIT} --project gosh --variables '{"versionNo":"${version}", "DRYRUN":"true"}' | jq .id)
                 else
                     PIPELINE_1_ID=\$(az pipelines build queue --definition-id 1 --branch ${COMMIT} --project gosh --variables versionNo=${version} | jq .id)
                 fi
