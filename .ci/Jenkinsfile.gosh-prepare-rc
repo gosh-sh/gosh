@@ -60,7 +60,7 @@ pipeline {
                 }
             }
         }
-        /*stage('Build: Dispatcher') {
+        stage('Build: Dispatcher') {
             agent {
                 node {
                     label 'jenkins-main'
@@ -70,7 +70,7 @@ pipeline {
                 buildDispatcher()
                 //buildDispatcherDebug()
             }
-        }*/
+        }
         stage('Build: Git Helper') {
             agent {
                 node {
