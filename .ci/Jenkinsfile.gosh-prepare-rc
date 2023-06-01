@@ -251,7 +251,11 @@ def buildDispatcher() {
                 set -ex
                 
                 # 2 = gosh-dispatcher
-                PIPELINE_2_ID=$(az pipelines build queue --definition-id 2 --branch \${COMMIT} --project gosh | jq .id)
+                if (params.DRYRUN) {
+                    PIPELINE_2_ID=$(az pipelines build queue --definition-id 2 --branch \${COMMIT} --project gosh --variables DRYRUN=true | jq .id)
+                } else {
+                    PIPELINE_2_ID=$(az pipelines build queue --definition-id 2 --branch \${COMMIT} --project gosh | jq .id)
+                }
                 PIPELINE_2_STATUS=inProgress
 
                 until [ \$PIPELINE_2_STATUS = "completed" ]
@@ -265,11 +269,15 @@ def buildDispatcher() {
                 rm -rf darwin-*
                 rm -rf windows-*
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id $PIPELINE_2_ID --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id $PIPELINE_2_ID --path darwin-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id $PIPELINE_2_ID --path windows-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id $PIPELINE_2_ID --path linux-arm64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id $PIPELINE_2_ID --path darwin-arm64 && sleep 2
+                if (params.DRYRUN) {
+                    az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id $PIPELINE_2_ID --path linux-amd64 && sleep 2
+                } else {
+                    az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id $PIPELINE_2_ID --path linux-amd64 && sleep 2
+                    az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id $PIPELINE_2_ID --path darwin-amd64 && sleep 2
+                    az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id $PIPELINE_2_ID --path windows-amd64 && sleep 2
+                    az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id $PIPELINE_2_ID --path linux-arm64 && sleep 2
+                    az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id $PIPELINE_2_ID --path darwin-arm64 && sleep 2
+                }
             '''
         }
     }
@@ -308,7 +316,11 @@ def buildRemoteGosh(version) {
                 ### az pipelines variable create --name version --pipeline-id 1 --project gosh --allow-override true
 
                 # 1 = git-remote-gosh
-                PIPELINE_1_ID=\$(az pipelines build queue --definition-id 1 --branch ${COMMIT} --project gosh --variables versionNo=${version} | jq .id)
+                if (params.DRYRUN) {
+                    PIPELINE_1_ID=\$(az pipelines build queue --definition-id 1 --branch ${COMMIT} --project gosh --variables versionNo=${version},DRYRUN=true | jq .id)
+                } else {
+                    PIPELINE_1_ID=\$(az pipelines build queue --definition-id 1 --branch ${COMMIT} --project gosh --variables versionNo=${version} | jq .id)
+                }
                 PIPELINE_1_STATUS=inProgress
 
                 until [ \$PIPELINE_1_STATUS = "completed" ]
@@ -318,12 +330,16 @@ def buildRemoteGosh(version) {
                 done
 
                 cd ${WORKSPACE}
-
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id \$PIPELINE_1_ID --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id \$PIPELINE_1_ID --path darwin-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id \$PIPELINE_1_ID --path windows-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id \$PIPELINE_1_ID --path linux-arm64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id \$PIPELINE_1_ID --path darwin-arm64 && sleep 2
+                if (params.DRYRUN) {
+                    az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id \$PIPELINE_1_ID --path linux-amd64 && sleep 2
+                } else {
+                    az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id \$PIPELINE_1_ID --path linux-amd64 && sleep 
+                    az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id \$PIPELINE_1_ID --path darwin-amd64 && sleep 2
+                    az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id \$PIPELINE_1_ID --path windows-amd64 && sleep 2
+                    az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id \$PIPELINE_1_ID --path linux-arm64 && sleep 2
+                    az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id \$PIPELINE_1_ID --path darwin-arm64 && sleep 2
+                }
+                
             """
         }
     }
