@@ -251,7 +251,7 @@ def buildDispatcher() {
                 set -ex
                 
                 # 2 = gosh-dispatcher
-                if [ \${DRYRUN} == "true" ]; then
+                if [ \${DRYRUN} = "true" ]; then
                     PIPELINE_2_ID=$(az pipelines build queue --definition-id 2 --branch \${COMMIT} --project gosh --variables DRYRUN=true | jq .id)
                 else
                     PIPELINE_2_ID=$(az pipelines build queue --definition-id 2 --branch \${COMMIT} --project gosh | jq .id)
@@ -269,7 +269,7 @@ def buildDispatcher() {
                 rm -rf darwin-*
                 rm -rf windows-*
 
-                if [ \${DRYRUN} == "true" ]; then
+                if [ \${DRYRUN} = "true" ]; then
                     az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id $PIPELINE_2_ID --path linux-amd64 && sleep 2
                 else
                     az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id $PIPELINE_2_ID --path linux-amd64 && sleep 2
@@ -316,7 +316,7 @@ def buildRemoteGosh(version) {
                 ### az pipelines variable create --name version --pipeline-id 1 --project gosh --allow-override true
 
                 # 1 = git-remote-gosh
-                if [ ${DRYRUN} == "true" ]; then
+                if [ ${DRYRUN} = "true" ]; then
                     PIPELINE_1_ID=\$(az pipelines build queue --definition-id 1 --branch ${COMMIT} --project gosh --variables versionNo=${version},DRYRUN=true | jq .id)
                 else
                     PIPELINE_1_ID=\$(az pipelines build queue --definition-id 1 --branch ${COMMIT} --project gosh --variables versionNo=${version} | jq .id)
@@ -330,7 +330,7 @@ def buildRemoteGosh(version) {
                 done
 
                 cd ${WORKSPACE}
-                if [ "${DRYRUN}" == "true" ]; then
+                if [ "${DRYRUN}" = "true" ]; then
                     az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id \$PIPELINE_1_ID --path linux-amd64 && sleep 2
                 else
                     az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id \$PIPELINE_1_ID --path linux-amd64 && sleep 
@@ -396,7 +396,7 @@ def archiveAzureArtifacts() {
             find . -name \'git-remote-gosh_v*\' | tr -d ./ > dispatcher.ini
             cd -
 
-            if [ \${DRYRUN} == "true" ]; then
+            if [ \${DRYRUN} = "true" ]; then
                 cp linux-amd64/dispatcher.ini darwin-amd64
                 tar -czvf git-remote-gosh-linux-amd64.tar.gz -C linux-amd64 $(ls -A linux-amd64)
             else
