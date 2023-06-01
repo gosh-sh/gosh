@@ -12,15 +12,13 @@ strategy:
       binName: git-remote-gosh
       artifactNameAmd: linux-amd64
     mac:
-      imageName: macOS-12
-      binName: git-remote-gosh
-      artifactNameAmd: darwin-amd64
-      condition: eq(variables['DRYRUN'], 'false')
+        imageName: macOS-12
+        binName: git-remote-gosh
+        artifactNameAmd: darwin-amd64
     windows:
-      imageName: windows-2019
-      binName: git-remote-gosh.exe
-      artifactNameAmd: windows-amd64
-      condition: eq(variables['DRYRUN'], 'false')
+        imageName: windows-2019
+        binName: git-remote-gosh.exe
+        artifactNameAmd: windows-amd64
   maxParallel: 3
 
 pool:
@@ -34,6 +32,8 @@ steps:
     set -ex
     sudo apt install -y protobuf-compiler
   condition: eq( variables['Agent.OS'], 'Linux' )
+  pool:
+  vmImage: $(imageName)
   displayName: Install pre-requirements Linux
 # Mac
 - script: |
