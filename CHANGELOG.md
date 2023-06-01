@@ -1,7 +1,16 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [4.1.19] - 2023-05-12
+## [4.1.21] - 2023-06-01
+### New features
+- Improved dispatcher and remotes interaction protocol to allow multiple calls;
+- Added wait timeout to GOSH config and env variable `GOSH_REMOTE_WAIT_TIMEOUT`;
+
+### Bug fixes
+- Fixed parallel commit load;
+- Fixed fetch after upgrade;
+
+## [4.1.20] - 2023-05-12
 ### Bug fixes
 Fixed several bugs with clone command: 
  - Wrong order of entries in git tree
