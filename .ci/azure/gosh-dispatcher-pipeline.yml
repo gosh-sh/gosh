@@ -114,7 +114,18 @@ steps:
 # Linux, MacOs and Windows amd64 
 - publish: ./gosh-dispatcher/target/release/$(binName)
   artifact: $(artifactNameAmd)
-  displayName: Publish amd64
+  condition: eq( variables['Agent.OS'], 'Linux' )
+  displayName: Publish amd64 Linux
+
+- publish: ./gosh-dispatcher/target/release/$(binName)
+  artifact: $(artifactNameAmd)
+  condition: and(eq(variables['Agent.OS'], 'Darwin'), eq(variables['DRYRUN'], 'false'))
+  displayName: Publish amd64 Mac
+
+- publish: ./gosh-dispatcher/target/release/$(binName)
+  artifact: $(artifactNameAmd)
+  condition: and(eq(variables['Agent.OS'], 'Windows_NT'), eq(variables['DRYRUN'], 'false'))
+  displayName: Publish amd64 Windows
 
 # Linux arm64
 - publish: ./gosh-dispatcher/target/aarch64-unknown-linux-gnu/release/$(binName)
