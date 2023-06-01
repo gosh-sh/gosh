@@ -396,15 +396,20 @@ def archiveAzureArtifacts() {
             find . -name \'git-remote-gosh_v*\' | tr -d ./ > dispatcher.ini
             cd -
 
-            cp linux-amd64/dispatcher.ini darwin-amd64
-            cp linux-amd64/dispatcher.ini linux-arm64
-            cp linux-amd64/dispatcher.ini darwin-arm64
-            cp linux-amd64/dispatcher.ini windows-amd64
-            tar -czvf git-remote-gosh-linux-amd64.tar.gz -C linux-amd64 $(ls -A linux-amd64)
-            tar -czvf git-remote-gosh-darwin-amd64.tar.gz -C darwin-amd64 $(ls -A darwin-amd64)
-            tar -czvf git-remote-gosh-linux-arm64.tar.gz -C linux-arm64 $(ls -A linux-arm64)
-            tar -czvf git-remote-gosh-darwin-arm64.tar.gz -C darwin-arm64 $(ls -A darwin-arm64)  
-            cd windows-amd64 && zip -r git-remote-gosh-windows-amd64.zip ./* && cp git-remote-gosh-windows-amd64.zip ../
+            if (params.DRYRUN) {
+                cp linux-amd64/dispatcher.ini darwin-amd64
+                tar -czvf git-remote-gosh-linux-amd64.tar.gz -C linux-amd64 $(ls -A linux-amd64)
+            } else {
+                cp linux-amd64/dispatcher.ini darwin-amd64
+                cp linux-amd64/dispatcher.ini linux-arm64
+                cp linux-amd64/dispatcher.ini darwin-arm64
+                cp linux-amd64/dispatcher.ini windows-amd64
+                tar -czvf git-remote-gosh-linux-amd64.tar.gz -C linux-amd64 $(ls -A linux-amd64)
+                tar -czvf git-remote-gosh-darwin-amd64.tar.gz -C darwin-amd64 $(ls -A darwin-amd64)
+                tar -czvf git-remote-gosh-linux-arm64.tar.gz -C linux-arm64 $(ls -A linux-arm64)
+                tar -czvf git-remote-gosh-darwin-arm64.tar.gz -C darwin-arm64 $(ls -A darwin-arm64)  
+                cd windows-amd64 && zip -r git-remote-gosh-windows-amd64.zip ./* && cp git-remote-gosh-windows-amd64.zip ../
+            }
         '''
     }
 }
