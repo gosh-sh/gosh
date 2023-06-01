@@ -3,7 +3,7 @@ import { atom } from 'recoil'
 type BlobComment = {
     id: string
     username: string
-    datetime: string
+    datetime: number
     content: string
 }
 

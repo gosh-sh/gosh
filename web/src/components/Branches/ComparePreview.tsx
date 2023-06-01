@@ -50,6 +50,9 @@ const BranchComparePreview = (props: TBranchComparePreviewProps) => {
                         return (
                             <div key={index} className="my-5">
                                 <BlobDiffPreview
+                                    commentsOn={false}
+                                    commit={dstBranch!.commit}
+                                    address=""
                                     filename={treepath.find((value) => !!value)}
                                     original={original}
                                     modified={modified}

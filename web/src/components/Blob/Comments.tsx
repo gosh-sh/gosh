@@ -2,7 +2,12 @@ import { getIdenticonAvatar } from '../../helpers'
 import classNames from 'classnames'
 import { Button } from '../Form'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronLeft, faChevronRight, faTimes } from '@fortawesome/free-solid-svg-icons'
+import {
+    faArrowUp,
+    faChevronLeft,
+    faChevronRight,
+    faTimes,
+} from '@fortawesome/free-solid-svg-icons'
 import { useBlobComments } from '../../hooks/codecomment.hooks'
 import { useOutletContext } from 'react-router-dom'
 import { TDaoLayoutOutletContext } from '../../pages/DaoLayout'
@@ -14,6 +19,7 @@ import { useRef } from 'react'
 import { faCheckCircle } from '@fortawesome/free-regular-svg-icons'
 import { Tooltip } from 'react-tooltip'
 import Loader from '../Loader/Loader'
+import moment from 'moment'
 
 const CommentBlock = (props: any) => {
     const { comment, className } = props
@@ -34,9 +40,16 @@ const CommentBlock = (props: any) => {
             </div>
             <div className="grow">
                 <div className="text-sm font-medium">{comment.username}</div>
-                <div className="text-xs text-gray-7c8db5 my-1">{comment.datetime}</div>
+                <div
+                    className="text-xs text-gray-7c8db5 my-1"
+                    data-tooltip-id="tip-datetime"
+                    data-tooltip-content={new Date(comment.datetime).toLocaleString()}
+                >
+                    {moment(comment.datetime).format('D MMM, H:mm')}
+                </div>
                 <div className="text-sm">{comment.content}</div>
             </div>
+            <Tooltip id="tip-datetime" clickable className="z-50" />
         </div>
     )
 }
@@ -119,6 +132,7 @@ const CodeComments = (props: TCodeCommentsProps) => {
                     className={classNames(
                         'flex flex-nowrap items-start overflow-hidden',
                         thread.isResolved ? 'opacity-60' : null,
+                        thread.isOpen ? 'sticky top-1 bottom-1 z-10' : null,
                     )}
                 >
                     <div
@@ -278,17 +292,27 @@ const CodeComments = (props: TCodeCommentsProps) => {
                                                     component={FormikTextarea}
                                                     placeholder="Say something"
                                                     autoComplete="off"
+                                                    resize={false}
+                                                    maxRows={6}
                                                 />
                                             </div>
-                                            <div className="text-end">
+                                            <div className="text-end pt-2">
                                                 <Button
-                                                    type="submit"
                                                     variant="custom"
-                                                    className="text-xs text-gray-7c8db5"
+                                                    type="submit"
+                                                    className={classNames(
+                                                        'text-xs text-white bg-blue-1e7aec',
+                                                        '!rounded-full w-6 h-6 !p-0',
+                                                        'hover:bg-blue-2b89ff',
+                                                    )}
                                                     disabled={isSubmitting}
                                                     isLoading={isSubmitting}
                                                 >
-                                                    Submit
+                                                    {!isSubmitting && (
+                                                        <FontAwesomeIcon
+                                                            icon={faArrowUp}
+                                                        />
+                                                    )}
                                                 </Button>
                                             </div>
                                         </Form>

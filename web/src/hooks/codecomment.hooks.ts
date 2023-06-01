@@ -86,9 +86,7 @@ export function useBlobComments(params: {
                             content: {
                                 id: '',
                                 username: createdBy.name,
-                                datetime: new Date(
-                                    thread.createdAt * 1000,
-                                ).toLocaleString(),
+                                datetime: thread.createdAt * 1000,
                                 content: thread.content,
                             },
                             comments: {
@@ -271,7 +269,7 @@ export function useBlobComments(params: {
                                         {
                                             id: transaction.out_msgs[0],
                                             username: user.username!,
-                                            datetime: new Date().toLocaleString(),
+                                            datetime: Date.now(),
                                             content,
                                         },
                                     ],
@@ -321,7 +319,7 @@ export function useBlobComments(params: {
                                 content: {
                                     id: '',
                                     username: user.username!,
-                                    datetime: new Date().toLocaleString(),
+                                    datetime: Date.now(),
                                     content,
                                 },
                                 comments: {
@@ -417,7 +415,7 @@ export function useBlobComments(params: {
                     username: (
                         await dao.getGosh().getUserByAddress(decoded.value.pubaddr)
                     ).name,
-                    datetime: new Date(message.created_at * 1000).toLocaleString(),
+                    datetime: message.created_at * 1000,
                     content: decoded.value.message,
                 })),
         )

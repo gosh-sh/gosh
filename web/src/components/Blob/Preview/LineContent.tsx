@@ -1,30 +1,37 @@
 import classNames from 'classnames'
 import { Field, Form, Formik } from 'formik'
-import React from 'react'
+import React, { MutableRefObject } from 'react'
 import { FormikTextarea } from '../../Formik'
 import { Button } from '../../Form'
 import commentBtn from '../../../assets/images/comment-add.png'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faArrowUp } from '@fortawesome/free-solid-svg-icons'
 
 type TLineContentProps = {
     commentsOn?: boolean
+    commentFormRefs: MutableRefObject<{
+        [line: number]: HTMLDivElement | null
+    }>
+    line: number
     content: string
     showForm: boolean
     containerProps?: React.HTMLAttributes<HTMLTableCellElement>
     commentButtonProps?: React.HTMLAttributes<HTMLDivElement>
-    onCommentFormReset?(): void
     onCommentFormSubmit?(values: any, helpers: any): void
 }
 
 const LineContent = (props: TLineContentProps) => {
     const {
         commentsOn,
+        commentFormRefs,
+        line,
         content,
         showForm,
         containerProps,
         commentButtonProps,
-        onCommentFormReset,
         onCommentFormSubmit,
     } = props
+
     return (
         <td className="relative group pl-4" {...containerProps}>
             {commentsOn && (
@@ -48,6 +55,7 @@ const LineContent = (props: TLineContentProps) => {
 
             {commentsOn && onCommentFormSubmit && (
                 <div
+                    ref={(el) => (commentFormRefs.current[line] = el)}
                     className={classNames(
                         showForm ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0',
                         'w-full md:w-1/2 overflow-hidden bg-white',
@@ -64,29 +72,28 @@ const LineContent = (props: TLineContentProps) => {
                                     name="comment"
                                     component={FormikTextarea}
                                     placeholder="Say something"
-                                    rows={2}
+                                    rows={1}
+                                    maxRows={6}
                                     className="!border-0"
+                                    resize={false}
                                 />
-                                <div className="border-t border-gray-e6edff flex items-center justify-between">
+                                <div className="border-t border-gray-e6edff flex items-center justify-between px-4 py-1">
                                     <div className="grow"></div>
                                     <div className="grow text-end">
                                         <Button
                                             variant="custom"
-                                            type="button"
-                                            className="text-xs text-gray-7c8db5"
-                                            disabled={isSubmitting}
-                                            onClick={onCommentFormReset}
-                                        >
-                                            Close
-                                        </Button>
-                                        <Button
-                                            variant="custom"
                                             type="submit"
-                                            className="text-xs text-gray-7c8db5"
+                                            className={classNames(
+                                                'text-xs text-white bg-blue-1e7aec',
+                                                '!rounded-full w-6 h-6 !p-0',
+                                                'hover:bg-blue-2b89ff',
+                                            )}
                                             disabled={isSubmitting}
                                             isLoading={isSubmitting}
                                         >
-                                            Submit
+                                            {!isSubmitting && (
+                                                <FontAwesomeIcon icon={faArrowUp} />
+                                            )}
                                         </Button>
                                     </div>
                                 </div>
