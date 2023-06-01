@@ -162,7 +162,7 @@ steps:
 # Linux and macOS amd64
 - publish: ./$(versionNo)/git-remote-gosh/target/release/git-remote-gosh_$(VERSION)
   artifact: $(artifactNameAmd)
-  condition: and(eq(variables['Agent.OS'], 'Linux'), eq(variables['DRYRUN'], 'false'))
+  condition: eq(variables['Agent.OS'], 'Linux')
   displayName: Publish amd64 Linux
 
 - publish: ./$(versionNo)/git-remote-gosh/target/release/git-remote-gosh_$(VERSION)
