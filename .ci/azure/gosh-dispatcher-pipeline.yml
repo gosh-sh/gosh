@@ -15,12 +15,12 @@ strategy:
       imageName: macOS-12
       binName: git-remote-gosh
       artifactNameAmd: darwin-amd64
-      condition: not(eq(variables['DRYRUN'], 'true')
+      condition: eq(variables['DRYRUN'], 'false')
     windows:
       imageName: windows-2019
       binName: git-remote-gosh.exe
       artifactNameAmd: windows-amd64
-      condition: not(eq(variables['DRYRUN'], 'true')
+      condition: eq(variables['DRYRUN'], 'false')
   maxParallel: 3
 
 pool:
@@ -38,12 +38,12 @@ steps:
 # Mac
 - script: |
     brew install protobuf
-  condition: eq( variables['Agent.OS'], 'Darwin' )
+  condition: and(eq(variables['Agent.OS'], 'Darwin'), not(eq(variables['DRYRUN'], 'true')))
   displayName: Install pre-requirements MacOS
 # Windows
 - script: |
     choco install protoc
-  condition: eq( variables['Agent.OS'], 'Windows_NT' )
+  condition: and(eq( variables['Agent.OS'], 'Windows_NT' ), not(eq(variables['DRYRUN'], 'true')))
   displayName: Install pre-requirements Windows
 
 ###########################################################
