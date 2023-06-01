@@ -251,11 +251,11 @@ def buildDispatcher() {
                 set -ex
                 
                 # 2 = gosh-dispatcher
-                if (params.DRYRUN) {
+                if [[ "${params.DRYRUN}" == "true" ]]; then
                     PIPELINE_2_ID=$(az pipelines build queue --definition-id 2 --branch \${COMMIT} --project gosh --variables DRYRUN=true | jq .id)
-                } else {
+                else
                     PIPELINE_2_ID=$(az pipelines build queue --definition-id 2 --branch \${COMMIT} --project gosh | jq .id)
-                }
+                fi
                 PIPELINE_2_STATUS=inProgress
 
                 until [ \$PIPELINE_2_STATUS = "completed" ]
@@ -269,15 +269,15 @@ def buildDispatcher() {
                 rm -rf darwin-*
                 rm -rf windows-*
 
-                if (params.DRYRUN) {
+                if [[ "${params.DRYRUN}" == "true" ]]; then
                     az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id $PIPELINE_2_ID --path linux-amd64 && sleep 2
-                } else {
+                else
                     az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id $PIPELINE_2_ID --path linux-amd64 && sleep 2
                     az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id $PIPELINE_2_ID --path darwin-amd64 && sleep 2
                     az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id $PIPELINE_2_ID --path windows-amd64 && sleep 2
                     az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id $PIPELINE_2_ID --path linux-arm64 && sleep 2
                     az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id $PIPELINE_2_ID --path darwin-arm64 && sleep 2
-                }
+                fi
             '''
         }
     }
@@ -316,11 +316,11 @@ def buildRemoteGosh(version) {
                 ### az pipelines variable create --name version --pipeline-id 1 --project gosh --allow-override true
 
                 # 1 = git-remote-gosh
-                if (params.DRYRUN) {
+                if [[ "${params.DRYRUN}" == "true" ]]; then
                     PIPELINE_1_ID=\$(az pipelines build queue --definition-id 1 --branch ${COMMIT} --project gosh --variables versionNo=${version},DRYRUN=true | jq .id)
-                } else {
+                else
                     PIPELINE_1_ID=\$(az pipelines build queue --definition-id 1 --branch ${COMMIT} --project gosh --variables versionNo=${version} | jq .id)
-                }
+                fi
                 PIPELINE_1_STATUS=inProgress
 
                 until [ \$PIPELINE_1_STATUS = "completed" ]
@@ -330,15 +330,15 @@ def buildRemoteGosh(version) {
                 done
 
                 cd ${WORKSPACE}
-                if (params.DRYRUN) {
+                if [[ "${params.DRYRUN}" == "true" ]]; then
                     az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id \$PIPELINE_1_ID --path linux-amd64 && sleep 2
-                } else {
+                else
                     az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id \$PIPELINE_1_ID --path linux-amd64 && sleep 
                     az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id \$PIPELINE_1_ID --path darwin-amd64 && sleep 2
                     az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id \$PIPELINE_1_ID --path windows-amd64 && sleep 2
                     az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id \$PIPELINE_1_ID --path linux-arm64 && sleep 2
                     az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id \$PIPELINE_1_ID --path darwin-arm64 && sleep 2
-                }
+                fi
                 
             """
         }
@@ -396,10 +396,10 @@ def archiveAzureArtifacts() {
             find . -name \'git-remote-gosh_v*\' | tr -d ./ > dispatcher.ini
             cd -
 
-            if (params.DRYRUN) {
+            if [[ "${params.DRYRUN}" == "true" ]]; then
                 cp linux-amd64/dispatcher.ini darwin-amd64
                 tar -czvf git-remote-gosh-linux-amd64.tar.gz -C linux-amd64 $(ls -A linux-amd64)
-            } else {
+            else
                 cp linux-amd64/dispatcher.ini darwin-amd64
                 cp linux-amd64/dispatcher.ini linux-arm64
                 cp linux-amd64/dispatcher.ini darwin-arm64
@@ -409,7 +409,7 @@ def archiveAzureArtifacts() {
                 tar -czvf git-remote-gosh-linux-arm64.tar.gz -C linux-arm64 $(ls -A linux-arm64)
                 tar -czvf git-remote-gosh-darwin-arm64.tar.gz -C darwin-arm64 $(ls -A darwin-arm64)  
                 cd windows-amd64 && zip -r git-remote-gosh-windows-amd64.zip ./* && cp git-remote-gosh-windows-amd64.zip ../
-            }
+            fi
         '''
     }
 }
