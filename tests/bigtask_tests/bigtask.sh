@@ -1,5 +1,6 @@
 BIGTASK_ABI=../v5_x/contracts/gosh/bigtask.abi.json
 SUBTASK_ABI=../v5_x/contracts/gosh/task.abi.json
+LOCKER_ABI=../v5_x/contracts/gosh/smv/SMVTokenLocker.abi.json
 
 function get_bigtask_address {
     repo=$REPO_NAME
@@ -186,6 +187,51 @@ function delete_subtask {
         echo "TEST FAILED: subtask '${subtask}' wasn't deleted (status: ${subtask_account_status})"
         exit 1
     fi
+}
+
+function complete_subtask {
+    repo=$REPO_NAME
+    branch=$1
+    commit=$2
+    num_files=$3
+    num_commits=$4
+    comment="task completed"
+    num_clients=6 # $(get_num_clients)
+    task=$5
+    reviewers=[]
+
+    params=$(jq -n \
+        --arg repoName "$repo" --arg branchName "$branch" --arg commit "$commit" \
+        --arg numberChangedFiles "$num_files" --arg numberCommits "$num_commits" \
+        --arg comment "$comment" --arg num_clients "$num_clients" --argjson task "$task" \
+        --argjson reviewers "$reviewers" '$ARGS.named')
+
+    delay 30
+
+    tonos-cli -u $NETWORK call $WALLET_ADDR --abi $WALLET_ABI --sign $WALLET_KEYS \
+        startProposalForSetCommit "${params}" || exit 1
+
+    delay 3
+
+    TIME=$(get_account_last_paid $WALLET_ADDR)
+    params=$(echo $params | jq --arg time "${TIME}" 'del(.num_clients, .reviewers) | . += $ARGS.named')
+
+    TVMCELL=$(tonos-cli -j -u $NETWORK run $WALLET_ADDR --abi $WALLET_ABI \
+        getCellSetCommit "${params}" | jq -r .value0)
+
+    echo "TVMCELL=$TVMCELL"
+
+    PROP_ID=$(calculate_prop_id "${TVMCELL}")
+    echo "PROP_ID[complete SubTask]=$PROP_ID"
+
+    vote_for_proposal
+}
+
+function get_num_clients {
+    locker=$(tonos-cli -j -u $NETWORK run $WALLET_ADDR --abi $WALLET_ABI \
+        tip3VotingLocker {} | jq -r .tip3VotingLocker)
+
+    tonos-cli -j -u $NETWORK run $locker --abi $LOCKER_ABI m_num_clients {} | jq -r .m_num_clients
 }
 
 function create_config_grant {

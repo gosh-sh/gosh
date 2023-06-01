@@ -12,13 +12,7 @@ set -o pipefail
 
 NOW=$(date +%s)
 REPO_NAME="bt_repo04-${NOW}"
-
-deploy_repo
 REPO_ADDR=$(get_repo_addr)
-wait_account_active $REPO_ADDR
-
-echo "REPO_NAME=${REPO_NAME}"
-echo "REPO_ADDR=${REPO_ADDR}"
 
 TOKEN=100
 mint_tokens_3
@@ -53,7 +47,7 @@ if (( $TOKEN_RESERVE != $EXPECTED_RESERVE )); then
 fi
 
 SUBTASK_CFG_GRANT="{\"assign\": [{\"grant\": 10, \"lock\": 1}], \"review\": [], \"manager\": [], \"subtask\": []}"
-SUBTASK_WORKERS="{\"pubaddrassign\": {\"$USER_PROFILE_ADDR\": true}, \"pubaddrreview\": {}, \"pubaddrmanager\": {}, \"daoMembers\": {}}"
+SUBTASK_WORKERS="{\"pubaddrassign\": {}, \"pubaddrreview\": {}, \"pubaddrmanager\": {}, \"daoMembers\": {}}"
 
 SUBTASK_ADDR=$(create_subtask "${BIGTASK_NAME}" "${SUBTASK_NAME}" "${SUBTASK_CFG_GRANT}" "[]" "${SUBTASK_WORKERS}")
 
@@ -64,20 +58,48 @@ if (( $TOKEN_RESERVE != $EXPECTED_RESERVE )); then
     echo "TEST FAILED: incorrect reserve after big task was created"
     exit 1
 fi
+
+
+deploy_repo
+wait_account_active $REPO_ADDR
+
+echo "REPO_NAME=${REPO_NAME}"
+echo "REPO_ADDR=${REPO_ADDR}"
+
+git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME
+
+#check
+cd $REPO_NAME
+
+# config git client
+git config user.email "foo@bar.com"
+git config user.name "My name"
+
+git branch -m main
+
+CHANGE=$(date +%s)
+echo $CHANGE > now
+git add now
+git commit -m "main: created file"
+git push -u origin main
+
+# commit_id=$(git rev-parse --short HEAD)
+commit_id="58b40b0819a3e4547e9e5f9fdb5154a07702b342"
+
+cd ..
+
 set -x
-delete_subtask "${BIGTASK_NAME}" "${SUBTASK_NAME}" 0
 
-SUBTASK_2_NAME=sub_task_4_2
-SUBTASK_2_ADDR=$(create_subtask "${BIGTASK_NAME}" "${SUBTASK_2_NAME}" "${SUBTASK_CFG_GRANT}" "[]" "${SUBTASK_WORKERS}")
+get_subtask_status $SUBTASK_ADDR
 
-confirm_bigtask "${BIGTASK_NAME}"
+branch=main
+num_files=1
+num_commits=1
+task=$(echo $SUBTASK_WORKERS | jq --arg task "${SUBTASK_ADDR}" --argjson pubaddrassign "{\"$USER_PROFILE_ADDR\": true}" '. += $ARGS.named')
+complete_subtask "${branch}" "${commit_id}" $num_files $num_commits "${task}"
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-get_subtask_status "${SUBTASK_2_ADDR}" | jq -r
-
-expected_subtask_status="Active"
-delete_subtask "${BIGTASK_NAME}" "${SUBTASK_2_NAME}" 0 $expected_subtask_status
-
-delay 10
+get_subtask_status $SUBTASK_ADDR
 
 TOKEN_RESERVE_FINAL=$(get_dao_token_reserve)
 
