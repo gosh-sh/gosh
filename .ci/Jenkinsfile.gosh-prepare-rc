@@ -469,6 +469,7 @@ def runSingleFunctionalTest(script, index, port, version) {
     dir("${WORKSPACE}/tests_workspace_${index}") {
         sh """
             export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
+            export GOSH_REMOTE_WAIT_TIMEOUT=300
             ./set-vars.sh ${version}_workspace_${index} http://localnode:${port}
             ./${script}
         """
@@ -497,6 +498,7 @@ def runSingleUpgradeTest(script, index, port, from, to) {
     dir("${WORKSPACE}/tests_workspace_${index}") {
         sh """
             export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
+            export GOSH_REMOTE_WAIT_TIMEOUT=300
             ./set-vars.sh v${from}_x_workspace_${index} http://localnode:${port}
             ./upgrade_tests/set_up.sh v${from}_x_workspace_${index} v${to}_x_workspace_${index}
             ./upgrade_tests/${script}
