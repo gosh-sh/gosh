@@ -15,10 +15,12 @@ strategy:
       imageName: macOS-12
       binName: git-remote-gosh
       artifactNameAmd: darwin-amd64
+      condition: not(eq(variables['DRYRUN'], 'true')
     windows:
       imageName: windows-2019
       binName: git-remote-gosh.exe
       artifactNameAmd: windows-amd64
+      condition: not(eq(variables['DRYRUN'], 'true')
   maxParallel: 3
 
 pool:

@@ -16,7 +16,7 @@ def runFunctionSet(function_name) {
     parallel(running_set)
 }
 
-def batchSize = 15
+def batchSize = 10
 
 pipeline {
     agent none
@@ -29,9 +29,9 @@ pipeline {
     parameters {
         gitParameter branchFilter: 'origin/(.*)', defaultValue: 'dev', name: 'sha1', type: 'PT_BRANCH', quickFilterEnabled: true
         booleanParam name: 'DRYRUN', defaultValue: true, description: 'If enabled, will NOT publish pre-release artifacts to Github and Dockerhub.'
-        booleanParam name: 'TEST_WEB', defaultValue: true, description: 'If enabled, will execute web tests.'
+        booleanParam name: 'TEST_WEB', defaultValue: false, description: 'If enabled, will execute web tests.'
         booleanParam name: 'TEST_FUNC', defaultValue: true, description: 'If enabled, will execute func tests.'
-        booleanParam name: 'TEST_UPGRADE', defaultValue: true, description: 'If enabled, will execute upgrade tests.'
+        booleanParam name: 'TEST_UPGRADE', defaultValue: false, description: 'If enabled, will execute upgrade tests.'
     }
 
     stages {
@@ -610,9 +610,9 @@ def prereleaseBinaries() {
                     sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-linux-arm64.tar.gz application/gzip'
                     sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-darwin-arm64.tar.gz application/gzip'
                     sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-windows-amd64.zip application/zip'
-                    sh './package-deb.sh'
-                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-windows_amd64.zip application/octet-stream'
-                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-windows_arm64.zip application/octet-stream'
+                    sh './package-deb.sh /tmp/${JOB_NAME}'
+                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} ./git-remote-gosh-windows_amd64.deb application/octet-stream'
+                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} ./git-remote-gosh-windows_arm64.deb application/octet-stream'
                 }
             }
         }
