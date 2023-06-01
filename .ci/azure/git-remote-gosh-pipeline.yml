@@ -109,7 +109,7 @@ steps:
     CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
     CXX_aarch64_unknown_linux_gnu: aarch64-linux-gnu-g++
   workingDirectory: $(versionNo)/git-remote-gosh
-  condition: eq( variables['Agent.OS'], 'Linux' )
+  condition: and(eq(variables['Agent.OS'], 'Linux'), eq(variables['DRYRUN'], 'false'))
   displayName: Build Linux arm64
 # Mac
 - script: |
