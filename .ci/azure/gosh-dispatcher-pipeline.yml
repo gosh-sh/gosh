@@ -130,7 +130,7 @@ steps:
 # Linux arm64
 - publish: ./gosh-dispatcher/target/aarch64-unknown-linux-gnu/release/$(binName)
   artifact: linux-arm64
-  condition: eq( variables['Agent.OS'], 'Linux' )
+  condition: and(eq(variables['Agent.OS'], 'Linux'), eq(variables['DRYRUN'], 'false'))
   displayName: Publish arm64 Linux
 
 # MacOS arm64
