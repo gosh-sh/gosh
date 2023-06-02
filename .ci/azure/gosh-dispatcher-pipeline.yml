@@ -12,13 +12,13 @@ strategy:
       binName: git-remote-gosh
       artifactNameAmd: linux-amd64
     mac:
-      imageName: macOS-12
-      binName: git-remote-gosh
-      artifactNameAmd: darwin-amd64
+        imageName: macOS-12
+        binName: git-remote-gosh
+        artifactNameAmd: darwin-amd64
     windows:
-      imageName: windows-2019
-      binName: git-remote-gosh.exe
-      artifactNameAmd: windows-amd64
+        imageName: windows-2019
+        binName: git-remote-gosh.exe
+        artifactNameAmd: windows-amd64
   maxParallel: 3
 
 pool:
@@ -36,12 +36,12 @@ steps:
 # Mac
 - script: |
     brew install protobuf
-  condition: eq( variables['Agent.OS'], 'Darwin' )
+  condition: and(eq(variables['Agent.OS'], 'Darwin'), eq(variables['DRYRUN'], 'false'))
   displayName: Install pre-requirements MacOS
 # Windows
 - script: |
     choco install protoc
-  condition: eq( variables['Agent.OS'], 'Windows_NT' )
+  condition: and(eq(variables['Agent.OS'], 'Windows_NT'), eq(variables['DRYRUN'], 'false'))
   displayName: Install pre-requirements Windows
 
 ###########################################################
@@ -64,7 +64,7 @@ steps:
   env:
     RUSTUP_TOOLCHAIN: ${{ variables.RUSTUP_TOOLCHAIN }}
   displayName: "Install rust (windows)"
-  condition: eq(variables['Agent.OS'], 'Windows_NT')
+  condition: and(eq(variables['Agent.OS'], 'Windows_NT'), eq(variables['DRYRUN'], 'false'))
 
 ##########################################################
 # Build
@@ -73,10 +73,16 @@ steps:
     set -ex
     sudo apt update -y
     cargo build --release
+  workingDirectory: gosh-dispatcher
+  condition: eq( variables['Agent.OS'], 'Linux' )
+  displayName: Build Linux amd
+# Linux
+- script: |
+    set -ex
+    sudo apt update -y
     sudo apt install -y build-essential g++-x86-64-linux-gnu libc6-dev-amd64-cross g++-aarch64-linux-gnu libc6-dev-arm64-cross gcc-aarch64-linux-gnu
     rustup target add aarch64-unknown-linux-gnu
     cargo build --release --target aarch64-unknown-linux-gnu
-    ls target/aarch64-unknown-linux-gnu
   env:
     CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: x86_64-linux-gnu-gcc
     CC_x86_64_unknown_linux_gnu: x86_64-linux-gnu-gcc
@@ -85,8 +91,8 @@ steps:
     CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
     CXX_aarch64_unknown_linux_gnu: aarch64-linux-gnu-g++
   workingDirectory: gosh-dispatcher
-  condition: eq( variables['Agent.OS'], 'Linux' )
-  displayName: Build Linux 
+  condition: and(eq(variables['Agent.OS'], 'Linux'), eq(variables['DRYRUN'], 'false'))
+  displayName: Build Linux arm
 # Mac
 - script: |
     set -ex
@@ -94,13 +100,13 @@ steps:
     rustup target add aarch64-apple-darwin
     cargo build --release --target aarch64-apple-darwin
   workingDirectory: gosh-dispatcher
-  condition: eq( variables['Agent.OS'], 'Darwin' )
+  condition: and(eq(variables['Agent.OS'], 'Darwin'), eq(variables['DRYRUN'], 'false'))
   displayName: Build MacOS
 # Windows
 - script: |
     cargo build --release
   workingDirectory: gosh-dispatcher
-  condition: eq( variables['Agent.OS'], 'Windows_NT' )
+  condition: and(eq(variables['Agent.OS'], 'Windows_NT'), eq(variables['DRYRUN'], 'false'))
   displayName: Build Windows
 
 ##################################
@@ -108,16 +114,27 @@ steps:
 # Linux, MacOs and Windows amd64 
 - publish: ./gosh-dispatcher/target/release/$(binName)
   artifact: $(artifactNameAmd)
-  displayName: Publish amd64
+  condition: eq( variables['Agent.OS'], 'Linux' )
+  displayName: Publish amd64 Linux
+
+- publish: ./gosh-dispatcher/target/release/$(binName)
+  artifact: $(artifactNameAmd)
+  condition: and(eq(variables['Agent.OS'], 'Darwin'), eq(variables['DRYRUN'], 'false'))
+  displayName: Publish amd64 Mac
+
+- publish: ./gosh-dispatcher/target/release/$(binName)
+  artifact: $(artifactNameAmd)
+  condition: and(eq(variables['Agent.OS'], 'Windows_NT'), eq(variables['DRYRUN'], 'false'))
+  displayName: Publish amd64 Windows
 
 # Linux arm64
 - publish: ./gosh-dispatcher/target/aarch64-unknown-linux-gnu/release/$(binName)
   artifact: linux-arm64
-  condition: eq( variables['Agent.OS'], 'Linux' )
+  condition: and(eq(variables['Agent.OS'], 'Linux'), eq(variables['DRYRUN'], 'false'))
   displayName: Publish arm64 Linux
 
 # MacOS arm64
 - publish: ./gosh-dispatcher/target/aarch64-apple-darwin/release/$(binName)
   artifact: darwin-arm64
-  condition: eq( variables['Agent.OS'], 'Darwin' )
+  condition: and(eq(variables['Agent.OS'], 'Darwin'), eq(variables['DRYRUN'], 'false'))
   displayName: Publish arm64 MacOS
