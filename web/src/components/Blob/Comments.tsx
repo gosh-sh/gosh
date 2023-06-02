@@ -15,7 +15,7 @@ import { Field, Form, Formik, FormikHelpers } from 'formik'
 import { toast } from 'react-toastify'
 import { ToastError } from '../Toast'
 import { FormikTextarea } from '../Formik'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { faCheckCircle } from '@fortawesome/free-regular-svg-icons'
 import { Tooltip } from 'react-tooltip'
 import Loader from '../Loader/Loader'
@@ -73,6 +73,7 @@ const CodeComments = (props: TCodeCommentsProps) => {
         filename,
     })
     const commentRefs = useRef<{ [threadId: string]: HTMLDivElement | null }>({})
+    const [isTextareaFocus, setTextareaFocus] = useState<boolean>(false)
 
     const onThreadToggle = (id: string | null) => {
         if (id) {
@@ -278,25 +279,43 @@ const CodeComments = (props: TCodeCommentsProps) => {
                             ))}
                         </div>
                         {dao.details.isAuthMember && (
-                            <div className="mt-1">
+                            <div className="mt-1 border rounded-lg overflow-hidden bg-gray-fafafd">
                                 <Formik
                                     initialValues={{ thread_id: thread.id, comment: '' }}
                                     onSubmit={onAddCommentSubmit}
                                     enableReinitialize
                                 >
-                                    {({ isSubmitting }) => (
+                                    {({ isSubmitting, values }) => (
                                         <Form>
                                             <div>
                                                 <Field
                                                     name="comment"
+                                                    className="!border-0"
                                                     component={FormikTextarea}
                                                     placeholder="Say something"
                                                     autoComplete="off"
                                                     resize={false}
                                                     maxRows={6}
+                                                    minRows={isTextareaFocus ? 2 : 1}
+                                                    onFocus={() => {
+                                                        setTextareaFocus(true)
+                                                    }}
+                                                    onBlur={() => {
+                                                        if (!values.comment) {
+                                                            setTextareaFocus(false)
+                                                        }
+                                                    }}
                                                 />
                                             </div>
-                                            <div className="text-end pt-2">
+                                            <div
+                                                className={classNames(
+                                                    'text-end px-4 overflow-hidden',
+                                                    'transition-all duration-200',
+                                                    isTextareaFocus
+                                                        ? 'py-2 border-t max-h-screen opacity-100'
+                                                        : 'max-h-0 opacity-0',
+                                                )}
+                                            >
                                                 <Button
                                                     variant="custom"
                                                     type="submit"
