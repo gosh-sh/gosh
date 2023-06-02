@@ -15,7 +15,7 @@ DAO_NAME="dao-upgrade-test03_$(date +%s)"
 
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
-[ -d $REPO_NAME ] && rm -rf "$REPO_NAME""_clone"
+[ -d $REPO_NAME ] && rm -rf "{$REPO_NAME}_clone"
 
 # deploy new DAO that will be upgraded
 deploy_DAO_and_repo
