@@ -4,6 +4,7 @@ PKG_NAME="git-remote-gosh"
 BINARIES=("git-remote-gosh" "git-remote-gosh_v1_0_0" "git-remote-gosh_v2_0_0" "git-remote-gosh_v3_0_0" "git-remote-gosh_v4_0_0")
 DISPATCHER_FILE="dispatcher.ini"
 ARCHITECTURES=("amd64" "arm64")
+DIR=$1
 
 for arch in "${ARCHITECTURES[@]}"; do
     # Create necessary directories
@@ -13,16 +14,16 @@ for arch in "${ARCHITECTURES[@]}"; do
 
     # Copy binaries into package
     for binary in "${BINARIES[@]}"; do
-        cp "linux-${arch}/${binary}" "${PKG_NAME}_${arch}/usr/local/bin/"
+        cp "$DIR/linux-${arch}/${binary}" "${PKG_NAME}_${arch}/usr/local/bin/"
     done
 
     # Copy dispatcher.ini into package
-    cp "linux-${arch}/${DISPATCHER_FILE}" "${PKG_NAME}_${arch}/usr/local/bin"
+    cp "$DIR/linux-${arch}/${DISPATCHER_FILE}" "${PKG_NAME}_${arch}/usr/local/bin"
 
     # Create control file
     cat << EOF > "${PKG_NAME}_${arch}/DEBIAN/control"
 Package: ${PKG_NAME}
-Version: 4.1.20
+Version: 4.1.21
 Section: custom
 Priority: optional
 Architecture: ${arch}

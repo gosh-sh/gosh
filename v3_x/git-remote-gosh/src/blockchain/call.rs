@@ -1,6 +1,7 @@
 use super::{
     contract::ContractInfo, BlockchainContractAddress, CallResult, Everscale, SendMessageResult,
 };
+pub use crate::abi as gosh_abi;
 use crate::blockchain::{default_callback, BlockchainService, GoshContract};
 use async_trait::async_trait;
 use std::{
@@ -13,7 +14,6 @@ use ton_client::{
         ParamsOfProcessMessage, ParamsOfSendMessage, ResultOfProcessMessage, ResultOfSendMessage,
     },
 };
-pub use crate::abi as gosh_abi;
 use tracing::Instrument;
 
 #[async_trait]
@@ -50,7 +50,8 @@ impl BlockchainCall for Everscale {
     where
         C: ContractInfo + Sync,
     {
-        tracing::trace!("blockchain call start contract.address: {:?}, function: {}, args: {:?}",
+        tracing::trace!(
+            "blockchain call start contract.address: {:?}, function: {}, args: {:?}",
             contract.get_address().clone(),
             function_name,
             args

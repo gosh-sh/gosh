@@ -68,6 +68,8 @@ sleep 3
 export NEW_LINK="gosh://$SYSTEM_CONTRACT_ADDR_1/$DAO_NAME/$REPO_NAME"
 echo "NEW_LINK=$NEW_LINK"
 
+sleep 20
+
 echo "***** cloning repo with new link *****"
 git clone $NEW_LINK $NEW_REPO_PATH
 
@@ -83,6 +85,8 @@ git commit -m test2
 git push -u origin main
 
 cd ../
+
+sleep 20
 
 echo "***** cloning repo with old link *****"
 git clone $OLD_LINK $CONTROL_REPO_PATH

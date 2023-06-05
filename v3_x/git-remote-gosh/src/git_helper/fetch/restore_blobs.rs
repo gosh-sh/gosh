@@ -145,10 +145,14 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
         blobs,
         visited,
         &mut last_restored_snapshots,
-        false
-    ).await?;
+        false,
+    )
+    .await?;
 
-    tracing::info!("snap={snapshot_address} Expecting to restore blobs: {:?}", blobs);
+    tracing::info!(
+        "snap={snapshot_address} Expecting to restore blobs: {:?}",
+        blobs
+    );
     tracing::debug!("snap={snapshot_address} visited: {:?}", visited);
 
     // TODO: convert to async iterator
@@ -161,7 +165,10 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     let mut replacement = None;
     let mut replacement_processing = false;
     while !blobs.is_empty() {
-        tracing::debug!("snap={snapshot_address} Still expecting to restore blobs: {:?}", blobs);
+        tracing::debug!(
+            "snap={snapshot_address} Still expecting to restore blobs: {:?}",
+            blobs
+        );
         tracing::debug!("snap={snapshot_address} preserved: {:?}", preserved_message);
         tracing::debug!("snap={snapshot_address} visited: {:?}", visited);
         // tracing::info!("Still expecting to restore blobs: {:?}", blobs);
@@ -177,7 +184,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
                 None => {
                     tracing::debug!("snap={snapshot_address} Nothing found. Interrupt loop");
                     break;
-                },
+                }
                 Some(message) => {
                     if parsed.contains(&message) {
                         if !replacement_processing {
@@ -191,8 +198,9 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
                                 blobs,
                                 visited,
                                 &mut last_restored_snapshots,
-                                true // try to restore blob with stripped LF
-                            ).await?;
+                                true, // try to restore blob with stripped LF
+                            )
+                            .await?;
                         } else {
                             tracing::debug!("snap={snapshot_address} Already parsed (2nd iteration). Interrupt loop");
                             break;
@@ -208,7 +216,9 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
             tracing::debug!("snap={snapshot_address} ipfs_onchain_transition_branch");
             let data = match message.diff.get_patch_data() {
                 Some(content) => content,
-                None => panic!("snap={snapshot_address} Broken diff detected: content doesn't exist"),
+                None => {
+                    panic!("snap={snapshot_address} Broken diff detected: content doesn't exist")
+                }
             };
             data
         } else if let Some(ipfs) = &message.diff.ipfs {
@@ -229,13 +239,20 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
                 .as_ref()
                 .expect("Option on this should be reverted. It must always be there");
             let patched_blob_sha = if let Some(replacement_sha) = replacement {
-                tracing::debug!("snap={snapshot_address} replacement found: from={}, to={}", *patched_blob_sha, replacement_sha);
+                tracing::debug!(
+                    "snap={snapshot_address} replacement found: from={}, to={}",
+                    *patched_blob_sha,
+                    replacement_sha
+                );
                 replacement = None;
                 git_hash::ObjectId::from_str(&replacement_sha.to_string())?
             } else {
                 git_hash::ObjectId::from_str(patched_blob_sha)?
             };
-            tracing::debug!("snap={snapshot_address} patched_blob_sha={}", patched_blob_sha);
+            tracing::debug!(
+                "snap={snapshot_address} patched_blob_sha={}",
+                patched_blob_sha
+            );
             let content = last_restored_snapshots
                 .get(&patched_blob_sha)
                 .expect("It is a sequence of changes. Sha must be correct. Fail otherwise");
@@ -346,13 +363,10 @@ impl BlobsRebuildingPlan {
             } else {
                 &snapshot.next_content
             };
-            let (blob, blob_data) = convert_snapshot_into_blob(
-                &ipfs_client,
-                content,
-                &snapshot.next_ipfs,
-            )
-            .instrument(info_span!("convert_next_snapshot_into_blob").or_current())
-            .await?;
+            let (blob, blob_data) =
+                convert_snapshot_into_blob(&ipfs_client, content, &snapshot.next_ipfs)
+                    .instrument(info_span!("convert_next_snapshot_into_blob").or_current())
+                    .await?;
             let blob_oid = write_git_object(repo, blob).await?;
             Some((blob_oid, blob_data))
         } else {
@@ -367,13 +381,10 @@ impl BlobsRebuildingPlan {
             } else {
                 &snapshot.current_content
             };
-            let (blob, blob_data) = convert_snapshot_into_blob(
-                &ipfs_client,
-                content,
-                &snapshot.current_ipfs,
-            )
-            .instrument(info_span!("convert_current_snapshot_into_blob").or_current())
-            .await?;
+            let (blob, blob_data) =
+                convert_snapshot_into_blob(&ipfs_client, content, &snapshot.current_ipfs)
+                    .instrument(info_span!("convert_current_snapshot_into_blob").or_current())
+                    .await?;
             let blob_oid = write_git_object(repo, blob).await?;
             Some((blob_oid, blob_data))
         } else {
@@ -409,8 +420,9 @@ impl BlobsRebuildingPlan {
 
         tracing::info!("Restoring blobs: {:?}", self.snapshot_address_to_blob_sha);
         let visited: Arc<Mutex<HashSet<git_hash::ObjectId>>> = Arc::new(Mutex::new(HashSet::new()));
-        let mut fetched_blobs: FuturesUnordered<tokio::task::JoinHandle<anyhow::Result<HashSet<ObjectId>>>> =
-            FuturesUnordered::new();
+        let mut fetched_blobs: FuturesUnordered<
+            tokio::task::JoinHandle<anyhow::Result<HashSet<ObjectId>>>,
+        > = FuturesUnordered::new();
 
         let mut unvisited_blobs = HashSet::new();
 

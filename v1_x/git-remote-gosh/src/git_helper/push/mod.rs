@@ -5,10 +5,9 @@ use crate::{
     blockchain::{
         branch::DeleteBranch,
         contract::{ContractRead, GoshContract},
-        user_wallet::WalletError,
-        ZERO_SHA, MAX_ACCOUNTS_ADDRESSES_PER_QUERY,
-        BlockchainContractAddress, BlockchainService,
         get_commit_address, gosh_abi,
+        user_wallet::WalletError,
+        BlockchainContractAddress, BlockchainService, MAX_ACCOUNTS_ADDRESSES_PER_QUERY, ZERO_SHA,
     },
     git_helper::push::{
         create_branch::CreateBranchOperation, utilities::retry::default_retry_strategy,
@@ -17,13 +16,13 @@ use crate::{
 use anyhow::bail;
 use git_hash::{self, ObjectId};
 use git_odb::Find;
-use ton_client::net::ParamsOfQuery;
 use std::{
     collections::{HashMap, HashSet},
     str::FromStr,
     sync::Arc,
     vec::Vec,
 };
+use ton_client::net::ParamsOfQuery;
 
 use tokio::{
     sync::Semaphore,
@@ -315,7 +314,12 @@ where
             .into_iter();
 
         let mut ids = vec![];
-        let commits: Vec<_> = walk.map(|a| { ids.push(a.clone().to_string()); a.object().unwrap().into_commit() }).collect();
+        let commits: Vec<_> = walk
+            .map(|a| {
+                ids.push(a.clone().to_string());
+                a.object().unwrap().into_commit()
+            })
+            .collect();
         let query = r#"query($accounts: [String]!) {
             accounts(filter: {
                 id: { in: $accounts }
@@ -342,9 +346,7 @@ where
                 Arc::clone(client),
                 ParamsOfQuery {
                     query: query.clone(),
-                    variables: Some(serde_json::json!({
-                        "accounts": addresses
-                    })),
+                    variables: Some(serde_json::json!({ "accounts": addresses })),
                     ..Default::default()
                 },
             )
@@ -368,15 +370,13 @@ where
                 let pos = ex_iter.position(|x| x.address == commit.1 && x.status == 1);
 
                 if pos.is_none() {
-                    return Ok(Some(commit.0.clone()))
+                    return Ok(Some(commit.0.clone()));
                 }
             }
         }
 
         Ok(Some(from.to_string()))
     }
-
-
 
     #[instrument(level = "info", skip_all)]
     async fn push_commit_object<'a>(
@@ -552,7 +552,7 @@ where
             &mut repo_contract,
             &ancestor_commit,
         )
-            .await?;
+        .await?;
         tracing::trace!("ancestor address: {ancestor_address}");
 
         // 2) Check that ancestor contract exists
@@ -577,8 +577,11 @@ where
         tracing::trace!("prev repo addr: {previous:?}");
 
         // 4) Get address of the ancestor commit of previous version
-        let previous_repo_addr = previous.previous
-            .ok_or(anyhow::format_err!("Failed to get previous version of the repo"))?
+        let previous_repo_addr = previous
+            .previous
+            .ok_or(anyhow::format_err!(
+                "Failed to get previous version of the repo"
+            ))?
             .address;
         let mut prev_repo_contract = GoshContract::new(&previous_repo_addr, gosh_abi::REPO);
         let prev_ancestor_address = get_commit_address(
@@ -586,7 +589,7 @@ where
             &mut prev_repo_contract,
             &ancestor_commit,
         )
-            .await?;
+        .await?;
         tracing::trace!("prev ver ancestor commit address: {prev_ancestor_address}");
 
         // 5) get previous version commit data
@@ -720,6 +723,7 @@ where
                 1,
                 &self.remote,
                 &self.dao_addr,
+                &self.config,
             )
             .await?;
 
@@ -802,7 +806,7 @@ where
                     ancestor_commit_id = branching_point.to_string().clone();
                     parents_of_commits.insert(
                         originating_commit.to_hex().to_string(),
-                        vec![ancestor_commit_id]
+                        vec![ancestor_commit_id],
                     );
                     ancestor_commit_object
                 }
@@ -926,6 +930,7 @@ where
                 number_of_commits,
                 &self.remote,
                 &self.dao_addr,
+                &self.config,
             )
             .await?;
 
@@ -996,15 +1001,11 @@ where
             ["", remote_tag] if remote_tag.starts_with("refs/tags") => {
                 self.delete_remote_tag(remote_tag).await?
             }
-            ["", remote_ref] => {
-                self.delete_remote_ref(remote_ref).await?
-            },
+            ["", remote_ref] => self.delete_remote_ref(remote_ref).await?,
             [local_tag, remote_tag] if local_tag.starts_with("refs/tags") => {
                 self.push_ref_tag(local_tag, remote_tag).await?
             }
-            [local_ref, remote_ref] => {
-                self.push_ref(local_ref, remote_ref).await?
-            },
+            [local_ref, remote_ref] => self.push_ref(local_ref, remote_ref).await?,
             _ => unreachable!(),
         };
         tracing::debug!("push ref result: {result}");
@@ -1015,17 +1016,17 @@ where
         let branch_name: &str = get_ref_name(remote_ref)?;
 
         let wallet = self
-                .blockchain
-                .user_wallet(&self.dao_addr, &self.remote.network)
-                .await?;
-
-            DeleteBranch::delete_branch(
-                &self.blockchain,
-                &wallet,
-                self.remote.repo.clone(),
-                branch_name.to_string(),
-            )
+            .blockchain
+            .user_wallet(&self.dao_addr, &self.remote.network)
             .await?;
+
+        DeleteBranch::delete_branch(
+            &self.blockchain,
+            &wallet,
+            self.remote.repo.clone(),
+            branch_name.to_string(),
+        )
+        .await?;
         Ok(format!("ok {remote_ref}\n"))
     }
 

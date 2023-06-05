@@ -1,7 +1,6 @@
 use crate::blockchain::{
-    contract::GoshContract,
-    gosh_abi,
-    BlockchainContractAddress, EverClient, GetNameCommitResult, branch_list,
+    branch_list, contract::GoshContract, gosh_abi, BlockchainContractAddress, EverClient,
+    GetNameCommitResult,
 };
 
 const ZERO_COMMIT: &str = "0000000000000000000000000000000000000000";
@@ -28,7 +27,9 @@ pub async fn get_refs(
         //     .unwrap();
         // TODO: get commit can fail due to changes in versions
         let commit_contract = GoshContract::new(&branch.commit_address, gosh_abi::COMMIT);
-        let sha: GetNameCommitResult = commit_contract.run_static(context, "getNameCommit", None).await?;
+        let sha: GetNameCommitResult = commit_contract
+            .run_static(context, "getNameCommit", None)
+            .await?;
         tracing::trace!("Commit sha: {sha:?}");
         if sha.name != ZERO_COMMIT {
             ref_list.push(format!("{} refs/heads/{}", sha.name, branch.branch_name));

@@ -81,6 +81,7 @@ git push
 
 cd ..
 
+sleep 30
 GOSH_TRACE=5 \
     git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME "${REPO_NAME}-clone" &> "clone-${REPO_NAME}.log"
 mv "clone-${REPO_NAME}.log" $REPO_NAME

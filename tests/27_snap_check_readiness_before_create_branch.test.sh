@@ -6,6 +6,12 @@ set -x
 
 # Test 27 - checks that git-remote-gosh checks of snapshots status before branch creation.
 #           This is a prerequisite for the successful creation of a branch.
+# works only for versions greater than 1
+
+if [[ "$VERSION" == *"v1_x"* ]]; then
+  echo "Test is ignored for v1"
+  exit 0
+fi
 
 REPO_NAME="repo27_$(date +%s)"
 

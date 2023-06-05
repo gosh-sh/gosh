@@ -3,9 +3,11 @@
 use std::env;
 
 use serde_json::Value;
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
+use crate::blockchain::get_commit_address;
 use crate::cache::proxy::CacheProxy;
 use crate::{
     abi as gosh_abi,
@@ -19,7 +21,6 @@ use crate::{
     logger::set_log_verbosity,
     utilities::Remote,
 };
-use crate::blockchain::get_commit_address;
 
 pub mod ever_client;
 #[cfg(test)]
@@ -41,6 +42,7 @@ pub struct GitHelper<
     pub repo_addr: BlockchainContractAddress,
     local_repository: Arc<git_repository::Repository>,
     cache: Arc<CacheProxy>,
+    upgraded_commits: Vec<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -144,6 +146,7 @@ where
             repo_addr,
             local_repository,
             cache: Arc::new(cache),
+            upgraded_commits: vec![],
         })
     }
 
@@ -219,7 +222,11 @@ where
                 continue;
             }
             if repo_addresses {
-                available_versions.push(format!("{} {}", version.0, String::from(repo_addr.address)));
+                available_versions.push(format!(
+                    "{} {}",
+                    version.0,
+                    String::from(repo_addr.address)
+                ));
             } else {
                 available_versions.push(format!("{} {}", version.0, version.1));
             }
@@ -288,7 +295,10 @@ where
         set_log_verbosity(verbosity)
     }
 
-    pub async fn find_commit(&self, commit_id: &String) -> anyhow::Result<(String, BlockchainContractAddress)> {
+    pub async fn find_commit(
+        &self,
+        commit_id: &String,
+    ) -> anyhow::Result<(String, BlockchainContractAddress)> {
         tracing::trace!("Find commit {commit_id}");
         let mut repo_versions = self.get_repo_versions(true).await?;
         repo_versions.pop();
@@ -300,11 +310,8 @@ where
             let repo_address: &str = iter.next().unwrap();
             let repo_address = BlockchainContractAddress::new(repo_address.to_string());
             let mut repo_contract = GoshContract::new(&repo_address, gosh_abi::REPO);
-            let commit_address = get_commit_address(
-                self.blockchain.client(),
-                &mut repo_contract,
-                commit_id,
-            ).await?;
+            let commit_address =
+                get_commit_address(self.blockchain.client(), &mut repo_contract, commit_id).await?;
             tracing::trace!("commit_address (sha={commit_id}) {commit_address}");
             let commit_contract = GoshContract::new(&commit_address, gosh_abi::COMMIT);
             let res: anyhow::Result<Value> = commit_contract
@@ -425,32 +432,18 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
             }
             (Some("fetch"), Some(sha), Some(name)) => {
                 is_batching_fetch_in_progress = true;
-                let fetch_result = helper.fetch(sha, name).await;
-                if let Err(e) = fetch_result {
-                    let error_str = e.to_string();
-                    if error_str.contains("Was trying to call getCommit") {
-                        tracing::trace!("Fetch error: {error_str}");
-                        let (sha, version) = if error_str.contains("SHA=") {
-                            let extracted = error_str
-                                .trim_start_matches(|c| c != '\"')
-                                .trim_end_matches(|c| c != '\"')
-                                .replace(['\"'], "");
-                            let pair = extracted.split(",").collect::<Vec<&str>>().clone();
-                            (pair[0].to_owned(), pair[1].to_owned())
-                        } else {
-                            (sha.to_owned(), helper.find_commit(&sha.clone().to_owned()).await?.0)
-                        };
-                        // let previous: Value = helper
-                        //     .blockchain
-                        //     .repo_contract()
-                        //     .read_state(helper.blockchain.client(), "getPrevious", None)
-                        //     .await?;
-                        let out_str = format!("dispatcher {version} fetch {sha} {name}");
-                        stdout.write_all(format!("{out_str}\n").as_bytes()).await?;
-                        return Ok(());
-                    } else {
-                        return Err(e);
+
+                let fetch_result = helper.fetch(sha, name).await?;
+                if !fetch_result.is_empty() {
+                    tracing::trace!("Fetch result: {fetch_result:?}");
+                    let mut map: HashMap<String, Vec<String>> = HashMap::new();
+                    for (version, sha) in fetch_result {
+                        map.entry(version).or_insert(vec![]).push(sha);
                     }
+                    let map = format!("{map:?}").replace(" ", "");
+                    let out_str = format!("dispatcher fetch {name} {map}");
+                    stdout.write_all(format!("{out_str}\n").as_bytes()).await?;
+                    return Ok(());
                 }
                 if dispatcher_call {
                     stdout
@@ -465,7 +458,9 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
             (Some("list"), Some("for-push"), None) => helper.list(true).await?,
             (Some("gosh_repo_version"), None, None) => helper.get_repo_version().await?,
             (Some("gosh_get_dao_tombstone"), None, None) => helper.get_dao_tombstone().await?,
-            (Some("gosh_get_all_repo_versions"), None, None) => helper.get_repo_versions(false).await?,
+            (Some("gosh_get_all_repo_versions"), None, None) => {
+                helper.get_repo_versions(false).await?
+            }
             (Some("gosh_supported_contract_version"), None, None) => {
                 let mut versions = vec![supported_contract_version()?];
                 versions.push("".to_string());
@@ -528,6 +523,7 @@ pub mod tests {
             repo_addr,
             local_repository,
             cache,
+            upgraded_commits: vec![],
         }
     }
 }
