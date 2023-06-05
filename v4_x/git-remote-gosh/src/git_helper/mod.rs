@@ -233,13 +233,14 @@ where
             if res.is_err() {
                 continue;
             }
-            self.repo_versions.push(RepoVersion{
+            self.repo_versions.push(RepoVersion {
                 version: version.0,
                 system_address: BlockchainContractAddress::new(version.1),
                 repo_address: repo_addr.address,
             });
         }
-        self.repo_versions.sort_by(|ver1, ver2| ver2.version.cmp(&ver1.version));
+        self.repo_versions
+            .sort_by(|ver1, ver2| ver2.version.cmp(&ver1.version));
         tracing::trace!("repo versions: {:?}", self.repo_versions);
         Ok(())
     }
@@ -304,10 +305,7 @@ where
         set_log_verbosity(verbosity)
     }
 
-    pub async fn find_commit(
-        &self,
-        commit_id: &String,
-    ) -> anyhow::Result<CommitVersion> {
+    pub async fn find_commit(&self, commit_id: &String) -> anyhow::Result<CommitVersion> {
         tracing::trace!("Find commit {commit_id}");
         let repo_versions = self.get_repo_versions();
         tracing::trace!("Repo versions {repo_versions:?}");
@@ -326,7 +324,10 @@ where
             if res.is_err() {
                 continue;
             }
-            return Ok(CommitVersion{version: repo_version.version.clone(), commit_address});
+            return Ok(CommitVersion {
+                version: repo_version.version.clone(),
+                commit_address,
+            });
         }
         anyhow::bail!("Failed to find commit with id {commit_id} in all repo versions.")
     }
@@ -466,9 +467,16 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
             (Some("gosh_get_dao_tombstone"), None, None) => helper.get_dao_tombstone().await?,
             (Some("gosh_get_all_repo_versions"), None, None) => {
                 let repo_versions = helper.get_repo_versions();
-                let mut res: Vec<String> = repo_versions.iter().map(|ver|
-                    format!("{} {}", ver.version, String::from(ver.system_address.clone()))
-                ).collect();
+                let mut res: Vec<String> = repo_versions
+                    .iter()
+                    .map(|ver| {
+                        format!(
+                            "{} {}",
+                            ver.version,
+                            String::from(ver.system_address.clone())
+                        )
+                    })
+                    .collect();
                 res.push("".to_string());
                 res
             }

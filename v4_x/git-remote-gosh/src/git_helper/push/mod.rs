@@ -31,16 +31,16 @@ use push_tag::push_tag;
 mod delete_tag;
 mod parallel_snapshot_upload_support;
 
-use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
 use crate::blockchain::branch_list;
+use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
 use crate::git_helper::push::parallel_snapshot_upload_support::{
     ParallelCommit, ParallelCommitUploadSupport, ParallelSnapshot, ParallelSnapshotUploadSupport,
     ParallelTreeUploadSupport,
 };
+use crate::git_helper::supported_contract_version;
 use delete_tag::delete_tag;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 use push_tree::push_tree;
-use crate::git_helper::supported_contract_version;
 
 static PARALLEL_PUSH_LIMIT: usize = 1 << 6;
 static MAX_REDEPLOY_ATTEMPTS: i32 = 3;
@@ -324,9 +324,7 @@ where
         tracing::trace!("Repo versions {repo_versions:?}");
         let mut repo_contracts: Vec<_> = repo_versions
             .iter()
-            .map(|ver| {
-                GoshContract::new(ver.repo_address.clone(), gosh_abi::REPO)
-            })
+            .map(|ver| GoshContract::new(ver.repo_address.clone(), gosh_abi::REPO))
             .collect();
         // search for commits in all repo versions
         for ids in ids.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY / repo_contracts.len()) {
@@ -401,18 +399,22 @@ where
         for id in parent_ids {
             tracing::trace!("check parent: {id}");
             for repo_version in &self.repo_versions {
-                let mut repo_contract = GoshContract::new(&repo_version.repo_address, gosh_abi::REPO);
+                let mut repo_contract =
+                    GoshContract::new(&repo_version.repo_address, gosh_abi::REPO);
                 let parent = get_commit_address(
                     self.blockchain.client(),
                     &mut repo_contract,
                     &id.to_string(),
                 )
-                    .await?;
+                .await?;
                 let commit_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
                 match commit_contract.is_active(self.blockchain.client()).await {
                     Ok(true) => {
                         if repo_version.version != supported_contract_version() {
-                            tracing::trace!("Found parent {id} in version {}", repo_version.version);
+                            tracing::trace!(
+                                "Found parent {id} in version {}",
+                                repo_version.version
+                            );
                             tracing::trace!("Start upgrade of the parent: {id}");
                             let branch: GetNameCommitResult = commit_contract
                                 .run_static(self.blockchain.client(), "getNameBranch", None)
@@ -424,13 +426,16 @@ where
                                 &branch.name,
                                 set_commit,
                             )
-                                .await?;
+                            .await?;
                         }
                         break;
-                    },
+                    }
                     _ => {
-                        tracing::trace!("Not found parent {id} in version {}", repo_version.version);
-                    },
+                        tracing::trace!(
+                            "Not found parent {id} in version {}",
+                            repo_version.version
+                        );
+                    }
                 }
             }
         }
@@ -735,7 +740,6 @@ where
                 }
             }
         }
-
 
         let mut expected_contracts = vec![];
         let mut attempts = 0;
