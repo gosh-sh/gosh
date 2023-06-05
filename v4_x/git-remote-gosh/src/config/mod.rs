@@ -113,7 +113,7 @@ impl Config {
     pub fn get_primary_network_timeout(&self) -> u64 {
         match self.networks.get(&self.primary_network) {
             Some(net_config) => net_config.timeout,
-            _ => default_timeout()
+            _ => default_timeout(),
         }
     }
 

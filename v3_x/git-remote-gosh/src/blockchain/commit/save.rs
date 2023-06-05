@@ -53,11 +53,31 @@ struct TrxInfo {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Message {
-    id: String,
-    body: Option<String>,
+    pub id: String,
+    pub body: Option<String>,
     #[serde(with = "ton_sdk::json_helper::uint")]
-    created_lt: u64,
-    bounced: bool,
+    pub created_lt: u64,
+    pub bounced: bool,
+}
+
+#[derive(Deserialize, Debug)]
+struct Node {
+    #[serde(rename = "node")]
+    message: Message,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct PageInfo {
+    has_next_page: bool,
+    end_cursor: String,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct Messages {
+    edges: Vec<Node>,
+    page_info: PageInfo,
 }
 
 #[cfg_attr(test, mockall::automock)]
@@ -229,24 +249,22 @@ pub async fn query_all_messages(
         "find_messages: contract.address={}",
         contract.address
     );
-    let query = r#"query($contract: String!, $from: String) {
-        messages(filter: {
-            dst: { eq: $contract },
-            created_lt: { gt: $from }
-        }
-        orderBy: [
-            {
-                path: "created_lt"
-                direction: ASC
+
+    let query = r#"query($addr: String!, $after: String){
+      blockchain {
+        account(address: $addr) {
+          messages(msg_type: [IntIn], after: $after, first: 50) {
+            edges {
+              node {  id body created_lt bounced }
             }
-        ]
-        limit: 50
-        ) {
-            id body created_lt bounced
+            pageInfo { hasNextPage endCursor }
+          }
         }
+      }
     }"#
         .to_string();
-    let mut from = 0u64;
+
+    let mut after = "0".to_string();
     let dst_address = String::from(contract.get_address().clone());
     let mut result_messages = vec![];
 
@@ -256,21 +274,32 @@ pub async fn query_all_messages(
             ParamsOfQuery {
                 query: query.clone(),
                 variables: Some(serde_json::json!({
-                "contract": dst_address.clone(),
-                "from": from.to_string()
-            })),
+                    "addr": dst_address.clone(),
+                    "after": after.to_string()
+                })),
                 ..Default::default()
             },
         )
             .await
             .map(|r| r.result)?;
-        let raw_messages = result["data"]["messages"].clone();
-        let mut messages: Vec<Message> = serde_json::from_value(raw_messages)?;
-        if messages.is_empty() {
+
+        let nodes = &result["data"]["blockchain"]["account"]["messages"];
+        let edges: Messages = serde_json::from_value(nodes.clone())?;
+        let mut messages: Vec<Message> = edges.edges.iter().map(|node|
+            Message {
+                id: node.message.id.split('/').last().unwrap().to_string(),
+                body: node.message.body.clone(),
+                created_lt: node.message.created_lt,
+                bounced: node.message.bounced,
+            }
+        ).collect();
+
+        after = edges.page_info.end_cursor;
+        result_messages.append(&mut messages);
+
+        if !edges.page_info.has_next_page {
             break;
         }
-        from = messages.last().unwrap().created_lt;
-        result_messages.append(&mut messages);
     }
     tracing::trace!("Found {} messages to {}", result_messages.len(), dst_address);
     Ok(result_messages)

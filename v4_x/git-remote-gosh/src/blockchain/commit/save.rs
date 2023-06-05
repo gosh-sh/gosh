@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use crate::blockchain::AddrVersion;
+use crate::config::Config;
 use crate::{
     abi as gosh_abi,
     blockchain::{
@@ -15,13 +15,13 @@ use crate::{
 use anyhow::bail;
 use async_trait::async_trait;
 use git_hash::ObjectId;
+use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::time::sleep;
 use ton_client::abi::{DecodedMessageBody, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
-use crate::config::Config;
 
 const GOSH_REMOTE_WAIT_TIMEOUT_ENV: &str = "GOSH_REMOTE_WAIT_TIMEOUT";
 
@@ -54,11 +54,31 @@ struct TrxInfo {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Message {
-    id: String,
-    body: Option<String>,
+    pub id: String,
+    pub body: Option<String>,
     #[serde(with = "ton_sdk::json_helper::uint")]
-    created_lt: u64,
-    bounced: bool,
+    pub created_lt: u64,
+    pub bounced: bool,
+}
+
+#[derive(Deserialize, Debug)]
+struct Node {
+    #[serde(rename = "node")]
+    message: Message,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct PageInfo {
+    has_next_page: bool,
+    end_cursor: String,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct Messages {
+    edges: Vec<Node>,
+    page_info: PageInfo,
 }
 
 #[cfg_attr(test, mockall::automock)]
@@ -169,8 +189,10 @@ impl BlockchainCommitPusher for Everscale {
         tracing::trace!("setCommit msg id: {:?}", result.message_id);
 
         let mut start = Instant::now();
-        let timeout = std::env::var(GOSH_REMOTE_WAIT_TIMEOUT_ENV).ok()
-            .map(|time| u64::from_str_radix(&time, 10).ok()).flatten()
+        let timeout = std::env::var(GOSH_REMOTE_WAIT_TIMEOUT_ENV)
+            .ok()
+            .map(|time| u64::from_str_radix(&time, 10).ok())
+            .flatten()
             .unwrap_or(config.get_primary_network_timeout());
         tracing::trace!("Set commit timeout: {} sec", timeout);
         let timeout = Duration::from_secs(timeout);
@@ -194,15 +216,20 @@ impl BlockchainCommitPusher for Everscale {
         }
         let mut processed_messages = HashMap::new();
         loop {
-            let found = find_messages(self, &commit_contract, &filter, &mut processed_messages).await?;
-            tracing::trace!("did find new messages for {}: {}", commit_contract.address, found.1);
+            let found =
+                find_messages(self, &commit_contract, &filter, &mut processed_messages).await?;
+            tracing::trace!(
+                "did find new messages for {}: {}",
+                commit_contract.address,
+                found.1
+            );
             if let Some(message) = found.0 {
                 match message.name.as_str() {
                     "allCorrect" => break,
                     "treeAccept" => break,
                     "cancelCommit" => bail!("Push failed. Fix and retry"),
                     "NotCorrectRepo" => bail!("Push failed. Fetch first"),
-                    _ => {},
+                    _ => {}
                 };
             } else {
                 if found.1 {
@@ -225,28 +252,23 @@ pub async fn query_all_messages(
     context: &Everscale,
     contract: &GoshContract,
 ) -> anyhow::Result<Vec<Message>> {
-    tracing::trace!(
-        "find_messages: contract.address={}",
-        contract.address
-    );
-    let query = r#"query($contract: String!, $from: String) {
-        messages(filter: {
-            dst: { eq: $contract },
-            created_lt: { gt: $from }
-        }
-        orderBy: [
-            {
-                path: "created_lt"
-                direction: ASC
+    tracing::trace!("find_messages: contract.address={}", contract.address);
+
+    let query = r#"query($addr: String!, $after: String){
+      blockchain {
+        account(address: $addr) {
+          messages(msg_type: [IntIn], after: $after, first: 50) {
+            edges {
+              node {  id body created_lt bounced }
             }
-        ]
-        limit: 50
-        ) {
-            id body created_lt bounced
+            pageInfo { hasNextPage endCursor }
+          }
         }
+      }
     }"#
-        .to_string();
-    let mut from = 0u64;
+    .to_string();
+
+    let mut after = "0".to_string();
     let dst_address = String::from(contract.get_address().clone());
     let mut result_messages = vec![];
 
@@ -256,26 +278,42 @@ pub async fn query_all_messages(
             ParamsOfQuery {
                 query: query.clone(),
                 variables: Some(serde_json::json!({
-                "contract": dst_address.clone(),
-                "from": from.to_string()
-            })),
+                    "addr": dst_address.clone(),
+                    "after": after.to_string()
+                })),
                 ..Default::default()
             },
         )
-            .await
-            .map(|r| r.result)?;
-        let raw_messages = result["data"]["messages"].clone();
-        let mut messages: Vec<Message> = serde_json::from_value(raw_messages)?;
-        if messages.is_empty() {
+        .await
+        .map(|r| r.result)?;
+
+        let nodes = &result["data"]["blockchain"]["account"]["messages"];
+        let edges: Messages = serde_json::from_value(nodes.clone())?;
+        let mut messages: Vec<Message> = edges
+            .edges
+            .iter()
+            .map(|node| Message {
+                id: node.message.id.split('/').last().unwrap().to_string(),
+                body: node.message.body.clone(),
+                created_lt: node.message.created_lt,
+                bounced: node.message.bounced,
+            })
+            .collect();
+
+        after = edges.page_info.end_cursor;
+        result_messages.append(&mut messages);
+
+        if !edges.page_info.has_next_page {
             break;
         }
-        from = messages.last().unwrap().created_lt;
-        result_messages.append(&mut messages);
     }
-    tracing::trace!("Found {} messages to {}", result_messages.len(), dst_address);
+    tracing::trace!(
+        "Found {} messages to {}",
+        result_messages.len(),
+        dst_address
+    );
     Ok(result_messages)
 }
-
 
 #[instrument(level = "info", skip_all)]
 pub async fn find_messages(
@@ -284,7 +322,11 @@ pub async fn find_messages(
     filter: &Vec<String>,
     already_processed_messages: &mut HashMap<String, bool>,
 ) -> anyhow::Result<(Option<DecodedMessageBody>, bool)> {
-    tracing::trace!("find_messages start contract:{}, processed_len:{}", contract.address, already_processed_messages.len());
+    tracing::trace!(
+        "find_messages start contract:{}, processed_len:{}",
+        contract.address,
+        already_processed_messages.len()
+    );
     let messages = query_all_messages(context, contract).await?;
     let mut got_new_messages = false;
     for message in messages.iter() {
