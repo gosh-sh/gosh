@@ -39,7 +39,7 @@ const Button = (props: TButtonProps) => {
             {...rest}
             disabled={disabled || isLoading}
         >
-            {isLoading && <Spinner className="mr-2" />}
+            {isLoading && <Spinner className={classNames(children ? 'mr-2' : null)} />}
             {children}
         </button>
     )

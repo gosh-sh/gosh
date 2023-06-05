@@ -1209,8 +1209,9 @@ contract GoshDao is Modifiers, TokenRootOwner {
             this.deployTaskTag{value:0.1 ton, flag: 1}(repo, address.makeAddrStd(0, tvm.hash(s1)), hashtag, sender);
         } else {
             TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
-            TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});
-            optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], grant, uint128(0), balance, hashtag, bigtask, workers);
+            TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});            
+            optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], grant, balance, balance, hashtag, bigtask, workers);
+            if (bigtask.hasValue()) { data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], grant, uint128(0), balance, hashtag, bigtask, workers); }
             optional(TvmCell) data1;
             new Task{
                 stateInit: s1, value: FEE_DEPLOY_TASK, wid: 0, bounce: true, flag: 1

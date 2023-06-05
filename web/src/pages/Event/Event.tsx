@@ -259,7 +259,7 @@ const EventPage = () => {
                     </div>
                 </div>
 
-                <div className="col !max-w-full md:!max-w-side-right-md lg:!max-w-side-right">
+                <div className="col !basis-full md:!basis-[18rem] lg:!basis-[20.4375rem] !grow-0">
                     <div className="border border-gray-e6edff rounded-xl p-5">
                         {(dao.details.isEventProgressOn || event.status?.completed) && (
                             <EventProgressBar votes={event.votes} />

@@ -11,7 +11,9 @@ import { toast } from 'react-toastify'
 import { ToastError } from '../../Toast'
 import commentBtn from '../../../assets/images/comment-add.png'
 import { TCommit } from 'react-gosh'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faArrowUp } from '@fortawesome/free-solid-svg-icons'
 
 type TLinesBlockProps = {
     filename: string
@@ -58,6 +60,7 @@ const LinesBlock = (props: TLinesBlockProps) => {
         filename,
         commits: [commit.parents[0].name, commit.name],
     })
+    const commentFormRefs = useRef<{ [line: number]: HTMLDivElement | null }>({})
 
     const commits = useMemo(() => {
         return {
@@ -134,6 +137,22 @@ const LinesBlock = (props: TLinesBlockProps) => {
             toast.error(<ToastError error={e} />)
         }
     }
+
+    useEffect(() => {
+        const onClickOutsideCommentForm = (event: any) => {
+            const _ref = commentFormRefs.current[commentFormLine.line]
+            if (_ref && !_ref.contains(event.target)) {
+                console.log(`You clicked Outside the box!`)
+                resetLinesSelection()
+            } else {
+                console.log(`You clicked Inside the box!`)
+            }
+        }
+        document.addEventListener('click', onClickOutsideCommentForm, true)
+        return () => {
+            document.removeEventListener('click', onClickOutsideCommentForm, true)
+        }
+    }, [commentFormLine.line])
 
     return (
         <>
@@ -255,6 +274,10 @@ const LinesBlock = (props: TLinesBlockProps) => {
                                 </pre>
                             </div>
                             <div
+                                ref={(el) => {
+                                    const { number } = getLineCommit(line)
+                                    commentFormRefs.current[number] = el
+                                }}
                                 className={classNames(
                                     isLineFormOpen(line)
                                         ? 'max-h-screen opacity-100'
@@ -275,26 +298,27 @@ const LinesBlock = (props: TLinesBlockProps) => {
                                                 placeholder="Say something"
                                                 rows={2}
                                                 className="!border-0"
+                                                resize={false}
                                             />
-                                            <div className="border-t border-gray-e6edff flex items-center justify-between">
+                                            <div className="border-t border-gray-e6edff flex items-center justify-between px-4 py-1">
                                                 <div className="grow"></div>
                                                 <div className="grow text-end">
                                                     <Button
                                                         variant="custom"
-                                                        type="button"
-                                                        className="text-xs text-gray-7c8db5"
-                                                        onClick={resetLinesSelection}
-                                                    >
-                                                        Close
-                                                    </Button>
-                                                    <Button
-                                                        variant="custom"
                                                         type="submit"
-                                                        className="text-xs text-gray-7c8db5"
+                                                        className={classNames(
+                                                            'text-xs text-white bg-blue-1e7aec',
+                                                            '!rounded-full w-6 h-6 !p-0',
+                                                            'hover:bg-blue-2b89ff',
+                                                        )}
                                                         disabled={isSubmitting}
                                                         isLoading={isSubmitting}
                                                     >
-                                                        Submit
+                                                        {!isSubmitting && (
+                                                            <FontAwesomeIcon
+                                                                icon={faArrowUp}
+                                                            />
+                                                        )}
                                                     </Button>
                                                 </div>
                                             </div>

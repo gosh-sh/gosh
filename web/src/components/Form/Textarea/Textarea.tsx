@@ -1,11 +1,13 @@
+import { TextareaAutosize } from '@mui/material'
 import { classNames } from 'react-gosh'
 
 type TTextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
     hasError?: boolean
+    resize?: boolean
 }
 
 const Textarea = (props: TTextareaProps) => {
-    const { className, hasError, ...rest } = props
+    const { className, hasError, resize = true, ...rest } = props
 
     return (
         <div
@@ -17,10 +19,11 @@ const Textarea = (props: TTextareaProps) => {
                 className,
             )}
         >
-            <textarea
+            <TextareaAutosize
                 className={classNames(
                     'block grow outline-none bg-transparent px-4 py-2',
                     'disabled:text-gray-7c8db5 text-sm',
+                    !resize ? 'resize-none' : null,
                 )}
                 {...rest}
             />

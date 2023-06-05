@@ -2,7 +2,7 @@ import ReactMarkdown from 'react-markdown'
 import hljs from 'highlight.js'
 import { classNames } from 'react-gosh'
 import { Buffer } from 'buffer'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import rehypeRaw from 'rehype-raw'
 import { useBlobComments } from '../../../hooks/codecomment.hooks'
 import { toast } from 'react-toastify'
@@ -51,6 +51,7 @@ const BlobPreview = (props: TBlobPreviewProps) => {
         commits: [commit],
     })
     const [mouseDown, setMouseDown] = useState<boolean>(false)
+    const commentFormRefs = useRef<{ [line: number]: HTMLDivElement | null }>({})
 
     const onAddCommentSubmit = async (
         values: { comment: string },
@@ -107,6 +108,22 @@ const BlobPreview = (props: TBlobPreviewProps) => {
             resetThreads()
         }
     }, [commentsOn])
+
+    useEffect(() => {
+        const onClickOutsideCommentForm = (event: any) => {
+            const _ref = commentFormRefs.current[commentFormLine.line]
+            if (_ref && !_ref.contains(event.target)) {
+                console.log(`You clicked Outside the box!`)
+                resetLinesSelection()
+            } else {
+                console.log(`You clicked Inside the box!`)
+            }
+        }
+        document.addEventListener('click', onClickOutsideCommentForm, true)
+        return () => {
+            document.removeEventListener('click', onClickOutsideCommentForm, true)
+        }
+    }, [commentFormLine.line])
 
     if (Buffer.isBuffer(value)) {
         return <p className="text-gray-606060 p-3 text-sm">Binary data not shown</p>
@@ -178,6 +195,8 @@ const BlobPreview = (props: TBlobPreviewProps) => {
                             />
                             <LineContent
                                 commentsOn={dao.details.isAuthMember && commentsOn}
+                                commentFormRefs={commentFormRefs}
+                                line={number}
                                 content={tdContent}
                                 showForm={commentFormLine.line === number}
                                 containerProps={{
@@ -186,7 +205,6 @@ const BlobPreview = (props: TBlobPreviewProps) => {
                                 commentButtonProps={{
                                     onClick: () => toggleLineForm(number, commit),
                                 }}
-                                onCommentFormReset={resetLinesSelection}
                                 onCommentFormSubmit={onAddCommentSubmit}
                             />
                         </tr>
