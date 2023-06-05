@@ -79,7 +79,7 @@ impl DeployTree for Everscale {
         let wallet_contract = wallet.take_one().await?;
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
         let nodes_cnt = nodes.len();
-        let result = if nodes.len() > TREE_NODES_CHUNK_MAX_SIZE {
+        let result = {
             tracing::trace!("Start tree upload by chunks");
             let mut repo_contract = self.repo_contract().clone();
             let tree_address =
@@ -87,11 +87,6 @@ impl DeployTree for Everscale {
                     .await?;
             let mut nodes = nodes.to_owned();
             let mut chunk: HashMap<String, TreeNode> = HashMap::new();
-            let mut counter = 0;
-            (chunk, nodes) = nodes.into_iter().partition(|(_, _)| {
-                counter += 1;
-                counter <= TREE_NODES_CHUNK_MAX_SIZE
-            });
             let params = DeployTreeArgs {
                 sha: sha.to_owned(),
                 repo_name: repo_name.to_owned(),
@@ -99,81 +94,37 @@ impl DeployTree for Everscale {
                 number: nodes_cnt as u128,
             };
             tracing::trace!("DeployTreeArgs: {params:?}");
-            let mut attempts = 0;
-            while attempts < MAX_REDEPLOY_ATTEMPTS {
-                self.send_message(
-                    wallet_contract.deref(),
-                    "deployTree",
-                    Some(serde_json::to_value(params.clone())?),
-                    None,
-                )
-                .await
-                .map(|_| ())?;
-                let res = wait_contracts_deployed(self, &[tree_address.clone()]).await;
-                attempts += 1;
-                if res.is_ok() {
-                    if res.unwrap().len() == 0 {
-                        // we have no contracts to wait for
-                        break;
-                    }
-                }
-                if attempts == MAX_REDEPLOY_ATTEMPTS {
-                    return Err(anyhow::format_err!("Failed to deploy tree"));
-                }
-            }
-            let mut attempts = 0;
-            let rest_nodes = nodes;
-            while attempts < MAX_REDEPLOY_ATTEMPTS {
-                let mut nodes = rest_nodes.clone();
-                while nodes.len() > 0 {
-                    let mut counter = 0;
-                    let mut chunk: HashMap<String, TreeNode> = HashMap::new();
-                    (chunk, nodes) = nodes.into_iter().partition(|(_, _)| {
-                        counter += 1;
-                        counter <= TREE_NODES_CHUNK_MAX_SIZE
-                    });
-                    let params = DeployAddTreeArgs {
-                        sha: sha.to_owned(),
-                        repo_name: repo_name.to_owned(),
-                        nodes: chunk,
-                    };
-                    tracing::trace!("DeployAddTreeArgs: {params:?}");
-                    self.send_message(
-                        wallet_contract.deref(),
-                        "deployAddTree",
-                        Some(serde_json::to_value(params)?),
-                        None,
-                    )
-                    .await
-                    .map(|_| ())?;
-                }
-                let res = wait_for_all_chunks_to_be_loaded(self, &tree_address, nodes_cnt).await;
-                if res.is_ok() {
-                    break;
-                }
-                attempts += 1;
-                if attempts == MAX_REDEPLOY_ATTEMPTS {
-                    return Err(anyhow::format_err!("Failed to load all tree chunks"));
-                }
-            }
-
-            Ok(())
-        } else {
-            let params = DeployTreeArgs {
-                sha: sha.to_owned(),
-                repo_name: repo_name.to_owned(),
-                nodes: nodes.to_owned(),
-                number: nodes_cnt as u128,
-            };
-            tracing::trace!("DeployTreeArgs: {params:?}");
             self.send_message(
                 wallet_contract.deref(),
                 "deployTree",
-                Some(serde_json::to_value(params)?),
+                Some(serde_json::to_value(params.clone())?),
                 None,
             )
-            .await
-            .map(|_| ())
+                .await
+                .map(|_| ())?;
+            while nodes.len() > 0 {
+                let mut counter = 0;
+                let mut chunk: HashMap<String, TreeNode> = HashMap::new();
+                (chunk, nodes) = nodes.into_iter().partition(|(_, _)| {
+                    counter += 1;
+                    counter <= TREE_NODES_CHUNK_MAX_SIZE
+                });
+                let params = DeployAddTreeArgs {
+                    sha: sha.to_owned(),
+                    repo_name: repo_name.to_owned(),
+                    nodes: chunk,
+                };
+                tracing::trace!("DeployAddTreeArgs: {params:?}");
+                self.send_message(
+                    wallet_contract.deref(),
+                    "deployAddTree",
+                    Some(serde_json::to_value(params)?),
+                    None,
+                )
+                    .await
+                    .map(|_| ())?;
+            }
+            Ok(())
         };
         drop(wallet_contract);
         if let Err(ref e) = result {
