@@ -165,6 +165,7 @@ pub mod tests {
     use super::*;
     use crate::{
         blockchain::{snapshot::save::Diff, tree::TreeNode, user_wallet::UserWallet, AddrVersion},
+        config::Config,
         config::UserWalletConfig,
         utilities::Remote,
     };

@@ -1,4 +1,5 @@
 use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
+use crate::blockchain::tree::load::check_if_tree_is_ready;
 use crate::{
     blockchain::{
         get_commit_address, tree::TreeNode, user_wallet::WalletError, AddrVersion,
@@ -18,7 +19,6 @@ use std::{collections::HashMap, sync::Arc, vec::Vec};
 use tokio::{sync::Semaphore, task::JoinSet};
 use tokio_retry::RetryIf;
 use tracing::Instrument;
-use crate::blockchain::tree::load::check_if_tree_is_ready;
 
 // TODO: refactor this code and unite all this parallel pushes
 
@@ -443,7 +443,7 @@ impl ParallelTreeUploadSupport {
         let mut rest = vec![];
         for address in addresses {
             match check_if_tree_is_ready(&blockchain, &address).await {
-                Ok(true) => {},
+                Ok(true) => {}
                 _ => {
                     rest.push(address);
                 }

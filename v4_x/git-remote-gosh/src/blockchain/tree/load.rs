@@ -1,4 +1,6 @@
-use crate::blockchain::{BlockchainContractAddress, BlockchainService, EverClient, gosh_abi, GoshContract, Number};
+use crate::blockchain::{
+    gosh_abi, BlockchainContractAddress, BlockchainService, EverClient, GoshContract, Number,
+};
 use ::git_object;
 use data_contract_macro_derive::DataContract;
 use std::collections::HashMap;
@@ -27,7 +29,6 @@ pub struct GetDetailsResult {
     #[serde(rename = "value4")]
     pubaddr: BlockchainContractAddress,
 }
-
 
 #[derive(Deserialize, Debug, DataContract)]
 #[abi = "tree.abi.json"]
@@ -90,10 +91,12 @@ pub async fn check_if_tree_is_ready<B>(
     blockchain: &B,
     address: &BlockchainContractAddress,
 ) -> anyhow::Result<bool>
-    where
-        B: BlockchainService + 'static
+where
+    B: BlockchainService + 'static,
 {
     let tree_contract = GoshContract::new(address, gosh_abi::TREE);
-    let res: GetDetailsResult = tree_contract.run_static(blockchain.client(), "getDetails", None).await?;
+    let res: GetDetailsResult = tree_contract
+        .run_static(blockchain.client(), "getDetails", None)
+        .await?;
     Ok(res.is_ready)
 }

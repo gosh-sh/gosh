@@ -1,4 +1,3 @@
-use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
 use crate::blockchain::contract::ContractInfo;
 use crate::blockchain::user_wallet::UserWallet;
 use crate::blockchain::{
@@ -11,6 +10,8 @@ use git_object::tree;
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::Arc;
+
+const MAX_RETRIES_FOR_CHUNKS_TO_APPEAR: i32 = 20;
 
 #[derive(Serialize, Debug, Clone)]
 pub struct TreeNode {
@@ -98,11 +99,11 @@ impl DeployTree for Everscale {
                 Some(serde_json::to_value(params.clone())?),
                 None,
             )
-                .await
-                .map(|_| ())?;
+            .await
+            .map(|_| ())?;
             while nodes.len() > 0 {
                 let mut counter = 0;
-                let mut chunk: HashMap<String, TreeNode>;
+                let chunk: HashMap<String, TreeNode>;
                 (chunk, nodes) = nodes.into_iter().partition(|(_, _)| {
                     counter += 1;
                     counter <= TREE_NODES_CHUNK_MAX_SIZE
@@ -119,8 +120,8 @@ impl DeployTree for Everscale {
                     Some(serde_json::to_value(params)?),
                     None,
                 )
-                    .await
-                    .map(|_| ())?;
+                .await
+                .map(|_| ())?;
             }
             Ok(())
         };
