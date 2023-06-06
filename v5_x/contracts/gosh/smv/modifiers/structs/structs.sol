@@ -148,6 +148,8 @@ struct PauseTree {
     uint256 index;
     string path;
     uint128 typer;
+    string branch;
+    optional(address) branchcommit;
 }
 
 struct SystemContractV {

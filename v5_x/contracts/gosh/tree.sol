@@ -108,7 +108,7 @@ contract Tree is Modifiers {
         Commit(msg.sender).SendDiff3{value: 0.1 ton, flag: 1}(branch, branchcommit, number, numberCommits, task, isUpgrade);
     }
 
-    function checkFull(string namecommit, address repo, string branch, uint128 typer) public senderIs(GoshLib.calculateCommitAddress(_code[m_CommitCode], repo, namecommit)) {
+    function checkFull(string namecommit, address repo, string branch, uint128 typer, optional(address) branchcommit) public senderIs(GoshLib.calculateCommitAddress(_code[m_CommitCode], repo, namecommit)) {
         require(_check == false, ERR_PROCCESS_IS_EXIST);
         require(_isReady == true, ERR_PROCCESS_END);
         _check = true;
@@ -116,45 +116,45 @@ contract Tree is Modifiers {
         _root = true;
         _checkaddr = msg.sender;
         getMoney();
-        this.checkTree{value: 0.2 ton, flag: 1}(0, "", typer);
+        this.checkTree{value: 0.2 ton, flag: 1}(0, "", typer, branch, branchcommit);
     }
 
-    function checkTree(uint256 index, string path, uint128 typer) public senderIs(address(this)) {
+    function checkTree(uint256 index, string path, uint128 typer, string branch, optional(address) branchcommit) public senderIs(address(this)) {
         require(_check == true, ERR_PROCCESS_END);
         require(_isReady == true, ERR_PROCCESS_END);
         getMoney();
-        if (address(this).balance < 5 ton) { _saved = PauseTree(index, path, typer); return; }
+        if (address(this).balance < 5 ton) { _saved = PauseTree(index, path, typer, branch, branchcommit); return; }
         optional(uint256, TreeObject) res = _tree.next(index);
         if (res.hasValue()) {
             TreeObject obj;
             (index, obj) = res.get();
             if (obj.mode == "040000") { _needAnswer += 1;
-                if (path != "" ) { Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], obj.sha1, _repo)).getCheckTree{value: 0.2 ton, flag: 1}(_shaTree, _checkbranch, path + obj.name, typer); }
-                else { Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], obj.sha1, _repo)).getCheckTree{value: 0.2 ton, flag: 1}(_shaTree, _checkbranch, obj.name, typer); }
+                if (path != "" ) { Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], obj.sha1, _repo)).getCheckTree{value: 0.2 ton, flag: 1}(_shaTree, _checkbranch, path + obj.name, branchcommit, typer); }
+                else { Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], obj.sha1, _repo)).getCheckTree{value: 0.2 ton, flag: 1}(_shaTree, _checkbranch, obj.name, branchcommit, typer); }
             }
             else if ((obj.mode == "100644") || (obj.mode == "100664") || (obj.mode == "100755") || (obj.mode == "120000")) {
                 _needAnswer += 1;
-                if (path != "" ) { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, _checkbranch, path + obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.sha256, typer); }
-                else { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, _checkbranch, obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.sha256, typer); }
+                if (path != "" ) { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, _checkbranch, path + obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.sha256, branchcommit, typer); }
+                else { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, _checkbranch, obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.sha256, branchcommit, typer); }
             }
-            this.checkTree{value: 0.2 ton, flag: 1}(index, path, typer);
+            this.checkTree{value: 0.2 ton, flag: 1}(index, path, typer, branch, branchcommit);
         }
         if (_needAnswer == 0) {
-            if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, true, typer); }
-            else { Commit(_checkaddr).treeAccept{value: 0.1 ton, flag: 1}(_checkbranch, typer); }
+            if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, true, branchcommit, typer); }
+            else { Commit(_checkaddr).treeAccept{value: 0.1 ton, flag: 1}(_checkbranch, branchcommit, typer); }
             _check = false;
             _needAnswer = 0;
         }
     }
 
-    function answerIs(string name, bool _ready, uint128 typer) public senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, _checkbranch, name)) {
+    function answerIs(string name, bool _ready, optional(address) branchcommit, uint128 typer) public senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, _checkbranch, name)) {
         tvm.accept();
         getMoney();
         require(_check == true, ERR_PROCCESS_END);
         require(_needAnswer > 0, ERR_NO_NEED_ANSWER);
         require(_isReady == true, ERR_PROCCESS_END);
         if (_ready == false) {
-            if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false, typer); }
+            if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false, branchcommit, typer); }
             _check = false;
             _needAnswer = 0;
             return;
@@ -162,13 +162,13 @@ contract Tree is Modifiers {
         _needAnswer -= 1;
         if (_needAnswer != 0) { return; }
         if (_saved.hasValue() == true) { return; }
-        if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, true, typer); }
-        else { Commit(_checkaddr).treeAccept{value: 0.1 ton, flag: 1}(_checkbranch, typer); }
+        if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, true, branchcommit, typer); }
+        else { Commit(_checkaddr).treeAccept{value: 0.1 ton, flag: 1}(_checkbranch, branchcommit, typer); }
         _check = false;
         _needAnswer = 0;
     }
 
-    function getCheckTree(string name, string branch, string path, uint128 typer) public senderIs(GoshLib.calculateTreeAddress(_code[m_TreeCode], name, _repo)) {
+    function getCheckTree(string name, string branch, string path, optional(address) branchcommit, uint128 typer) public senderIs(GoshLib.calculateTreeAddress(_code[m_TreeCode], name, _repo)) {
         require(_isReady == true, ERR_PROCCESS_END);      tvm.accept();
         path += "/";
         require(_check == false, ERR_PROCCESS_IS_EXIST);
@@ -177,16 +177,16 @@ contract Tree is Modifiers {
         _checkaddr = msg.sender;
         _root = false;
         getMoney();
-        this.checkTree{value: 0.2 ton, flag: 1}(0, path, typer);
+        this.checkTree{value: 0.2 ton, flag: 1}(0, path, typer, branch, branchcommit);
     }
 
-    function gotCheckTree(string name, bool res, uint128 typer) public senderIs(GoshLib.calculateTreeAddress(_code[m_TreeCode], name, _repo)) {
+    function gotCheckTree(string name, bool res, optional(address) branchcommit, uint128 typer) public senderIs(GoshLib.calculateTreeAddress(_code[m_TreeCode], name, _repo)) {
         require(_isReady == true, ERR_PROCCESS_END);
         tvm.accept();
         getMoney();
         if (_check == false) { return; }
         if (res == false) {
-            if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false, typer); }
+            if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false, branchcommit, typer); }
             _check = false;
             _needAnswer = 0;
             return;
@@ -194,8 +194,8 @@ contract Tree is Modifiers {
         _needAnswer -= 1;
         if (_needAnswer != 0) { return; }
         if (_saved.hasValue() == true) { return; }
-        if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, true, typer); }
-        else { Commit(_checkaddr).treeAccept{value: 0.1 ton, flag: 1}(_checkbranch, typer); }
+        if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, true, branchcommit, typer); }
+        else { Commit(_checkaddr).treeAccept{value: 0.1 ton, flag: 1}(_checkbranch, branchcommit, typer); }
         _check = false;
         _needAnswer = 0;
     }
@@ -214,7 +214,7 @@ contract Tree is Modifiers {
             _flag = false;
             if (_saved.hasValue() == true) {
                 PauseTree val = _saved.get();
-                this.checkTree{value: 0.1 ton, flag: 1}(val.index, val.path, val.typer);
+                this.checkTree{value: 0.1 ton, flag: 1}(val.index, val.path, val.typer, val.branch, val.branchcommit);
                 _saved = null;
             }
         }
@@ -222,14 +222,14 @@ contract Tree is Modifiers {
 
     onBounce(TvmSlice body) external {
         body;
-        if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false, 0); }
+        if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false, null, 0); }
         _check = false;
         _root = false;
         _needAnswer = 0;
     }
 
     fallback() external {
-        if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false, 0); }
+        if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaTree, false, null, 0); }
         _check = false;
         _root = false;
         _needAnswer = 0;
