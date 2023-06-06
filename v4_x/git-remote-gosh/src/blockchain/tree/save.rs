@@ -64,8 +64,6 @@ pub trait DeployTree {
 }
 
 static TREE_NODES_CHUNK_MAX_SIZE: usize = 200;
-static MAX_REDEPLOY_ATTEMPTS: i32 = 3;
-const MAX_RETRIES_FOR_CHUNKS_TO_APPEAR: i32 = 20;
 
 #[async_trait]
 impl DeployTree for Everscale {
@@ -86,7 +84,7 @@ impl DeployTree for Everscale {
                 Tree::calculate_address(&Arc::clone(self.client()), &mut repo_contract, sha)
                     .await?;
             let mut nodes = nodes.to_owned();
-            let mut chunk: HashMap<String, TreeNode> = HashMap::new();
+            let chunk: HashMap<String, TreeNode> = HashMap::new();
             let params = DeployTreeArgs {
                 sha: sha.to_owned(),
                 repo_name: repo_name.to_owned(),
@@ -104,7 +102,7 @@ impl DeployTree for Everscale {
                 .map(|_| ())?;
             while nodes.len() > 0 {
                 let mut counter = 0;
-                let mut chunk: HashMap<String, TreeNode> = HashMap::new();
+                let mut chunk: HashMap<String, TreeNode>;
                 (chunk, nodes) = nodes.into_iter().partition(|(_, _)| {
                     counter += 1;
                     counter <= TREE_NODES_CHUNK_MAX_SIZE

@@ -18,8 +18,7 @@ use std::{collections::HashMap, sync::Arc, vec::Vec};
 use tokio::{sync::Semaphore, task::JoinSet};
 use tokio_retry::RetryIf;
 use tracing::Instrument;
-
-// const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
+use crate::blockchain::tree::load::check_if_tree_is_ready;
 
 // TODO: refactor this code and unite all this parallel pushes
 
@@ -440,6 +439,16 @@ impl ParallelTreeUploadSupport {
                 Ok(Ok(_)) => {}
             }
         }
-        wait_contracts_deployed(&blockchain, &addresses).await
+        let _ = wait_contracts_deployed(&blockchain, &addresses).await?;
+        let mut rest = vec![];
+        for address in addresses {
+            match check_if_tree_is_ready(&blockchain, &address).await {
+                Ok(true) => {},
+                _ => {
+                    rest.push(address);
+                }
+            }
+        }
+        Ok(rest)
     }
 }
