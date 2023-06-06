@@ -16,9 +16,13 @@ use crate::{
 use anyhow::bail;
 use git_hash::ObjectId;
 use std::{collections::HashMap, sync::Arc, vec::Vec};
+use std::time::Duration;
 use tokio::{sync::Semaphore, task::JoinSet};
+use tokio::time::sleep;
 use tokio_retry::RetryIf;
 use tracing::Instrument;
+
+const WAIT_TREE_READY_MAX_ATTEMPTS: i32 = 3;
 
 // TODO: refactor this code and unite all this parallel pushes
 
@@ -440,15 +444,32 @@ impl ParallelTreeUploadSupport {
             }
         }
         let _ = wait_contracts_deployed(&blockchain, &addresses).await?;
-        let mut rest = vec![];
-        for address in addresses {
-            match check_if_tree_is_ready(&blockchain, &address).await {
-                Ok(true) => {}
-                _ => {
-                    rest.push(address);
+
+        let mut rest: HashMap<BlockchainContractAddress, usize> = addresses.iter().map(|addr| (addr.to_owned(), 0)).collect();
+        let mut attempt = 0;
+        loop {
+            attempt += 1;
+            let mut new_rest = HashMap::new();
+            for (address, _) in &rest {
+                match check_if_tree_is_ready(&blockchain, address).await {
+                    Ok((true, _)) => {},
+                    Ok((false, num)) => {
+                        if &num != rest.get(address).unwrap() {
+                            attempt = 0;
+                        }
+                        new_rest.insert(address.to_owned(), num);
+                    },
+                    _ => {
+                        new_rest.insert(address.to_owned(), 0usize);
+                    }
                 }
             }
+            rest = new_rest;
+            if attempt == WAIT_TREE_READY_MAX_ATTEMPTS {
+                break;
+            }
+            sleep(Duration::from_secs(5)).await;
         }
-        Ok(rest)
+        Ok(rest.keys().map(|a| a.to_owned()).collect())
     }
 }
