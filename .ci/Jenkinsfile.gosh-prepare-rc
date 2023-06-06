@@ -333,7 +333,7 @@ def buildRemoteGosh(version) {
                 if [ "${DRYRUN}" = "true" ]; then
                     az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id \$PIPELINE_1_ID --path linux-amd64 && sleep 2
                 else
-                    az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id \$PIPELINE_1_ID --path linux-amd64 && sleep 
+                    az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id \$PIPELINE_1_ID --path linux-amd64 && sleep 2
                     az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id \$PIPELINE_1_ID --path darwin-amd64 && sleep 2
                     az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id \$PIPELINE_1_ID --path windows-amd64 && sleep 2
                     az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id \$PIPELINE_1_ID --path linux-arm64 && sleep 2
