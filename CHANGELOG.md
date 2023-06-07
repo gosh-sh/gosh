@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [4.1.23] - 2023-06-07
+### Bug fixes
+- Fixed big trees deploy anf check for version 4.
+
+## [4.1.22] - 2023-06-06
+### Bug fixes
+- Fixed account messages query while waiting for set commit.
+
 ## [4.1.21] - 2023-06-01
 ### New features
 - Improved dispatcher and remotes interaction protocol to allow multiple calls;
