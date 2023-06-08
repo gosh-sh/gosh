@@ -1,5 +1,5 @@
-import { useRecoilState, useResetRecoilState } from 'recoil'
-import { blobCommentsAtom } from '../store/comments.state'
+import { useRecoilState, useResetRecoilState, useSetRecoilState } from 'recoil'
+import { blobCommentsAtom, blobsCommentsCountAtom } from '../store/comments.state'
 import { IGoshDaoAdapter, IGoshTopic } from 'react-gosh/dist/gosh/interfaces'
 import { useEffect } from 'react'
 import {
@@ -21,6 +21,7 @@ export function useBlobComments(params: {
     const { user } = useUser()
     const [threads, setThreads] = useRecoilState(blobCommentsAtom)
     const resetThreads = useResetRecoilState(blobCommentsAtom)
+    const setCommentsCounter = useSetRecoilState(blobsCommentsCountAtom)
 
     const getThreads = async () => {
         if (!objectAddress || !commits.length) {
@@ -333,6 +334,14 @@ export function useBlobComments(params: {
                 },
             }))
             resetLinesSelection()
+        }
+
+        // Add global counter (only for single files not PR)
+        if (commits.length === 1) {
+            setCommentsCounter((state) => ({
+                ...state,
+                [filename]: (state[filename] || 0) + 1,
+            }))
         }
     }
 
