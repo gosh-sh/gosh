@@ -1,4 +1,4 @@
-use crate::blockchain::{BlockchainContractAddress, EverClient, GoshContract, Number};
+use crate::blockchain::{gosh_abi, BlockchainContractAddress, BlockchainService, EverClient, GoshContract, Number, run_local};
 use ::git_object;
 use data_contract_macro_derive::DataContract;
 use std::collections::HashMap;
@@ -12,6 +12,20 @@ pub struct TreeComponent {
     pub name: String,
     pub sha1: String,
     pub sha256: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct GetDetailsResult {
+    #[serde(rename = "value0")]
+    pub is_ready: bool,
+    #[serde(rename = "value1")]
+    objects: HashMap<String, TreeComponent>,
+    #[serde(rename = "value2")]
+    sha_tree_local: String,
+    #[serde(rename = "value3")]
+    sha_tree: String,
+    #[serde(rename = "value4")]
+    pubaddr: BlockchainContractAddress,
 }
 
 #[derive(Deserialize, Debug, DataContract)]
@@ -69,4 +83,21 @@ impl Into<git_object::Tree> for Tree {
         entries.sort();
         git_object::Tree { entries }
     }
+}
+
+pub async fn check_if_tree_is_ready<B>(
+    blockchain: &B,
+    address: &BlockchainContractAddress,
+) -> anyhow::Result<(bool, usize)> // returns ready status and number of tree objects
+where
+    B: BlockchainService + 'static,
+{
+    tracing::trace!("Check whether tree is ready: {address}");
+    let tree_contract = GoshContract::new(address, gosh_abi::TREE);
+    let value = run_local(blockchain.client(), &tree_contract, "getDetails", None)
+        .await?;
+    let res: GetDetailsResult = serde_json::from_value(value)?;
+
+    tracing::trace!("tree {}: ready={}, objects={}", address, res.is_ready, res.objects.len());
+    Ok((res.is_ready, res.objects.len()))
 }

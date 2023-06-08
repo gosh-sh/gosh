@@ -32,7 +32,6 @@ mod delete_tag;
 mod parallel_snapshot_upload_support;
 
 use crate::blockchain::branch_list;
-use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
 use crate::git_helper::push::parallel_snapshot_upload_support::{
     ParallelCommit, ParallelCommitUploadSupport, ParallelSnapshot, ParallelSnapshotUploadSupport,
     ParallelTreeUploadSupport,
@@ -1562,7 +1561,7 @@ mod tests {
 
             mock_blockchain
                 .expect_notify_commit()
-                .returning(|_, _, _, _, _, _, _| Ok(()));
+                .returning(|_, _, _, _, _, _, _, _| Ok(()));
 
             let mut helper = setup_test_helper(
                 json!({

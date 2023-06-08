@@ -1,4 +1,3 @@
-use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
 use crate::blockchain::contract::ContractInfo;
 use crate::blockchain::user_wallet::UserWallet;
 use crate::blockchain::{
@@ -11,6 +10,8 @@ use git_object::tree;
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::Arc;
+
+const MAX_RETRIES_FOR_CHUNKS_TO_APPEAR: i32 = 20;
 
 #[derive(Serialize, Debug, Clone)]
 pub struct TreeNode {
@@ -64,8 +65,6 @@ pub trait DeployTree {
 }
 
 static TREE_NODES_CHUNK_MAX_SIZE: usize = 200;
-static MAX_REDEPLOY_ATTEMPTS: i32 = 3;
-const MAX_RETRIES_FOR_CHUNKS_TO_APPEAR: i32 = 20;
 
 #[async_trait]
 impl DeployTree for Everscale {
@@ -86,7 +85,7 @@ impl DeployTree for Everscale {
                 Tree::calculate_address(&Arc::clone(self.client()), &mut repo_contract, sha)
                     .await?;
             let mut nodes = nodes.to_owned();
-            let mut chunk: HashMap<String, TreeNode> = HashMap::new();
+            let chunk: HashMap<String, TreeNode> = HashMap::new();
             let params = DeployTreeArgs {
                 sha: sha.to_owned(),
                 repo_name: repo_name.to_owned(),
@@ -100,11 +99,11 @@ impl DeployTree for Everscale {
                 Some(serde_json::to_value(params.clone())?),
                 None,
             )
-                .await
-                .map(|_| ())?;
+            .await
+            .map(|_| ())?;
             while nodes.len() > 0 {
                 let mut counter = 0;
-                let mut chunk: HashMap<String, TreeNode> = HashMap::new();
+                let chunk: HashMap<String, TreeNode>;
                 (chunk, nodes) = nodes.into_iter().partition(|(_, _)| {
                     counter += 1;
                     counter <= TREE_NODES_CHUNK_MAX_SIZE
@@ -121,8 +120,8 @@ impl DeployTree for Everscale {
                     Some(serde_json::to_value(params)?),
                     None,
                 )
-                    .await
-                    .map(|_| ())?;
+                .await
+                .map(|_| ())?;
             }
             Ok(())
         };
