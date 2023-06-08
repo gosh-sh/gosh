@@ -24,12 +24,14 @@ import { AppConfig } from '../appconfig'
 import { useProfile, useUser } from './user.hooks'
 import {
     IGoshDaoAdapter,
+    IGoshProfile,
     IGoshRepositoryAdapter,
     IGoshSmvAdapter,
     IGoshWallet,
 } from '../gosh/interfaces'
 import { GoshAdapterFactory } from '../gosh'
 import { DAO_TOKEN_TRANSFER_TAG, MAX_PARALLEL_READ, SYSTEM_TAG } from '../constants'
+import { KeyPair } from '@eversdk/core'
 
 function useDaoList(perPage: number) {
     const profile = useProfile()
@@ -252,6 +254,7 @@ function useDaoCreate() {
         setProgress({ isFetching: true })
 
         // Deploy dao
+        let dao: IGoshDaoAdapter
         let isDaoDeployed: boolean
         try {
             if (!profile) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
@@ -259,7 +262,7 @@ function useDaoCreate() {
             const usernames = (options.members || []).filter((item) => !!item)
             const profiles = await gosh.isValidProfile(usernames)
             const addresses = profiles.map(({ address }) => address)
-            await profile.deployDao(gosh, name, [profile.address, ...addresses])
+            dao = await profile.deployDao(gosh, name, [profile.address, ...addresses])
             isDaoDeployed = true
         } catch (e) {
             isDaoDeployed = false
@@ -270,6 +273,7 @@ function useDaoCreate() {
 
         // Set progress
         setProgress((state) => ({ ...state, isFetching: false }))
+        return dao
     }
 
     const _create_2_0_0 = async (
@@ -279,13 +283,21 @@ function useDaoCreate() {
             description?: string
             supply?: number
             mint?: boolean
+            auth?: {
+                profile: IGoshProfile
+                username: string
+                keys: KeyPair
+            }
         },
     ) => {
-        if (!profile || !user.keys || !user.username) {
+        const { tags, description, supply, mint, auth } = options
+
+        const _profile = profile || auth?.profile
+        const _keys = user.keys || auth?.keys
+        const _username = user.username || auth?.username
+        if (!_profile || !_keys || !_username) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
-
-        const { tags, description, supply, mint } = options
 
         // Set initial progress
         setProgress({ isFetching: true })
@@ -293,7 +305,7 @@ function useDaoCreate() {
         // Deploy DAO
         let dao: IGoshDaoAdapter
         try {
-            dao = await profile.deployDao(gosh, name, [profile.address])
+            dao = await _profile.deployDao(gosh, name, [_profile.address])
             setProgress((state) => ({ ...state, isDaoDeployed: true }))
         } catch (e) {
             setProgress((state) => ({ ...state, isDaoDeployed: false }))
@@ -302,7 +314,7 @@ function useDaoCreate() {
 
         // Authorize DAO
         try {
-            await dao.setAuth(user.username, user.keys)
+            await dao.setAuth(_username, _keys)
             setProgress((state) => ({ ...state, isDaoAuthorized: true }))
         } catch (e) {
             setProgress((state) => ({ ...state, isDaoAuthorized: false }))
@@ -372,6 +384,7 @@ function useDaoCreate() {
 
         // Set progress
         setProgress((state) => ({ ...state, isFetching: false }))
+        return dao
     }
 
     // Resolve create fn
