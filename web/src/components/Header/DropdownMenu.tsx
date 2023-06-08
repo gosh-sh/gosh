@@ -1,25 +1,54 @@
 import React from 'react'
 import { Menu, Transition } from '@headlessui/react'
 import { Link } from 'react-router-dom'
-import { classNames, useUser } from 'react-gosh'
+import classNames from 'classnames'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons'
+import { useUser } from 'react-gosh'
+import { getIdenticonAvatar } from '../../helpers'
 
 const DropdownMenu = () => {
     const user = useUser()
     const items = [
         { to: '/a/orgs', title: 'Organizations', className: 'text-gray-050a15' },
-        // { to: '/a/repos', title: 'Repositories', className: 'text-gray-050a15' },
         { to: '/a/settings', title: 'Settings', className: 'text-gray-050a15' },
         {
             to: '',
             title: 'Sign out',
-            className: 'text-red-dd3a3a',
+            className: 'text-red-ff3b30',
             onClick: user.signout,
         },
     ]
 
     return (
         <Menu as="div" className="relative">
-            <Menu.Button className="btn btn--header btn--burger icon-burger" />
+            <Menu.Button className="flex flex-nowrap items-center text-gray-53596d gap-3">
+                {({ open }) => (
+                    <>
+                        <div className="w-8 border border-gray-e6edff rounded-full overflow-hidden">
+                            <img
+                                src={getIdenticonAvatar({
+                                    seed: user.persist.profile,
+                                    radius: 50,
+                                }).toDataUriSync()}
+                                alt=""
+                                className="w-full"
+                            />
+                        </div>
+                        <div className="hidden md:block">{user.persist.username}</div>
+                        <div>
+                            <FontAwesomeIcon
+                                icon={faChevronDown}
+                                size="sm"
+                                className={classNames(
+                                    'transition-all',
+                                    open ? 'rotate-180' : null,
+                                )}
+                            />
+                        </div>
+                    </>
+                )}
+            </Menu.Button>
             <Transition
                 as={React.Fragment}
                 enter="transition ease-out duration-100"
@@ -29,19 +58,18 @@ const DropdownMenu = () => {
                 leaveFrom="transform opacity-100 scale-100"
                 leaveTo="transform opacity-0 scale-95"
             >
-                <Menu.Items className="dropdown-menu">
-                    <div>{user.user.username}</div>
+                <Menu.Items className="absolute origin-top-right right-0 bg-white border border-gray-e6edff rounded-lg mt-2 z-50 py-2">
                     {items.map((item, index) => (
                         <Menu.Item key={index}>
                             {({ active }) => (
                                 <Link
                                     to={item.to}
                                     className={classNames(
-                                        'block my-1 text-lg leading-32px hover:text-white',
-                                        active ? 'text-white' : null,
-                                        item?.className,
+                                        'block py-1 px-4 text-gray-53596d hover:text-black',
+                                        active ? 'text-black' : null,
+                                        item.className,
                                     )}
-                                    onClick={item?.onClick}
+                                    onClick={item.onClick}
                                 >
                                     {item.title}
                                 </Link>
