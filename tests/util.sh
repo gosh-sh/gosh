@@ -22,7 +22,7 @@ function get_repo_addr {
 }
 
 function list_branches {
-    repo_addr=$1
+    repo_addr=${1:-$REPO_ADDR}
     tonos-cli -j -u $NETWORK run $repo_addr getAllAddress {} --abi ../$REPO_ABI | jq -r '.value0[].branchname'
 }
 
