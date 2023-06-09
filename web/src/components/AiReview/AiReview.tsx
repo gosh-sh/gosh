@@ -20,7 +20,7 @@ const AiReview = (props: TAiReviewButtonProps) => {
     }, [comments])
 
     const isAiMember = dao.members.find(
-        ({ profile }) => profile === import.meta.env.REACT_APP_GOSHAI,
+        ({ profile }) => profile === import.meta.env.REACT_APP_GOSHAI_PROFILE,
     )
 
     if (dao.version < '5.0.0' || !isAiMember || !Object.keys(comments).length) {

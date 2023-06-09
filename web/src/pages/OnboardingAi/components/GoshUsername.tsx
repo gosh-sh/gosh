@@ -59,13 +59,13 @@ const GoshUsername = (props: TGoshUsernameProps) => {
 
             // Create DAO
             const dao = await createDao(daoname, { tags: ['GoshAI'], auth })
-
+            const aiUsername = import.meta.env.REACT_APP_GOSHAI_NAME
             // TODO: Add gosh-ai bot as dao member
             // await dao.createMember({
             //     alone: true,
             //     members: [
             //         {
-            //             user: { name: 'gosh-ai', type: 'user' },
+            //             user: { name: aiUsername, type: 'user' },
             //             allowance: 0,
             //             comment: '',
             //             expired: 0,

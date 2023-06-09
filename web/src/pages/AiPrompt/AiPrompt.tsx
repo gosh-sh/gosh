@@ -150,7 +150,8 @@ const AiPromptPage = () => {
                 }
             }
 
-            const aiUser = { name: 'gosh-ai', type: 'user' }
+            const aiUsername = import.meta.env.REACT_APP_GOSHAI_NAME
+            const aiUser = { name: aiUsername, type: 'user' }
             const isAiMember = await dao.isMember({ user: aiUser })
             if (!isAiMember) {
                 if (members.length === 1) {
