@@ -104,13 +104,15 @@ contract Tree is Modifiers {
 
     function SendDiff2(string namecommit, string branch, address branchcommit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task, bool isUpgrade) public senderIs(GoshLib.calculateCommitAddress(_code[m_CommitCode], _repo, namecommit)){
         tvm.accept();
-        getMoney();
+        getMoney();        
+        require(_isReady == true, ERR_PROCCESS_END);
         Commit(msg.sender).SendDiff3{value: 0.1 ton, flag: 1}(branch, branchcommit, number, numberCommits, task, isUpgrade);
     }
 
     function checkFull(string namecommit, address repo, string branch, uint128 typer, optional(address) branchcommit) public senderIs(GoshLib.calculateCommitAddress(_code[m_CommitCode], repo, namecommit)) {
         require(_check == false, ERR_PROCCESS_IS_EXIST);
         require(_isReady == true, ERR_PROCCESS_END);
+        if (typer == 2) { Commit(msg.sender).treeAccept{value: 0.1 ton, flag: 1}(_checkbranch, branchcommit, typer); return; }
         _check = true;
         _checkbranch = branch;
         _root = true;
