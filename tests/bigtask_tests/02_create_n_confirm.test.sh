@@ -61,7 +61,7 @@ if (( $WALLET_TOKEN_BALANCE_AT_START != 0 )); then
     echo "TEST FAILED: incorrect token balance at user wallet"
 fi
 
-request_reward "${BIGTASK_NAME}"
+request_bigtask_reward "${BIGTASK_NAME}"
 delay 20
 
 WALLET_TOKEN_BALANCE=$(get_wallet_token_balance)
