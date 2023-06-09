@@ -2,8 +2,8 @@ use std::{fmt::Debug, str::FromStr};
 
 use crate::{
     blockchain::{
-        branch::DeployBranch, snapshot::wait_snapshots_readiness::wait_snapshots_readiness,
-        user_wallet::WalletError, Snapshot, BlockchainContractAddress,
+        branch::DeployBranch, snapshot::wait_snapshots_until_ready, user_wallet::WalletError,
+        BlockchainContractAddress, Snapshot,
     },
     git_helper::GitHelper,
 };
@@ -166,12 +166,9 @@ where
         }
 
         let result =
-            wait_snapshots_readiness(&self.context.blockchain, &expected_readiness_for).await?;
+            wait_snapshots_until_ready(&self.context.blockchain, &expected_readiness_for).await?;
         if !result.is_empty() {
-            anyhow::bail!(
-                "Some ({}) of snapshot contracts aren't ready",
-                result.len()
-            );
+            anyhow::bail!("Some ({}) of snapshot contracts aren't ready", result.len());
         }
         Ok(())
     }

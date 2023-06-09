@@ -136,7 +136,14 @@ impl DiffMessagesIterator {
                 let snapshot_contract =
                     GoshContract::new(original_snapshot.clone(), crate::abi::SNAPSHOT);
                 let snapshot_is_active = snapshot_contract.is_active(client).await?;
-                tracing::trace!("snap={original_snapshot} is {}", if snapshot_is_active { "ACTIVE" } else { "NON_ACTIVE" });
+                tracing::trace!(
+                    "snap={original_snapshot} is {}",
+                    if snapshot_is_active {
+                        "ACTIVE"
+                    } else {
+                        "NON_ACTIVE"
+                    }
+                );
                 tracing::info!(
                     "First commit in this branch to the file {} is {} and it was branched from {} -> snapshot addr: {}",
                     file_path,
@@ -202,7 +209,11 @@ impl DiffMessagesIterator {
                         } else {
                             // Do not panic but stop search, because this commit can be found in the other branch
                             tracing::info!("snap={address}: We reached the end of the messages queue to a snapshot and were not able to find original commit there.");
-                            tracing::info!("snap={address}: before return index is {:?}, buffer_cursor={}", index, self.buffer_cursor);
+                            tracing::info!(
+                                "snap={address}: before return index is {:?}, buffer_cursor={}",
+                                index,
+                                self.buffer_cursor
+                            );
                             self.buffer_cursor = 0;
                             return Ok(LoadStatus::StopSearch);
                         }

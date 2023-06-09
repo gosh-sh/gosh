@@ -1,4 +1,5 @@
 use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
+use crate::blockchain::tree::load::check_if_tree_is_ready;
 use crate::{
     blockchain::{
         get_commit_address, tree::TreeNode, user_wallet::WalletError, AddrVersion,
@@ -15,11 +16,13 @@ use crate::{
 use anyhow::bail;
 use git_hash::ObjectId;
 use std::{collections::HashMap, sync::Arc, vec::Vec};
+use std::time::Duration;
 use tokio::{sync::Semaphore, task::JoinSet};
+use tokio::time::sleep;
 use tokio_retry::RetryIf;
 use tracing::Instrument;
 
-// const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
+const WAIT_TREE_READY_MAX_ATTEMPTS: i32 = 3;
 
 // TODO: refactor this code and unite all this parallel pushes
 
@@ -440,6 +443,33 @@ impl ParallelTreeUploadSupport {
                 Ok(Ok(_)) => {}
             }
         }
-        wait_contracts_deployed(&blockchain, &addresses).await
+        let _ = wait_contracts_deployed(&blockchain, &addresses).await?;
+
+        let mut rest: HashMap<BlockchainContractAddress, usize> = addresses.iter().map(|addr| (addr.to_owned(), 0)).collect();
+        let mut attempt = 0;
+        loop {
+            attempt += 1;
+            let mut new_rest = HashMap::new();
+            for (address, _) in &rest {
+                match check_if_tree_is_ready(&blockchain, address).await {
+                    Ok((true, _)) => {},
+                    Ok((false, num)) => {
+                        if &num != rest.get(address).unwrap() {
+                            attempt = 0;
+                        }
+                        new_rest.insert(address.to_owned(), num);
+                    },
+                    _ => {
+                        new_rest.insert(address.to_owned(), 0usize);
+                    }
+                }
+            }
+            rest = new_rest;
+            if attempt == WAIT_TREE_READY_MAX_ATTEMPTS {
+                break;
+            }
+            sleep(Duration::from_secs(5)).await;
+        }
+        Ok(rest.keys().map(|a| a.to_owned()).collect())
     }
 }
