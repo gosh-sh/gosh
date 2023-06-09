@@ -1,5 +1,7 @@
 use crate::blockchain::user_wallet::{UserWallet, WalletError};
 use crate::ipfs::build_ipfs;
+use std::time::Duration;
+use tokio::time::sleep;
 
 use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
 use crate::blockchain::get_commit_address;
@@ -25,6 +27,8 @@ use super::utilities::retry::default_retry_strategy;
 
 // const PUSH_DIFF_MAX_TRIES: i32 = 3;
 // const PUSH_SNAPSHOT_MAX_TRIES: i32 = 3;
+
+const WAIT_FOR_DELETE_SNAPSHOT_TRIES: i32 = 20;
 
 enum BlobDst {
     Ipfs(String),
@@ -299,6 +303,20 @@ pub async fn push_new_branch_snapshot(
         blockchain
             .delete_snapshot(&wallet, expected_addr.clone())
             .await?;
+
+        let mut attempt = 0;
+        tracing::trace!("wait for snapshot to be not active: {expected_addr}");
+        loop {
+            attempt += 1;
+            if attempt == WAIT_FOR_DELETE_SNAPSHOT_TRIES {
+                anyhow::bail!("Failed to delete snapshot: {expected_addr}");
+            }
+            if !snapshot_contract.is_active(blockchain.client()).await? {
+                tracing::trace!("Snapshot is deleted: {expected_addr}");
+                break;
+            }
+            sleep(Duration::from_secs(5)).await;
+        }
     }
 
     let (content, ipfs) = if is_going_to_ipfs(original_content) {
@@ -379,12 +397,13 @@ where
             &branch_name,
             &file_path,
         )
-            .await?;
+        .await?;
         let snapshot = Snapshot::load(blockchain.client(), &snapshot_addr).await?;
         if snapshot.current_ipfs.is_some() {
             ("".to_string(), commit_id, snapshot.current_ipfs)
         } else {
-            let content: Vec<u8> = ton_client::utils::compress_zstd(&snapshot.current_content, None)?;
+            let content: Vec<u8> =
+                ton_client::utils::compress_zstd(&snapshot.current_content, None)?;
             tracing::trace!("Previous snapshot content: {content:?}");
             let mut content_string = "".to_string();
             for byte in content {
@@ -402,9 +421,9 @@ where
             let undeployed = wait_contracts_deployed(&blockchain, &vec![new_commit]).await?;
             if !undeployed.is_empty() {
                 anyhow::bail!(
-                "Commit was not deployed in expected time: {}",
-                undeployed[0]
-            );
+                    "Commit was not deployed in expected time: {}",
+                    undeployed[0]
+                );
             }
             tracing::trace!("commit is ready");
 

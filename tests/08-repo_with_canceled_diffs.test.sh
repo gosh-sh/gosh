@@ -61,6 +61,8 @@ git push -u origin $BRANCH_NAME
 
 cd ..
 
+sleep 10
+
 # 5
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone2"
 

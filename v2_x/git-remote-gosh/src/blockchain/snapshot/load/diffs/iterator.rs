@@ -136,7 +136,14 @@ impl DiffMessagesIterator {
                 let snapshot_contract =
                     GoshContract::new(original_snapshot.clone(), crate::abi::SNAPSHOT);
                 let snapshot_is_active = snapshot_contract.is_active(client).await?;
-                tracing::trace!("snap={original_snapshot} is {}", if snapshot_is_active { "ACTIVE" } else { "NON_ACTIVE" });
+                tracing::trace!(
+                    "snap={original_snapshot} is {}",
+                    if snapshot_is_active {
+                        "ACTIVE"
+                    } else {
+                        "NON_ACTIVE"
+                    }
+                );
                 tracing::info!(
                     "First commit in this branch to the file {} is {} and it was branched from {} -> snapshot addr: {}",
                     file_path,
@@ -354,4 +361,3 @@ pub async fn load_messages_to(
     };
     Ok((messages, page))
 }
-

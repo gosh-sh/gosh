@@ -36,6 +36,10 @@ set -o pipefail
 ./upgrade_tests/08-tagging_after_upgrade.test.sh
 ./upgrade_tests/09-delete_tag_after_upgrade.test.sh
 ./upgrade_tests/10-tagless_after_upgrade.test.sh
+./upgrade_tests/11_branch_from_main_old_ver.test.sh
+./upgrade_tests/12_upgrade_from_commit_with_ipfs.test.sh
+./upgrade_tests/13-check_upgrade_parent.test.sh
+./upgrade_tests/14-check_upgrade_parent_2.test.sh
 
 ./clean.sh
 echo "All tests passed"

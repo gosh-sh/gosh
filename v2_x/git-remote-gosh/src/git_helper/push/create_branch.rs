@@ -1,7 +1,10 @@
 use std::{fmt::Debug, str::FromStr};
 
 use crate::{
-    blockchain::{branch::DeployBranch, user_wallet::WalletError, Snapshot},
+    blockchain::{
+        branch::DeployBranch, snapshot::wait_snapshots_until_ready, user_wallet::WalletError,
+        BlockchainContractAddress, Snapshot,
+    },
     git_helper::GitHelper,
 };
 use git_hash::ObjectId;
@@ -74,14 +77,18 @@ where
     #[instrument(level = "info", skip_all)]
     async fn push_initial_snapshots(&mut self) -> anyhow::Result<()> {
         let repository = self.context.local_repository();
-        let tree_root_id =
-            repository.find_object(self.ancestor_commit)?.into_commit().tree()?.id;
+        let tree_root_id = repository
+            .find_object(self.ancestor_commit)?
+            .into_commit()
+            .tree()?
+            .id;
         let snapshots_to_deploy: Vec<recorder::Entry> =
             super::utilities::all_files(repository, tree_root_id)?;
 
         let mut snapshot_handlers = JoinSet::new();
 
         let context = &mut self.context.clone();
+        let mut expected_readiness_for = Vec::<BlockchainContractAddress>::new();
 
         for entry in snapshots_to_deploy {
             let mut buffer: Vec<u8> = Vec::new();
@@ -106,7 +113,9 @@ where
                 &mut repo_contract,
                 &self.new_branch,
                 &file_path,
-            ).await?;
+            )
+            .await?;
+            expected_readiness_for.push(expected_snapshot_addr.clone());
 
             let remote_network = self.context.remote.network.clone();
             let dao_addr = self.context.dao_addr.clone();
@@ -154,6 +163,12 @@ where
         while let Some(finished_task) = snapshot_handlers.join_next().await {
             let result: Result<anyhow::Result<()>, JoinError> = finished_task;
             result??;
+        }
+
+        let result =
+            wait_snapshots_until_ready(&self.context.blockchain, &expected_readiness_for).await?;
+        if !result.is_empty() {
+            anyhow::bail!("Some ({}) of snapshot contracts aren't ready", result.len());
         }
         Ok(())
     }

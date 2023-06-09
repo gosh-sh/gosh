@@ -47,6 +47,8 @@ git commit -m test4
 
 git push -u origin main
 
+sleep 60
+
 echo "***** cloning repo *****"
 cd ..
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"

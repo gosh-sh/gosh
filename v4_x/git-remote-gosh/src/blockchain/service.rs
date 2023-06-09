@@ -165,6 +165,7 @@ pub mod tests {
     use super::*;
     use crate::{
         blockchain::{snapshot::save::Diff, tree::TreeNode, user_wallet::UserWallet, AddrVersion},
+        config::Config,
         config::UserWalletConfig,
         utilities::Remote,
     };
@@ -296,6 +297,7 @@ pub mod tests {
                 remote: &Remote,
                 dao_addr: &BlockchainContractAddress,
                 is_upgrade: bool,
+                config: &Config,
             ) -> anyhow::Result<()>;
         }
 

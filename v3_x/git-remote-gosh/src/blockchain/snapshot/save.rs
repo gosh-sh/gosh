@@ -231,7 +231,7 @@ impl DeleteSnapshot for Everscale {
                 wallet_contract.deref(),
                 "deleteSnapshot",
                 Some(serde_json::to_value(args)?),
-                None
+                None,
             )
             .await
             .map(|_| ());

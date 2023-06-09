@@ -15,6 +15,7 @@ DAO_NAME="dao-upgrade-test03_$(date +%s)"
 
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
+[ -d $REPO_NAME ] && rm -rf "{$REPO_NAME}_clone"
 
 # deploy new DAO that will be upgraded
 deploy_DAO_and_repo
@@ -39,6 +40,14 @@ git commit -m test
 git push -u origin main
 PARENT_COMMIT_ID=$(git rev-parse --short HEAD)
 
+sleep 30
+
+echo "***** Pushing file to the repo *****"
+echo test > 2.txt
+git add 2.txt
+git commit -m test2
+git push -u origin main
+
 wait_set_commit $REPO_ADDR main
 
 cd ..
@@ -55,13 +64,16 @@ echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
 sleep 3
 
+export NEW_LINK="gosh://$SYSTEM_CONTRACT_ADDR_1/$DAO_NAME/$REPO_NAME"
+echo "NEW_LINK=$NEW_LINK"
+
 cd $REPO_NAME
 echo "**** Fetch repo *****"
 git fetch
 echo new_ver > 1.txt
 git add 1.txt
 git commit -m test2
-git push
+GOSH_TRACE=5 git push &> ../trace_test_03.log
 
 echo "***** create branch heading to old commit *****"
 git checkout -b parent_branch $PARENT_COMMIT_ID
@@ -75,8 +87,10 @@ echo "GOOD VERSION"
 echo branch > 1.txt
 git add 1.txt
 git commit -m test2
-git push --set-upstream origin parent_branch
+GOSH_TRACE=5 git push --set-upstream origin parent_branch &> ../trace_test_03.log
 
 cd ..
+
+
 
 echo "TEST SUCCEEDED"

@@ -74,8 +74,11 @@ where
     #[instrument(level = "info", skip_all)]
     async fn push_initial_snapshots(&mut self) -> anyhow::Result<()> {
         let repository = self.context.local_repository();
-        let tree_root_id =
-            repository.find_object(self.ancestor_commit)?.into_commit().tree()?.id;
+        let tree_root_id = repository
+            .find_object(self.ancestor_commit)?
+            .into_commit()
+            .tree()?
+            .id;
         let snapshots_to_deploy: Vec<recorder::Entry> =
             super::utilities::all_files(repository, tree_root_id)?;
 
@@ -106,7 +109,8 @@ where
                 &mut repo_contract,
                 &self.new_branch,
                 &file_path,
-            ).await?;
+            )
+            .await?;
 
             let remote_network = self.context.remote.network.clone();
             let dao_addr = self.context.dao_addr.clone();

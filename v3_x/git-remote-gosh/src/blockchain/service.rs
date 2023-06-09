@@ -3,12 +3,12 @@ use super::{
     commit::save::BlockchainCommitPusher,
     contract::ContractRead,
     get_contracts_blocks,
-    snapshot::save::{DeployDiff, DeployNewSnapshot, DeleteSnapshot},
+    snapshot::save::{DeleteSnapshot, DeployDiff, DeployNewSnapshot},
     tag::save::Tagging,
     tree::DeployTree,
     user_wallet::BlockchainUserWalletService,
-    AddrVersion, BlockchainContractAddress, EverClient, Everscale, GetAddrBranchResult,
-    GetBoolResult, GoshCommit, GoshContract,
+    BlockchainContractAddress, EverClient, Everscale, GetAddrBranchResult, GetBoolResult,
+    GoshCommit, GoshContract,
 };
 use crate::abi as gosh_abi;
 use async_trait::async_trait;
@@ -164,7 +164,7 @@ impl BlockchainService for Everscale {
 pub mod tests {
     use super::*;
     use crate::{
-        blockchain::{snapshot::save::Diff, tree::TreeNode, user_wallet::UserWallet},
+        blockchain::{snapshot::save::Diff, tree::TreeNode, user_wallet::UserWallet, AddrVersion},
         config::UserWalletConfig,
         utilities::Remote,
     };
@@ -296,6 +296,7 @@ pub mod tests {
                 remote: &Remote,
                 dao_addr: &BlockchainContractAddress,
                 is_upgrade: bool,
+                config: &Config,
             ) -> anyhow::Result<()>;
         }
 
