@@ -298,10 +298,11 @@ class GoshAdapter_5_0_0 implements IGoshAdapter {
     async getProfile(options: {
         username?: string
         address?: TAddress
+        keys?: KeyPair
     }): Promise<IGoshProfile> {
-        const { username, address } = options
+        const { username, address, keys } = options
         if (address) {
-            return new GoshProfile(this.client, address)
+            return new GoshProfile(this.client, address, keys)
         }
         if (!username) {
             throw new GoshError(EGoshError.USER_NAME_UNDEFINED)
@@ -315,7 +316,7 @@ class GoshAdapter_5_0_0 implements IGoshAdapter {
             undefined,
             { useCachedBoc: true },
         )
-        return new GoshProfile(this.client, value0)
+        return new GoshProfile(this.client, value0, keys)
     }
 
     async getDao(options: {
@@ -1082,7 +1083,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async createMember(params: TDaoMemberCreateParams): Promise<TDaoMemberCreateResult> {
-        const { members = [], reviewers = [], cell } = params
+        const { members = [], reviewers = [], cell, alone } = params
 
         if (!members.length) {
             return
@@ -1125,6 +1126,8 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
                 comment: note.length ? note.join('\n\n') : '',
             })
             return value0
+        } else if (alone) {
+            await this.wallet.run('AloneDeployWalletDao', { pubaddr })
         } else {
             const _reviewers = await this.getReviewers(reviewers)
             const smv = await this.getSmv()

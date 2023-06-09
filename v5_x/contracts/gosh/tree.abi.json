@@ -60,7 +60,8 @@
 				{"name":"namecommit","type":"string"},
 				{"name":"repo","type":"address"},
 				{"name":"branch","type":"string"},
-				{"name":"typer","type":"uint128"}
+				{"name":"typer","type":"uint128"},
+				{"name":"branchcommit","type":"optional(address)"}
 			],
 			"outputs": [
 			]
@@ -70,7 +71,9 @@
 			"inputs": [
 				{"name":"index","type":"uint256"},
 				{"name":"path","type":"string"},
-				{"name":"typer","type":"uint128"}
+				{"name":"typer","type":"uint128"},
+				{"name":"branch","type":"string"},
+				{"name":"branchcommit","type":"optional(address)"}
 			],
 			"outputs": [
 			]
@@ -80,6 +83,7 @@
 			"inputs": [
 				{"name":"name","type":"string"},
 				{"name":"_ready","type":"bool"},
+				{"name":"branchcommit","type":"optional(address)"},
 				{"name":"typer","type":"uint128"}
 			],
 			"outputs": [
@@ -91,6 +95,7 @@
 				{"name":"name","type":"string"},
 				{"name":"branch","type":"string"},
 				{"name":"path","type":"string"},
+				{"name":"branchcommit","type":"optional(address)"},
 				{"name":"typer","type":"uint128"}
 			],
 			"outputs": [
@@ -101,6 +106,7 @@
 			"inputs": [
 				{"name":"name","type":"string"},
 				{"name":"res","type":"bool"},
+				{"name":"branchcommit","type":"optional(address)"},
 				{"name":"typer","type":"uint128"}
 			],
 			"outputs": [
@@ -224,7 +230,7 @@
 		{"name":"_checkbranch","type":"string"},
 		{"name":"_checkaddr","type":"address"},
 		{"name":"_flag","type":"bool"},
-		{"components":[{"name":"index","type":"uint256"},{"name":"path","type":"string"},{"name":"typer","type":"uint128"}],"name":"_saved","type":"optional(tuple)"},
+		{"components":[{"name":"index","type":"uint256"},{"name":"path","type":"string"},{"name":"typer","type":"uint128"},{"name":"branch","type":"string"},{"name":"branchcommit","type":"optional(address)"}],"name":"_saved","type":"optional(tuple)"},
 		{"name":"_number","type":"uint128"},
 		{"name":"_neednumber","type":"uint128"},
 		{"name":"_isReady","type":"bool"},

@@ -207,7 +207,7 @@ const CodeComments = (props: TCodeCommentsProps) => {
                                 </Button>
                             </div>
                             <div>
-                                {!thread.isResolved && (
+                                {dao.details.isAuthMember && !thread.isResolved && (
                                     <div className="inline-block">
                                         <Formik
                                             initialValues={{ id: thread.id }}

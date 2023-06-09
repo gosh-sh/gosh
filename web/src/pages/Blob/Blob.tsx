@@ -17,6 +17,7 @@ import { BranchSelect } from '../../components/Branches'
 import { ButtonLink } from '../../components/Form'
 import Loader from '../../components/Loader'
 import { CodeComments } from '../../components/Blob/Comments'
+import AiReview from '../../components/AiReview'
 
 const BlobPage = () => {
     const treepath = useParams()['*']
@@ -139,6 +140,10 @@ const BlobPage = () => {
                     </div>
                 </div>
             )}
+
+            <div className="fixed bottom-10 right-10">
+                <AiReview dao={dao.details} />
+            </div>
         </div>
     )
 }

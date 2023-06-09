@@ -275,6 +275,7 @@ type TDaoMemberCreateParams = TEventCreateParams & {
         expired: number
     }[]
     cell?: boolean
+    alone?: boolean
 }
 
 type TDaoMemberCreateResult = Promise<void | string>

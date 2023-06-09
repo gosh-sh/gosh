@@ -143,7 +143,11 @@ interface IGoshAdapter {
     resetAuth(): Promise<void>
 
     getVersion(): string
-    getProfile(options: { username?: string; address?: TAddress }): Promise<IGoshProfile>
+    getProfile(options: {
+        username?: string
+        address?: TAddress
+        keys?: KeyPair
+    }): Promise<IGoshProfile>
     getDao(options: {
         name?: string
         address?: TAddress

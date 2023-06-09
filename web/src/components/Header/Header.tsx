@@ -6,19 +6,17 @@ import DropdownMenu from './DropdownMenu'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPaperPlane, faQuestionCircle } from '@fortawesome/free-regular-svg-icons'
 import { faDocker } from '@fortawesome/free-brands-svg-icons'
-import { faBlog, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
+import { faBlog } from '@fortawesome/free-solid-svg-icons'
 import { appModalStateAtom } from '../../store/app.state'
 import MDDocumentModal from '../Modal/MDDocument/MDDocumentModal'
 import { useUser } from 'react-gosh'
 import { onExternalLinkClick } from '../../helpers'
-import Alert from '../Alert/Alert'
 import { useState } from 'react'
 
 const Header = () => {
     const user = useUser()
     const location = useLocation()
     const setModal = useSetRecoilState(appModalStateAtom)
-    const [alertShow, setAlertShow] = useState<boolean>(true)
 
     return (
         <header>
@@ -150,23 +148,6 @@ const Header = () => {
                     </>
                 )}
             </Disclosure>
-
-            {user.persist.phrase && alertShow && (
-                <div className="container">
-                    <Alert
-                        variant="danger"
-                        dismiss
-                        className="mt-6"
-                        onDismiss={() => setAlertShow(false)}
-                    >
-                        Please, DO NOT sign out, go to the{' '}
-                        <Link to={'/a/settings'} className="underline">
-                            Settings
-                        </Link>{' '}
-                        page now and backup your seed phrase
-                    </Alert>
-                </div>
-            )}
         </header>
     )
 }

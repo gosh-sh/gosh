@@ -38,3 +38,8 @@ export const blobCommentsAtom = atom<BlobCommentsAtom>({
     key: 'BlobCommentsAtom',
     default: {},
 })
+
+export const blobsCommentsCountAtom = atom<{ [filename: string]: number }>({
+    key: 'BlobsCommentsCountAtom',
+    default: {},
+})
