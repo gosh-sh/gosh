@@ -66,7 +66,7 @@ NEW_CHILD_WALLET_ADDR=$WALLET_ADDR
 NEW_CHILD_DAO_ADDR=$DAO_ADDR
 
 CHILD_ADDR=$(echo $NEW_CHILD_DAO_ADDR | sed -r "s/:/x/")
-NEW_CHILD_DAO_WALLET_ADDR=$(tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull | jq '.value0."'$CHILD_ADDR'".member' | cut -d'"' -f 2)
+NEW_CHILD_DAO_WALLET_ADDR=$(tonos-cli -j runx --abi $DAO_ABI_1 --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull | jq '.value0."'$CHILD_ADDR'".member' | cut -d'"' -f 2)
 echo "NEW_CHILD_DAO_WALLET_ADDR=$NEW_CHILD_DAO_WALLET_ADDR"
 
 
