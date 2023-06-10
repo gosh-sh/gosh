@@ -81,6 +81,7 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
             },
             allowance: allowance.value,
             comment: comment.value,
+            expired: 0,
         }))
 
     const hasErrorsSelector = members.some(

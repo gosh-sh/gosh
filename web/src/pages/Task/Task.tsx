@@ -149,9 +149,8 @@ const TaskPage = () => {
                                             Commit
                                         </div>
                                         <div>
-                                            {!details.team ? (
-                                                'Not assigned'
-                                            ) : (
+                                            {!details.team && 'Not assigned'}
+                                            {details.team?.commit ? (
                                                 <Link
                                                     to={`/o/${dao.details.name}/r/${details.repository}/commits/${details.team.commit.branch}/${details.team.commit.name}`}
                                                     className="text-blue-348eff"
@@ -163,6 +162,8 @@ const TaskPage = () => {
                                                         '',
                                                     )}
                                                 </Link>
+                                            ) : (
+                                                'Awaiting commits'
                                             )}
                                         </div>
                                     </div>

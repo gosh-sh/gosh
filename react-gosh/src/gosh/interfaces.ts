@@ -98,6 +98,33 @@ import {
     TDaoTokenDaoTransferResult,
     TUpgradeVersionControllerParams,
     TUpgradeVersionControllerResult,
+    TDaoStartPaidMembershipParams,
+    TDaoStartPaidMembershipResult,
+    TDaoStopPaidMembershipParams,
+    TDaoStopPaidMembershipResult,
+    TCodeCommentThreadCreateParams,
+    TCodeCommentThreadCreateResult,
+    TCodeCommentThreadGetCodeParams,
+    TCodeCommentThreadGetCodeResult,
+    TCodeCommentThreadGetParams,
+    TCodeCommentThreadGetResult,
+    TCodeCommentCreateParams,
+    TCodeCommentCreateResult,
+    TBigTaskCreateParams,
+    TBigTaskCreateResult,
+    TSubTaskCreateParams,
+    TSubTaskCreateResult,
+    TSubTaskDeleteParams,
+    TSubTaskDeleteResult,
+    TBigTaskApproveParams,
+    TBigTaskApproveResult,
+    TBigTaskDeleteParams,
+    TBigTaskDeleteResult,
+    TBigTaskUpgradeParams,
+    TBigTaskUpgradeResult,
+    TCodeCommentThreadResdolveParams,
+    TCodeCommentThreadResolveResult,
+    TBigTaskDetails,
 } from '../types'
 
 interface IGoshAdapter {
@@ -116,7 +143,11 @@ interface IGoshAdapter {
     resetAuth(): Promise<void>
 
     getVersion(): string
-    getProfile(options: { username?: string; address?: TAddress }): Promise<IGoshProfile>
+    getProfile(options: {
+        username?: string
+        address?: TAddress
+        keys?: KeyPair
+    }): Promise<IGoshProfile>
     getDao(options: {
         name?: string
         address?: TAddress
@@ -143,6 +174,10 @@ interface IGoshAdapter {
         tag: string,
     ): Promise<string>
     getHelperTag(address: TAddress): Promise<IGoshHelperTag>
+    getCommitTag(params: {
+        address?: string
+        data?: { daoName: string; repoName: string; tagName: string }
+    }): Promise<IGoshCommitTag>
 
     deployProfile(username: string, pubkey: string): Promise<IGoshProfile>
 }
@@ -185,9 +220,17 @@ interface IGoshDaoAdapter {
 
     getTaskCodeHash(repository: string): Promise<string>
     getTask(options: { name?: string; address?: TAddress }): Promise<TTaskDetails>
+    getBigTask(options: { name?: string; address?: TAddress }): Promise<TBigTaskDetails>
 
     getTopicCodeHash(): Promise<string>
     getTopic(params: { address?: TAddress }): Promise<TTopic>
+
+    getCodeCommetThreadCodeHash(
+        params: TCodeCommentThreadGetCodeParams,
+    ): Promise<TCodeCommentThreadGetCodeResult>
+    getCodeCommentThread(
+        params: TCodeCommentThreadGetParams,
+    ): Promise<TCodeCommentThreadGetResult>
 
     getSmv(): Promise<IGoshSmvAdapter>
     getPrevDao(): Promise<IGoshDaoAdapter | null>
@@ -242,6 +285,14 @@ interface IGoshDaoAdapter {
         params: TTaskUpgradeCompleteParams,
     ): Promise<TTaskUpgradeCompleteResult>
 
+    createBigTask(params: TBigTaskCreateParams): Promise<TBigTaskCreateResult>
+    approveBigTask(params: TBigTaskApproveParams): Promise<TBigTaskApproveResult>
+    deleteBigTask(params: TBigTaskDeleteParams): Promise<TBigTaskDeleteResult>
+    receiveBigTaskBounty(params: TTaskReceiveBountyParams): Promise<void>
+    upgradeBigTask(params: TBigTaskUpgradeParams): Promise<TBigTaskUpgradeResult>
+    createSubTask(params: TSubTaskCreateParams): Promise<TSubTaskCreateResult>
+    deleteSubTask(params: TSubTaskDeleteParams): Promise<TSubTaskDeleteResult>
+
     sendEventReview(params: TDaoEventSendReviewParams): Promise<void>
     updateEventShowProgress(
         params: TDaoEventShowProgressParams,
@@ -256,6 +307,21 @@ interface IGoshDaoAdapter {
     upgradeVersionController(
         params: TUpgradeVersionControllerParams,
     ): Promise<TUpgradeVersionControllerResult>
+
+    startPaidMembership(
+        params: TDaoStartPaidMembershipParams,
+    ): Promise<TDaoStartPaidMembershipResult>
+    stopPaidMembership(
+        params: TDaoStopPaidMembershipParams,
+    ): Promise<TDaoStopPaidMembershipResult>
+
+    createCodeCommentThread(
+        params: TCodeCommentThreadCreateParams,
+    ): Promise<TCodeCommentThreadCreateResult>
+    resolveCodeCommentThread(
+        params: TCodeCommentThreadResdolveParams,
+    ): Promise<TCodeCommentThreadResolveResult>
+    createCodeComment(params: TCodeCommentCreateParams): Promise<TCodeCommentCreateResult>
 }
 
 interface IGoshRepositoryAdapter {
@@ -278,6 +344,7 @@ interface IGoshRepositoryAdapter {
         fullpath?: string
         address?: TAddress
     }): Promise<{
+        address: string
         onchain: { commit: string; content: string }
         content: string | Buffer
         ipfs: boolean
@@ -519,6 +586,10 @@ interface IGoshTask extends IContract {
     address: TAddress
 }
 
+interface IGoshBigTask extends IContract {
+    address: TAddress
+}
+
 interface IGoshHelperTag extends IContract {
     address: TAddress
 }
@@ -567,6 +638,7 @@ export {
     IGoshTree,
     IGoshCommitTag,
     IGoshTask,
+    IGoshBigTask,
     IGoshHelperTag,
     IGoshTopic,
     IGoshContentSignature,

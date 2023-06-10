@@ -1,4 +1,5 @@
-import { classNames } from 'react-gosh'
+import classNames from 'classnames'
+import { forwardRef } from 'react'
 
 type TInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
     ref?: React.LegacyRef<HTMLInputElement>
@@ -8,7 +9,7 @@ type TInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
     inputClassName?: string
 }
 
-const Input = (props: TInputProps) => {
+const Input = forwardRef<HTMLInputElement, TInputProps>((props: TInputProps, ref) => {
     const { className, before, after, hasError, inputClassName, ...rest } = props
 
     return (
@@ -28,11 +29,12 @@ const Input = (props: TInputProps) => {
                     'disabled:text-gray-7c8db5 text-sm',
                     inputClassName,
                 )}
+                ref={ref}
                 {...rest}
             />
             {after}
         </div>
     )
-}
+})
 
 export { Input }

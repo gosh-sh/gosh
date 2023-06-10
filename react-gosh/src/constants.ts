@@ -4,6 +4,8 @@ export const MAX_ONCHAIN_SIZE = 64512
 export const MAX_PARALLEL_READ = 600
 export const MAX_PARALLEL_WRITE = 200
 export const SYSTEM_TAG = '___!system!___'
+export const BIGTASK_TAG = '___!bigtask!___'
+export const DAO_TOKEN_TRANSFER_TAG = '___!daotokentransfer!___'
 
 export const SmvEventTypes: { [key: number]: string } = {
     1: 'Pull request',
@@ -13,7 +15,7 @@ export const SmvEventTypes: { [key: number]: string } = {
     6: 'Remove DAO member',
     7: 'Upgrade DAO',
     8: 'Change DAO config',
-    9: 'Confirm task',
+    9: 'Approve big task',
     10: 'Delete task',
     11: 'Create task',
     12: 'Create repository',
@@ -44,4 +46,9 @@ export const SmvEventTypes: { [key: number]: string } = {
     37: 'Redeployed task',
     38: 'Task upgrade',
     39: 'DAO transfer tokens from previous version',
+    40: 'Start paid membership',
+    41: 'Stop paid membership',
+    42: 'Delete big task',
+    43: 'Create big task',
+    44: 'Upgrade big task',
 }

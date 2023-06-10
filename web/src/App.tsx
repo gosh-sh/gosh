@@ -53,6 +53,8 @@ import TopicPage from './pages/Topic'
 import TaskPage from './pages/Task'
 import OnboardingDaoPage from './pages/OnboardingDao'
 import TasksUpgradePage from './pages/TasksUpgrade'
+import OnboardingAiPage from './pages/OnboardingAi/OnboardingAi'
+import AiPromptPage from './pages/AiPrompt/AiPrompt'
 
 const App = () => {
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
@@ -153,6 +155,10 @@ const App = () => {
                     <Route path="/onboarding">
                         <Route index element={<OnboardingPage />} />
                         <Route path="status" element={<OnboardingStatusPage />} />
+                    </Route>
+                    <Route path="/ai/onboarding" element={<OnboardingAiPage />} />
+                    <Route path="/ai" element={<ProtectedLayout />}>
+                        <Route index element={<AiPromptPage />} />
                     </Route>
                     <Route path="/a/signin" element={<SigninPage />} />
                     <Route path="/a/signup" element={<SignupPage />} />

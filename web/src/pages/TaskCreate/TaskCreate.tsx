@@ -114,7 +114,7 @@ const TaskCreatePage = () => {
             await dao.adapter.createTask({
                 repository: values.repository,
                 name: values.name,
-                config: _struct,
+                config: { ..._struct, subtask: [] },
                 tags,
                 comment: values.comment,
             })
