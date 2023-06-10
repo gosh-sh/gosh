@@ -19,24 +19,26 @@ const AiReview = (props: TAiReviewButtonProps) => {
         return sum(array)
     }, [comments])
 
-    const isAiMember = dao.members.find(
-        ({ profile }) => profile === import.meta.env.REACT_APP_GOSHAI_PROFILE,
-    )
+    return null
 
-    if (dao.version < '5.0.0' || !isAiMember || !Object.keys(comments).length) {
-        return null
-    }
+    // const isAiMember = dao.members.find(
+    //     ({ profile }) => profile === import.meta.env.REACT_APP_GOSHAI_PROFILE,
+    // )
 
-    return (
-        <div className="bg-white border border-gray-e6edff rounded-xl p-2">
-            <div className="bg-gray-fafafd rounded-xl px-3 py-4">
-                <div className="text-sm mb-2">
-                    {getCommentsCount()} comments in {Object.keys(comments).length} files
-                </div>
-                <Button onClick={reset}>Finish review, request changes</Button>
-            </div>
-        </div>
-    )
+    // if (dao.version < '5.0.0' || !isAiMember || !Object.keys(comments).length) {
+    //     return null
+    // }
+
+    // return (
+    //     <div className="bg-white border border-gray-e6edff rounded-xl p-2">
+    //         <div className="bg-gray-fafafd rounded-xl px-3 py-4">
+    //             <div className="text-sm mb-2">
+    //                 {getCommentsCount()} comments in {Object.keys(comments).length} files
+    //             </div>
+    //             <Button onClick={reset}>Finish review, request changes</Button>
+    //         </div>
+    //     </div>
+    // )
 }
 
 export default AiReview
