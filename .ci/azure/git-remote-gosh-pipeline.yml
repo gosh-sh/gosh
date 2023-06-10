@@ -1,6 +1,6 @@
 variables:
 - name: RUSTUP_TOOLCHAIN
-  value: 1.66.0 
+  value: 1.68.0
 
 trigger: none
 pr: none
@@ -22,29 +22,44 @@ pool:
   vmImage: $(imageName)
 
 steps:
+############################################################
+# Check version
+- bash: |
+    PREFIX=$(echo "$(versionNo)" | tr -d '_x')
+    VERSION="${PREFIX}_0_0"
+    echo "##vso[task.setvariable variable=VERSION]$VERSION"
+  displayName: Get supported_contract_version
+
+  # Check version
+- bash: |
+    echo $(VERSION)
+    echo "$(versionNo)/git-remote-gosh/target/aarch64-unknown-linux-gnu/release/git-remote-gosh_$(VERSION)"
+  displayName: Check version
+
 ##################################################
 # Pre-requirements
 # Linux
 - script: |
+    set -ex
     sudo apt install -y protobuf-compiler
   condition: eq( variables['Agent.OS'], 'Linux' )
   displayName: Install pre-requirements Linux
 # Mac
 - script: |
     brew install protobuf
-  condition: eq( variables['Agent.OS'], 'Darwin' )
+  condition: and(eq(variables['Agent.OS'], 'Darwin'), eq(variables['DRYRUN'], 'false'))
   displayName: Install pre-requirements MacOS
 # Windows
 - script: |
     choco install protoc
-  condition: eq( variables['Agent.OS'], 'Windows_NT' )
+  condition: and(eq(variables['Agent.OS'], 'Windows_NT'), eq(variables['DRYRUN'], 'false'))
   displayName: Install pre-requirements Windows
 
 ######################################################
 # Rust setup
 # Linux and macOS
 - script: |
-    set -e
+    set -ex
     curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUSTUP_TOOLCHAIN
     echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
   env:
@@ -60,11 +75,12 @@ steps:
   env:
     RUSTUP_TOOLCHAIN: ${{ variables.RUSTUP_TOOLCHAIN }}
   displayName: "Install rust (windows)"
-  condition: eq(variables['Agent.OS'], 'Windows_NT')
+  condition: and(eq(variables['Agent.OS'], 'Windows_NT'), eq(variables['DRYRUN'], 'false'))
 
 ################################################### 
 # Build
 - bash: |
+    set -ex
     mkdir -p ./resources
     cp ../contracts/gosh/*.abi.json ./resources/
   workingDirectory: $(versionNo)/git-remote-gosh
@@ -72,8 +88,17 @@ steps:
    
 # Linux
 - script: |
+    set -ex
+    sudo apt update -y
     cargo build --release
-    sudo apt install -y build-essential g++-x86-64-linux-gnu libc6-dev-amd64-cross g++-aarch64-linux-gnu libc6-dev-arm64-cross
+  workingDirectory: $(versionNo)/git-remote-gosh
+  condition: eq( variables['Agent.OS'], 'Linux' )
+  displayName: Build Linux amd64
+
+- script: |
+    set -ex
+    sudo apt update -y
+    sudo apt install -y build-essential g++-x86-64-linux-gnu libc6-dev-amd64-cross g++-aarch64-linux-gnu libc6-dev-arm64-cross gcc-aarch64-linux-gnu
     rustup target add aarch64-unknown-linux-gnu 
     cargo build --release --target aarch64-unknown-linux-gnu
   env:
@@ -84,84 +109,81 @@ steps:
     CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
     CXX_aarch64_unknown_linux_gnu: aarch64-linux-gnu-g++
   workingDirectory: $(versionNo)/git-remote-gosh
-  condition: eq( variables['Agent.OS'], 'Linux' )
-  displayName: Build Linux
+  condition: and(eq(variables['Agent.OS'], 'Linux'), eq(variables['DRYRUN'], 'false'))
+  displayName: Build Linux arm64
 # Mac
 - script: |
+    set -ex
     cargo build --release
     rustup target add aarch64-apple-darwin
     cargo build --release --target aarch64-apple-darwin
   workingDirectory: $(versionNo)/git-remote-gosh
-  condition: eq( variables['Agent.OS'], 'Darwin' )
+  condition: and(eq(variables['Agent.OS'], 'Darwin'), eq(variables['DRYRUN'], 'false'))
   displayName: Build MacOS
 # Windows
 - script: |
     cargo build --release
   workingDirectory: $(versionNo)/git-remote-gosh
-  condition: eq( variables['Agent.OS'], 'Windows_NT' )
+  condition: and(eq(variables['Agent.OS'], 'Windows_NT'), eq(variables['DRYRUN'], 'false'))
   displayName: Build Windows
 
-############################################################
-# Check version
-- bash: |
-    chmod +x ./git-remote-gosh_unknown
-    VERSION=$(./git-remote-gosh_unknown supported_contract_version | cut -d '"' -f 2 | sed "s/\./_/g")
-    echo "##vso[task.setvariable variable=VERSION]$VERSION"
-  workingDirectory: $(versionNo)/git-remote-gosh/target/release
-  displayName: Get supported_contract_version
-
-#############################################################
+# ############################################################
 # Set Version
 # Linux and macOS amd64
-- bash: |
-    mv git-remote-gosh_unknown git-remote-gosh_v$(VERSION)
-  workingDirectory: $(versionNo)/git-remote-gosh/target/release
-  displayName: Name binaries Linux and macOS amd64
-  condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
+# - bash: |
+#     mv git-remote-gosh_unknown git-remote-gosh_v$(VERSION)
+#   workingDirectory: $(versionNo)/git-remote-gosh/target/release
+#   displayName: Name binaries Linux and macOS amd64
+#   condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
 
 # Linux arm64
-- bash: |
-    mv git-remote-gosh_unknown git-remote-gosh_v$(VERSION)
-  workingDirectory: $(versionNo)/git-remote-gosh/target/aarch64-unknown-linux-gnu/release
-  displayName: Name binaries Linux arm64
-  condition: eq(variables['Agent.OS'], 'Linux')
+# - bash: |
+#     mv git-remote-gosh_unknown git-remote-gosh_v$(VERSION)
+#   workingDirectory: $(versionNo)/git-remote-gosh/target/aarch64-unknown-linux-gnu/release
+#   displayName: Name binaries Linux arm64
+#   condition: eq(variables['Agent.OS'], 'Linux')
 
 # MacOS arm64
-- bash: |
-    mv git-remote-gosh_unknown git-remote-gosh_v$(VERSION)
-  workingDirectory: $(versionNo)/git-remote-gosh/target/aarch64-apple-darwin/release
-  displayName: Name binaries MacOS arm64
-  condition: eq(variables['Agent.OS'], 'Darwin')
+# - bash: |
+#     mv git-remote-gosh_unknown git-remote-gosh_v$(VERSION)
+#   workingDirectory: $(versionNo)/git-remote-gosh/target/aarch64-apple-darwin/release
+#   displayName: Name binaries MacOS arm64
+#   condition: eq(variables['Agent.OS'], 'Darwin')
 
 # Windows
-- bash: |
-    mv git-remote-gosh_unknown.exe git-remote-gosh_v$(VERSION).exe
-  workingDirectory: $(versionNo)/git-remote-gosh/target/release
-  displayName: Name binaries Windows
-  condition: eq(variables['Agent.OS'], 'Windows_NT')
+# - bash: |
+#     mv git-remote-gosh_unknown.exe git-remote-gosh_v$(VERSION).exe
+#   workingDirectory: $(versionNo)/git-remote-gosh/target/release
+#   displayName: Name binaries Windows
+#   condition: eq(variables['Agent.OS'], 'Windows_NT')
 
 ###########################################################
 # Publish
 # Linux and macOS amd64
-- publish: ./$(versionNo)/git-remote-gosh/target/release/git-remote-gosh_v$(VERSION)
+- publish: ./$(versionNo)/git-remote-gosh/target/release/git-remote-gosh_$(VERSION)
   artifact: $(artifactNameAmd)
-  condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
+  condition: eq(variables['Agent.OS'], 'Linux')
   displayName: Publish amd64 Linux
 
-# Windows amd64
-- publish: ./$(versionNo)/git-remote-gosh/target/release/git-remote-gosh_v$(VERSION).exe
+- publish: ./$(versionNo)/git-remote-gosh/target/release/git-remote-gosh_$(VERSION)
   artifact: $(artifactNameAmd)
-  condition: eq(variables['Agent.OS'], 'Windows_NT')
+  condition: and(eq(variables['Agent.OS'], 'Darwin'), eq(variables['DRYRUN'], 'false'))
+  displayName: Publish amd64 macOS
+
+# Windows amd64
+- publish: ./$(versionNo)/git-remote-gosh/target/release/git-remote-gosh_$(VERSION).exe
+  artifact: $(artifactNameAmd)
+  condition: and(eq(variables['Agent.OS'], 'Windows_NT'), eq(variables['DRYRUN'], 'false'))
   displayName: Publish amd64 Windows
 
 # Linux arm64
-- publish: ./$(versionNo)/git-remote-gosh/target/aarch64-unknown-linux-gnu/release/git-remote-gosh_v$(VERSION)
+- publish: ./$(versionNo)/git-remote-gosh/target/aarch64-unknown-linux-gnu/release/git-remote-gosh_$(VERSION)
   artifact: linux-arm64
-  condition: eq( variables['Agent.OS'], 'Linux' )
+  condition: and(eq(variables['Agent.OS'], 'Linux'), eq(variables['DRYRUN'], 'false'))
   displayName: Publish arm64 Linux
 
 # MacOS arm64
-- publish: ./$(versionNo)/git-remote-gosh/target/aarch64-apple-darwin/release/git-remote-gosh_v$(VERSION)
+- publish: ./$(versionNo)/git-remote-gosh/target/aarch64-apple-darwin/release/git-remote-gosh_$(VERSION)
   artifact: darwin-arm64
-  condition: eq( variables['Agent.OS'], 'Darwin' )
+  condition: and(eq(variables['Agent.OS'], 'Darwin'), eq(variables['DRYRUN'], 'false'))
   displayName: Publish arm64 MacOS

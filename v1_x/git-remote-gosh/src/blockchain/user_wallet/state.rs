@@ -231,7 +231,7 @@ impl UserWalletMirrors {
 
         let contract = match zero_wallet {
             Some(Wallet::Contract(wallet)) => wallet,
-            _ => bail!(WalletError::ZeroWalletNotExists)
+            _ => bail!(WalletError::ZeroWalletNotExists),
         };
 
         Ok(contract)

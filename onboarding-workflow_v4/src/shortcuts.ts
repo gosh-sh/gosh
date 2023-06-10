@@ -39,9 +39,9 @@ export async function goshCli(...args: string[]) {
         p.output().then((res) => new TextDecoder().decode(res)),
         p.stderrOutput().then((res) => new TextDecoder().decode(res)),
     ])
-    if (stdout) {
-        console.log('Stdout:', stdout)
-    }
+    // if (stdout) {
+    //     console.log('Stdout:', stdout)
+    // }
     if (stderr) {
         console.log('Stderr:', stderr)
     }

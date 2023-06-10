@@ -31,11 +31,12 @@ use push_tag::push_tag;
 mod delete_tag;
 mod parallel_snapshot_upload_support;
 
-use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
+use crate::blockchain::branch_list;
 use crate::git_helper::push::parallel_snapshot_upload_support::{
     ParallelCommit, ParallelCommitUploadSupport, ParallelSnapshot, ParallelSnapshotUploadSupport,
     ParallelTreeUploadSupport,
 };
+use crate::git_helper::supported_contract_version;
 use delete_tag::delete_tag;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 use push_tree::push_tree;
@@ -75,6 +76,12 @@ pub struct AccountStatus {
     pub address: String,
     #[serde(rename = "acc_type")]
     pub status: u8,
+}
+
+#[derive(Deserialize, Debug)]
+struct GetLimitedResult {
+    #[serde(rename = "_limited")]
+    pub limited: bool,
 }
 
 impl<Blockchain> GitHelper<Blockchain>
@@ -293,7 +300,12 @@ where
             .into_iter();
 
         let mut ids = vec![];
-        let commits: Vec<_> = walk.map(|a| { ids.push(a.clone().to_string()); a.object().unwrap().into_commit() }).collect();
+        let commits: Vec<_> = walk
+            .map(|a| {
+                ids.push(a.clone().to_string());
+                a.object().unwrap().into_commit()
+            })
+            .collect();
         let query = r#"query($accounts: [String]!) {
             accounts(filter: {
                 id: { in: $accounts }
@@ -304,17 +316,27 @@ where
         .to_owned();
 
         let client = self.blockchain.client();
-        let repo_contract = &mut self.blockchain.repo_contract().clone();
-        let mut map_id_addr = Vec::<(String, String)>::new();
+        let mut map_id_addr = Vec::<(String, Vec<String>)>::new();
         tracing::trace!("commits={commits:?}");
 
-        for ids in ids.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {
+        let repo_versions = self.get_repo_versions();
+        tracing::trace!("Repo versions {repo_versions:?}");
+        let mut repo_contracts: Vec<_> = repo_versions
+            .iter()
+            .map(|ver| GoshContract::new(ver.repo_address.clone(), gosh_abi::REPO))
+            .collect();
+        // search for commits in all repo versions
+        for ids in ids.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY / repo_contracts.len()) {
             let mut addresses = Vec::<BlockchainContractAddress>::new();
             for id in ids {
-                let commit_address = get_commit_address(client, repo_contract, id).await?;
-                // let (version, commit_address) = self.find_commit(id).await?;
-                addresses.push(commit_address.clone());
-                map_id_addr.push((id.to_owned(), String::from(commit_address)));
+                let mut commits = vec![];
+                for repo_contract in repo_contracts.iter_mut() {
+                    let commit_address = get_commit_address(client, repo_contract, id).await?;
+                    // let (version, commit_address) = self.find_commit(id).await?;
+                    addresses.push(commit_address.clone());
+                    commits.push(String::from(commit_address));
+                }
+                map_id_addr.push((id.to_owned(), commits));
             }
             let result = ton_client::net::query(
                 Arc::clone(client),
@@ -341,7 +363,7 @@ where
             }
             for commit in map_id_addr.iter().rev() {
                 let mut ex_iter = existing_commits.iter();
-                let pos = ex_iter.position(|x| x.address == commit.1 && x.status == 1);
+                let pos = ex_iter.position(|x| commit.1.contains(&x.address) && x.status == 1);
 
                 if pos.is_none() {
                     return Ok(Some(commit.0.clone()));
@@ -358,8 +380,9 @@ where
         object_id: ObjectId,
         remote_branch_name: &str,
         local_branch_name: &str,
+        set_commit: bool,
     ) -> anyhow::Result<()> {
-        tracing::trace!("check_parents object_id:{object_id} remote_branch_name:{remote_branch_name}, local_branch_name:{local_branch_name}");
+        tracing::trace!("check_parents object_id: {object_id} remote_branch_name: {remote_branch_name}, local_branch_name: {local_branch_name}");
         let mut buffer: Vec<u8> = Vec::new();
         let commit = self
             .local_repository()
@@ -372,43 +395,46 @@ where
         let commit_iter = commit.try_into_commit_iter().unwrap();
         let parent_ids: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
 
-        let mut repo_contract = self.blockchain.repo_contract().clone();
-
         for id in parent_ids {
             tracing::trace!("check parent: {id}");
-            let parent = get_commit_address(
-                &self.blockchain.client(),
-                &mut repo_contract,
-                &id.to_string(),
-            )
-            .await?;
-            tracing::trace!("parent address: {parent}");
-            let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
-
-            if let Err(_) = parent_contract.get_version(self.blockchain.client()).await {
-                let undeployed = wait_contracts_deployed(&self.blockchain, &[parent]).await;
-                if undeployed.is_err() || !undeployed.unwrap().is_empty() {
-                    tracing::trace!("Failed to call parent");
-                    let right_commit_address = if let Ok(res) = self.find_commit(&id).await {
-                        res.1
-                    } else {
-                        // TODO: This situation happens because of wrong order of commits
-                        // see comment before `get_list_of_commit_objects(latest_commit, ancestor_commit_object)`
-                        // just skip check in this case
-                        return Ok(());
-                    };
-                    let commit_contract =
-                        GoshContract::new(&right_commit_address, gosh_abi::COMMIT);
-                    let branch: GetNameCommitResult = commit_contract
-                        .run_static(self.blockchain.client(), "getNameBranch", None)
-                        .await?;
-                    // TODO: local and remote branch are set equal here it can be wrong
-                    self.check_and_upgrade_previous_commit(
-                        id.to_string(),
-                        &branch.name,
-                        &branch.name,
-                    )
-                    .await?;
+            for repo_version in &self.repo_versions {
+                let mut repo_contract =
+                    GoshContract::new(&repo_version.repo_address, gosh_abi::REPO);
+                let parent = get_commit_address(
+                    self.blockchain.client(),
+                    &mut repo_contract,
+                    &id.to_string(),
+                )
+                .await?;
+                let commit_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
+                match commit_contract.is_active(self.blockchain.client()).await {
+                    Ok(true) => {
+                        if repo_version.version != supported_contract_version() {
+                            tracing::trace!(
+                                "Found parent {id} in version {}",
+                                repo_version.version
+                            );
+                            tracing::trace!("Start upgrade of the parent: {id}");
+                            let branch: GetNameCommitResult = commit_contract
+                                .run_static(self.blockchain.client(), "getNameBranch", None)
+                                .await?;
+                            // TODO: local and remote branch are set equal here it can be wrong
+                            self.check_and_upgrade_previous_commit(
+                                id.to_string(),
+                                &branch.name,
+                                &branch.name,
+                                set_commit,
+                            )
+                            .await?;
+                        }
+                        break;
+                    }
+                    _ => {
+                        tracing::trace!(
+                            "Not found parent {id} in version {}",
+                            repo_version.version
+                        );
+                    }
                 }
             }
         }
@@ -555,6 +581,7 @@ where
         ancestor_commit: String,
         local_branch_name: &str,
         remote_branch_name: &str,
+        set_commit: bool,
     ) -> anyhow::Result<()> {
         // check in cur repo if account with commit exists   eg call get version
         // if not found need to init upgrade commit
@@ -643,12 +670,15 @@ where
         // 8) Get list of objects to push with the ancestor commit
         tracing::trace!("Find objects till: {till_id:?}");
         let commit_objects_list = get_list_of_commit_objects(ancestor_id, till_id)?;
+        if self.upgraded_commits.contains(&commit_objects_list[0]) {
+            return Ok(());
+        }
+
         tracing::trace!("List of commit objects: {commit_objects_list:?}");
 
         // 9) push objects
         let mut push_commits = ParallelCommitUploadSupport::new();
         let push_semaphore = Arc::new(Semaphore::new(PARALLEL_PUSH_LIMIT));
-        // let mut parallel_snapshot_uploads: JoinSet<anyhow::Result<()>> = JoinSet::new();
         let mut parallel_tree_uploads = ParallelTreeUploadSupport::new();
         let mut parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
         let mut parents_of_commits: HashMap<String, Vec<String>> =
@@ -669,6 +699,7 @@ where
             let object_kind = self.local_repository().find_object(object_id)?.kind;
             match object_kind {
                 git_object::Kind::Commit => {
+                    self.upgraded_commits.push(oid.to_string());
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)
                     self.push_commit_object(
                         oid,
@@ -709,24 +740,74 @@ where
             }
         }
 
-        // wait for all spawned collections to finish
-        parallel_diffs_upload_support.push_dangling(self).await?;
-        parallel_diffs_upload_support
-            .wait_all_diffs(self.blockchain.clone())
-            .await?;
-
-        // 10) call set commit to the new version of the ancestor commit
-        self.blockchain
-            .notify_commit(
-                &latest_commit_id,
-                local_branch_name,
-                1,
-                1,
-                &self.remote,
-                &self.dao_addr,
-                true,
+        let mut expected_contracts = vec![];
+        let mut attempts = 0;
+        let mut last_rest_cnt = 0;
+        while attempts < MAX_REDEPLOY_ATTEMPTS {
+            attempts += 1;
+            expected_contracts = push_commits
+                .wait_all_commits(self.blockchain.clone())
+                .await?;
+            tracing::trace!("Wait all commits result: {expected_contracts:?}");
+            if expected_contracts.is_empty() {
+                break;
+            }
+            if expected_contracts.len() != last_rest_cnt {
+                attempts = 0;
+            }
+            last_rest_cnt = expected_contracts.len();
+            tracing::trace!("Restart deploy on undeployed commits");
+            let expected = push_commits.get_expected().to_owned();
+            push_commits = ParallelCommitUploadSupport::new();
+            for address in expected_contracts.clone() {
+                let commit = expected
+                    .get(&address)
+                    .ok_or(anyhow::format_err!("Failed to get diff params"))?
+                    .clone();
+                tracing::trace!(
+                    "Get params of undeployed tree: {} {:?}",
+                    address,
+                    commit.commit_id
+                );
+                push_commits
+                    .add_to_push_list(self, commit, push_semaphore.clone())
+                    .await?;
+            }
+        }
+        if attempts == MAX_REDEPLOY_ATTEMPTS {
+            anyhow::bail!(
+                "Failed to deploy all commits. Undeployed commits: {expected_contracts:?}"
             )
-            .await?;
+        }
+
+        if set_commit {
+            let branches = branch_list(self.blockchain.client(), &self.repo_addr).await?;
+            for branch_ref in branches.branch_ref {
+                if branch_ref.branch_name == local_branch_name {
+                    let commit_contract =
+                        GoshContract::new(&branch_ref.commit_address, gosh_abi::COMMIT);
+                    let sha: GetNameCommitResult = commit_contract
+                        .run_static(self.blockchain.client(), "getNameCommit", None)
+                        .await?;
+                    tracing::trace!("Commit sha: {sha:?}");
+                    if sha.name == latest_commit_id.to_string() {
+                        // 10) call set commit to the new version of the ancestor commit
+                        self.blockchain
+                            .notify_commit(
+                                &latest_commit_id,
+                                local_branch_name,
+                                1,
+                                1,
+                                &self.remote,
+                                &self.dao_addr,
+                                true,
+                                &self.config,
+                            )
+                            .await?;
+                    }
+                }
+            }
+        }
 
         Ok(())
     }
@@ -751,6 +832,7 @@ where
             .remote_rev_parse(&self.repo_addr, remote_branch_name)
             .await?
             .map(|pair| pair.0);
+        tracing::trace!("remote_commit_addr={remote_commit_addr:?}");
 
         // 2. Find ancestor commit in local repo
 
@@ -764,25 +846,19 @@ where
                 // this means a branch is created and all initial states are filled there
                 ("".to_owned(), None)
             };
+        tracing::trace!("ancestor_commit_id={ancestor_commit_id:?}");
         let mut ancestor_commit_object = if ancestor_commit_id != "" {
             Some(ObjectId::from_str(&ancestor_commit_id)?)
         } else {
             None
         };
-
-        // if ancestor_commit_id != "" {
-        //     self.check_and_upgrade_previous_commit(
-        //         ancestor_commit_id.clone(),
-        //         local_branch_name,
-        //         remote_branch_name,
-        //     )
-        //     .await?;
-        // }
+        tracing::trace!("ancestor_commit_object={ancestor_commit_object:?}");
 
         let latest_commit = self
             .local_repository()
             .find_reference(local_ref)?
             .into_fully_peeled_id()?;
+        tracing::trace!("latest_commit={latest_commit:?}");
         // get list of git objects in local repo, excluding ancestor ones
         // TODO: list of commits is not in right order in case of merge commit with commits at the same time
         //
@@ -802,8 +878,16 @@ where
             //    if it doesn't
             let originating_commit = self.find_ancestor_commit(latest_commit).await?.unwrap();
             let originating_commit = git_hash::ObjectId::from_str(&originating_commit)?;
-
+            tracing::trace!("originating_commit={originating_commit:?}");
+            self.check_parents(
+                originating_commit,
+                remote_branch_name,
+                local_branch_name,
+                false,
+            )
+            .await?;
             let branching_point = self.get_parent_id(&originating_commit)?;
+            tracing::trace!("branching_point={branching_point:?}");
             ancestor_commit_object = Some(branching_point);
             let mut create_branch_op =
                 CreateBranchOperation::new(branching_point, remote_branch_name, self);
@@ -820,7 +904,14 @@ where
                     ancestor_commit_object
                 }
             };
+            tracing::trace!("prev_commit_id={prev_commit_id:?}");
         }
+
+        let latest_commit = self
+            .local_repository()
+            .find_reference(local_ref)?
+            .into_fully_peeled_id()?;
+        tracing::trace!("latest_commit={latest_commit:?}");
         // get list of git objects in local repo, excluding ancestor ones
         let commit_and_tree_list =
             get_list_of_commit_objects(latest_commit, ancestor_commit_object)?;
@@ -843,14 +934,16 @@ where
         tracing::trace!("latest commit id {latest_commit_id}");
         let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
 
+        tracing::trace!("List of objects: {commit_and_tree_list:?}");
         // iterate through the git objects list and push them
         for oid in &commit_and_tree_list {
             let object_id = git_hash::ObjectId::from_str(oid)?;
             let object_kind = self.local_repository().find_object(object_id)?.kind;
+            tracing::trace!("Push object: {object_id:?} {object_kind:?}");
             match object_kind {
                 git_object::Kind::Commit => {
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)
-                    self.check_parents(object_id, remote_branch_name, local_branch_name)
+                    self.check_parents(object_id, remote_branch_name, local_branch_name, true)
                         .await?;
                     self.push_commit_object(
                         oid,
@@ -956,7 +1049,9 @@ where
                     .ok_or(anyhow::format_err!("Failed to get diff params"))?
                     .clone();
                 // parallel_diffs_upload_support.push(self, diff).await?;
-                parallel_diffs_upload_support.add_to_push_list(self, &coord, &parallel, is_last).await?;
+                parallel_diffs_upload_support
+                    .add_to_push_list(self, &coord, &parallel, is_last)
+                    .await?;
             }
             parallel_diffs_upload_support.push_dangling(self).await?;
         }
@@ -1052,7 +1147,7 @@ where
             parents_of_commits,
             &latest_commit_id.clone().to_string(),
             &ancestor_commit_id,
-        );
+        ); // TODO: this number can be wrong with slow network
         self.blockchain
             .notify_commit(
                 &latest_commit_id,
@@ -1062,6 +1157,7 @@ where
                 &self.remote,
                 &self.dao_addr,
                 false,
+                &self.config,
             )
             .await?;
 
@@ -1124,9 +1220,31 @@ where
         Ok(result_ok)
     }
 
+    async fn check_if_wallet_is_limited(&self) -> anyhow::Result<()> {
+        tracing::trace!("start check whether wallet is limited");
+        let wallet = self
+            .blockchain
+            .user_wallet(&self.dao_addr, &self.remote.network)
+            .await?
+            .take_zero_wallet()
+            .await
+            .map_err(|_| anyhow::format_err!("Seems like you are not a member of DAO. Only DAO members can push to the repositories."))?;
+        tracing::trace!("Zero wallet address: {:?}", wallet.address);
+        let res: GetLimitedResult = wallet
+            .run_static(self.blockchain.client(), "_limited", None)
+            .await?;
+        tracing::trace!("wallet _limited: {:?}", res);
+        if res.limited {
+            anyhow::bail!("Seems like you are not a member of DAO. Only DAO members can push to the repositories.");
+        }
+        tracing::trace!("wallet is valid");
+        Ok(())
+    }
+
     #[instrument(level = "trace", skip_all)]
     pub async fn push(&mut self, refs: &str) -> anyhow::Result<String> {
         tracing::debug!("push: refs={refs}");
+        self.check_if_wallet_is_limited().await?;
         let splitted: Vec<&str> = refs.split(':').collect();
         let result = match splitted.as_slice() {
             ["", remote_tag] if remote_tag.starts_with("refs/tags") => {
@@ -1443,7 +1561,7 @@ mod tests {
 
             mock_blockchain
                 .expect_notify_commit()
-                .returning(|_, _, _, _, _, _, _| Ok(()));
+                .returning(|_, _, _, _, _, _, _, _| Ok(()));
 
             let mut helper = setup_test_helper(
                 json!({

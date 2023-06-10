@@ -125,16 +125,20 @@ impl ParallelDiffsUploadSupport {
             &self.last_commit_id,
             &diff_coordinates,
         )
-            .await?;
+        .await?;
         tracing::trace!(
-                "diff_contract_address <commit: {}, coord: {:?}>: {}",
-                self.last_commit_id,
-                diff_coordinates,
-                diff_contract_address
-            );
+            "diff_contract_address <commit: {}, coord: {:?}>: {}",
+            self.last_commit_id,
+            diff_coordinates,
+            diff_contract_address
+        );
         self.expecting_deployed_contacts_addresses.insert(
             diff_contract_address,
-            (diff_coordinates.to_owned(), parallel_diff.to_owned(), true),
+            (
+                diff_coordinates.to_owned(),
+                parallel_diff.to_owned(),
+                is_last,
+            ),
         );
         Ok(())
     }
@@ -151,7 +155,8 @@ impl ParallelDiffsUploadSupport {
             .collect::<Vec<(PushDiffCoordinate, ParallelDiff)>>();
         for (diff_coordinates, parallel_diff) in values {
             {
-                self.add_to_push_list(context, &diff_coordinates, &parallel_diff, true).await?;
+                self.add_to_push_list(context, &diff_coordinates, &parallel_diff, true)
+                    .await?;
             }
         }
         Ok(())
@@ -245,7 +250,8 @@ impl ParallelDiffsUploadSupport {
         match prev_value {
             None => {}
             Some((diff_coordinates, parallel_diff)) => {
-                self.add_to_push_list(context, &diff_coordinates, &parallel_diff, false).await?;
+                self.add_to_push_list(context, &diff_coordinates, &parallel_diff, false)
+                    .await?;
             }
         }
         Ok(())

@@ -1,6 +1,11 @@
 use crate::blockchain::user_wallet::{UserWallet, WalletError};
 use crate::ipfs::build_ipfs;
+use std::time::Duration;
+use tokio::time::sleep;
 
+use crate::blockchain::get_commit_address;
+use crate::git_helper::push::parallel_diffs_upload_support::ParallelDiffsUploadSupport;
+use crate::git_helper::push::GetPreviousResult;
 use crate::{
     blockchain::{
         contract::{ContractRead, GoshContract},
@@ -16,15 +21,14 @@ use crate::{
 };
 use tokio_retry::RetryIf;
 use ton_client::utils::compress_zstd;
-use crate::blockchain::get_commit_address;
-use crate::git_helper::push::GetPreviousResult;
-use crate::git_helper::push::parallel_diffs_upload_support::ParallelDiffsUploadSupport;
 
 use super::is_going_to_ipfs;
 use super::utilities::retry::default_retry_strategy;
 
 // const PUSH_DIFF_MAX_TRIES: i32 = 3;
 // const PUSH_SNAPSHOT_MAX_TRIES: i32 = 3;
+
+const WAIT_FOR_DELETE_SNAPSHOT_TRIES: i32 = 20;
 
 enum BlobDst {
     Ipfs(String),
@@ -300,6 +304,20 @@ pub async fn push_new_branch_snapshot(
         blockchain
             .delete_snapshot(&wallet, expected_addr.clone())
             .await?;
+
+        let mut attempt = 0;
+        tracing::trace!("wait for snapshot to be not active: {expected_addr}");
+        loop {
+            attempt += 1;
+            if attempt == WAIT_FOR_DELETE_SNAPSHOT_TRIES {
+                anyhow::bail!("Failed to delete snapshot: {expected_addr}");
+            }
+            if !snapshot_contract.is_active(blockchain.client()).await? {
+                tracing::trace!("Snapshot is deleted: {expected_addr}");
+                break;
+            }
+            sleep(Duration::from_secs(5)).await;
+        }
     }
 
     let (content, ipfs) = if is_going_to_ipfs(original_content) {
@@ -366,8 +384,11 @@ where
             .repo_contract()
             .read_state(blockchain.client(), "getPrevious", None)
             .await?;
-        let repo_addr = repo_addr.previous
-            .ok_or(anyhow::format_err!("Failed to get address of previous version"))?
+        let repo_addr = repo_addr
+            .previous
+            .ok_or(anyhow::format_err!(
+                "Failed to get address of previous version"
+            ))?
             .address;
         tracing::trace!("Previous repo addr: {repo_addr}");
         let mut repo_contract = GoshContract::new(&repo_addr, gosh_abi::REPO);
@@ -391,16 +412,10 @@ where
         // because snapshot with content will call commit for check
 
         let mut repo_contract = blockchain.repo_contract().clone();
-        let new_commit = get_commit_address(
-            &blockchain.client(),
-            &mut repo_contract,
-            &commit_id,
-        ).await?;
+        let new_commit =
+            get_commit_address(&blockchain.client(), &mut repo_contract, &commit_id).await?;
         tracing::trace!("start waiting for commit to be ready, address: {new_commit}");
-        ParallelDiffsUploadSupport::wait_contracts_deployed(
-            &blockchain,
-            &vec![new_commit],
-        ).await?;
+        ParallelDiffsUploadSupport::wait_contracts_deployed(&blockchain, &vec![new_commit]).await?;
         tracing::trace!("commit is ready");
 
         (content_string, commit_id)

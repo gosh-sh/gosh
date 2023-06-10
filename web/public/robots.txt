@@ -1,3 +1,5 @@
-# https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow: *
+Disallow:
+
+Sitemap: https://gosh.sh/sitemap.xml
+Sitemap: https://app.gosh.sh/sitemap.xml

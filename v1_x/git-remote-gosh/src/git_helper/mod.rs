@@ -6,6 +6,7 @@ use serde_json::Value;
 use std::sync::Arc;
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
+use crate::blockchain::get_commit_address;
 use crate::cache::proxy::CacheProxy;
 use crate::{
     abi as gosh_abi,
@@ -19,7 +20,6 @@ use crate::{
     logger::set_log_verbosity,
     utilities::Remote,
 };
-use crate::blockchain::get_commit_address;
 
 pub mod ever_client;
 #[cfg(test)]
@@ -202,7 +202,7 @@ where
             })
             .collect();
 
-        tracing::trace!("Available repo versions: {versions:?}");
+        tracing::trace!("Available system contract versions: {versions:?}");
         let mut available_versions = vec![];
         for version in versions {
             let address = BlockchainContractAddress::new(version.1.clone());
@@ -219,7 +219,11 @@ where
                 continue;
             }
             if repo_addresses {
-                available_versions.push(format!("{} {}", version.0, String::from(repo_addr.address)));
+                available_versions.push(format!(
+                    "{} {}",
+                    version.0,
+                    String::from(repo_addr.address)
+                ));
             } else {
                 available_versions.push(format!("{} {}", version.0, version.1));
             }
@@ -404,7 +408,7 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
                             error_str
                                 .trim_start_matches(|c| c != '\"')
                                 .trim_end_matches(|c| c != '\"')
-                                .replace(['\"'],"")
+                                .replace(['\"'], "")
                         } else {
                             sha.to_owned()
                         };
@@ -434,7 +438,9 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
             (Some("list"), Some("for-push"), None) => helper.list(true).await?,
             (Some("gosh_repo_version"), None, None) => helper.get_repo_version().await?,
             (Some("gosh_get_dao_tombstone"), None, None) => helper.get_dao_tombstone().await?,
-            (Some("gosh_get_all_repo_versions"), None, None) => helper.get_repo_versions(false).await?,
+            (Some("gosh_get_all_repo_versions"), None, None) => {
+                helper.get_repo_versions(false).await?
+            }
             (Some("gosh_supported_contract_version"), None, None) => {
                 let mut versions = vec![supported_contract_version()?];
                 versions.push("".to_string());
@@ -468,11 +474,8 @@ async fn find_commit(helper: &GitHelper, commit_id: &String) -> anyhow::Result<S
         let repo_address: &str = iter.next().unwrap();
         let repo_address = BlockchainContractAddress::new(repo_address.to_string());
         let mut repo_contract = GoshContract::new(&repo_address, gosh_abi::REPO);
-        let commit_address = get_commit_address(
-            helper.blockchain.client(),
-            &mut repo_contract,
-            commit_id,
-        ).await?;
+        let commit_address =
+            get_commit_address(helper.blockchain.client(), &mut repo_contract, commit_id).await?;
         tracing::trace!("commit_address (sha={commit_id}) {commit_address}");
         let commit_contract = GoshContract::new(&commit_address, gosh_abi::COMMIT);
         let res: anyhow::Result<Value> = commit_contract

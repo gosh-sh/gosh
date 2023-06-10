@@ -1,6 +1,4 @@
-use crate::blockchain::{
-    BlockchainContractAddress, EverClient, branch_list, get_commit_by_addr,
-};
+use crate::blockchain::{branch_list, get_commit_by_addr, BlockchainContractAddress, EverClient};
 
 const ZERO_COMMIT: &str = "0000000000000000000000000000000000000000";
 // pub const EMPTY_TREE_SHA: &str = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"; // $ echo -n '' | git hash-object --stdin -t tree
