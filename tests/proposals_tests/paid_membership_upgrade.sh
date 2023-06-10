@@ -69,8 +69,8 @@ fi
 OLD_WALLET_ADDR=$WALLET_ADDR
 upgrade_DAO
 
-tonos-cli runx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" -m m_pseudoDAOBalance
-tonos-cli runx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" -m m_pseudoDAOVoteBalance
+tonos-cli runx --addr "$WALLET_ADDR" --abi "$WALLET_ABI_1" -m m_pseudoDAOBalance
+tonos-cli runx --addr "$WALLET_ADDR" --abi "$WALLET_ABI_1" -m m_pseudoDAOVoteBalance
 
 
 
@@ -82,24 +82,24 @@ tonos-cli callx --addr $WALLET_ADDR --abi $WALLET_ABI_1 --keys $WALLET_KEYS -m s
 
 sleep 30
 
-tonos-cli runx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" -m m_pseudoDAOBalance
-tonos-cli runx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" -m m_pseudoDAOVoteBalance
+tonos-cli runx --addr "$WALLET_ADDR" --abi "$WALLET_ABI_1" -m m_pseudoDAOBalance
+tonos-cli runx --addr "$WALLET_ADDR" --abi "$WALLET_ABI_1" -m m_pseudoDAOVoteBalance
 
-tonos-cli callx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m lockVoting --amount 0
+tonos-cli callx --addr "$WALLET_ADDR" --abi "$WALLET_ABI_1" --keys "$WALLET_KEYS" -m lockVoting --amount 0
 
 sleep 30
 
-tonos-cli runx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" -m m_pseudoDAOBalance
-tonos-cli runx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" -m m_pseudoDAOVoteBalance
+tonos-cli runx --addr "$WALLET_ADDR" --abi "$WALLET_ABI_1" -m m_pseudoDAOBalance
+tonos-cli runx --addr "$WALLET_ADDR" --abi "$WALLET_ABI_1" -m m_pseudoDAOVoteBalance
 
 
-ACCESS_KEY=$(tonos-cli -j runx --addr $DAO_ADDR --abi $DAO_ABI -m getDetails | jq '.paidMembership."1".accessKey' | cut -d '"' -f 2)
+ACCESS_KEY=$(tonos-cli -j runx --addr $DAO_ADDR --abi $DAO_ABI_1 -m getDetails | jq '.paidMembership."1".accessKey' | cut -d '"' -f 2)
 if [ "$ACCESS_KEY" != "$KEY_FOR_SERVICE" ]; then
   echo Wrong access key
   exit 1
 fi
 
-VALUE=$(tonos-cli -j runx --addr $DAO_ADDR --abi $DAO_ABI -m getDetails | jq '.paidMembership."1".paidMembershipValue' | cut -d '"' -f 2)
+VALUE=$(tonos-cli -j runx --addr $DAO_ADDR --abi $DAO_ABI_1 -m getDetails | jq '.paidMembership."1".paidMembershipValue' | cut -d '"' -f 2)
 if [ "$VALUE" != "23" ]; then
   echo Wrong paid mem value
   exit 1
@@ -112,7 +112,7 @@ if [ "$MEMBERS_LEN" != "3" ]; then
   exit 1
 fi
 
-tonos-cli -j callx --addr $WALLET_ADDR --abi $WALLET_ABI --keys $WALLET_KEYS -m startCheckPaidMembership
+tonos-cli -j callx --addr $WALLET_ADDR --abi $WALLET_ABI_1 --keys $WALLET_KEYS -m startCheckPaidMembership
 
 get_number_of_members
 
@@ -123,13 +123,13 @@ fi
 
 stop_paid_membership
 
-ACCESS_KEY=$(tonos-cli -j runx --addr $DAO_ADDR --abi $DAO_ABI -m getDetails | jq '.paidMembership."1".accessKey' )
+ACCESS_KEY=$(tonos-cli -j runx --addr $DAO_ADDR --abi $DAO_ABI_1 -m getDetails | jq '.paidMembership."1".accessKey' )
 if [ "$ACCESS_KEY" != "null" ]; then
   echo Wrong access key
   exit 1
 fi
 
-RESERVE=$(tonos-cli -j runx --addr $DAO_ADDR --abi $DAO_ABI -m getDetails | jq .reserve | cut -d '"' -f 2)
+RESERVE=$(tonos-cli -j runx --addr $DAO_ADDR --abi $DAO_ABI_1 -m getDetails | jq .reserve | cut -d '"' -f 2)
 if [ "$RESERVE" != "98" ]; then
   echo Wrong amount of tokens in reserve
   exit 1
