@@ -1,6 +1,6 @@
 def runFunctionSet(function_name) {
     running_set = [
-        /*"v1_x": {
+        "v1_x": {
             "${function_name}"('v1_x')
         },
         "v2_x": {
@@ -8,7 +8,7 @@ def runFunctionSet(function_name) {
         },
         "v3_x": {
             "${function_name}"('v3_x')
-        },*/
+        },
         "v4_x": {
             "${function_name}"('v4_x')
         },
@@ -70,8 +70,8 @@ pipeline {
                 }
             }
             steps {
-                //buildDispatcher()
-                buildDispatcherDebug()
+                buildDispatcher()
+                //buildDispatcherDebug()
             }
         }
         stage('Build: Git Helper') {
@@ -81,8 +81,8 @@ pipeline {
                 }
             }
             steps {
-                //runFunctionSet('buildRemoteGosh')
-                runFunctionSet('buildRemoteGoshDebug')
+                runFunctionSet('buildRemoteGosh')
+                //runFunctionSet('buildRemoteGoshDebug')
             }
         }
 
