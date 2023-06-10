@@ -300,10 +300,6 @@ def buildDispatcherDebug() {
                 rm -rf windows-*
 
                 az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1092 --path linux-amd64 && sleep 2
-                //az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 1092 --path darwin-amd64 && sleep 2
-                //az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 1092 --path windows-amd64 && sleep 2
-                //az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 1092 --path linux-arm64 && sleep 2
-                //az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 1092 --path darwin-arm64 && sleep 2
             '''
         }
     }
@@ -360,16 +356,8 @@ def buildRemoteGoshDebug(version) {
                 export VSTS_ARTIFACTTOOL_DISABLE_HARDLINKS=1
                 
                 az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1093 --path linux-amd64 && sleep 2
-                //az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 1093 --path darwin-amd64 && sleep 2
-                //az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 1093 --path windows-amd64 && sleep 2
-                //az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 1093 --path linux-arm64 && sleep 2
-                //az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 1093 --path darwin-arm64 && sleep 2
 
                 az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1094 --path linux-amd64 && sleep 2
-                //az pipelines runs artifact download --project gosh --artifact-name darwin-amd64 --run-id 1094 --path darwin-amd64 && sleep 2
-                //az pipelines runs artifact download --project gosh --artifact-name windows-amd64 --run-id 1094 --path windows-amd64 && sleep 2
-                //az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id 1094 --path linux-arm64 && sleep 2
-                //az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id 1094.. --path darwin-arm64 && sleep 2
             """
         }
     }
