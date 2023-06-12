@@ -1,0 +1,37 @@
+pipeline {
+    agent {
+        node {
+            label 'jenkins-main'
+        }
+    }
+    stages {
+        stage('Build') {     
+            steps {
+                withCredentials([string(credentialsId: 'github-gosh-release', variable: 'TOKEN')]) {
+                    sh 'git clone https://oauth2:$TOKEN@github.com/gosh-sh/goshai-site.git'
+                }
+                script {
+                    dir('gosh-site') {
+                        sh "export PATH=/usr/local/lib/nodejs/node-v16.17.0-linux-x64/bin:${PATH} && CI=false npm i && npm run build"
+                    }
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+                script {
+                    dir('goshai-site') {
+                        sh 'aws s3 rm s3://goshai-site --recursive'
+                        sh 'aws s3 sync build/ s3://goshai-site'
+                        //sh "aws cloudfront create-invalidation --distribution-id E2IXFBDTRHZ0Z2 --paths '/*'"
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}

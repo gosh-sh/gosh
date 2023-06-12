@@ -24,7 +24,7 @@ pipeline {
                 }
             }
         }*/
-        stage('Web: deploy prod') {
+        /*stage('Web: deploy prod') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -36,7 +36,7 @@ pipeline {
                     build job: 'deploy-web-prod', parameters: [[$class: 'StringParameterValue', name: 'sha1', value: "${TAG}"]]
                 }
             }
-        }
+        }*/
         stage('Publish: update release') {
             agent {
                 docker {
