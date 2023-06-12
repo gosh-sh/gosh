@@ -10,7 +10,7 @@ import { TDaoLayoutOutletContext } from '../../../pages/DaoLayout'
 import { toast } from 'react-toastify'
 import { ToastError } from '../../Toast'
 import commentBtn from '../../../assets/images/comment-add.png'
-import { TCommit } from 'react-gosh'
+import { GoshError, TCommit } from 'react-gosh'
 import { useEffect, useMemo, useRef } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowUp } from '@fortawesome/free-solid-svg-icons'
@@ -18,8 +18,9 @@ import { faArrowUp } from '@fortawesome/free-solid-svg-icons'
 type TLinesBlockProps = {
     filename: string
     block: DiffBlock
-    commit: TCommit
-    address: string
+    commit?: TCommit
+    commentsObject?: string
+    snapshotAddress?: string
     commentsOn?: boolean
     mouseDown: boolean
     setMouseDown: React.Dispatch<React.SetStateAction<boolean>>
@@ -41,8 +42,16 @@ const getThreadAvatar = (seed: string) => {
 }
 
 const LinesBlock = (props: TLinesBlockProps) => {
-    const { commentsOn, filename, block, commit, address, mouseDown, setMouseDown } =
-        props
+    const {
+        commentsOn,
+        filename,
+        block,
+        commit,
+        commentsObject,
+        snapshotAddress,
+        mouseDown,
+        setMouseDown,
+    } = props
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const {
         threads,
@@ -56,18 +65,18 @@ const LinesBlock = (props: TLinesBlockProps) => {
         submitComment,
     } = useBlobComments({
         dao: dao.adapter,
-        objectAddress: address,
+        objectAddress: commentsObject,
         filename,
-        commits: [commit.parents[0].name, commit.name],
+        commits: commit ? [commit.parents[0].name, commit.name] : undefined,
     })
     const commentFormRefs = useRef<{ [line: number]: HTMLDivElement | null }>({})
 
     const commits = useMemo(() => {
         return {
-            prev: commit.parents[0].name,
-            curr: commit.name,
+            prev: commit ? commit.parents[0].name : '',
+            curr: commit ? commit.name : '',
         }
-    }, [commit.name])
+    }, [commit])
 
     const getLineCommit = (line: DiffLine) => {
         const { oldNumber, newNumber } = line
@@ -123,12 +132,17 @@ const LinesBlock = (props: TLinesBlockProps) => {
         helpers: FormikHelpers<any>,
     ) => {
         try {
+            if (!snapshotAddress) {
+                throw new GoshError('Add comment error', 'Blob address undefined')
+            }
+
             await submitComment({
                 content: values.comment,
                 metadata: {
                     startLine: selectedLines.lines[0],
                     endLine: selectedLines.lines.slice(-1)[0],
                     commit: selectedLines.commit,
+                    snapshot: snapshotAddress,
                 },
             })
             helpers.resetForm()

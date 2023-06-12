@@ -79,7 +79,8 @@ const RepoPullRequestEvent = (props: TRepoPullRequestEventProps) => {
                             modified={current}
                             original={previous}
                             commit={commit!}
-                            address={event.address}
+                            commentsObject={event.address}
+                            snapshotAddress={item.address}
                             isDiffLoaded={showDiff}
                             isDiffFetching={isFetching}
                             getDiff={() => blobs.getDiff(index)}

@@ -136,7 +136,7 @@ const BlobPage = () => {
                 <div className="pl-5">
                     <h3 className="text-gray-53596d text-lg mb-4">Comments</h3>
                     <div className="sticky top-3 shrink-0 w-72 bg-white">
-                        <CodeComments filename={blob.path} />
+                        <CodeComments filename={blob.path} multiple />
                     </div>
                 </div>
             )}

@@ -1,5 +1,5 @@
 import { useRecoilState, useResetRecoilState, useSetRecoilState } from 'recoil'
-import { blobCommentsAtom, blobsCommentsCountAtom } from '../store/comments.state'
+import { blobCommentsAtom, blobsCommentsAiAtom } from '../store/comments.state'
 import { IGoshDaoAdapter, IGoshTopic } from 'react-gosh/dist/gosh/interfaces'
 import { useEffect } from 'react'
 import {
@@ -16,12 +16,13 @@ export function useBlobComments(params: {
     filename: string
     objectAddress?: string
     commits?: string[]
+    multiple?: boolean
 }) {
-    const { dao, objectAddress, filename, commits = [] } = params
+    const { dao, objectAddress, filename, commits = [], multiple } = params
     const { user } = useUser()
     const [threads, setThreads] = useRecoilState(blobCommentsAtom)
     const resetThreads = useResetRecoilState(blobCommentsAtom)
-    const setCommentsCounter = useSetRecoilState(blobsCommentsCountAtom)
+    const setAiComments = useSetRecoilState(blobsCommentsAiAtom)
 
     const getThreads = async () => {
         if (!objectAddress || !commits.length) {
@@ -76,6 +77,7 @@ export function useBlobComments(params: {
                         })
                         .map(({ thread, createdBy, comments }, index) => ({
                             id: thread.address,
+                            snapshot: thread.metadata.snapshot,
                             commit: thread.metadata.commit,
                             startLine: thread.metadata.startLine,
                             endLine: thread.metadata.endLine,
@@ -307,6 +309,7 @@ export function useBlobComments(params: {
                             ...state[filename].threads.items,
                             {
                                 id: thread.address,
+                                snapshot: metadata.snapshot,
                                 commit: metadata.commit,
                                 startLine: metadata?.startLine || 0,
                                 endLine: metadata?.endLine || 0,
@@ -336,12 +339,34 @@ export function useBlobComments(params: {
             resetLinesSelection()
         }
 
-        // Add global counter (only for single files not PR)
-        if (commits.length === 1) {
-            setCommentsCounter((state) => ({
-                ...state,
-                [filename]: (state[filename] || 0) + 1,
-            }))
+        // Add new comments to separate storage
+        // Used for commenting multiple files for AI
+        if (multiple) {
+            const item = { filename, comment: content }
+            let meta: { address: string; startLine: number; endLine: number } | undefined
+            if (id) {
+                const thread = threads[filename].threads.items.find(
+                    (item) => item.id === id,
+                )
+                if (thread) {
+                    meta = {
+                        address: thread.snapshot,
+                        startLine: thread.startLine,
+                        endLine: thread.endLine,
+                    }
+                }
+            } else if (metadata) {
+                meta = {
+                    address: metadata.snapshot,
+                    startLine: metadata.startLine,
+                    endLine: metadata.endLine,
+                }
+            }
+
+            // Update AI comments
+            if (meta) {
+                setAiComments((state) => [...state, { ...item, ...meta! }])
+            }
         }
     }
 

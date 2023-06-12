@@ -56,10 +56,11 @@ const CommentBlock = (props: any) => {
 
 type TCodeCommentsProps = {
     filename: string
+    multiple?: boolean
 }
 
 const CodeComments = (props: TCodeCommentsProps) => {
-    const { filename } = props
+    const { filename, multiple } = props
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const {
         threads,
@@ -71,6 +72,7 @@ const CodeComments = (props: TCodeCommentsProps) => {
     } = useBlobComments({
         dao: dao.adapter,
         filename,
+        multiple,
     })
     const commentRefs = useRef<{ [threadId: string]: HTMLDivElement | null }>({})
     const [isTextareaFocus, setTextareaFocus] = useState<boolean>(false)
