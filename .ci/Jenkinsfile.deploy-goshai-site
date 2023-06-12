@@ -11,7 +11,7 @@ pipeline {
                     sh 'git clone https://oauth2:$TOKEN@github.com/gosh-sh/goshai-site.git'
                 }
                 script {
-                    dir('gosh-site') {
+                    dir('goshai-site') {
                         sh "export PATH=/usr/local/lib/nodejs/node-v16.17.0-linux-x64/bin:${PATH} && CI=false npm i && npm run build"
                     }
                 }
