@@ -23,7 +23,7 @@ pipeline {
                     dir('jocelyn-site') {
                         sh 'aws s3 rm s3://jocelyn-site --recursive'
                         sh 'aws s3 sync dist/ s3://jocelyn-site'
-                        //sh "aws cloudfront create-invalidation --distribution-id E2IXFBDTRHZ0Z2 --paths '/*'"
+                        sh "aws cloudfront create-invalidation --distribution-id E2Q5ZFHL8D6SLC --paths '/*'"
                     }
                 }
             }
