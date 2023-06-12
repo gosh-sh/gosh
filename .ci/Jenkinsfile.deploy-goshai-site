@@ -23,7 +23,7 @@ pipeline {
                     dir('goshai-site') {
                         sh 'aws s3 rm s3://goshai-site --recursive'
                         sh 'aws s3 sync build/ s3://goshai-site'
-                        //sh "aws cloudfront create-invalidation --distribution-id E2IXFBDTRHZ0Z2 --paths '/*'"
+                        sh "aws cloudfront create-invalidation --distribution-id E27GTMAE24GVRW --paths '/*'"
                     }
                 }
             }
