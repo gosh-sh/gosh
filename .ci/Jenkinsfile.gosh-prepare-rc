@@ -34,7 +34,7 @@ pipeline {
         booleanParam name: 'DRYRUN', defaultValue: true, description: 'If enabled, will NOT publish pre-release artifacts to Github and Dockerhub.'
         booleanParam name: 'TEST_WEB', defaultValue: false, description: 'If enabled, will execute web tests.'
         booleanParam name: 'TEST_FUNC', defaultValue: true, description: 'If enabled, will execute func tests.'
-        booleanParam name: 'TEST_UPGRADE', defaultValue: false, description: 'If enabled, will execute upgrade tests.'
+        booleanParam name: 'TEST_UPGRADE', defaultValue: true, description: 'If enabled, will execute upgrade tests.'
     }
 
     stages {
