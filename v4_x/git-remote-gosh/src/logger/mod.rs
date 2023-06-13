@@ -4,6 +4,7 @@ pub mod test_utils;
 
 use cached::once_cell::sync::Lazy;
 use std::{env, str::FromStr, sync::Arc};
+use dhat::HeapStats;
 
 use telemetry::OPENTELEMETRY_FILTER_LEVEL;
 use tracing::metadata::LevelFilter;
@@ -97,4 +98,30 @@ fn decode_verbosity(level: u8) -> LevelFilter {
         4 => LevelFilter::DEBUG,
         _ => LevelFilter::TRACE,
     }
+}
+
+#[derive(Serialize)]
+struct MyHeapStats {
+    pub total_bytes: u64,
+    pub curr_bytes: usize,
+    pub max_bytes: usize,
+}
+
+impl MyHeapStats {
+    pub fn new(stats: &HeapStats) -> Self {
+        Self {
+            total_bytes: stats.total_bytes,
+            curr_bytes: stats.curr_bytes,
+            max_bytes: stats.max_bytes,
+        }
+    }
+}
+
+pub fn trace_memory() {
+    #[cfg(feature = "memory_profiling")]
+    tracing::trace!("MemoryState={}",
+        json!(
+            MyHeapStats::new(&dhat::HeapStats::get())
+        )
+    );
 }

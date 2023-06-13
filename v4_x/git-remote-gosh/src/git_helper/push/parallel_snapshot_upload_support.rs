@@ -21,6 +21,7 @@ use tokio::{sync::Semaphore, task::JoinSet};
 use tokio::time::sleep;
 use tokio_retry::RetryIf;
 use tracing::Instrument;
+use crate::logger::trace_memory;
 
 const WAIT_TREE_READY_MAX_ATTEMPTS: i32 = 3;
 
@@ -140,6 +141,7 @@ impl ParallelSnapshotUploadSupport {
             "Expecting the following diff contracts to be deployed: {:?}",
             addresses
         );
+        trace_memory();
         while let Some(finished_task) = self.pushed_blobs.join_next().await {
             match finished_task {
                 Err(e) => {
@@ -151,6 +153,7 @@ impl ParallelSnapshotUploadSupport {
                 Ok(Ok(_)) => {}
             }
         }
+        trace_memory();
         wait_contracts_deployed(&blockchain, &addresses).await
     }
 }
@@ -294,6 +297,7 @@ impl ParallelCommitUploadSupport {
             "Expecting the following diff contracts to be deployed: {:?}",
             addresses
         );
+        trace_memory();
         while let Some(finished_task) = self.pushed_blobs.join_next().await {
             match finished_task {
                 Err(e) => {
@@ -305,6 +309,7 @@ impl ParallelCommitUploadSupport {
                 Ok(Ok(_)) => {}
             }
         }
+        trace_memory();
         wait_contracts_deployed(&blockchain, &addresses).await
     }
 }
@@ -432,6 +437,7 @@ impl ParallelTreeUploadSupport {
             "Expecting the following diff contracts to be deployed: {:?}",
             addresses
         );
+        trace_memory();
         while let Some(finished_task) = self.pushed_blobs.join_next().await {
             match finished_task {
                 Err(e) => {
@@ -443,6 +449,7 @@ impl ParallelTreeUploadSupport {
                 Ok(Ok(_)) => {}
             }
         }
+        trace_memory();
         let _ = wait_contracts_deployed(&blockchain, &addresses).await?;
 
         let mut rest: HashMap<BlockchainContractAddress, usize> = addresses.iter().map(|addr| (addr.to_owned(), 0)).collect();

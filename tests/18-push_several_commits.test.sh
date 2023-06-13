@@ -45,7 +45,29 @@ echo blabla > 3.txt
 git add 3.txt
 git commit -m test4
 
-git push -u origin main
+for n in {1..500}; do
+    echo "$n$n$n" > "bla$n.txt"
+done
+git add *
+git commit -m "many files"
+
+
+for n in {1..500}; do
+    echo "{$n$n$n}11" >> "bla$n.txt"
+done
+git add *
+git commit -m "many files2"
+
+
+for c in {1..20}; do
+  for n in {1..100}; do
+    echo "{$c$n$n}22" >> "bla2$n$c.txt"
+  done
+  git add *
+  git commit -m "for $c"
+done
+
+GOSH_TRACE=5 git push -u origin main &> ../trace_test_18.log
 
 sleep 60
 

@@ -1,11 +1,15 @@
 use clap::{Arg, Command};
 use git_remote_gosh::anyhow;
 use git_remote_gosh::git_helper::supported_contract_version;
-use git_remote_gosh::logger::set_log_verbosity;
+use git_remote_gosh::logger::{set_log_verbosity, trace_memory};
 use opentelemetry::global::shutdown_tracer_provider;
 use std::process::ExitCode;
 use std::time::Duration;
 use tokio::time::sleep;
+
+#[cfg(feature = "memory_profiling")]
+#[global_allocator]
+static ALLOC: dhat::Alloc = dhat::Alloc;
 
 fn shutdown(result: anyhow::Result<()>) -> ExitCode {
     let exit_code = match result {
@@ -20,9 +24,14 @@ fn shutdown(result: anyhow::Result<()>) -> ExitCode {
     return exit_code;
 }
 
-#[tokio::main(flavor = "multi_thread", worker_threads = 20)]
+#[tokio::main(flavor = "multi_thread", worker_threads = 2)]
 async fn main() -> ExitCode {
+    #[cfg(feature = "memory_profiling")]
+    let _profiler = dhat::Profiler::builder().testing().build();
+    #[cfg(feature = "memory_profiling")]
+    eprintln!("trace memory: On");
     set_log_verbosity(1);
+    trace_memory();
     let mut result = Ok(());
     let mut ctrl_c = false;
     tokio::select! {
@@ -34,6 +43,7 @@ async fn main() -> ExitCode {
     if ctrl_c {
         sleep(Duration::from_secs(1)).await;
     }
+    trace_memory();
     shutdown(result)
 }
 
