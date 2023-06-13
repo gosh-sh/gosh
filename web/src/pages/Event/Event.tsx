@@ -265,11 +265,10 @@ const EventPage = () => {
                             <EventProgressBar votes={event.votes} />
                         )}
                         <div className="mt-5 text-sm text-gray-7c8db5 text-center">
-                            {!event.reviewers.length ? (
+                            {!event.reviewers.length && !event.status.completed && (
                                 <>{getDurationDelta()} to end</>
-                            ) : (
-                                'Review required'
                             )}
+                            {event.reviewers.length > 0 && 'Review required'}
                         </div>
                     </div>
 

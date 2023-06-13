@@ -1,4 +1,4 @@
-import { Field, Form, Formik } from 'formik'
+import { Field, Form, Formik, FormikHelpers } from 'formik'
 import { useCallback } from 'react'
 import { classNames, TDao, TSmvEvent, useSmv, useSmvVote } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
@@ -30,13 +30,14 @@ const EventVotingForm = (props: TEventVotingFormProps) => {
     const getMaxAmount = useCallback(() => {
         return Math.min(
             smv.details.smvAvailable + smv.details.smvBalance - event.votes.yours,
-            smv.details.allowance,
+            smv.details.allowance - event.votes.yours,
         )
     }, [smv.details, event.votes.yours])
 
-    const onSubmit = async (values: TFormValues) => {
+    const onSubmit = async (values: TFormValues, helpers: FormikHelpers<TFormValues>) => {
         try {
             await vote(values.approve === true, values.amount)
+            helpers.resetForm()
             toast.success(
                 <ToastSuccess
                     message={{
