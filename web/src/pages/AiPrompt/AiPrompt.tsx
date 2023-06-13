@@ -15,6 +15,7 @@ import { faEnvelope } from '@fortawesome/free-regular-svg-icons'
 import { getIdenticonAvatar, supabase } from '../../helpers'
 import { GoshAdapterFactory, GoshError, useDaoCreate, useUser } from 'react-gosh'
 import { useNavigate } from 'react-router-dom'
+import Alert from '../../components/Alert/Alert'
 
 type TAiPromptCompleteProps = React.HTMLAttributes<HTMLDivElement> & {
     daoName: string
@@ -150,7 +151,8 @@ const AiPromptPage = () => {
                 }
             }
 
-            const aiUser = { name: 'gosh-ai', type: 'user' }
+            const aiUsername = import.meta.env.REACT_APP_GOSHAI_NAME
+            const aiUser = { name: aiUsername, type: 'user' }
             const isAiMember = await dao.isMember({ user: aiUser })
             if (!isAiMember) {
                 if (members.length === 1) {
@@ -197,6 +199,14 @@ const AiPromptPage = () => {
 
             <div className="flex flex-wrap justify-between gap-y-6 gap-x-12">
                 <div className="basis-0 grow relative overflow-x-auto md:overflow-x-visible">
+                    <Alert variant="warning" className="mb-4">
+                        This is an Alpha Version of GOSH.AI. Currently supporting only
+                        Async Solidity. The model training is ongoing. As such it may take
+                        a very long time (sometimes many hours depending on the prompt) to
+                        generate a response. It may fail as well. We are continuously
+                        improving the model. Thank you for understanding.
+                    </Alert>
+
                     <Editable
                         editor={editor}
                         placeholder="Write something..."

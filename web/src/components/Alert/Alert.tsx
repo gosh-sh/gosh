@@ -7,17 +7,19 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import classNames from 'classnames'
 
 type TAlertProps = React.PropsWithChildren<any> & {
-    variant: 'danger'
+    variant: 'danger' | 'warning'
     dismiss?: boolean
     onDismiss?(): any
 }
 
 const iconMap: Record<string, IconDefinition> = {
     danger: faExclamationTriangle,
+    warning: faExclamationTriangle,
 }
 
 const variantMap: Record<string, string> = {
     danger: 'bg-red-ff3b30/5 text-red-ff3b30',
+    warning: 'bg-yellow-faedcc/90 text-yellow-600',
 }
 
 const Alert = (props: TAlertProps) => {

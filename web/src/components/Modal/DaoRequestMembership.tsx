@@ -38,6 +38,7 @@ const DaoRequestMembershipModal = (props: TDaoRequestMembershipModalProps) => {
                     {
                         user: { name: user.username!, type: 'user' },
                         allowance: 0,
+                        expired: 0,
                         comment,
                     },
                 ],

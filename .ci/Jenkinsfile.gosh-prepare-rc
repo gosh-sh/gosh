@@ -615,9 +615,9 @@ def prereleaseBinaries() {
                     sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-linux-arm64.tar.gz application/gzip'
                     sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-darwin-arm64.tar.gz application/gzip'
                     sh './github-upload-assets.sh $TOKEN ${APP_VERSION} /tmp/${JOB_NAME}/git-remote-gosh-windows-amd64.zip application/zip'
-                    sh './package-deb.sh /tmp/${JOB_NAME}'
-                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} ./git-remote-gosh-windows_amd64.deb application/octet-stream'
-                    sh './github-upload-assets.sh $TOKEN ${APP_VERSION} ./git-remote-gosh-windows_arm64.deb application/octet-stream'
+                    //sh './package-deb.sh /tmp/${JOB_NAME}'
+                    //sh './github-upload-assets.sh $TOKEN ${APP_VERSION} ./git-remote-gosh-windows_amd64.deb application/octet-stream'
+                    //sh './github-upload-assets.sh $TOKEN ${APP_VERSION} ./git-remote-gosh-windows_arm64.deb application/octet-stream'
                 }
             }
         }
