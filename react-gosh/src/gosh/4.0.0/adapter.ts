@@ -4617,18 +4617,19 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         const details = await event.runLocal('getDetails', {})
 
         const kind = parseInt(details.value0)
+        const time = {
+            start: parseInt(details.value2) * 1000,
+            finish: parseInt(details.value3) * 1000,
+            finishReal: parseInt(details.value4) * 1000,
+        }
         const minimal = {
             address,
             type: { kind, name: SmvEventTypes[kind] },
             status: {
-                completed: details.value1 !== null,
+                completed: details.value1 !== null || Date.now() > time.finish,
                 accepted: !!details.value1,
             },
-            time: {
-                start: parseInt(details.value2) * 1000,
-                finish: parseInt(details.value3) * 1000,
-                finishReal: parseInt(details.value4) * 1000,
-            },
+            time,
             votes: {
                 yes: parseInt(details.value5),
                 no: parseInt(details.value6),

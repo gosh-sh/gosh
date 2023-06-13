@@ -6,6 +6,8 @@ import { appModalStateAtom } from '../../store/app.state'
 import PinCodeModal from '../../components/Modal/PinCode'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronUp, faLock } from '@fortawesome/free-solid-svg-icons'
+import FileDownload from '../../components/FileDownload'
+import { faFloppyDisk } from '@fortawesome/free-regular-svg-icons'
 
 type TLockButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
     isLocked: boolean
@@ -185,13 +187,23 @@ const SettingsPage = () => {
                             'text-sm text-gray-7c8db5',
                         )}
                     >
-                        <CopyClipboard
-                            className="absolute right-3 top-3"
-                            componentProps={{
-                                text: JSON.stringify(gitRemoteCredentials),
-                            }}
-                            iconProps={{ size: 'lg' }}
-                        />
+                        <div className="absolute right-3 top-3 flex items-center gap-x-4">
+                            <FileDownload
+                                name="config.json"
+                                content={JSON.stringify(
+                                    gitRemoteCredentials,
+                                    undefined,
+                                    2,
+                                )}
+                                label={<FontAwesomeIcon icon={faFloppyDisk} size="lg" />}
+                            />
+                            <CopyClipboard
+                                componentProps={{
+                                    text: JSON.stringify(gitRemoteCredentials),
+                                }}
+                                iconProps={{ size: 'lg' }}
+                            />
+                        </div>
                         <pre className="overflow-x-auto">
                             {JSON.stringify(gitRemoteCredentials, undefined, 2)}
                         </pre>
