@@ -22,7 +22,7 @@ function get_repo_addr {
 }
 
 function list_branches {
-    repo_addr=$1
+    repo_addr=${1:-$REPO_ADDR}
     tonos-cli -j -u $NETWORK run $repo_addr getAllAddress {} --abi ../$REPO_ABI | jq -r '.value0[].branchname'
 }
 
@@ -34,6 +34,15 @@ function get_account_status {
 function get_account_last_paid {
     contract_addr=$1
     tonos-cli -j -u $NETWORK account $contract_addr | jq -r '."'"$contract_addr"'".last_paid'
+}
+
+function get_gosh_contract_version {
+    contract_addr=$1
+
+    ABI='{"ABI version": 2, "version": "2.3", "header": ["pubkey", "time", "expire"], "functions": [ { "name": "getVersion", "inputs": [], "outputs": [ {"name":"value0","type":"string"}, {"name":"value1","type":"string"} ] }] }'
+
+    tonos-cli -j -u $NETWORK run $contract_addr getVersion {} --abi "$ABI" | \
+        jq -r '(.value0) + " " + (.value1)'
 }
 
 function get_wallet_details {
@@ -89,13 +98,28 @@ function wait_account_active {
     fi
 }
 
+function get_commit_addr {
+    commit_id=$1
+    repo=${2:-$REPO_ADDR}
+
+    params=$(jq -n --arg nameCommit "$commit_id" '$ARGS.named')
+    tonos-cli -j -u $NETWORK run $repo getCommitAddr "$params" --abi ../$REPO_ABI | jq -r .value0
+}
+
+function get_tree_addr {
+    tree_id=$1
+
+    params=$(jq -n --arg treeName "$tree_id" '$ARGS.named')
+    tonos-cli -j -u $NETWORK run $REPO_ADDR getTreeAddr "$params" --abi ../$REPO_ABI | jq -r .value0
+}
+
 function wait_set_commit {
     stop_at=$((SECONDS+300))
     repo_addr=$1
     branch=$2
     expected_commit=`git rev-parse HEAD`
 
-    expected_commit_addr=`tonos-cli -j -u $NETWORK run $repo_addr getCommitAddr '{"nameCommit":"'"$expected_commit"'"}' --abi ../$REPO_ABI | jq -r .value0`
+    expected_commit_addr=$(get_commit_addr $expected_commit)
 
     is_ok=0
 

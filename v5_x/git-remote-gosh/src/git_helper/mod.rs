@@ -1,11 +1,13 @@
 #![allow(unused_variables)]
 
+use std::collections::HashMap;
 use std::env;
 
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
+use crate::blockchain::get_commit_address;
 use crate::cache::proxy::CacheProxy;
 use crate::{
     abi as gosh_abi,
@@ -19,7 +21,6 @@ use crate::{
     logger::set_log_verbosity,
     utilities::Remote,
 };
-use crate::blockchain::get_commit_address;
 
 pub mod ever_client;
 #[cfg(test)]
@@ -27,6 +28,19 @@ mod test_utils;
 
 static CAPABILITIES_LIST: [&str; 4] = ["list", "push", "fetch", "option"];
 static DISPATCHER_ENDL: &str = "endl";
+
+#[derive(Clone, Debug)]
+pub struct RepoVersion {
+    pub version: String,
+    pub system_address: BlockchainContractAddress,
+    pub repo_address: BlockchainContractAddress,
+}
+
+#[derive(Clone)]
+pub struct CommitVersion {
+    pub version: String,
+    pub commit_address: BlockchainContractAddress,
+}
 
 #[derive(Clone)]
 pub struct GitHelper<
@@ -41,6 +55,8 @@ pub struct GitHelper<
     pub repo_addr: BlockchainContractAddress,
     local_repository: Arc<git_repository::Repository>,
     cache: Arc<CacheProxy>,
+    upgraded_commits: Vec<String>,
+    repo_versions: Vec<RepoVersion>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -65,8 +81,8 @@ mod list;
 
 mod fmt;
 
-pub fn supported_contract_version() -> anyhow::Result<String> {
-    Ok(env!("BUILD_SUPPORTED_VERSION").to_string())
+pub fn supported_contract_version() -> String {
+    env!("BUILD_SUPPORTED_VERSION").to_string()
 }
 
 impl<Blockchain, FileProvider> GitHelper<Blockchain, FileProvider>
@@ -144,6 +160,8 @@ where
             repo_addr,
             local_repository,
             cache: Arc::new(cache),
+            upgraded_commits: vec![],
+            repo_versions: vec![],
         })
     }
 
@@ -162,13 +180,11 @@ where
         Ok(vec![version, "".to_string()])
     }
 
-    async fn get_repo_versions(&self, repo_addresses: bool) -> anyhow::Result<Vec<String>> {
-        let cur_version = self
-            .blockchain
-            .repo_contract()
-            .get_version(self.blockchain.client())
-            .await?;
+    pub fn get_repo_versions(&self) -> &Vec<RepoVersion> {
+        &self.repo_versions
+    }
 
+    async fn load_repo_versions(&mut self) -> anyhow::Result<()> {
         let version_controller_address: GetAddrDaoResult = self
             .blockchain
             .root_contract()
@@ -180,7 +196,7 @@ where
             gosh_abi::VERSION_CONTROLLER,
         );
 
-        let versions: serde_json::Value = version_controller
+        let versions: Value = version_controller
             .run_static(self.blockchain.client(), "getVersionAddrMap", None)
             .await?;
 
@@ -202,8 +218,7 @@ where
             })
             .collect();
 
-        tracing::trace!("Available repo versions: {versions:?}");
-        let mut available_versions = vec![];
+        tracing::trace!("Available system contract versions: {versions:?}");
         for version in versions {
             let address = BlockchainContractAddress::new(version.1.clone());
             let system_contract = GoshContract::new(address, gosh_abi::GOSH);
@@ -218,14 +233,16 @@ where
             if res.is_err() {
                 continue;
             }
-            if repo_addresses {
-                available_versions.push(format!("{} {}", version.0, String::from(repo_addr.address)));
-            } else {
-                available_versions.push(format!("{} {}", version.0, version.1));
-            }
+            self.repo_versions.push(RepoVersion {
+                version: version.0,
+                system_address: BlockchainContractAddress::new(version.1),
+                repo_address: repo_addr.address,
+            });
         }
-        available_versions.push("".to_string());
-        Ok(available_versions)
+        self.repo_versions
+            .sort_by(|ver1, ver2| ver2.version.cmp(&ver1.version));
+        tracing::trace!("repo versions: {:?}", self.repo_versions);
+        Ok(())
     }
 
     async fn get_dao_tombstone(&self) -> anyhow::Result<Vec<String>> {
@@ -288,23 +305,17 @@ where
         set_log_verbosity(verbosity)
     }
 
-    pub async fn find_commit(&self, commit_id: &String) -> anyhow::Result<(String, BlockchainContractAddress)> {
+    pub async fn find_commit(&self, commit_id: &String) -> anyhow::Result<CommitVersion> {
         tracing::trace!("Find commit {commit_id}");
-        let mut repo_versions = self.get_repo_versions(true).await?;
-        repo_versions.pop();
+        let repo_versions = self.get_repo_versions();
         tracing::trace!("Repo versions {repo_versions:?}");
-        for version in repo_versions {
-            tracing::trace!("Check {version}");
-            let mut iter = version.split(' ');
-            let version: &str = iter.next().unwrap();
-            let repo_address: &str = iter.next().unwrap();
-            let repo_address = BlockchainContractAddress::new(repo_address.to_string());
-            let mut repo_contract = GoshContract::new(&repo_address, gosh_abi::REPO);
-            let commit_address = get_commit_address(
-                self.blockchain.client(),
-                &mut repo_contract,
-                commit_id,
-            ).await?;
+        for repo_version in repo_versions {
+            tracing::trace!("Check {repo_version:?}");
+            let version: &str = &repo_version.version;
+            let repo_address = &repo_version.repo_address;
+            let mut repo_contract = GoshContract::new(repo_address, gosh_abi::REPO);
+            let commit_address =
+                get_commit_address(self.blockchain.client(), &mut repo_contract, commit_id).await?;
             tracing::trace!("commit_address {commit_address}");
             let commit_contract = GoshContract::new(&commit_address, gosh_abi::COMMIT);
             let res: anyhow::Result<Value> = commit_contract
@@ -313,7 +324,10 @@ where
             if res.is_err() {
                 continue;
             }
-            return Ok((version.to_string(), commit_address));
+            return Ok(CommitVersion {
+                version: repo_version.version.clone(),
+                commit_address,
+            });
         }
         anyhow::bail!("Failed to find commit with id {commit_id} in all repo versions.")
     }
@@ -362,6 +376,7 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
     let file_provider = build_ipfs(config.ipfs_http_endpoint())?;
 
     let mut helper = GitHelper::build(config, url, blockchain, file_provider).await?;
+    helper.load_repo_versions().await?;
     let mut lines = BufReader::new(io::stdin()).lines();
     let mut stdout = io::stdout();
 
@@ -425,31 +440,17 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
             }
             (Some("fetch"), Some(sha), Some(name)) => {
                 is_batching_fetch_in_progress = true;
-                let fetch_result = helper.fetch(sha, name).await;
-                if let Err(e) = fetch_result {
-                    let error_str = e.to_string();
-                    if error_str.contains("Was trying to call getCommit") {
-                        tracing::trace!("Fetch error: {error_str}");
-                        let sha = if error_str.contains("SHA=") {
-                            error_str
-                                .trim_start_matches(|c| c != '\"')
-                                .trim_end_matches(|c| c != '\"')
-                                .replace(['\"'],"")
-                        } else {
-                            sha.to_owned()
-                        };
-                        // let previous: Value = helper
-                        //     .blockchain
-                        //     .repo_contract()
-                        //     .read_state(helper.blockchain.client(), "getPrevious", None)
-                        //     .await?;
-                        let version = helper.find_commit(&sha).await?.0;
-                        let out_str = format!("dispatcher {version} fetch {sha} {name}");
-                        stdout.write_all(format!("{out_str}\n").as_bytes()).await?;
-                        return Ok(());
-                    } else {
-                        return Err(e);
+                let fetch_result = helper.fetch(sha, name).await?;
+                if !fetch_result.is_empty() {
+                    tracing::trace!("Fetch result: {fetch_result:?}");
+                    let mut map: HashMap<String, Vec<String>> = HashMap::new();
+                    for (version, sha) in fetch_result {
+                        map.entry(version).or_insert(vec![]).push(sha);
                     }
+                    let map = format!("{map:?}").replace(" ", "");
+                    let out_str = format!("dispatcher fetch {name} {map}");
+                    stdout.write_all(format!("{out_str}\n").as_bytes()).await?;
+                    return Ok(());
                 }
                 if dispatcher_call {
                     stdout
@@ -464,9 +465,23 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
             (Some("list"), Some("for-push"), None) => helper.list(true).await?,
             (Some("gosh_repo_version"), None, None) => helper.get_repo_version().await?,
             (Some("gosh_get_dao_tombstone"), None, None) => helper.get_dao_tombstone().await?,
-            (Some("gosh_get_all_repo_versions"), None, None) => helper.get_repo_versions(false).await?,
+            (Some("gosh_get_all_repo_versions"), None, None) => {
+                let repo_versions = helper.get_repo_versions();
+                let mut res: Vec<String> = repo_versions
+                    .iter()
+                    .map(|ver| {
+                        format!(
+                            "{} {}",
+                            ver.version,
+                            String::from(ver.system_address.clone())
+                        )
+                    })
+                    .collect();
+                res.push("".to_string());
+                res
+            }
             (Some("gosh_supported_contract_version"), None, None) => {
-                let mut versions = vec![supported_contract_version()?];
+                let mut versions = vec![supported_contract_version()];
                 versions.push("".to_string());
                 versions
             }
@@ -527,6 +542,8 @@ pub mod tests {
             repo_addr,
             local_repository,
             cache,
+            upgraded_commits: vec![],
+            repo_versions: vec![],
         }
     }
 }

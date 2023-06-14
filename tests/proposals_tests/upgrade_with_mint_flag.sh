@@ -5,9 +5,9 @@ set -x
 
 FIRST_VERSION=v4_x
 SECOND_VERSION=v5_x
-./node_se_scripts/deploy.sh $FIRST_VERSION
-. set-vars.sh $FIRST_VERSION
-./upgrade_tests/set_up.sh $FIRST_VERSION $SECOND_VERSION
+#./node_se_scripts/deploy.sh $FIRST_VERSION
+#. set-vars.sh $FIRST_VERSION
+#./upgrade_tests/set_up.sh $FIRST_VERSION $SECOND_VERSION
 
 . ./util.sh
 
@@ -65,7 +65,7 @@ done
 echo "Upgrade DAO"
 upgrade_DAO
 
-ALLOW_MINT=$(tonos-cli -j runx --abi "$DAO_ABI" --addr "$DAO_ADDR" -m _allowMint | jq '._allowMint')
+ALLOW_MINT=$(tonos-cli -j runx --abi "$DAO_ABI_1" --addr "$DAO_ADDR" -m _allowMint | jq '._allowMint')
 if [ "$ALLOW_MINT" != "false" ]; then
   echo Mint flag is wrong
   exit 1
