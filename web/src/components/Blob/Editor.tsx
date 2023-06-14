@@ -1,19 +1,21 @@
 import Editor from '@monaco-editor/react'
+import classNames from 'classnames'
 
 type TEditorPanelProps = {
     language?: string
     value?: string
     className?: string
     disabled?: boolean
+    editorClassName?: string
     onChange?(value: string | undefined): void
 }
 
 const BlobEditor = (props: TEditorPanelProps) => {
-    const { className, disabled, ...rest } = props
+    const { className, disabled, editorClassName, ...rest } = props
 
     return (
         <Editor
-            className="min-h-[500px]"
+            className={classNames('min-h-[500px]', editorClassName)}
             wrapperProps={{
                 className,
             }}

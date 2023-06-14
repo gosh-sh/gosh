@@ -15,8 +15,8 @@ if [ $# -lt 1 ]; then
   exit 1
 fi
 
-if [[ "$1" != "v1_x" && "$1" != "v2_x" && "$1" != "v3_x" && "$1" != "v4_x" ]]; then
-  echo "Error: First argument must be either 'v1_x' or 'v2_x' or 'v3_x' or 'v4_x'"
+if [[ "$1" != "v1_x" && "$1" != "v2_x" && "$1" != "v3_x" && "$1" != "v4_x" && "$1" != "v5_x" ]]; then
+  echo "Error: First argument must be either 'v1_x' or 'v2_x' or 'v3_x' or 'v4_x' or 'v5_x'"
   exit 1
 fi
 
@@ -53,8 +53,10 @@ elif [ "$VERSION" = "v2_x" ]; then
  echo "" > SystemContract-2.0.0.addr
 elif [ "$VERSION" = "v3_x" ]; then
  echo "" > SystemContract-3.0.0.addr
+elif [ "$VERSION" = "v4_x" ]; then
+echo "" > SystemContract-4.0.0.addr
 else
- echo "" > SystemContract-4.0.0.addr
+ echo "" > SystemContract-5.0.0.addr
 fi
 
 #make build

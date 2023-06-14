@@ -23,6 +23,7 @@ import RepoReadme from './Readme'
 import { onExternalLinkClick } from '../../helpers'
 import { Button, ButtonLink } from '../../components/Form'
 import Loader from '../../components/Loader'
+import AiReview from '../../components/AiReview/AiReview'
 
 const RepoPage = () => {
     const treepath = useParams()['*'] || ''
@@ -254,6 +255,10 @@ const RepoPage = () => {
                     branch={branch!.name}
                     blobs={blobs || []}
                 />
+            </div>
+
+            <div className="fixed bottom-10 right-10">
+                <AiReview dao={dao.details} />
             </div>
         </>
     )

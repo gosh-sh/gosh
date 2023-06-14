@@ -30,16 +30,22 @@ import {
     RepoTagRemoveEvent,
     RepoDescriptionEvent,
     MultiEvent,
+    DaoVoteEvent,
+    DaoTokenDaoSendEvent,
+    DaoReviewEvent,
+    DaoReceiveBountyEvent,
+    DaoTokenDaoLockEvent,
+    TaskUpgradeEvent,
+    DaoTokenDaoTransferEvent,
+    UpgradeVersionControllerEvent,
+    DaoStartPaidMembershipEvent,
+    DaoStopPaidMembershipEvent,
+    BigTaskCreateEvent,
+    BigTaskApproveEvent,
+    BigTaskDeleteEvent,
+    BigTaskUpgradeEvent,
 } from './components'
 import { Tooltip } from 'react-tooltip'
-import { DaoVoteEvent } from './components/DaoVoteEvent/DaoVoteEvent'
-import { DaoTokenDaoSendEvent } from './components/DaoTokenDaoSendEvent/DaoTokenDaoSendEvent'
-import { DaoReviewEvent } from './components/DaoReviewEvent/DaoReviewEvent'
-import { DaoReceiveBountyEvent } from './components/DaoReceiveBountyEvent/DaoReceiveBountyEvent'
-import { DaoTokenDaoLockEvent } from './components/DaoTokenDaoLockEvent/DaoTokenDaoLockEvent'
-import { TaskUpgradeEvent } from './components/TaskUpgradeEvent/TaskUpgradeEvent'
-import { DaoTokenDaoTransferEvent } from './components/DaoTokenDaoTransferEvent/DaoTokenDaoTransferEvent'
-import { UpgradeVersionControllerEvent } from './components/UpgradeVersionControllerEvent/UpgradeVersionControllerEvent'
 
 const EventPage = () => {
     const { eventAddr } = useParams()
@@ -113,7 +119,7 @@ const EventPage = () => {
                         </div>
                     )}
 
-                    <div className="border border-gray-e6edff rounded-xl px-4 py-5 overflow-hidden">
+                    <div className="border border-gray-e6edff rounded-xl px-4 py-5 overflow-clip">
                         <h3 className="mb-3 text-xl font-medium">Event details</h3>
                         {event.type.kind === ESmvEventType.DAO_MEMBER_ADD && (
                             <MemberAddEvent
@@ -232,20 +238,37 @@ const EventPage = () => {
                         {event.type.kind === ESmvEventType.UPGRADE_VERSION_CONTROLLER && (
                             <UpgradeVersionControllerEvent data={event.data} />
                         )}
+                        {event.type.kind === ESmvEventType.DAO_START_PAID_MEMBERSHIP && (
+                            <DaoStartPaidMembershipEvent data={event.data} />
+                        )}
+                        {event.type.kind === ESmvEventType.DAO_STOP_PAID_MEMBERSHIP && (
+                            <DaoStopPaidMembershipEvent data={event.data} />
+                        )}
+                        {event.type.kind === ESmvEventType.BIGTASK_CREATE && (
+                            <BigTaskCreateEvent data={event.data} />
+                        )}
+                        {event.type.kind === ESmvEventType.BIGTASK_APPROVE && (
+                            <BigTaskApproveEvent data={event.data} />
+                        )}
+                        {event.type.kind === ESmvEventType.BIGTASK_DELETE && (
+                            <BigTaskDeleteEvent data={event.data} />
+                        )}
+                        {event.type.kind === ESmvEventType.BIGTASK_UPGRADE && (
+                            <BigTaskUpgradeEvent data={event.data} />
+                        )}
                     </div>
                 </div>
 
-                <div className="col !max-w-full md:!max-w-side-right-md lg:!max-w-side-right">
+                <div className="col !basis-full md:!basis-[18rem] lg:!basis-[20.4375rem] !grow-0">
                     <div className="border border-gray-e6edff rounded-xl p-5">
                         {(dao.details.isEventProgressOn || event.status?.completed) && (
                             <EventProgressBar votes={event.votes} />
                         )}
                         <div className="mt-5 text-sm text-gray-7c8db5 text-center">
-                            {!event.reviewers.length ? (
+                            {!event.reviewers.length && !event.status.completed && (
                                 <>{getDurationDelta()} to end</>
-                            ) : (
-                                'Review required'
                             )}
+                            {event.reviewers.length > 0 && 'Review required'}
                         </div>
                     </div>
 

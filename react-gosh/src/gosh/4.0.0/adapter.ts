@@ -96,6 +96,28 @@ import {
     TTaskUpgradeResult,
     TDaoTokenDaoTransferParams,
     TUpgradeVersionControllerParams,
+    TDaoStartPaidMembershipParams,
+    TDaoStartPaidMembershipResult,
+    TDaoStopPaidMembershipParams,
+    TDaoStopPaidMembershipResult,
+    TCodeCommentThreadCreateParams,
+    TCodeCommentThreadGetCodeParams,
+    TCodeCommentThreadGetCodeResult,
+    TCodeCommentThreadGetParams,
+    TCodeCommentThreadGetResult,
+    TCodeCommentCreateParams,
+    TCodeCommentThreadCreateResult,
+    TBigTaskCreateParams,
+    TBigTaskCreateResult,
+    TSubTaskCreateParams,
+    TSubTaskDeleteParams,
+    TBigTaskApproveParams,
+    TBigTaskApproveResult,
+    TBigTaskDeleteParams,
+    TBigTaskDeleteResult,
+    TBigTaskUpgradeParams,
+    TBigTaskUpgradeResult,
+    TCodeCommentThreadResdolveParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -119,6 +141,7 @@ import {
     IGoshHelperTag,
     IGoshTopic,
     IGoshProfileDao,
+    IGoshCommitTag,
 } from '../interfaces'
 import { Gosh } from './gosh'
 import { GoshDao } from './goshdao'
@@ -451,6 +474,13 @@ class GoshAdapter_4_0_0 implements IGoshAdapter {
 
     async getHelperTag(address: string): Promise<IGoshHelperTag> {
         return new GoshHelperTag(this.client, address)
+    }
+
+    async getCommitTag(params: {
+        address?: string | undefined
+        data?: { daoName: string; repoName: string; tagName: string } | undefined
+    }): Promise<IGoshCommitTag> {
+        throw new Error('Method is unavailable in current version')
     }
 
     async deployProfile(username: string, pubkey: string): Promise<IGoshProfile> {
@@ -810,6 +840,13 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
+    async getBigTask(options: {
+        name?: string | undefined
+        address?: string | undefined
+    }): Promise<TTaskDetails> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async getTopicCodeHash(): Promise<string> {
         const { value0 } = await this.gosh.gosh.runLocal(
             'getTopicCode',
@@ -835,6 +872,18 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             content: value1,
             object: value2,
         }
+    }
+
+    async getCodeCommetThreadCodeHash(
+        params: TCodeCommentThreadGetCodeParams,
+    ): Promise<TCodeCommentThreadGetCodeResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async getCodeCommentThread(
+        params: TCodeCommentThreadGetParams,
+    ): Promise<TCodeCommentThreadGetResult> {
+        throw new Error('Method is unavailable in current version')
     }
 
     async getSmv(): Promise<IGoshSmvAdapter> {
@@ -1809,6 +1858,34 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
+    async createBigTask(params: TBigTaskCreateParams): Promise<TBigTaskCreateResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async approveBigTask(params: TBigTaskApproveParams): Promise<TBigTaskApproveResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async deleteBigTask(params: TBigTaskDeleteParams): Promise<TBigTaskDeleteResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async receiveBigTaskBounty(params: TTaskReceiveBountyParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async upgradeBigTask(params: TBigTaskUpgradeParams): Promise<TBigTaskUpgradeResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createSubTask(params: TSubTaskCreateParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async deleteSubTask(params: TSubTaskDeleteParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async sendEventReview(params: TDaoEventSendReviewParams): Promise<void> {
         const { event, decision } = params
 
@@ -1911,6 +1988,34 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: await smv.getClientsCount(),
         })
+    }
+
+    async startPaidMembership(
+        params: TDaoStartPaidMembershipParams,
+    ): Promise<TDaoStartPaidMembershipResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async stopPaidMembership(
+        params: TDaoStopPaidMembershipParams,
+    ): Promise<TDaoStopPaidMembershipResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createCodeCommentThread(
+        params: TCodeCommentThreadCreateParams,
+    ): Promise<TCodeCommentThreadCreateResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async resolveCodeCommentThread(
+        params: TCodeCommentThreadResdolveParams,
+    ): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createCodeComment(params: TCodeCommentCreateParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
     }
 
     private async _isAuthMember(): Promise<boolean> {
@@ -2383,6 +2488,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         fullpath?: string
         address?: TAddress
     }): Promise<{
+        address: string
         onchain: { commit: string; content: string }
         content: string | Buffer
         ipfs: boolean
@@ -2431,7 +2537,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             result.ipfs = true
         }
 
-        return result
+        return { ...result, address: snapshot.address }
     }
 
     async getCommit(options: { name?: string; address?: TAddress }): Promise<TCommit> {
@@ -2459,6 +2565,18 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             })
         })
 
+        const _parents = await Promise.all(
+            parents.map(async (item: any) => {
+                const _commit = await this._getCommit({ address: item.addr })
+                const { value0 } = await _commit.runLocal('getNameCommit', {})
+                return {
+                    address: item.addr,
+                    version: item.version,
+                    name: value0,
+                }
+            }),
+        )
+
         return {
             address: commit.address,
             name: sha,
@@ -2469,10 +2587,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             message: parsed.message,
             author: parsed.author,
             committer: parsed.committer,
-            parents: parents.map((item: any) => ({
-                address: item.addr,
-                version: item.version,
-            })),
+            parents: _parents,
             version: commit.version,
             initupgrade,
         }
@@ -2714,7 +2829,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 commit: {
                     ...object,
                     tree: ZERO_COMMIT,
-                    parents: [{ address: object.address, version: object.version }],
+                    parents: [
+                        {
+                            address: object.address,
+                            version: object.version,
+                            name: object.name,
+                        },
+                    ],
                 },
                 tree: {},
                 blobs: [],
@@ -2727,7 +2848,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return {
             commit: {
                 ...object,
-                parents: [{ address: object.address, version: object.version }],
+                parents: [
+                    {
+                        address: object.address,
+                        version: object.version,
+                        name: object.name,
+                    },
+                ],
             },
             tree,
             blobs,
@@ -4482,18 +4609,19 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         const details = await event.runLocal('getDetails', {})
 
         const kind = parseInt(details.value0)
+        const time = {
+            start: parseInt(details.value2) * 1000,
+            finish: parseInt(details.value3) * 1000,
+            finishReal: parseInt(details.value4) * 1000,
+        }
         const minimal = {
             address,
             type: { kind, name: SmvEventTypes[kind] },
             status: {
-                completed: details.value1 !== null,
+                completed: details.value1 !== null || Date.now() > time.finish,
                 accepted: !!details.value1,
             },
-            time: {
-                start: parseInt(details.value2) * 1000,
-                finish: parseInt(details.value3) * 1000,
-                finishReal: parseInt(details.value4) * 1000,
-            },
+            time,
             votes: {
                 yes: parseInt(details.value5),
                 no: parseInt(details.value6),
@@ -4818,8 +4946,6 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getGoshSetCommitProposalParams'
         } else if (type === ESmvEventType.DAO_CONFIG_CHANGE) {
             fn = 'getGoshSetConfigDaoProposalParams'
-        } else if (type === ESmvEventType.TASK_CONFIRM) {
-            fn = 'getGoshConfirmTaskProposalParams'
         } else if (type === ESmvEventType.TASK_DELETE) {
             fn = 'getGoshDestroyTaskProposalParams'
         } else if (type === ESmvEventType.TASK_CREATE) {

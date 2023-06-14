@@ -145,6 +145,7 @@ const DaoMemberForm = (props: TDaoMemberFormProps) => {
                     },
                     allowance: parseInt(item.allowance),
                     comment: item.comment,
+                    expired: 0,
                 }))
             const memberProfilesList = memberProfiles.map(({ user }) => {
                 return `${user.name}.${user.type}`

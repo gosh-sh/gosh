@@ -4,6 +4,10 @@ import CopyClipboard from '../../../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
 import Loader from '../../../../components/Loader'
 import { Commiter } from '../../../../components/Commit'
+import { useBlobComments } from '../../../../hooks/codecomment.hooks'
+import { useOutletContext } from 'react-router-dom'
+import { TDaoLayoutOutletContext } from '../../../DaoLayout'
+import { useEffect } from 'react'
 
 type TRepoPullRequestEventProps = {
     className?: string
@@ -14,11 +18,22 @@ type TRepoPullRequestEventProps = {
 const RepoPullRequestEvent = (props: TRepoPullRequestEventProps) => {
     const { className, daoName, event } = props
     const { data } = event
+    const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const { isFetching, commit, blobs } = usePullRequestCommit(
         daoName!,
         data.repoName,
         data.commit,
     )
+    const { resetThreads } = useBlobComments({
+        dao: dao.adapter,
+        filename: '',
+    })
+
+    useEffect(() => {
+        return () => {
+            resetThreads()
+        }
+    }, [])
 
     return (
         <div className={className}>
@@ -59,9 +74,12 @@ const RepoPullRequestEvent = (props: TRepoPullRequestEventProps) => {
                 ({ item, current, previous, showDiff, isFetching }, index) => (
                     <div key={index} className="my-5 relative">
                         <BlobDiffPreview
+                            commentsOn={dao.details.version >= '5.0.0'}
                             filename={item.treepath}
                             modified={current}
                             original={previous}
+                            commit={commit!}
+                            address={event.address}
                             isDiffLoaded={showDiff}
                             isDiffFetching={isFetching}
                             getDiff={() => blobs.getDiff(index)}

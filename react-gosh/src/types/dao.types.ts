@@ -89,6 +89,7 @@ type TDaoMember = {
     profile: TAddress
     wallet: TAddress
     allowance?: number
+    expired?: number
 }
 
 type TDaoMemberDetails = TDaoMember & {
@@ -112,7 +113,7 @@ type TTaskDetails = {
     name: string
     repository: string
     team?: {
-        commit: {
+        commit?: {
             branch: string
             name: string
         }
@@ -127,20 +128,97 @@ type TTaskDetails = {
     tagsRaw: string[]
 }
 
+type TBigTaskDetails = TTaskDetails
+
 type TTaskListItem = TTaskDetails & {
     adapter: IGoshDaoAdapter
     isLoadDetailsFired?: boolean
 }
 
+type TTaskGrant = {
+    assign: { grant: number; lock: number }[]
+    review: { grant: number; lock: number }[]
+    manager: { grant: number; lock: number }[]
+    subtask: { grant: number; lock: number }[]
+}
+
+type TTaskAssigner = {
+    pubaddrassign: { [address: string]: boolean }
+    pubaddrreview: { [address: string]: boolean }
+    pubaddrmanager: { [address: string]: boolean }
+    daoMembers: { [address: string]: string }
+}
+
+type TTaskCandidate = TTaskAssigner & {
+    commitAddress?: string
+    commitCount?: string
+}
+
+type TBigTaskCreateParams = TEventCreateParams & {
+    repositoryName: string
+    name: string
+    config: TTaskGrant
+    assigners: TTaskAssigner
+    balance: number
+    tags?: string[]
+    cell?: boolean
+}
+
+type TBigTaskCreateResult = Promise<void | string>
+
+type TBigTaskApproveParams = TEventCreateParams & {
+    repositoryName: string
+    name: string
+    cell?: boolean
+}
+
+type TBigTaskApproveResult = void | string
+
+type TBigTaskDeleteParams = TEventCreateParams & {
+    repositoryName: string
+    name: string
+    cell?: boolean
+}
+
+type TBigTaskDeleteResult = void | string
+
+type TBigTaskUpgradeParams = TEventCreateParams & {
+    repositoryName: string
+    name: string
+    prevVersion: string
+    prevAddress: string
+    tags?: string[]
+    cell?: boolean
+}
+
+type TBigTaskUpgradeResult = void | string
+
+type TSubTaskDeleteParams = {
+    repositoryName: string
+    bigtaskName: string
+    index: number
+}
+
+type TSubTaskDeleteResult = void
+
+type TSubTaskCreateParams = {
+    repositoryName: string
+    bigtaskName: string
+    name: string
+    config: TTaskGrant
+    balance: number
+    tags?: string[]
+    candidates?: TTaskCandidate
+}
+
+type TSubTaskCreateResult = void
+
 type TTaskCreateParams = TEventCreateParams & {
     repository: string
     name: string
-    config: {
-        assign: { grant: number; lock: number }[]
-        review: { grant: number; lock: number }[]
-        manager: { grant: number; lock: number }[]
-    }
+    config: TTaskGrant
     tags?: string[]
+    candidates?: TTaskCandidate
     cell?: boolean
 }
 
@@ -194,8 +272,10 @@ type TDaoMemberCreateParams = TEventCreateParams & {
         user: TUserParam
         allowance: number
         comment: string
+        expired: number
     }[]
     cell?: boolean
+    alone?: boolean
 }
 
 type TDaoMemberCreateResult = Promise<void | string>
@@ -383,6 +463,80 @@ type TUpgradeVersionControllerParams = TEventCreateParams & {
 
 type TUpgradeVersionControllerResult = void
 
+type TDaoStartPaidMembershipParams = TEventCreateParams & {
+    index: number
+    cost: { value: number; decimals: number }
+    reserve: number
+    subscriptionAmount: number
+    subscriptionTime: number
+    accessKey: string
+    details: string
+    cell?: boolean
+}
+
+type TDaoStartPaidMembershipResult = string | void
+
+type TDaoStopPaidMembershipParams = TEventCreateParams & {
+    index: number
+    cell?: boolean
+}
+
+type TDaoStopPaidMembershipResult = string | void
+
+type TCodeCommentThreadCreateParams = {
+    name: string
+    content: string
+    object: string
+    metadata: {
+        startLine: number
+        endLine: number
+        commit: string
+    }
+    commit: string
+    filename: string
+}
+
+type TCodeCommentThreadCreateResult = IGoshTopic
+
+type TCodeCommentThreadGetCodeParams = {
+    daoAddress: string
+    objectAddress: string
+    commitName: string
+    filename: string
+}
+
+type TCodeCommentThreadGetCodeResult = string
+
+type TCodeCommentThreadGetParams = {
+    address: string
+}
+
+type TCodeCommentThreadGetResult = {
+    account: IGoshTopic
+    address: string
+    name: string
+    content: string
+    metadata: TCodeCommentThreadCreateParams['metadata']
+    isResolved: boolean
+    createdBy: string
+    createdAt: number
+}
+
+type TCodeCommentThreadResdolveParams = {
+    address: string
+    resolved: boolean
+}
+
+type TCodeCommentThreadResolveResult = void
+
+type TCodeCommentCreateParams = {
+    threadAddress: TAddress
+    message: string
+    answerId?: string
+}
+
+type TCodeCommentCreateResult = any
+
 export {
     ETaskBounty,
     TDao,
@@ -394,7 +548,20 @@ export {
     TWalletDetails,
     TUserParam,
     TTaskDetails,
+    TBigTaskDetails,
     TTaskListItem,
+    TBigTaskCreateParams,
+    TBigTaskCreateResult,
+    TBigTaskApproveParams,
+    TBigTaskApproveResult,
+    TBigTaskDeleteParams,
+    TBigTaskDeleteResult,
+    TBigTaskUpgradeParams,
+    TBigTaskUpgradeResult,
+    TSubTaskCreateParams,
+    TSubTaskCreateResult,
+    TSubTaskDeleteParams,
+    TSubTaskDeleteResult,
     TTaskCreateParams,
     TTaskCreateResult,
     TTaskDeleteParams,
@@ -451,4 +618,18 @@ export {
     TDaoTokenDaoTransferResult,
     TUpgradeVersionControllerParams,
     TUpgradeVersionControllerResult,
+    TDaoStartPaidMembershipParams,
+    TDaoStartPaidMembershipResult,
+    TDaoStopPaidMembershipParams,
+    TDaoStopPaidMembershipResult,
+    TCodeCommentThreadCreateParams,
+    TCodeCommentThreadCreateResult,
+    TCodeCommentThreadGetCodeParams,
+    TCodeCommentThreadGetCodeResult,
+    TCodeCommentThreadResdolveParams,
+    TCodeCommentThreadResolveResult,
+    TCodeCommentThreadGetParams,
+    TCodeCommentThreadGetResult,
+    TCodeCommentCreateParams,
+    TCodeCommentCreateResult,
 }

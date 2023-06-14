@@ -5,6 +5,7 @@ import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { ButtonLink, Input } from '../../../../components/Form'
 import DAO_MEMEBER_LIST_1_0_0 from './1.0.0/MemberList'
 import DAO_MEMEBER_LIST_2_0_0 from './2.0.0/MemberList'
+import DAO_MEMEBER_LIST_5_0_0 from './5.0.0/MemberList'
 
 type TMemberListProps = {
     dao: {
@@ -56,8 +57,17 @@ const DaoMemberList = (props: TMemberListProps) => {
                                 />
                             )
                         }
+                        if (version < '5.0.0') {
+                            return (
+                                <DAO_MEMEBER_LIST_2_0_0
+                                    dao={dao}
+                                    members={{ search, setSearch, ...restMembers }}
+                                    removal={removal}
+                                />
+                            )
+                        }
                         return (
-                            <DAO_MEMEBER_LIST_2_0_0
+                            <DAO_MEMEBER_LIST_5_0_0
                                 dao={dao}
                                 members={{ search, setSearch, ...restMembers }}
                                 removal={removal}
