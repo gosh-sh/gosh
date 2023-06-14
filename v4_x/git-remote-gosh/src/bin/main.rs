@@ -24,7 +24,7 @@ fn shutdown(result: anyhow::Result<()>) -> ExitCode {
     return exit_code;
 }
 
-#[tokio::main(flavor = "multi_thread", worker_threads = 2)]
+#[tokio::main(flavor = "multi_thread", worker_threads = 20)]
 async fn main() -> ExitCode {
     //#[cfg(feature = "memory_profiling")]
     let _profiler = dhat::Profiler::builder().testing().build();
