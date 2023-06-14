@@ -12,8 +12,10 @@ set -x
 # 4. Clone the repo and check the dev branch to have the correct content
 
 # ignore to wait for fixes
-echo "Test is ignored"
-exit 0
+if [ "$VERSION" != "v5_x" ]; then
+  echo "Test is ignored"
+  exit 0
+fi
 
 REPO_NAME="repo25_$(date +%s)"
 

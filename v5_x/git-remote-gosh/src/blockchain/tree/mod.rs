@@ -6,7 +6,7 @@
 // it is much easier to follow and apply changes
 // in the blockchain contracts.
 
-mod load;
+pub mod load;
 mod save;
 
 use std::{
