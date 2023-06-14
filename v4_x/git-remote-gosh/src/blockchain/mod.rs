@@ -240,18 +240,20 @@ impl Clone for Everscale {
 }
 
 #[instrument(level = "trace", skip_all)]
-async fn get_contracts_blocks(
+async fn check_contracts_deployed(
     context: &EverClient,
     contracts_addresses: &[BlockchainContractAddress],
     allow_incomplete_results: bool,
-) -> anyhow::Result<HashMap<BlockchainContractAddress, String>> {
+) -> anyhow::Result<Vec<BlockchainContractAddress>> {
+    trace_memory();
     tracing::trace!("get_contracts_blocks: allow_incomplete_results={allow_incomplete_results}");
     if contracts_addresses.is_empty() {
-        return Ok(HashMap::new());
+        return Ok(vec![]);
     }
     tracing::trace!("internal get_contracts_blocks start");
-    let mut accounts_bocs: HashMap<BlockchainContractAddress, String> = HashMap::new();
+    let mut accounts_bocs = vec![];
     for chunk in contracts_addresses.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {
+        trace_memory();
         let addresses: &[String] = &chunk
             .iter()
             .map(|e| -> String { <&BlockchainContractAddress as Into<String>>::into(e) })
@@ -267,7 +269,7 @@ async fn get_contracts_blocks(
             ParamsOfQueryCollection {
                 collection: "accounts".to_owned(),
                 filter: Some(filter),
-                result: "id boc".to_owned(),
+                result: "id".to_owned(),
                 limit: Some(contracts_addresses.len() as u32),
                 order: None,
             },
@@ -290,20 +292,19 @@ async fn get_contracts_blocks(
                 );
             }
         }
+        trace_memory();
         for r in query_result.iter() {
-            let boc = r["boc"]
-                .as_str()
-                .ok_or(anyhow::format_err!("boc must be a string"))?
-                .to_owned();
             let address = BlockchainContractAddress::new(
                 r["id"]
                     .as_str()
                     .expect("address must be a string")
                     .to_owned(),
             );
-            accounts_bocs.insert(address, boc);
+            accounts_bocs.push(address);
         }
+        trace_memory();
     }
+    trace_memory();
     return Ok(accounts_bocs);
 }
 

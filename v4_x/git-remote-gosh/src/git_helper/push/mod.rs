@@ -755,6 +755,7 @@ where
         let mut expected_contracts = vec![];
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
+        trace_memory();
         while attempts < MAX_REDEPLOY_ATTEMPTS {
             attempts += 1;
             expected_contracts = push_commits

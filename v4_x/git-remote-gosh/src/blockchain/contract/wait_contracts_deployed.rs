@@ -19,12 +19,12 @@ where
 {
     tracing::trace!("wait_contracts_deployed: addresses={addresses:?}");
     trace_memory();
-    let mut deploymend_results: JoinSet<anyhow::Result<Vec<BlockchainContractAddress>>> =
+    let mut deployment_results: JoinSet<anyhow::Result<Vec<BlockchainContractAddress>>> =
         JoinSet::new();
     for chunk in addresses.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {
         let mut waiting_for_addresses = Vec::from(addresses);
         let b = blockchain.clone();
-        deploymend_results.spawn(
+        deployment_results.spawn(
             async move {
                 let mut iteration = 0;
                 trace_memory();
@@ -39,12 +39,11 @@ where
                         return Ok(waiting_for_addresses);
                     }
                     match b
-                        .get_contracts_state_raw_data(&waiting_for_addresses, true)
+                        .check_contracts_state(&waiting_for_addresses, true)
                         .await
                     {
-                        Ok(available_bocs) => {
-                            let found_addresses: Vec<BlockchainContractAddress> =
-                                available_bocs.into_keys().collect();
+                        // bocs are useless
+                        Ok(found_addresses) => {
                             let available: HashSet<BlockchainContractAddress> =
                                 HashSet::from_iter(found_addresses.iter().cloned());
                             waiting_for_addresses.retain(|e| !available.contains(e));
@@ -74,7 +73,7 @@ where
     }
     trace_memory();
     let mut undeployed_contracts = HashSet::new();
-    while let Some(res) = deploymend_results.join_next().await {
+    while let Some(res) = deployment_results.join_next().await {
         let val = res??;
         for el in val {
             undeployed_contracts.insert(el);

@@ -118,7 +118,7 @@ impl MyHeapStats {
 }
 
 pub fn trace_memory() {
-    #[cfg(feature = "memory_profiling")]
+ //   #[cfg(feature = "memory_profiling")]
     tracing::trace!("MemoryState={}",
         json!(
             MyHeapStats::new(&dhat::HeapStats::get())
