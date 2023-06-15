@@ -22,7 +22,7 @@ export const GOSH_VERSION = Deno.env.get('GOSH_VERSION') ?? ''
 
 export async function initDaoBot(dao_bot: DaoBot) {
 
-    if (dao_bot.dao_name !== "vvismaster") {
+    if (dao_bot.dao_name !== "rolltidehero") {
         console.log("Wrong dao name skip it")
         return
     }
