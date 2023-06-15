@@ -7,7 +7,7 @@ use std::process::ExitCode;
 use std::time::Duration;
 use tokio::time::sleep;
 
-//#[cfg(feature = "memory_profiling")]
+#[cfg(feature = "memory_profiling")]
 #[global_allocator]
 static ALLOC: dhat::Alloc = dhat::Alloc;
 
@@ -26,9 +26,9 @@ fn shutdown(result: anyhow::Result<()>) -> ExitCode {
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 20)]
 async fn main() -> ExitCode {
-    //#[cfg(feature = "memory_profiling")]
+    #[cfg(feature = "memory_profiling")]
     let _profiler = dhat::Profiler::builder().testing().build();
-    //#[cfg(feature = "memory_profiling")]
+    #[cfg(feature = "memory_profiling")]
     eprintln!("trace memory: On");
     set_log_verbosity(1);
     trace_memory();

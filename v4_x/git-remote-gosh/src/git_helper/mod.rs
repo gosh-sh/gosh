@@ -318,16 +318,14 @@ where
                 get_commit_address(self.blockchain.client(), &mut repo_contract, commit_id).await?;
             tracing::trace!("commit_address {commit_address}");
             let commit_contract = GoshContract::new(&commit_address, gosh_abi::COMMIT);
-            let res: anyhow::Result<bool> = commit_contract.is_active(self.blockchain.client()).await;
-            match res {
-                Ok(true) => {
-                    return Ok(CommitVersion {
-                        version: repo_version.version.clone(),
-                        commit_address,
-                    });
-                },
-                _ => { continue; }
+            if !commit_contract.is_active(self.blockchain.client()).await? {
+                continue;
             }
+            return Ok(CommitVersion {
+                version: repo_version.version.clone(),
+                commit_address,
+            });
+
         }
         anyhow::bail!("Failed to find commit with id {commit_id} in all repo versions.")
     }

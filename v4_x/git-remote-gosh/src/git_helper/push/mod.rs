@@ -411,34 +411,31 @@ where
                 )
                 .await?;
                 let commit_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
-                match commit_contract.is_active(self.blockchain.client()).await {
-                    Ok(true) => {
-                        if repo_version.version != supported_contract_version() {
-                            tracing::trace!(
+                if commit_contract.is_active(self.blockchain.client()).await? {
+                    if repo_version.version != supported_contract_version() {
+                        tracing::trace!(
                                 "Found parent {id} in version {}",
                                 repo_version.version
                             );
-                            tracing::trace!("Start upgrade of the parent: {id}");
-                            let branch: GetNameCommitResult = commit_contract
-                                .run_local(self.blockchain.client(), "getNameBranch", None)
-                                .await?;
-                            // TODO: local and remote branch are set equal here it can be wrong
-                            self.check_and_upgrade_previous_commit(
-                                id.to_string(),
-                                &branch.name,
-                                &branch.name,
-                                set_commit,
-                            )
+                        tracing::trace!("Start upgrade of the parent: {id}");
+                        let branch: GetNameCommitResult = commit_contract
+                            .run_local(self.blockchain.client(), "getNameBranch", None)
                             .await?;
-                        }
-                        break;
+                        // TODO: local and remote branch are set equal here it can be wrong
+                        self.check_and_upgrade_previous_commit(
+                            id.to_string(),
+                            &branch.name,
+                            &branch.name,
+                            set_commit,
+                        )
+                            .await?;
                     }
-                    _ => {
-                        tracing::trace!(
-                            "Not found parent {id} in version {}",
-                            repo_version.version
-                        );
-                    }
+                    break;
+                } else {
+                    tracing::trace!(
+                        "Not found parent {id} in version {}",
+                        repo_version.version
+                    );
                 }
             }
         }
