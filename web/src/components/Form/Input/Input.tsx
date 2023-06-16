@@ -2,14 +2,13 @@ import classNames from 'classnames'
 import { forwardRef } from 'react'
 
 type TInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
-    ref?: React.LegacyRef<HTMLInputElement>
     before?: React.ReactNode
     after?: React.ReactNode
     hasError?: boolean
     inputClassName?: string
 }
 
-const Input = forwardRef<HTMLInputElement, TInputProps>((props: TInputProps, ref) => {
+const Input = forwardRef<HTMLInputElement, TInputProps>((props, ref) => {
     const { className, before, after, hasError, inputClassName, ...rest } = props
 
     return (

@@ -3,7 +3,7 @@ import { useCallback, useEffect } from 'react'
 import { AppConfig, EGoshError, GoshError } from 'react-gosh'
 import { toast } from 'react-toastify'
 import { ToastError } from '../../../components/Toast'
-import { SwitchField } from '../../../components/Formik'
+import { FormikCheckbox } from '../../../components/Formik'
 import { Link } from 'react-router-dom'
 import PhraseForm from '../../../components/PhraseForm'
 import yup from '../../../yup-extended'
@@ -75,10 +75,7 @@ const GoshPhrase = (props: TGoshPhraseProps) => {
                 <div className="p-8 border border-gray-e6edff rounded-xl">
                     <PhraseForm
                         initialValues={{
-                            words: signupState.phrase.map((v, i) => ({
-                                value: v,
-                                index: i,
-                            })),
+                            words: signupState.phrase,
                             isConfirmed: false,
                         }}
                         validationSchema={yup.object().shape({
@@ -89,6 +86,9 @@ const GoshPhrase = (props: TGoshPhraseProps) => {
                         btnGenerate
                         btnClear
                         btnSubmitContent="Continue"
+                        btnSubmitProps={{
+                            size: 'xl',
+                        }}
                         onSubmit={onFormSubmit}
                         onGenerate={async (words) => {
                             setSignupState((state) => ({ ...state, phrase: words }))
@@ -96,12 +96,13 @@ const GoshPhrase = (props: TGoshPhraseProps) => {
                     >
                         <div className="mt-8 text-center">
                             <Field
+                                className="!inline-block"
                                 name="isConfirmed"
-                                component={SwitchField}
-                                className="justify-center"
-                                label="I have written phrase carefuly"
-                                labelClassName="text-sm text-gray-505050"
-                                errorClassName="mt-2 text-center text-sm"
+                                type="checkbox"
+                                component={FormikCheckbox}
+                                inputProps={{
+                                    label: 'I have written phrase carefuly',
+                                }}
                             />
                         </div>
                     </PhraseForm>
