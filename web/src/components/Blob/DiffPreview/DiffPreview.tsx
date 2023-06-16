@@ -18,8 +18,9 @@ type TBlobDiffPreviewProps = {
     isDiffLoaded?: boolean
     isDiffFetching?: boolean
     commentsOn?: boolean
-    commit: TCommit
-    address: string
+    commentsObject?: string
+    snapshotAddress?: string
+    commit?: TCommit
 
     getDiff(): void
 }
@@ -32,16 +33,17 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
         isDiffLoaded = false,
         isDiffFetching = false,
         commentsOn,
+        commentsObject,
+        snapshotAddress,
         commit,
-        address,
         getDiff,
     } = props
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const { getThreads } = useBlobComments({
         dao: dao.adapter,
-        objectAddress: address,
+        objectAddress: commentsObject,
         filename,
-        commits: [commit.parents[0].name, commit.name],
+        commits: commit ? [commit.parents[0].name, commit.name] : undefined,
     })
     const [isDiffShort, setIsDiffShort] = useState<boolean>(true)
     const [mouseDown, setMouseDown] = useState<boolean>(false)
@@ -127,7 +129,8 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
                                     filename={filename}
                                     commit={commit}
                                     block={block}
-                                    address={address}
+                                    commentsObject={commentsObject}
+                                    snapshotAddress={snapshotAddress}
                                     commentsOn={commentsOn}
                                     mouseDown={mouseDown}
                                     setMouseDown={setMouseDown}

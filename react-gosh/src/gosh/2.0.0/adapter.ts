@@ -2117,7 +2117,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         treepath: string,
         branch: string,
         commit: string | TCommit,
-    ): Promise<{ previous: string | Buffer; current: string | Buffer }> {
+    ): Promise<{ address: string; previous: string | Buffer; current: string | Buffer }> {
         if (typeof commit === 'string') {
             commit = await this.getCommit({ name: commit })
         }
@@ -2166,10 +2166,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 ? ''
                 : await this._getCommitBlob(parent, treepath, content, approved)
 
-        return { previous, current }
+        return { address: snapshot.address, previous, current }
     }
 
-    async getCommitBlobs(branch: string, commit: string | TCommit): Promise<string[]> {
+    async getCommitBlobs(
+        branch: string,
+        commit: string | TCommit,
+    ): Promise<{ address: string; treepath: string }[]> {
         const isTCommit = typeof commit !== 'string'
         const object = !isTCommit
             ? await this._getCommit({ name: commit })
@@ -2185,13 +2188,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             })
             .map(({ decoded }) => decoded.value.value0.snap)
 
-        return await executeByChunk<TAddress, TAddress>(
+        return await executeByChunk<TAddress, { address: string; treepath: string }>(
             Array.from(new Set(addresses)),
             MAX_PARALLEL_READ,
             async (address) => {
                 const snapshot = await this._getSnapshot({ address })
                 const name = await snapshot.getName()
-                return name.split('/').slice(1).join('/')
+                return { address, treepath: name.split('/').slice(1).join('/') }
             },
         )
     }
@@ -2199,7 +2202,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     async getPullRequestBlob(
         item: { treepath: string; index: number },
         commit: string | TCommit,
-    ): Promise<{ previous: string | Buffer; current: string | Buffer }> {
+    ): Promise<{ address: string; previous: string | Buffer; current: string | Buffer }> {
         if (typeof commit === 'string') {
             commit = await this.getCommit({ name: commit })
         }
@@ -2212,6 +2215,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         // Get blob state at parent commit, get diffs and apply
         const parent = await this.getCommit({ address: commit.parents[0].address })
 
+        let address = ''
         let previous: string | Buffer
         let current: string | Buffer
         try {
@@ -2220,6 +2224,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 commit.branch,
                 parent.name,
             )
+            address = state.address
             previous = current = state.current
         } catch {
             previous = current = ''
@@ -2230,12 +2235,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         for (const subdiff of subdiffs) {
             current = await this._applyBlobDiffPatch(current, subdiff)
         }
-        return { previous, current }
+        return { address, previous, current }
     }
 
     async getPullRequestBlobs(
         commit: string | TCommit,
-    ): Promise<{ treepath: string; index: number }[]> {
+    ): Promise<{ address: string; treepath: string; index: number }[]> {
         if (typeof commit === 'string') commit = await this.getCommit({ name: commit })
 
         // Get IGoshDiff instance list for commit
@@ -2252,21 +2257,24 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         // Get blobs list from commit (if commit was accepted)
         if (!diffs.length) {
             const blobs = await this.getCommitBlobs(commit.branch, commit)
-            return blobs.map((treepath) => ({ treepath, index: -1 }))
+            return blobs.map(({ address, treepath }) => ({
+                address,
+                treepath,
+                index: -1,
+            }))
         }
 
         // Get blobs list from diffs (if commit is not accepted)
-        return await executeByChunk<IGoshDiff, { treepath: string; index: number }>(
-            diffs,
-            MAX_PARALLEL_READ,
-            async (diff, index) => {
-                const subdiffs = await this._getDiffs(diff)
-                const snapshot = await this._getSnapshot({ address: subdiffs[0].snap })
-                const name = await snapshot.getName()
-                const treepath = name.split('/').slice(1).join('/')
-                return { treepath, index }
-            },
-        )
+        return await executeByChunk<
+            IGoshDiff,
+            { address: string; treepath: string; index: number }
+        >(diffs, MAX_PARALLEL_READ, async (diff, index) => {
+            const subdiffs = await this._getDiffs(diff)
+            const snapshot = await this._getSnapshot({ address: subdiffs[0].snap })
+            const name = await snapshot.getName()
+            const treepath = name.split('/').slice(1).join('/')
+            return { address: snapshot.address, treepath, index }
+        })
     }
 
     async getBranch(name: string): Promise<TBranch> {

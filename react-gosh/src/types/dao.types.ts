@@ -491,6 +491,7 @@ type TCodeCommentThreadCreateParams = {
         startLine: number
         endLine: number
         commit: string
+        snapshot: string
     }
     commit: string
     filename: string
