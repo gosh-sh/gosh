@@ -37,7 +37,8 @@ type TBlobCommentsAtom = {
 
 type TBlobCommentsAiAtom = {
     filename: string
-    address: string
+    snapshot: string
+    thread: string
     startLine: number
     endLine: number
     comment: string

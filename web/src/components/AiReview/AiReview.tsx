@@ -7,18 +7,19 @@ import { toast } from 'react-toastify'
 import { ToastError } from '../Toast'
 import { supabase } from '../../helpers'
 import { Form, Formik } from 'formik'
+import classNames from 'classnames'
 
-type TAiReviewButtonProps = {
+type TAiReviewProps = React.HTMLAttributes<HTMLDivElement> & {
     dao: TDao
 }
 
-const AiReview = (props: TAiReviewButtonProps) => {
-    const { dao } = props
+const AiReview = (props: TAiReviewProps) => {
+    const { dao, className } = props
     const comments = useRecoilValue(blobsCommentsAiAtom)
     const resetComments = useResetRecoilState(blobsCommentsAiAtom)
 
     const getFilesCount = useCallback(() => {
-        const unique = new Set(comments.map(({ address }) => address))
+        const unique = new Set(comments.map(({ snapshot }) => snapshot))
         return unique.size
     }, [comments])
 
@@ -46,7 +47,12 @@ const AiReview = (props: TAiReviewButtonProps) => {
     }
 
     return (
-        <div className="bg-white border border-gray-e6edff rounded-xl p-2">
+        <div
+            className={classNames(
+                'bg-white border border-gray-e6edff rounded-xl p-2',
+                className,
+            )}
+        >
             <div className="bg-gray-fafafd rounded-xl px-3 py-4">
                 <div className="text-sm mb-2">
                     {comments.length} comments in {getFilesCount()} files

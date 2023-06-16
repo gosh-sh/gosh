@@ -245,7 +245,9 @@ export function useBlobComments(params: {
         metadata?: TCodeCommentThreadGetResult['metadata'] | null
     }) => {
         const { id, content, metadata } = params
+        let _thread: string
         if (id) {
+            _thread = id
             const { transaction } = await dao.createCodeComment({
                 threadAddress: id,
                 message: content,
@@ -297,6 +299,7 @@ export function useBlobComments(params: {
                 commit: metadata.commit,
                 filename,
             })
+            _thread = thread.address
 
             // Update state
             setThreads((state) => ({
@@ -343,21 +346,23 @@ export function useBlobComments(params: {
         // Used for commenting multiple files for AI
         if (multiple) {
             const item = { filename, comment: content }
-            let meta: { address: string; startLine: number; endLine: number } | undefined
+            let meta: any
             if (id) {
                 const thread = threads[filename].threads.items.find(
                     (item) => item.id === id,
                 )
                 if (thread) {
                     meta = {
-                        address: thread.snapshot,
+                        snapshot: thread.snapshot,
+                        thread: _thread,
                         startLine: thread.startLine,
                         endLine: thread.endLine,
                     }
                 }
             } else if (metadata) {
                 meta = {
-                    address: metadata.snapshot,
+                    snapshot: metadata.snapshot,
+                    thread: _thread,
                     startLine: metadata.startLine,
                     endLine: metadata.endLine,
                 }
@@ -365,7 +370,7 @@ export function useBlobComments(params: {
 
             // Update AI comments
             if (meta) {
-                setAiComments((state) => [...state, { ...item, ...meta! }])
+                setAiComments((state) => [...state, { ...item, ...meta }])
             }
         }
     }
