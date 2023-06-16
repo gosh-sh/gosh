@@ -1,44 +1,78 @@
 import { useRecoilValue, useResetRecoilState } from 'recoil'
-import { blobsCommentsCountAtom } from '../../store/comments.state'
-import { TDao } from 'react-gosh'
+import { blobsCommentsAiAtom } from '../../store/comments.state'
+import { GoshError, TDao } from 'react-gosh'
 import { Button } from '../Form'
-import { sum } from 'lodash'
 import { useCallback } from 'react'
+import { toast } from 'react-toastify'
+import { ToastError } from '../Toast'
+import { supabase } from '../../helpers'
+import { Form, Formik } from 'formik'
+import classNames from 'classnames'
 
-type TAiReviewButtonProps = {
+type TAiReviewProps = React.HTMLAttributes<HTMLDivElement> & {
     dao: TDao
 }
 
-const AiReview = (props: TAiReviewButtonProps) => {
-    const { dao } = props
-    const comments = useRecoilValue(blobsCommentsCountAtom)
-    const reset = useResetRecoilState(blobsCommentsCountAtom)
+const AiReview = (props: TAiReviewProps) => {
+    const { dao, className } = props
+    const comments = useRecoilValue(blobsCommentsAiAtom)
+    const resetComments = useResetRecoilState(blobsCommentsAiAtom)
 
-    const getCommentsCount = useCallback(() => {
-        const array = Object.keys(comments).map((key) => comments[key])
-        return sum(array)
+    const getFilesCount = useCallback(() => {
+        const unique = new Set(comments.map(({ snapshot }) => snapshot))
+        return unique.size
     }, [comments])
 
-    return null
+    const isAiMember = dao.members.find(
+        ({ profile }) => profile === import.meta.env.REACT_APP_GOSHAI_PROFILE,
+    )
 
-    // const isAiMember = dao.members.find(
-    //     ({ profile }) => profile === import.meta.env.REACT_APP_GOSHAI_PROFILE,
-    // )
+    const onSubmitReview = async () => {
+        try {
+            const { error } = await supabase.from('gosh_ai_comments').insert({
+                data: JSON.stringify(comments),
+            })
+            if (error) {
+                throw new GoshError('Save comments error', error.message)
+            }
+            resetComments()
+        } catch (e: any) {
+            console.error(e.message)
+            toast.error(<ToastError error={e} />)
+        }
+    }
 
-    // if (dao.version < '5.0.0' || !isAiMember || !Object.keys(comments).length) {
-    //     return null
-    // }
+    if (dao.version < '5.0.0' || !isAiMember || !comments.length) {
+        return null
+    }
 
-    // return (
-    //     <div className="bg-white border border-gray-e6edff rounded-xl p-2">
-    //         <div className="bg-gray-fafafd rounded-xl px-3 py-4">
-    //             <div className="text-sm mb-2">
-    //                 {getCommentsCount()} comments in {Object.keys(comments).length} files
-    //             </div>
-    //             <Button onClick={reset}>Finish review, request changes</Button>
-    //         </div>
-    //     </div>
-    // )
+    return (
+        <div
+            className={classNames(
+                'bg-white border border-gray-e6edff rounded-xl p-2',
+                className,
+            )}
+        >
+            <div className="bg-gray-fafafd rounded-xl px-3 py-4">
+                <div className="text-sm mb-2">
+                    {comments.length} comments in {getFilesCount()} files
+                </div>
+                <Formik initialValues={{}} onSubmit={onSubmitReview}>
+                    {({ isSubmitting }) => (
+                        <Form>
+                            <Button
+                                type="submit"
+                                disabled={isSubmitting}
+                                isLoading={isSubmitting}
+                            >
+                                Finish review, request changes
+                            </Button>
+                        </Form>
+                    )}
+                </Formik>
+            </div>
+        </div>
+    )
 }
 
 export default AiReview

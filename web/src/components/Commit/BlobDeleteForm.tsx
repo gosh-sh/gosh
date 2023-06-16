@@ -195,6 +195,7 @@ const BlobDeleteForm = (props: TBlobDeleteFormProps) => {
                                 filename={treepath}
                                 original={content}
                                 modified=""
+                                commentsOn={false}
                                 isDiffLoaded
                                 getDiff={() => {}}
                             />

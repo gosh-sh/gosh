@@ -1,14 +1,15 @@
 import { atom } from 'recoil'
 
-type BlobComment = {
+type TBlobComment = {
     id: string
     username: string
     datetime: number
     content: string
 }
 
-type BlobCommentsThread = {
+type TBlobCommentsThread = {
     id: string
+    snapshot: string
     commit: string
     startLine: number
     endLine: number
@@ -17,29 +18,38 @@ type BlobCommentsThread = {
     isResolved: boolean
     isOpen: boolean
     isActive: boolean
-    content: BlobComment
+    content: TBlobComment
     comments: {
         isFetching: boolean
         cursor?: string
         hasNext: boolean
-        items: BlobComment[]
+        items: TBlobComment[]
     }
 }
 
-type BlobCommentsAtom = {
+type TBlobCommentsAtom = {
     [filename: string]: {
         selectedLines: { commit: string; lines: number[] }
         commentFormLine: { commit: string; line: number }
-        threads: { isFetching: boolean; items: BlobCommentsThread[] }
+        threads: { isFetching: boolean; items: TBlobCommentsThread[] }
     }
 }
 
-export const blobCommentsAtom = atom<BlobCommentsAtom>({
+type TBlobCommentsAiAtom = {
+    filename: string
+    snapshot: string
+    thread: string
+    startLine: number
+    endLine: number
+    comment: string
+}[]
+
+export const blobCommentsAtom = atom<TBlobCommentsAtom>({
     key: 'BlobCommentsAtom',
     default: {},
 })
 
-export const blobsCommentsCountAtom = atom<{ [filename: string]: number }>({
-    key: 'BlobsCommentsCountAtom',
-    default: {},
+export const blobsCommentsAiAtom = atom<TBlobCommentsAiAtom>({
+    key: 'BlobsCommentsAiAtom',
+    default: [],
 })
