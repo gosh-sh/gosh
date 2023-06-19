@@ -30,7 +30,12 @@ import {
     IGoshWallet,
 } from '../gosh/interfaces'
 import { GoshAdapterFactory } from '../gosh'
-import { DAO_TOKEN_TRANSFER_TAG, MAX_PARALLEL_READ, SYSTEM_TAG } from '../constants'
+import {
+    DAO_TOKEN_TRANSFER_TAG,
+    MAX_PARALLEL_READ,
+    SYSTEM_TAG,
+    VESTING_BALANCE_TAG,
+} from '../constants'
 import { KeyPair } from '@eversdk/core'
 
 function useDaoList(perPage: number) {
@@ -419,6 +424,138 @@ function useDaoUpgrade(dao: IGoshDaoAdapter) {
     }
 
     return { versions, upgrade }
+}
+
+function useVestingBalance(dao?: IGoshDaoAdapter) {
+    const { user } = useUser()
+    const [balance, setBalance] = useState<number>(0)
+
+    const getTagName = () => {
+        return `${VESTING_BALANCE_TAG}:${user.username}`
+    }
+
+    const getTag = async () => {
+        if (!dao) {
+            return null
+        }
+        return await dao.getGosh().getCommitTag({
+            data: {
+                daoName: await dao.getName(),
+                repoName: VESTING_BALANCE_TAG,
+                tagName: getTagName(),
+            },
+        })
+    }
+
+    const getStoredBalance = async () => {
+        const tag = await getTag()
+        console.debug('TAG', tag)
+        if (!tag || !(await tag.isDeployed())) {
+            return 0
+        }
+
+        const { value0 } = await tag.runLocal('getContent', {})
+        return parseInt(value0)
+    }
+
+    const updateBalance = async () => {
+        if (!dao || !user.profile || !user.username) {
+            return
+        }
+
+        // Get stored balance
+        const stored = await getStoredBalance()
+        setBalance(stored)
+        console.debug('STORED', stored)
+
+        // Get all DAO tasks
+        const gosh = dao.getGosh()
+        const codeHash = await gosh.getTaskTagDaoCodeHash(dao.getAddress(), SYSTEM_TAG)
+        const result = await getAllAccounts({
+            filters: [`code_hash: {eq:"${codeHash}"}`],
+        })
+        const tasks = await executeByChunk(result, 30, async ({ id }) => {
+            const tag = await gosh.getHelperTag(id)
+            const { _task } = await tag.runLocal('_task', {})
+            const task = await dao.getTaskAccount({ address: _task })
+            return await task.runLocal('getStatus', {})
+        })
+        console.debug('TASKS', tasks)
+
+        // Calculate balance
+        let _balance = 0
+        for (const task of tasks) {
+            if (task.candidates.length === 0) {
+                continue
+            }
+
+            const assigners = Object.keys(task.candidates[0].pubaddrassign)
+            const reviewers = Object.keys(task.candidates[0].pubaddrreview)
+            const managers = Object.keys(task.candidates[0].pubaddrmanager)
+
+            if (assigners.indexOf(user.profile) >= 0) {
+                for (const { grant } of task.grant.assign) {
+                    _balance += Math.floor(parseInt(grant) / assigners.length)
+                }
+            }
+            if (reviewers.indexOf(user.profile) >= 0) {
+                for (const { grant } of task.grant.review) {
+                    _balance += Math.floor(parseInt(grant) / reviewers.length)
+                }
+            }
+            if (managers.indexOf(user.profile) >= 0) {
+                for (const { grant } of task.grant.manager) {
+                    _balance += Math.floor(parseInt(grant) / managers.length)
+                }
+            }
+        }
+        setBalance(_balance)
+
+        // Update tag
+        const tag = await getTag()
+        if (tag) {
+            if ((await tag.isDeployed()) && stored !== _balance) {
+                await dao.wallet?.run('deleteTag', {
+                    repoName: VESTING_BALANCE_TAG,
+                    nametag: getTagName(),
+                })
+            }
+            if (!(await tag.isDeployed())) {
+                await dao.wallet?.run('deployTag', {
+                    repoName: VESTING_BALANCE_TAG,
+                    nametag: getTagName(),
+                    nameCommit: user.username,
+                    commit: user.profile,
+                    content: _balance.toString(),
+                })
+            }
+        }
+    }
+
+    useEffect(() => {
+        updateBalance()
+
+        let isIntervalBusy = false
+        const interval = setInterval(async () => {
+            if (isIntervalBusy) {
+                return
+            }
+
+            isIntervalBusy = true
+            try {
+                await updateBalance()
+            } catch (e: any) {
+                console.error(e.message)
+            }
+            isIntervalBusy = false
+        }, 120000)
+
+        return () => {
+            clearInterval(interval)
+        }
+    }, [dao?.getAddress()])
+
+    return balance
 }
 
 function useDaoAutoTokenTransfer(dao?: IGoshDaoAdapter) {
@@ -1479,4 +1616,5 @@ export {
     useTopicCreate,
     useTopicList,
     useTopic,
+    useVestingBalance,
 }
