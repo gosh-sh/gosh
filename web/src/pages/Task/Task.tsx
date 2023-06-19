@@ -10,6 +10,7 @@ import Loader from '../../components/Loader'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import { TaskStatusBadge } from '../Tasks/components'
 import { TaskGrantList } from '../../components/Task/GrantList'
+import Alert from '../../components/Alert'
 
 const TaskPage = () => {
     const { address } = useParams()
@@ -259,10 +260,16 @@ const TaskPage = () => {
                                                             type="submit"
                                                             className="w-full"
                                                             isLoading={isSubmitting}
-                                                            disabled={isSubmitting}
+                                                            disabled={true}
                                                         >
                                                             Claim reward
                                                         </Button>
+                                                        <Alert
+                                                            variant="danger"
+                                                            className="mt-4 text-xs"
+                                                        >
+                                                            Claim is temporary unavailable
+                                                        </Alert>
                                                     </Form>
                                                 )}
                                             </Formik>
