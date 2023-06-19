@@ -22,8 +22,8 @@ use ton_client::{
         ParamsOfEncodeMessage, ResultOfEncodeInitialData, Signer,
     },
     boc::{
-        cache_set, encode_tvc, get_boc_hash, BocCacheType, ParamsOfBocCacheSet, ParamsOfEncodeTvc,
-        ParamsOfGetBocHash, ResultOfBocCacheSet, ResultOfEncodeTvc, ResultOfGetBocHash,
+        cache_set, get_boc_hash, BocCacheType, ParamsOfBocCacheSet,
+        ParamsOfGetBocHash, ResultOfBocCacheSet, ResultOfGetBocHash,
     },
     net::{query_collection, ParamsOfQuery, ParamsOfQueryCollection},
     processing::ProcessingEvent,
@@ -49,7 +49,10 @@ use once_cell::sync::Lazy;
 use serde_number::Number;
 pub use snapshot::Snapshot;
 use std::collections::HashMap;
+use std::time::Duration;
 use tokio::sync::RwLock;
+use tokio::time::sleep;
+use ton_client::boc::{encode_state_init, ParamsOfEncodeStateInit, ResultOfEncodeStateInit};
 pub use tree::Tree;
 pub use tvm_hash::tvm_hash;
 
@@ -237,17 +240,17 @@ impl Clone for Everscale {
 }
 
 #[instrument(level = "trace", skip_all)]
-async fn get_contracts_blocks(
+async fn check_contracts_deployed(
     context: &EverClient,
     contracts_addresses: &[BlockchainContractAddress],
     allow_incomplete_results: bool,
-) -> anyhow::Result<HashMap<BlockchainContractAddress, String>> {
+) -> anyhow::Result<Vec<BlockchainContractAddress>> {
     tracing::trace!("get_contracts_blocks: allow_incomplete_results={allow_incomplete_results}");
     if contracts_addresses.is_empty() {
-        return Ok(HashMap::new());
+        return Ok(vec![]);
     }
     tracing::trace!("internal get_contracts_blocks start");
-    let mut accounts_bocs: HashMap<BlockchainContractAddress, String> = HashMap::new();
+    let mut accounts_bocs = vec![];
     for chunk in contracts_addresses.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {
         let addresses: &[String] = &chunk
             .iter()
@@ -264,7 +267,7 @@ async fn get_contracts_blocks(
             ParamsOfQueryCollection {
                 collection: "accounts".to_owned(),
                 filter: Some(filter),
-                result: "id boc".to_owned(),
+                result: "id".to_owned(),
                 limit: Some(contracts_addresses.len() as u32),
                 order: None,
             },
@@ -288,17 +291,13 @@ async fn get_contracts_blocks(
             }
         }
         for r in query_result.iter() {
-            let boc = r["boc"]
-                .as_str()
-                .ok_or(anyhow::format_err!("boc must be a string"))?
-                .to_owned();
             let address = BlockchainContractAddress::new(
                 r["id"]
                     .as_str()
                     .expect("address must be a string")
                     .to_owned(),
             );
-            accounts_bocs.insert(address, boc);
+            accounts_bocs.push(address);
         }
     }
     return Ok(accounts_bocs);
@@ -379,7 +378,8 @@ async fn run_local(
     .instrument(info_span!("run_local sdk::run_tvm").or_current())
     .await
     .map(|r| r.decoded.unwrap())
-    .map(|r| r.output.unwrap())?;
+    .map(|r| r.output.unwrap())
+        .map_err(|e| anyhow::format_err!("run_local failed: {e}"))?;
 
     Ok(result)
 }
@@ -436,6 +436,7 @@ async fn run_static(
             );
         }
         let AccountBoc { boc, .. } = serde_json::from_value(query[0].clone())?;
+        tracing::trace!("Save acc to cache");
         let ResultOfBocCacheSet { boc_ref } = cache_set(
             Arc::clone(context),
             ParamsOfBocCacheSet {
@@ -487,12 +488,15 @@ async fn run_static(
             return_updated_account: None,
         },
     )
-    .instrument(info_span!("run_static sdk::run_tvm").or_current())
-    .await
-    .map(|r| r.decoded.unwrap())
-    .map(|r| r.output.unwrap())?;
-
-    Ok(result)
+        .instrument(info_span!("run_static sdk::run_tvm").or_current())
+        .await
+        .map(|r| r.decoded.unwrap())
+        .map(|r| r.output.unwrap())
+        .map_err(|e| anyhow::format_err!("run_static failed: {e}"));
+    if result.is_err() {
+        eprintln!("run_static error: {result:?}");
+    }
+    Ok(result?)
 }
 
 #[instrument(level = "debug", skip(context))]
@@ -522,7 +526,8 @@ pub async fn get_account_data(
         },
     )
     .await
-    .map(|r| r.result)?;
+    .map(|r| r.result)
+        .map_err(|e| anyhow::format_err!("query error: {e}"))?;
 
     let extracted_data = &result["data"]["blockchain"]["account"]["info"];
 
@@ -684,7 +689,8 @@ pub async fn tag_list(
         },
     )
     .await
-    .map(|r| r.result)?;
+    .map(|r| r.result)
+        .map_err(|e| anyhow::format_err!("query error: {e}"))?;
 
     let raw_accounts = result["data"]["accounts"].clone();
     let accounts: Vec<Account> = serde_json::from_value(raw_accounts)?;
@@ -789,15 +795,15 @@ pub async fn calculate_contract_address(
     let ResultOfEncodeInitialData { data } =
         encode_initial_data(Arc::clone(context), params).await?;
 
-    let params = ParamsOfEncodeTvc {
+    let params = ParamsOfEncodeStateInit {
         code: Some(code.to_owned()),
         data: Some(data.to_owned()),
         ..Default::default()
     };
 
-    let ResultOfEncodeTvc { tvc } = encode_tvc(Arc::clone(context), params).await?;
+    let ResultOfEncodeStateInit { state_init } = encode_state_init(Arc::clone(context), params).await?;
 
-    let hash = calculate_boc_hash(context, &tvc).await?;
+    let hash = calculate_boc_hash(context, &state_init).await?;
 
     Ok(BlockchainContractAddress::new(format!("0:{hash}")))
 }
