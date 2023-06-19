@@ -1,13 +1,6 @@
 import { Form, Formik } from 'formik'
 import { useCallback } from 'react'
-import {
-    classNames,
-    GoshError,
-    TDao,
-    TSmvDetails,
-    useUser,
-    useVestingBalance,
-} from 'react-gosh'
+import { classNames, GoshError, TDao, TSmvDetails, useUser } from 'react-gosh'
 import { IGoshDaoAdapter, IGoshSmvAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { toast } from 'react-toastify'
 import { useSetRecoilState } from 'recoil'
@@ -32,7 +25,6 @@ const DaoWalletSide = (props: TDaoWalletSideProps) => {
     const { dao, wallet, className } = props
     const setModal = useSetRecoilState(appModalStateAtom)
     const { user } = useUser()
-    const vesting = useVestingBalance(dao.adapter)
 
     const getUserBalance = useCallback(() => {
         const voting = Math.max(wallet.details.smvAvailable, wallet.details.smvLocked)
@@ -152,12 +144,6 @@ const DaoWalletSide = (props: TDaoWalletSideProps) => {
                         </div>
                     </div>
                 )}
-            </div>
-
-            <hr className="my-4 bg-gray-e6edff" />
-            <div>
-                <div className="mb-1 text-gray-7c8db5 text-sm">Your vesting balance</div>
-                <div className="text-xl font-medium">{vesting.toLocaleString()}</div>
             </div>
 
             {dao.details.isAuthMember && (

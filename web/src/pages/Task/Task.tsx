@@ -260,16 +260,24 @@ const TaskPage = () => {
                                                             type="submit"
                                                             className="w-full"
                                                             isLoading={isSubmitting}
-                                                            disabled={true}
+                                                            disabled={
+                                                                isSubmitting ||
+                                                                dao.details.version >=
+                                                                    '5.0.0'
+                                                            }
                                                         >
                                                             Claim reward
                                                         </Button>
-                                                        <Alert
-                                                            variant="danger"
-                                                            className="mt-4 text-xs"
-                                                        >
-                                                            Claim is temporary unavailable
-                                                        </Alert>
+                                                        {dao.details.version >=
+                                                            '5.0.0' && (
+                                                            <Alert
+                                                                variant="danger"
+                                                                className="mt-4 text-xs"
+                                                            >
+                                                                Claim is temporary
+                                                                unavailable
+                                                            </Alert>
+                                                        )}
                                                     </Form>
                                                 )}
                                             </Formik>
