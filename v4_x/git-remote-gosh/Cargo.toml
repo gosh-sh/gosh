@@ -44,6 +44,7 @@ bytes = '^1'
 cached = {version = '0.38.0', features = ['default']}
 clap = "4.1.6"
 derive_builder = '0.11.2'
+dhat = "0.3.2"
 form-data = '0.4.2'
 futures = '0.3.26'
 git-config = '=0.16.0'
@@ -104,12 +105,12 @@ version = '1.21.2'
 [dependencies.ton_client]
 git = 'https://github.com/tonlabs/ever-sdk.git'
 package = 'ton_client'
-tag = "1.41.1"
+tag = "1.43.1"
 
 [dependencies.ton_sdk]
 git = 'https://github.com/tonlabs/ever-sdk.git'
 package = 'ton_sdk'
-tag = "1.41.1"
+tag = "1.43.1"
 
 [dependencies.zstd]
 default-features = false
@@ -118,3 +119,6 @@ version = '0.11.2+zstd.1.5.2'
 [patch.crates-io.tokio]
 git = 'https://github.com/tokio-rs/tokio'
 tag = 'tokio-1.21.2'
+
+[features]
+memory_profiling = []

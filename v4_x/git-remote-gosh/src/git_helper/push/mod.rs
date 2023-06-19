@@ -40,6 +40,7 @@ use crate::git_helper::supported_contract_version;
 use delete_tag::delete_tag;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 use push_tree::push_tree;
+use crate::logger::trace_memory;
 
 static PARALLEL_PUSH_LIMIT: usize = 1 << 6;
 static MAX_REDEPLOY_ATTEMPTS: i32 = 3;
@@ -141,29 +142,32 @@ where
             let branch_name = branch_name.to_string();
             let file_path = file_path.to_string();
             let commit_str = commit_id.to_string();
+            trace_memory();
             parallel_snapshot_uploads
                 .add_to_push_list(
                     self,
                     ParallelSnapshot::new(branch_name, file_path, upgrade_commit, commit_str),
                 )
                 .await?;
+            trace_memory();
         }
-
-        let file_diff =
-            utilities::generate_blob_diff(&self.local_repository().objects, None, Some(blob_id))
-                .await?;
-        let diff = ParallelDiff::new(
-            *commit_id,
-            branch_name.to_string(),
-            *blob_id,
-            file_path.to_string(),
-            file_diff.original.clone(),
-            file_diff.patch.clone(),
-            file_diff.after_patch.clone(),
-        );
-        parallel_diffs_upload_support.push(self, diff).await?;
+        if !upgrade_commit {
+            let file_diff =
+                utilities::generate_blob_diff(&self.local_repository().objects, None, Some(blob_id))
+                    .await?;
+            let diff = ParallelDiff::new(
+                *commit_id,
+                branch_name.to_string(),
+                *blob_id,
+                file_path.to_string(),
+                file_diff.original.clone(),
+                file_diff.patch.clone(),
+                file_diff.after_patch.clone(),
+            );
+            parallel_diffs_upload_support.push(self, diff).await?;
+            statistics.diffs += 1;
+        }
         statistics.new_snapshots += 1;
-        statistics.diffs += 1;
         Ok(())
     }
 
@@ -262,7 +266,7 @@ where
         // TODO: get commit can fail due to changes in versions
         let commit_contract = GoshContract::new(&remote_commit_addr, gosh_abi::COMMIT);
         let sha: GetNameCommitResult = commit_contract
-            .run_static(self.blockchain.client(), "getNameCommit", None)
+            .run_local(self.blockchain.client(), "getNameCommit", None)
             .await?;
         tracing::trace!("Commit sha: {sha:?}");
         let sha = sha.name;
@@ -347,7 +351,8 @@ where
                 },
             )
             .await
-            .map(|r| r.result)?;
+            .map(|r| r.result)
+                .map_err(|e| anyhow::format_err!("query error: {e}"))?;
 
             let raw_data = result["data"]["accounts"].clone();
             let existing_commits: Vec<AccountStatus> = serde_json::from_value(raw_data)?;
@@ -407,34 +412,31 @@ where
                 )
                 .await?;
                 let commit_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
-                match commit_contract.is_active(self.blockchain.client()).await {
-                    Ok(true) => {
-                        if repo_version.version != supported_contract_version() {
-                            tracing::trace!(
+                if commit_contract.is_active(self.blockchain.client()).await? {
+                    if repo_version.version != supported_contract_version() {
+                        tracing::trace!(
                                 "Found parent {id} in version {}",
                                 repo_version.version
                             );
-                            tracing::trace!("Start upgrade of the parent: {id}");
-                            let branch: GetNameCommitResult = commit_contract
-                                .run_static(self.blockchain.client(), "getNameBranch", None)
-                                .await?;
-                            // TODO: local and remote branch are set equal here it can be wrong
-                            self.check_and_upgrade_previous_commit(
-                                id.to_string(),
-                                &branch.name,
-                                &branch.name,
-                                set_commit,
-                            )
+                        tracing::trace!("Start upgrade of the parent: {id}");
+                        let branch: GetNameCommitResult = commit_contract
+                            .run_local(self.blockchain.client(), "getNameBranch", None)
                             .await?;
-                        }
-                        break;
+                        // TODO: local and remote branch are set equal here it can be wrong
+                        self.check_and_upgrade_previous_commit(
+                            id.to_string(),
+                            &branch.name,
+                            &branch.name,
+                            set_commit,
+                        )
+                            .await?;
                     }
-                    _ => {
-                        tracing::trace!(
-                            "Not found parent {id} in version {}",
-                            repo_version.version
-                        );
-                    }
+                    break;
+                } else {
+                    tracing::trace!(
+                        "Not found parent {id} in version {}",
+                        repo_version.version
+                    );
                 }
             }
         }
@@ -511,6 +513,7 @@ where
             let tree_addr = tree_addr.clone();
             let branch_name = remote_branch_name.to_owned().clone();
 
+            trace_memory();
             push_commits
                 .add_to_push_list(
                     self,
@@ -525,6 +528,7 @@ where
                     push_semaphore.clone(),
                 )
                 .await?;
+            trace_memory();
         }
 
         let tree_diff = utilities::build_tree_diff_from_commits(
@@ -533,6 +537,7 @@ where
             object_id,
         )?;
         for added in tree_diff.added {
+            trace_memory();
             self.push_new_blob(
                 &added.filepath.to_string(),
                 &added.oid,
@@ -544,9 +549,11 @@ where
                 upgrade_commit,
             )
             .await?;
+            trace_memory();
         }
         if !upgrade_commit {
             for update in tree_diff.updated {
+                trace_memory();
                 self.push_blob_update(
                     &update.1.filepath.to_string(),
                     &update.0.oid,
@@ -557,9 +564,11 @@ where
                     parallel_diffs_upload_support,
                 )
                 .await?;
+                trace_memory();
             }
 
             for deleted in tree_diff.deleted {
+                trace_memory();
                 self.push_blob_remove(
                     &deleted.filepath.to_string(),
                     &deleted.oid,
@@ -569,6 +578,7 @@ where
                     parallel_diffs_upload_support,
                 )
                 .await?;
+                trace_memory();
             }
         }
         *prev_commit_id = Some(object_id);
@@ -743,6 +753,7 @@ where
         let mut expected_contracts = vec![];
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
+        trace_memory();
         while attempts < MAX_REDEPLOY_ATTEMPTS {
             attempts += 1;
             expected_contracts = push_commits
@@ -769,9 +780,11 @@ where
                     address,
                     commit.commit_id
                 );
+                trace_memory();
                 push_commits
                     .add_to_push_list(self, commit, push_semaphore.clone())
                     .await?;
+                trace_memory();
             }
         }
         if attempts == MAX_REDEPLOY_ATTEMPTS {
@@ -787,7 +800,7 @@ where
                     let commit_contract =
                         GoshContract::new(&branch_ref.commit_address, gosh_abi::COMMIT);
                     let sha: GetNameCommitResult = commit_contract
-                        .run_static(self.blockchain.client(), "getNameCommit", None)
+                        .run_local(self.blockchain.client(), "getNameCommit", None)
                         .await?;
                     tracing::trace!("Commit sha: {sha:?}");
                     if sha.name == latest_commit_id.to_string() {
@@ -823,6 +836,7 @@ where
         // and snapshots were not created since git didn't count them as changed.
         // Our second attempt is to calculated tree diff from one commit to another.
         tracing::debug!("push_ref {} : {}", local_ref, remote_ref);
+        trace_memory();
         let local_branch_name: &str = get_ref_name(local_ref)?;
         let remote_branch_name: &str = get_ref_name(remote_ref)?;
 
@@ -935,11 +949,13 @@ where
         let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
 
         tracing::trace!("List of objects: {commit_and_tree_list:?}");
+        trace_memory();
         // iterate through the git objects list and push them
         for oid in &commit_and_tree_list {
             let object_id = git_hash::ObjectId::from_str(oid)?;
             let object_kind = self.local_repository().find_object(object_id)?.kind;
             tracing::trace!("Push object: {object_id:?} {object_kind:?}");
+            trace_memory();
             match object_kind {
                 git_object::Kind::Commit => {
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)
@@ -980,14 +996,17 @@ where
                         push_semaphore.clone(),
                     )
                     .await?;
+                    trace_memory();
                 }
             }
         }
-
+        tracing::trace!("Start of wait for contracts to be deployed");
+        trace_memory();
         let mut expected_contracts = vec![];
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
         while attempts < MAX_REDEPLOY_ATTEMPTS {
+            trace_memory();
             attempts += 1;
             expected_contracts = parallel_tree_uploads
                 .wait_all_trees(self.blockchain.clone())
@@ -1004,6 +1023,7 @@ where
             let expected = parallel_tree_uploads.get_expected().to_owned();
             parallel_tree_uploads = ParallelTreeUploadSupport::new();
             for address in expected_contracts.clone() {
+                trace_memory();
                 let tree = expected
                     .get(&address)
                     .ok_or(anyhow::format_err!("Failed to get diff params"))?
@@ -1013,21 +1033,24 @@ where
                     address,
                     tree.tree_id
                 );
+                trace_memory();
                 parallel_tree_uploads
                     .add_to_push_list(self, tree, push_semaphore.clone())
                     .await?;
+                trace_memory();
             }
         }
         if attempts == MAX_REDEPLOY_ATTEMPTS {
             anyhow::bail!("Failed to deploy all trees. Undeployed trees: {expected_contracts:?}")
         }
-
+        trace_memory();
         // wait for all spawned collections to finish
         parallel_diffs_upload_support.push_dangling(self).await?;
         let number_of_files_changed = parallel_diffs_upload_support.get_parallels_number();
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
         while attempts < MAX_REDEPLOY_ATTEMPTS {
+            trace_memory();
             attempts += 1;
             expected_contracts = parallel_diffs_upload_support
                 .wait_all_diffs(self.blockchain.clone())
@@ -1044,24 +1067,28 @@ where
             let expected = parallel_diffs_upload_support.get_expected().to_owned();
             parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
             for address in expected_contracts.clone() {
+                trace_memory();
                 let (coord, parallel, is_last) = expected
                     .get(&address)
                     .ok_or(anyhow::format_err!("Failed to get diff params"))?
                     .clone();
                 // parallel_diffs_upload_support.push(self, diff).await?;
+                trace_memory();
                 parallel_diffs_upload_support
                     .add_to_push_list(self, &coord, &parallel, is_last)
                     .await?;
+                trace_memory();
             }
             parallel_diffs_upload_support.push_dangling(self).await?;
         }
         if attempts == MAX_REDEPLOY_ATTEMPTS {
             anyhow::bail!("Failed to deploy all diffs. Undeployed diffs: {expected_contracts:?}")
         }
-
+        trace_memory();
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
         while attempts < MAX_REDEPLOY_ATTEMPTS {
+            trace_memory();
             attempts += 1;
             expected_contracts = parallel_snapshot_uploads
                 .wait_all_snapshots(self.blockchain.clone())
@@ -1078,6 +1105,7 @@ where
             let expected = parallel_snapshot_uploads.get_expected().to_owned();
             parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
             for address in expected_contracts.clone() {
+                trace_memory();
                 let snapshot = expected
                     .get(&address)
                     .ok_or(anyhow::format_err!("Failed to get diff params"))?
@@ -1087,9 +1115,11 @@ where
                     address,
                     snapshot
                 );
+                trace_memory();
                 parallel_snapshot_uploads
                     .add_to_push_list(self, snapshot)
                     .await?;
+                trace_memory();
             }
         }
         if attempts == MAX_REDEPLOY_ATTEMPTS {
@@ -1097,10 +1127,11 @@ where
                 "Failed to deploy all snapshots. Undeployed snapshots: {expected_contracts:?}"
             )
         }
-
+        trace_memory();
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
         while attempts < MAX_REDEPLOY_ATTEMPTS {
+            trace_memory();
             attempts += 1;
             expected_contracts = push_commits
                 .wait_all_commits(self.blockchain.clone())
@@ -1117,6 +1148,7 @@ where
             let expected = push_commits.get_expected().to_owned();
             push_commits = ParallelCommitUploadSupport::new();
             for address in expected_contracts.clone() {
+                trace_memory();
                 let commit = expected
                     .get(&address)
                     .ok_or(anyhow::format_err!("Failed to get diff params"))?
@@ -1126,9 +1158,11 @@ where
                     address,
                     commit.commit_id
                 );
+                trace_memory();
                 push_commits
                     .add_to_push_list(self, commit, push_semaphore.clone())
                     .await?;
+                trace_memory();
             }
         }
         if attempts == MAX_REDEPLOY_ATTEMPTS {
@@ -1231,7 +1265,7 @@ where
             .map_err(|_| anyhow::format_err!("Seems like you are not a member of DAO. Only DAO members can push to the repositories."))?;
         tracing::trace!("Zero wallet address: {:?}", wallet.address);
         let res: GetLimitedResult = wallet
-            .run_static(self.blockchain.client(), "_limited", None)
+            .run_local(self.blockchain.client(), "_limited", None)
             .await?;
         tracing::trace!("wallet _limited: {:?}", res);
         if res.limited {

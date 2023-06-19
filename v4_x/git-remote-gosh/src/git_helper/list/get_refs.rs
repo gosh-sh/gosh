@@ -28,7 +28,7 @@ pub async fn get_refs(
         // TODO: get commit can fail due to changes in versions
         let commit_contract = GoshContract::new(&branch.commit_address, gosh_abi::COMMIT);
         let sha: GetNameCommitResult = commit_contract
-            .run_static(context, "getNameCommit", None)
+            .run_local(context, "getNameCommit", None)
             .await?;
         tracing::trace!("Commit sha: {sha:?}");
         if sha.name != ZERO_COMMIT {

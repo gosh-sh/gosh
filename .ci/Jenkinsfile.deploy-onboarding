@@ -21,9 +21,9 @@ pipeline {
                     //    sh 'npm i'
                     //    sh 'make docker'
                     //}
-                    dir('v4_x/contracts/gosh') {
-                        sh 'make prepare-docker && make build-contracts-docker'
-                    }
+                    //dir('v4_x/contracts/gosh') {
+                    //    sh 'make prepare-docker && make build-contracts-docker'
+                    //}
                     dir('onboarding-workflow_v4') {
                         sh 'docker compose down -v --remove-orphans || true'
                         sh 'npm i'

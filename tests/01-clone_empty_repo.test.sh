@@ -27,4 +27,6 @@ echo ================== REPOSITORY ===================
 echo "     REPO_NAME:" $REPO_NAME
 echo "     REPO_ADDR:" $REPO_ADDR
 
+echo gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME
+
 exit $REPO_STATUS

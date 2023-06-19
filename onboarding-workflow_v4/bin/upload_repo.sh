@@ -52,8 +52,10 @@ rm -rf "repo_clone"
 log "Pushing github repo to gosh...\n________________"
 PUSH_START=$SECONDS
 cd ./repo
+git-remote-gosh dispatcher_ini
+git-remote-gosh_v4_0_0 --version
 git remote add gosh "gosh://$GOSH_SYSTEM_CONTRACT_ADDR/$GOSH_DAO_NAME/$GOSH_REPO_NAME"
-git push --all -vvv gosh >>"$LOG_FILE"
+GOSH_TRACE=5 git push --all gosh &>>"$LOG_FILE"
 PUSH_END=$SECONDS
 PUSH_DURATION=$((PUSH_END - PUSH_START))
 log "...complete. Push took $(convertsecs $PUSH_DURATION)."

@@ -5,6 +5,7 @@ use crate::blockchain::{
 use std::collections::HashSet;
 use tokio::task::JoinSet;
 use tracing::Instrument;
+use crate::logger::trace_memory;
 
 const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
 
@@ -17,14 +18,16 @@ where
     B: BlockchainService + 'static,
 {
     tracing::trace!("wait_contracts_deployed: addresses={addresses:?}");
-    let mut deploymend_results: JoinSet<anyhow::Result<Vec<BlockchainContractAddress>>> =
+    trace_memory();
+    let mut deployment_results: JoinSet<anyhow::Result<Vec<BlockchainContractAddress>>> =
         JoinSet::new();
     for chunk in addresses.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {
         let mut waiting_for_addresses = Vec::from(addresses);
         let b = blockchain.clone();
-        deploymend_results.spawn(
+        deployment_results.spawn(
             async move {
                 let mut iteration = 0;
+                trace_memory();
                 while !waiting_for_addresses.is_empty() {
                     iteration += 1;
                     if iteration > MAX_RETRIES_FOR_DIFFS_TO_APPEAR + 1 {
@@ -36,12 +39,11 @@ where
                         return Ok(waiting_for_addresses);
                     }
                     match b
-                        .get_contracts_state_raw_data(&waiting_for_addresses, true)
+                        .check_contracts_state(&waiting_for_addresses, true)
                         .await
                     {
-                        Ok(available_bocs) => {
-                            let found_addresses: Vec<BlockchainContractAddress> =
-                                available_bocs.into_keys().collect();
+                        // bocs are useless
+                        Ok(found_addresses) => {
                             let available: HashSet<BlockchainContractAddress> =
                                 HashSet::from_iter(found_addresses.iter().cloned());
                             waiting_for_addresses.retain(|e| !available.contains(e));
@@ -66,11 +68,12 @@ where
                 } // While loop
                 Ok(vec![])
             } //move
-            .instrument(info_span!("tokio::spawn::wait_diff_deployed").or_current()),
+            .instrument(info_span!("tokio::spawn::wait_contracts_deployed").or_current()),
         );
     }
+    trace_memory();
     let mut undeployed_contracts = HashSet::new();
-    while let Some(res) = deploymend_results.join_next().await {
+    while let Some(res) = deployment_results.join_next().await {
         let val = res??;
         for el in val {
             undeployed_contracts.insert(el);
