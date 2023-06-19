@@ -151,22 +151,23 @@ where
                 .await?;
             trace_memory();
         }
-
-        let file_diff =
-            utilities::generate_blob_diff(&self.local_repository().objects, None, Some(blob_id))
-                .await?;
-        let diff = ParallelDiff::new(
-            *commit_id,
-            branch_name.to_string(),
-            *blob_id,
-            file_path.to_string(),
-            file_diff.original.clone(),
-            file_diff.patch.clone(),
-            file_diff.after_patch.clone(),
-        );
-        parallel_diffs_upload_support.push(self, diff).await?;
+        if !upgrade_commit {
+            let file_diff =
+                utilities::generate_blob_diff(&self.local_repository().objects, None, Some(blob_id))
+                    .await?;
+            let diff = ParallelDiff::new(
+                *commit_id,
+                branch_name.to_string(),
+                *blob_id,
+                file_path.to_string(),
+                file_diff.original.clone(),
+                file_diff.patch.clone(),
+                file_diff.after_patch.clone(),
+            );
+            parallel_diffs_upload_support.push(self, diff).await?;
+            statistics.diffs += 1;
+        }
         statistics.new_snapshots += 1;
-        statistics.diffs += 1;
         Ok(())
     }
 
