@@ -1,0 +1,11 @@
+.env
+.vscode
+node_modules
+
+/media
+/abi
+deno.lock
+
+/tonos-cli.conf.json
+/docker-compose.override.yaml
+/logs
