@@ -38,9 +38,10 @@ pipeline {
                     //dir('onboarding-workflow_v1') {
                     //    sh 'docker compose up -d'
                     //}
-                    //dir('onboarding-workflow_v4') {
-                    //    sh 'docker compose up -d'
-                    //}
+                    dir('onboarding-workflow_v5') {
+                        //sh 'docker compose up -d'
+                        sh 'ls'
+                    }
                 }
             }
             /*post {
