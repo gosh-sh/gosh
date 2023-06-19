@@ -219,7 +219,16 @@ interface IGoshDaoAdapter {
     ): Promise<{ username: string; profile: TAddress; wallet: TAddress }[]>
 
     getTaskCodeHash(repository: string): Promise<string>
-    getTask(options: { name?: string; address?: TAddress }): Promise<TTaskDetails>
+    getTaskAccount(options: {
+        repository?: string
+        name?: string
+        address?: TAddress
+    }): Promise<IGoshTask>
+    getTask(options: {
+        repository?: string
+        name?: string
+        address?: TAddress
+    }): Promise<TTaskDetails>
     getBigTask(options: { name?: string; address?: TAddress }): Promise<TBigTaskDetails>
 
     getTopicCodeHash(): Promise<string>
