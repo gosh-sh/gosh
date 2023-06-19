@@ -140,6 +140,7 @@ import {
     IGoshHelperTag,
     IGoshProfileDao,
     IGoshCommitTag,
+    IGoshTask,
 } from '../interfaces'
 import { Gosh } from './gosh'
 import { GoshDao } from './goshdao'
@@ -647,6 +648,14 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async getTask(options: { name?: string; address?: TAddress }): Promise<TTaskDetails> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async getTaskAccount(options: {
+        repository?: string | undefined
+        name?: string | undefined
+        address?: string | undefined
+    }): Promise<IGoshTask> {
         throw new Error('Method is unavailable in current version')
     }
 
