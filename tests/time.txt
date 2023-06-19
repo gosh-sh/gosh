@@ -1,0 +1,14 @@
++ GOSH_TRACE=5
++ git push -u origin main
+
+real	5m17,500s
+user	14m30,122s
+sys	0m12,314s
+2023-06-18T13:36:16.489128Z TRACE ThreadId(01) MemoryState={"total_bytes":4462201754,"curr_bytes":7667516,"max_bytes":21683659}
++ GOSH_TRACE=5
++ git push -u origin main
+
+real	5m40,008s
+user	15m38,668s
+sys	0m13,297s
+2023-06-18T17:29:35.225594Z TRACE ThreadId(01) MemoryState={"total_bytes":4488300745,"curr_bytes":7712328,"max_bytes":22632795}

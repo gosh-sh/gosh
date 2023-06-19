@@ -33,6 +33,7 @@ pub(super) trait BlockchainCall {
         function_name: &str,
         args: Option<serde_json::Value>,
         expected_address: Option<BlockchainContractAddress>,
+        messages_list: Option<&mut Vec<String>>,
     ) -> anyhow::Result<SendMessageResult>
     where
         C: ContractInfo + Sync;
@@ -108,6 +109,7 @@ impl BlockchainCall for Everscale {
         function_name: &str,
         args: Option<serde_json::Value>,
         expected_address: Option<BlockchainContractAddress>,
+        messages_list: Option<&mut Vec<String>>, // In some cases we need to send message now with guarantee and sometims can add to list and send as bunch
     ) -> anyhow::Result<SendMessageResult>
     where
         C: ContractInfo + Sync,
@@ -149,52 +151,64 @@ impl BlockchainCall for Everscale {
         )
         .await?;
 
-        tracing::trace!(
-            "sending message ({message_id}) to {}",
-            contract.get_address()
-        );
-        let ResultOfSendMessage {
-            shard_block_id,
-            sending_endpoints,
-        } = ton_client::processing::send_message(
-            Arc::clone(self.client()),
-            ParamsOfSendMessage {
-                abi: None,
-                message,
-                send_events: true,
+        match messages_list {
+            Some(list) => {
+                list.push(message);
+                let call_result = SendMessageResult {
+                    shard_block_id: "".to_string(),
+                    message_id,
+                    sending_endpoints: vec![],
+                };
+                Ok(call_result)
             },
-            default_callback,
-        )
-        .instrument(info_span!("blockchain_client::send_message").or_current())
-        .await
-            .map_err(|e| anyhow::format_err!("send_message error: {e}"))?;
+            _ => {
+                tracing::trace!(
+                    "sending message ({message_id}) to {}",
+                    contract.get_address()
+                );
+                let ResultOfSendMessage {
+                    shard_block_id,
+                    sending_endpoints,
+                } = ton_client::processing::send_message(
+                    Arc::clone(self.client()),
+                    ParamsOfSendMessage {
+                        abi: None,
+                        message,
+                        send_events: true,
+                    },
+                    default_callback,
+                )
+                    .instrument(info_span!("blockchain_client::send_message").or_current())
+                    .await
+                    .map_err(|e| anyhow::format_err!("send_message error: {e}"))?;
 
-        if let Some(expected_address) = expected_address {
-            let start = Instant::now();
-            let timeout = Duration::from_secs(*crate::config::DEPLOY_CONTRACT_TIMEOUT);
+                if let Some(expected_address) = expected_address {
+                    let start = Instant::now();
+                    let timeout = Duration::from_secs(*crate::config::DEPLOY_CONTRACT_TIMEOUT);
 
-            // we don't care what ABI the contract has
-            let expected_contract = GoshContract::new(&expected_address, gosh_abi::TREE);
-            loop {
-                if expected_contract.is_active(self.client()).await? {
-                    tracing::trace!("expected contract {} is active", expected_address);
-                    break;
-                }
-                if start.elapsed() > timeout {
-                    anyhow::bail!(
+                    // we don't care what ABI the contract has
+                    let expected_contract = GoshContract::new(&expected_address, gosh_abi::TREE);
+                    loop {
+                        if expected_contract.is_active(self.client()).await? {
+                            tracing::trace!("expected contract {} is active", expected_address);
+                            break;
+                        }
+                        if start.elapsed() > timeout {
+                            anyhow::bail!(
                         "Timeout exceeded: expected contract {expected_address} didn't appear within {}s",
                         timeout.as_secs(),
                     );
+                        }
+                        tokio::time::sleep(Duration::from_secs(5)).await;
+                    }
                 }
-                tokio::time::sleep(Duration::from_secs(5)).await;
-            }
-        }
 
-        let call_result = SendMessageResult {
-            shard_block_id,
-            message_id,
-            sending_endpoints,
-        };
-        Ok(call_result)
+                let call_result = SendMessageResult {
+                    shard_block_id,
+                    message_id,
+                    sending_endpoints,
+                };
+                Ok(call_result)
+            }
     }
 }

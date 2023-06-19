@@ -374,12 +374,12 @@ def archiveAzureArtifacts() {
             cd -
 
             if [ \${DRYRUN} = "true" ]; then
-                chmod +x linux-a*/*
+                chmod +x linux-a*/git*
                 cp linux-amd64/dispatcher.ini darwin-amd64
                 tar -czvf git-remote-gosh-linux-amd64.tar.gz -C linux-amd64 $(ls -A linux-amd64)
             else
-                chmod +x linux-a*/*
-                chmod +x darwin-a*/*
+                chmod +x linux-a*/git*
+                chmod +x darwin-a*/git*
                 cp linux-amd64/dispatcher.ini darwin-amd64
                 cp linux-amd64/dispatcher.ini linux-arm64
                 cp linux-amd64/dispatcher.ini darwin-arm64

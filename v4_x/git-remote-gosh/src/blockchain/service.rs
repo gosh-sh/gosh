@@ -286,6 +286,7 @@ pub mod tests {
                 raw_commit: &str,
                 parents: &Vec<AddrVersion>,
                 upgrade_commit: bool,
+                messages_list: Option<&mut Vec<String>>,
             ) -> anyhow::Result<()>;
 
             async fn notify_commit(

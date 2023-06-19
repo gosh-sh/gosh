@@ -94,6 +94,7 @@ pub trait BlockchainCommitPusher {
         raw_commit: &str,
         parents: &Vec<AddrVersion>,
         upgrade_commit: bool,
+        messages_list: Option<&mut Vec<String>>,
     ) -> anyhow::Result<()>;
     async fn notify_commit(
         &self,
@@ -121,6 +122,7 @@ impl BlockchainCommitPusher for Everscale {
         raw_commit: &str,
         parents: &Vec<AddrVersion>,
         upgrade_commit: bool,
+        messages_list: Option<&mut Vec<String>>,
     ) -> anyhow::Result<()> {
         let args = DeployCommitParams {
             repo_name: remote.repo.clone(),
@@ -151,6 +153,7 @@ impl BlockchainCommitPusher for Everscale {
                 "deployCommit",
                 Some(params),
                 Some(expected_address),
+                messages_list,
             )
             .await?;
         drop(wallet_contract);
@@ -183,7 +186,7 @@ impl BlockchainCommitPusher for Everscale {
         let wallet_contract = wallet.take_zero_wallet().await?;
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
         let result = self
-            .send_message(&wallet_contract, "setCommit", Some(params), None)
+            .send_message(&wallet_contract, "setCommit", Some(params), None, None)
             .await?;
         // drop(wallet_contract);
         tracing::trace!("setCommit msg id: {:?}", result.message_id);
