@@ -5,7 +5,6 @@ use crate::blockchain::{
 use std::collections::HashSet;
 use tokio::task::JoinSet;
 use tracing::Instrument;
-use crate::logger::trace_memory;
 
 const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
 
@@ -18,7 +17,6 @@ where
     B: BlockchainService + 'static,
 {
     tracing::trace!("wait_contracts_deployed: addresses={addresses:?}");
-    trace_memory();
     let mut deployment_results: JoinSet<anyhow::Result<Vec<BlockchainContractAddress>>> =
         JoinSet::new();
     for chunk in addresses.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {
@@ -27,7 +25,6 @@ where
         deployment_results.spawn(
             async move {
                 let mut iteration = 0;
-                trace_memory();
                 while !waiting_for_addresses.is_empty() {
                     iteration += 1;
                     if iteration > MAX_RETRIES_FOR_DIFFS_TO_APPEAR + 1 {
@@ -71,7 +68,6 @@ where
             .instrument(info_span!("tokio::spawn::wait_contracts_deployed").or_current()),
         );
     }
-    trace_memory();
     let mut undeployed_contracts = HashSet::new();
     while let Some(res) = deployment_results.join_next().await {
         let val = res??;

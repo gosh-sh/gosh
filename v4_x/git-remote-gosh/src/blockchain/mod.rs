@@ -55,7 +55,6 @@ use tokio::time::sleep;
 use ton_client::boc::{encode_state_init, ParamsOfEncodeStateInit, ResultOfEncodeStateInit};
 pub use tree::Tree;
 pub use tvm_hash::tvm_hash;
-use crate::logger::trace_memory;
 
 use self::contract::{ContractRead, ContractStatic, GoshContract};
 
@@ -246,7 +245,6 @@ async fn check_contracts_deployed(
     contracts_addresses: &[BlockchainContractAddress],
     allow_incomplete_results: bool,
 ) -> anyhow::Result<Vec<BlockchainContractAddress>> {
-    trace_memory();
     tracing::trace!("get_contracts_blocks: allow_incomplete_results={allow_incomplete_results}");
     if contracts_addresses.is_empty() {
         return Ok(vec![]);
@@ -254,7 +252,6 @@ async fn check_contracts_deployed(
     tracing::trace!("internal get_contracts_blocks start");
     let mut accounts_bocs = vec![];
     for chunk in contracts_addresses.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {
-        trace_memory();
         let addresses: &[String] = &chunk
             .iter()
             .map(|e| -> String { <&BlockchainContractAddress as Into<String>>::into(e) })
@@ -293,7 +290,6 @@ async fn check_contracts_deployed(
                 );
             }
         }
-        trace_memory();
         for r in query_result.iter() {
             let address = BlockchainContractAddress::new(
                 r["id"]
@@ -303,9 +299,7 @@ async fn check_contracts_deployed(
             );
             accounts_bocs.push(address);
         }
-        trace_memory();
     }
-    trace_memory();
     return Ok(accounts_bocs);
 }
 
@@ -399,7 +393,6 @@ async fn run_static(
 ) -> anyhow::Result<serde_json::Value> {
     // Read lock
     tracing::trace!("run_static: function_name={function_name}, args={args:?}");
-    trace_memory();
     let boc_ref = {
         PINNED_CONTRACT_BOCREFS
             .read()
@@ -411,17 +404,16 @@ async fn run_static(
     let (account, boc_cache, client) = if let Some(boc_ref) = boc_ref {
         let (boc_ref, client) = boc_ref;
         tracing::trace!(
-        "run_static: use cached boc ref: {} -> {}",
-        &contract.address,
-        boc_ref
-    );
+            "run_static: use cached boc ref: {} -> {}",
+            &contract.address,
+            boc_ref
+        );
         (boc_ref, Some(BocCacheType::Pinned { pin: pin }), client)
     } else {
-        trace_memory();
         tracing::trace!("run_static: load account' boc");
         let filter = Some(serde_json::json!({
-        "id": { "eq": contract.address }
-    }));
+            "id": { "eq": contract.address }
+        }));
         let query = query_collection(
             Arc::clone(context),
             ParamsOfQueryCollection {
@@ -432,20 +424,19 @@ async fn run_static(
                 order: None,
             },
         )
-            .instrument(info_span!("run_static sdk::query_collection").or_current())
-            .await
-            .map(|r| r.result)?;
+        .instrument(info_span!("run_static sdk::query_collection").or_current())
+        .await
+        .map(|r| r.result)?;
 
         if query.is_empty() {
             anyhow::bail!(
-            "account with address {} not found. Was trying to call {}",
-            contract.address,
-            function_name,
-        );
+                "account with address {} not found. Was trying to call {}",
+                contract.address,
+                function_name,
+            );
         }
         let AccountBoc { boc, .. } = serde_json::from_value(query[0].clone())?;
         tracing::trace!("Save acc to cache");
-        trace_memory();
         let ResultOfBocCacheSet { boc_ref } = cache_set(
             Arc::clone(context),
             ParamsOfBocCacheSet {
@@ -453,8 +444,7 @@ async fn run_static(
                 cache_type: BocCacheType::Pinned { pin: pin },
             },
         )
-            .await?;
-        trace_memory();
+        .await?;
         // write lock
         {
             let mut refs = PINNED_CONTRACT_BOCREFS.write().await;
@@ -483,9 +473,9 @@ async fn run_static(
             signature_id: None,
         },
     )
-        .instrument(info_span!("run_static sdk::encode_message").or_current())
-        .await
-        .map_err(|e| Box::new(RunLocalError::from(&e)))?;
+    .instrument(info_span!("run_static sdk::encode_message").or_current())
+    .await
+    .map_err(|e| Box::new(RunLocalError::from(&e)))?;
     // ---------
     let result = run_tvm(
         Arc::clone(&client),

@@ -9,7 +9,6 @@ use std::collections::HashMap;
 use std::vec::Vec;
 use tokio::task::JoinSet;
 use tracing::Instrument;
-use crate::logger::trace_memory;
 
 const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
 
@@ -133,7 +132,6 @@ impl ParallelDiffsUploadSupport {
             diff_coordinates,
             diff_contract_address
         );
-        trace_memory();
         self.expecting_deployed_contacts_addresses.insert(
             diff_contract_address,
             (
@@ -142,7 +140,6 @@ impl ParallelDiffsUploadSupport {
                 is_last,
             ),
         );
-        trace_memory();
         Ok(())
     }
 
@@ -184,7 +181,6 @@ impl ParallelDiffsUploadSupport {
             "Expecting the following diff contracts to be deployed: {:?}",
             addresses
         );
-        trace_memory();
         while let Some(finished_task) = self.pushed_blobs.join_next().await {
             match finished_task {
                 Err(e) => {
@@ -196,7 +192,6 @@ impl ParallelDiffsUploadSupport {
                 Ok(Ok(_)) => {}
             }
         }
-        trace_memory();
         wait_contracts_deployed(&blockchain, &addresses).await
     }
 

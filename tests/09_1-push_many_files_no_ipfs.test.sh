@@ -57,7 +57,7 @@ echo $(ls -la | wc -l)
 echo "***** Pushing file to the repo *****"
 git add *
 git commit -m push
-GOSH_TRACE=5 git push -u origin dev &> ../trace_test_09.log
+git push -u origin dev
 
 echo "***** cloning repo *****"
 cd ..
