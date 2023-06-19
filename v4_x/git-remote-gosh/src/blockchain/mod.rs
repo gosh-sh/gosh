@@ -22,8 +22,8 @@ use ton_client::{
         ParamsOfEncodeMessage, ResultOfEncodeInitialData, Signer,
     },
     boc::{
-        cache_set, get_boc_hash, BocCacheType, ParamsOfBocCacheSet,
-        ParamsOfGetBocHash, ResultOfBocCacheSet, ResultOfGetBocHash,
+        cache_set, encode_tvc, get_boc_hash, BocCacheType, ParamsOfBocCacheSet, ParamsOfEncodeTvc,
+        ParamsOfGetBocHash, ResultOfBocCacheSet, ResultOfEncodeTvc, ResultOfGetBocHash,
     },
     net::{query_collection, ParamsOfQuery, ParamsOfQueryCollection},
     processing::ProcessingEvent,
@@ -52,7 +52,6 @@ use std::collections::HashMap;
 use std::time::Duration;
 use tokio::sync::RwLock;
 use tokio::time::sleep;
-use ton_client::boc::{encode_state_init, ParamsOfEncodeStateInit, ResultOfEncodeStateInit};
 pub use tree::Tree;
 pub use tvm_hash::tvm_hash;
 use crate::logger::trace_memory;
@@ -805,15 +804,15 @@ pub async fn calculate_contract_address(
     let ResultOfEncodeInitialData { data } =
         encode_initial_data(Arc::clone(context), params).await?;
 
-    let params = ParamsOfEncodeStateInit {
+    let params = ParamsOfEncodeTvc {
         code: Some(code.to_owned()),
         data: Some(data.to_owned()),
         ..Default::default()
     };
 
-    let ResultOfEncodeStateInit { state_init } = encode_state_init(Arc::clone(context), params).await?;
+    let ResultOfEncodeTvc { tvc } = encode_tvc(Arc::clone(context), params).await?;
 
-    let hash = calculate_boc_hash(context, &state_init).await?;
+    let hash = calculate_boc_hash(context, &tvc).await?;
 
     Ok(BlockchainContractAddress::new(format!("0:{hash}")))
 }

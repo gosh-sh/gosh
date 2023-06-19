@@ -212,7 +212,6 @@ impl ParallelCommitUploadSupport {
         context: &mut GitHelper<impl BlockchainService + 'static>,
         commit: ParallelCommit,
         push_semaphore: Arc<Semaphore>,
-        messages_list: Option<&mut Vec<String>>,
     ) -> anyhow::Result<()> {
         let blockchain = context.blockchain.clone();
         let dao_address: BlockchainContractAddress = context.dao_addr.clone();
@@ -249,53 +248,33 @@ impl ParallelCommitUploadSupport {
             }
         };
 
-        match messages_list {
-            Some(list) => {
-                blockchain
-                    .push_commit(
-                        &commit_id,
-                        &branch,
-                        &tree_addr,
-                        &remote,
-                        &dao_address,
-                        &raw_commit,
-                        &parents,
-                        upgrade_commit,
-                        Some(list),
-                    )
-                    .await?;
-            },
-            _ => {
-                self.pushed_blobs.spawn(
-                    async move {
-                        let res = RetryIf::spawn(
-                            default_retry_strategy(),
-                            || async {
-                                blockchain
-                                    .push_commit(
-                                        &commit_id,
-                                        &branch,
-                                        &tree_addr,
-                                        &remote,
-                                        &dao_address,
-                                        &raw_commit,
-                                        &parents,
-                                        upgrade_commit,
-                                        None,
-                                    )
-                                    .await?;
-                            },
-                            condition,
-                        )
-                            .await;
+        self.pushed_blobs.spawn(
+            async move {
+                let res = RetryIf::spawn(
+                    default_retry_strategy(),
+                    || async {
+                        blockchain
+                            .push_commit(
+                                &commit_id,
+                                &branch,
+                                &tree_addr,
+                                &remote,
+                                &dao_address,
+                                &raw_commit,
+                                &parents,
+                                upgrade_commit,
+                            )
+                            .await
+                    },
+                    condition,
+                )
+                .await;
 
-                        drop(permit);
-                        res
-                    }
-                        .instrument(info_span!("tokio::spawn::push_commit").or_current()),
-                );
+                drop(permit);
+                res
             }
-        }
+            .instrument(info_span!("tokio::spawn::push_commit").or_current()),
+        );
         Ok(())
     }
 

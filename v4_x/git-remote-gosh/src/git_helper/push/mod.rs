@@ -18,7 +18,7 @@ use std::{
 };
 use ton_client::net::ParamsOfQuery;
 
-use tokio::sync::{Mutex, Semaphore};
+use tokio::sync::Semaphore;
 
 pub mod create_branch;
 mod parallel_diffs_upload_support;
@@ -458,7 +458,6 @@ where
         parallel_snapshot_uploads: &mut ParallelSnapshotUploadSupport,
         upgrade_commit: bool,
         parents_for_upgrade: Vec<AddrVersion>,
-        messages_list: &mut Vec<String>,
     ) -> anyhow::Result<()> {
         tracing::trace!("push_commit_object: object_id={object_id}, remote_branch_name={remote_branch_name}, local_branch_name={local_branch_name}, prev_commit_id={prev_commit_id:?}");
         let mut buffer: Vec<u8> = Vec::new();
@@ -524,7 +523,6 @@ where
                         raw_commit,
                         parents,
                         upgrade_commit,
-                        messages_list,
                     ),
                     push_semaphore.clone(),
                 )
@@ -951,7 +949,6 @@ where
 
         tracing::trace!("List of objects: {commit_and_tree_list:?}");
         trace_memory();
-        let mut messages_list = vec![];
         // iterate through the git objects list and push them
         for oid in &commit_and_tree_list {
             let object_id = git_hash::ObjectId::from_str(oid)?;
@@ -977,7 +974,6 @@ where
                         &mut parallel_snapshot_uploads,
                         false,
                         vec![],
-                        messages_list,
                     )
                     .await?;
                 }
