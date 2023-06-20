@@ -232,7 +232,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
 
     
-    function getPreviousInfo1(mapping(uint256 => MemberToken) wallets, uint128 trash) public internalMsg {
+    function getPreviousInfo1(mapping(uint256 => MemberTokenv4) wallets, uint128 trash) public internalMsg {
         trash;
         require(_previous.hasValue() == true, ERR_FIRST_DAO);
         require(_previous.get() == msg.sender, ERR_WRONG_DAO);
@@ -330,15 +330,16 @@ contract GoshDao is Modifiers, TokenRootOwner {
         getMoney();
     }
     
-    function returnWallets(uint256 key, mapping(uint256 => MemberToken) wallets) public internalMsg senderIs(address(this)) accept {
-        optional(uint256, MemberToken) res = wallets.next(key);
+    function returnWallets(uint256 key, mapping(uint256 => MemberTokenv4) wallets) public internalMsg senderIs(address(this)) accept {
+        optional(uint256, MemberTokenv4) res = wallets.next(key);
         if (res.hasValue()) {
-            MemberToken pub;
+            MemberTokenv4 pub;
             (key, pub) = res.get();
             _reserve += pub.count;
             _totalsupply += pub.count;
             pub.member = address.makeAddrStd(0, key);
-            deployWalletIn(pub);
+            MemberToken pub1 = MemberToken(pub.member, pub.count, 0);
+            deployWalletIn(pub1);
             this.returnWallets{value: 0.1 ton, flag: 1}(key, wallets);
         }
         getMoney();
