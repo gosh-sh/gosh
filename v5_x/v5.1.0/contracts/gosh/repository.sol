@@ -170,8 +170,13 @@ contract Repository is Modifiers{
         require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
         if (commit.version == "1.0.0") {
             _Branches[tvm.hash(branch)] = Item(branch, msg.sender, version);
+            return;
         }
-        else { Repository(_previousversion.get().addr).isCorrectCommit{value: 0.3 ton, bounce: true, flag: 1}(namecommit, branch, commit.addr); }
+        if ((commit.version == "2.0.0") && (_previousversion.get().version == "3.0.0")) {
+            _Branches[tvm.hash(branch)] = Item(branch, msg.sender, version);
+            return;
+        }
+        Repository(_previousversion.get().addr).isCorrectCommit{value: 0.3 ton, bounce: true, flag: 1}(namecommit, branch, commit.addr);
     }
 
     function isCorrectCommit(string namecommit, string branch, address commit) public view {
