@@ -480,7 +480,15 @@ class GoshAdapter_4_0_0 implements IGoshAdapter {
         address?: string | undefined
         data?: { daoName: string; repoName: string; tagName: string } | undefined
     }): Promise<IGoshCommitTag> {
-        throw new Error('Method is unavailable in current version')
+        const { address } = params
+
+        if (!address) {
+            throw new GoshError(
+                'Get commit tag error',
+                'Get commit tag by data is not supported in current version',
+            )
+        }
+        return new GoshCommitTag(this.client, address)
     }
 
     async deployProfile(username: string, pubkey: string): Promise<IGoshProfile> {
