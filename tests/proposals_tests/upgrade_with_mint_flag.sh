@@ -3,8 +3,8 @@ set -e
 set -o pipefail
 set -x
 
-FIRST_VERSION=v4_x
-SECOND_VERSION=v5_x
+#FIRST_VERSION=v4_x
+#SECOND_VERSION=v5_x
 #./node_se_scripts/deploy.sh $FIRST_VERSION
 #. set-vars.sh $FIRST_VERSION
 #./upgrade_tests/set_up.sh $FIRST_VERSION $SECOND_VERSION
