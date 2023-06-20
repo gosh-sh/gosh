@@ -24,7 +24,7 @@ build-contracts:
 	../../compiler/tvm_linker compile TokenWallet.code -o TokenWallet.tvc --lib ../../compiler/stdlib_sol.tvm || exit $$@; \
 
 prepare-docker:
-	docker build -t everdev:latest ../../../.ci/
+	docker build -t everdev:latest ../../../../.ci/
 
 build-contracts-docker:
 	docker run -it --rm \
