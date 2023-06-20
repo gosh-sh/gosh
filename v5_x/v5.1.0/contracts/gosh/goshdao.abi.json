@@ -101,7 +101,7 @@
 		{
 			"name": "getPreviousInfo1",
 			"inputs": [
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
 				{"name":"trash","type":"uint128"}
 			],
 			"outputs": [
@@ -133,7 +133,7 @@
 			"name": "returnWallets",
 			"inputs": [
 				{"name":"key","type":"uint256"},
-				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"}
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"}
 			],
 			"outputs": [
 			]

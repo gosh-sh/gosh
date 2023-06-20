@@ -335,6 +335,7 @@ interface IGoshDaoAdapter {
 
 interface IGoshRepositoryAdapter {
     auth?: any
+    repo: IGoshRepository
 
     isDeployed(): Promise<boolean>
 
