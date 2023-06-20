@@ -127,11 +127,8 @@ pipeline {
                             deployVersion(version, batch, basePort + (j * batchSize))
                         }
 
-                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v1", "v1_x")
-                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v2", "v2_x")
-                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v2", "v3_x")
-                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v4", "v4_x")
-                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v5", "v5_x/v5.1.0")
+                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v5.0", "v5_x/v5.0.0")
+                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v5.1", "v5_x/v5.1.0")
                         sh 'docker ps -a --filter name=localnode-* -aq | grep -v "$(docker ps -a --filter name=localnode-9000 -q)" | xargs docker rm -f'
                     }
                 }
