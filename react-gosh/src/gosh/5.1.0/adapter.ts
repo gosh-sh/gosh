@@ -194,11 +194,11 @@ import { GoshProfileDao } from '../goshprofiledao'
 import { GoshRoot } from '../goshroot'
 import { GoshBigTask } from './goshbigtask'
 
-class GoshAdapter_5_0_0 implements IGoshAdapter {
-    private static instance: GoshAdapter_5_0_0
+class GoshAdapter_5_1_0 implements IGoshAdapter {
+    private static instance: GoshAdapter_5_1_0
     private auth?: { username: string; keys: KeyPair }
 
-    static version: string = '5.0.0'
+    static version: string = '5.1.0'
 
     client: TonClient
     goshroot: IGoshRoot
@@ -210,11 +210,11 @@ class GoshAdapter_5_0_0 implements IGoshAdapter {
         this.gosh = new Gosh(this.client, goshaddr)
     }
 
-    static getInstance(goshroot: IGoshRoot, goshaddr: TAddress): GoshAdapter_5_0_0 {
-        if (!GoshAdapter_5_0_0.instance) {
-            GoshAdapter_5_0_0.instance = new GoshAdapter_5_0_0(goshroot, goshaddr)
+    static getInstance(goshroot: IGoshRoot, goshaddr: TAddress): GoshAdapter_5_1_0 {
+        if (!GoshAdapter_5_1_0.instance) {
+            GoshAdapter_5_1_0.instance = new GoshAdapter_5_1_0(goshroot, goshaddr)
         }
-        return GoshAdapter_5_0_0.instance
+        return GoshAdapter_5_1_0.instance
     }
 
     isValidUsername(username: string): TValidationResult {
@@ -292,7 +292,7 @@ class GoshAdapter_5_0_0 implements IGoshAdapter {
     }
 
     getVersion(): string {
-        return GoshAdapter_5_0_0.version
+        return GoshAdapter_5_1_0.version
     }
 
     async getProfile(options: {
@@ -5706,4 +5706,4 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     }
 }
 
-export { GoshAdapter_5_0_0 }
+export { GoshAdapter_5_1_0 }
