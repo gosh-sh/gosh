@@ -167,9 +167,8 @@ pipeline {
                             deployVersion(version, batch, basePort + (j * batchSize))
                         }
 
-                        runUpgradeTests(batch, basePort + (j * batchSize), 4, 5_x/v5.1.0)
-                        runUpgradeTests(batch, basePort + (j * batchSize), 3, 5_x/v5.1.0)
-                        runUpgradeTests(batch, basePort + (j * batchSize), 2, 5_x/v5.1.0)
+                        runUpgradeTests(batch, basePort + (j * batchSize), "5_x/v5.0.0", "5_x/v5.1.0")
+                        runUpgradeTests(batch, basePort + (j * batchSize), 4, "5_x/v5.1.0")
                         sh 'docker ps -a --filter name=localnode-* -aq | grep -v "$(docker ps -a --filter name=localnode-9000 -q)" | xargs docker rm -f'
                     }
 
