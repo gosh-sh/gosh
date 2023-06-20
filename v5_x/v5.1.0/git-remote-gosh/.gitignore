@@ -1,0 +1,8 @@
+.vscode/
+target/
+log/
+resources/*.abi.json
+
+.DS_Store
+*.log
+*.swp

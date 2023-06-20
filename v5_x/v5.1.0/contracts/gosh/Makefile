@@ -59,7 +59,7 @@ deploy-docker:
 		-v ${CURDIR}/../multisig/Giver.seed:/tmp/Giver.seed \
 		-v ${CURDIR}/../multisig/Giver.addr:/tmp/Giver.addr \
 		-v ${CURDIR}/../multisig/Giver.network:/tmp/Giver.network \
-		-v ${CURDIR}/../../../tests/util.sh:/tmp/util.sh \
+		-v ${CURDIR}/../../../../tests/util.sh:/tmp/util.sh \
 		${EXTRA_DOCKER_ARGS} \
 		-e VERSIONCONTROLLER_SEED_FILE_OUT="gosh.seed" \
 		everdev:latest \
@@ -71,7 +71,7 @@ upgrade-docker:
 		-v ${CURDIR}/../multisig/Giver.seed:/tmp/Giver.seed \
 		-v ${CURDIR}/../multisig/Giver.addr:/tmp/Giver.addr \
 		-v ${CURDIR}/../multisig/Giver.network:/tmp/Giver.network \
-		-v ${CURDIR}/../../../tests/util.sh:/tmp/util.sh \
+		-v ${CURDIR}/../../../../tests/util.sh:/tmp/util.sh \
 		${EXTRA_DOCKER_ARGS} \
 		-e VERSIONCONTROLLER_ADDR=${VERSIONCONTROLLER_ADDR} \
 		-e VERSIONCONTROLLER_SEED="${VERSIONCONTROLLER_SEED}" \
