@@ -1886,10 +1886,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     private gosh: IGoshAdapter
     private client: TonClient
-    private repo: IGoshRepository
     private name?: string
     private subwallets: IGoshWallet[] = []
 
+    repo: IGoshRepository
     auth?: { username: string; wallet0: IGoshWallet }
     config?: { maxWalletsWrite: number }
 
