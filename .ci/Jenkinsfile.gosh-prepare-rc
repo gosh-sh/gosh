@@ -164,8 +164,8 @@ pipeline {
                             deployVersion(version, batch, basePort + (j * batchSize))
                         }
 
-                        runUpgradeTests(batch, basePort + (j * batchSize), "5_x/v5.0.0", "5_x/v5.1.0")
-                        runUpgradeTests(batch, basePort + (j * batchSize), 4, "5_x/v5.1.0")
+                        runUpgradeTests(batch, basePort + (j * batchSize), "v5_x/v5.0.0", "v5_x/v5.1.0")
+                        runUpgradeTests(batch, basePort + (j * batchSize), "v4_x", "v5_x/v5.1.0")
                         sh 'docker ps -a --filter name=localnode-* -aq | grep -v "$(docker ps -a --filter name=localnode-9000 -q)" | xargs docker rm -f'
                     }
 
@@ -505,8 +505,8 @@ def runSingleUpgradeTest(script, index, port, from, to) {
         sh """
             export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
             export GOSH_REMOTE_WAIT_TIMEOUT=300
-            ./set-vars.sh v${from}_x_workspace_${index} http://localnode:${port}
-            ./upgrade_tests/set_up.sh v${from}_x_workspace_${index} v${to}_x_workspace_${index}
+            ./set-vars.sh ${from}_workspace_${index} http://localnode:${port}
+            ./upgrade_tests/set_up.sh ${from}_workspace_${index} ${to}_workspace_${index}
             ./upgrade_tests/${script}
         """
     }
