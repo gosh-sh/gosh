@@ -172,7 +172,11 @@ contract Repository is Modifiers{
             _Branches[tvm.hash(branch)] = Item(branch, msg.sender, version);
             return;
         }
-        if ((commit.version == "2.0.0") && (_previousversion.get().version == "3.0.0")) {
+        if ((commit.version == "2.0.0") && ((_previousversion.get().version == "3.0.0") || (_previousversion.get().version == "4.0.0"))) {
+            _Branches[tvm.hash(branch)] = Item(branch, msg.sender, version);
+            return;
+        }
+        if ((commit.version == "3.0.0") && (_previousversion.get().version == "4.0.0")) {
             _Branches[tvm.hash(branch)] = Item(branch, msg.sender, version);
             return;
         }
