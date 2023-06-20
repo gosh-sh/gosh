@@ -40,7 +40,7 @@ git push -u origin main
 
 git checkout -b dev
 echo "***** Generating files *****"
-if [[ "$VERSION" == *"v4_x"* ]]; then
+if [[ "$VERSION" =~ "v4_x" ]]; then
   FILES_CNT=504
   for n in {1..500}; do
       echo "$n$n$n" > "$n.txt"

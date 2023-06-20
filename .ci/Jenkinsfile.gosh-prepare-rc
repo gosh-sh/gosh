@@ -12,8 +12,11 @@ def runFunctionSet(function_name) {
         "v4_x": {
             "${function_name}"('v4_x')
         },
-        "v5_x": {
-            "${function_name}"('v5_x')
+        "v5_x/v5.0.0": {
+            "${function_name}"('v5_x/v5.0.0')
+        },
+        "v5_x/v5.1.0": {
+            "${function_name}"('v5_x/v5.1.0')
         }
     ]
     parallel(running_set)
@@ -110,7 +113,7 @@ pipeline {
                     sh "rm -rf tests_workspace_*"
                     def basePort = 9000
                     def files = getTestFiles("tests").toList()
-                    def versions = ["v1_x", "v2_x", "v3_x", "v4_x", "v5_x"]
+                    def versions = ["v1_x", "v2_x", "v3_x", "v4_x", "v5_x/v5.1.0", "v5_x/v5.0.0"]
                     def batches = []
                     for (int i = 0; i < files.size(); i += batchSize) {
                         def end = Math.min(i + batchSize, files.size())
@@ -128,7 +131,8 @@ pipeline {
                         runFunctionalTests(batch, basePort + (j * batchSize), "Func v2", "v2_x")
                         runFunctionalTests(batch, basePort + (j * batchSize), "Func v2", "v3_x")
                         runFunctionalTests(batch, basePort + (j * batchSize), "Func v4", "v4_x")
-                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v5", "v5_x")
+                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v5.0", "v5_x/v5.0.0")
+                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v5.1", "v5_x/v5.1.0")
                         sh 'docker ps -a --filter name=localnode-* -aq | grep -v "$(docker ps -a --filter name=localnode-9000 -q)" | xargs docker rm -f'
                     }
                 }
@@ -147,7 +151,7 @@ pipeline {
                 script {
                     sh "rm -rf tests_workspace_*"
                     def basePort = 9000
-                    def versions = ["v2_x", "v3_x", "v4_x", "v5_x"]
+                    def versions = [v2_x", "v3_x", "v4_x", "v5_x/v5.0.0", "v5_x/v5.1.0"]
 
                     def upgradeFiles = getTestFiles("tests/upgrade_tests").toList()
                     def upgradeBatches = []
@@ -164,9 +168,10 @@ pipeline {
                             deployVersion(version, batch, basePort + (j * batchSize))
                         }
 
-                        runUpgradeTests(batch, basePort + (j * batchSize), 4, 5)
-                        runUpgradeTests(batch, basePort + (j * batchSize), 3, 5)
-                        runUpgradeTests(batch, basePort + (j * batchSize), 2, 5)
+                        runUpgradeTests(batch, basePort + (j * batchSize), "v5_x/v5.0.0", "v5_x/v5.1.0")
+                        runUpgradeTests(batch, basePort + (j * batchSize), "v4_x", "v5_x/v5.1.0")
+                        runUpgradeTests(batch, basePort + (j * batchSize), "v3_x", "v5_x/v5.1.0")
+                        runUpgradeTests(batch, basePort + (j * batchSize), "v2_x", "v5_x/v5.1.0")
                         sh 'docker ps -a --filter name=localnode-* -aq | grep -v "$(docker ps -a --filter name=localnode-9000 -q)" | xargs docker rm -f'
                     }
 
@@ -298,7 +303,7 @@ def buildDispatcherDebug() {
                 rm -rf darwin-*
                 rm -rf windows-*
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1123 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1140 --path linux-amd64 && sleep 2
             '''
         }
     }
@@ -354,11 +359,12 @@ def buildRemoteGoshDebug(version) {
                 cd ${WORKSPACE}
                 export VSTS_ARTIFACTTOOL_DISABLE_HARDLINKS=1
                 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1124 --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1125 --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1126 --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1127 --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1128 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1141 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1142 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1143 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1144 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1145 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1146 --path linux-amd64 && sleep 2
             """
         }
     }
@@ -505,8 +511,8 @@ def runSingleUpgradeTest(script, index, port, from, to) {
         sh """
             export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
             export GOSH_REMOTE_WAIT_TIMEOUT=300
-            ./set-vars.sh v${from}_x_workspace_${index} http://localnode:${port}
-            ./upgrade_tests/set_up.sh v${from}_x_workspace_${index} v${to}_x_workspace_${index}
+            ./set-vars.sh ${from}_workspace_${index} http://localnode:${port}
+            ./upgrade_tests/set_up.sh ${from}_workspace_${index} ${to}_workspace_${index}
             ./upgrade_tests/${script}
         """
     }

@@ -45,7 +45,7 @@ install:
 	@echo Installing from ${target-dir} to ${target-network}
 
 prepare-docker:
-	docker build -t everdev:latest ../../../.ci/
+	docker build -t everdev:latest ../../../../.ci/
 
 build-contracts-docker:
 	docker run --rm \

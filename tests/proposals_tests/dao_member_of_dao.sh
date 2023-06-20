@@ -15,8 +15,8 @@ set -x
 #get second part of reward
 
 
-FIRST_VERSION=v4_x
-SECOND_VERSION=v5_x
+#FIRST_VERSION=v4_x
+#SECOND_VERSION=v5_x
 #./node_se_scripts/deploy.sh $FIRST_VERSION
 #. set-vars.sh $FIRST_VERSION
 #./upgrade_tests/set_up.sh $FIRST_VERSION $SECOND_VERSION
@@ -25,9 +25,9 @@ SECOND_VERSION=v5_x
 REPO_NAME=prop_repo02
 DAO_NAME="dao-prop-child_$(date +%s)"
 NEW_REPO_PATH=prop_repo02_v2
-COMMIT_ABI="../$FIRST_VERSION/contracts/gosh/commit.abi.json"
-SNAPSHOT_ABI="../$FIRST_VERSION/contracts/gosh/snapshot.abi.json"
-TASK_ABI="../$FIRST_VERSION/contracts/gosh/task.abi.json"
+COMMIT_ABI="../$VERSION/contracts/gosh/commit.abi.json"
+SNAPSHOT_ABI="../$VERSION/contracts/gosh/snapshot.abi.json"
+TASK_ABI="../$VERSION/contracts/gosh/task.abi.json"
 OLD_VERSION=$CUR_VERSION
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
