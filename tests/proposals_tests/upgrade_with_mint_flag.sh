@@ -42,7 +42,7 @@ if [ "$MEMBERS_LEN" != "1" ]; then
   exit 1
 fi
 
-MEMBERS_CNT=59
+MEMBERS_CNT=39
 TOTAL_CNT=$((MEMBERS_CNT + 1))
 add_members_to_dao
 
@@ -72,6 +72,7 @@ if [ "$ALLOW_MINT" != "false" ]; then
 fi
 MEMBERS_LEN=0
 iter=1
+DAO_ABI=$DAO_ABI_1
 while [[ $MEMBERS_LEN -lt $TOTAL_CNT ]]
 do
   sleep 60
