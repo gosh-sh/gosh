@@ -43,7 +43,10 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
         dao: dao.adapter,
         objectAddress: commentsObject,
         filename,
-        commits: commit ? [commit.parents[0].name, commit.name] : undefined,
+        commits:
+            commit && commit.parents.length
+                ? [commit.parents[0].name, commit.name]
+                : undefined,
     })
     const [isDiffShort, setIsDiffShort] = useState<boolean>(true)
     const [mouseDown, setMouseDown] = useState<boolean>(false)
