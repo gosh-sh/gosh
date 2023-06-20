@@ -262,20 +262,20 @@ const TaskPage = () => {
                                                             isLoading={isSubmitting}
                                                             disabled={
                                                                 isSubmitting ||
-                                                                dao.details.version >=
+                                                                dao.details.version ===
                                                                     '5.0.0'
                                                             }
                                                         >
                                                             Claim reward
                                                         </Button>
-                                                        {dao.details.version >=
+                                                        {dao.details.version ===
                                                             '5.0.0' && (
                                                             <Alert
                                                                 variant="danger"
                                                                 className="mt-4 text-xs"
                                                             >
-                                                                Claim is temporary
-                                                                unavailable
+                                                                Claim is unavailable in
+                                                                current version
                                                             </Alert>
                                                         )}
                                                     </Form>
