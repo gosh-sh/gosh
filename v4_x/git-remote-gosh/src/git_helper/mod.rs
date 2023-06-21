@@ -21,6 +21,7 @@ use crate::{
     logger::set_log_verbosity,
     utilities::Remote,
 };
+use crate::database::GoshDB;
 
 pub mod ever_client;
 #[cfg(test)]
@@ -57,6 +58,7 @@ pub struct GitHelper<
     cache: Arc<CacheProxy>,
     upgraded_commits: Vec<String>,
     repo_versions: Vec<RepoVersion>,
+    database: Arc<GoshDB>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -151,6 +153,8 @@ where
             }
         }
 
+        let database = GoshDB::new()?;
+
         Ok(Self {
             config,
             file_provider,
@@ -162,7 +166,12 @@ where
             cache: Arc::new(cache),
             upgraded_commits: vec![],
             repo_versions: vec![],
+            database: Arc::new(database),
         })
+    }
+
+    pub fn delete_db(&mut self) -> anyhow::Result<()> {
+        Arc::get_mut(&mut self.database).unwrap().delete()
     }
 
     async fn capabilities(&self) -> anyhow::Result<Vec<String>> {
@@ -411,6 +420,7 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
                 }
                 continue;
             } else {
+                helper.delete_db()?;
                 return Ok(());
             }
         }
@@ -542,6 +552,7 @@ pub mod tests {
             cache,
             upgraded_commits: vec![],
             repo_versions: vec![],
+            database: Arc::new(GoshDB::new().unwrap()),
         }
     }
 }

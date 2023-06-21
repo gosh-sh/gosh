@@ -35,3 +35,4 @@ pub mod git_helper;
 pub mod ipfs;
 pub mod logger;
 pub mod utilities;
+pub(crate) mod database;
