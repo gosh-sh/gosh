@@ -29,7 +29,7 @@ mod push_tag;
 mod push_tree;
 use push_tag::push_tag;
 mod delete_tag;
-mod parallel_snapshot_upload_support;
+pub(crate) mod parallel_snapshot_upload_support;
 
 use crate::blockchain::branch_list;
 use crate::git_helper::push::parallel_snapshot_upload_support::{
@@ -400,6 +400,9 @@ where
         for id in parent_ids {
             tracing::trace!("check parent: {id}");
             for repo_version in &self.repo_versions {
+                if repo_version.version == supported_contract_version().trim_matches(|c| c == '"') {
+                    continue;
+                }
                 let mut repo_contract =
                     GoshContract::new(&repo_version.repo_address, gosh_abi::REPO);
                 let parent = get_commit_address(
@@ -410,30 +413,29 @@ where
                 .await?;
                 let commit_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
                 if commit_contract.is_active(self.blockchain.client()).await? {
-                    if repo_version.version != supported_contract_version() {
-                        tracing::trace!(
-                                "Found parent {id} in version {}",
-                                repo_version.version
-                            );
-                        tracing::trace!("Start upgrade of the parent: {id}");
-                        let branch: GetNameCommitResult = commit_contract
-                            .run_local(self.blockchain.client(), "getNameBranch", None)
-                            .await?;
-                        let parents_for_upgrade = vec![
-                            AddrVersion {
-                                address: parent,
-                                version: repo_version.version.clone(),
-                            }
-                        ];
-                        self.check_and_upgrade_previous_commit(
-                            id.to_string(),
-                            &branch.name,
-                            &branch.name,
-                            set_commit,
-                            parents_for_upgrade,
-                        )
-                            .await?;
-                    }
+                    tracing::trace!(
+                            "Found parent {id} in version {}",
+                            repo_version.version
+                        );
+                    tracing::trace!("Start upgrade of the parent: {id}");
+                    let branch: GetNameCommitResult = commit_contract
+                        .run_local(self.blockchain.client(), "getNameBranch", None)
+                        .await?;
+                    let parents_for_upgrade = vec![
+                        AddrVersion {
+                            address: parent,
+                            version: repo_version.version.clone(),
+                        }
+                    ];
+                    self.check_and_upgrade_previous_commit(
+                        id.to_string(),
+                        &branch.name,
+                        &branch.name,
+                        set_commit,
+                        parents_for_upgrade,
+                    )
+                        .await?;
+
                     break;
                 } else {
                     tracing::trace!(
@@ -516,17 +518,21 @@ where
             let tree_addr = tree_addr.clone();
             let branch_name = remote_branch_name.to_owned().clone();
 
+            let commit = ParallelCommit::new(
+                object_id,
+                branch_name,
+                tree_addr,
+                raw_commit,
+                parents,
+                upgrade_commit,
+            );
+
+            self.database.put_commit(&commit)?;
+
             push_commits
                 .add_to_push_list(
                     self,
-                    ParallelCommit::new(
-                        object_id,
-                        branch_name,
-                        tree_addr,
-                        raw_commit,
-                        parents,
-                        upgrade_commit,
-                    ),
+                    commit,
                     push_semaphore.clone(),
                 )
                 .await?;
@@ -887,6 +893,7 @@ where
             match object_kind {
                 git_object::Kind::Commit => {
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)
+                    // TODO: check only the first commit
                     self.check_parents(object_id, remote_branch_name, local_branch_name, true)
                         .await?;
                     self.push_commit_object(

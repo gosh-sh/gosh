@@ -77,7 +77,7 @@ struct GetTombstoneResult {
 mod fetch;
 
 // Note: this module implements push method on GitHelper
-mod push;
+pub(crate) mod push;
 
 mod list;
 
@@ -420,7 +420,7 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
                 }
                 continue;
             } else {
-                helper.delete_db()?;
+                // helper.delete_db()?;
                 return Ok(());
             }
         }
