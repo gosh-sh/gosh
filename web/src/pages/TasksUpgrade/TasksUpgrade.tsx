@@ -120,7 +120,7 @@ const TasksUpgradePage = () => {
         const vgosh = GoshAdapterFactory.create(ver)
         const vdao = await vgosh.getDao({ name: dao.details.name, useAuth: false })
 
-        // Get all repositories from DAO 3.0 and task code hash for repo
+        // Get all repositories from DAO ver and task code hash for repo
         const repos = await getRepositoryAccounts(dao.details.name, {
             version: ver,
         })
@@ -246,11 +246,19 @@ const TasksUpgradePage = () => {
             const prevVersion = prevDao.getVersion()
 
             // Upgrade big tasks
-            const result = await _upgrade_bigtasks(prevVersion)
-            isEvent = result.isEvent
+            if (prevVersion >= '5.0.0') {
+                const result = await _upgrade_bigtasks(prevVersion)
+                isEvent = result.isEvent
+            }
 
             // Upgrade tasks
-            if (prevVersion === '2.0.0') {
+            if (prevVersion === '1.0.0') {
+                await dao.adapter.upgradeTaskComplete({ cell: false })
+                progressDispatch({ type: 'get_repositories', payload: true })
+                progressDispatch({ type: 'get_tasks', payload: true })
+                progressDispatch({ type: 'upgrade_tasks', payload: true })
+                isEvent = false
+            } else if (prevVersion === '2.0.0') {
                 const result = await _upgrade_from_2()
                 isEvent = result.isEvent
             } else {

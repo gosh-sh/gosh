@@ -5123,7 +5123,9 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             address,
             type: { kind, name: SmvEventTypes[kind] },
             status: {
-                completed: details.value1 !== null || Date.now() > time.finish,
+                completed:
+                    details.value1 !== null ||
+                    (time.finish > 0 && Date.now() > time.finish),
                 accepted: !!details.value1,
             },
             time,
