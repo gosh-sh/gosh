@@ -18,6 +18,8 @@ use crate::git_helper::push::parallel_snapshot_upload_support::{
     ParallelTree, ParallelTreeUploadSupport,
 };
 use tokio::sync::Semaphore;
+use crate::blockchain::Tree;
+use crate::database::GoshDB;
 
 const MARKER_FLAG: u32 = 1u32;
 
@@ -118,12 +120,22 @@ pub async fn push_tree(
         let cache = context.cache.clone();
 
         let tree = ParallelTree::new(tree_id, tree_nodes);
-        context.database.put_tree(&tree)?;
+
+        let mut repo_contract = context.blockchain.repo_contract().clone();
+        let tree_address = Tree::calculate_address(
+            &Arc::clone(context.blockchain.client()),
+            &mut repo_contract,
+            &tree_id.to_string(),
+        )
+            .await?
+            .to_string();
+
+        context.database.put_tree(tree,tree_address.clone())?;
 
         handlers
             .add_to_push_list(
                 context,
-                tree,
+                tree_address,
                 push_semaphore.clone(),
             )
             .await?;
@@ -137,17 +149,18 @@ pub async fn inner_deploy_tree(
     remote_network: &str,
     dao_addr: &BlockchainContractAddress,
     remote_repo: &str,
-    tree_id: &ObjectId,
-    tree_nodes: &HashMap<String, TreeNode>,
+    tree_address: &str,
+    database: Arc<GoshDB>,
 ) -> anyhow::Result<()> {
-    tracing::trace!("inner_deploy_tree: remote_network={remote_network}, dao_addr={dao_addr}, remote_repo={remote_repo}, tree_id={tree_id}");
+    let tree = database.get_tree(tree_address)?;
+    tracing::trace!("inner_deploy_tree: remote_network={remote_network}, dao_addr={dao_addr}, remote_repo={remote_repo}, tree_id={}", tree.tree_id);
     let wallet = blockchain.user_wallet(&dao_addr, &remote_network).await?;
     blockchain
         .deploy_tree(
             &wallet,
-            &tree_id.to_hex().to_string(),
+            &tree.tree_id.to_hex().to_string(),
             &remote_repo,
-            tree_nodes,
+            &tree.tree_nodes,
         )
         .await
 }

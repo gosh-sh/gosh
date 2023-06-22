@@ -278,14 +278,10 @@ pub mod tests {
         impl BlockchainCommitPusher for Everscale {
             async fn push_commit(
                 &self,
-                commit_id: &ObjectId,
-                branch: &str,
-                tree_addr: &BlockchainContractAddress,
+                commit_address: &str,
                 remote: &Remote,
                 dao_addr: &BlockchainContractAddress,
-                raw_commit: &str,
-                parents: &Vec<AddrVersion>,
-                upgrade_commit: bool,
+                database: Arc<GoshDB>,
             ) -> anyhow::Result<()>;
 
             async fn notify_commit(

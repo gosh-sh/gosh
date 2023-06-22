@@ -1,4 +1,6 @@
 mod types;
+mod save;
+mod load;
 
 use std::ops::{Deref, DerefMut};
 use std::path::{Path, PathBuf};
@@ -6,6 +8,7 @@ use std::sync::Arc;
 use rocksdb::{BoundColumnFamily, DBCommon, DBWithThreadMode, MultiThreaded};
 use tokio::sync::Mutex;
 use uuid::Uuid;
+use crate::blockchain::snapshot::PushDiffCoordinate;
 use crate::database::types::{DBCommit, DBDiff, DBTree};
 use crate::git_helper::push::parallel_diffs_upload_support::ParallelDiff;
 use crate::git_helper::push::parallel_snapshot_upload_support::{ParallelCommit, ParallelSnapshot, ParallelTree};
@@ -81,48 +84,6 @@ impl GoshDB {
         self.db().cf_handle(name).expect("Failed to access column")
     }
 
-    fn id() -> String {
-        Uuid::new_v4().to_string()
-    }
-
-    pub fn put_commit(&self, commit: &ParallelCommit) -> anyhow::Result<()> {
-        eprintln!("put commit");
-        let commit_for_db = DBCommit::from(commit);
-        let value = serde_json::to_string(&commit_for_db).expect("Failed to serialize commit");
-        let db = self.db();
-        db.put_cf(&self.cf(COMMIT_CF), GoshDB::id(), value)?;
-        db.flush()?;
-        Ok(())
-    }
-
-    pub fn put_tree(&self, tree: &ParallelTree) -> anyhow::Result<()> {
-        eprintln!("put tree");
-        let commit_for_db = DBTree::from(tree);
-        let value = serde_json::to_string(&commit_for_db).expect("Failed to serialize commit");
-        let db = self.db();
-        db.put_cf(&self.cf(TREE_CF), GoshDB::id(), value)?;
-        db.flush()?;
-        Ok(())
-    }
-
-    pub fn put_diff(&self, diff: &ParallelDiff) -> anyhow::Result<()> {
-        eprintln!("put diff");
-        let commit_for_db = DBDiff::from(diff);
-        let value = serde_json::to_string(&commit_for_db).expect("Failed to serialize commit");
-        let db = self.db();
-        db.put_cf(&self.cf(DIFF_CF), GoshDB::id(), value)?;
-        db.flush()?;
-        Ok(())
-    }
-
-    pub fn put_snapshot(&self, snapshot: &ParallelSnapshot) -> anyhow::Result<()> {
-        eprintln!("put snapshot");
-        let value = serde_json::to_string(snapshot).expect("Failed to serialize commit");
-        let db = self.db();
-        db.put_cf(&self.cf(SNAPSHOT_CF), GoshDB::id(), value)?;
-        db.flush()?;
-        Ok(())
-    }
     pub fn delete(&mut self) -> anyhow::Result<()> {
         eprintln!("delete db");
         match self.db.take() {

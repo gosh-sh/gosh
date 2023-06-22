@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use crate::blockchain::user_wallet::{UserWallet, WalletError};
 use crate::ipfs::build_ipfs;
 use std::time::Duration;
@@ -21,6 +22,7 @@ use crate::{
 };
 use tokio_retry::RetryIf;
 use ton_client::utils::compress_zstd;
+use crate::database::GoshDB;
 
 use super::is_going_to_ipfs;
 use super::utilities::retry::default_retry_strategy;
@@ -358,14 +360,19 @@ pub async fn push_initial_snapshot<B>(
     repo_addr: BlockchainContractAddress,
     dao_addr: BlockchainContractAddress,
     remote_network: String,
-    branch_name: String,
-    file_path: String,
-    upgrade: bool,
-    commit_id: String,
+    snapshot_address: String,
+    database: Arc<GoshDB>,
 ) -> anyhow::Result<()>
 where
     B: BlockchainService + 'static,
 {
+    let snapshot = database.get_snapshot(&snapshot_address)?;
+
+    let branch_name= snapshot.branch_name;
+    let file_path = snapshot.file_path;
+    let upgrade = snapshot.upgrade;
+    let commit_id = snapshot.commit_id;
+
     tracing::trace!("push_initial_snapshot: repo_addr={repo_addr}, dao_addr={dao_addr}, remote_network={remote_network}, branch_name={branch_name}, file_path={file_path}");
     let wallet = blockchain.user_wallet(&dao_addr, &remote_network).await?;
 
