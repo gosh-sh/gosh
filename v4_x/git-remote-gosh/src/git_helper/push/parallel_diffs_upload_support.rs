@@ -15,11 +15,10 @@ const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
 pub struct ParallelDiffsUploadSupport {
     parallels: HashMap<String, u32>,
     next_index: HashMap<String, u32>,
-    dangling_diffs: HashMap<String, (PushDiffCoordinate, ParallelDiff)>,
+    dangling_diffs: Vec<String>,
     next_parallel_index: u32,
     last_commit_id: git_hash::ObjectId,
-    expecting_deployed_contacts_addresses:
-        HashMap<BlockchainContractAddress, (PushDiffCoordinate, ParallelDiff, bool)>,
+    expecting_deployed_contacts_addresses: Vec<String>,
     pushed_blobs: JoinSet<anyhow::Result<()>>,
 }
 
@@ -66,35 +65,41 @@ impl ParallelDiffsUploadSupport {
         Self {
             parallels: HashMap::new(),
             next_index: HashMap::new(),
-            dangling_diffs: HashMap::new(),
+            dangling_diffs: vec![],
             next_parallel_index: 0,
             last_commit_id: *last_commit_id,
-            expecting_deployed_contacts_addresses: HashMap::new(),
+            expecting_deployed_contacts_addresses: vec![],
             pushed_blobs: JoinSet::new(),
         }
     }
 
     pub fn get_expected(
         &self,
-    ) -> &HashMap<BlockchainContractAddress, (PushDiffCoordinate, ParallelDiff, bool)> {
+    ) -> &Vec<String> {
         &self.expecting_deployed_contacts_addresses
     }
 
     pub async fn add_to_push_list(
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
-        diff_coordinates: &PushDiffCoordinate,
-        parallel_diff: &ParallelDiff,
-        is_last: bool,
+        diff_address: String,
     ) -> anyhow::Result<()> {
         let blockchain = context.blockchain.clone();
         let dao_address: BlockchainContractAddress = context.dao_addr.clone();
         let remote_network: String = context.remote.network.clone();
-        let diff_coordinates_clone = diff_coordinates.clone();
-        let parallel_diff_clone = parallel_diff.clone();
         let last_commit_id = self.last_commit_id.clone();
         let repo_name: String = context.remote.repo.clone();
         let ipfs_http_endpoint: String = context.config.ipfs_http_endpoint().to_string();
+        tracing::trace!(
+            "start push of diff: {}",
+            diff_address
+        );
+
+        let database = context.database.clone();
+
+        self.expecting_deployed_contacts_addresses.push(
+            diff_address.clone()
+        );
         self.pushed_blobs.spawn(
             async move {
                 push_diff(
@@ -103,42 +108,13 @@ impl ParallelDiffsUploadSupport {
                     &dao_address,
                     &remote_network,
                     &ipfs_http_endpoint,
-                    &parallel_diff_clone.commit_id,
-                    &parallel_diff_clone.branch_name,
-                    &parallel_diff_clone.blob_id,
-                    &parallel_diff_clone.file_path,
-                    &diff_coordinates_clone,
                     &last_commit_id,
-                    is_last, // <- It is known now
-                    &parallel_diff_clone.original_snapshot_content,
-                    &parallel_diff_clone.diff,
-                    &parallel_diff_clone.new_snapshot_content,
+                    diff_address.clone(),
+                    database,
                 )
                 .await
             }
             .instrument(debug_span!("tokio::spawn::push_diff").or_current()),
-        );
-        let mut repo_contract = context.blockchain.repo_contract().clone();
-        let diff_contract_address = diff_address(
-            &context.blockchain.client(),
-            &mut repo_contract,
-            &self.last_commit_id,
-            &diff_coordinates,
-        )
-        .await?;
-        tracing::trace!(
-            "diff_contract_address <commit: {}, coord: {:?}>: {}",
-            self.last_commit_id,
-            diff_coordinates,
-            diff_contract_address
-        );
-        self.expecting_deployed_contacts_addresses.insert(
-            diff_contract_address,
-            (
-                diff_coordinates.to_owned(),
-                parallel_diff.to_owned(),
-                is_last,
-            ),
         );
         Ok(())
     }
@@ -148,14 +124,25 @@ impl ParallelDiffsUploadSupport {
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
     ) -> anyhow::Result<()> {
-        let values = self
-            .dangling_diffs
-            .clone()
-            .into_values()
-            .collect::<Vec<(PushDiffCoordinate, ParallelDiff)>>();
-        for (diff_coordinates, parallel_diff) in values {
+        let values = context.database.get_all_dangling_diffs()?;
+        for (parallel_diff, diff_coordinates) in values {
             {
-                self.add_to_push_list(context, &diff_coordinates, &parallel_diff, true)
+                let mut repo_contract = context.blockchain.repo_contract().clone();
+                let diff_contract_address = diff_address(
+                    &context.blockchain.client(),
+                    &mut repo_contract,
+                    &self.last_commit_id,
+                    &diff_coordinates,
+                )
+                    .await?;
+                let diff_contract_address = String::from(diff_contract_address);
+
+                context.database.put_diff(
+                    (&parallel_diff, diff_coordinates, true),
+                    diff_contract_address.clone()
+                )?;
+
+                self.add_to_push_list(context, diff_contract_address)
                     .await?;
             }
         }
@@ -174,8 +161,8 @@ impl ParallelDiffsUploadSupport {
         // - Make it configurable
         let addresses = self
             .expecting_deployed_contacts_addresses
-            .clone()
-            .into_keys()
+            .iter()
+            .map(|addr| BlockchainContractAddress::new(addr))
             .collect::<Vec<BlockchainContractAddress>>();
         tracing::debug!(
             "Expecting the following diff contracts to be deployed: {:?}",
@@ -242,15 +229,40 @@ impl ParallelDiffsUploadSupport {
         context: &mut GitHelper<impl BlockchainService + 'static>,
         diff: ParallelDiff,
     ) -> anyhow::Result<()> {
-        let diff_coordinates = self.next_diff(&diff.file_path);
-        let prev_value = self
-            .dangling_diffs
-            .insert(diff.file_path.clone(), (diff_coordinates, diff));
+        let file_path = diff.file_path.clone();
+        let diff_coordinates = self.next_diff(&file_path);
+        let prev_value = if self.dangling_diffs.contains(&file_path) {
+            Some(
+                context.database.get_dangling_diff(&file_path)?
+            )
+        } else {
+            self
+                .dangling_diffs
+                .push(file_path.clone());
+            None
+        };
+
+        context.database.put_dangling_diff((&diff, diff_coordinates), file_path)?;
 
         match prev_value {
             None => {}
-            Some((diff_coordinates, parallel_diff)) => {
-                self.add_to_push_list(context, &diff_coordinates, &parallel_diff, false)
+            Some((parallel_diff, diff_coordinates)) => {
+                let mut repo_contract = context.blockchain.repo_contract().clone();
+                let diff_contract_address = diff_address(
+                    &context.blockchain.client(),
+                    &mut repo_contract,
+                    &self.last_commit_id,
+                    &diff_coordinates,
+                )
+                    .await?;
+                let diff_contract_address = String::from(diff_contract_address);
+
+                context.database.put_diff(
+                    (&parallel_diff, diff_coordinates, false),
+                    diff_contract_address.clone()
+                )?;
+
+                self.add_to_push_list(context, diff_contract_address)
                     .await?;
             }
         }

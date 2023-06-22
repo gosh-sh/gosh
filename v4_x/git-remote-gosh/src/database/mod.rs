@@ -19,6 +19,7 @@ const DIFF_CF: &str = "Diff";
 const TREE_CF: &str = "Tree";
 const COMMIT_CF: &str = "Commit";
 const SNAPSHOT_CF: &str = "Snapshot";
+const DANGLING_DIFF_CF: &str = "DanglingDiff";
 
 fn get_db_path() -> anyhow::Result<String> {
     let local_git_dir = std::env::var("GIT_DIR")?;
@@ -55,7 +56,7 @@ fn create_db() -> anyhow::Result<DBWithThreadMode<MultiThreaded>> {
     } else {
         let db = DBWithThreadMode::<MultiThreaded>::open(&db_options, &db_path)
             .map_err(|e| anyhow::format_err!("Failed to open temporary database: {e}"))?;
-        let cfs = vec![DIFF_CF, TREE_CF, SNAPSHOT_CF, COMMIT_CF];
+        let cfs = vec![DIFF_CF, TREE_CF, SNAPSHOT_CF, COMMIT_CF, DANGLING_DIFF_CF];
         for cf in cfs {
             db.create_cf(cf, &db_options)?;
         }

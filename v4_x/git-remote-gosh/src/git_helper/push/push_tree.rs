@@ -127,8 +127,8 @@ pub async fn push_tree(
             &mut repo_contract,
             &tree_id.to_string(),
         )
-            .await?
-            .to_string();
+            .await?;
+        let tree_address = String::from(tree_address);
 
         context.database.put_tree(tree,tree_address.clone())?;
 
