@@ -31,7 +31,7 @@ pub struct ParallelSnapshotUploadSupport {
     pushed_blobs: JoinSet<anyhow::Result<()>>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ParallelSnapshot {
     branch_name: String,
     file_path: String,
@@ -318,7 +318,7 @@ pub struct ParallelTreeUploadSupport {
 #[derive(Clone, Debug)]
 pub struct ParallelTree {
     pub tree_id: ObjectId,
-    tree_nodes: HashMap<String, TreeNode>,
+    pub tree_nodes: HashMap<String, TreeNode>,
 }
 
 impl ParallelTree {

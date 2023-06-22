@@ -117,10 +117,13 @@ pub async fn push_tree(
         let repo = context.remote.repo.clone();
         let cache = context.cache.clone();
 
+        let tree = ParallelTree::new(tree_id, tree_nodes);
+        context.database.put_tree(&tree)?;
+
         handlers
             .add_to_push_list(
                 context,
-                ParallelTree::new(tree_id, tree_nodes),
+                tree,
                 push_semaphore.clone(),
             )
             .await?;

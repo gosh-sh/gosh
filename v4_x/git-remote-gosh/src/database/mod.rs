@@ -6,8 +6,9 @@ use std::sync::Arc;
 use rocksdb::{BoundColumnFamily, DBCommon, DBWithThreadMode, MultiThreaded};
 use tokio::sync::Mutex;
 use uuid::Uuid;
-use crate::database::types::DBCommit;
-use crate::git_helper::push::parallel_snapshot_upload_support::ParallelCommit;
+use crate::database::types::{DBCommit, DBDiff, DBTree};
+use crate::git_helper::push::parallel_diffs_upload_support::ParallelDiff;
+use crate::git_helper::push::parallel_snapshot_upload_support::{ParallelCommit, ParallelSnapshot, ParallelTree};
 
 const DB_FOLDER_NAME: &str = "gosh_db";
 const DEFAULT_LEVEL_OF_PARALLELISM: i32 = 4;
@@ -94,6 +95,34 @@ impl GoshDB {
         Ok(())
     }
 
+    pub fn put_tree(&self, tree: &ParallelTree) -> anyhow::Result<()> {
+        eprintln!("put tree");
+        let commit_for_db = DBTree::from(tree);
+        let value = serde_json::to_string(&commit_for_db).expect("Failed to serialize commit");
+        let db = self.db();
+        db.put_cf(&self.cf(TREE_CF), GoshDB::id(), value)?;
+        db.flush()?;
+        Ok(())
+    }
+
+    pub fn put_diff(&self, diff: &ParallelDiff) -> anyhow::Result<()> {
+        eprintln!("put diff");
+        let commit_for_db = DBDiff::from(diff);
+        let value = serde_json::to_string(&commit_for_db).expect("Failed to serialize commit");
+        let db = self.db();
+        db.put_cf(&self.cf(DIFF_CF), GoshDB::id(), value)?;
+        db.flush()?;
+        Ok(())
+    }
+
+    pub fn put_snapshot(&self, snapshot: &ParallelSnapshot) -> anyhow::Result<()> {
+        eprintln!("put snapshot");
+        let value = serde_json::to_string(snapshot).expect("Failed to serialize commit");
+        let db = self.db();
+        db.put_cf(&self.cf(SNAPSHOT_CF), GoshDB::id(), value)?;
+        db.flush()?;
+        Ok(())
+    }
     pub fn delete(&mut self) -> anyhow::Result<()> {
         eprintln!("delete db");
         match self.db.take() {

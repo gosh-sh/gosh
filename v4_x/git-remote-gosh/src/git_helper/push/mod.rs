@@ -21,7 +21,7 @@ use ton_client::net::ParamsOfQuery;
 use tokio::sync::Semaphore;
 
 pub mod create_branch;
-mod parallel_diffs_upload_support;
+pub(crate) mod parallel_diffs_upload_support;
 mod utilities;
 pub use utilities::ipfs_content::is_going_to_ipfs;
 mod push_diff;
@@ -115,6 +115,9 @@ where
             file_diff.patch.clone(),
             file_diff.after_patch.clone(),
         );
+
+        self.database.put_diff(&diff)?;
+
         parallel_diffs_upload_support.push(self, diff).await?;
         statistics.diffs += 1;
         Ok(())
@@ -141,10 +144,15 @@ where
             let branch_name = branch_name.to_string();
             let file_path = file_path.to_string();
             let commit_str = commit_id.to_string();
+
+            let snapshot = ParallelSnapshot::new(branch_name, file_path, upgrade_commit, commit_str);
+
+            self.database.put_snapshot(&snapshot)?;
+
             parallel_snapshot_uploads
                 .add_to_push_list(
                     self,
-                    ParallelSnapshot::new(branch_name, file_path, upgrade_commit, commit_str),
+                    snapshot,
                 )
                 .await?;
         }
@@ -161,6 +169,9 @@ where
                 file_diff.patch.clone(),
                 file_diff.after_patch.clone(),
             );
+
+            self.database.put_diff(&diff)?;
+
             parallel_diffs_upload_support.push(self, diff).await?;
             statistics.diffs += 1;
         }
@@ -191,6 +202,9 @@ where
             file_diff.patch.clone(),
             file_diff.after_patch.clone(),
         );
+
+        self.database.put_diff(&diff)?;
+
         parallel_diffs_upload_support.push(self, diff).await?;
         statistics.diffs += 1;
         Ok(())

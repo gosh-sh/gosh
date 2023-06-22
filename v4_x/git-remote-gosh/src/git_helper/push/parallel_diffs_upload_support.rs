@@ -25,13 +25,13 @@ pub struct ParallelDiffsUploadSupport {
 
 #[derive(Clone, Debug)]
 pub struct ParallelDiff {
-    commit_id: git_hash::ObjectId,
-    branch_name: String,
-    blob_id: git_hash::ObjectId,
-    file_path: String,
-    original_snapshot_content: Vec<u8>,
-    diff: Vec<u8>,
-    new_snapshot_content: Vec<u8>,
+    pub commit_id: git_hash::ObjectId,
+    pub branch_name: String,
+    pub blob_id: git_hash::ObjectId,
+    pub file_path: String,
+    pub original_snapshot_content: Vec<u8>,
+    pub diff: Vec<u8>,
+    pub new_snapshot_content: Vec<u8>,
 }
 
 impl ParallelDiff {
