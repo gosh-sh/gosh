@@ -90,8 +90,9 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
                         initialValue=""
                         type="numeric"
                         inputMode="number"
-                        regexCriteria={/[0-9]/}
-                        secret
+                        secretDelay={10}
+                        focus
+                        autoSelect={false}
                         style={{
                             display: 'flex',
                             flexWrap: 'nowrap',

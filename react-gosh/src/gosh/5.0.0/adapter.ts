@@ -798,7 +798,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         name?: string
         address?: TAddress
     }): Promise<TTaskDetails> {
-        const task = await this._getTask(options)
+        const task = await this.getTaskAccount(options)
         const details = await task.runLocal('getStatus', {})
         const repository = await this.getRepository({ address: details.repo })
 
@@ -1784,7 +1784,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
-        const _task = await this._getTask({ repository, name })
+        const _task = await this.getTaskAccount({ repository, name })
         if (await _task.isDeployed()) {
             throw new GoshError('Task already exists', { name })
         }
@@ -2174,7 +2174,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
 
         const _name = `${bigtaskName}:${name}`
-        const _task = await this._getTask({ repository: repositoryName, name: _name })
+        const _task = await this.getTaskAccount({
+            repository: repositoryName,
+            name: _name,
+        })
         const _candidates = candidates
             ? {
                   task: _task.address,
@@ -2533,7 +2536,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
-    private async _getTask(options: {
+    async getTaskAccount(options: {
         address?: TAddress
         repository?: string
         name?: string
@@ -2860,10 +2863,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     private gosh: IGoshAdapter
     private client: TonClient
-    private repo: IGoshRepository
     private name?: string
     private subwallets: IGoshWallet[] = []
 
+    repo: IGoshRepository
     auth?: { username: string; wallet0: IGoshWallet }
     config?: { maxWalletsWrite: number }
 
@@ -5120,7 +5123,9 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             address,
             type: { kind, name: SmvEventTypes[kind] },
             status: {
-                completed: details.value1 !== null || Date.now() > time.finish,
+                completed:
+                    details.value1 !== null ||
+                    (time.finish > 0 && Date.now() > time.finish),
                 accepted: !!details.value1,
             },
             time,

@@ -140,6 +140,7 @@ import {
     IGoshHelperTag,
     IGoshProfileDao,
     IGoshCommitTag,
+    IGoshTask,
 } from '../interfaces'
 import { Gosh } from './gosh'
 import { GoshDao } from './goshdao'
@@ -650,6 +651,14 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new Error('Method is unavailable in current version')
     }
 
+    async getTaskAccount(options: {
+        repository?: string | undefined
+        name?: string | undefined
+        address?: string | undefined
+    }): Promise<IGoshTask> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async getBigTask(options: {
         name?: string | undefined
         address?: string | undefined
@@ -1010,10 +1019,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     private gosh: IGoshAdapter
     private client: TonClient
-    private repo: IGoshRepository
     private name?: string
     private subwallets: IGoshWallet[] = []
 
+    repo: IGoshRepository
     auth?: { username: string; wallet0: IGoshWallet }
     config?: { maxWalletsWrite: number }
 

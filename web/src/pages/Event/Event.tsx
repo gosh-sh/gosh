@@ -281,7 +281,7 @@ const EventPage = () => {
                             </div>
                         )}
 
-                    {!event.status.completed && !!event.reviewers.length && (
+                    {!!event.reviewers.length && (
                         <div className="mt-5 border border-gray-e6edff rounded-xl p-5">
                             <h3 className="mb-4 text-xl font-medium">Event review</h3>
                             <div className="text-sm">
