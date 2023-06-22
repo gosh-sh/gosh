@@ -25,6 +25,10 @@ const TaskPage = () => {
     }>({ assigner: 0, reviewer: 0, manager: 0, total: 0 })
 
     const onTaskDelete = async () => {
+        if (!window.confirm('Delete task?')) {
+            return
+        }
+
         try {
             await dao.adapter.deleteTask({
                 repository: details!.repository,

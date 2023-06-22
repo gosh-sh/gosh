@@ -84,11 +84,13 @@ const CommitFields = (props: TCommitFieldsProps) => {
                             <option value="">
                                 {tasks.isFetching ? 'Loading...' : 'Select task'}
                             </option>
-                            {tasks.items.map(({ name }, index) => (
-                                <option value={name} key={index}>
-                                    {name}
-                                </option>
-                            ))}
+                            {tasks.items
+                                .filter(({ confirmed }) => !confirmed)
+                                .map(({ name }, index) => (
+                                    <option value={name} key={index}>
+                                        {name}
+                                    </option>
+                                ))}
                         </Field>
                     </div>
                     <div className="mt-6">
