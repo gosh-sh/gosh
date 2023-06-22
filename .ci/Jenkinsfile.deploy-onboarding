@@ -39,8 +39,7 @@ pipeline {
                     //    sh 'docker compose up -d'
                     //}
                     dir('onboarding-workflow_v5') {
-                        //sh 'docker compose up -d'
-                        sh 'ls'
+                        sh 'docker compose up -d'
                     }
                 }
             }
