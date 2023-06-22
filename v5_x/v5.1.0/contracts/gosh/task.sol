@@ -350,7 +350,7 @@ contract Task is Modifiers{
         require(_ready == false, ERR_TASK_COMPLETED);
         GoshDao(_goshdao).returnTaskToken{value: 0.2 ton, flag: 1}(_nametask, _repo, _balance);
         GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag);
-        if (_assignfull + _reviewfull + _managerfull > 0) {
+        if ((_assignfull + _reviewfull + _managerfull > 0) && (_bigtask.hasValue())) {
             BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).destroySubTaskFinal{value: 0.2 ton, flag: 1}(_nametask, true);
         } else {
             BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).destroySubTaskFinal{value: 0.2 ton, flag: 1}(_nametask, false);
