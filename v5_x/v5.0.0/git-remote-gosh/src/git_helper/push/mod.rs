@@ -131,6 +131,7 @@ where
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
         parallel_snapshot_uploads: &mut ParallelSnapshotUploadSupport,
         upgrade_commit: bool,
+        parents_for_upgrade: Vec<AddrVersion>,
     ) -> anyhow::Result<()> {
         {
             tracing::trace!("push_new_blob: file_path={file_path}, blob_id={blob_id}, commit_id={commit_id}, branch_name={branch_name}, upgrade_commit={upgrade_commit}");
@@ -141,10 +142,13 @@ where
             let branch_name = branch_name.to_string();
             let file_path = file_path.to_string();
             let commit_str = commit_id.to_string();
+            tracing::trace!("Search prev commit repo: {:?} {:?}", self.repo_versions, parents_for_upgrade);
+            let prev_repo_address = self.repo_versions.iter().find(|repo| repo.version == parents_for_upgrade[0].version).expect("Failed to find prev repo address").repo_address.clone();
             parallel_snapshot_uploads
                 .add_to_push_list(
                     self,
                     ParallelSnapshot::new(branch_name, file_path, upgrade_commit, commit_str),
+                    prev_repo_address,
                 )
                 .await?;
         }
@@ -400,6 +404,9 @@ where
         for id in parent_ids {
             tracing::trace!("check parent: {id}");
             for repo_version in &self.repo_versions {
+                if repo_version.version == supported_contract_version().trim_matches(|c| c == '"') {
+                    continue;
+                }
                 let mut repo_contract =
                     GoshContract::new(&repo_version.repo_address, gosh_abi::REPO);
                 let parent = get_commit_address(
@@ -407,33 +414,32 @@ where
                     &mut repo_contract,
                     &id.to_string(),
                 )
-                .await?;
+                    .await?;
                 let commit_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
                 if commit_contract.is_active(self.blockchain.client()).await? {
-                    if repo_version.version != supported_contract_version() {
-                        tracing::trace!(
-                                "Found parent {id} in version {}",
-                                repo_version.version
-                            );
-                        tracing::trace!("Start upgrade of the parent: {id}");
-                        let branch: GetNameCommitResult = commit_contract
-                            .run_local(self.blockchain.client(), "getNameBranch", None)
-                            .await?;
-                        let parents_for_upgrade = vec![
-                            AddrVersion {
-                                address: parent,
-                                version: repo_version.version.clone(),
-                            }
-                        ];
-                        self.check_and_upgrade_previous_commit(
-                            id.to_string(),
-                            &branch.name,
-                            &branch.name,
-                            set_commit,
-                            parents_for_upgrade,
-                        )
-                            .await?;
-                    }
+                    tracing::trace!(
+                        "Found parent {id} in version {}",
+                        repo_version.version
+                    );
+                    tracing::trace!("Start upgrade of the parent: {id}");
+                    let branch: GetNameCommitResult = commit_contract
+                        .run_local(self.blockchain.client(), "getNameBranch", None)
+                        .await?;
+                    let parents_for_upgrade = vec![
+                        AddrVersion {
+                            address: parent,
+                            version: repo_version.version.clone(),
+                        }
+                    ];
+                    self.check_and_upgrade_previous_commit(
+                        id.to_string(),
+                        &branch.name,
+                        &branch.name,
+                        set_commit,
+                        parents_for_upgrade,
+                    )
+                        .await?;
+
                     break;
                 } else {
                     tracing::trace!(
@@ -504,7 +510,7 @@ where
             });
         }
         if upgrade_commit && !parents_for_upgrade.is_empty() {
-            parents = parents_for_upgrade;
+            parents = parents_for_upgrade.clone();
         }
         let tree_addr = self.calculate_tree_address(tree_id).await?;
 
@@ -547,6 +553,7 @@ where
                 parallel_diffs_upload_support,
                 parallel_snapshot_uploads,
                 upgrade_commit,
+                parents_for_upgrade.clone(),
             )
             .await?;
         }
@@ -1032,7 +1039,7 @@ where
                     snapshot
                 );
                 parallel_snapshot_uploads
-                    .add_to_push_list(self, snapshot)
+                    .add_to_push_list(self, snapshot, BlockchainContractAddress::new(""))
                     .await?;
             }
         }
