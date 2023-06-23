@@ -362,7 +362,7 @@ pub async fn push_initial_snapshot<B>(
     file_path: String,
     upgrade: bool,
     commit_id: String,
-    prev_repo_address: BlockchainContractAddress,
+    prev_repo_address: Option<BlockchainContractAddress>,
 ) -> anyhow::Result<()>
 where
     B: BlockchainService + 'static,
@@ -381,7 +381,7 @@ where
     let (content, commit_id, ipfs) = if upgrade {
         tracing::trace!("generate content for upgrade snapshot");
 
-        let mut repo_contract = GoshContract::new(&prev_repo_address, gosh_abi::REPO);
+        let mut repo_contract = GoshContract::new(prev_repo_address.as_ref().unwrap(), gosh_abi::REPO);
         let snapshot_addr = Snapshot::calculate_address(
             blockchain.client(),
             &mut repo_contract,

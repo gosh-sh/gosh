@@ -75,7 +75,7 @@ impl ParallelSnapshotUploadSupport {
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
         snapshot: ParallelSnapshot,
-        prev_repo_address: BlockchainContractAddress,
+        prev_repo_address: Option<BlockchainContractAddress>,
     ) -> anyhow::Result<()> {
         let blockchain = context.blockchain.clone();
         let dao_address: BlockchainContractAddress = context.dao_addr.clone();

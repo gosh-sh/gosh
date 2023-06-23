@@ -143,7 +143,11 @@ where
             let file_path = file_path.to_string();
             let commit_str = commit_id.to_string();
             tracing::trace!("Search prev commit repo: {:?} {:?}", self.repo_versions, parents_for_upgrade);
-            let prev_repo_address = self.repo_versions.iter().find(|repo| repo.version == parents_for_upgrade[0].version).expect("Failed to find prev repo address").repo_address.clone();
+            let prev_repo_address = if upgrade_commit {
+                Some(self.repo_versions.iter().find(|repo| repo.version == parents_for_upgrade[0].version).expect("Failed to find prev repo address").repo_address.clone())
+            } else {
+                None
+            };
             parallel_snapshot_uploads
                 .add_to_push_list(
                     self,
@@ -1039,7 +1043,7 @@ where
                     snapshot
                 );
                 parallel_snapshot_uploads
-                    .add_to_push_list(self, snapshot, BlockchainContractAddress::new(""))
+                    .add_to_push_list(self, snapshot, None)
                     .await?;
             }
         }
