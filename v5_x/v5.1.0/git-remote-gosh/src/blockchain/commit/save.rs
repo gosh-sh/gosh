@@ -285,7 +285,8 @@ pub async fn query_all_messages(
             },
         )
         .await
-        .map(|r| r.result)?;
+        .map(|r| r.result)
+            .map_err(|e| anyhow::format_err!("query error: {e}"))?;
 
         let nodes = &result["data"]["blockchain"]["account"]["messages"];
         let edges: Messages = serde_json::from_value(nodes.clone())?;
@@ -392,7 +393,8 @@ pub async fn is_transaction_ok(context: &Everscale, msg_id: &String) -> anyhow::
         },
     )
     .await
-    .map(|r| r.result)?;
+    .map(|r| r.result)
+        .map_err(|e| anyhow::format_err!("query error: {e}"))?;
 
     let trx: Vec<TrxInfo> = serde_json::from_value(result["data"]["transactions"].clone())?;
 
