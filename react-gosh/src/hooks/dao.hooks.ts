@@ -30,7 +30,12 @@ import {
     IGoshWallet,
 } from '../gosh/interfaces'
 import { GoshAdapterFactory } from '../gosh'
-import { DAO_TOKEN_TRANSFER_TAG, MAX_PARALLEL_READ, SYSTEM_TAG } from '../constants'
+import {
+    DAO_TOKEN_TRANSFER_TAG,
+    MAX_PARALLEL_READ,
+    SYSTEM_TAG,
+    VESTING_BALANCE_TAG,
+} from '../constants'
 import { KeyPair } from '@eversdk/core'
 
 function useDaoList(perPage: number) {
@@ -419,6 +424,167 @@ function useDaoUpgrade(dao: IGoshDaoAdapter) {
     }
 
     return { versions, upgrade }
+}
+
+function useVestingBalance(dao?: IGoshDaoAdapter) {
+    const { user } = useUser()
+    const [balance, setBalance] = useState<number>(0)
+
+    const getTagName = () => {
+        return `${VESTING_BALANCE_TAG}:${user.username}`
+    }
+
+    const getTag = async () => {
+        if (!dao || dao.getVersion() < '4.0.0') {
+            return null
+        }
+
+        const gosh = dao.getGosh()
+        const tagName = getTagName()
+        if (dao.getVersion() === '4.0.0') {
+            const repo = await dao.getRepository({ name: VESTING_BALANCE_TAG })
+            const { value0: code } = await gosh.goshroot.runLocal('getTagCode', {
+                tagcode:
+                    'te6ccgECKgEABn0ABCSK7VMg4wMgwP/jAiDA/uMC8gsnAwEpA+DtRNDXScMB+GaJ+Gkh2zzTAAGOIoMI1xgg+CjIzs7J+QAB0wABlNP/AwGTAvhC4iD4ZfkQ8qiV0wAB8nriUzDTPzMwIdMfMyD4I7zy4Pog+COBASygtR+58uD7IfkAIfhKgCD0Dm+hlPQFbwHeIG4gDgwCAUqOEDBcbyGDB/QOb5GT1woA3rPf8uD8UxJvAvhrXwTTHwHbPPI8BANS7UTQ10nDAfhmItDTA/pAMPhpqTgA3CHHAOMCIdcNH/K8IeMDAds88jwmJgQDPCCCED/YVlW74wIgghBcWupCu+MCIIIQYSSk+brjAhMHBQNmMPhG8uBM+EJu4wDR2zwhjhsj0NMB+kAwMcjPhyDOghDhJKT5zwuBzMlw+wCRMOLjAPIAJQYjAAT4TwRQIIIQSUkuMLrjAiCCEEuM0oO64wIgghBQhNyVuuMCIIIQXFrqQrrjAhEPCggDODD4RvLgTPhCbuMAIZPU0dDe+kDTf9HbPNs88gAlCSMCVHP4Vnj0D46BiN/4UvhTVRLbPPhJxwXy4NL4UsjPhQjOgG/PQMmBAKD7ACkZBOIw+EJu4wD4RvJzIZPU0dDe+kDU1NHQ+kDU1NHQ+kDU0dD6QNTU1NN/0fhFIG6SMHDe+EK68uDU+E35AIj5AL3y4NP4AAFz+FZ49Bf4dlUD+HJVAvhzVQX4cVj4dAH4dXP4Vnj0D46BiN/4UvhT+FFVAwwpKQsCKts8+EnHBfLg0lj4bgH4cPhv2zzyABkjAhbtRNDXScIBjoDjDQ0lBIxw7UTQ9AVtcCBvAnBxJIBA9A+OgYjfiCCJXzCIIG34dvh1+HT4c/hy+HH4cPhv+G74bfhs+Gv4aoBA9A7yvdcL//hicPhjKSkOKQBDgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAMkMPhG8uBM+EJu4wDR2zzjAPIAJRAjAJJopv5gghAdzWUAvvLgzPhU+E/4TvhQ+E34ScjPhYjOgoAgL68IAAAAAAAAAAAAAAAAAAHPC45VQMjPkWox2LbMzszMzM3JcfsAA3ow+Eby4Ez4Qm7jANHbPCWOJCfQ0wH6QDAxyM+HIM5xzwthXkDIz5MlJLjCzM7MzMzNyXD7AJJfBeLjAPIAJRIjABT4TfhQ+E74T/hUBFAgghAZsfAJuuMCIIIQHqUXXbrjAiCCECV4DfK64wIgghA/2FZVuuMCIiAXFAJkMPhG8uBM0ds8Io4fJNDTAfpAMDHIz4cgzoBiz0BeAc+S/2FZVszMyXD7AJFb4uMA8gAVIwIEiIgWHwAGdGFnAzow+Eby4Ez4Qm7jACGT1NHQ3vpA03/U0ds84wDyACUYIwK4c/hWePQPjoGI3/hS+FNVE9s8+EnHBfLg0vhP+FD4TvhN+FT4VfhSyM+FiM6CgCBfXhAAAAAAAAAAAAAAAAAAAc8LjlVgyM+QUpfQGszMzFUwyMzOzMzNzclx+wApGQKOVQNYiNs8cMjL/3BtgED0Q1UDc1iAQPQWVQJxWIBA9BZYyMt/cliAQPRDyPQAyQHIz4SA9AD0AM+ByfkAcMjPhkDKB8v/ydAfGgEmAcjOzCDJ+QDIMs8L/wHQAcnbPBsCFiGLOK2zWMcFioriHRwBCAHbPMkeASYB1NQwEtDbPMjPjits1hLMzxHJHgF21YsvSkDXJvQE0wkxINdKkdSOgogB4otfS98sBOjXJjAByM+L0pD0AIAgzwsJz5fS98sBOswSzMjPEc4pAAo0LjAuMANuMPhG8uBM+EJu4wDR2zwhjh8j0NMB+kAwMcjPhyDOcc8LYQHIz5J6lF12zs3JcPsAkTDi4wDyACUhIwAE+FEDbjD4RvLgTPhCbuMA0ds8IY4fI9DTAfpAMDHIz4cgznHPC2EByM+SZsfAJs7NyXD7AJEw4uMA8gAlJCMAlvhW+FX4VPhT+FL4UfhQ+E/4TvhN+Ez4S/hK+ELIy//Pg/QAAW8iAsv/yx/L/8zMVXDIzM5VUMjOVUDIzlUwyM7MzPQAzc3NzcntVAAE+FAAmO1E0NP/0wAx9ATT/9MfWW8CAdP/1NTU0dDU+kDU0dD6QNTR0PpA1NHQ+kDU1PQE0fh2+HX4dPhz+HL4cfhw+G/4bvht+Gz4a/hq+GIACvhG8uBMAhD0pCD0vfLATikoABRzb2wgMC42Ny4wAAA=',
+                repo: repo.getAddress(),
+                ver: '4.0.0',
+            })
+            const { hash } = await dao.dao.account.client.boc.get_boc_hash({ boc: code })
+            const accounts = await getAllAccounts({
+                filters: [`code_hash: {eq:"${hash}"}`],
+            })
+
+            const details = await executeByChunk(
+                accounts,
+                MAX_PARALLEL_READ,
+                async ({ id }) => {
+                    const tag = await gosh.getCommitTag({ address: id })
+                    const data = await tag.runLocal('getDetails', {})
+                    return { address: id, ...data }
+                },
+            )
+
+            const found = details.find(({ value0 }) => value0 === tagName)
+            if (found) {
+                return await gosh.getCommitTag({ address: found.address })
+            }
+            return null
+        } else {
+            return await gosh.getCommitTag({
+                data: {
+                    daoName: await dao.getName(),
+                    repoName: VESTING_BALANCE_TAG,
+                    tagName,
+                },
+            })
+        }
+    }
+
+    const getStoredBalance = async () => {
+        const tag = await getTag()
+        console.debug('TAG', tag)
+        if (!tag || !(await tag.isDeployed())) {
+            return 0
+        }
+
+        const { value0 } = await tag.runLocal('getContent', {})
+        return parseInt(value0)
+    }
+
+    const updateBalance = async () => {
+        if (!dao || !user.profile || !user.username || dao.getVersion() < '4.0.0') {
+            return
+        }
+
+        // Get stored balance
+        const stored = await getStoredBalance()
+        setBalance(stored)
+
+        // Get all DAO tasks
+        const gosh = dao.getGosh()
+        const codeHash = await gosh.getTaskTagDaoCodeHash(dao.getAddress(), SYSTEM_TAG)
+        const result = await getAllAccounts({
+            filters: [`code_hash: {eq:"${codeHash}"}`],
+        })
+        const tasks = await executeByChunk(result, 30, async ({ id }) => {
+            const tag = await gosh.getHelperTag(id)
+            const { _task } = await tag.runLocal('_task', {})
+            const task = await dao.getTaskAccount({ address: _task })
+            return await task.runLocal('getStatus', {})
+        })
+
+        // Calculate balance
+        let _balance = 0
+        for (const task of tasks) {
+            if (task.candidates.length === 0) {
+                continue
+            }
+
+            const assigners = Object.keys(task.candidates[0].pubaddrassign)
+            const reviewers = Object.keys(task.candidates[0].pubaddrreview)
+            const managers = Object.keys(task.candidates[0].pubaddrmanager)
+
+            if (assigners.indexOf(user.profile) >= 0) {
+                for (const { grant } of task.grant.assign) {
+                    _balance += Math.floor(parseInt(grant) / assigners.length)
+                }
+            }
+            if (reviewers.indexOf(user.profile) >= 0) {
+                for (const { grant } of task.grant.review) {
+                    _balance += Math.floor(parseInt(grant) / reviewers.length)
+                }
+            }
+            if (managers.indexOf(user.profile) >= 0) {
+                for (const { grant } of task.grant.manager) {
+                    _balance += Math.floor(parseInt(grant) / managers.length)
+                }
+            }
+        }
+        setBalance(_balance)
+
+        // Update tag
+        const tag = await getTag()
+        if (tag && (await tag.isDeployed()) && stored !== _balance) {
+            await dao.wallet?.run('deleteTag', {
+                repoName: VESTING_BALANCE_TAG,
+                nametag: getTagName(),
+            })
+        }
+        if (!tag || !(await tag.isDeployed())) {
+            await dao.wallet?.run('deployTag', {
+                repoName: VESTING_BALANCE_TAG,
+                nametag: getTagName(),
+                nameCommit: user.username,
+                commit: user.profile,
+                content: _balance.toString(),
+            })
+        }
+    }
+
+    useEffect(() => {
+        updateBalance()
+
+        let isIntervalBusy = false
+        const interval = setInterval(async () => {
+            if (isIntervalBusy) {
+                return
+            }
+
+            isIntervalBusy = true
+            try {
+                await updateBalance()
+            } catch (e: any) {
+                console.error(e.message)
+            }
+            isIntervalBusy = false
+        }, 120000)
+
+        return () => {
+            clearInterval(interval)
+        }
+    }, [dao?.getAddress()])
+
+    return balance
 }
 
 function useDaoAutoTokenTransfer(dao?: IGoshDaoAdapter) {
@@ -1479,4 +1645,5 @@ export {
     useTopicCreate,
     useTopicList,
     useTopic,
+    useVestingBalance,
 }

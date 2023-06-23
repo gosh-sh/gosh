@@ -421,11 +421,11 @@ function deploy_task_with_proposal_3 {
   echo "***** start proposal for task deploy *****"
   LOCK=100
   tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForTaskDeploy \
-    "{\"taskName\":\"$TASK_NAME\",\"repoName\":\"$REPO_NAME\",\"tag\":[],\"comment\":\"\",\"grant\":{\"assign\":[{\"grant\":1,\"lock\":1},{\"grant\":1,\"lock\":$LOCK}],\"review\":[],\"manager\":[]},\"num_clients\":1,\"reviewers\":[]}"
+    "{\"taskName\":\"$TASK_NAME\",\"repoName\":\"$REPO_NAME\",\"tag\":[],\"comment\":\"\",\"grant\":{\"assign\":[{\"grant\":1,\"lock\":1},{\"grant\":1,\"lock\":$LOCK}],\"review\":[],\"manager\":[],\"subtask\":[]},\"num_clients\":1,\"reviewers\":[],\"workers\":null}"
   NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
   echo "NOW_ARG=$NOW_ARG"
   TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellTaskDeploy \
-    "{\"taskName\":\"$TASK_NAME\",\"repoName\":\"$REPO_NAME\",\"tag\":[],\"comment\":\"\",\"grant\":{\"assign\":[{\"grant\":1,\"lock\":1},{\"grant\":1,\"lock\":$LOCK}],\"review\":[],\"manager\":[]},\"time\":$NOW_ARG}" | sed -n '/value0/ p' | cut -d'"' -f 4)
+    "{\"taskName\":\"$TASK_NAME\",\"repoName\":\"$REPO_NAME\",\"tag\":[],\"workers\":null,\"comment\":\"\",\"grant\":{\"assign\":[{\"grant\":1,\"lock\":1},{\"grant\":1,\"lock\":$LOCK}],\"review\":[],\"manager\":[],\"subtask\":[]},\"time\":$NOW_ARG}" | sed -n '/value0/ p' | cut -d'"' -f 4)
 
   echo "TVMCELL=$TVMCELL"
   sleep 10
@@ -614,14 +614,15 @@ function add_dao_to_dao {
 #  struct MemberToken {
 #      address member;
 #      uint128 count;
+#      uint128 expired;    // for v5 +
 #  }
   CHILD_TOKEN="${CHILD_TOKEN:-1}"
   tonos-cli -j callx --abi $WALLET_ABI --addr $PARENT_WALLET_ADDR --keys $WALLET_KEYS -m startProposalForDeployWalletDao \
-    "{\"pubaddr\":[{\"member\":\"$CHILD_DAO_ADDR\",\"count\":$CHILD_TOKEN}],\"dao\":[\"$CHILD_DAO_NAME\"],\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
+    "{\"pubaddr\":[{\"member\":\"$CHILD_DAO_ADDR\",\"count\":$CHILD_TOKEN,\"expired\":0}],\"dao\":[\"$CHILD_DAO_NAME\"],\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
   NOW_ARG=$(tonos-cli -j account $PARENT_WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
   echo "NOW_ARG=$NOW_ARG"
   TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $PARENT_WALLET_ADDR -m getCellDeployWalletDao \
-    "{\"pubaddr\":[{\"member\":\"$CHILD_DAO_ADDR\",\"count\":$CHILD_TOKEN}],\"dao\":[\"$CHILD_DAO_NAME\"],\"comment\":\"\",\"time\":$NOW_ARG}"  | sed -n '/value0/ p' | cut -d'"' -f 4)
+    "{\"pubaddr\":[{\"member\":\"$CHILD_DAO_ADDR\",\"count\":$CHILD_TOKEN,\"expired\":0}],\"dao\":[\"$CHILD_DAO_NAME\"],\"comment\":\"\",\"time\":$NOW_ARG}"  | sed -n '/value0/ p' | cut -d'"' -f 4)
   sleep 10
 
   PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
@@ -647,7 +648,7 @@ function add_members_to_dao {
   do
     echo "generate member #$i"
     INDEX=$(printf '%02d' $i)
-    PARAMS="$PARAMS{\"member\":\""$ADDR_TEMPLATE""$INDEX"\",\"count\":0}"
+    PARAMS="$PARAMS{\"member\":\""$ADDR_TEMPLATE""$INDEX"\",\"count\":0,\"expired\":0}"
     DAO="$DAO""null"
     if [ "$i" != "$MEMBERS_CNT" ]; then
       PARAMS="$PARAMS,"

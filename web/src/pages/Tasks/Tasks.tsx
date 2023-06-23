@@ -14,13 +14,15 @@ const TasksPage = () => {
 
     return (
         <div>
-            <div className="mb-7 text-right">
-                {dao.details.isAuthMember && (
-                    <ButtonLink to={`/o/${dao.details.name}/tasks/create`}>
-                        Create task
-                    </ButtonLink>
-                )}
-            </div>
+            {dao.details.version !== '5.0.0' && (
+                <div className="mb-7 text-right">
+                    {dao.details.isAuthMember && (
+                        <ButtonLink to={`/o/${dao.details.name}/tasks/create`}>
+                            Create task
+                        </ButtonLink>
+                    )}
+                </div>
+            )}
 
             <div className="border border-gray-e6edff rounded-xl overflow-hidden">
                 <div className="w-full overflow-x-auto">

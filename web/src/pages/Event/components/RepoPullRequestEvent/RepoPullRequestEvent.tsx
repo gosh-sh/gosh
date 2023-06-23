@@ -1,4 +1,4 @@
-import { getCommitTime, TSmvEvent, usePullRequestCommit } from 'react-gosh'
+import { getCommitTime, TSmvEvent, TTaskDetails, usePullRequestCommit } from 'react-gosh'
 import BlobDiffPreview from '../../../../components/Blob/DiffPreview'
 import CopyClipboard from '../../../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
@@ -7,7 +7,7 @@ import { Commiter } from '../../../../components/Commit'
 import { useBlobComments } from '../../../../hooks/codecomment.hooks'
 import { useOutletContext } from 'react-router-dom'
 import { TDaoLayoutOutletContext } from '../../../DaoLayout'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 type TRepoPullRequestEventProps = {
     className?: string
@@ -19,6 +19,7 @@ const RepoPullRequestEvent = (props: TRepoPullRequestEventProps) => {
     const { className, daoName, event } = props
     const { data } = event
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
+    const [task, setTask] = useState<TTaskDetails | null>(null)
     const { isFetching, commit, blobs } = usePullRequestCommit(
         daoName!,
         data.repoName,
@@ -28,6 +29,25 @@ const RepoPullRequestEvent = (props: TRepoPullRequestEventProps) => {
         dao: dao.adapter,
         filename: '',
     })
+
+    useEffect(() => {
+        const _getTask = async () => {
+            if (!data.task) {
+                return
+            }
+            try {
+                const _task = await dao.adapter.getTask({ address: data.task.task })
+                setTask(_task)
+            } catch (e: any) {
+                console.error(e.message)
+                setTask(null)
+            }
+        }
+
+        if (dao.details.version >= '2.0.0') {
+            _getTask()
+        }
+    }, [data.task, dao.details.version])
 
     useEffect(() => {
         return () => {
@@ -66,6 +86,12 @@ const RepoPullRequestEvent = (props: TRepoPullRequestEventProps) => {
                     </div>
                 </>
             )}
+            {task && (
+                <div className="flex gap-3 text-gray-7c8db5 text-sm">
+                    <div>Task:</div>
+                    <div>{task.name}</div>
+                </div>
+            )}
 
             <h4 className="mt-10 mb-3 text-lg font-medium">Pull request diff</h4>
             {blobs.isFetching && <Loader>Loading commit diff...</Loader>}
@@ -79,7 +105,8 @@ const RepoPullRequestEvent = (props: TRepoPullRequestEventProps) => {
                             modified={current}
                             original={previous}
                             commit={commit!}
-                            address={event.address}
+                            commentsObject={event.address}
+                            snapshotAddress={item.address}
                             isDiffLoaded={showDiff}
                             isDiffFetching={isFetching}
                             getDiff={() => blobs.getDiff(index)}

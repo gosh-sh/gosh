@@ -1,6 +1,6 @@
 import ReactMarkdown from 'react-markdown'
 import hljs from 'highlight.js'
-import { classNames } from 'react-gosh'
+import { GoshError, classNames } from 'react-gosh'
 import { Buffer } from 'buffer'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import rehypeRaw from 'rehype-raw'
@@ -49,6 +49,7 @@ const BlobPreview = (props: TBlobPreviewProps) => {
         objectAddress: address,
         filename,
         commits: [commit],
+        multiple: true,
     })
     const [mouseDown, setMouseDown] = useState<boolean>(false)
     const commentFormRefs = useRef<{ [line: number]: HTMLDivElement | null }>({})
@@ -58,12 +59,17 @@ const BlobPreview = (props: TBlobPreviewProps) => {
         helpers: FormikHelpers<any>,
     ) => {
         try {
+            if (!address) {
+                throw new GoshError('Add comment error', 'Blob address undefined')
+            }
+
             await submitComment({
                 content: values.comment,
                 metadata: {
                     startLine: selectedLines.lines[0],
                     endLine: selectedLines.lines.slice(-1)[0],
                     commit,
+                    snapshot: address,
                 },
             })
             helpers.resetForm()

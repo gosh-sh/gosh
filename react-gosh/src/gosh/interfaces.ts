@@ -219,7 +219,16 @@ interface IGoshDaoAdapter {
     ): Promise<{ username: string; profile: TAddress; wallet: TAddress }[]>
 
     getTaskCodeHash(repository: string): Promise<string>
-    getTask(options: { name?: string; address?: TAddress }): Promise<TTaskDetails>
+    getTaskAccount(options: {
+        repository?: string
+        name?: string
+        address?: TAddress
+    }): Promise<IGoshTask>
+    getTask(options: {
+        repository?: string
+        name?: string
+        address?: TAddress
+    }): Promise<TTaskDetails>
     getBigTask(options: { name?: string; address?: TAddress }): Promise<TBigTaskDetails>
 
     getTopicCodeHash(): Promise<string>
@@ -326,6 +335,7 @@ interface IGoshDaoAdapter {
 
 interface IGoshRepositoryAdapter {
     auth?: any
+    repo: IGoshRepository
 
     isDeployed(): Promise<boolean>
 
@@ -354,15 +364,18 @@ interface IGoshRepositoryAdapter {
         treepath: string,
         branch: string,
         commit: string | TCommit,
-    ): Promise<{ previous: string | Buffer; current: string | Buffer }>
-    getCommitBlobs(branch: string, commit: string | TCommit): Promise<string[]>
+    ): Promise<{ address: string; previous: string | Buffer; current: string | Buffer }>
+    getCommitBlobs(
+        branch: string,
+        commit: string | TCommit,
+    ): Promise<{ address: string; treepath: string }[]>
     getPullRequestBlob(
         item: { treepath: string; index: number },
         commit: string | TCommit,
-    ): Promise<{ previous: string | Buffer; current: string | Buffer }>
+    ): Promise<{ address: string; previous: string | Buffer; current: string | Buffer }>
     getPullRequestBlobs(
         commit: string | TCommit,
-    ): Promise<{ treepath: string; index: number }[]>
+    ): Promise<{ address: string; treepath: string; index: number }[]>
     getBranch(name: string): Promise<TBranch>
     getBranches(): Promise<TBranch[]>
     getCommitTags(): Promise<TCommitTag[]>

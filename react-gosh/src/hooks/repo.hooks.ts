@@ -683,7 +683,7 @@ function useCommit(
             setBlobs({ isFetching: true, items: [] })
             const blobs = await repository.getCommitBlobs(branch, details.commit)
             const state = await Promise.all(
-                blobs.sort().map(async (treepath, i) => {
+                blobs.sort().map(async ({ treepath }, i) => {
                     const diff =
                         i < showDiffNum
                             ? await repository.getCommitBlob(
@@ -759,6 +759,20 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branchName?: string) {
     }
 
     const pushUpgrade = async (branch: string, commit: string, version: string) => {
+        if (['4.0.0', '5.0.0'].indexOf(repo.getVersion()) >= 0) {
+            const { value0 } = await repo.repo.runLocal('getPrevious', {})
+            if (
+                (version === '2.0.0' && value0.version === '3.0.0') ||
+                (version === '2.0.0' && value0.version === '4.0.0') ||
+                (version === '3.0.0' && value0.version === '4.0.0')
+            ) {
+                throw new GoshError(
+                    'Push error',
+                    'You should upgrade your DAO to version 5.1+ to push to this repository',
+                )
+            }
+        }
+
         if (repo.getVersion() !== version) {
             const gosh = GoshAdapterFactory.create(version)
             const name = await repo.getName()
@@ -1011,6 +1025,7 @@ function usePullRequestCommit(
         isFetching: boolean
         items: {
             item: {
+                address: string
                 treepath: string
                 index: number
             }
@@ -1055,7 +1070,7 @@ function usePullRequestCommit(
                     const diff =
                         i < showDiffNum
                             ? await repository.getPullRequestBlob(item, details.commit!)
-                            : { previous: '', current: '' }
+                            : { address: item.address, previous: '', current: '' }
                     return {
                         item,
                         ...diff,
