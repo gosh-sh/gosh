@@ -1088,6 +1088,9 @@ where
             )
         }
 
+        // clear database after all objects were deployed
+        self.delete_db()?;
+
         // 9. Set commit (move HEAD)
         ancestor_commit_id = match ancestor_commit_object {
             Some(v) => v.to_string(),

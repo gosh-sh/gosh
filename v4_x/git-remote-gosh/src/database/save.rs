@@ -6,7 +6,7 @@ use crate::git_helper::push::parallel_snapshot_upload_support::{ParallelCommit, 
 
 impl GoshDB {
     pub fn put_commit(&self, commit: ParallelCommit, id: String) -> anyhow::Result<()> {
-        eprintln!("put commit {id}");
+        tracing::trace!("put commit {id}");
         let commit_for_db = DBCommit::from(commit);
         let value = serde_json::to_string(&commit_for_db).expect("Failed to serialize commit");
         let db = self.db();
@@ -16,7 +16,7 @@ impl GoshDB {
     }
 
     pub fn put_tree(&self, tree: ParallelTree, id: String) -> anyhow::Result<()> {
-        eprintln!("put tree {id}");
+        tracing::trace!("put tree {id}");
         let commit_for_db = DBTree::from(tree);
         let value = serde_json::to_string(&commit_for_db).expect("Failed to serialize tree");
         let db = self.db();
@@ -26,7 +26,7 @@ impl GoshDB {
     }
 
     pub fn put_diff(&self, diff: (&ParallelDiff, PushDiffCoordinate, bool), id: String) -> anyhow::Result<()> {
-        eprintln!("put diff {id}");
+        tracing::trace!("put diff {id}");
         let commit_for_db = DBDiff::from(diff);
         let value = serde_json::to_string(&commit_for_db).expect("Failed to serialize diff");
         let db = self.db();
@@ -36,7 +36,7 @@ impl GoshDB {
     }
 
     pub fn put_snapshot(&self, snapshot: &ParallelSnapshot, id: String) -> anyhow::Result<()> {
-        eprintln!("put snapshot {id}");
+        tracing::trace!("put snapshot {id}");
         let value = serde_json::to_string(snapshot).expect("Failed to serialize snapshot");
         let db = self.db();
         db.put_cf(&self.cf(SNAPSHOT_CF), id, value)?;
@@ -45,7 +45,7 @@ impl GoshDB {
     }
 
     pub fn put_dangling_diff(&self, diff: (&ParallelDiff, PushDiffCoordinate), id: String) -> anyhow::Result<()> {
-        eprintln!("put dangling diff {id}");
+        tracing::trace!("put dangling diff {id}");
         let commit_for_db = DBDiff::from((diff.0, diff.1, false));
         let value = serde_json::to_string(&commit_for_db).expect("Failed to serialize diff");
         let db = self.db();

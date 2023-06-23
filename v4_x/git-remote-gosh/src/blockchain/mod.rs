@@ -494,7 +494,7 @@ async fn run_static(
         .map(|r| r.output.unwrap())
         .map_err(|e| anyhow::format_err!("run_static failed: {e}"));
     if result.is_err() {
-        eprintln!("run_static error: {result:?}");
+        tracing::trace!("run_static error: {result:?}");
     }
     Ok(result?)
 }

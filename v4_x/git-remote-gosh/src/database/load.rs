@@ -7,35 +7,35 @@ use crate::git_helper::push::parallel_snapshot_upload_support::{ParallelCommit, 
 
 impl GoshDB {
     pub fn get_commit(&self, id: &str) -> anyhow::Result<DBCommit> {
-        eprintln!("get commit {id}");
+        tracing::trace!("get commit {id}");
         let value = self.db().get_cf(&self.cf(COMMIT_CF), id)?.expect("Failed to get commit data from db");
         let res: DBCommit = serde_json::from_slice(&value)?;
         Ok(res)
     }
 
     pub fn get_tree(&self, id: &str) -> anyhow::Result<ParallelTree> {
-        eprintln!("get tree {id}");
+        tracing::trace!("get tree {id}");
         let value = self.db().get_cf(&self.cf(TREE_CF), id)?.expect("Failed to get tree data from db");
         let res: DBTree = serde_json::from_slice(&value)?;
         Ok(res.to_parallel_tree())
     }
 
     pub fn get_diff(&self, id: &str) -> anyhow::Result<(ParallelDiff, PushDiffCoordinate, bool)> {
-        eprintln!("get diff {id}");
+        tracing::trace!("get diff {id}");
         let value = self.db().get_cf(&self.cf(DIFF_CF), id)?.expect("Failed to get diff data from db");
         let res: DBDiff = serde_json::from_slice(&value)?;
         Ok(res.to_parallel_diff())
     }
 
     pub fn get_snapshot(&self, id: &str) -> anyhow::Result<ParallelSnapshot> {
-        eprintln!("get snapshot {id}");
+        tracing::trace!("get snapshot {id}");
         let value = self.db().get_cf(&self.cf(SNAPSHOT_CF), id)?.expect("Failed to get tree data from db");
         let res: ParallelSnapshot = serde_json::from_slice(&value)?;
         Ok(res)
     }
 
     pub fn get_dangling_diff(&self, id: &str) -> anyhow::Result<(ParallelDiff, PushDiffCoordinate)> {
-        eprintln!("get dangling diff {id}");
+        tracing::trace!("get dangling diff {id}");
         let value = self.db().get_cf(&self.cf(DANGLING_DIFF_CF), id)?.expect("Failed to get dangling diff data from db");
         let res: DBDiff = serde_json::from_slice(&value)?;
         let val = res.to_parallel_diff();
@@ -43,7 +43,7 @@ impl GoshDB {
     }
 
     pub fn get_all_dangling_diffs(&self) -> anyhow::Result<Vec<(ParallelDiff, PushDiffCoordinate)>> {
-        eprintln!("get all dangling diffs");
+        tracing::trace!("get all dangling diffs");
         let iter = self.db().iterator_cf(&self.cf(DANGLING_DIFF_CF), IteratorMode::Start);
         let mut diffs = vec![];
         for value in iter {

@@ -45,7 +45,7 @@ fn get_db_options() -> rocksdb::Options {
 }
 
 fn create_db() -> anyhow::Result<DBWithThreadMode<MultiThreaded>> {
-    eprintln!("create db");
+    tracing::trace!("create db");
     tracing::trace!("Create local database");
     let db_options = get_db_options();
     let db_path = get_db_path()?;
@@ -86,7 +86,7 @@ impl GoshDB {
     }
 
     pub fn delete(&mut self) -> anyhow::Result<()> {
-        eprintln!("delete db");
+        tracing::trace!("delete db");
         match self.db.take() {
             Some(db) => {
                 let db_path = db.path().to_str().unwrap().to_owned();
