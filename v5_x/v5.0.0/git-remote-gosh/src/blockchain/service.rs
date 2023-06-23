@@ -2,7 +2,6 @@ use super::{
     branch::{DeleteBranch, DeployBranch},
     commit::save::BlockchainCommitPusher,
     contract::ContractRead,
-    get_contracts_blocks,
     snapshot::save::{DeleteSnapshot, DeployDiff, DeployNewSnapshot},
     tag::save::Tagging,
     tree::DeployTree,
@@ -14,6 +13,7 @@ use crate::abi as gosh_abi;
 use async_trait::async_trait;
 use std::collections::HashMap;
 use std::fmt::Debug;
+use crate::blockchain::check_contracts_deployed;
 
 #[async_trait]
 pub trait BlockchainBranchesService {
@@ -38,12 +38,12 @@ pub trait BlockchainCommitService {
 }
 
 #[async_trait]
-pub trait BlockchainReadContractRawDataService {
-    async fn get_contracts_state_raw_data(
+pub trait BlockchainReadContractState {
+    async fn check_contracts_state(
         &self,
         addresses: &[BlockchainContractAddress],
         allow_incomplete_results: bool,
-    ) -> anyhow::Result<HashMap<BlockchainContractAddress, String>>;
+    ) -> anyhow::Result<Vec<BlockchainContractAddress>>;
 }
 
 #[async_trait]
@@ -57,7 +57,7 @@ pub trait BlockchainService:
     + BlockchainCommitPusher
     + BlockchainUserWalletService
     + BlockchainBranchesService
-    + BlockchainReadContractRawDataService
+    + BlockchainReadContractState
     // TODO: fix naming later
     + DeployBranch
     + DeleteBranch
@@ -125,14 +125,14 @@ impl BlockchainCommitService for Everscale {
 }
 
 #[async_trait]
-impl BlockchainReadContractRawDataService for Everscale {
+impl BlockchainReadContractState for Everscale {
     #[instrument(level = "info", skip_all)]
-    async fn get_contracts_state_raw_data(
+    async fn check_contracts_state(
         &self,
         addresses: &[BlockchainContractAddress],
         allow_incomplete_results: bool,
-    ) -> anyhow::Result<HashMap<BlockchainContractAddress, String>> {
-        get_contracts_blocks(self.client(), addresses, allow_incomplete_results).await
+    ) -> anyhow::Result<Vec<BlockchainContractAddress>> {
+        check_contracts_deployed(self.client(), addresses, allow_incomplete_results).await
     }
 }
 
@@ -341,12 +341,12 @@ pub mod tests {
             fn repo_contract(&self) -> &GoshContract;
         }
         #[async_trait]
-        impl BlockchainReadContractRawDataService for Everscale {
-            async fn get_contracts_state_raw_data(
+        impl BlockchainReadContractState for Everscale {
+            async fn check_contracts_state(
                 &self,
                 addresses: &[BlockchainContractAddress],
                 allow_incomplete_results: bool
-            ) -> anyhow::Result<HashMap<BlockchainContractAddress, String>>;
+            ) -> anyhow::Result<Vec<BlockchainContractAddress>>;
         }
     }
     impl Clone for MockEverscale {

@@ -149,6 +149,21 @@ impl GoshContract {
         Ok(serde_json::from_value::<T>(result)?)
     }
 
+    #[instrument(level = "info", skip_all)]
+    pub async fn run_local<T>(
+        &self,
+        context: &EverClient,
+        function_name: &str,
+        args: Option<serde_json::Value>,
+    ) -> anyhow::Result<T>
+        where
+            T: de::DeserializeOwned,
+    {
+        let result = run_local(context, self, function_name, args).await?;
+        tracing::trace!("run_local result: {:?}", result);
+        Ok(serde_json::from_value::<T>(result)?)
+    }
+
     pub async fn get_version(&self, context: &EverClient) -> anyhow::Result<String> {
         let result: GetVersionResult = self.read_state(context, "getVersion", None).await?;
         tracing::trace!("get_version result: {:?}", result);
