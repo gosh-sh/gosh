@@ -14,7 +14,7 @@ const TasksPage = () => {
 
     return (
         <div>
-            {dao.details.version < '5.0.0' && (
+            {dao.details.version !== '5.0.0' && (
                 <div className="mb-7 text-right">
                     {dao.details.isAuthMember && (
                         <ButtonLink to={`/o/${dao.details.name}/tasks/create`}>

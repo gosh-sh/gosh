@@ -67,13 +67,16 @@ const LinesBlock = (props: TLinesBlockProps) => {
         dao: dao.adapter,
         objectAddress: commentsObject,
         filename,
-        commits: commit ? [commit.parents[0].name, commit.name] : undefined,
+        commits:
+            commit && commit.parents.length
+                ? [commit.parents[0].name, commit.name]
+                : undefined,
     })
     const commentFormRefs = useRef<{ [line: number]: HTMLDivElement | null }>({})
 
     const commits = useMemo(() => {
         return {
-            prev: commit ? commit.parents[0].name : '',
+            prev: commit && commit.parents.length ? commit.parents[0].name : '',
             curr: commit ? commit.name : '',
         }
     }, [commit])

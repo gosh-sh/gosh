@@ -480,7 +480,15 @@ class GoshAdapter_4_0_0 implements IGoshAdapter {
         address?: string | undefined
         data?: { daoName: string; repoName: string; tagName: string } | undefined
     }): Promise<IGoshCommitTag> {
-        throw new Error('Method is unavailable in current version')
+        const { address } = params
+
+        if (!address) {
+            throw new GoshError(
+                'Get commit tag error',
+                'Get commit tag by data is not supported in current version',
+            )
+        }
+        return new GoshCommitTag(this.client, address)
     }
 
     async deployProfile(username: string, pubkey: string): Promise<IGoshProfile> {
@@ -2366,10 +2374,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     private gosh: IGoshAdapter
     private client: TonClient
-    private repo: IGoshRepository
     private name?: string
     private subwallets: IGoshWallet[] = []
 
+    repo: IGoshRepository
     auth?: { username: string; wallet0: IGoshWallet }
     config?: { maxWalletsWrite: number }
 
@@ -4626,7 +4634,9 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             address,
             type: { kind, name: SmvEventTypes[kind] },
             status: {
-                completed: details.value1 !== null || Date.now() > time.finish,
+                completed:
+                    details.value1 !== null ||
+                    (time.finish > 0 && Date.now() > time.finish),
                 accepted: !!details.value1,
             },
             time,

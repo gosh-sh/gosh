@@ -51,7 +51,9 @@ const DaoTokenSendModal = (props: TDaoTokenSendModalProps) => {
                             {
                                 type: ESmvEventType.DAO_MEMBER_ADD,
                                 params: {
-                                    members: [{ user, allowance: 0, comment: '' }],
+                                    members: [
+                                        { user, allowance: 0, comment: '', expired: 0 },
+                                    ],
                                 },
                             },
                             {

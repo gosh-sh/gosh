@@ -2863,10 +2863,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     private gosh: IGoshAdapter
     private client: TonClient
-    private repo: IGoshRepository
     private name?: string
     private subwallets: IGoshWallet[] = []
 
+    repo: IGoshRepository
     auth?: { username: string; wallet0: IGoshWallet }
     config?: { maxWalletsWrite: number }
 
@@ -5123,7 +5123,9 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             address,
             type: { kind, name: SmvEventTypes[kind] },
             status: {
-                completed: details.value1 !== null || Date.now() > time.finish,
+                completed:
+                    details.value1 !== null ||
+                    (time.finish > 0 && Date.now() > time.finish),
                 accepted: !!details.value1,
             },
             time,

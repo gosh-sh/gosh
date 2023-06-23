@@ -8,6 +8,7 @@ import { FormikSelect, FormikTextarea } from '../../components/Formik'
 import { Button } from '../../components/Form'
 import yup from '../../yup-extended'
 import Alert from '../../components/Alert/Alert'
+import { DISABLED_VERSIONS } from '../../helpers'
 
 type TFormValues = {
     version: string
@@ -51,7 +52,11 @@ const DaoUpgradePage = () => {
 
             <Formik
                 initialValues={{
-                    version: versions ? versions.slice(-1)[0] : '',
+                    version: versions
+                        ? versions
+                              .filter((v) => DISABLED_VERSIONS.indexOf(v) < 0)
+                              .slice(-1)[0]
+                        : '',
                     comment: '',
                 }}
                 onSubmit={onDaoUpgrade}
@@ -76,8 +81,14 @@ const DaoUpgradePage = () => {
                                 }
                             >
                                 {versions?.map((version, index) => (
-                                    <option key={index} value={version}>
+                                    <option
+                                        key={index}
+                                        value={version}
+                                        disabled={DISABLED_VERSIONS.indexOf(version) >= 0}
+                                    >
                                         {version}
+                                        {DISABLED_VERSIONS.indexOf(version) >= 0 &&
+                                            ' (Not available)'}
                                     </option>
                                 ))}
                             </Field>

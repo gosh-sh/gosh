@@ -759,6 +759,20 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branchName?: string) {
     }
 
     const pushUpgrade = async (branch: string, commit: string, version: string) => {
+        if (['4.0.0', '5.0.0'].indexOf(repo.getVersion()) >= 0) {
+            const { value0 } = await repo.repo.runLocal('getPrevious', {})
+            if (
+                (version === '2.0.0' && value0.version === '3.0.0') ||
+                (version === '2.0.0' && value0.version === '4.0.0') ||
+                (version === '3.0.0' && value0.version === '4.0.0')
+            ) {
+                throw new GoshError(
+                    'Push error',
+                    'You should upgrade your DAO to version 5.1+ to push to this repository',
+                )
+            }
+        }
+
         if (repo.getVersion() !== version) {
             const gosh = GoshAdapterFactory.create(version)
             const name = await repo.getName()

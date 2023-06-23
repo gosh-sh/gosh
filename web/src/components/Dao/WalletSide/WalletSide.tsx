@@ -3,6 +3,7 @@ import { IGoshDaoAdapter, IGoshSmvAdapter } from 'react-gosh/dist/gosh/interface
 import DAO_WALLET_SIDE_1_0_0 from './1.0.0/WalletSide'
 import DAO_WALLET_SIDE_2_0_0 from './2.0.0/WalletSide'
 import DAO_WALLET_SIDE_3_0_0 from './3.0.0/WalletSide'
+import DAO_WALLET_SIDE_4_0_0 from './4.0.0/WalletSide'
 import DAO_WALLET_SIDE_5_0_0 from './5.0.0/WalletSide'
 
 type TDaoWalletSideProps = {
@@ -25,8 +26,10 @@ const DaoWalletSide = (props: TDaoWalletSideProps) => {
         return <DAO_WALLET_SIDE_1_0_0 wallet={wallet} className={className} />
     } else if (version === '2.0.0') {
         return <DAO_WALLET_SIDE_2_0_0 dao={dao} wallet={wallet} className={className} />
-    } else if (version < '5.0.0') {
+    } else if (version === '3.0.0') {
         return <DAO_WALLET_SIDE_3_0_0 dao={dao} wallet={wallet} className={className} />
+    } else if (version === '4.0.0') {
+        return <DAO_WALLET_SIDE_4_0_0 dao={dao} wallet={wallet} className={className} />
     }
     return <DAO_WALLET_SIDE_5_0_0 dao={dao} wallet={wallet} className={className} />
 }
