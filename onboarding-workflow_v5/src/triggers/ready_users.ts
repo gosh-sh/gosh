@@ -32,7 +32,7 @@ while (true) {
         *,
         github (
             updated_at,
-            dao_bot (dao_name, profile_gosh_address, seed)
+            dao_bot (dao_name, profile_gosh_address, seed, version)
         )
     `)
     if (error) {
@@ -43,15 +43,19 @@ while (true) {
         continue
     }
 
+    const version = Deno.env.get('GOSH_VERSION') ?? '0.0.0'
+
     // Filter users
     // User `onboarded_at` should be null, all user repos should have
     // date at `updated_at` field
     const ready_users = data
         .filter(({ onboarded_at }) => !onboarded_at)
+        .filter(({ github }) => !!github )
         .filter(({ github }) => {
-            if (!github) {
-                return false
-            }
+            console.log(github)
+            return github.dao_bot.version == version
+        })
+        .filter(({ github }) => {
             const repos = Array.isArray(github) ? github : [github]
             return repos.every(({ updated_at }) => !!updated_at)
         })
