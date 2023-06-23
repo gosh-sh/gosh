@@ -149,6 +149,24 @@ export async function deployAloneDaoWallet_v2(
     )
 }
 
+export async function deployAloneDaoWallet_v5(
+    profile_address: string,
+    wallet_addr: string,
+    seed: string,
+    tokens: number,
+): Promise<boolean> {
+    return await goshCli(
+        'call',
+        '--abi',
+        GOSH_WALLET_ABI,
+        wallet_addr,
+        '--sign',
+        seed,
+        'AloneDeployWalletDao',
+        JSON.stringify({ pubaddr: [ { member: profile_address, count: tokens, expired: 0} ] }),
+    )
+}
+
 export async function AloneMintDaoReserve(
   tokens: number,
   wallet_addr: string,

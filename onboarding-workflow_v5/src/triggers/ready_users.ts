@@ -4,6 +4,7 @@ import { emailOnboardingFinished } from '../actions/emails/onboarding_finished.t
 import {
     deployAloneDaoWallet,
     deployAloneDaoWallet_v2,
+    deployAloneDaoWallet_v5,
     AloneMintDaoReserve,
     getAddrDao,
     isDaoMember,
@@ -52,12 +53,13 @@ while (true) {
         .filter(({ onboarded_at }) => !onboarded_at)
         .filter(({ github }) => !!github )
         .filter(({ github }) => {
-            console.log(github)
-            return github.dao_bot.version == version
-        })
-        .filter(({ github }) => {
             const repos = Array.isArray(github) ? github : [github]
             return repos.every(({ updated_at }) => !!updated_at)
+        })
+        .filter(({ github }) => {
+            console.log(github)
+            const gh = Array.isArray(github) ? github : [github]
+            return gh.every(({ dao_bot }) => dao_bot.version  === version)
         })
 
     // Iterate ready for onboarding data
@@ -109,12 +111,21 @@ while (true) {
                     await deployAloneDaoWallet([userProfileAddress], walletAddress, seed)
                 } else {
                     await AloneMintDaoReserve(100, walletAddress, seed)
-                    await deployAloneDaoWallet_v2(
-                        userProfileAddress,
-                        walletAddress,
-                        seed,
-                        100,
-                    )
+                    if (version === '5.1.0') {
+                        await deployAloneDaoWallet_v5(
+                            userProfileAddress,
+                            walletAddress,
+                            seed,
+                            100,
+                        )
+                    } else {
+                        await deployAloneDaoWallet_v2(
+                            userProfileAddress,
+                            walletAddress,
+                            seed,
+                            100,
+                        )
+                    }
                 }
             }),
         )
