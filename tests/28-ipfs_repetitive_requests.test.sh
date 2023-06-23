@@ -48,9 +48,9 @@ cd ..
 GOSH_TRACE=5 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME "${REPO_NAME}-clone" &> trace-clone.log
 
 set +o pipefail
-cnt=$(grep "load_data_from_ipfs: ipfs_address=" trace-clone.log | wc -l)
+cnt=$(grep -c "load_data_from_ipfs: ipfs_address=" trace-clone.log)
 
-if (( $cnt == $max_files )); then
+if (( $cnt != $max_files )); then
     echo "TEST FAILED"
     exit 1
 fi
