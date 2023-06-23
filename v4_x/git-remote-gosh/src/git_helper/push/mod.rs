@@ -148,22 +148,23 @@ where
                 )
                 .await?;
         }
-
-        let file_diff =
-            utilities::generate_blob_diff(&self.local_repository().objects, None, Some(blob_id))
-                .await?;
-        let diff = ParallelDiff::new(
-            *commit_id,
-            branch_name.to_string(),
-            *blob_id,
-            file_path.to_string(),
-            file_diff.original.clone(),
-            file_diff.patch.clone(),
-            file_diff.after_patch.clone(),
-        );
-        parallel_diffs_upload_support.push(self, diff).await?;
+        if !upgrade_commit {
+            let file_diff =
+                utilities::generate_blob_diff(&self.local_repository().objects, None, Some(blob_id))
+                    .await?;
+            let diff = ParallelDiff::new(
+                *commit_id,
+                branch_name.to_string(),
+                *blob_id,
+                file_path.to_string(),
+                file_diff.original.clone(),
+                file_diff.patch.clone(),
+                file_diff.after_patch.clone(),
+            );
+            parallel_diffs_upload_support.push(self, diff).await?;
+            statistics.diffs += 1;
+        }
         statistics.new_snapshots += 1;
-        statistics.diffs += 1;
         Ok(())
     }
 
@@ -262,7 +263,7 @@ where
         // TODO: get commit can fail due to changes in versions
         let commit_contract = GoshContract::new(&remote_commit_addr, gosh_abi::COMMIT);
         let sha: GetNameCommitResult = commit_contract
-            .run_static(self.blockchain.client(), "getNameCommit", None)
+            .run_local(self.blockchain.client(), "getNameCommit", None)
             .await?;
         tracing::trace!("Commit sha: {sha:?}");
         let sha = sha.name;
@@ -347,7 +348,8 @@ where
                 },
             )
             .await
-            .map(|r| r.result)?;
+            .map(|r| r.result)
+                .map_err(|e| anyhow::format_err!("query error: {e}"))?;
 
             let raw_data = result["data"]["accounts"].clone();
             let existing_commits: Vec<AccountStatus> = serde_json::from_value(raw_data)?;
@@ -407,34 +409,31 @@ where
                 )
                 .await?;
                 let commit_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
-                match commit_contract.is_active(self.blockchain.client()).await {
-                    Ok(true) => {
-                        if repo_version.version != supported_contract_version() {
-                            tracing::trace!(
+                if commit_contract.is_active(self.blockchain.client()).await? {
+                    if repo_version.version != supported_contract_version() {
+                        tracing::trace!(
                                 "Found parent {id} in version {}",
                                 repo_version.version
                             );
-                            tracing::trace!("Start upgrade of the parent: {id}");
-                            let branch: GetNameCommitResult = commit_contract
-                                .run_static(self.blockchain.client(), "getNameBranch", None)
-                                .await?;
-                            // TODO: local and remote branch are set equal here it can be wrong
-                            self.check_and_upgrade_previous_commit(
-                                id.to_string(),
-                                &branch.name,
-                                &branch.name,
-                                set_commit,
-                            )
+                        tracing::trace!("Start upgrade of the parent: {id}");
+                        let branch: GetNameCommitResult = commit_contract
+                            .run_local(self.blockchain.client(), "getNameBranch", None)
                             .await?;
-                        }
-                        break;
+                        // TODO: local and remote branch are set equal here it can be wrong
+                        self.check_and_upgrade_previous_commit(
+                            id.to_string(),
+                            &branch.name,
+                            &branch.name,
+                            set_commit,
+                        )
+                            .await?;
                     }
-                    _ => {
-                        tracing::trace!(
-                            "Not found parent {id} in version {}",
-                            repo_version.version
-                        );
-                    }
+                    break;
+                } else {
+                    tracing::trace!(
+                        "Not found parent {id} in version {}",
+                        repo_version.version
+                    );
                 }
             }
         }
@@ -787,7 +786,7 @@ where
                     let commit_contract =
                         GoshContract::new(&branch_ref.commit_address, gosh_abi::COMMIT);
                     let sha: GetNameCommitResult = commit_contract
-                        .run_static(self.blockchain.client(), "getNameCommit", None)
+                        .run_local(self.blockchain.client(), "getNameCommit", None)
                         .await?;
                     tracing::trace!("Commit sha: {sha:?}");
                     if sha.name == latest_commit_id.to_string() {
@@ -983,7 +982,7 @@ where
                 }
             }
         }
-
+        tracing::trace!("Start of wait for contracts to be deployed");
         let mut expected_contracts = vec![];
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
@@ -1231,7 +1230,7 @@ where
             .map_err(|_| anyhow::format_err!("Seems like you are not a member of DAO. Only DAO members can push to the repositories."))?;
         tracing::trace!("Zero wallet address: {:?}", wallet.address);
         let res: GetLimitedResult = wallet
-            .run_static(self.blockchain.client(), "_limited", None)
+            .run_local(self.blockchain.client(), "_limited", None)
             .await?;
         tracing::trace!("wallet _limited: {:?}", res);
         if res.limited {

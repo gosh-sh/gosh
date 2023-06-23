@@ -194,19 +194,18 @@ where
                                 .await?;
                                 let snapshot_contract =
                                     GoshContract::new(&snapshot_address, gosh_abi::SNAPSHOT);
-                                let version: anyhow::Result<serde_json::Value> = snapshot_contract
-                                    .run_static(self.blockchain.client(), "getVersion", None)
-                                    .await;
-                                if version.is_err() {
-                                    continue;
+                                match snapshot_contract.is_active(self.blockchain.client()).await {
+                                    Ok(true) => {
+                                        tracing::debug!(
+                                            "branch={branch}: Adding a blob to search for. Path: {}, id: {}, snapshot: {}",
+                                            file_path,
+                                            oid,
+                                            snapshot_address
+                                        );
+                                        blobs_restore_plan.mark_blob_to_restore(snapshot_address, oid);
+                                    },
+                                    _ => { continue; }
                                 }
-                                tracing::debug!(
-                                    "branch={branch}: Adding a blob to search for. Path: {}, id: {}, snapshot: {}",
-                                    file_path,
-                                    oid,
-                                    snapshot_address
-                                );
-                                blobs_restore_plan.mark_blob_to_restore(snapshot_address, oid);
                             }
                         }
                         _ => {
@@ -269,7 +268,7 @@ where
                         let parent = BlockchainContractAddress::new(parent.address);
                         let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
                         let branch: GetNameBranchResult = parent_contract
-                            .run_static(self.blockchain.client(), "getNameBranch", None)
+                            .run_local(self.blockchain.client(), "getNameBranch", None)
                             .await?;
                         tracing::debug!("commit={id}: extracted branch {:?}", branch.name);
                         branches.insert(branch.name);
