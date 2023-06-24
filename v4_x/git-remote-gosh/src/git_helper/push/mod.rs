@@ -607,6 +607,65 @@ where
 
         tracing::trace!("check and upgrade previous commit: {ancestor_commit} {local_branch_name} {remote_branch_name}");
 
+        // 1) get ancestor commit address
+        let mut repo_contract = self.blockchain.repo_contract().clone();
+        let ancestor_address = get_commit_address(
+            &self.blockchain.client(),
+            &mut repo_contract,
+            &ancestor_commit,
+        )
+            .await?;
+        tracing::trace!("ancestor address: {ancestor_address}");
+
+        // 2) Check that ancestor contract exists
+        let ancestor_contract = GoshContract::new(&ancestor_address, gosh_abi::COMMIT);
+        // if ancestor is valid return
+        let res = ancestor_contract
+            .get_version(self.blockchain.client())
+            .await;
+        if let Ok(_) = res {
+            return Ok(());
+        }
+
+        // If ancestor commit doesn't exist we need to deploy a new version of the commit with init_upgrade flag set to true
+        tracing::trace!("Failed to get contract version: {res:?}");
+
+        // 3) Get address of the previous version of the repo
+        let previous: GetPreviousResult = self
+            .blockchain
+            .repo_contract()
+            .read_state(self.blockchain.client(), "getPrevious", None)
+            .await?;
+        tracing::trace!("prev repo addr: {previous:?}");
+
+        // 4) Get address of the ancestor commit of previous version
+        let previous_repo_addr = previous
+            .previous
+            .clone()
+            .ok_or(anyhow::format_err!(
+                "Failed to get previous version of the repo"
+            ))?
+            .address;
+        let mut prev_repo_contract = GoshContract::new(&previous_repo_addr, gosh_abi::REPO);
+        let prev_ancestor_address = get_commit_address(
+            &self.blockchain.client(),
+            &mut prev_repo_contract,
+            &ancestor_commit,
+        )
+            .await?;
+        tracing::trace!("prev ver ancestor commit address: {prev_ancestor_address}");
+
+        // 5) get previous version commit data
+        // let commit = get_commit_by_addr(self.blockchain.client(), &prev_ancestor_address)
+        //     .await?
+        //     .unwrap();
+        // tracing::trace!("Prev version commit data: {commit:?}");
+
+        // 6) For new version ancestor commit set parent to the ancestor commit of previous version
+        let parents_for_upgrade = vec![AddrVersion {
+            address: prev_ancestor_address.clone(),
+            version: previous.previous.unwrap().version,
+        }];
         let ancestor_id = self
             .local_repository()
             .find_object(ObjectId::from_str(&ancestor_commit)?)?
@@ -637,7 +696,7 @@ where
         let mut parallel_tree_uploads = ParallelTreeUploadSupport::new();
         let mut parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
         let mut parents_of_commits: HashMap<String, Vec<String>> =
-            HashMap::new();
+            HashMap::from([(ZERO_SHA.to_owned(), vec![]), ("".to_owned(), vec![])]);
         let mut visited_trees: HashSet<ObjectId> = HashSet::new();
         let mut statistics = PushBlobStatistics::new();
 
