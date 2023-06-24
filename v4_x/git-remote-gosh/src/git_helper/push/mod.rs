@@ -133,6 +133,7 @@ where
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
         parallel_snapshot_uploads: &mut ParallelSnapshotUploadSupport,
         upgrade_commit: bool,
+        parents_for_upgrade: Vec<AddrVersion>,
     ) -> anyhow::Result<()> {
         {
             tracing::trace!("push_new_blob: file_path={file_path}, blob_id={blob_id}, commit_id={commit_id}, branch_name={branch_name}, upgrade_commit={upgrade_commit}");
@@ -143,17 +144,12 @@ where
             let branch_name = branch_name.to_string();
             let file_path = file_path.to_string();
             let commit_str = commit_id.to_string();
-
-            let mut repo_contract = self.blockchain.repo_contract().clone();
-            let snapshot_addr = Snapshot::calculate_address(
-                self.blockchain.client(),
-                &mut repo_contract,
-                &branch_name,
-                &file_path,
-            )
-                .await?;
-            let snapshot_addr = String::from(snapshot_addr);
-            let snapshot = ParallelSnapshot::new(branch_name, file_path, upgrade_commit, commit_str);
+            tracing::trace!("Search prev commit repo: {:?} {:?}", self.repo_versions, parents_for_upgrade);
+            let prev_repo_address = if upgrade_commit {
+                Some(self.repo_versions.iter().find(|repo| repo.version == parents_for_upgrade[0].version).expect("Failed to find prev repo address").repo_address.clone())
+            } else {
+                None
+            };
 
             self.database.put_snapshot(&snapshot, snapshot_addr.clone())?;
 
@@ -177,7 +173,6 @@ where
                 file_diff.patch.clone(),
                 file_diff.after_patch.clone(),
             );
-
             parallel_diffs_upload_support.push(self, diff).await?;
             statistics.diffs += 1;
         }
@@ -428,13 +423,13 @@ where
                     &mut repo_contract,
                     &id.to_string(),
                 )
-                .await?;
+                    .await?;
                 let commit_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
                 if commit_contract.is_active(self.blockchain.client()).await? {
                     tracing::trace!(
-                            "Found parent {id} in version {}",
-                            repo_version.version
-                        );
+                        "Found parent {id} in version {}",
+                        repo_version.version
+                    );
                     tracing::trace!("Start upgrade of the parent: {id}");
                     let branch: GetNameCommitResult = commit_contract
                         .run_local(self.blockchain.client(), "getNameBranch", None)
@@ -524,7 +519,7 @@ where
             });
         }
         if upgrade_commit && !parents_for_upgrade.is_empty() {
-            parents = parents_for_upgrade;
+            parents = parents_for_upgrade.clone();
         }
         let tree_addr = self.calculate_tree_address(tree_id).await?;
 
@@ -578,6 +573,7 @@ where
                 parallel_diffs_upload_support,
                 parallel_snapshot_uploads,
                 upgrade_commit,
+                parents_for_upgrade.clone(),
             )
             .await?;
         }
@@ -627,6 +623,65 @@ where
 
         tracing::trace!("check and upgrade previous commit: {ancestor_commit} {local_branch_name} {remote_branch_name}");
 
+        // 1) get ancestor commit address
+        let mut repo_contract = self.blockchain.repo_contract().clone();
+        let ancestor_address = get_commit_address(
+            &self.blockchain.client(),
+            &mut repo_contract,
+            &ancestor_commit,
+        )
+            .await?;
+        tracing::trace!("ancestor address: {ancestor_address}");
+
+        // 2) Check that ancestor contract exists
+        let ancestor_contract = GoshContract::new(&ancestor_address, gosh_abi::COMMIT);
+        // if ancestor is valid return
+        let res = ancestor_contract
+            .get_version(self.blockchain.client())
+            .await;
+        if let Ok(_) = res {
+            return Ok(());
+        }
+
+        // If ancestor commit doesn't exist we need to deploy a new version of the commit with init_upgrade flag set to true
+        tracing::trace!("Failed to get contract version: {res:?}");
+
+        // 3) Get address of the previous version of the repo
+        let previous: GetPreviousResult = self
+            .blockchain
+            .repo_contract()
+            .read_state(self.blockchain.client(), "getPrevious", None)
+            .await?;
+        tracing::trace!("prev repo addr: {previous:?}");
+
+        // 4) Get address of the ancestor commit of previous version
+        let previous_repo_addr = previous
+            .previous
+            .clone()
+            .ok_or(anyhow::format_err!(
+                "Failed to get previous version of the repo"
+            ))?
+            .address;
+        let mut prev_repo_contract = GoshContract::new(&previous_repo_addr, gosh_abi::REPO);
+        let prev_ancestor_address = get_commit_address(
+            &self.blockchain.client(),
+            &mut prev_repo_contract,
+            &ancestor_commit,
+        )
+            .await?;
+        tracing::trace!("prev ver ancestor commit address: {prev_ancestor_address}");
+
+        // 5) get previous version commit data
+        // let commit = get_commit_by_addr(self.blockchain.client(), &prev_ancestor_address)
+        //     .await?
+        //     .unwrap();
+        // tracing::trace!("Prev version commit data: {commit:?}");
+
+        // 6) For new version ancestor commit set parent to the ancestor commit of previous version
+        let parents_for_upgrade = vec![AddrVersion {
+            address: prev_ancestor_address.clone(),
+            version: previous.previous.unwrap().version,
+        }];
         let ancestor_id = self
             .local_repository()
             .find_object(ObjectId::from_str(&ancestor_commit)?)?

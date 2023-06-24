@@ -18,7 +18,7 @@ function get_repo_addr {
     params=$(jq -n --arg name "${REPO_NAME}" --arg dao "${DAO_NAME}" '$ARGS.named')
 
     tonos-cli -j -u $NETWORK run $SYSTEM_CONTRACT_ADDR --abi $SYSTEM_CONTRACT_ABI \
-      getAddrRepository "${params}"  | jq -r .value0
+      getAddrRepository "${params}" | jq -r .value0
 }
 
 function list_branches {

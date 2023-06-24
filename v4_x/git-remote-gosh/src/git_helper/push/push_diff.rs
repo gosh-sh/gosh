@@ -5,7 +5,7 @@ use std::time::Duration;
 use tokio::time::sleep;
 
 use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
-use crate::blockchain::get_commit_address;
+use crate::blockchain::{AddrVersion, get_commit_address};
 use crate::git_helper::push::GetPreviousResult;
 use crate::{
     blockchain::{
@@ -341,6 +341,7 @@ pub async fn push_initial_snapshot<B>(
     remote_network: String,
     snapshot_address: String,
     database: Arc<GoshDB>,
+    prev_repo_address: Option<BlockchainContractAddress>,
 ) -> anyhow::Result<()>
 where
     B: BlockchainService + 'static,
@@ -365,18 +366,8 @@ where
     };
     let (content, commit_id, ipfs) = if upgrade {
         tracing::trace!("generate content for upgrade snapshot");
-        let repo_addr: GetPreviousResult = blockchain
-            .repo_contract()
-            .read_state(blockchain.client(), "getPrevious", None)
-            .await?;
-        let repo_addr = repo_addr
-            .previous
-            .ok_or(anyhow::format_err!(
-                "Failed to get address of previous version"
-            ))?
-            .address;
-        tracing::trace!("Previous repo addr: {repo_addr}");
-        let mut repo_contract = GoshContract::new(&repo_addr, gosh_abi::REPO);
+
+        let mut repo_contract = GoshContract::new(prev_repo_address.as_ref().unwrap(), gosh_abi::REPO);
         let snapshot_addr = Snapshot::calculate_address(
             blockchain.client(),
             &mut repo_contract,
