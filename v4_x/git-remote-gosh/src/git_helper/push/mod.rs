@@ -151,12 +151,24 @@ where
                 None
             };
 
+            let mut repo_contract = self.blockchain.repo_contract().clone();
+            let snapshot_addr = Snapshot::calculate_address(
+                self.blockchain.client(),
+                &mut repo_contract,
+                &branch_name,
+                &file_path,
+            )
+                .await?;
+            let snapshot_addr = String::from(snapshot_addr);
+            let snapshot = ParallelSnapshot::new(branch_name, file_path, upgrade_commit, commit_str);
+
             self.database.put_snapshot(&snapshot, snapshot_addr.clone())?;
 
             parallel_snapshot_uploads
                 .add_to_push_list(
                     self,
                     snapshot_addr,
+                    prev_repo_address,
                 )
                 .await?;
         }
@@ -1099,7 +1111,7 @@ where
                     address,
                 );
                 parallel_snapshot_uploads
-                    .add_to_push_list(self, String::from(address))
+                    .add_to_push_list(self, String::from(address), None)
                     .await?;
             }
         }
