@@ -14,7 +14,7 @@ keywords = ['git-remote', 'git', 'gosh']
 name = 'git-remote-gosh'
 resolver = '2'
 rust-version = "1.68"
-version = '4.1.24'
+version = '4.1.25'
 
 [profile.profiling]
 debug = 1
@@ -104,12 +104,12 @@ version = '1.21.2'
 [dependencies.ton_client]
 git = 'https://github.com/tonlabs/ever-sdk.git'
 package = 'ton_client'
-tag = "1.41.1"
+tag = "1.43.1"
 
 [dependencies.ton_sdk]
 git = 'https://github.com/tonlabs/ever-sdk.git'
 package = 'ton_sdk'
-tag = "1.41.1"
+tag = "1.43.1"
 
 [dependencies.zstd]
 default-features = false

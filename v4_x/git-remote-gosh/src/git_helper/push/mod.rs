@@ -131,6 +131,7 @@ where
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
         parallel_snapshot_uploads: &mut ParallelSnapshotUploadSupport,
         upgrade_commit: bool,
+        parents_for_upgrade: Vec<AddrVersion>,
     ) -> anyhow::Result<()> {
         {
             tracing::trace!("push_new_blob: file_path={file_path}, blob_id={blob_id}, commit_id={commit_id}, branch_name={branch_name}, upgrade_commit={upgrade_commit}");
@@ -141,29 +142,37 @@ where
             let branch_name = branch_name.to_string();
             let file_path = file_path.to_string();
             let commit_str = commit_id.to_string();
+            tracing::trace!("Search prev commit repo: {:?} {:?}", self.repo_versions, parents_for_upgrade);
+            let prev_repo_address = if upgrade_commit {
+                Some(self.repo_versions.iter().find(|repo| repo.version == parents_for_upgrade[0].version).expect("Failed to find prev repo address").repo_address.clone())
+            } else {
+                None
+            };
             parallel_snapshot_uploads
                 .add_to_push_list(
                     self,
                     ParallelSnapshot::new(branch_name, file_path, upgrade_commit, commit_str),
+                    prev_repo_address,
                 )
                 .await?;
         }
-
-        let file_diff =
-            utilities::generate_blob_diff(&self.local_repository().objects, None, Some(blob_id))
-                .await?;
-        let diff = ParallelDiff::new(
-            *commit_id,
-            branch_name.to_string(),
-            *blob_id,
-            file_path.to_string(),
-            file_diff.original.clone(),
-            file_diff.patch.clone(),
-            file_diff.after_patch.clone(),
-        );
-        parallel_diffs_upload_support.push(self, diff).await?;
+        if !upgrade_commit {
+            let file_diff =
+                utilities::generate_blob_diff(&self.local_repository().objects, None, Some(blob_id))
+                    .await?;
+            let diff = ParallelDiff::new(
+                *commit_id,
+                branch_name.to_string(),
+                *blob_id,
+                file_path.to_string(),
+                file_diff.original.clone(),
+                file_diff.patch.clone(),
+                file_diff.after_patch.clone(),
+            );
+            parallel_diffs_upload_support.push(self, diff).await?;
+            statistics.diffs += 1;
+        }
         statistics.new_snapshots += 1;
-        statistics.diffs += 1;
         Ok(())
     }
 
@@ -262,7 +271,7 @@ where
         // TODO: get commit can fail due to changes in versions
         let commit_contract = GoshContract::new(&remote_commit_addr, gosh_abi::COMMIT);
         let sha: GetNameCommitResult = commit_contract
-            .run_static(self.blockchain.client(), "getNameCommit", None)
+            .run_local(self.blockchain.client(), "getNameCommit", None)
             .await?;
         tracing::trace!("Commit sha: {sha:?}");
         let sha = sha.name;
@@ -347,7 +356,8 @@ where
                 },
             )
             .await
-            .map(|r| r.result)?;
+            .map(|r| r.result)
+                .map_err(|e| anyhow::format_err!("query error: {e}"))?;
 
             let raw_data = result["data"]["accounts"].clone();
             let existing_commits: Vec<AccountStatus> = serde_json::from_value(raw_data)?;
@@ -398,6 +408,9 @@ where
         for id in parent_ids {
             tracing::trace!("check parent: {id}");
             for repo_version in &self.repo_versions {
+                if repo_version.version == supported_contract_version().trim_matches(|c| c == '"') {
+                    continue;
+                }
                 let mut repo_contract =
                     GoshContract::new(&repo_version.repo_address, gosh_abi::REPO);
                 let parent = get_commit_address(
@@ -405,36 +418,38 @@ where
                     &mut repo_contract,
                     &id.to_string(),
                 )
-                .await?;
+                    .await?;
                 let commit_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
-                match commit_contract.is_active(self.blockchain.client()).await {
-                    Ok(true) => {
-                        if repo_version.version != supported_contract_version() {
-                            tracing::trace!(
-                                "Found parent {id} in version {}",
-                                repo_version.version
-                            );
-                            tracing::trace!("Start upgrade of the parent: {id}");
-                            let branch: GetNameCommitResult = commit_contract
-                                .run_static(self.blockchain.client(), "getNameBranch", None)
-                                .await?;
-                            // TODO: local and remote branch are set equal here it can be wrong
-                            self.check_and_upgrade_previous_commit(
-                                id.to_string(),
-                                &branch.name,
-                                &branch.name,
-                                set_commit,
-                            )
-                            .await?;
+                if commit_contract.is_active(self.blockchain.client()).await? {
+                    tracing::trace!(
+                        "Found parent {id} in version {}",
+                        repo_version.version
+                    );
+                    tracing::trace!("Start upgrade of the parent: {id}");
+                    let branch: GetNameCommitResult = commit_contract
+                        .run_local(self.blockchain.client(), "getNameBranch", None)
+                        .await?;
+                    let parents_for_upgrade = vec![
+                        AddrVersion {
+                            address: parent,
+                            version: repo_version.version.clone(),
                         }
-                        break;
-                    }
-                    _ => {
-                        tracing::trace!(
-                            "Not found parent {id} in version {}",
-                            repo_version.version
-                        );
-                    }
+                    ];
+                    self.check_and_upgrade_previous_commit(
+                        id.to_string(),
+                        &branch.name,
+                        &branch.name,
+                        set_commit,
+                        parents_for_upgrade,
+                    )
+                        .await?;
+
+                    break;
+                } else {
+                    tracing::trace!(
+                        "Not found parent {id} in version {}",
+                        repo_version.version
+                    );
                 }
             }
         }
@@ -499,7 +514,7 @@ where
             });
         }
         if upgrade_commit && !parents_for_upgrade.is_empty() {
-            parents = parents_for_upgrade;
+            parents = parents_for_upgrade.clone();
         }
         let tree_addr = self.calculate_tree_address(tree_id).await?;
 
@@ -542,6 +557,7 @@ where
                 parallel_diffs_upload_support,
                 parallel_snapshot_uploads,
                 upgrade_commit,
+                parents_for_upgrade.clone(),
             )
             .await?;
         }
@@ -582,12 +598,10 @@ where
         local_branch_name: &str,
         remote_branch_name: &str,
         set_commit: bool,
+        parents_for_upgrade: Vec<AddrVersion>,
     ) -> anyhow::Result<()> {
-        // check in cur repo if account with commit exists   eg call get version
-        // if not found need to init upgrade commit
-        // can get list of objects and push the last commit and objects
         // last commit should be redeployed with flag init_upgrade
-        // tree for last commit should be redeployed ans addr of new tree goes to commit constructor
+        // tree for last commit should be redeployed and addr of new tree goes to commit constructor
         // parent for commit should be prev version of the same commit
         // snapshot should be deployed with content of the last snapshot and new addr of commit
 
@@ -600,7 +614,7 @@ where
             &mut repo_contract,
             &ancestor_commit,
         )
-        .await?;
+            .await?;
         tracing::trace!("ancestor address: {ancestor_address}");
 
         // 2) Check that ancestor contract exists
@@ -638,7 +652,7 @@ where
             &mut prev_repo_contract,
             &ancestor_commit,
         )
-        .await?;
+            .await?;
         tracing::trace!("prev ver ancestor commit address: {prev_ancestor_address}");
 
         // 5) get previous version commit data
@@ -787,7 +801,7 @@ where
                     let commit_contract =
                         GoshContract::new(&branch_ref.commit_address, gosh_abi::COMMIT);
                     let sha: GetNameCommitResult = commit_contract
-                        .run_static(self.blockchain.client(), "getNameCommit", None)
+                        .run_local(self.blockchain.client(), "getNameCommit", None)
                         .await?;
                     tracing::trace!("Commit sha: {sha:?}");
                     if sha.name == latest_commit_id.to_string() {
@@ -983,7 +997,7 @@ where
                 }
             }
         }
-
+        tracing::trace!("Start of wait for contracts to be deployed");
         let mut expected_contracts = vec![];
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
@@ -1088,7 +1102,7 @@ where
                     snapshot
                 );
                 parallel_snapshot_uploads
-                    .add_to_push_list(self, snapshot)
+                    .add_to_push_list(self, snapshot, None)
                     .await?;
             }
         }
@@ -1231,7 +1245,7 @@ where
             .map_err(|_| anyhow::format_err!("Seems like you are not a member of DAO. Only DAO members can push to the repositories."))?;
         tracing::trace!("Zero wallet address: {:?}", wallet.address);
         let res: GetLimitedResult = wallet
-            .run_static(self.blockchain.client(), "_limited", None)
+            .run_local(self.blockchain.client(), "_limited", None)
             .await?;
         tracing::trace!("wallet _limited: {:?}", res);
         if res.limited {

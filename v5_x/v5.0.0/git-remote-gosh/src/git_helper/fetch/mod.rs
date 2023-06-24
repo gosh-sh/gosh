@@ -7,14 +7,15 @@ use crate::{
     },
 };
 use git_odb::{Find, Write};
+use tokio::sync::Mutex;
 
 use crate::blockchain::contract::GoshContract;
 use crate::blockchain::{gosh_abi, GetNameBranchResult};
 
 use bstr::ByteSlice;
-use std::io::Write as IoWrite;
 use std::{
-    collections::{HashSet, VecDeque},
+    collections::{HashMap, HashSet, VecDeque},
+    io::Write as IoWrite,
     str::FromStr,
     sync::Arc,
 };
@@ -104,18 +105,27 @@ where
             .map(|b| b.branch_name.clone())
             .collect();
 
-        let mut visited: HashSet<git_hash::ObjectId> = HashSet::new();
+        // let mut visited: HashSet<git_hash::ObjectId> = HashSet::new();
+        let visited: Arc<Mutex<HashSet<git_hash::ObjectId>>> = Arc::new(Mutex::new(HashSet::new()));
+        let visited_ipfs: Arc<Mutex<HashMap<String, git_hash::ObjectId>>> =
+            Arc::new(Mutex::new(HashMap::new()));
         macro_rules! guard {
             ($id:ident) => {
-                if visited.contains(&$id) {
-                    continue;
+                {
+                    let visited = visited.lock().await;
+                    if visited.contains(&$id) {
+                        continue;
+                    }
                 }
                 if $id.is_null() {
                     continue;
                 }
-                visited.insert($id.clone());
-                if self.is_commit_in_local_cache(&$id) {
-                    continue;
+                {
+                    let mut visited = visited.lock().await;
+                    visited.insert($id.clone());
+                    if self.is_commit_in_local_cache(&$id) {
+                        continue;
+                    }
                 }
             };
         }
@@ -137,8 +147,10 @@ where
         let mut next_commit_of_prev_version = vec![];
         loop {
             if blobs_restore_plan.is_available() {
+                let visited_ref = Arc::clone(&visited);
+                let visited_ipfs_ref = Arc::clone(&visited_ipfs);
                 tracing::debug!("branch={branch}: Restoring blobs");
-                blobs_restore_plan.restore(self).await?;
+                blobs_restore_plan.restore(self, visited_ref, visited_ipfs_ref).await?;
                 blobs_restore_plan = restore_blobs::BlobsRebuildingPlan::new();
                 continue;
             }
@@ -194,19 +206,18 @@ where
                                 .await?;
                                 let snapshot_contract =
                                     GoshContract::new(&snapshot_address, gosh_abi::SNAPSHOT);
-                                let version: anyhow::Result<serde_json::Value> = snapshot_contract
-                                    .run_static(self.blockchain.client(), "getVersion", None)
-                                    .await;
-                                if version.is_err() {
-                                    continue;
+                                match snapshot_contract.is_active(self.blockchain.client()).await {
+                                    Ok(true) => {
+                                        tracing::debug!(
+                                            "branch={branch}: Adding a blob to search for. Path: {}, id: {}, snapshot: {}",
+                                            file_path,
+                                            oid,
+                                            snapshot_address
+                                        );
+                                        blobs_restore_plan.mark_blob_to_restore(snapshot_address, oid);
+                                    },
+                                    _ => { continue; }
                                 }
-                                tracing::debug!(
-                                    "branch={branch}: Adding a blob to search for. Path: {}, id: {}, snapshot: {}",
-                                    file_path,
-                                    oid,
-                                    snapshot_address
-                                );
-                                blobs_restore_plan.mark_blob_to_restore(snapshot_address, oid);
                             }
                         }
                         _ => {
@@ -269,7 +280,7 @@ where
                         let parent = BlockchainContractAddress::new(parent.address);
                         let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
                         let branch: GetNameBranchResult = parent_contract
-                            .run_static(self.blockchain.client(), "getNameBranch", None)
+                            .run_local(self.blockchain.client(), "getNameBranch", None)
                             .await?;
                         tracing::debug!("commit={id}: extracted branch {:?}", branch.name);
                         branches.insert(branch.name);

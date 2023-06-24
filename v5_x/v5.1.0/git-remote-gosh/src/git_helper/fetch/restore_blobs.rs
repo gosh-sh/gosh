@@ -1,4 +1,5 @@
 use super::GitHelper;
+
 use crate::ipfs::build_ipfs;
 use crate::{
     blockchain::{
@@ -9,13 +10,15 @@ use crate::{
 };
 use futures::{stream::FuturesUnordered, StreamExt};
 use git_hash::ObjectId;
-use git_odb::Write;
+use git_odb::{FindExt, Write};
+use git_repository::OdbHandle;
 use lru::LruCache;
+use tokio::sync::Mutex;
 use std::{
     collections::{HashMap, HashSet},
     num::NonZeroUsize,
     str::FromStr,
-    sync::{Arc, Mutex},
+    sync::Arc,
     vec::Vec,
 };
 use tracing::Instrument;
@@ -35,6 +38,18 @@ async fn load_data_from_ipfs(
     let ipfs_data = ipfs_client.load(ipfs_address).await?;
     let compressed_data = base64::decode(&ipfs_data)?;
     let data = ton_client::utils::decompress_zstd(&compressed_data)?;
+
+    Ok(data)
+}
+
+#[instrument(level = "debug", skip(odb))]
+fn load_data_from_local(
+    odb: &OdbHandle,
+    blob_id: &ObjectId,
+) -> anyhow::Result<Vec<u8>> {
+    tracing::trace!("load_data_from_local: blob_id={blob_id}");
+    let mut blob_buffer: Vec<u8> = Vec::new();
+    let data = odb.find_blob(blob_id, &mut blob_buffer)?.data.to_vec();
 
     Ok(data)
 }
@@ -77,11 +92,12 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     repo_contract: &mut GoshContract,
     snapshot_address: &blockchain::BlockchainContractAddress,
     blobs: &mut HashSet<git_hash::ObjectId>,
-    visited: &Arc<Mutex<HashSet<git_hash::ObjectId>>>,
+    visited: Arc<Mutex<HashSet<git_hash::ObjectId>>>,
+    visited_ipfs: Arc<Mutex<HashMap<String, git_hash::ObjectId>>>,
 ) -> anyhow::Result<HashSet<git_hash::ObjectId>> {
     tracing::info!("Iteration in restore: {} -> {:?}", snapshot_address, blobs);
     {
-        let visited = visited.lock().unwrap();
+        let visited = visited.lock().await;
         blobs.retain(|e| !visited.contains(e));
     }
     tracing::info!("remaining: {:?}", blobs);
@@ -99,6 +115,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
         ipfs_endpoint,
         repo,
         snapshot_address,
+        visited_ipfs.clone(),
     )
     .await?;
     // tracing::trace!("restored_snapshots: {:#?}", current_snapshot_state);
@@ -106,7 +123,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
         LruCache::new(NonZeroUsize::new(2).unwrap());
     if let Some((blob_id, blob)) = current_snapshot_state.0 {
         {
-            let mut visited = visited.lock().unwrap();
+            let mut visited = visited.lock().await;
             visited.insert(blob_id);
         }
         last_restored_snapshots.put(blob_id, blob);
@@ -114,7 +131,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     }
     if let Some((blob_id, blob)) = current_snapshot_state.1 {
         {
-            let mut visited = visited.lock().unwrap();
+            let mut visited = visited.lock().await;
             visited.insert(blob_id);
         }
         last_restored_snapshots.put(blob_id, blob);
@@ -134,6 +151,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     let mut preserved_message: Option<DiffMessage> = None;
     let mut transition_content: Option<Vec<u8>> = None;
     let mut parsed = vec![];
+    let mut visited_ipfs_hash: Option<String> = None;
     while !blobs.is_empty() {
         tracing::info!("Still expecting to restore blobs: {:?}", blobs);
 
@@ -145,9 +163,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
             unused_message
         } else {
             match messages.next(&es_client).await? {
-                None => {
-                    break;
-                }
+                None => break,
                 Some(message) => {
                     if parsed.contains(&message) {
                         break;
@@ -166,7 +182,17 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
             data
         } else if let Some(ipfs) = &message.diff.ipfs {
             transition_content = message.diff.get_patch_data();
-            load_data_from_ipfs(&build_ipfs(&ipfs_endpoint)?, ipfs).await?
+
+            let visited = visited_ipfs.lock().await;
+            let blob_id: Option<ObjectId> = visited.get(ipfs).copied();
+
+            match blob_id {
+                Some(blob_id) => load_data_from_local(&repo.objects, &blob_id)?,
+                None => {
+                    visited_ipfs_hash = Some(ipfs.to_owned());
+                    load_data_from_ipfs(&build_ipfs(&ipfs_endpoint)?, ipfs).await?
+                }
+            }
         } else if let Some(content) = transition_content.clone() {
             // we won't use the message, so we'll store it for the next iteration
             preserved_message = Some(message);
@@ -201,8 +227,15 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
         tracing::info!("Restored blob {}", blob_id);
         last_restored_snapshots.put(blob_id, blob_data);
         {
-            let mut visited = visited.lock().unwrap();
+            let mut visited = visited.lock().await;
             visited.insert(blob_id);
+        }
+        if let Some(ipfs) = visited_ipfs_hash {
+            visited_ipfs_hash = None;
+            {
+                let mut visited_ipfs = visited_ipfs.lock().await;
+                visited_ipfs.insert(ipfs, blob_id);
+            }
         }
         blobs.remove(&blob_id);
     }
@@ -214,8 +247,8 @@ async fn convert_snapshot_into_blob(
     content: &[u8],
     ipfs: &Option<String>,
 ) -> anyhow::Result<(git_object::Object, Vec<u8>)> {
-    let ipfs_data = if let Some(ipfs_address) = ipfs {
-        load_data_from_ipfs(ipfs_client, ipfs_address).await?
+    let ipfs_data = if let Some(ipfs_hash) = ipfs {
+        load_data_from_ipfs(ipfs_client, ipfs_hash).await?
     } else {
         vec![]
     };
@@ -248,11 +281,7 @@ impl BlobsRebuildingPlan {
         appeared_at_snapshot_address: BlockchainContractAddress,
         blob_sha1: ObjectId,
     ) {
-        tracing::info!(
-            "Mark blob: {} -> {}",
-            blob_sha1,
-            appeared_at_snapshot_address
-        );
+        tracing::info!("Mark blob: {} -> {}", blob_sha1, appeared_at_snapshot_address);
         self.snapshot_address_to_blob_sha
             .entry(appeared_at_snapshot_address)
             .and_modify(|blobs| {
@@ -272,39 +301,69 @@ impl BlobsRebuildingPlan {
         ipfs_endpoint: &str,
         repo: &mut git_repository::Repository,
         snapshot_address: &BlockchainContractAddress,
+        visited_ipfs: Arc<Mutex<HashMap<String, git_hash::ObjectId>>>,
     ) -> anyhow::Result<(Option<(ObjectId, Vec<u8>)>, Option<(ObjectId, Vec<u8>)>)> {
-        tracing::trace!("restore_snapshot_blob: ipfs_endpoint={ipfs_endpoint}, repo={repo:?}, snapshot_address={snapshot_address}");
+        tracing::trace!(
+            "restore_snapshot_blob: ipfs_endpoint={}, repo={:?}, snapshot_address={}",
+            ipfs_endpoint,
+            repo,
+            snapshot_address,
+        );
         let ipfs_client = build_ipfs(ipfs_endpoint)?;
         let snapshot = blockchain::Snapshot::load(&es_client, snapshot_address).await?;
         tracing::info!("Loaded a snapshot: {:?}", snapshot);
         let snapshot_next_commit_sha = ObjectId::from_str(&snapshot.next_commit);
         let snapshot_current_commit_sha = ObjectId::from_str(&snapshot.current_commit);
         let snapshot_next = if snapshot_next_commit_sha.is_ok() {
+            let mut new_loading = false;
+            let (content, ipfs_hash) = if let Some(ipfs_hash) = snapshot.next_ipfs.clone() {
+                let visited = visited_ipfs.lock().await;
+                let blob_id: Option<ObjectId> = visited.get(&ipfs_hash).copied();
+
+                let data = match blob_id {
+                    Some(blob_id) => load_data_from_local(&repo.objects, &blob_id)?,
+                    None => {
+                        new_loading = true;
+                        load_data_from_ipfs(&build_ipfs(&ipfs_endpoint)?, &ipfs_hash).await?
+                    }
+                };
+                (data, None)
+            } else {
+                (snapshot.next_content, snapshot.next_ipfs.clone())
+            };
+
             let (blob, blob_data) = convert_snapshot_into_blob(
                 &ipfs_client,
-                &snapshot.next_content,
-                &snapshot.next_ipfs,
+                &content,
+                &ipfs_hash,
             )
             .instrument(info_span!("convert_next_snapshot_into_blob").or_current())
             .await?;
             let blob_oid = write_git_object(repo, blob).await?;
+            if new_loading {
+                let mut visited = visited_ipfs.lock().await;
+                visited.insert(snapshot.next_ipfs.clone().unwrap(), blob_oid);
+            }
             Some((blob_oid, blob_data))
         } else {
             None
         };
-        let snapshot_current = if snapshot_current_commit_sha.is_ok() {
-            let (blob, blob_data) = convert_snapshot_into_blob(
-                &ipfs_client,
-                &snapshot.current_content,
-                &snapshot.current_ipfs,
-            )
-            .instrument(info_span!("convert_current_snapshot_into_blob").or_current())
-            .await?;
-            let blob_oid = write_git_object(repo, blob).await?;
-            Some((blob_oid, blob_data))
-        } else {
-            None
-        };
+        let snapshot_current
+            = if snapshot.next_ipfs.is_some() && snapshot.next_ipfs == snapshot.current_ipfs { // deduplicate
+                None // snapshot_next.clone()
+            } else if snapshot_current_commit_sha.is_ok() {
+                let (blob, blob_data) = convert_snapshot_into_blob(
+                    &ipfs_client,
+                    &snapshot.current_content,
+                    &snapshot.current_ipfs,
+                )
+                .instrument(info_span!("convert_current_snapshot_into_blob").or_current())
+                .await?;
+                let blob_oid = write_git_object(repo, blob).await?;
+                Some((blob_oid, blob_data))
+            } else {
+                None
+            };
         let restored_snapshots = (snapshot_next, snapshot_current);
         assert!(
             restored_snapshots != (None, None),
@@ -316,6 +375,8 @@ impl BlobsRebuildingPlan {
     pub async fn restore<'a, 'b>(
         &'b mut self,
         git_helper: &mut GitHelper<impl BlockchainService>,
+        visited: Arc<Mutex<HashSet<git_hash::ObjectId>>>,
+        visited_ipfs: Arc<Mutex<HashMap<String, git_hash::ObjectId>>>,
     ) -> anyhow::Result<()> {
         // Idea behind
         // --
@@ -334,7 +395,6 @@ impl BlobsRebuildingPlan {
         // Note: this is kind of a bad solution. It create tons of junk files in the system
 
         tracing::info!("Restoring blobs: {:?}", self.snapshot_address_to_blob_sha);
-        let visited: Arc<Mutex<HashSet<git_hash::ObjectId>>> = Arc::new(Mutex::new(HashSet::new()));
         let mut fetched_blobs: FuturesUnordered<
             tokio::task::JoinHandle<anyhow::Result<HashSet<ObjectId>>>,
         > = FuturesUnordered::new();
@@ -349,6 +409,7 @@ impl BlobsRebuildingPlan {
             let snapshot_address_clone = snapshot_address.clone();
             let mut blobs_to_restore = blobs.clone();
             let visited_ref = Arc::clone(&visited);
+            let visited_ipfs_ref = Arc::clone(&visited_ipfs);
             fetched_blobs.push(tokio::spawn(
                 async move {
                     let attempt = 0;
@@ -360,7 +421,8 @@ impl BlobsRebuildingPlan {
                             &mut repo_contract,
                             &snapshot_address_clone,
                             &mut blobs_to_restore,
-                            &visited_ref,
+                            visited_ref.clone(),
+                            visited_ipfs_ref.clone(),
                         )
                         .await;
                         if result.is_ok() || attempt > FETCH_MAX_TRIES {
@@ -409,7 +471,7 @@ impl BlobsRebuildingPlan {
         tracing::trace!("visited_blobs: {visited:?}");
 
         for blob in unvisited_blobs {
-            let vis = visited.lock().unwrap();
+            let vis = visited.lock().await;
             if !vis.contains(&blob) {
                 panic!("Failed to restore: {blob}");
             }
