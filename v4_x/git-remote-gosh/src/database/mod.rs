@@ -41,6 +41,8 @@ fn get_db_options() -> rocksdb::Options {
         std::thread::available_parallelism().map(|val| val.get() as i32).unwrap_or(DEFAULT_LEVEL_OF_PARALLELISM)
     );
 
+    db_options.set_use_direct_io_for_flush_and_compaction(true);
+
     db_options
 }
 
