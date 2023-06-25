@@ -141,7 +141,10 @@ const PhraseForm = (props: TPhraseFormProps) => {
         e.preventDefault()
         const wordList = words.split(SPLITTER)
 
-        if (wordsChangedIndex === wordList.length - 1 && wordsChangedIndex !== 11) {
+        if (
+            wordsChangedIndex === wordList.length - 1 &&
+            wordsChangedIndex !== wordCount - 1
+        ) {
             word += SPLITTER
         }
 
@@ -153,6 +156,66 @@ const PhraseForm = (props: TPhraseFormProps) => {
         setWordsQuery('')
         setFieldValue('words', updated.join(SPLITTER))
         wordsRef.current?.focus()
+    }
+
+    const onPhraseSpace = (
+        e: React.KeyboardEvent<HTMLTextAreaElement>,
+        setFieldValue: FormikHelpers<any>['setFieldValue'],
+    ) => {
+        e.preventDefault()
+        const caretPos = e.currentTarget.selectionEnd
+        const caretVal = e.currentTarget.value[caretPos]
+        const checkSpacer = e.currentTarget.value.slice(caretPos - 1, caretPos + 2)
+        if (checkSpacer.slice(1) === `${EM_QUAD}${EM_2DASH}`) {
+            e.currentTarget.setSelectionRange(caretPos + 3, caretPos + 3)
+        } else if (checkSpacer === SPLITTER) {
+            e.currentTarget.setSelectionRange(caretPos + 2, caretPos + 2)
+        } else if (checkSpacer.slice(0, 2) === `${EM_2DASH}${EM_QUAD}`) {
+            e.currentTarget.setSelectionRange(caretPos + 1, caretPos + 1)
+        } else if (
+            caretPos === 0 ||
+            (checkSpacer.length >= 2 &&
+                checkSpacer[0] === EM_QUAD &&
+                checkSpacer[1].match(/\w/)?.length)
+        ) {
+            const next = e.currentTarget.value.indexOf(EM_QUAD, caretPos)
+            e.currentTarget.setSelectionRange(next, next)
+        } else if (
+            !caretVal &&
+            checkSpacer[0] !== EM_QUAD &&
+            e.currentTarget.value.split(SPLITTER).length < wordCount
+        ) {
+            setFieldValue('words', `${e.currentTarget.value}${SPLITTER}`)
+        }
+    }
+
+    const onPhraseBackspace = (
+        e: React.KeyboardEvent<HTMLTextAreaElement>,
+        setFieldValue: FormikHelpers<any>['setFieldValue'],
+    ) => {
+        const caretPos = e.currentTarget.selectionEnd
+        const caretVal = e.currentTarget.value[caretPos]
+        const checkSpacer = e.currentTarget.value.slice(caretPos - 2, caretPos)
+        if (checkSpacer === `${EM_2DASH}${EM_QUAD}`) {
+            e.preventDefault()
+            const before = e.currentTarget.value.slice(0, caretPos - 3)
+            const after = e.currentTarget.value.slice(caretPos)
+            setFieldValue('words', `${before}${after}`)
+            setTimeout(() => {
+                wordsRef.current!.selectionEnd = caretPos - 3
+            }, 10)
+        } else if (checkSpacer === `${EM_QUAD}${EM_2DASH}`) {
+            e.preventDefault()
+            const before = e.currentTarget.value.slice(0, caretPos - 2)
+            const after = e.currentTarget.value.slice(caretPos + 1)
+            setFieldValue('words', `${before}${after}`)
+            setTimeout(() => {
+                wordsRef.current!.selectionEnd = caretPos - 2
+            }, 10)
+        } else if (caretVal === EM_2DASH) {
+            e.preventDefault()
+            e.currentTarget.setSelectionRange(caretPos - 1, caretPos - 1)
+        }
     }
 
     const onFormSubmit = async (values: any) => {
@@ -230,31 +293,28 @@ const PhraseForm = (props: TPhraseFormProps) => {
                             className="z-10"
                             inputClassName="!leading-6 !p-6"
                             placeholder="Input your seed phrase"
+                            autoComplete="off"
                             onPaste={(e) => {
                                 onPhrasePaste(setFieldValue, e)
                             }}
                             onKeyDown={(e) => {
-                                if (['ArrowDown', 'ArrowUp'].indexOf(e.key) >= 0) {
+                                if (['ArrowDown', 'ArrowUp'].indexOf(e.code) >= 0) {
                                     onPhraseKeyUpDown(e)
-                                } else if (e.key === 'Enter') {
+                                } else if (e.code === 'Enter') {
                                     onSuggestedWordSelect(
                                         wordsSuggested[wordsSuggestedActive],
                                         e.currentTarget.value,
                                         e,
                                         setFieldValue,
                                     )
+                                } else if (e.code === 'Space') {
+                                    onPhraseSpace(e, setFieldValue)
+                                } else if (e.code === 'Backspace') {
+                                    onPhraseBackspace(e, setFieldValue)
                                 }
                             }}
                             onChange={(e) => {
                                 const value = e.target.value
-                                const caretPos = e.target.selectionEnd
-                                const caretVal = value[caretPos - 1] ?? ''
-                                console.debug('pos:', caretPos, 'val:', `|${caretVal}|`)
-
-                                if (value.indexOf('\n') >= 0) {
-                                    return
-                                }
-
                                 const [changedWord, changedIndex] = getChangedWord(
                                     e.target.value,
                                     values.words,
@@ -262,34 +322,7 @@ const PhraseForm = (props: TPhraseFormProps) => {
                                 setWordsQuery(changedWord)
                                 setWordsChangedIndex(changedIndex)
                                 setWordsSuggestedActive(0)
-
-                                if (caretVal === ' ') {
-                                    const next = value.slice(caretPos, caretPos + 2)
-                                    if (next.indexOf(EM_2DASH) >= 0) {
-                                        if (next[0] === EM_QUAD) {
-                                            setTimeout(() => {
-                                                e.target.selectionEnd = caretPos + 2
-                                            }, 5)
-                                        } else if (next[0] === EM_2DASH) {
-                                            setTimeout(() => {
-                                                e.target.selectionEnd = caretPos + 1
-                                            }, 5)
-                                        }
-                                    } else if (
-                                        values.words.split(SPLITTER).length < wordCount
-                                    ) {
-                                        setFieldValue(
-                                            'words',
-                                            `${values.words}${SPLITTER}`,
-                                        )
-                                    }
-                                } else if (caretVal === EM_2DASH) {
-                                    const before = values.words.slice(0, caretPos - 2)
-                                    const after = values.words.slice(caretPos + 1)
-                                    setFieldValue('words', `${before}${after}`)
-                                } else {
-                                    setFieldValue('words', value)
-                                }
+                                setFieldValue('words', value)
                             }}
                         />
 

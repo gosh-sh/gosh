@@ -16,7 +16,14 @@ export const OAuthSessionAtom = atom<{
 })
 
 export const onboardingDataAtom = atom<{
-    step?: 'signin' | 'invites' | 'organizations' | 'phrase' | 'username' | 'complete'
+    step?:
+        | 'signin'
+        | 'invites'
+        | 'organizations'
+        | 'phrase'
+        | 'phrase-check'
+        | 'username'
+        | 'complete'
     invites: {
         items: TOnboardingInvite[]
         isFetching: boolean

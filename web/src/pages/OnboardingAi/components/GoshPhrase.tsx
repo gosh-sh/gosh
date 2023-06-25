@@ -30,11 +30,9 @@ const GoshPhrase = (props: TGoshPhraseProps) => {
         setSignupState((state) => ({ ...state, phrase: result.phrase.split(' ') }))
     }, [setSignupState])
 
-    const onFormSubmit = async (values: {
-        words: { value: string; index: number }[]
-    }) => {
+    const onFormSubmit = async (values: { words: string[] }) => {
         try {
-            const words = values.words.map(({ value }) => value)
+            const { words } = values
             const { valid } = await AppConfig.goshclient.crypto.mnemonic_verify({
                 phrase: words.join(' '),
             })

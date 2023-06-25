@@ -5,7 +5,6 @@ import PreviousStep from './PreviousStep'
 import { ToastError } from '../../../components/Toast'
 import PhraseForm from '../../../components/PhraseForm'
 import { GoshError } from 'react-gosh'
-import { Link } from 'react-router-dom'
 
 const generateRandomWordNumbers = () => {
     const min = 0
@@ -28,7 +27,11 @@ type TGoshPhraseCheckProps = {
         phrase: string[]
         username: string
     }
-    setStep: React.Dispatch<React.SetStateAction<'phrase' | 'phrase-check' | 'username'>>
+    setStep: React.Dispatch<
+        React.SetStateAction<
+            'username' | 'submit' | 'phrase' | 'phrase-check' | undefined
+        >
+    >
 }
 
 const GoshPhraseCheck = (props: TGoshPhraseCheckProps) => {
@@ -60,22 +63,15 @@ const GoshPhraseCheck = (props: TGoshPhraseCheckProps) => {
     }, [])
 
     return (
-        <div className="flex flex-wrap gap-4 items-center justify-around">
-            <div className="basis-4/12">
-                <div className="mb-6">
-                    <PreviousStep onClick={onBackClick} />
-                </div>
-                <h3 className="text-3xl font-medium">Verify the secret</h3>
-                <div className="mt-2 text-gray-53596d text-sm">Enter required words</div>
-                <div className="mt-16 text-gray-53596d text-sm">
-                    Already have an account on Gosh?{' '}
-                    <Link to="/a/signin" className="text-blue-1e7aec underline">
-                        Log in
-                    </Link>
+        <>
+            <div className="flex flex-wrap gap-6 items-center mb-8">
+                <PreviousStep onClick={onBackClick} />
+                <div>
+                    <h3 className="text-xl font-medium">Verify the secret</h3>
                 </div>
             </div>
 
-            <div className="basis-6/12">
+            <div className="w-full lg:w-5/12">
                 <div className="p-8 border border-gray-e6edff rounded-xl">
                     <h3 className="mb-2">
                         Input words{' '}
@@ -91,7 +87,7 @@ const GoshPhraseCheck = (props: TGoshPhraseCheckProps) => {
                     />
                 </div>
             </div>
-        </div>
+        </>
     )
 }
 
