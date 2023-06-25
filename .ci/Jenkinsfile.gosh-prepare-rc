@@ -5,19 +5,19 @@ def runFunctionSet(function_name) {
         },
         "v2_x": {
             "${function_name}"('v2_x')
-        },*/
+        },
         "v3_x": {
             "${function_name}"('v3_x')
-        },
+        },*/
         "v4_x": {
             "${function_name}"('v4_x')
         },
         /*"v5_x/v5.0.0": {
             "${function_name}"('v5_x/v5.0.0')
-        },*/
+        },
         "v5_x/v5.1.0": {
             "${function_name}"('v5_x/v5.1.0')
-        }
+        }*/
     ]
     parallel(running_set)
 }
@@ -73,8 +73,8 @@ pipeline {
                 }
             }
             steps {
-                buildDispatcher()
-                //buildDispatcherDebug()
+                //buildDispatcher()
+                buildDispatcherDebug()
             }
         }
         stage('Build: Git Helper') {
@@ -296,7 +296,7 @@ def buildDispatcherDebug() {
                 rm -rf darwin-*
                 rm -rf windows-*
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1140 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1178 --path linux-amd64 && sleep 2
             '''
         }
     }

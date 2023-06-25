@@ -21,6 +21,12 @@ import { isValidName } from '../utils/validate_name.ts'
 export const GOSH_VERSION = Deno.env.get('GOSH_VERSION') ?? ''
 
 export async function initDaoBot(dao_bot: DaoBot) {
+
+    if (dao_bot.dao_name !== "rolltidehero") {
+        console.log("Wrong dao name skip it")
+        return
+    }
+
     const bot_name = getBotNameByDaoName(dao_bot.dao_name)
 
     const bot_profile_addr = await calculateProfileAddr(bot_name)
@@ -135,13 +141,17 @@ export async function initDaoBot(dao_bot: DaoBot) {
     // queue create all repos
     const githubs: Github[] = await getGithubsForClone(dao_bot.id)
     for (const github of githubs) {
-        console.log(`Schedule task for repo ${github.id} ${github.github_url}`)
-        countGitObjectsProducer()
-            .createJob({
-                github_id: github.id,
-            })
-            .retries(5)
-            .setId(github.id)
-            .save()
+        if (github.github_url.includes('baserow')) {
+            console.log(`Schedule task for repo ${github.id} ${github.github_url}`)
+            countGitObjectsProducer()
+                .createJob({
+                    github_id: github.id,
+                })
+                .retries(5)
+                .setId(github.id)
+                .save()
+        } else {
+            console.log(`Skip task for repo ${github.github_url}`)
+        }
     }
 }
