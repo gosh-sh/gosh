@@ -93,7 +93,7 @@ const PhraseForm = (props: TPhraseFormProps) => {
 
         const data = await getClipboardData(e)
         if (data !== null) {
-            const words = data.split(' ')
+            const words = data.replace(/\W+/g, ' ').replace(/\s+/, ' ').split(' ')
             setFieldValue('words', words.join(SPLITTER))
         } else {
             const error = {
