@@ -95,7 +95,7 @@ impl ParallelDiffsUploadSupport {
             diff_address
         );
 
-        let database = context.database.clone();
+        let database = context.get_db()?.clone();
 
         self.expecting_deployed_contacts_addresses.push(
             diff_address.clone()
@@ -124,7 +124,7 @@ impl ParallelDiffsUploadSupport {
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
     ) -> anyhow::Result<()> {
-        let values = context.database.get_all_dangling_diffs()?;
+        let values = context.get_db()?.get_all_dangling_diffs()?;
         for (parallel_diff, diff_coordinates) in values {
             {
                 let mut repo_contract = context.blockchain.repo_contract().clone();
@@ -137,7 +137,7 @@ impl ParallelDiffsUploadSupport {
                     .await?;
                 let diff_contract_address = String::from(diff_contract_address);
 
-                context.database.put_diff(
+                context.get_db()?.put_diff(
                     (&parallel_diff, diff_coordinates, true),
                     diff_contract_address.clone()
                 )?;
@@ -233,7 +233,7 @@ impl ParallelDiffsUploadSupport {
         let diff_coordinates = self.next_diff(&file_path);
         let prev_value = if self.dangling_diffs.contains(&file_path) {
             Some(
-                context.database.get_dangling_diff(&file_path)?
+                context.get_db()?.get_dangling_diff(&file_path)?
             )
         } else {
             self
@@ -242,7 +242,7 @@ impl ParallelDiffsUploadSupport {
             None
         };
 
-        context.database.put_dangling_diff((&diff, diff_coordinates), file_path)?;
+        context.get_db()?.put_dangling_diff((&diff, diff_coordinates), file_path)?;
 
         match prev_value {
             None => {}
@@ -257,7 +257,7 @@ impl ParallelDiffsUploadSupport {
                     .await?;
                 let diff_contract_address = String::from(diff_contract_address);
 
-                context.database.put_diff(
+                context.get_db()?.put_diff(
                     (&parallel_diff, diff_coordinates, false),
                     diff_contract_address.clone()
                 )?;

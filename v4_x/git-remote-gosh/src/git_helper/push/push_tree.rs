@@ -130,7 +130,7 @@ pub async fn push_tree(
             .await?;
         let tree_address = String::from(tree_address);
 
-        context.database.put_tree(tree,tree_address.clone())?;
+        context.get_db()?.put_tree(tree,tree_address.clone())?;
 
         handlers
             .add_to_push_list(

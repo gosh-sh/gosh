@@ -58,7 +58,7 @@ pub struct GitHelper<
     cache: Arc<CacheProxy>,
     upgraded_commits: Vec<String>,
     repo_versions: Vec<RepoVersion>,
-    database: Arc<GoshDB>,
+    database: Option<Arc<GoshDB>>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -153,8 +153,6 @@ where
             }
         }
 
-        let database = GoshDB::new()?;
-
         Ok(Self {
             config,
             file_provider,
@@ -166,12 +164,29 @@ where
             cache: Arc::new(cache),
             upgraded_commits: vec![],
             repo_versions: vec![],
-            database: Arc::new(database),
+            database: None,
         })
     }
 
+    pub fn open_db(&mut self) -> anyhow::Result<()> {
+        self.database = Some(Arc::new(GoshDB::new()?));
+        Ok(())
+    }
+
+    pub fn get_db(&self) -> anyhow::Result<Arc<GoshDB>> {
+        if let Some(db) = &self.database {
+            Ok(db.clone())
+        } else {
+            anyhow::bail!("Database is closed")
+        }
+    }
+
     pub fn delete_db(&mut self) -> anyhow::Result<()> {
-        Arc::get_mut(&mut self.database).unwrap().delete()
+        if let Some(db) = &mut self.database {
+            Arc::get_mut(db).unwrap().delete()?;
+            self.database = None;
+        }
+        Ok(())
     }
 
     async fn capabilities(&self) -> anyhow::Result<Vec<String>> {
@@ -420,7 +435,6 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
                 }
                 continue;
             } else {
-                // helper.delete_db()?;
                 return Ok(());
             }
         }
@@ -552,7 +566,7 @@ pub mod tests {
             cache,
             upgraded_commits: vec![],
             repo_versions: vec![],
-            database: Arc::new(GoshDB::new().unwrap()),
+            database: None,
         }
     }
 }

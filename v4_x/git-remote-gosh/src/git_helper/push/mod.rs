@@ -162,7 +162,7 @@ where
             let snapshot_addr = String::from(snapshot_addr);
             let snapshot = ParallelSnapshot::new(branch_name, file_path, upgrade_commit, commit_str);
 
-            self.database.put_snapshot(&snapshot, snapshot_addr.clone())?;
+            self.get_db()?.put_snapshot(&snapshot, snapshot_addr.clone())?;
 
             parallel_snapshot_uploads
                 .add_to_push_list(
@@ -559,7 +559,7 @@ where
             )
                 .await?;
             let commit_address = String::from(commit_address);
-            self.database.put_commit(commit, commit_address.clone())?;
+            self.get_db()?.put_commit(commit, commit_address.clone())?;
 
             push_commits
                 .add_to_push_list(
@@ -860,6 +860,7 @@ where
         // and snapshots were not created since git didn't count them as changed.
         // Our second attempt is to calculated tree diff from one commit to another.
         tracing::debug!("push_ref {} : {}", local_ref, remote_ref);
+        self.open_db()?;
         let local_branch_name: &str = get_ref_name(local_ref)?;
         let remote_branch_name: &str = get_ref_name(remote_ref)?;
 

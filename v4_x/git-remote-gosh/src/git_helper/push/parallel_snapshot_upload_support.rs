@@ -89,7 +89,7 @@ impl ParallelSnapshotUploadSupport {
         self.expecting_deployed_contacts_addresses
             .push(snapshot_address.to_string());
 
-        let database = context.database.clone();
+        let database = context.get_db()?.clone();
         self.pushed_blobs.spawn(
             async move {
                 push_initial_snapshot(
@@ -201,7 +201,7 @@ impl ParallelCommitUploadSupport {
         let blockchain = context.blockchain.clone();
         let dao_address: BlockchainContractAddress = context.dao_addr.clone();
         let remote = context.remote.clone();
-        let database = context.database.clone();
+        let database = context.get_db()?.clone();
 
         tracing::trace!("Start push of commit: address: {commit_address:?}");
 
@@ -344,7 +344,7 @@ impl ParallelTreeUploadSupport {
             }
         };
 
-        let database = context.database.clone();
+        let database = context.get_db()?.clone();
 
         self.pushed_blobs.spawn(
             async move {
