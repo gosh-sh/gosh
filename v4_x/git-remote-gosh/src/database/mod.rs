@@ -7,7 +7,6 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use rocksdb::{BoundColumnFamily, DBCommon, DBWithThreadMode, MultiThreaded};
 use tokio::sync::Mutex;
-use uuid::Uuid;
 use crate::blockchain::snapshot::PushDiffCoordinate;
 use crate::database::types::{DBCommit, DBDiff, DBTree};
 use crate::git_helper::push::parallel_diffs_upload_support::ParallelDiff;
