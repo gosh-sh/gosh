@@ -141,7 +141,7 @@ export async function initDaoBot(dao_bot: DaoBot) {
     // queue create all repos
     const githubs: Github[] = await getGithubsForClone(dao_bot.id)
     for (const github of githubs) {
-        if (github.github_url.includes('baserow')) {
+        if (github.github_url.includes('awesome-selfhosted')) {
             console.log(`Schedule task for repo ${github.id} ${github.github_url}`)
             countGitObjectsProducer()
                 .createJob({
