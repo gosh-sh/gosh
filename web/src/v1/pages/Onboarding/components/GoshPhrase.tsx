@@ -27,11 +27,9 @@ const GoshPhrase = (props: TGoshPhraseProps) => {
         updateData({ step: 'organizations' })
     }
 
-    const onFormSubmit = async (values: {
-        words: { value: string; index: number }[]
-    }) => {
+    const onFormSubmit = async (values: { words: string[] }) => {
         try {
-            const words = values.words.map(({ value }) => value)
+            const { words } = values
             const { valid } = await AppConfig.goshclient.crypto.mnemonic_verify({
                 phrase: words.join(' '),
             })
@@ -76,7 +74,7 @@ const GoshPhrase = (props: TGoshPhraseProps) => {
             <div className="grow basis-0 border border-gray-e6edff rounded-xl p-8">
                 <PhraseForm
                     initialValues={{
-                        words: phrase.map((v, i) => ({ value: v, index: i })),
+                        words: phrase,
                         isConfirmed: false,
                     }}
                     validationSchema={yup.object().shape({

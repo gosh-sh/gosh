@@ -23,7 +23,7 @@ const App = () => {
         <div className="wrapper">
             <Header />
             <main id="main" className="grow">
-                <AnimatePresence>
+                <AnimatePresence mode="wait">
                     <Routes location={location} key={location.pathname}>
                         <Route path="/" element={<Navigate to="onboarding" replace />} />
                         {/* <Route path="/containers" element={<ProtectedLayout />}>

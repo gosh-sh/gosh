@@ -10,7 +10,6 @@ import { faBlog } from '@fortawesome/free-solid-svg-icons'
 import { appModalStateAtom } from '../../../store/app.state'
 import MDDocumentModal from '../../../components/Modal/MDDocument/MDDocumentModal'
 import { onExternalLinkClick } from '../../../helpers'
-import Alert from '../../../components/Alert'
 import { useState } from 'react'
 import { useUser } from '../../hooks/user.hooks'
 import { AppConfig } from '../../../appconfig'
@@ -130,22 +129,6 @@ const Header = () => {
                     </>
                 )}
             </Disclosure>
-            {user.persist.phrase && alertShow && (
-                <div className="container">
-                    <Alert
-                        variant="danger"
-                        dismiss
-                        className="mt-6"
-                        onDismiss={() => setAlertShow(false)}
-                    >
-                        Please, DO NOT sign out, go to the{' '}
-                        <Link to={'/a/settings'} className="underline">
-                            Settings
-                        </Link>{' '}
-                        page now and backup your seed phrase
-                    </Alert>
-                </div>
-            )}
         </header>
     )
 }

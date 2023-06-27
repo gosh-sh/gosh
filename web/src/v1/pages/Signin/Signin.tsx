@@ -17,12 +17,10 @@ const SigninPage = () => {
     const [step, setStep] = useState<{ name: string; data: any }>()
     const [setupPin, setSetupPin] = useState<string>()
 
-    const onPhraseSubmit = async (values: {
-        words: { value: string; index: number }[]
-    }) => {
+    const onPhraseSubmit = async (values: { words: string[] }) => {
         try {
             const { words } = values
-            const phrase = words.map(({ value }) => value).join(' ')
+            const phrase = words.join(' ')
             const profiles = await getProfiles(phrase)
             if (profiles.length > 1) {
                 setStep({

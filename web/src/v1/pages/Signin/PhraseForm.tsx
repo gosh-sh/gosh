@@ -1,7 +1,7 @@
 import PhraseForm from '../../../components/PhraseForm'
 
 type TSigninPhraseFormProps = {
-    onSubmit(values: { words: { value: string; index: number }[] }): Promise<void>
+    onSubmit(values: { words: string[] }): Promise<void>
 }
 
 const SigninPhraseForm = (props: TSigninPhraseFormProps) => {

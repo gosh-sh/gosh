@@ -79,10 +79,15 @@ const GoshPhraseCheck = (props: TGoshPhraseProps) => {
             </div>
 
             <div className="grow basis-0 border border-gray-e6edff rounded-xl p-8">
+                <h3 className="mb-2">
+                    Input words{' '}
+                    <span className="font-medium">
+                        {rndNumbers.map((n) => n + 1).join(' - ')}
+                    </span>{' '}
+                    of your phrase
+                </h3>
                 <PhraseForm
-                    initialValues={{
-                        words: rndNumbers.map((index) => ({ value: '', index })),
-                    }}
+                    wordCount={3}
                     btnSubmitContent="Continue"
                     onSubmit={onFormSubmit}
                 />

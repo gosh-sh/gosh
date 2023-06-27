@@ -14,7 +14,7 @@ const OnboardingComplete = () => {
 
     useEffect(() => {
         updateData({ redirectTo: undefined })
-    }, [updateData])
+    }, [])
 
     return (
         <div className="relative border rounded-xl items-center py-9 px-4 lg:px-16 mb-9">
