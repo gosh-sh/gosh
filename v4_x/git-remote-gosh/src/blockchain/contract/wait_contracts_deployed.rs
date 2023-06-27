@@ -20,7 +20,7 @@ where
     let mut deployment_results: JoinSet<anyhow::Result<Vec<BlockchainContractAddress>>> =
         JoinSet::new();
     for chunk in addresses.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {
-        let mut waiting_for_addresses = Vec::from(addresses);
+        let mut waiting_for_addresses = Vec::from(chunk);
         let b = blockchain.clone();
         deployment_results.spawn(
             async move {

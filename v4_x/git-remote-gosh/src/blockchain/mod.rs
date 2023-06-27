@@ -261,7 +261,8 @@ async fn check_contracts_deployed(
                 "in": addresses
             }
         });
-        tracing::trace!("Filter: {}", filter.to_string());
+        // This log is too big and is printed too often
+        // tracing::trace!("Filter: {}", filter.to_string());
         let query_result: Vec<serde_json::Value> = query_collection(
             Arc::clone(context),
             ParamsOfQueryCollection {

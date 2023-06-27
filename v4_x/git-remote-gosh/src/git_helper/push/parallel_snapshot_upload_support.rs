@@ -124,7 +124,7 @@ impl ParallelSnapshotUploadSupport {
             .map(|addr| BlockchainContractAddress::new(addr))
             .collect::<Vec<BlockchainContractAddress>>();
         tracing::debug!(
-            "Expecting the following diff contracts to be deployed: {:?}",
+            "Expecting the following snapshot contracts to be deployed: {:?}",
             addresses
         );
         while let Some(finished_task) = self.pushed_blobs.join_next().await {
@@ -261,7 +261,7 @@ impl ParallelCommitUploadSupport {
             .map(|addr| BlockchainContractAddress::new(addr))
             .collect::<Vec<BlockchainContractAddress>>();
         tracing::debug!(
-            "Expecting the following diff contracts to be deployed: {:?}",
+            "Expecting the following commit contracts to be deployed: {:?}",
             addresses
         );
         while let Some(finished_task) = self.pushed_blobs.join_next().await {
@@ -388,7 +388,7 @@ impl ParallelTreeUploadSupport {
             .map(|addr| BlockchainContractAddress::new(addr))
             .collect::<Vec<BlockchainContractAddress>>();
         tracing::debug!(
-            "Expecting the following diff contracts to be deployed: {:?}",
+            "Expecting the following tree contracts to be deployed: {:?}",
             addresses
         );
         while let Some(finished_task) = self.pushed_blobs.join_next().await {

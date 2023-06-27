@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use crate::blockchain::user_wallet::{UserWallet, WalletError};
-use crate::ipfs::build_ipfs;
+use crate::ipfs::{build_ipfs, IpfsError};
 use std::time::Duration;
 use tokio::time::sleep;
 
@@ -59,7 +59,7 @@ where
     let last_commit_id = *last_commit_id;
 
     let condition = |e: &anyhow::Error| {
-        if e.is::<WalletError>() {
+        if e.is::<WalletError>() || e.is::<IpfsError>() {
             false
         } else {
             tracing::warn!("Attempt failed with {:#?}", e);
