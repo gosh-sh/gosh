@@ -1,9 +1,15 @@
-use rocksdb::IteratorMode;
+use rocksdb::{IteratorMode, ReadOptions};
 use crate::blockchain::snapshot::PushDiffCoordinate;
 use crate::database::{COMMIT_CF, DANGLING_DIFF_CF, DIFF_CF, GoshDB, SNAPSHOT_CF, TREE_CF};
 use crate::database::types::{DBCommit, DBDiff, DBTree};
 use crate::git_helper::push::parallel_diffs_upload_support::ParallelDiff;
 use crate::git_helper::push::parallel_snapshot_upload_support::{ParallelCommit, ParallelSnapshot, ParallelTree};
+
+fn read_opt() -> ReadOptions {
+    let mut opt = ReadOptions::default();
+    opt.fill_cache(false);
+    opt
+}
 
 impl GoshDB {
     pub fn get_commit(&self, id: &str) -> anyhow::Result<DBCommit> {
@@ -52,5 +58,26 @@ impl GoshDB {
             diffs.push((diff.0, diff.1));
         }
         Ok(diffs)
+    }
+
+    fn value_exists(&self, value: &str, cf: &str) -> anyhow::Result<bool> {
+        tracing::trace!("Check value {value} exists in {cf}");
+        Ok(self.db().get_pinned_cf_opt(&self.cf(cf), value, &read_opt())?.is_some())
+    }
+
+    pub fn tree_exists(&self, address: &str) -> anyhow::Result<bool> {
+        self.value_exists(address, TREE_CF)
+    }
+
+    pub fn commit_exists(&self, address: &str) -> anyhow::Result<bool> {
+        self.value_exists(address, COMMIT_CF)
+    }
+
+    pub fn snapshot_exists(&self, address: &str) -> anyhow::Result<bool> {
+        self.value_exists(address, SNAPSHOT_CF)
+    }
+
+    pub fn diff_exists(&self, address: &str) -> anyhow::Result<bool> {
+        self.value_exists(address, DIFF_CF)
     }
 }

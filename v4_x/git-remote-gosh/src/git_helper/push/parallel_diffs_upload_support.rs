@@ -79,6 +79,10 @@ impl ParallelDiffsUploadSupport {
         &self.expecting_deployed_contacts_addresses
     }
 
+    pub fn push_expected(&mut self, value: String) {
+        self.expecting_deployed_contacts_addresses.push(value);
+    }
+
     pub async fn add_to_push_list(
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
@@ -137,13 +141,17 @@ impl ParallelDiffsUploadSupport {
                     .await?;
                 let diff_contract_address = String::from(diff_contract_address);
 
-                context.get_db()?.put_diff(
-                    (&parallel_diff, diff_coordinates, true),
-                    diff_contract_address.clone()
-                )?;
+                if !context.get_db()?.diff_exists(&diff_contract_address)? {
+                    context.get_db()?.put_diff(
+                        (&parallel_diff, diff_coordinates, true),
+                        diff_contract_address.clone()
+                    )?;
 
-                self.add_to_push_list(context, diff_contract_address)
-                    .await?;
+                    self.add_to_push_list(context, diff_contract_address)
+                        .await?;
+                } else {
+                    self.push_expected(diff_contract_address);
+                }
             }
         }
         Ok(())
@@ -257,13 +265,17 @@ impl ParallelDiffsUploadSupport {
                     .await?;
                 let diff_contract_address = String::from(diff_contract_address);
 
-                context.get_db()?.put_diff(
-                    (&parallel_diff, diff_coordinates, false),
-                    diff_contract_address.clone()
-                )?;
+                if !context.get_db()?.diff_exists(&diff_contract_address)? {
+                    context.get_db()?.put_diff(
+                        (&parallel_diff, diff_coordinates, false),
+                        diff_contract_address.clone()
+                    )?;
 
-                self.add_to_push_list(context, diff_contract_address)
-                    .await?;
+                    self.add_to_push_list(context, diff_contract_address)
+                        .await?;
+                } else {
+                    self.push_expected(diff_contract_address);
+                }
             }
         }
         Ok(())

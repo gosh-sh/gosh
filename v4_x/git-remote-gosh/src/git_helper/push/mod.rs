@@ -160,17 +160,21 @@ where
             )
                 .await?;
             let snapshot_addr = String::from(snapshot_addr);
-            let snapshot = ParallelSnapshot::new(branch_name, file_path, upgrade_commit, commit_str);
 
-            self.get_db()?.put_snapshot(&snapshot, snapshot_addr.clone())?;
+            if !self.get_db()?.snapshot_exists(&snapshot_addr)? {
+                let snapshot = ParallelSnapshot::new(branch_name, file_path, upgrade_commit, commit_str);
+                self.get_db()?.put_snapshot(&snapshot, snapshot_addr.clone())?;
 
-            parallel_snapshot_uploads
-                .add_to_push_list(
-                    self,
-                    snapshot_addr,
-                    prev_repo_address,
-                )
-                .await?;
+                parallel_snapshot_uploads
+                    .add_to_push_list(
+                        self,
+                        snapshot_addr,
+                        prev_repo_address,
+                    )
+                    .await?;
+            } else {
+                parallel_snapshot_uploads.push_expected(snapshot_addr);
+            }
         }
         if !upgrade_commit {
             let file_diff =
@@ -559,15 +563,19 @@ where
             )
                 .await?;
             let commit_address = String::from(commit_address);
-            self.get_db()?.put_commit(commit, commit_address.clone())?;
+            if !self.get_db()?.commit_exists(&commit_address)? {
+                self.get_db()?.put_commit(commit, commit_address.clone())?;
 
-            push_commits
-                .add_to_push_list(
-                    self,
-                    commit_address,
-                    push_semaphore.clone(),
-                )
-                .await?;
+                push_commits
+                    .add_to_push_list(
+                        self,
+                        commit_address,
+                        push_semaphore.clone(),
+                    )
+                    .await?;
+            } else {
+                push_commits.push_expected(commit_address);
+            }
         }
 
         let tree_diff = utilities::build_tree_diff_from_commits(
@@ -1022,6 +1030,10 @@ where
                 }
             }
         }
+        // push dangling diffs
+        parallel_diffs_upload_support.push_dangling(self).await?;
+        let number_of_files_changed = parallel_diffs_upload_support.get_parallels_number();
+
         tracing::trace!("Start of wait for contracts to be deployed");
         let mut expected_contracts = vec![];
         let mut attempts = 0;
@@ -1057,8 +1069,6 @@ where
         }
 
         // wait for all spawned collections to finish
-        parallel_diffs_upload_support.push_dangling(self).await?;
-        let number_of_files_changed = parallel_diffs_upload_support.get_parallels_number();
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
         while attempts < MAX_REDEPLOY_ATTEMPTS {

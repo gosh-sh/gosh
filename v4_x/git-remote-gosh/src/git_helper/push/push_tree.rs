@@ -130,15 +130,19 @@ pub async fn push_tree(
             .await?;
         let tree_address = String::from(tree_address);
 
-        context.get_db()?.put_tree(tree,tree_address.clone())?;
+        if !context.get_db()?.tree_exists(&tree_address)? {
+            context.get_db()?.put_tree(tree, tree_address.clone())?;
 
-        handlers
-            .add_to_push_list(
-                context,
-                tree_address,
-                push_semaphore.clone(),
-            )
-            .await?;
+            handlers
+                .add_to_push_list(
+                    context,
+                    tree_address,
+                    push_semaphore.clone(),
+                )
+                .await?;
+        } else {
+            handlers.push_expected(tree_address);
+        }
     }
     Ok(())
 }

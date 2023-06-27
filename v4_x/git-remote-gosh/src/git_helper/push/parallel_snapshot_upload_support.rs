@@ -70,6 +70,10 @@ impl ParallelSnapshotUploadSupport {
         &self.expecting_deployed_contacts_addresses
     }
 
+    pub fn push_expected(&mut self, value: String) {
+        self.expecting_deployed_contacts_addresses.push(value);
+    }
+
     #[instrument(level = "info", skip_all)]
     pub async fn add_to_push_list(
         &mut self,
@@ -189,6 +193,10 @@ impl ParallelCommitUploadSupport {
 
     pub fn get_expected(&self) -> &Vec<String> {
         &self.expecting_deployed_contacts_addresses
+    }
+
+    pub fn push_expected(&mut self, value: String) {
+        self.expecting_deployed_contacts_addresses.push(value);
     }
 
     #[instrument(level = "info", skip_all)]
@@ -311,6 +319,10 @@ impl ParallelTreeUploadSupport {
 
     pub fn get_expected(&self) -> &Vec<String> {
         &self.expecting_deployed_contacts_addresses
+    }
+
+    pub fn push_expected(&mut self, value: String) {
+        self.expecting_deployed_contacts_addresses.push(value);
     }
 
     #[instrument(level = "info", skip_all)]
