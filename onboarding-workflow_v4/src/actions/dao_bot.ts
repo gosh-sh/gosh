@@ -22,7 +22,7 @@ export const GOSH_VERSION = Deno.env.get('GOSH_VERSION') ?? ''
 
 export async function initDaoBot(dao_bot: DaoBot) {
 
-    if (dao_bot.dao_name !== "rolltidehero") {
+    if (dao_bot.dao_name !== "sergespb") {
         console.log("Wrong dao name skip it")
         return
     }
@@ -141,7 +141,7 @@ export async function initDaoBot(dao_bot: DaoBot) {
     // queue create all repos
     const githubs: Github[] = await getGithubsForClone(dao_bot.id)
     for (const github of githubs) {
-        if (github.github_url.includes('awesome-selfhosted')) {
+        if (github.github_url.includes('ton-sdk')) {
             console.log(`Schedule task for repo ${github.id} ${github.github_url}`)
             countGitObjectsProducer()
                 .createJob({
