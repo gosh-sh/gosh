@@ -8,6 +8,7 @@ import GoshPhrase from './components/GoshPhrase'
 import { useUser } from 'react-gosh'
 import GoshUsername from './components/GoshUsername'
 import DaoInvitationSubmit from './components/InvitationSubmit'
+import GoshPhraseCheck from './components/GoshPhraseCheck'
 
 const OnboardingDaoPage = () => {
     const { dao } = useOutletContext<TDaoLayoutOutletContext>()
@@ -19,7 +20,7 @@ const OnboardingDaoPage = () => {
         id: string | null
         data: any
     }>({ isFetching: false, isValid: false, id: null, data: null })
-    const [step, setStep] = useState<'phrase' | 'username' | 'submit'>()
+    const [step, setStep] = useState<'phrase' | 'phrase-check' | 'username' | 'submit'>()
     const [signupState, setSignupState] = useState<{
         phrase: string[]
         username: string
@@ -100,6 +101,9 @@ const OnboardingDaoPage = () => {
                             setSignupState={setSignupState}
                             setStep={setStep}
                         />
+                    )}
+                    {step === 'phrase-check' && (
+                        <GoshPhraseCheck signupState={signupState} setStep={setStep} />
                     )}
                     {step === 'username' && (
                         <GoshUsername

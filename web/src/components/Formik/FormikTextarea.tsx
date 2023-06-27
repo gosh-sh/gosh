@@ -1,8 +1,14 @@
+import { TextareaAutosizeProps } from 'react-textarea-autosize'
 import { Textarea } from '../Form'
 import BaseField, { IBaseFieldProps } from './BaseField'
 
 interface IFormikTextareaProps extends IBaseFieldProps {
-    inputProps: React.InputHTMLAttributes<HTMLTextAreaElement>
+    inputProps: React.TextareaHTMLAttributes<HTMLTextAreaElement> &
+        TextareaAutosizeProps & {
+            hasError?: boolean
+            autoResize?: boolean
+            inputClassName?: string
+        }
 }
 
 const FormikTextarea = (props: IFormikTextareaProps) => {
