@@ -13,8 +13,8 @@ set -x
 #get second part of reward
 
 
-FIRST_VERSION=v3_x
-SECOND_VERSION=v4_x
+#FIRST_VERSION=v4_x
+#SECOND_VERSION=v5_x
 #./node_se_scripts/deploy.sh $FIRST_VERSION
 #. set-vars.sh $FIRST_VERSION
 #./upgrade_tests/set_up.sh $FIRST_VERSION $SECOND_VERSION
@@ -25,9 +25,9 @@ SECOND_VERSION=v4_x
 REPO_NAME=prop_repo04
 DAO_NAME="dao-prop_$(date +%s)"
 NEW_REPO_PATH=prop_repo04_v2
-COMMIT_ABI="../$FIRST_VERSION/contracts/gosh/commit.abi.json"
-SNAPSHOT_ABI="../$FIRST_VERSION/contracts/gosh/snapshot.abi.json"
-TASK_ABI="../$FIRST_VERSION/contracts/gosh/task.abi.json"
+COMMIT_ABI="../$VERSION/contracts/gosh/commit.abi.json"
+SNAPSHOT_ABI="../$VERSION/contracts/gosh/snapshot.abi.json"
+TASK_ABI="../$VERSION/contracts/gosh/task.abi.json"
 
 
 # delete folders
@@ -172,14 +172,14 @@ tonos-cli callx --addr "$OLD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KE
 
 sleep 20
 
-NEW_TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getWalletsFull | jq '.value0."'$USER_ADDR'".count' | cut -d'"' -f 2)
-tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
+NEW_TOKEN_CNT=$(tonos-cli -j runx --abi $DAO_ABI_1 --addr $DAO_ADDR -m getWalletsFull | jq '.value0."'$USER_ADDR'".count' | cut -d'"' -f 2)
+tonos-cli -j runx --abi $DAO_ABI_1 --addr $DAO_ADDR -m getTokenBalance
 
-tonos-cli callx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m lockVoting --amount 0
+tonos-cli callx --addr "$WALLET_ADDR" --abi "$WALLET_ABI_1" --keys "$WALLET_KEYS" -m lockVoting --amount 0
 
 sleep 60
 
-tonos-cli -j runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
+tonos-cli -j runx --abi $DAO_ABI_1 --addr $DAO_ADDR -m getTokenBalance
 
 sleep 60
 
@@ -199,11 +199,11 @@ fi
 
 sleep 10
 
-tonos-cli callx --addr "$WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m askGrantToken --repoName $REPO_NAME --nametask $TASK_NAME --typegrant 1
+tonos-cli callx --addr "$WALLET_ADDR" --abi "$WALLET_ABI_1" --keys "$WALLET_KEYS" -m askGrantToken --repoName $REPO_NAME --nametask $TASK_NAME --typegrant 1
 
 sleep 10
 
-TOKEN_CNT=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m m_pseudoDAOBalance | jq '.m_pseudoDAOBalance' | cut -d'"' -f 2)
+TOKEN_CNT=$(tonos-cli -j runx --abi $WALLET_ABI_1 --addr $WALLET_ADDR -m m_pseudoDAOBalance | jq '.m_pseudoDAOBalance' | cut -d'"' -f 2)
 if [ "$TOKEN_CNT" != "2" ]; then
   echo Wrong amount of token
   exit 1

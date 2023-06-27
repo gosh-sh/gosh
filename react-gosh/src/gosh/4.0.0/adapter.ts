@@ -96,6 +96,28 @@ import {
     TTaskUpgradeResult,
     TDaoTokenDaoTransferParams,
     TUpgradeVersionControllerParams,
+    TDaoStartPaidMembershipParams,
+    TDaoStartPaidMembershipResult,
+    TDaoStopPaidMembershipParams,
+    TDaoStopPaidMembershipResult,
+    TCodeCommentThreadCreateParams,
+    TCodeCommentThreadGetCodeParams,
+    TCodeCommentThreadGetCodeResult,
+    TCodeCommentThreadGetParams,
+    TCodeCommentThreadGetResult,
+    TCodeCommentCreateParams,
+    TCodeCommentThreadCreateResult,
+    TBigTaskCreateParams,
+    TBigTaskCreateResult,
+    TSubTaskCreateParams,
+    TSubTaskDeleteParams,
+    TBigTaskApproveParams,
+    TBigTaskApproveResult,
+    TBigTaskDeleteParams,
+    TBigTaskDeleteResult,
+    TBigTaskUpgradeParams,
+    TBigTaskUpgradeResult,
+    TCodeCommentThreadResdolveParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -119,6 +141,7 @@ import {
     IGoshHelperTag,
     IGoshTopic,
     IGoshProfileDao,
+    IGoshCommitTag,
 } from '../interfaces'
 import { Gosh } from './gosh'
 import { GoshDao } from './goshdao'
@@ -453,6 +476,21 @@ class GoshAdapter_4_0_0 implements IGoshAdapter {
         return new GoshHelperTag(this.client, address)
     }
 
+    async getCommitTag(params: {
+        address?: string | undefined
+        data?: { daoName: string; repoName: string; tagName: string } | undefined
+    }): Promise<IGoshCommitTag> {
+        const { address } = params
+
+        if (!address) {
+            throw new GoshError(
+                'Get commit tag error',
+                'Get commit tag by data is not supported in current version',
+            )
+        }
+        return new GoshCommitTag(this.client, address)
+    }
+
     async deployProfile(username: string, pubkey: string): Promise<IGoshProfile> {
         // Get profile and check it's status
         const profile = await this.getProfile({ username })
@@ -742,7 +780,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         name?: string
         address?: TAddress
     }): Promise<TTaskDetails> {
-        const task = await this._getTask(options)
+        const task = await this.getTaskAccount(options)
         const details = await task.runLocal('getStatus', {})
         const repository = await this.getRepository({ address: details.repo })
 
@@ -810,6 +848,13 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
+    async getBigTask(options: {
+        name?: string | undefined
+        address?: string | undefined
+    }): Promise<TTaskDetails> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async getTopicCodeHash(): Promise<string> {
         const { value0 } = await this.gosh.gosh.runLocal(
             'getTopicCode',
@@ -835,6 +880,18 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             content: value1,
             object: value2,
         }
+    }
+
+    async getCodeCommetThreadCodeHash(
+        params: TCodeCommentThreadGetCodeParams,
+    ): Promise<TCodeCommentThreadGetCodeResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async getCodeCommentThread(
+        params: TCodeCommentThreadGetParams,
+    ): Promise<TCodeCommentThreadGetResult> {
+        throw new Error('Method is unavailable in current version')
     }
 
     async getSmv(): Promise<IGoshSmvAdapter> {
@@ -1615,7 +1672,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
-        const _task = await this._getTask({ repository, name })
+        const _task = await this.getTaskAccount({ repository, name })
         if (await _task.isDeployed()) {
             throw new GoshError('Task already exists', { name })
         }
@@ -1809,6 +1866,34 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
+    async createBigTask(params: TBigTaskCreateParams): Promise<TBigTaskCreateResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async approveBigTask(params: TBigTaskApproveParams): Promise<TBigTaskApproveResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async deleteBigTask(params: TBigTaskDeleteParams): Promise<TBigTaskDeleteResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async receiveBigTaskBounty(params: TTaskReceiveBountyParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async upgradeBigTask(params: TBigTaskUpgradeParams): Promise<TBigTaskUpgradeResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createSubTask(params: TSubTaskCreateParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async deleteSubTask(params: TSubTaskDeleteParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     async sendEventReview(params: TDaoEventSendReviewParams): Promise<void> {
         const { event, decision } = params
 
@@ -1913,6 +1998,34 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         })
     }
 
+    async startPaidMembership(
+        params: TDaoStartPaidMembershipParams,
+    ): Promise<TDaoStartPaidMembershipResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async stopPaidMembership(
+        params: TDaoStopPaidMembershipParams,
+    ): Promise<TDaoStopPaidMembershipResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createCodeCommentThread(
+        params: TCodeCommentThreadCreateParams,
+    ): Promise<TCodeCommentThreadCreateResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async resolveCodeCommentThread(
+        params: TCodeCommentThreadResdolveParams,
+    ): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createCodeComment(params: TCodeCommentCreateParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     private async _isAuthMember(): Promise<boolean> {
         if (!this.profile) {
             return false
@@ -1999,7 +2112,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
-    private async _getTask(options: {
+    async getTaskAccount(options: {
         address?: TAddress
         repository?: string
         name?: string
@@ -2261,10 +2374,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     private gosh: IGoshAdapter
     private client: TonClient
-    private repo: IGoshRepository
     private name?: string
     private subwallets: IGoshWallet[] = []
 
+    repo: IGoshRepository
     auth?: { username: string; wallet0: IGoshWallet }
     config?: { maxWalletsWrite: number }
 
@@ -2383,6 +2496,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         fullpath?: string
         address?: TAddress
     }): Promise<{
+        address: string
         onchain: { commit: string; content: string }
         content: string | Buffer
         ipfs: boolean
@@ -2431,7 +2545,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             result.ipfs = true
         }
 
-        return result
+        return { ...result, address: snapshot.address }
     }
 
     async getCommit(options: { name?: string; address?: TAddress }): Promise<TCommit> {
@@ -2459,6 +2573,18 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             })
         })
 
+        const _parents = await Promise.all(
+            parents.map(async (item: any) => {
+                const _commit = await this._getCommit({ address: item.addr })
+                const { value0 } = await _commit.runLocal('getNameCommit', {})
+                return {
+                    address: item.addr,
+                    version: item.version,
+                    name: value0,
+                }
+            }),
+        )
+
         return {
             address: commit.address,
             name: sha,
@@ -2469,10 +2595,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             message: parsed.message,
             author: parsed.author,
             committer: parsed.committer,
-            parents: parents.map((item: any) => ({
-                address: item.addr,
-                version: item.version,
-            })),
+            parents: _parents,
             version: commit.version,
             initupgrade,
         }
@@ -2482,7 +2605,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         treepath: string,
         branch: string,
         commit: string | TCommit,
-    ): Promise<{ previous: string | Buffer; current: string | Buffer }> {
+    ): Promise<{ address: string; previous: string | Buffer; current: string | Buffer }> {
         if (typeof commit === 'string') {
             commit = await this.getCommit({ name: commit })
         }
@@ -2531,10 +2654,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 ? ''
                 : await this._getCommitBlob(parent, treepath, content, approved)
 
-        return { previous, current }
+        return { address: snapshot.address, previous, current }
     }
 
-    async getCommitBlobs(branch: string, commit: string | TCommit): Promise<string[]> {
+    async getCommitBlobs(
+        branch: string,
+        commit: string | TCommit,
+    ): Promise<{ address: string; treepath: string }[]> {
         const isTCommit = typeof commit !== 'string'
         const object = !isTCommit
             ? await this._getCommit({ name: commit })
@@ -2550,13 +2676,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             })
             .map(({ decoded }) => decoded.value.value0.snap)
 
-        return await executeByChunk<TAddress, TAddress>(
+        return await executeByChunk<TAddress, { address: string; treepath: string }>(
             Array.from(new Set(addresses)),
             MAX_PARALLEL_READ,
             async (address) => {
                 const snapshot = await this._getSnapshot({ address })
                 const name = await snapshot.getName()
-                return name.split('/').slice(1).join('/')
+                return { address, treepath: name.split('/').slice(1).join('/') }
             },
         )
     }
@@ -2564,7 +2690,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     async getPullRequestBlob(
         item: { treepath: string; index: number },
         commit: string | TCommit,
-    ): Promise<{ previous: string | Buffer; current: string | Buffer }> {
+    ): Promise<{ address: string; previous: string | Buffer; current: string | Buffer }> {
         if (typeof commit === 'string') {
             commit = await this.getCommit({ name: commit })
         }
@@ -2577,6 +2703,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         // Get blob state at parent commit, get diffs and apply
         const parent = await this.getCommit({ address: commit.parents[0].address })
 
+        let address = ''
         let previous: string | Buffer
         let current: string | Buffer
         try {
@@ -2585,6 +2712,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 commit.branch,
                 parent.name,
             )
+            address = state.address
             previous = current = state.current
         } catch {
             previous = current = ''
@@ -2595,12 +2723,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         for (const subdiff of subdiffs) {
             current = await this._applyBlobDiffPatch(current, subdiff)
         }
-        return { previous, current }
+        return { address, previous, current }
     }
 
     async getPullRequestBlobs(
         commit: string | TCommit,
-    ): Promise<{ treepath: string; index: number }[]> {
+    ): Promise<{ address: string; treepath: string; index: number }[]> {
         if (typeof commit === 'string') commit = await this.getCommit({ name: commit })
 
         // Get IGoshDiff instance list for commit
@@ -2617,21 +2745,24 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         // Get blobs list from commit (if commit was accepted)
         if (!diffs.length) {
             const blobs = await this.getCommitBlobs(commit.branch, commit)
-            return blobs.map((treepath) => ({ treepath, index: -1 }))
+            return blobs.map(({ address, treepath }) => ({
+                address,
+                treepath,
+                index: -1,
+            }))
         }
 
         // Get blobs list from diffs (if commit is not accepted)
-        return await executeByChunk<IGoshDiff, { treepath: string; index: number }>(
-            diffs,
-            MAX_PARALLEL_READ,
-            async (diff, index) => {
-                const subdiffs = await this._getDiffs(diff)
-                const snapshot = await this._getSnapshot({ address: subdiffs[0].snap })
-                const name = await snapshot.getName()
-                const treepath = name.split('/').slice(1).join('/')
-                return { treepath, index }
-            },
-        )
+        return await executeByChunk<
+            IGoshDiff,
+            { address: string; treepath: string; index: number }
+        >(diffs, MAX_PARALLEL_READ, async (diff, index) => {
+            const subdiffs = await this._getDiffs(diff)
+            const snapshot = await this._getSnapshot({ address: subdiffs[0].snap })
+            const name = await snapshot.getName()
+            const treepath = name.split('/').slice(1).join('/')
+            return { address: snapshot.address, treepath, index }
+        })
     }
 
     async getBranch(name: string): Promise<TBranch> {
@@ -2714,7 +2845,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 commit: {
                     ...object,
                     tree: ZERO_COMMIT,
-                    parents: [{ address: object.address, version: object.version }],
+                    parents: [
+                        {
+                            address: object.address,
+                            version: object.version,
+                            name: object.name,
+                        },
+                    ],
                 },
                 tree: {},
                 blobs: [],
@@ -2727,7 +2864,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return {
             commit: {
                 ...object,
-                parents: [{ address: object.address, version: object.version }],
+                parents: [
+                    {
+                        address: object.address,
+                        version: object.version,
+                        name: object.name,
+                    },
+                ],
             },
             tree,
             blobs,
@@ -3809,6 +3952,17 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             snapshotdata: data.snapshotData,
             snapshotipfs: data.snapshotIpfs,
         })
+        const wait = await whileFinite(async () => {
+            return await snapshot.isDeployed()
+        })
+        if (!wait) {
+            throw new GoshError('Deploy snapshot timeout reached', {
+                branch,
+                name: treepath,
+                address: snapshot.address,
+            })
+        }
+
         return snapshot
     }
 
@@ -3955,6 +4109,16 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             index2: 0,
             last: true,
         })
+        const wait = await whileFinite(async () => {
+            return await diffContract.isDeployed()
+        })
+        if (!wait) {
+            throw new GoshError('Deploy diff timeout reached', {
+                branch,
+                index1,
+                address: diffContract.address,
+            })
+        }
     }
 
     private async _deployCommit(
@@ -3986,6 +4150,16 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             tree: tree.address,
             upgrade,
         })
+        const wait = await whileFinite(async () => {
+            return await commitContract.isDeployed()
+        })
+        if (!wait) {
+            throw new GoshError('Deploy commit timeout reached', {
+                branch,
+                name: commit,
+                address: commitContract.address,
+            })
+        }
     }
 
     private async _setCommit(
@@ -4451,18 +4625,21 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         const details = await event.runLocal('getDetails', {})
 
         const kind = parseInt(details.value0)
+        const time = {
+            start: parseInt(details.value2) * 1000,
+            finish: parseInt(details.value3) * 1000,
+            finishReal: parseInt(details.value4) * 1000,
+        }
         const minimal = {
             address,
             type: { kind, name: SmvEventTypes[kind] },
             status: {
-                completed: details.value1 !== null,
+                completed:
+                    details.value1 !== null ||
+                    (time.finish > 0 && Date.now() > time.finish),
                 accepted: !!details.value1,
             },
-            time: {
-                start: parseInt(details.value2) * 1000,
-                finish: parseInt(details.value3) * 1000,
-                finishReal: parseInt(details.value4) * 1000,
-            },
+            time,
             votes: {
                 yes: parseInt(details.value5),
                 no: parseInt(details.value6),
@@ -4787,8 +4964,6 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getGoshSetCommitProposalParams'
         } else if (type === ESmvEventType.DAO_CONFIG_CHANGE) {
             fn = 'getGoshSetConfigDaoProposalParams'
-        } else if (type === ESmvEventType.TASK_CONFIRM) {
-            fn = 'getGoshConfirmTaskProposalParams'
         } else if (type === ESmvEventType.TASK_DELETE) {
             fn = 'getGoshDestroyTaskProposalParams'
         } else if (type === ESmvEventType.TASK_CREATE) {

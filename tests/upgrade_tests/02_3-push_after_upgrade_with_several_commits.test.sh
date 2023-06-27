@@ -83,6 +83,8 @@ wait_set_commit $REPO_ADDR main
 
 cd ..
 
+sleep 20
+
 echo "***** cloning repo with new link *****"
 git clone $NEW_LINK $NEW_REPO_PATH
 

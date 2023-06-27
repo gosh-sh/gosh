@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::{
     abi as gosh_abi,
     blockchain::{
@@ -6,7 +7,7 @@ use crate::{
         contract::{ContractInfo, GoshContract},
         get_commit_address,
         user_wallet::BlockchainUserWalletService,
-        BlockchainContractAddress, Everscale,
+        AddrVersion, BlockchainContractAddress, Everscale,
     },
     utilities::Remote,
 };
@@ -19,7 +20,9 @@ use std::time::{Duration, Instant};
 use tokio::time::sleep;
 use ton_client::abi::{DecodedMessageBody, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
-use crate::blockchain::AddrVersion;
+use crate::config::Config;
+
+const GOSH_REMOTE_WAIT_TIMEOUT_ENV: &str = "GOSH_REMOTE_WAIT_TIMEOUT";
 
 #[derive(Serialize, Debug)]
 pub struct DeployCommitParams {
@@ -50,11 +53,31 @@ struct TrxInfo {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Message {
-    id: String,
-    body: Option<String>,
+    pub id: String,
+    pub body: Option<String>,
     #[serde(with = "ton_sdk::json_helper::uint")]
-    created_lt: u64,
-    bounced: bool,
+    pub created_lt: u64,
+    pub bounced: bool,
+}
+
+#[derive(Deserialize, Debug)]
+struct Node {
+    #[serde(rename = "node")]
+    message: Message,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct PageInfo {
+    has_next_page: bool,
+    end_cursor: String,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct Messages {
+    edges: Vec<Node>,
+    page_info: PageInfo,
 }
 
 #[cfg_attr(test, mockall::automock)]
@@ -68,7 +91,7 @@ pub trait BlockchainCommitPusher {
         remote: &Remote,
         dao_addr: &BlockchainContractAddress,
         raw_commit: &str,
-        parents:&Vec<AddrVersion>,
+        parents: &Vec<AddrVersion>,
         upgrade_commit: bool,
     ) -> anyhow::Result<()>;
     async fn notify_commit(
@@ -80,6 +103,7 @@ pub trait BlockchainCommitPusher {
         remote: &Remote,
         dao_addr: &BlockchainContractAddress,
         is_upgrade: bool,
+        config: &Config,
     ) -> anyhow::Result<()>;
 }
 
@@ -143,6 +167,7 @@ impl BlockchainCommitPusher for Everscale {
         remote: &Remote,
         dao_addr: &BlockchainContractAddress,
         is_upgrade: bool,
+        config: &Config,
     ) -> anyhow::Result<()> {
         tracing::trace!("notify_commit: commit_id={commit_id}, branch={branch}, number_of_files_changed={number_of_files_changed}, number_of_commits={number_of_commits}, remote={remote:?}, dao_addr={dao_addr}, is_upgrade={is_upgrade}");
         let wallet = self.user_wallet(&dao_addr, &remote.network).await?;
@@ -162,8 +187,12 @@ impl BlockchainCommitPusher for Everscale {
         // drop(wallet_contract);
         tracing::trace!("setCommit msg id: {:?}", result.message_id);
 
-        let start = Instant::now();
-        let timeout = Duration::from_secs(*crate::config::SET_COMMIT_TIMEOUT);
+        let mut start = Instant::now();
+        let timeout = std::env::var(GOSH_REMOTE_WAIT_TIMEOUT_ENV).ok()
+            .map(|time| u64::from_str_radix(&time, 10).ok()).flatten()
+            .unwrap_or(config.get_primary_network_timeout());
+        tracing::trace!("Set commit timeout: {} sec", timeout);
+        let timeout = Duration::from_secs(timeout);
 
         let mut repo_contract = self.repo_contract.clone();
         let commit_address = get_commit_address(
@@ -174,76 +203,124 @@ impl BlockchainCommitPusher for Everscale {
         .await?;
         let commit_contract = GoshContract::new(commit_address.clone(), gosh_abi::COMMIT);
 
-        let filter = vec![
+        let mut filter = vec![
             "allCorrect".to_owned(),
             "cancelCommit".to_owned(),
             "NotCorrectRepo".to_owned(),
         ];
-        let mut from_lt = 0;
-
+        if is_upgrade {
+            filter.push("treeAccept".to_owned());
+        }
+        let mut processed_messages = HashMap::new();
         loop {
-            let found = find_messages(self, &commit_contract, &filter, from_lt).await?;
+            let found = find_messages(self, &commit_contract, &filter, &mut processed_messages).await?;
+            tracing::trace!("did find new messages for {}: {}", commit_contract.address, found.1);
             if let Some(message) = found.0 {
                 match message.name.as_str() {
                     "allCorrect" => break,
+                    "treeAccept" => break,
                     "cancelCommit" => bail!("Push failed. Fix and retry"),
                     "NotCorrectRepo" => bail!("Push failed. Fetch first"),
-                    _ => from_lt = found.1,
+                    _ => {},
                 };
             } else {
-                from_lt = found.1;
+                if found.1 {
+                    tracing::debug!("Reset timer");
+                    start = Instant::now();
+                }
             }
 
             if start.elapsed() > timeout {
-                break;
+                bail!("Time is up. Fix and retry");
             }
-            sleep(Duration::from_secs(10)).await;
+            sleep(Duration::from_secs(5)).await;
         }
-        tracing::info!("Time spent on `set_commit` is: {:?}", start.elapsed());
+        tracing::info!("Branch `{branch}` has been updated");
         Ok(())
     }
 }
+
+
+pub async fn query_all_messages(
+    context: &Everscale,
+    contract: &GoshContract,
+) -> anyhow::Result<Vec<Message>> {
+    tracing::trace!(
+        "find_messages: contract.address={}",
+        contract.address
+    );
+
+    let query = r#"query($addr: String!, $after: String){
+      blockchain {
+        account(address: $addr) {
+          messages(msg_type: [IntIn], after: $after, first: 50) {
+            edges {
+              node {  id body created_lt bounced }
+            }
+            pageInfo { hasNextPage endCursor }
+          }
+        }
+      }
+    }"#
+        .to_string();
+
+    let mut after = "0".to_string();
+    let dst_address = String::from(contract.get_address().clone());
+    let mut result_messages = vec![];
+
+    loop {
+        let result = ton_client::net::query(
+            Arc::clone(&context.ever_client),
+            ParamsOfQuery {
+                query: query.clone(),
+                variables: Some(serde_json::json!({
+                    "addr": dst_address.clone(),
+                    "after": after.to_string()
+                })),
+                ..Default::default()
+            },
+        )
+            .await
+            .map(|r| r.result)?;
+
+        let nodes = &result["data"]["blockchain"]["account"]["messages"];
+        let edges: Messages = serde_json::from_value(nodes.clone())?;
+        let mut messages: Vec<Message> = edges.edges.iter().map(|node|
+            Message {
+                id: node.message.id.split('/').last().unwrap().to_string(),
+                body: node.message.body.clone(),
+                created_lt: node.message.created_lt,
+                bounced: node.message.bounced,
+            }
+        ).collect();
+
+        after = edges.page_info.end_cursor;
+        result_messages.append(&mut messages);
+
+        if !edges.page_info.has_next_page {
+            break;
+        }
+    }
+    tracing::trace!("Found {} messages to {}", result_messages.len(), dst_address);
+    Ok(result_messages)
+}
+
 
 #[instrument(level = "info", skip_all)]
 pub async fn find_messages(
     context: &Everscale,
     contract: &GoshContract,
     filter: &Vec<String>,
-    from_lt: u64,
-) -> anyhow::Result<(Option<DecodedMessageBody>, u64)> {
-    tracing::trace!(
-        "find_messages: contract.address={}, filter={filter:?}, from_lt={from_lt}",
-        contract.address
-    );
-    let query = r#"query($contract: String!, $from: String) {
-        messages(filter: {
-            dst: { eq: $contract },
-            created_lt: { gt: $from }
-        }) {
-            id body created_lt bounced
-        }
-    }"#
-    .to_string();
-    let dst_address = String::from(contract.get_address().clone());
-    let result = ton_client::net::query(
-        Arc::clone(&context.ever_client),
-        ParamsOfQuery {
-            query,
-            variables: Some(serde_json::json!({
-                "contract": dst_address,
-                "from": from_lt.to_string()
-            })),
-            ..Default::default()
-        },
-    )
-    .await
-    .map(|r| r.result)?;
-    let raw_messages = result["data"]["messages"].clone();
-    let messages: Vec<Message> = serde_json::from_value(raw_messages)?;
-
-    let mut last_lt = 0u64;
+    already_processed_messages: &mut HashMap<String, bool>,
+) -> anyhow::Result<(Option<DecodedMessageBody>, bool)> {
+    tracing::trace!("find_messages start contract:{}, processed_len:{}", contract.address, already_processed_messages.len());
+    let messages = query_all_messages(context, contract).await?;
+    let mut got_new_messages = false;
     for message in messages.iter() {
         if message.bounced || message.body.is_none() {
+            continue;
+        }
+        if already_processed_messages.contains_key(&message.id) {
             continue;
         }
 
@@ -256,7 +333,9 @@ pub async fn find_messages(
                 ..Default::default()
             },
         )
-        .await;
+            .await;
+        got_new_messages = true;
+        already_processed_messages.insert(message.id.clone(), true);
 
         if let Err(ref e) = decoding_result {
             tracing::trace!("decode_message_body error: {:#?}", e);
@@ -270,12 +349,11 @@ pub async fn find_messages(
         if filter.contains(&decoded.name) {
             let trx_status = is_transaction_ok(context, &message.id).await?;
             if trx_status {
-                return Ok((Some(decoded.clone()), message.created_lt));
+                return Ok((Some(decoded.clone()), got_new_messages));
             }
         }
-        last_lt = message.created_lt;
     }
-    Ok((None, last_lt))
+    Ok((None, got_new_messages))
 }
 
 #[instrument(level = "info", skip_all)]

@@ -1,7 +1,7 @@
 use crate::{
     blockchain::{
-        tree::TreeNode, user_wallet::WalletError,
-        BlockchainContractAddress, BlockchainService, tvm_hash,
+        tree::TreeNode, tvm_hash, user_wallet::WalletError, BlockchainContractAddress,
+        BlockchainService,
     },
     git_helper::GitHelper,
 };

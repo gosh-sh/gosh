@@ -25,7 +25,9 @@ type TGoshUsernameProps = {
         }>
     >
     setStep: React.Dispatch<
-        React.SetStateAction<'username' | 'submit' | 'phrase' | undefined>
+        React.SetStateAction<
+            'username' | 'submit' | 'phrase' | 'phrase-check' | undefined
+        >
     >
 }
 

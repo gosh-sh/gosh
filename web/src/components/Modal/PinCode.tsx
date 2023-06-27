@@ -1,15 +1,12 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { Dialog } from '@headlessui/react'
 import { useResetRecoilState, useSetRecoilState } from 'recoil'
 import { SHA256 } from 'crypto-js'
 import { Buffer } from 'buffer'
 import { appModalStateAtom } from '../../store/app.state'
 import { toast } from 'react-toastify'
-import { Button, Input } from '../Form'
-import { useUser } from '../../v1/hooks/user.hooks'
-import { TUserPersist } from '../../types/user.types'
-import { chacha20, generateRandomBytes } from '../../blockchain/utils'
-import { AppConfig } from '../../appconfig'
+import { Button } from '../Form'
+import PinInput from 'react-pin-input'
 
 type TPinCodeModalProps = {
     unlock?: boolean
@@ -21,10 +18,9 @@ type TPinCodeModalProps = {
 const PinCodeModal = (props: TPinCodeModalProps) => {
     const { phrase, unlock, onUnlock } = props
     const user = useUser()
-
+    const pinRef = useRef<PinInput | null | undefined>()
     const setModal = useSetRecoilState(appModalStateAtom)
     const resetModal = useResetRecoilState(appModalStateAtom)
-    const [pin, setPin] = useState<string>('')
     const [tmp, setTmp] = useState<TUserPersist>({ ...user.persist })
 
     const onPinSubmit = useCallback(
@@ -40,13 +36,11 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
                     nonce,
                 )
                 setTmp((state) => ({ ...state, nonce, phrase: encrypted, pin: pinHash }))
-                setPin('')
             }
 
             if (tmp.phrase && tmp.nonce) {
                 if (pinHash !== tmp.pin) {
                     toast.error('Wrong PIN', { autoClose: 1500 })
-                    setPin('')
                     if (!unlock) {
                         setTmp((state) => ({
                             ...state,
@@ -72,12 +66,6 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
         [phrase, unlock, tmp, onUnlock, setModal, user],
     )
 
-    useEffect(() => {
-        if (pin.length === 4) {
-            onPinSubmit(pin)
-        }
-    }, [pin, onPinSubmit])
-
     return (
         <Dialog.Panel className="rounded-xl bg-white px-8 py-8 w-full max-w-md">
             <Dialog.Title className="text-3xl text-center font-medium">
@@ -87,24 +75,53 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
                 {tmp.pin ? 'Unlock with PIN code' : 'Create PIN code'}
             </Dialog.Description>
 
-            <div className="mt-4 w-full md:w-1/3 mx-auto">
+            <div className="mt-4 w-full mx-auto">
                 <form>
-                    <Input
-                        type="password"
-                        inputClassName="text-center w-full"
-                        placeholder="PIN code"
-                        autoComplete="off"
-                        value={pin}
-                        onChange={(e) => setPin(e.target.value)}
-                        test-id="input-pin"
+                    <PinInput
+                        ref={(el) => (pinRef.current = el)}
+                        length={4}
+                        initialValue=""
+                        type="numeric"
+                        inputMode="number"
+                        secretDelay={10}
+                        focus
+                        autoSelect={false}
+                        style={{
+                            display: 'flex',
+                            flexWrap: 'nowrap',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem',
+                            overflow: 'hidden',
+                        }}
+                        inputStyle={{
+                            width: '3.5rem',
+                            height: '3.5rem',
+                            margin: '0',
+                            borderRadius: '0.5rem',
+                            borderWidth: '1px',
+                            borderStyle: 'solid',
+                            borderColor: '#e6edff',
+                            fontSize: '1.75rem',
+                            color: 'transparent',
+                            textShadow: '0 0 0 #000000',
+                        }}
+                        inputFocusStyle={{
+                            borderColor: '#000000',
+                        }}
+                        onComplete={(v) => {
+                            pinRef.current?.clear()
+                            onPinSubmit(v)
+                        }}
                     />
                 </form>
             </div>
 
             {unlock && (
-                <div className="mt-4 text-center">
+                <div className="mt-6 text-center">
                     <Button
                         type="button"
+                        size="xl"
                         onClick={() => {
                             user.signout()
                             resetModal()

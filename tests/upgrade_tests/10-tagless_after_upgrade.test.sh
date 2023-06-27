@@ -60,6 +60,8 @@ delay 3
 export NEW_LINK="gosh://$SYSTEM_CONTRACT_ADDR_1/$DAO_NAME/$REPO_NAME"
 echo "NEW_LINK=$NEW_LINK"
 
+sleep 30
+
 echo "***** cloning repo with new link *****"
 git clone $NEW_LINK $REPO_NAME"-copy"
 cd $REPO_NAME"-copy"

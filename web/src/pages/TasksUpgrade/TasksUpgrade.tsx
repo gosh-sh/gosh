@@ -1,6 +1,7 @@
 import { Form, Formik } from 'formik'
 import { useReducer } from 'react'
 import {
+    BIGTASK_TAG,
     ESmvEventType,
     executeByChunk,
     getAllAccounts,
@@ -119,7 +120,7 @@ const TasksUpgradePage = () => {
         const vgosh = GoshAdapterFactory.create(ver)
         const vdao = await vgosh.getDao({ name: dao.details.name, useAuth: false })
 
-        // Get all repositories from DAO 3.0 and task code hash for repo
+        // Get all repositories from DAO ver and task code hash for repo
         const repos = await getRepositoryAccounts(dao.details.name, {
             version: ver,
         })
@@ -186,6 +187,50 @@ const TasksUpgradePage = () => {
         return { isEvent: taskDeployCells.length > 0 }
     }
 
+    const _upgrade_bigtasks = async (ver: string) => {
+        // Get version DAO adapter
+        const vgosh = GoshAdapterFactory.create(ver)
+        const vdao = await vgosh.getDao({ name: dao.details.name, useAuth: false })
+
+        // Get all big tasks from vdao
+        const codeHash = await vdao
+            .getGosh()
+            .getTaskTagDaoCodeHash(vdao.getAddress(), BIGTASK_TAG)
+        const bigtaskSystemTags = await getAllAccounts({
+            filters: [`code_hash: {eq:"${codeHash}"}`],
+            result: ['id'],
+        })
+        const tasks = await executeByChunk(
+            bigtaskSystemTags,
+            MAX_PARALLEL_READ,
+            async ({ id }) => {
+                const tag = await vdao.getGosh().getHelperTag(id)
+                const { _task: address } = await tag.runLocal('_task', {})
+                return await vdao.getBigTask({ address })
+            },
+        )
+
+        // Generate multiproposal cells and start proposal
+        const cells: any[] = tasks.map((task) => ({
+            type: ESmvEventType.BIGTASK_UPGRADE,
+            params: {
+                repositoryName: task.repository,
+                name: task.name,
+                prevVersion: ver,
+                prevAddress: task.address,
+                tags: task.tagsRaw,
+            },
+        }))
+        if (cells.length > 0) {
+            if (cells.length === 1) {
+                cells.push({ type: ESmvEventType.DELAY, params: {} })
+            }
+            await dao.adapter.createMultiProposal({ proposals: cells })
+        }
+
+        return { isEvent: cells.length > 0 }
+    }
+
     const onTasksUpgrade = async () => {
         try {
             if (dao.details.isTaskRedeployed) {
@@ -199,7 +244,21 @@ const TasksUpgradePage = () => {
 
             let isEvent = false
             const prevVersion = prevDao.getVersion()
-            if (prevVersion === '2.0.0') {
+
+            // Upgrade big tasks
+            if (prevVersion >= '5.0.0') {
+                const result = await _upgrade_bigtasks(prevVersion)
+                isEvent = result.isEvent
+            }
+
+            // Upgrade tasks
+            if (prevVersion === '1.0.0') {
+                await dao.adapter.upgradeTaskComplete({ cell: false })
+                progressDispatch({ type: 'get_repositories', payload: true })
+                progressDispatch({ type: 'get_tasks', payload: true })
+                progressDispatch({ type: 'upgrade_tasks', payload: true })
+                isEvent = false
+            } else if (prevVersion === '2.0.0') {
                 const result = await _upgrade_from_2()
                 isEvent = result.isEvent
             } else {

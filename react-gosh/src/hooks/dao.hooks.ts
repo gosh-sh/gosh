@@ -22,9 +22,21 @@ import {
 import { EGoshError, GoshError } from '../errors'
 import { AppConfig } from '../appconfig'
 import { useProfile, useUser } from './user.hooks'
-import { IGoshDaoAdapter, IGoshRepositoryAdapter } from '../gosh/interfaces'
+import {
+    IGoshDaoAdapter,
+    IGoshProfile,
+    IGoshRepositoryAdapter,
+    IGoshSmvAdapter,
+    IGoshWallet,
+} from '../gosh/interfaces'
 import { GoshAdapterFactory } from '../gosh'
-import { MAX_PARALLEL_READ, SYSTEM_TAG } from '../constants'
+import {
+    DAO_TOKEN_TRANSFER_TAG,
+    MAX_PARALLEL_READ,
+    SYSTEM_TAG,
+    VESTING_BALANCE_TAG,
+} from '../constants'
+import { KeyPair } from '@eversdk/core'
 
 function useDaoList(perPage: number) {
     const profile = useProfile()
@@ -204,6 +216,24 @@ function useDao(name: string) {
         }
     }, [updateDetails])
 
+    useEffect(() => {
+        const _checkPaidMembership = async () => {
+            if (!adapter?.wallet || !details?.members.length) {
+                return
+            }
+
+            const now = Math.round(Date.now() / 1000)
+            const anyExpired = details.members.filter(({ expired = 0 }) => {
+                return expired > 0 && now > expired
+            })
+            if (anyExpired.length) {
+                adapter.wallet.run('startCheckPaidMembership', {})
+            }
+        }
+
+        _checkPaidMembership()
+    }, [details?.members, adapter?.wallet])
+
     return {
         adapter,
         details,
@@ -229,6 +259,7 @@ function useDaoCreate() {
         setProgress({ isFetching: true })
 
         // Deploy dao
+        let dao: IGoshDaoAdapter
         let isDaoDeployed: boolean
         try {
             if (!profile) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
@@ -236,7 +267,7 @@ function useDaoCreate() {
             const usernames = (options.members || []).filter((item) => !!item)
             const profiles = await gosh.isValidProfile(usernames)
             const addresses = profiles.map(({ address }) => address)
-            await profile.deployDao(gosh, name, [profile.address, ...addresses])
+            dao = await profile.deployDao(gosh, name, [profile.address, ...addresses])
             isDaoDeployed = true
         } catch (e) {
             isDaoDeployed = false
@@ -247,6 +278,7 @@ function useDaoCreate() {
 
         // Set progress
         setProgress((state) => ({ ...state, isFetching: false }))
+        return dao
     }
 
     const _create_2_0_0 = async (
@@ -256,13 +288,21 @@ function useDaoCreate() {
             description?: string
             supply?: number
             mint?: boolean
+            auth?: {
+                profile: IGoshProfile
+                username: string
+                keys: KeyPair
+            }
         },
     ) => {
-        if (!profile || !user.keys || !user.username) {
+        const { tags, description, supply, mint, auth } = options
+
+        const _profile = profile || auth?.profile
+        const _keys = user.keys || auth?.keys
+        const _username = user.username || auth?.username
+        if (!_profile || !_keys || !_username) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
-
-        const { tags, description, supply, mint } = options
 
         // Set initial progress
         setProgress({ isFetching: true })
@@ -270,7 +310,7 @@ function useDaoCreate() {
         // Deploy DAO
         let dao: IGoshDaoAdapter
         try {
-            dao = await profile.deployDao(gosh, name, [profile.address])
+            dao = await _profile.deployDao(gosh, name, [_profile.address])
             setProgress((state) => ({ ...state, isDaoDeployed: true }))
         } catch (e) {
             setProgress((state) => ({ ...state, isDaoDeployed: false }))
@@ -279,7 +319,7 @@ function useDaoCreate() {
 
         // Authorize DAO
         try {
-            await dao.setAuth(user.username, user.keys)
+            await dao.setAuth(_username, _keys)
             setProgress((state) => ({ ...state, isDaoAuthorized: true }))
         } catch (e) {
             setProgress((state) => ({ ...state, isDaoAuthorized: false }))
@@ -349,6 +389,7 @@ function useDaoCreate() {
 
         // Set progress
         setProgress((state) => ({ ...state, isFetching: false }))
+        return dao
     }
 
     // Resolve create fn
@@ -385,6 +426,289 @@ function useDaoUpgrade(dao: IGoshDaoAdapter) {
     return { versions, upgrade }
 }
 
+function useVestingBalance(dao?: IGoshDaoAdapter) {
+    const { user } = useUser()
+    const [balance, setBalance] = useState<number>(0)
+
+    const getTagName = () => {
+        return `${VESTING_BALANCE_TAG}:${user.username}`
+    }
+
+    const getTag = async () => {
+        if (!dao || dao.getVersion() < '4.0.0') {
+            return null
+        }
+
+        const gosh = dao.getGosh()
+        const tagName = getTagName()
+        if (dao.getVersion() === '4.0.0') {
+            const repo = await dao.getRepository({ name: VESTING_BALANCE_TAG })
+            const { value0: code } = await gosh.goshroot.runLocal('getTagCode', {
+                tagcode:
+                    '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',
+                repo: repo.getAddress(),
+                ver: '4.0.0',
+            })
+            const { hash } = await dao.dao.account.client.boc.get_boc_hash({ boc: code })
+            const accounts = await getAllAccounts({
+                filters: [`code_hash: {eq:"${hash}"}`],
+            })
+
+            const details = await executeByChunk(
+                accounts,
+                MAX_PARALLEL_READ,
+                async ({ id }) => {
+                    const tag = await gosh.getCommitTag({ address: id })
+                    const data = await tag.runLocal('getDetails', {})
+                    return { address: id, ...data }
+                },
+            )
+
+            const found = details.find(({ value0 }) => value0 === tagName)
+            if (found) {
+                return await gosh.getCommitTag({ address: found.address })
+            }
+            return null
+        } else {
+            return await gosh.getCommitTag({
+                data: {
+                    daoName: await dao.getName(),
+                    repoName: VESTING_BALANCE_TAG,
+                    tagName,
+                },
+            })
+        }
+    }
+
+    const getStoredBalance = async () => {
+        const tag = await getTag()
+        console.debug('TAG', tag)
+        if (!tag || !(await tag.isDeployed())) {
+            return 0
+        }
+
+        const { value0 } = await tag.runLocal('getContent', {})
+        return parseInt(value0)
+    }
+
+    const updateBalance = async () => {
+        if (!dao || !user.profile || !user.username || dao.getVersion() < '4.0.0') {
+            return
+        }
+
+        // Get stored balance
+        const stored = await getStoredBalance()
+        setBalance(stored)
+
+        // Get all DAO tasks
+        const gosh = dao.getGosh()
+        const codeHash = await gosh.getTaskTagDaoCodeHash(dao.getAddress(), SYSTEM_TAG)
+        const result = await getAllAccounts({
+            filters: [`code_hash: {eq:"${codeHash}"}`],
+        })
+        const tasks = await executeByChunk(result, 30, async ({ id }) => {
+            const tag = await gosh.getHelperTag(id)
+            const { _task } = await tag.runLocal('_task', {})
+            const task = await dao.getTaskAccount({ address: _task })
+            return await task.runLocal('getStatus', {})
+        })
+
+        // Calculate balance
+        let _balance = 0
+        for (const task of tasks) {
+            if (task.candidates.length === 0) {
+                continue
+            }
+
+            const assigners = Object.keys(task.candidates[0].pubaddrassign)
+            const reviewers = Object.keys(task.candidates[0].pubaddrreview)
+            const managers = Object.keys(task.candidates[0].pubaddrmanager)
+
+            if (assigners.indexOf(user.profile) >= 0) {
+                for (const { grant } of task.grant.assign) {
+                    _balance += Math.floor(parseInt(grant) / assigners.length)
+                }
+            }
+            if (reviewers.indexOf(user.profile) >= 0) {
+                for (const { grant } of task.grant.review) {
+                    _balance += Math.floor(parseInt(grant) / reviewers.length)
+                }
+            }
+            if (managers.indexOf(user.profile) >= 0) {
+                for (const { grant } of task.grant.manager) {
+                    _balance += Math.floor(parseInt(grant) / managers.length)
+                }
+            }
+        }
+        setBalance(_balance)
+
+        // Update tag
+        const tag = await getTag()
+        if (tag && (await tag.isDeployed()) && stored !== _balance) {
+            await dao.wallet?.run('deleteTag', {
+                repoName: VESTING_BALANCE_TAG,
+                nametag: getTagName(),
+            })
+        }
+        if (!tag || !(await tag.isDeployed())) {
+            await dao.wallet?.run('deployTag', {
+                repoName: VESTING_BALANCE_TAG,
+                nametag: getTagName(),
+                nameCommit: user.username,
+                commit: user.profile,
+                content: _balance.toString(),
+            })
+        }
+    }
+
+    useEffect(() => {
+        updateBalance()
+
+        let isIntervalBusy = false
+        const interval = setInterval(async () => {
+            if (isIntervalBusy) {
+                return
+            }
+
+            isIntervalBusy = true
+            try {
+                await updateBalance()
+            } catch (e: any) {
+                console.error(e.message)
+            }
+            isIntervalBusy = false
+        }, 120000)
+
+        return () => {
+            clearInterval(interval)
+        }
+    }, [dao?.getAddress()])
+
+    return balance
+}
+
+function useDaoAutoTokenTransfer(dao?: IGoshDaoAdapter) {
+    const { user } = useUser()
+
+    const getUntransferredTokens = async (
+        _ver: string,
+        _smv: IGoshSmvAdapter,
+        _wallet: IGoshWallet,
+    ) => {
+        if (_ver < '3.0.0') {
+            const { smvAvailable, smvLocked, smvBalance } = await _smv.getDetails(_wallet)
+            return Math.max(smvAvailable, smvLocked) + smvBalance
+        } else {
+            const { m_pseudoDAOBalance } = await _wallet.runLocal(
+                'm_pseudoDAOBalance',
+                {},
+            )
+            const { _lockedBalance } = await _wallet.runLocal('_lockedBalance', {})
+            return parseInt(m_pseudoDAOBalance) + parseInt(_lockedBalance)
+        }
+    }
+
+    const transferTokens = async (
+        _dao: IGoshDaoAdapter,
+        _profile: string,
+        _to_dao_ver: string,
+    ) => {
+        const wallet = await _dao.getMemberWallet({ profile: _profile })
+        if (!(await wallet.isDeployed())) {
+            return 0
+        }
+
+        const version = _dao.getVersion()
+        const smv = await _dao.getSmv()
+        const untransferred = await getUntransferredTokens(version, smv, wallet)
+        if (untransferred > 0) {
+            await smv.releaseAll()
+            await smv.transferToWallet(0)
+            await _dao.wallet?.run('sendTokenToNewVersion', {
+                grant: untransferred,
+                newversion: _to_dao_ver,
+            })
+        }
+        return untransferred
+    }
+
+    const checkTokens = async () => {
+        try {
+            const { username, profile, keys } = user
+            const stopTransferTagName = `${DAO_TOKEN_TRANSFER_TAG}:${username}`
+            if (!profile || !username || !keys || !dao) {
+                return { retry: true }
+            }
+            if (dao.getVersion() < '5.0.0') {
+                return { retry: false }
+            }
+            if (!(await dao.wallet?.isDeployed())) {
+                return { retry: true }
+            }
+
+            // Check for stop transfer tag
+            const stopTransferTag = await dao.getGosh().getCommitTag({
+                data: {
+                    daoName: await dao.getName(),
+                    repoName: DAO_TOKEN_TRANSFER_TAG,
+                    tagName: stopTransferTagName,
+                },
+            })
+            if (await stopTransferTag.isDeployed()) {
+                return { retry: false }
+            }
+
+            // Transfer tokens from all prev dao versions
+            let untransferred = 0
+            let prevDao = await dao.getPrevDao()
+            while (prevDao) {
+                if (prevDao.getVersion() === '1.0.0') {
+                    break
+                }
+                await prevDao.setAuth(username, keys)
+                untransferred += await transferTokens(prevDao, profile, dao.getVersion())
+                prevDao = await prevDao.getPrevDao()
+            }
+
+            // Deploy stop transfer tag
+            if (untransferred === 0) {
+                await dao.wallet?.run('deployTag', {
+                    repoName: DAO_TOKEN_TRANSFER_TAG,
+                    nametag: stopTransferTagName,
+                    nameCommit: username,
+                    commit: profile,
+                    content: '',
+                })
+                return { retry: false }
+            }
+            return { retry: true }
+        } catch (e: any) {
+            console.error(e.message)
+            return { retry: true }
+        }
+    }
+
+    useEffect(() => {
+        let isIntervalBusy = false
+        const interval = setInterval(async () => {
+            if (isIntervalBusy) {
+                return
+            }
+
+            isIntervalBusy = true
+            const { retry } = await checkTokens()
+            isIntervalBusy = false
+            if (!retry) {
+                clearInterval(interval)
+            }
+        }, 10000)
+
+        return () => {
+            clearInterval(interval)
+        }
+    }, [dao?.getAddress()])
+}
+
 function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
     const [search, setSearch] = useState<string>('')
     const [members, setMembers] = useState<{
@@ -410,12 +734,12 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
         const version = dao.getVersion()
         if (version === '1.0.0') {
             items = await _getMemberList_1_0_0()
-        } else if (version === '2.0.0') {
+        } else if (version < '4.0.0') {
             items = await _getMemberList_2_0_0()
-        } else if (version === '3.0.0') {
-            items = await _getMemberList_2_0_0()
-        } else {
+        } else if (version < '5.0.0') {
             items = await _getMemberList_4_0_0()
+        } else {
+            items = await _getMemberList_5_0_0()
         }
 
         setMembers((state) => ({
@@ -522,6 +846,38 @@ function useDaoMemberList(dao: IGoshDaoAdapter, perPage: number) {
         return items
     }
 
+    const _getMemberList_5_0_0 = async () => {
+        const gosh = dao.getGosh()
+        const details = await dao.dao.runLocal('getDetails', {})
+        const prevDao = await dao.getPrevDao()
+
+        const members = await dao.getMembers()
+        const items = await executeByChunk(members, MAX_PARALLEL_READ, async (member) => {
+            // Resolve user (it can be DAO member which is not upgraded)
+            const profileHex = `0x${member.profile.slice(2)}`
+            const isDaoAsMember = details.daoMembers[profileHex]
+            const user = isDaoAsMember
+                ? { name: isDaoAsMember, type: 'dao' }
+                : await gosh.getUserByAddress(member.profile)
+
+            // Get wallet balance in current DAO version
+            const wallet = await dao.getMemberWallet({ address: member.wallet })
+            const { m_pseudoDAOBalance } = await wallet.runLocal('m_pseudoDAOBalance', {})
+            const { _lockedBalance } = await wallet.runLocal('_lockedBalance', {})
+            const balance = parseInt(m_pseudoDAOBalance) + parseInt(_lockedBalance)
+
+            // If member has karma but has no token balance, it means that
+            // member might not transferred tokens from previous DAO versions
+            let balancePrev = 0
+            if (prevDao && prevDao.getVersion() !== '1.0.0') {
+                balancePrev = (member.allowance ?? 0) > balance ? 1 : 0
+            }
+
+            return { ...member, user, balance, balancePrev }
+        })
+        return items
+    }
+
     /** Get initial DAO members list */
     useEffect(() => {
         _getMemberList()
@@ -598,10 +954,10 @@ function useDaoMemberCreate(dao: IGoshDaoAdapter) {
         }
 
         const memberAddCells: { type: number; params: TDaoMemberCreateParams }[] =
-            clean.map(({ user, comment }) => ({
+            clean.map(({ user, comment, expired }) => ({
                 type: ESmvEventType.DAO_MEMBER_ADD,
                 params: {
-                    members: [{ user, allowance: 0, comment }],
+                    members: [{ user, allowance: 0, comment, expired }],
                 },
             }))
 
@@ -638,10 +994,10 @@ function useDaoMemberCreate(dao: IGoshDaoAdapter) {
         }
 
         const memberAddCells: { type: number; params: TDaoMemberCreateParams }[] =
-            clean.map(({ user, comment }) => ({
+            clean.map(({ user, comment, expired }) => ({
                 type: ESmvEventType.DAO_MEMBER_ADD,
                 params: {
-                    members: [{ user, allowance: 0, comment }],
+                    members: [{ user, allowance: 0, comment, expired }],
                 },
             }))
         const memberAddVotingCells: { type: number; params: TDaoVotingTokenAddParams }[] =
@@ -1277,6 +1633,7 @@ export {
     useDao,
     useDaoCreate,
     useDaoUpgrade,
+    useDaoAutoTokenTransfer,
     useDaoMemberList,
     useDaoMemberCreate,
     useDaoMemberDelete,
@@ -1288,4 +1645,5 @@ export {
     useTopicCreate,
     useTopicList,
     useTopic,
+    useVestingBalance,
 }

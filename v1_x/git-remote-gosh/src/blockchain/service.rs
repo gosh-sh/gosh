@@ -3,7 +3,7 @@ use super::{
     commit::save::BlockchainCommitPusher,
     contract::ContractRead,
     get_contracts_blocks,
-    snapshot::save::{DeployDiff, DeployNewSnapshot, DeleteSnapshot},
+    snapshot::save::{DeleteSnapshot, DeployDiff, DeployNewSnapshot},
     tag::save::Tagging,
     tree::DeployTree,
     user_wallet::BlockchainUserWalletService,
@@ -295,6 +295,7 @@ pub mod tests {
                 number_of_commits: u64,
                 remote: &Remote,
                 dao_addr: &BlockchainContractAddress,
+                config: &Config,
             ) -> anyhow::Result<()>;
         }
 

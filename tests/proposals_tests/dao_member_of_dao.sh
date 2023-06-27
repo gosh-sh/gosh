@@ -15,8 +15,8 @@ set -x
 #get second part of reward
 
 
-FIRST_VERSION=v3_x
-SECOND_VERSION=v4_x
+#FIRST_VERSION=v4_x
+#SECOND_VERSION=v5_x
 #./node_se_scripts/deploy.sh $FIRST_VERSION
 #. set-vars.sh $FIRST_VERSION
 #./upgrade_tests/set_up.sh $FIRST_VERSION $SECOND_VERSION
@@ -25,9 +25,9 @@ SECOND_VERSION=v4_x
 REPO_NAME=prop_repo02
 DAO_NAME="dao-prop-child_$(date +%s)"
 NEW_REPO_PATH=prop_repo02_v2
-COMMIT_ABI="../$FIRST_VERSION/contracts/gosh/commit.abi.json"
-SNAPSHOT_ABI="../$FIRST_VERSION/contracts/gosh/snapshot.abi.json"
-TASK_ABI="../$FIRST_VERSION/contracts/gosh/task.abi.json"
+COMMIT_ABI="../$VERSION/contracts/gosh/commit.abi.json"
+SNAPSHOT_ABI="../$VERSION/contracts/gosh/snapshot.abi.json"
+TASK_ABI="../$VERSION/contracts/gosh/task.abi.json"
 OLD_VERSION=$CUR_VERSION
 # delete folders
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
@@ -174,7 +174,7 @@ NEW_PARENT_WALLET_ADDR=$WALLET_ADDR
 NEW_PARENT_DAO_ADDR=$DAO_ADDR
 
 sleep 20
-tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull
+tonos-cli -j runx --abi $DAO_ABI_1 --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull
 
 echo "Upgrade child DAO"
 WALLET_ADDR=$CHILD_WALLET_ADDR
@@ -185,19 +185,19 @@ NEW_CHILD_WALLET_ADDR=$WALLET_ADDR
 NEW_CHILD_DAO_ADDR=$DAO_ADDR
 
 sleep 20
-tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull
+tonos-cli -j runx --abi $DAO_ABI_1 --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull
 
 CHILD_ADDR=$(echo $NEW_CHILD_DAO_ADDR | sed -r "s/:/x/")
-NEW_CHILD_DAO_WALLET_ADDR=$(tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull | jq '.value0."'$CHILD_ADDR'".member' | cut -d'"' -f 2)
+NEW_CHILD_DAO_WALLET_ADDR=$(tonos-cli -j runx --abi $DAO_ABI_1 --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull | jq '.value0."'$CHILD_ADDR'".member' | cut -d'"' -f 2)
 echo "NEW_CHILD_DAO_WALLET_ADDR=$NEW_CHILD_DAO_WALLET_ADDR"
 
-tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getTokenBalance
-tonos-cli -j runx --abi $DAO_ABI --addr $NEW_CHILD_DAO_ADDR -m getTokenBalance
+tonos-cli -j runx --abi $DAO_ABI_1 --addr $NEW_PARENT_DAO_ADDR -m getTokenBalance
+tonos-cli -j runx --abi $DAO_ABI_1 --addr $NEW_CHILD_DAO_ADDR -m getTokenBalance
 
-tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_PARENT_WALLET_ADDR -m m_pseudoDAOBalance
-tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_PARENT_WALLET_ADDR -m m_pseudoDAOVoteBalance
-tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_CHILD_WALLET_ADDR -m m_pseudoDAOBalance
-tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_CHILD_WALLET_ADDR -m m_pseudoDAOVoteBalance
+tonos-cli -j runx --abi $WALLET_ABI_1 --addr $NEW_PARENT_WALLET_ADDR -m m_pseudoDAOBalance
+tonos-cli -j runx --abi $WALLET_ABI_1 --addr $NEW_PARENT_WALLET_ADDR -m m_pseudoDAOVoteBalance
+tonos-cli -j runx --abi $WALLET_ABI_1 --addr $NEW_CHILD_WALLET_ADDR -m m_pseudoDAOBalance
+tonos-cli -j runx --abi $WALLET_ABI_1 --addr $NEW_CHILD_WALLET_ADDR -m m_pseudoDAOVoteBalance
 
 tonos-cli callx --addr "$PARENT_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m updateHead
 tonos-cli callx --addr "$CHILD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m updateHead
@@ -209,19 +209,19 @@ tonos-cli callx --addr "$PARENT_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET
 tonos-cli callx --addr "$CHILD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m sendTokenToNewVersion --grant 20 --newversion "$TEST_VERSION1"
 sleep 60
 
-tonos-cli callx --addr "$NEW_PARENT_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m lockVoting --amount 0
-tonos-cli callx --addr "$NEW_CHILD_WALLET_ADDR" --abi "$WALLET_ABI" --keys "$WALLET_KEYS" -m lockVoting --amount 0
+tonos-cli callx --addr "$NEW_PARENT_WALLET_ADDR" --abi "$WALLET_ABI_1" --keys "$WALLET_KEYS" -m lockVoting --amount 0
+tonos-cli callx --addr "$NEW_CHILD_WALLET_ADDR" --abi "$WALLET_ABI_1" --keys "$WALLET_KEYS" -m lockVoting --amount 0
 
 sleep 60
 
-tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getTokenBalance
-tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull
-tonos-cli -j runx --abi $DAO_ABI --addr $NEW_CHILD_DAO_ADDR -m getTokenBalance
-tonos-cli -j runx --abi $DAO_ABI --addr $NEW_CHILD_DAO_ADDR -m getWalletsFull
-tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_PARENT_WALLET_ADDR -m m_pseudoDAOBalance
-tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_PARENT_WALLET_ADDR -m m_pseudoDAOVoteBalance
-tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_CHILD_WALLET_ADDR -m m_pseudoDAOBalance
-tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_CHILD_WALLET_ADDR -m m_pseudoDAOVoteBalance
+tonos-cli -j runx --abi $DAO_ABI_1 --addr $NEW_PARENT_DAO_ADDR -m getTokenBalance
+tonos-cli -j runx --abi $DAO_ABI_1 --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull
+tonos-cli -j runx --abi $DAO_ABI_1 --addr $NEW_CHILD_DAO_ADDR -m getTokenBalance
+tonos-cli -j runx --abi $DAO_ABI_1 --addr $NEW_CHILD_DAO_ADDR -m getWalletsFull
+tonos-cli -j runx --abi $WALLET_ABI_1 --addr $NEW_PARENT_WALLET_ADDR -m m_pseudoDAOBalance
+tonos-cli -j runx --abi $WALLET_ABI_1 --addr $NEW_PARENT_WALLET_ADDR -m m_pseudoDAOVoteBalance
+tonos-cli -j runx --abi $WALLET_ABI_1 --addr $NEW_CHILD_WALLET_ADDR -m m_pseudoDAOBalance
+tonos-cli -j runx --abi $WALLET_ABI_1 --addr $NEW_CHILD_WALLET_ADDR -m m_pseudoDAOVoteBalance
 
 
 tonos-cli -j runx --abi $WALLET_ABI --addr $CHILD_WALLET_ADDR -m m_pseudoDAOBalance
@@ -235,8 +235,8 @@ dao_transfer_tokens
 sleep 30
 
 
-tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull
-tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getTokenBalance
+tonos-cli -j runx --abi $DAO_ABI_1 --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull
+tonos-cli -j runx --abi $DAO_ABI_1 --addr $NEW_PARENT_DAO_ADDR -m getTokenBalance
 
 child_dao_lock_vote
 
@@ -245,8 +245,8 @@ sleep 60
 tonos-cli -j runx --abi $WALLET_ABI --addr $CHILD_WALLET_ADDR -m m_pseudoDAOBalance
 tonos-cli -j runx --abi $WALLET_ABI --addr $CHILD_WALLET_ADDR -m m_pseudoDAOVoteBalance
 
-tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull
-tonos-cli -j runx --abi $DAO_ABI --addr $NEW_PARENT_DAO_ADDR -m getTokenBalance
+tonos-cli -j runx --abi $DAO_ABI_1 --addr $NEW_PARENT_DAO_ADDR -m getWalletsFull
+tonos-cli -j runx --abi $DAO_ABI_1 --addr $NEW_PARENT_DAO_ADDR -m getTokenBalance
 
 sleep 60
 

@@ -1,0 +1,19 @@
+{
+  "name": "test",
+  "version": "1.0.0",
+  "description": "Gosh contracts tests",
+  "main": "gosh.test.js",
+  "scripts": {
+    "test": "mocha gosh.test.js --exit --bail",
+    "test:deploy": "mocha gosh.test.js -g @deploy"
+  },
+  "author": "TON Labs",
+  "license": "ISC",
+  "dependencies": {
+    "@eversdk/core": "^1.35.1",
+    "@eversdk/lib-node": "^1.35.1"
+  },
+  "devDependencies": {
+    "mocha": "^7.0.1"
+  }
+}

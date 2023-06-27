@@ -7,6 +7,7 @@ import { toast } from 'react-toastify'
 import { Button } from '../Form'
 import { ToastError, ToastSuccess } from '../Toast'
 import Alert from '../Alert/Alert'
+import { DISABLED_VERSIONS } from '../../helpers'
 
 type TDaoNotificationProps = {
     dao: {
@@ -49,7 +50,9 @@ const DaoNotification = (props: TDaoNotificationProps) => {
             // Check if using latest version of DAO or new version avaiable
             const versions = Object.keys(AppConfig.versions)
             const currVerIndex = versions.findIndex((v) => v === dao.details.version)
-            const nextVersions = versions.slice(currVerIndex + 1)
+            const nextVersions = versions
+                .slice(currVerIndex + 1)
+                .filter((v) => DISABLED_VERSIONS.indexOf(v) < 0)
             if (nextVersions.length && nextVersions.indexOf(dao.details.version) < 0) {
                 const next = await Promise.all(
                     nextVersions.map(async (ver) => {

@@ -41,9 +41,11 @@ async fn main_internal() -> anyhow::Result<()> {
     let root = tracing::span!(tracing::Level::INFO, "git-remote-helper");
     let _enter = root.enter();
     let config = git_remote_gosh::config::Config::init()?;
+    let supported_contract_version = supported_contract_version()?;
+    let version_stripped = supported_contract_version.replace("\"", "");
     let version = option_env!("GOSH_BUILD_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
-    tracing::info!("git-remote-gosh v{version}");
-    eprintln!("git-remote-gosh v{version}");
+    tracing::info!("git-remote-gosh v{version} (GOSH v{})", version_stripped);
+    eprintln!("git-remote-gosh v{version} (GOSH v{})", version_stripped);
     let matches = Command::new("git-remote-gosh")
         .about("GOSH network helper for git")
         .arg(Arg::new("name"))
@@ -57,7 +59,7 @@ async fn main_internal() -> anyhow::Result<()> {
         .arg(
             Arg::new("version")
                 .long("version")
-                .action(clap::ArgAction::SetTrue)
+                .action(clap::ArgAction::SetTrue),
         )
         .subcommand(
             Command::new("supported_contract_version")
@@ -67,10 +69,7 @@ async fn main_internal() -> anyhow::Result<()> {
 
     match matches.subcommand() {
         Some(("supported_contract_version", _)) => {
-            println!(
-                "Supported contract version: {}",
-                supported_contract_version()?
-            );
+            println!("Supported contract version: {}", supported_contract_version);
         }
         _ => {
             if matches.get_flag("version") {

@@ -86,6 +86,10 @@ if [ -n "$3" ]; then
   echo "Deploy giver for upgrade"
   cd $NEW_GOSH_PATH/../multisig
 
+  echo "" > Giver.addr
+  echo "" > Giver.network
+  echo "" > Giver.seed
+
   make generate-docker
   export GIVER_ADDR=`cat Giver.addr`
   echo "GIVER_ADDR = $GIVER_ADDR"

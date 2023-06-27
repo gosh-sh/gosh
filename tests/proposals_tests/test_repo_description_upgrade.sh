@@ -51,7 +51,7 @@ echo "***** awaiting repo deploy *****"
 wait_account_active $REPO_ADDR
 sleep 3
 
-DESC=$(tonos-cli -j runx --abi $REPO_ABI --addr $REPO_ADDR -m _description | jq '._description' | cut -d'"' -f 2)
+DESC=$(tonos-cli -j runx --abi $REPO_ABI_1 --addr $REPO_ADDR -m _description | jq '._description' | cut -d'"' -f 2)
 if [ "$DESC" != "$DESCRIPTION" ]; then
   echo Wrong repo description
   exit 1

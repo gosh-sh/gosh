@@ -9,11 +9,14 @@ export type TButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const styles: { [key: string]: string[] } = {
     base: [
-        'text-center whitespace-nowrap',
+        'text-center whitespace-nowrap transition-all',
         'border border-transparent rounded-lg',
         'disabled:pointer-events-none',
     ],
-    default: ['bg-black text-white hover:text-white/75 disabled:text-gray-7c8db5'],
+    default: [
+        'bg-black text-white hover:text-white/75',
+        'disabled:text-gray-7c8db5/50 disabled:bg-gray-fafafd',
+    ],
     custom: [],
     'outline-danger': [
         'bg-white text-red-ff3b30',
@@ -58,7 +61,7 @@ const Button = (props: TButtonProps) => {
             {...rest}
             disabled={disabled || isLoading}
         >
-            {isLoading && <Spinner className="mr-2" />}
+            {isLoading && <Spinner className={classNames(children ? 'mr-2' : null)} />}
             {children}
         </button>
     )

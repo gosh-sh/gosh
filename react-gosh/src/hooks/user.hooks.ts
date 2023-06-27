@@ -77,22 +77,23 @@ function useUser() {
     }
 
     const signup = async (params: { username: string; phrase: string }) => {
+        setSignupProgress((state) => ({ ...state, isFetching: true }))
+
         const gosh = GoshAdapterFactory.createLatest()
         await _validateCredentials(gosh, params)
 
         const { username, phrase } = params
-        const profile = await gosh.getProfile({ username })
+        const derived = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
+            phrase,
+        })
+
+        const profile = await gosh.getProfile({ username, keys: derived })
         if (await profile.isDeployed()) {
             throw new GoshError(
                 EGoshError.PROFILE_EXISTS,
                 `GOSH username '${username}' is already taken`,
             )
         }
-
-        setSignupProgress((state) => ({ ...state, isFetching: true }))
-        const derived = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
-            phrase,
-        })
 
         let isProfileDeployed = false
         try {
@@ -111,6 +112,8 @@ function useUser() {
 
         resetUserPersist()
         setUserPersist((state) => ({ ...state, username, profile: profile.address }))
+
+        return { profile, username, keys: derived }
     }
 
     const signout = () => {

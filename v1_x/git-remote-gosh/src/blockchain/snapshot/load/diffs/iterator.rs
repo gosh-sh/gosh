@@ -133,6 +133,17 @@ impl DiffMessagesIterator {
                     &file_path,
                 )
                 .await?;
+                let snapshot_contract =
+                    GoshContract::new(original_snapshot.clone(), crate::abi::SNAPSHOT);
+                let snapshot_is_active = snapshot_contract.is_active(client).await?;
+                tracing::trace!(
+                    "snap={original_snapshot} is {}",
+                    if snapshot_is_active {
+                        "ACTIVE"
+                    } else {
+                        "NON_ACTIVE"
+                    }
+                );
                 tracing::info!(
                     "First commit in this branch to the file {} is {} and it was branched from {} -> snapshot addr: {}",
                     file_path,
@@ -141,13 +152,17 @@ impl DiffMessagesIterator {
                     original_snapshot
                 );
                 // generate filter
-                let created_at: u64 = crate::blockchain::commit::get_set_commit_created_at_time(
-                    client,
-                    repo_contract,
-                    &original_commit,
-                    &original_branch,
-                )
-                .await?;
+                let created_at: u64 = if snapshot_is_active {
+                    crate::blockchain::commit::get_set_commit_created_at_time(
+                        client,
+                        repo_contract,
+                        &original_commit,
+                        &original_branch,
+                    )
+                    .await?
+                } else {
+                    0u64
+                };
                 Some(NextChunk::JumpToAnotherBranchSnapshot(
                     original_snapshot,
                     created_at,
@@ -194,6 +209,7 @@ impl DiffMessagesIterator {
                         } else {
                             // Do not panic but stop search, because this commit can be found in the other branch
                             tracing::info!("We reached the end of the messages queue to a snapshot and were not able to find original commit there.");
+                            self.buffer_cursor = 0;
                             return Ok(LoadStatus::StopSearch);
                         }
                     } else {
@@ -250,7 +266,7 @@ pub async fn load_messages_to(
     cursor: &Option<String>,
     stop_on: Option<u64>,
 ) -> anyhow::Result<(Vec<DiffMessage>, PageIterator)> {
-    tracing::trace!("load_messages_to: address={address}, cursor={cursor:?}, stop_on={stop_on:?}");
+    tracing::trace!("address={address}, cursor={cursor:?}, stop_on={stop_on:?}");
     let mut subsequent_page_info: Option<String> = None;
     let query = r#"query($addr: String!, $before: String){
       blockchain {
@@ -292,7 +308,7 @@ pub async fn load_messages_to(
         subsequent_page_info = Some(edges.page_info.start_cursor);
     }
 
-    tracing::trace!("Loaded {} message(s) to {}", edges.edges.len(), address);
+    tracing::trace!("snap={address} Loaded {} message(s)", edges.edges.len());
     for elem in edges.edges.iter().rev() {
         let raw_msg = &elem.message;
         if stop_on != None && raw_msg.created_at >= stop_on.unwrap() {
@@ -303,7 +319,7 @@ pub async fn load_messages_to(
             continue;
         }
 
-        tracing::trace!("Decoding message {:?}", raw_msg.id);
+        tracing::trace!("snap={address} Decoding message {:?}", raw_msg.id);
         let decoding_result = decode_message_body(
             Arc::clone(context),
             ParamsOfDecodeMessageBody {
@@ -316,8 +332,8 @@ pub async fn load_messages_to(
         .await;
 
         if let Err(ref e) = decoding_result {
-            tracing::trace!("decode_message_body error: {:#?}", e);
-            tracing::trace!("undecoded message: {:#?}", raw_msg);
+            tracing::trace!("snap={address} decode_message_body error: {:#?}", e);
+            tracing::trace!("snap={address} undecoded message: {:#?}", raw_msg);
             continue;
         }
 
@@ -334,7 +350,7 @@ pub async fn load_messages_to(
         }
     }
 
-    tracing::trace!("Passed {} message(s)", messages.len());
+    tracing::trace!("snap={address} Passed {} message(s)", messages.len());
     let oldest_timestamp = match messages.len() {
         0 => None,
         n => Some(messages[n - 1].created_at),
@@ -345,4 +361,3 @@ pub async fn load_messages_to(
     };
     Ok((messages, page))
 }
-

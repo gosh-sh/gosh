@@ -50,25 +50,32 @@ const DaoWalletSide = (props: TDaoWalletSideProps) => {
 
     const onTokenTransferFromPrevDao = async () => {
         try {
-            const { value0 } = await dao.adapter.dao.runLocal('getPreviousDaoAddr', {})
+            let prevDao = await dao.adapter.getPrevDao()
+            while (prevDao) {
+                console.debug('Prev DAO', prevDao.getVersion())
+                if (!user.username || !user.keys) {
+                    throw new GoshError('You should be authenticated')
+                }
+                if (prevDao.getVersion() === '1.0.0') {
+                    break
+                }
 
-            const gosh = dao.adapter.getGosh()
-            const daoPrev = await gosh.getDao({ address: value0, useAuth: true })
-            const { value1: daoPrevVer } = await daoPrev.dao.runLocal('getVersion', {})
-            if (daoPrevVer === '1.0.0') {
-                throw new GoshError('Transfer is not needed', {
-                    message: 'Transfer from DAO version 1.0.0 is not needed',
+                await prevDao.setAuth(user.username, user.keys)
+                if (!prevDao.wallet?.isDeployed()) {
+                    throw new GoshError('You was not a member of previous DAO version')
+                }
+
+                const prevSmv = await prevDao.getSmv()
+                await prevSmv.releaseAll()
+                await prevSmv.transferToWallet(0)
+                const balance = await prevSmv.getWalletBalance(prevDao.wallet!)
+                await prevDao.wallet?.run('sendTokenToNewVersion', {
+                    grant: balance,
+                    newversion: dao.details.version,
                 })
-            }
 
-            const smvPrev = await daoPrev.getSmv()
-            await smvPrev.releaseAll()
-            await smvPrev.transferToWallet(0)
-            const balance = await smvPrev.getWalletBalance(daoPrev.wallet!)
-            await daoPrev.wallet?.run('sendTokenToNewVersion', {
-                grant: balance,
-                newversion: dao.details.version,
-            })
+                prevDao = await prevDao.getPrevDao()
+            }
 
             toast.success(
                 <ToastSuccess
@@ -90,9 +97,13 @@ const DaoWalletSide = (props: TDaoWalletSideProps) => {
             className={classNames('border border-gray-e6edff rounded-xl p-5', className)}
         >
             <div>
-                <div className="mb-1 text-gray-7c8db5 text-sm">Your wallet balance</div>
-                <div className="text-xl font-medium">
-                    {getUserBalance().toLocaleString()}
+                <div>
+                    <div className="mb-1 text-gray-7c8db5 text-sm">
+                        Your wallet balance
+                    </div>
+                    <div className="text-xl font-medium">
+                        {getUserBalance().toLocaleString()}
+                    </div>
                 </div>
                 {(dao.details.isAuthMember || dao.details.isAuthLimited) && (
                     <div className="mt-3 flex flex-wrap gap-x-3">
