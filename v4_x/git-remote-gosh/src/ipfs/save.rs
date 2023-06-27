@@ -1,9 +1,9 @@
 use super::IpfsService;
 use crate::ipfs::service::FileSave;
+use crate::ipfs::IpfsError;
 use async_trait::async_trait;
 use std::path::Path;
 use tokio_retry::Retry;
-use crate::ipfs::IpfsError;
 
 #[async_trait]
 impl FileSave for IpfsService {
@@ -27,10 +27,11 @@ impl FileSave for IpfsService {
         })
         .await;
         match res {
-            Err(_) => { anyhow::bail!(IpfsError::SaveToIpfsError) },
-            Ok(res) => { Ok(res) }
+            Err(_) => {
+                anyhow::bail!(IpfsError::SaveToIpfsError)
+            }
+            Ok(res) => Ok(res),
         }
-
     }
 
     #[instrument(level = "info", skip_all)]

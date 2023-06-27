@@ -73,9 +73,7 @@ impl ParallelDiffsUploadSupport {
         }
     }
 
-    pub fn get_expected(
-        &self,
-    ) -> &Vec<String> {
+    pub fn get_expected(&self) -> &Vec<String> {
         &self.expecting_deployed_contacts_addresses
     }
 
@@ -94,16 +92,12 @@ impl ParallelDiffsUploadSupport {
         let last_commit_id = self.last_commit_id.clone();
         let repo_name: String = context.remote.repo.clone();
         let ipfs_http_endpoint: String = context.config.ipfs_http_endpoint().to_string();
-        tracing::trace!(
-            "start push of diff: {}",
-            diff_address
-        );
+        tracing::trace!("start push of diff: {}", diff_address);
 
         let database = context.get_db()?.clone();
 
-        self.expecting_deployed_contacts_addresses.push(
-            diff_address.clone()
-        );
+        self.expecting_deployed_contacts_addresses
+            .push(diff_address.clone());
         self.pushed_blobs.spawn(
             async move {
                 push_diff(
@@ -138,13 +132,13 @@ impl ParallelDiffsUploadSupport {
                     &self.last_commit_id,
                     &diff_coordinates,
                 )
-                    .await?;
+                .await?;
                 let diff_contract_address = String::from(diff_contract_address);
 
                 if !context.get_db()?.diff_exists(&diff_contract_address)? {
                     context.get_db()?.put_diff(
                         (&parallel_diff, diff_coordinates, true),
-                        diff_contract_address.clone()
+                        diff_contract_address.clone(),
                     )?;
 
                     self.add_to_push_list(context, diff_contract_address)
@@ -240,17 +234,15 @@ impl ParallelDiffsUploadSupport {
         let file_path = diff.file_path.clone();
         let diff_coordinates = self.next_diff(&file_path);
         let prev_value = if self.dangling_diffs.contains(&file_path) {
-            Some(
-                context.get_db()?.get_dangling_diff(&file_path)?
-            )
+            Some(context.get_db()?.get_dangling_diff(&file_path)?)
         } else {
-            self
-                .dangling_diffs
-                .push(file_path.clone());
+            self.dangling_diffs.push(file_path.clone());
             None
         };
 
-        context.get_db()?.put_dangling_diff((&diff, diff_coordinates), file_path)?;
+        context
+            .get_db()?
+            .put_dangling_diff((&diff, diff_coordinates), file_path)?;
 
         match prev_value {
             None => {}
@@ -262,13 +254,13 @@ impl ParallelDiffsUploadSupport {
                     &self.last_commit_id,
                     &diff_coordinates,
                 )
-                    .await?;
+                .await?;
                 let diff_contract_address = String::from(diff_contract_address);
 
                 if !context.get_db()?.diff_exists(&diff_contract_address)? {
                     context.get_db()?.put_diff(
                         (&parallel_diff, diff_coordinates, false),
-                        diff_contract_address.clone()
+                        diff_contract_address.clone(),
                     )?;
 
                     self.add_to_push_list(context, diff_contract_address)

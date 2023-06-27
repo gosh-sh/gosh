@@ -1,5 +1,6 @@
 use crate::blockchain::AddrVersion;
 use crate::config::Config;
+use crate::database::GoshDB;
 use crate::{
     abi as gosh_abi,
     blockchain::{
@@ -22,7 +23,6 @@ use std::time::{Duration, Instant};
 use tokio::time::sleep;
 use ton_client::abi::{DecodedMessageBody, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
-use crate::database::GoshDB;
 
 const GOSH_REMOTE_WAIT_TIMEOUT_ENV: &str = "GOSH_REMOTE_WAIT_TIMEOUT";
 
@@ -136,7 +136,8 @@ impl BlockchainCommitPusher for Everscale {
         // let mut repo_contract = self.repo_contract.clone();
         let repo_contract = &mut self.repo_contract.clone();
         let expected_address =
-            blockchain::get_commit_address(&self.ever_client, repo_contract, &commit.commit_id).await?;
+            blockchain::get_commit_address(&self.ever_client, repo_contract, &commit.commit_id)
+                .await?;
 
         let result = self
             .send_message(
@@ -279,7 +280,7 @@ pub async fn query_all_messages(
         )
         .await
         .map(|r| r.result)
-            .map_err(|e| anyhow::format_err!("query error: {e}"))?;
+        .map_err(|e| anyhow::format_err!("query error: {e}"))?;
 
         let nodes = &result["data"]["blockchain"]["account"]["messages"];
         let edges: Messages = serde_json::from_value(nodes.clone())?;
@@ -387,7 +388,7 @@ pub async fn is_transaction_ok(context: &Everscale, msg_id: &String) -> anyhow::
     )
     .await
     .map(|r| r.result)
-        .map_err(|e| anyhow::format_err!("query error: {e}"))?;
+    .map_err(|e| anyhow::format_err!("query error: {e}"))?;
 
     let trx: Vec<TrxInfo> = serde_json::from_value(result["data"]["transactions"].clone())?;
 

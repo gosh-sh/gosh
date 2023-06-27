@@ -9,6 +9,7 @@ use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
 use crate::blockchain::get_commit_address;
 use crate::cache::proxy::CacheProxy;
+use crate::database::GoshDB;
 use crate::{
     abi as gosh_abi,
     blockchain::{
@@ -21,7 +22,6 @@ use crate::{
     logger::set_log_verbosity,
     utilities::Remote,
 };
-use crate::database::GoshDB;
 
 pub mod ever_client;
 #[cfg(test)]
@@ -349,7 +349,6 @@ where
                 version: repo_version.version.clone(),
                 commit_address,
             });
-
         }
         anyhow::bail!("Failed to find commit with id {commit_id} in all repo versions.")
     }

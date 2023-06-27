@@ -35,10 +35,7 @@ where
                         );
                         return Ok(waiting_for_addresses);
                     }
-                    match b
-                        .check_contracts_state(&waiting_for_addresses, true)
-                        .await
-                    {
+                    match b.check_contracts_state(&waiting_for_addresses, true).await {
                         Ok(found_addresses) => {
                             let available: HashSet<BlockchainContractAddress> =
                                 HashSet::from_iter(found_addresses.iter().cloned());

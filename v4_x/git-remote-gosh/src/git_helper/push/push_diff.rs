@@ -1,12 +1,13 @@
-use std::sync::Arc;
 use crate::blockchain::user_wallet::{UserWallet, WalletError};
 use crate::ipfs::{build_ipfs, IpfsError};
+use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::sleep;
 
 use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
-use crate::blockchain::{AddrVersion, get_commit_address};
-use crate::git_helper::push::GetPreviousResult;
+use crate::blockchain::get_commit_address;
+
+use crate::database::GoshDB;
 use crate::{
     blockchain::{
         contract::{ContractRead, GoshContract},
@@ -22,7 +23,6 @@ use crate::{
 };
 use tokio_retry::RetryIf;
 use ton_client::utils::compress_zstd;
-use crate::database::GoshDB;
 
 use super::is_going_to_ipfs;
 use super::utilities::retry::default_retry_strategy;
@@ -97,7 +97,6 @@ pub async fn inner_push_diff(
     diff_address: &str,
     database: Arc<GoshDB>,
 ) -> anyhow::Result<()> {
-
     let (parallel_diff, diff_coordinate, is_last) = database.get_diff(diff_address)?;
 
     let commit_id = parallel_diff.commit_id;
@@ -115,7 +114,7 @@ pub async fn inner_push_diff(
         &branch_name,
         &file_path,
     ))
-        .await?;
+    .await?;
     tracing::trace!("inner_push_diff: snapshot_addr={snapshot_addr}, commit_id={commit_id}, branch_name={branch_name}, blob_id={blob_id}, file_path={file_path}, diff_coordinate={diff_coordinate:?}, last_commit_id={last_commit_id}, is_last={is_last}");
     let diff = compress_zstd(diff, None)?;
     tracing::trace!("compressed to {} size", diff.len());
@@ -348,7 +347,7 @@ where
 {
     let snapshot = database.get_snapshot(&snapshot_address)?;
 
-    let branch_name= snapshot.branch_name;
+    let branch_name = snapshot.branch_name;
     let file_path = snapshot.file_path;
     let upgrade = snapshot.upgrade;
     let commit_id = snapshot.commit_id;
@@ -367,7 +366,8 @@ where
     let (content, commit_id, ipfs) = if upgrade {
         tracing::trace!("generate content for upgrade snapshot");
 
-        let mut repo_contract = GoshContract::new(prev_repo_address.as_ref().unwrap(), gosh_abi::REPO);
+        let mut repo_contract =
+            GoshContract::new(prev_repo_address.as_ref().unwrap(), gosh_abi::REPO);
         let snapshot_addr = Snapshot::calculate_address(
             blockchain.client(),
             &mut repo_contract,

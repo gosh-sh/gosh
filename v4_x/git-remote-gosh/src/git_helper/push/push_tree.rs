@@ -14,12 +14,12 @@ use std::{
 use crate::cache::Cache;
 
 use super::is_going_to_ipfs;
+use crate::blockchain::Tree;
+use crate::database::GoshDB;
 use crate::git_helper::push::parallel_snapshot_upload_support::{
     ParallelTree, ParallelTreeUploadSupport,
 };
 use tokio::sync::Semaphore;
-use crate::blockchain::Tree;
-use crate::database::GoshDB;
 
 const MARKER_FLAG: u32 = 1u32;
 
@@ -127,18 +127,14 @@ pub async fn push_tree(
             &mut repo_contract,
             &tree_id.to_string(),
         )
-            .await?;
+        .await?;
         let tree_address = String::from(tree_address);
 
         if !context.get_db()?.tree_exists(&tree_address)? {
             context.get_db()?.put_tree(tree, tree_address.clone())?;
 
             handlers
-                .add_to_push_list(
-                    context,
-                    tree_address,
-                    push_semaphore.clone(),
-                )
+                .add_to_push_list(context, tree_address, push_semaphore.clone())
                 .await?;
         } else {
             handlers.push_expected(tree_address);

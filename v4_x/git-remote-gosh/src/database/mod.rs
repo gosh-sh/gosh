@@ -1,16 +1,10 @@
-mod types;
-mod save;
 mod load;
+mod save;
+mod types;
 
-use std::ops::{Deref, DerefMut};
+use rocksdb::{BoundColumnFamily, DBWithThreadMode, MultiThreaded};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use rocksdb::{BoundColumnFamily, DBCommon, DBWithThreadMode, MultiThreaded};
-use tokio::sync::Mutex;
-use crate::blockchain::snapshot::PushDiffCoordinate;
-use crate::database::types::{DBCommit, DBDiff, DBTree};
-use crate::git_helper::push::parallel_diffs_upload_support::ParallelDiff;
-use crate::git_helper::push::parallel_snapshot_upload_support::{ParallelCommit, ParallelSnapshot, ParallelTree};
 
 const DB_FOLDER_NAME: &str = "gosh_db";
 const DEFAULT_LEVEL_OF_PARALLELISM: i32 = 4;
@@ -24,7 +18,12 @@ fn get_db_path() -> anyhow::Result<String> {
     let local_git_dir = std::env::var("GIT_DIR")?;
     let mut path = PathBuf::from(local_git_dir);
     path.push(DB_FOLDER_NAME);
-    let res = path.to_str().ok_or(anyhow::format_err!("Failed to generate path for temporary database"))?.to_string();
+    let res = path
+        .to_str()
+        .ok_or(anyhow::format_err!(
+            "Failed to generate path for temporary database"
+        ))?
+        .to_string();
     tracing::trace!("Database path: {res}");
     Ok(res)
 }
@@ -37,7 +36,9 @@ fn get_db_options() -> rocksdb::Options {
 
     // Set parallelism to the number of cores
     db_options.increase_parallelism(
-        std::thread::available_parallelism().map(|val| val.get() as i32).unwrap_or(DEFAULT_LEVEL_OF_PARALLELISM)
+        std::thread::available_parallelism()
+            .map(|val| val.get() as i32)
+            .unwrap_or(DEFAULT_LEVEL_OF_PARALLELISM),
     );
 
     db_options.set_use_direct_io_for_flush_and_compaction(true);
@@ -73,9 +74,7 @@ pub struct GoshDB {
 impl GoshDB {
     pub fn new() -> anyhow::Result<Self> {
         let db = create_db()?;
-        Ok(GoshDB {
-            db: Some(db),
-        })
+        Ok(GoshDB { db: Some(db) })
     }
 
     fn db(&self) -> &DBWithThreadMode<MultiThreaded> {
@@ -94,7 +93,7 @@ impl GoshDB {
                 let db_options = get_db_options();
                 drop(db);
                 DBWithThreadMode::<MultiThreaded>::destroy(&db_options, &db_path)?;
-            },
+            }
             _ => {}
         }
         Ok(())

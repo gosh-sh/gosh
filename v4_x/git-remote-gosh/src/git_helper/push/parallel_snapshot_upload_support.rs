@@ -2,8 +2,8 @@ use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deploye
 use crate::blockchain::tree::load::check_if_tree_is_ready;
 use crate::{
     blockchain::{
-        get_commit_address, tree::TreeNode, user_wallet::WalletError, AddrVersion,
-        BlockchainContractAddress, BlockchainService, Snapshot, Tree,
+        tree::TreeNode, user_wallet::WalletError, AddrVersion, BlockchainContractAddress,
+        BlockchainService,
     },
     git_helper::{
         push::{
@@ -15,10 +15,10 @@ use crate::{
 };
 use anyhow::bail;
 use git_hash::ObjectId;
-use std::{collections::HashMap, sync::Arc, vec::Vec};
 use std::time::Duration;
-use tokio::{sync::Semaphore, task::JoinSet};
+use std::{collections::HashMap, sync::Arc, vec::Vec};
 use tokio::time::sleep;
+use tokio::{sync::Semaphore, task::JoinSet};
 use tokio_retry::RetryIf;
 use tracing::Instrument;
 
@@ -79,16 +79,14 @@ impl ParallelSnapshotUploadSupport {
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
         snapshot_address: String,
-        prev_repo_address: Option<BlockchainContractAddress>
+        prev_repo_address: Option<BlockchainContractAddress>,
     ) -> anyhow::Result<()> {
         let blockchain = context.blockchain.clone();
         let dao_address: BlockchainContractAddress = context.dao_addr.clone();
         let remote_network: String = context.remote.network.clone();
         let repo_address = context.repo_addr.clone();
 
-        tracing::trace!(
-            "Start push of snapshot: address: {snapshot_address:?}"
-        );
+        tracing::trace!("Start push of snapshot: address: {snapshot_address:?}");
 
         self.expecting_deployed_contacts_addresses
             .push(snapshot_address.to_string());
@@ -161,7 +159,6 @@ pub struct ParallelCommit {
     pub upgrade_commit: bool,
 }
 
-
 impl ParallelCommit {
     #[instrument(level = "info", skip_all, name = "new_ParallelDiff")]
     pub fn new(
@@ -233,12 +230,7 @@ impl ParallelCommitUploadSupport {
                     default_retry_strategy(),
                     || async {
                         blockchain
-                            .push_commit(
-                                &commit_address,
-                                &remote,
-                                &dao_address,
-                                database.clone(),
-                            )
+                            .push_commit(&commit_address, &remote, &dao_address, database.clone())
                             .await
                     },
                     condition,
@@ -338,9 +330,7 @@ impl ParallelTreeUploadSupport {
         let remote_network = context.remote.network.clone();
         let repo = context.remote.repo.clone();
 
-        tracing::trace!(
-            "Start push of tree: address: {tree_address:?}"
-        );
+        tracing::trace!("Start push of tree: address: {tree_address:?}");
 
         self.expecting_deployed_contacts_addresses
             .push(tree_address.clone());
@@ -416,20 +406,21 @@ impl ParallelTreeUploadSupport {
         }
         let _ = wait_contracts_deployed(&blockchain, &addresses).await?;
 
-        let mut rest: HashMap<BlockchainContractAddress, usize> = addresses.iter().map(|addr| (addr.to_owned(), 0)).collect();
+        let mut rest: HashMap<BlockchainContractAddress, usize> =
+            addresses.iter().map(|addr| (addr.to_owned(), 0)).collect();
         let mut attempt = 0;
         loop {
             attempt += 1;
             let mut new_rest = HashMap::new();
             for (address, _) in &rest {
                 match check_if_tree_is_ready(&blockchain, address).await {
-                    Ok((true, _)) => {},
+                    Ok((true, _)) => {}
                     Ok((false, num)) => {
                         if &num != rest.get(address).unwrap() {
                             attempt = 0;
                         }
                         new_rest.insert(address.to_owned(), num);
-                    },
+                    }
                     _ => {
                         new_rest.insert(address.to_owned(), 0usize);
                     }

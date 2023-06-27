@@ -22,8 +22,8 @@ use ton_client::{
         ParamsOfEncodeMessage, ResultOfEncodeInitialData, Signer,
     },
     boc::{
-        cache_set, get_boc_hash, BocCacheType, ParamsOfBocCacheSet,
-        ParamsOfGetBocHash, ResultOfBocCacheSet, ResultOfGetBocHash,
+        cache_set, get_boc_hash, BocCacheType, ParamsOfBocCacheSet, ParamsOfGetBocHash,
+        ResultOfBocCacheSet, ResultOfGetBocHash,
     },
     net::{query_collection, ParamsOfQuery, ParamsOfQueryCollection},
     processing::ProcessingEvent,
@@ -49,9 +49,9 @@ use once_cell::sync::Lazy;
 use serde_number::Number;
 pub use snapshot::Snapshot;
 use std::collections::HashMap;
-use std::time::Duration;
+
 use tokio::sync::RwLock;
-use tokio::time::sleep;
+
 use ton_client::boc::{encode_state_init, ParamsOfEncodeStateInit, ResultOfEncodeStateInit};
 pub use tree::Tree;
 pub use tvm_hash::tvm_hash;
@@ -380,7 +380,7 @@ async fn run_local(
     .await
     .map(|r| r.decoded.unwrap())
     .map(|r| r.output.unwrap())
-        .map_err(|e| anyhow::format_err!("run_local failed: {e}"))?;
+    .map_err(|e| anyhow::format_err!("run_local failed: {e}"))?;
 
     Ok(result)
 }
@@ -489,11 +489,11 @@ async fn run_static(
             return_updated_account: None,
         },
     )
-        .instrument(info_span!("run_static sdk::run_tvm").or_current())
-        .await
-        .map(|r| r.decoded.unwrap())
-        .map(|r| r.output.unwrap())
-        .map_err(|e| anyhow::format_err!("run_static failed: {e}"));
+    .instrument(info_span!("run_static sdk::run_tvm").or_current())
+    .await
+    .map(|r| r.decoded.unwrap())
+    .map(|r| r.output.unwrap())
+    .map_err(|e| anyhow::format_err!("run_static failed: {e}"));
     if result.is_err() {
         tracing::trace!("run_static error: {result:?}");
     }
@@ -528,7 +528,7 @@ pub async fn get_account_data(
     )
     .await
     .map(|r| r.result)
-        .map_err(|e| anyhow::format_err!("query error: {e}"))?;
+    .map_err(|e| anyhow::format_err!("query error: {e}"))?;
 
     let extracted_data = &result["data"]["blockchain"]["account"]["info"];
 
@@ -691,7 +691,7 @@ pub async fn tag_list(
     )
     .await
     .map(|r| r.result)
-        .map_err(|e| anyhow::format_err!("query error: {e}"))?;
+    .map_err(|e| anyhow::format_err!("query error: {e}"))?;
 
     let raw_accounts = result["data"]["accounts"].clone();
     let accounts: Vec<Account> = serde_json::from_value(raw_accounts)?;
@@ -802,7 +802,8 @@ pub async fn calculate_contract_address(
         ..Default::default()
     };
 
-    let ResultOfEncodeStateInit { state_init } = encode_state_init(Arc::clone(context), params).await?;
+    let ResultOfEncodeStateInit { state_init } =
+        encode_state_init(Arc::clone(context), params).await?;
 
     let hash = calculate_boc_hash(context, &state_init).await?;
 
