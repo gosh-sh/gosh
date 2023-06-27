@@ -12,6 +12,7 @@ import GoshPhrase from './components/GoshPhrase'
 import OAuthSignin from './components/OAuthSignin'
 import GoshUsername from './components/GoshUsername'
 import GoshDaoInvites from './components/GoshDaoInvites'
+import GoshPhraseCheck from './components/GoshPhraseCheck'
 
 const OnboardingPage = () => {
     const location = useLocation()
@@ -98,6 +99,7 @@ const OnboardingPage = () => {
                 <GithubOrganizations signoutOAuth={signoutOAuth} />
             )}
             {data.step === 'phrase' && <GoshPhrase />}
+            {data.step === 'phrase-check' && <GoshPhraseCheck />}
             {data.step === 'username' && <GoshUsername signoutOAuth={signoutOAuth} />}
         </div>
     )
