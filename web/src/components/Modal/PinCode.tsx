@@ -7,6 +7,10 @@ import { appModalStateAtom } from '../../store/app.state'
 import { toast } from 'react-toastify'
 import { Button } from '../Form'
 import PinInput from 'react-pin-input'
+import { useUser } from '../../v1/hooks/user.hooks'
+import { TUserPersist } from '../../types/user.types'
+import { chacha20, generateRandomBytes } from '../../blockchain/utils'
+import { AppConfig } from '../../appconfig'
 
 type TPinCodeModalProps = {
     unlock?: boolean

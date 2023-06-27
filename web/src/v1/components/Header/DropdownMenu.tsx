@@ -1,11 +1,11 @@
 import React from 'react'
 import { Menu, Transition } from '@headlessui/react'
 import { Link } from 'react-router-dom'
-import { useUser } from '../../hooks/user.hooks'
 import classNames from 'classnames'
-import { getIdenticonAvatar } from '../../../helpers'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons'
+import { getIdenticonAvatar } from '../../../helpers'
+import { useUser } from '../../hooks/user.hooks'
 
 const DropdownMenu = () => {
     const user = useUser()
@@ -35,7 +35,7 @@ const DropdownMenu = () => {
                                 className="w-full"
                             />
                         </div>
-                        <div>{user.persist.username}</div>
+                        <div className="hidden md:block">{user.persist.username}</div>
                         <div>
                             <FontAwesomeIcon
                                 icon={faChevronDown}

@@ -4,6 +4,7 @@ export const MAX_ONCHAIN_SIZE = 64512
 export const MAX_PARALLEL_READ = 600
 export const MAX_PARALLEL_WRITE = 200
 export const SYSTEM_TAG = '___!system!___'
+export const DISABLED_VERSIONS = ['5.0.0']
 
 export const SmvEventTypes: { [key: number]: string } = {
     1: 'Pull request',

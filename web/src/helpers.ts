@@ -2,16 +2,8 @@ import { AppConfig } from './appconfig'
 import { toast } from 'react-toastify'
 import { createAvatar } from '@dicebear/core'
 import { identicon } from '@dicebear/collection'
-import yup from './yup-extended'
 
-export const DISABLED_VERSIONS = ['5.0.0']
-
-const supabase = createClient(
-    'https://auth.gosh.sh',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkaHNrdnN6dGVwYnlpc2Jxc2pqIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzA0MTMwNTEsImV4cCI6MTk4NTk4OTA1MX0._6KcFBYmSUfJqTJsKkWcMoIQBv3tuInic9hvEHuFpJg',
-)
-
-const getClipboardData = async (event?: any): Promise<string | null> => {
+export const getClipboardData = async (event?: any): Promise<string | null> => {
     if (event?.clipboardData && event.clipboardData.getData) {
         return event.clipboardData.getData('text/plain')
     }
@@ -28,7 +20,7 @@ const getClipboardData = async (event?: any): Promise<string | null> => {
     return null
 }
 
-const onExternalLinkClick = (e: any, url: string) => {
+export const onExternalLinkClick = (e: any, url: string) => {
     if (!AppConfig.dockerclient) {
         return
     }
@@ -36,7 +28,7 @@ const onExternalLinkClick = (e: any, url: string) => {
     AppConfig.dockerclient.host.openExternal(url)
 }
 
-const getIdenticonAvatar = (options: any) => {
+export const getIdenticonAvatar = (options: any) => {
     return createAvatar(identicon, {
         radius: 8,
         scale: 60,
@@ -48,7 +40,7 @@ const getIdenticonAvatar = (options: any) => {
 /**
  * Toast shortcuts
  */
-const ToastOptionsShortcuts = {
+export const ToastOptionsShortcuts = {
     Default: {
         position: toast.POSITION.TOP_RIGHT,
         autoClose: 5000,
@@ -80,11 +72,4 @@ const ToastOptionsShortcuts = {
         style: { width: '50%' },
         className: 'mx-auto',
     },
-}
-
-export {
-    getClipboardData,
-    onExternalLinkClick,
-    ToastOptionsShortcuts,
-    getIdenticonAvatar,
 }

@@ -1,5 +1,5 @@
 import { forwardRef } from 'react'
-import { classNames } from 'react-gosh'
+import classNames from 'classnames'
 import TextareaAutosize, { TextareaAutosizeProps } from 'react-textarea-autosize'
 
 type TTextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> &
