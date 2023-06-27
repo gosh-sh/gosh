@@ -1,5 +1,6 @@
 use super::IpfsService;
 use crate::ipfs::service::FileSave;
+use crate::ipfs::IpfsError;
 use async_trait::async_trait;
 use std::path::Path;
 use tokio_retry::Retry;
@@ -15,7 +16,8 @@ impl FileSave for IpfsService {
             self.ipfs_endpoint_address,
         );
 
-        Retry::spawn(self.retry_strategy(), || async {
+        // TODO: add condition for expired cert error
+        let res = Retry::spawn(self.retry_strategy(), || async {
             IpfsService::save_blob_retriable(&self.http_client, &url, blob)
                 .await
                 .map_err(|e| {
@@ -23,7 +25,13 @@ impl FileSave for IpfsService {
                     e
                 })
         })
-        .await
+        .await;
+        match res {
+            Err(_) => {
+                anyhow::bail!(IpfsError::SaveToIpfsError)
+            }
+            Ok(res) => Ok(res),
+        }
     }
 
     #[instrument(level = "info", skip_all)]

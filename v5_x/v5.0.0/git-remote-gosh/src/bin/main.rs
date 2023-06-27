@@ -46,7 +46,6 @@ async fn main_internal() -> anyhow::Result<()> {
     let version = option_env!("GOSH_BUILD_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
     tracing::info!("git-remote-gosh v{version} (GOSH v{})", version_stripped);
     eprintln!("git-remote-gosh v{version} (GOSH v{})", version_stripped);
-    eprintln!("\nWarning: This version has found issues. Please upgrade to the next version as soon as possible.\n");
     let matches = Command::new("git-remote-gosh")
         .about("GOSH network helper for git")
         .arg(Arg::new("name"))

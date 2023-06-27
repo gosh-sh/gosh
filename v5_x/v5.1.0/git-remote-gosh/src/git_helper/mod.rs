@@ -9,6 +9,7 @@ use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
 use crate::blockchain::get_commit_address;
 use crate::cache::proxy::CacheProxy;
+use crate::database::GoshDB;
 use crate::{
     abi as gosh_abi,
     blockchain::{
@@ -57,6 +58,7 @@ pub struct GitHelper<
     cache: Arc<CacheProxy>,
     upgraded_commits: Vec<String>,
     repo_versions: Vec<RepoVersion>,
+    database: Option<Arc<GoshDB>>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -75,7 +77,7 @@ struct GetTombstoneResult {
 mod fetch;
 
 // Note: this module implements push method on GitHelper
-mod push;
+pub(crate) mod push;
 
 mod list;
 
@@ -162,7 +164,29 @@ where
             cache: Arc::new(cache),
             upgraded_commits: vec![],
             repo_versions: vec![],
+            database: None,
         })
+    }
+
+    pub fn open_db(&mut self) -> anyhow::Result<()> {
+        self.database = Some(Arc::new(GoshDB::new()?));
+        Ok(())
+    }
+
+    pub fn get_db(&self) -> anyhow::Result<Arc<GoshDB>> {
+        if let Some(db) = &self.database {
+            Ok(db.clone())
+        } else {
+            anyhow::bail!("Database is closed")
+        }
+    }
+
+    pub fn delete_db(&mut self) -> anyhow::Result<()> {
+        if let Some(db) = &mut self.database {
+            Arc::get_mut(db).unwrap().delete()?;
+            self.database = None;
+        }
+        Ok(())
     }
 
     async fn capabilities(&self) -> anyhow::Result<Vec<String>> {
@@ -325,7 +349,6 @@ where
                 version: repo_version.version.clone(),
                 commit_address,
             });
-
         }
         anyhow::bail!("Failed to find commit with id {commit_id} in all repo versions.")
     }
@@ -542,6 +565,7 @@ pub mod tests {
             cache,
             upgraded_commits: vec![],
             repo_versions: vec![],
+            database: None,
         }
     }
 }

@@ -1,5 +1,6 @@
 use crate::blockchain::AddrVersion;
 use crate::config::Config;
+use crate::database::GoshDB;
 use crate::{
     abi as gosh_abi,
     blockchain::{
@@ -25,7 +26,7 @@ use ton_client::net::ParamsOfQuery;
 
 const GOSH_REMOTE_WAIT_TIMEOUT_ENV: &str = "GOSH_REMOTE_WAIT_TIMEOUT";
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Deserialize)]
 pub struct DeployCommitParams {
     #[serde(rename = "repoName")]
     pub repo_name: String,
@@ -38,7 +39,7 @@ pub struct DeployCommitParams {
     pub parents: Vec<AddrVersion>,
     #[serde(rename = "tree")]
     pub tree_addr: BlockchainContractAddress,
-    upgrade: bool,
+    pub upgrade: bool,
 }
 
 #[derive(Deserialize, Debug)]
@@ -86,14 +87,10 @@ struct Messages {
 pub trait BlockchainCommitPusher {
     async fn push_commit(
         &self,
-        commit_id: &ObjectId,
-        branch: &str,
-        tree_addr: &BlockchainContractAddress,
+        commit_address: &str,
         remote: &Remote,
         dao_addr: &BlockchainContractAddress,
-        raw_commit: &str,
-        parents: &Vec<AddrVersion>,
-        upgrade_commit: bool,
+        database: Arc<GoshDB>,
     ) -> anyhow::Result<()>;
     async fn notify_commit(
         &self,
@@ -113,23 +110,20 @@ impl BlockchainCommitPusher for Everscale {
     #[instrument(level = "info", skip_all)]
     async fn push_commit(
         &self,
-        commit_id: &ObjectId,
-        branch: &str,
-        tree_addr: &BlockchainContractAddress,
+        commit_address: &str,
         remote: &Remote,
         dao_addr: &BlockchainContractAddress,
-        raw_commit: &str,
-        parents: &Vec<AddrVersion>,
-        upgrade_commit: bool,
+        database: Arc<GoshDB>,
     ) -> anyhow::Result<()> {
+        let commit = database.get_commit(commit_address)?;
         let args = DeployCommitParams {
             repo_name: remote.repo.clone(),
-            branch_name: branch.to_string(),
-            commit_id: commit_id.clone().to_string(),
-            raw_commit: raw_commit.to_owned(),
-            parents: parents.to_vec(),
-            tree_addr: tree_addr.clone(),
-            upgrade: upgrade_commit,
+            branch_name: commit.branch,
+            commit_id: commit.commit_id.clone(),
+            raw_commit: commit.raw_commit,
+            parents: commit.parents,
+            tree_addr: commit.tree_addr,
+            upgrade: commit.upgrade_commit,
         };
         tracing::trace!("push_commit: dao_addr={dao_addr}");
         tracing::trace!("deployCommit params: {:?}", args);
@@ -141,9 +135,9 @@ impl BlockchainCommitPusher for Everscale {
 
         // let mut repo_contract = self.repo_contract.clone();
         let repo_contract = &mut self.repo_contract.clone();
-        let commit = commit_id.clone().to_string();
         let expected_address =
-            blockchain::get_commit_address(&self.ever_client, repo_contract, &commit).await?;
+            blockchain::get_commit_address(&self.ever_client, repo_contract, &commit.commit_id)
+                .await?;
 
         let result = self
             .send_message(
@@ -286,7 +280,7 @@ pub async fn query_all_messages(
         )
         .await
         .map(|r| r.result)
-            .map_err(|e| anyhow::format_err!("query error: {e}"))?;
+        .map_err(|e| anyhow::format_err!("query error: {e}"))?;
 
         let nodes = &result["data"]["blockchain"]["account"]["messages"];
         let edges: Messages = serde_json::from_value(nodes.clone())?;
@@ -394,7 +388,7 @@ pub async fn is_transaction_ok(context: &Everscale, msg_id: &String) -> anyhow::
     )
     .await
     .map(|r| r.result)
-        .map_err(|e| anyhow::format_err!("query error: {e}"))?;
+    .map_err(|e| anyhow::format_err!("query error: {e}"))?;
 
     let trx: Vec<TrxInfo> = serde_json::from_value(result["data"]["transactions"].clone())?;
 

@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 const MAX_RETRIES_FOR_CHUNKS_TO_APPEAR: i32 = 20;
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Debug, Clone, Deserialize)]
 pub struct TreeNode {
     flags: String,
     mode: String,

@@ -156,8 +156,8 @@ impl GoshContract {
         function_name: &str,
         args: Option<serde_json::Value>,
     ) -> anyhow::Result<T>
-        where
-            T: de::DeserializeOwned,
+    where
+        T: de::DeserializeOwned,
     {
         let result = run_local(context, self, function_name, args).await?;
         tracing::trace!("run_local result: {:?}", result);
