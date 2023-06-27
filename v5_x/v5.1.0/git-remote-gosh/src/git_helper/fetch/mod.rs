@@ -140,11 +140,102 @@ where
         let mut tree_obj_queue = VecDeque::<TreeObjectsQueueItem>::new();
         let mut blobs_restore_plan = restore_blobs::BlobsRebuildingPlan::new();
         let sha = git_hash::ObjectId::from_str(sha)?;
-        commits_queue.push_back(sha);
+        commits_queue.push_front(sha);
 
         let mut dangling_trees = vec![];
         let mut dangling_commits = vec![];
         let mut next_commit_of_prev_version = vec![];
+        loop {
+            tracing::trace!("commits_queue={:?}", commits_queue);
+            if let Some(id) = commits_queue.pop_back() {
+                guard!(id);
+                let address = &self.calculate_commit_address(&id).await?;
+                let onchain_commit =
+                    match blockchain::GoshCommit::load(&self.blockchain.client(), address).await {
+                        Ok(commit) => commit,
+                        Err(e) => {
+                            let version = self.find_commit(&id.to_string()).await?.version;
+                            tracing::trace!(
+                                "push to next_commit_of_prev_version=({},{})",
+                                id,
+                                version
+                            );
+                            next_commit_of_prev_version.push((version, id.to_string()));
+                            continue;
+                        }
+                    };
+                tracing::debug!("branch={branch}: loaded onchain commit {}", id);
+                tracing::debug!(
+                    "branch={branch} commit={id} addr={address}: data {:?}",
+                    onchain_commit
+                );
+                let data = git_object::Data::new(
+                    git_object::Kind::Commit,
+                    onchain_commit.content.as_bytes(),
+                );
+                let obj = git_object::Object::from(data.decode()?).into_commit();
+                tracing::debug!("Received commit {}", id);
+                let mut branches = HashSet::new();
+                branches.insert(onchain_commit.branch.clone());
+
+                tracing::debug!(
+                    "branch={branch}: existing remote branches: {:?}",
+                    remote_branches
+                );
+                // don't collect parent branches for deleted one
+                if remote_branches.contains(&onchain_commit.branch) {
+                    for parent in onchain_commit.parents.clone() {
+                        let parent = BlockchainContractAddress::new(parent.address);
+                        let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
+                        let branch: GetNameBranchResult = parent_contract
+                            .run_local(self.blockchain.client(), "getNameBranch", None)
+                            .await?;
+                        tracing::debug!("commit={id}: extracted branch {:?}", branch.name);
+                        branches.insert(branch.name);
+                    }
+                } else {
+                    branches.insert(branch.to_owned());
+                }
+
+                let to_load = TreeObjectsQueueItem {
+                    path: "".to_owned(),
+                    oid: obj.tree,
+                    branches,
+                };
+                tracing::debug!("New tree root: {}", &to_load.oid);
+                if onchain_commit.initupgrade {
+                    // Object can be first in the tree and have no parents
+                    // if !obj.parents.is_empty() {
+                    let prev_version = onchain_commit.parents[0].clone().version;
+                    tracing::trace!(
+                        "push to next_commit_of_prev_version=({},{})",
+                        id,
+                        prev_version
+                    );
+                    next_commit_of_prev_version.push((prev_version, id.to_string()));
+                    // }
+                } else {
+                    tree_obj_queue.push_front(to_load);
+                    for parent_id in &obj.parents {
+                        commits_queue.push_front(*parent_id);
+                    }
+                    tracing::trace!("Push to dangling commits: {}", id);
+                    dangling_commits.push(obj);
+                }
+                continue;
+            }
+
+            if !dangling_commits.is_empty() {
+                tracing::trace!("Writing dangling commits");
+                for obj in dangling_commits.iter().rev() {
+                    self.write_git_object(obj)?;
+                }
+                dangling_commits.clear();
+                continue;
+            }
+            break;
+        }
+
         loop {
             if blobs_restore_plan.is_available() {
                 let visited_ref = Arc::clone(&visited);
@@ -236,94 +327,6 @@ where
                     self.write_git_tree(obj)?;
                 }
                 dangling_trees.clear();
-            }
-
-            tracing::trace!("commits_queue={:?}", commits_queue);
-            if let Some(id) = commits_queue.pop_front() {
-                guard!(id);
-                let address = &self.calculate_commit_address(&id).await?;
-                let onchain_commit =
-                    match blockchain::GoshCommit::load(&self.blockchain.client(), address).await {
-                        Ok(commit) => commit,
-                        Err(e) => {
-                            let version = self.find_commit(&id.to_string()).await?.version;
-                            tracing::trace!(
-                                "push to next_commit_of_prev_version=({},{})",
-                                id,
-                                version
-                            );
-                            next_commit_of_prev_version.push((version, id.to_string()));
-                            continue;
-                        }
-                    };
-                tracing::debug!("branch={branch}: loaded onchain commit {}", id);
-                tracing::debug!(
-                    "branch={branch} commit={id} addr={address}: data {:?}",
-                    onchain_commit
-                );
-                let data = git_object::Data::new(
-                    git_object::Kind::Commit,
-                    onchain_commit.content.as_bytes(),
-                );
-                let obj = git_object::Object::from(data.decode()?).into_commit();
-                tracing::debug!("Received commit {}", id);
-                let mut branches = HashSet::new();
-                branches.insert(onchain_commit.branch.clone());
-
-                tracing::debug!(
-                    "branch={branch}: existing remote branches: {:?}",
-                    remote_branches
-                );
-                // don't collect parent branches for deleted one
-                if remote_branches.contains(&onchain_commit.branch) {
-                    for parent in onchain_commit.parents.clone() {
-                        let parent = BlockchainContractAddress::new(parent.address);
-                        let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
-                        let branch: GetNameBranchResult = parent_contract
-                            .run_local(self.blockchain.client(), "getNameBranch", None)
-                            .await?;
-                        tracing::debug!("commit={id}: extracted branch {:?}", branch.name);
-                        branches.insert(branch.name);
-                    }
-                } else {
-                    branches.insert(branch.to_owned());
-                }
-
-                let to_load = TreeObjectsQueueItem {
-                    path: "".to_owned(),
-                    oid: obj.tree,
-                    branches,
-                };
-                tracing::debug!("New tree root: {}", &to_load.oid);
-                if onchain_commit.initupgrade {
-                    // Object can be first in the tree and have no parents
-                    // if !obj.parents.is_empty() {
-                    let prev_version = onchain_commit.parents[0].clone().version;
-                    tracing::trace!(
-                        "push to next_commit_of_prev_version=({},{})",
-                        id,
-                        prev_version
-                    );
-                    next_commit_of_prev_version.push((prev_version, id.to_string()));
-                    // }
-                } else {
-                    tree_obj_queue.push_back(to_load);
-                    for parent_id in &obj.parents {
-                        commits_queue.push_back(*parent_id);
-                    }
-                    tracing::trace!("Push to dangling commits: {}", id);
-                    dangling_commits.push(obj);
-                }
-                continue;
-            }
-
-            if !dangling_commits.is_empty() {
-                tracing::trace!("Writing dangling commits");
-                for obj in dangling_commits.iter().rev() {
-                    self.write_git_object(obj)?;
-                }
-                dangling_commits.clear();
-                continue;
             }
             break;
         }
