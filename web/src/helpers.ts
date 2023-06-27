@@ -1,15 +1,7 @@
-import { createClient, Provider } from '@supabase/supabase-js'
-import { AppConfig } from 'react-gosh'
-import { GoshError } from 'react-gosh'
+import { AppConfig } from './appconfig'
 import { toast } from 'react-toastify'
 import { createAvatar } from '@dicebear/core'
 import { identicon } from '@dicebear/collection'
-import yup from './yup-extended'
-
-const supabase = createClient(
-    'https://auth.gosh.sh',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkaHNrdnN6dGVwYnlpc2Jxc2pqIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzA0MTMwNTEsImV4cCI6MTk4NTk4OTA1MX0._6KcFBYmSUfJqTJsKkWcMoIQBv3tuInic9hvEHuFpJg',
-)
 
 const getClipboardData = async (event?: any): Promise<string | null> => {
     if (event?.clipboardData && event.clipboardData.getData) {
@@ -36,48 +28,6 @@ const onExternalLinkClick = (e: any, url: string) => {
     AppConfig.dockerclient.host.openExternal(url)
 }
 
-const singinOAuthSupabase = async (provider: Provider) => {
-    const scopes = 'read:user read:org'
-
-    if (AppConfig.dockerclient) {
-        const nounce = Date.now()
-
-        const { data, error } = await supabase.auth.signInWithOAuth({
-            provider,
-            options: {
-                redirectTo: `https://open.docker.com/dashboard/extension-tab?extensionId=teamgosh/docker-extension&nounce=${nounce}`,
-                scopes,
-                skipBrowserRedirect: true,
-            },
-        })
-        if (error) {
-            throw new GoshError(error.message)
-        }
-
-        console.log('data url', data.url)
-
-        AppConfig.dockerclient.host.openExternal(data.url!)
-    } else {
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider,
-            options: {
-                redirectTo: document.location.href,
-                scopes,
-            },
-        })
-        if (error) {
-            throw new GoshError(error.message)
-        }
-    }
-}
-
-const signoutOAuthSupabase = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) {
-        throw new GoshError(error.message)
-    }
-}
-
 const getIdenticonAvatar = (options: any) => {
     return createAvatar(identicon, {
         radius: 8,
@@ -85,11 +35,6 @@ const getIdenticonAvatar = (options: any) => {
         backgroundColor: ['fafafd'],
         ...options,
     })
-}
-
-const isValidEmail = (email: string) => {
-    const schema = yup.string().email()
-    return schema.isValidSync(email)
 }
 
 /**
@@ -106,6 +51,8 @@ const ToastOptionsShortcuts = {
         draggable: true,
         closeButton: true,
         progress: undefined,
+        isLoading: false,
+        delay: 100,
     },
     Message: {
         position: toast.POSITION.TOP_CENTER,
@@ -128,12 +75,8 @@ const ToastOptionsShortcuts = {
 }
 
 export {
-    supabase,
-    singinOAuthSupabase,
-    signoutOAuthSupabase,
     getClipboardData,
     onExternalLinkClick,
     ToastOptionsShortcuts,
     getIdenticonAvatar,
-    isValidEmail,
 }

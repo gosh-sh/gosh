@@ -1,4 +1,4 @@
-import { classNames } from 'react-gosh'
+import classNames from 'classnames'
 
 type TSelectProps = React.InputHTMLAttributes<HTMLSelectElement> & {
     hasError?: boolean

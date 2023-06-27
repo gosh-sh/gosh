@@ -1,16 +1,17 @@
-import { classNames, TDao } from 'react-gosh'
-import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
+// import { classNames, TDao } from 'react-gosh'
+// import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { Link } from 'react-router-dom'
 import { useSetRecoilState } from 'recoil'
 import { getIdenticonAvatar } from '../../helpers'
 import { appModalStateAtom } from '../../store/app.state'
 import { Button } from '../Form'
 import DaoRequestMembershipModal from '../Modal/DaoRequestMembership'
+import classNames from 'classnames'
 
 type TDaoMembersSideProps = {
     dao: {
-        adapter: IGoshDaoAdapter
-        details: TDao
+        adapter: any
+        details: any
     }
     className?: string
 }
@@ -39,7 +40,7 @@ const DaoMembersSide = (props: TDaoMembersSideProps) => {
             </div>
             <div>
                 <div className="flex flex-wrap gap-2 mb-3">
-                    {dao.details.members.slice(0, 8).map((item, index) => (
+                    {/* {dao.details.members.slice(0, 8).map((item, index) => (
                         <div key={index} className="w-9 overflow-hidden rounded-full">
                             <img
                                 src={getIdenticonAvatar({
@@ -50,7 +51,7 @@ const DaoMembersSide = (props: TDaoMembersSideProps) => {
                                 className="w-full"
                             />
                         </div>
-                    ))}
+                    ))} */}
                 </div>
 
                 {dao.details.isAuthMember && (

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { classNames } from 'react-gosh'
+import classNames from 'classnames'
 
 type TSliderProps = React.InputHTMLAttributes<HTMLInputElement> & {
     label?: React.ReactNode

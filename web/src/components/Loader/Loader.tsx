@@ -1,4 +1,4 @@
-import { classNames } from 'react-gosh'
+import classNames from 'classnames'
 import Spinner from '../Spinner'
 
 type TLoaderProps = React.PropsWithChildren & {

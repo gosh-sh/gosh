@@ -3,8 +3,9 @@ import { BrowserRouter, HashRouter } from 'react-router-dom'
 import reportWebVitals from './reportWebVitals'
 import { TonClient, BinaryLibrary } from '@eversdk/core'
 import { libWeb, libWebSetup } from '@eversdk/lib-web'
-import App from './App'
+import Dispatcher from './Dispatcher'
 import { RecoilRoot } from 'recoil'
+import './assets/scss/style.scss'
 
 // Check for docker extension flag
 let ConditionedRouter = BrowserRouter
@@ -24,7 +25,7 @@ const root = createRoot(container!)
 root.render(
     <RecoilRoot>
         <ConditionedRouter>
-            <App />
+            <Dispatcher />
         </ConditionedRouter>
     </RecoilRoot>,
 )

@@ -1,5 +1,5 @@
+import classNames from 'classnames'
 import { ErrorMessage, FieldProps } from 'formik'
-import { classNames } from 'react-gosh'
 
 export interface IBaseFieldProps extends FieldProps {
     className?: string
@@ -31,7 +31,7 @@ const BaseField = (props: IBaseFieldProps) => {
                 <label
                     htmlFor={field.name}
                     className={classNames(
-                        'block mb-2 font-medium',
+                        'block mb-2 text-sm',
                         labelClassName,
                         form.touched[field.name] && form.errors[field.name]
                             ? 'text-rose-600'

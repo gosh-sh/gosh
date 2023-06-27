@@ -1,4 +1,4 @@
-import { classNames } from 'react-gosh'
+import classNames from 'classnames'
 
 type TTextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
     hasError?: boolean

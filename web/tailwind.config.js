@@ -11,7 +11,6 @@ export default {
             },
             colors: {
                 'gray-050a15': '#050a15',
-                'gray-53596d': '#53596d',
                 'gray-0a1124': '#0a1124',
                 'gray-606060': '#606060',
                 'gray-505050': '#505050',
@@ -31,6 +30,7 @@ export default {
                 'gray-53596d': '#53596d',
                 'gray-e6edff': '#e6edff',
                 'gray-d6e4ee': '#d6e4ee',
+                'blue-2b89ff': '#2b89ff',
                 'blue-348eff': '#348eff',
                 'green-34c759': '#34c759',
                 'green-deecdc': '#deecdc',

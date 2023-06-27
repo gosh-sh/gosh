@@ -1,0 +1,109 @@
+import { Buffer } from 'buffer'
+import { AppConfig } from '../appconfig'
+import { TPaginatedAccountsResult } from '../types/blockchain.types'
+import { sleep } from '../utils'
+
+export const generateRandomBytes = async (
+    length: number,
+    hex: boolean = false,
+): Promise<string> => {
+    const result = await AppConfig.goshclient.crypto.generate_random_bytes({ length })
+    if (hex) return Buffer.from(result.bytes, 'base64').toString('hex')
+    return result.bytes
+}
+
+export const chacha20 = {
+    async encrypt(data: string, key: string, nonce: string): Promise<string> {
+        const result = await AppConfig.goshclient.crypto.chacha20({
+            data,
+            key: key.padStart(64, '0'),
+            nonce,
+        })
+        return result.data
+    },
+    async decrypt(data: string, key: string, nonce: string): Promise<string> {
+        const result = await AppConfig.goshclient.crypto.chacha20({
+            data,
+            key: key.padStart(64, '0'),
+            nonce,
+        })
+        return result.data
+    },
+}
+
+export const zstd = {
+    async compress(data: string | Buffer): Promise<string> {
+        const uncompressed = Buffer.isBuffer(data)
+            ? data.toString('base64')
+            : Buffer.from(data).toString('base64')
+        const result = await AppConfig.goshclient.utils.compress_zstd({
+            uncompressed,
+        })
+        return result.compressed
+    },
+    async decompress(data: string, uft8: boolean = true): Promise<string> {
+        const result = await AppConfig.goshclient.utils.decompress_zstd({
+            compressed: data,
+        })
+        if (uft8) return Buffer.from(result.decompressed, 'base64').toString()
+        return result.decompressed
+    },
+}
+
+export const getPaginatedAccounts = async (params: {
+    filters?: string[]
+    result?: string[]
+    limit?: number
+    lastId?: string
+}): Promise<TPaginatedAccountsResult> => {
+    const { filters = [], result = [], limit = 10, lastId } = params
+    const query = `query AccountsQuery( $lastId: String, $limit: Int) {
+        accounts(
+            filter: {
+                id: { gt: $lastId },
+                ${filters.join(',')}
+            }
+            orderBy: [
+                { path: "id", direction: ASC },
+            ]
+            limit: $limit
+        ) {
+            id ${result.join(' ')}
+        }
+    }`
+    const response = await AppConfig.goshclient.net.query({
+        query,
+        variables: { lastId, limit },
+    })
+    const results = response.result.data.accounts
+    return {
+        results,
+        lastId: results.length ? results[results.length - 1].id : undefined,
+        completed: results.length < limit,
+    }
+}
+
+export const getAllAccounts = async (params: {
+    filters: string[]
+    result?: string[]
+}): Promise<any[]> => {
+    const { filters, result } = params
+
+    let next: string | undefined
+    const results = []
+    while (true) {
+        const accounts = await getPaginatedAccounts({
+            filters,
+            result,
+            limit: 50,
+            lastId: next,
+        })
+        results.push(...accounts.results)
+        next = accounts.lastId
+        if (accounts.completed) {
+            break
+        }
+        await sleep(200)
+    }
+    return results
+}

@@ -3,16 +3,13 @@ import { Dialog } from '@headlessui/react'
 import { useResetRecoilState, useSetRecoilState } from 'recoil'
 import { SHA256 } from 'crypto-js'
 import { Buffer } from 'buffer'
-import {
-    chacha20,
-    generateRandomBytes,
-    AppConfig,
-    TUserPersist,
-    useUser,
-} from 'react-gosh'
 import { appModalStateAtom } from '../../store/app.state'
 import { toast } from 'react-toastify'
 import { Button, Input } from '../Form'
+import { useUser } from '../../v1/hooks/user.hooks'
+import { TUserPersist } from '../../types/user.types'
+import { chacha20, generateRandomBytes } from '../../blockchain/utils'
+import { AppConfig } from '../../appconfig'
 
 type TPinCodeModalProps = {
     unlock?: boolean
@@ -67,7 +64,7 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
                     phrase: decrypted,
                 })
 
-                user.setup(tmp, { phrase: decrypted, keys })
+                user.unlock(tmp, { phrase: decrypted, keys })
                 setModal({ isOpen: false, element: null })
                 onUnlock && onUnlock()
             }
@@ -76,7 +73,9 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
     )
 
     useEffect(() => {
-        if (pin.length === 4) onPinSubmit(pin)
+        if (pin.length === 4) {
+            onPinSubmit(pin)
+        }
     }, [pin, onPinSubmit])
 
     return (
