@@ -23,7 +23,7 @@ RUN <<EOF
 #    mv $HOME/.gosh/git-remote-gosh* /usr/local/bin/
 #    cd ..
 #    rm -rf gosh
-    wget "https://artprodsu6weu.artifacts.visualstudio.com/A1e9816a3-e2da-406c-be55-fff7d5f4b640/9c7d72d7-ac17-46c4-9a51-22e640f7c2f5/_apis/artifact/cGlwZWxpbmVhcnRpZmFjdDovL3NhbS1nb3NoL3Byb2plY3RJZC85YzdkNzJkNy1hYzE3LTQ2YzQtOWE1MS0yMmU2NDBmN2MyZjUvYnVpbGRJZC8xMTk2L2FydGlmYWN0TmFtZS9saW51eC1hbWQ2NA2/content?format=file&subPath=%2Fgit-remote-gosh_v5_1_0" -O git-remote-gosh_v5_1_0
+    wget "https://artprodsu6weu.artifacts.visualstudio.com/A1e9816a3-e2da-406c-be55-fff7d5f4b640/9c7d72d7-ac17-46c4-9a51-22e640f7c2f5/_apis/artifact/cGlwZWxpbmVhcnRpZmFjdDovL3NhbS1nb3NoL3Byb2plY3RJZC85YzdkNzJkNy1hYzE3LTQ2YzQtOWE1MS0yMmU2NDBmN2MyZjUvYnVpbGRJZC8xMTk3L2FydGlmYWN0TmFtZS9saW51eC1hbWQ2NA2/content?format=file&subPath=%2Fgit-remote-gosh_v5_1_0" -O git-remote-gosh_v5_1_0
     wget "https://artprodsu6weu.artifacts.visualstudio.com/A1e9816a3-e2da-406c-be55-fff7d5f4b640/9c7d72d7-ac17-46c4-9a51-22e640f7c2f5/_apis/artifact/cGlwZWxpbmVhcnRpZmFjdDovL3NhbS1nb3NoL3Byb2plY3RJZC85YzdkNzJkNy1hYzE3LTQ2YzQtOWE1MS0yMmU2NDBmN2MyZjUvYnVpbGRJZC8xMTc4L2FydGlmYWN0TmFtZS9saW51eC1hbWQ2NA2/content?format=file&subPath=%2Fgit-remote-gosh" -O git-remote-gosh
     chmod +x git-remote-gosh_v5_1_0
     chmod +x git-remote-gosh
