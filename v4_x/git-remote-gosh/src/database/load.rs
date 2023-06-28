@@ -105,4 +105,13 @@ impl GoshDB {
     pub fn diff_exists(&self, address: &str) -> anyhow::Result<bool> {
         self.value_exists(address, DIFF_CF)
     }
+
+    fn delete_value(&self, key: &str, cf: &str) -> anyhow::Result<()> {
+        tracing::trace!("Delete value {key} exists in {cf}");
+        Ok(self.db().delete_cf(&self.cf(cf), key)?)
+    }
+
+    pub fn delete_snapshot(&self, address: &str) -> anyhow::Result<()> {
+        self.delete_value(address, SNAPSHOT_CF)
+    }
 }

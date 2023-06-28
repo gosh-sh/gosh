@@ -250,7 +250,7 @@ where
         let supported_contract_version = supported_contract_version();
         let version_stripped = supported_contract_version.replace("\"", "");
         let system_contract = versions.iter().find(|v| v.0 == version_stripped)
-            .ok_or(anyhow::format_err!("Failed to get prev version system contract"))?;
+            .ok_or(anyhow::format_err!("Failed to get cur version system contract"))?;
         self.repo_versions.push(RepoVersion{
             version: version_stripped,
             repo_address: self.repo_addr.clone(),
