@@ -22,6 +22,8 @@ use crate::{
     logger::set_log_verbosity,
     utilities::Remote,
 };
+use crate::blockchain::contract::ContractRead;
+use crate::git_helper::push::GetPreviousResult;
 
 pub mod ever_client;
 #[cfg(test)]
@@ -243,26 +245,28 @@ where
             .collect();
 
         tracing::trace!("Available system contract versions: {versions:?}");
-        for version in versions {
-            let address = BlockchainContractAddress::new(version.1.clone());
-            let system_contract = GoshContract::new(address, gosh_abi::GOSH);
-            let args = json!({"dao": self.remote.dao, "name": self.remote.repo});
-            let repo_addr: GetAddrDaoResult = system_contract
-                .run_static(self.blockchain.client(), "getAddrRepository", Some(args))
-                .await?;
-            let repo_contract = GoshContract::new(repo_addr.address.clone(), gosh_abi::REPO);
-            let res: anyhow::Result<Value> = repo_contract
-                .run_static(self.blockchain.client(), "getVersion", None)
-                .await;
-            if res.is_err() {
-                continue;
-            }
-            self.repo_versions.push(RepoVersion {
-                version: version.0,
-                system_address: BlockchainContractAddress::new(version.1),
-                repo_address: repo_addr.address,
+
+        let mut previous: GetPreviousResult = self
+            .blockchain
+            .repo_contract()
+            .read_state(self.blockchain.client(), "getPrevious", None)
+            .await?;
+
+        while let Some(prev_repo) = &previous.previous {
+            let system_contract = versions.iter().find(|v| v.0 == prev_repo.version)
+                .ok_or(anyhow::format_err!("Failed to get prev version system contract"))?;
+
+            self.repo_versions.push(RepoVersion{
+                version: prev_repo.version.clone(),
+                repo_address: prev_repo.address.clone(),
+                system_address: BlockchainContractAddress::new(system_contract.1.clone()),
             });
+
+            let prev_repo_contract = GoshContract::new(&prev_repo.address, gosh_abi::REPO);
+            previous = prev_repo_contract.read_state(self.blockchain.client(), "getPrevious", None)
+                .await?;
         }
+
         self.repo_versions
             .sort_by(|ver1, ver2| ver2.version.cmp(&ver1.version));
         tracing::trace!("repo versions: {:?}", self.repo_versions);
