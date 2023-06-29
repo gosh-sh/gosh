@@ -101,7 +101,7 @@ git checkout main
 git merge dev -m merge
 git branch -D dev
 
-git push -u origin main
+GOSH_TRACE=5 git push -u origin main &> ../trace_13.log
 
 cd ..
 
