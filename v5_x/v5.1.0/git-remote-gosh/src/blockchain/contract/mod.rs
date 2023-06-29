@@ -171,10 +171,12 @@ impl GoshContract {
     }
 
     pub async fn is_active(&self, context: &EverClient) -> anyhow::Result<bool> {
-        match self.load_account(context).await? {
+        let res = match self.load_account(context).await? {
             None => Ok(false),
             Some(v) => Ok(v.status == 1),
-        }
+        };
+        tracing::trace!("Check account {} is active: {:?}", self.address, res);
+        res
     }
 }
 
