@@ -821,8 +821,9 @@ where
             )
         }
 
+        let snapshot_addresses = parallel_snapshot_uploads.get_expected().clone();
         let db = self.get_db()?;
-        for address in snapshot_addesses {
+        for address in snapshot_addresses {
             db.delete_snapshot(&address)?;
         }
 
