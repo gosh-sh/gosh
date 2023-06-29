@@ -843,7 +843,7 @@ where
             for address in expected_contracts.clone() {
                 tracing::trace!("Get params of undeployed snapshot: {}", address,);
                 parallel_snapshot_uploads
-                    .add_to_push_list(self, String::from(address), None)
+                    .add_to_push_list(self, String::from(address), Some(previous_repo_addr.clone()))
                     .await?;
             }
         }
