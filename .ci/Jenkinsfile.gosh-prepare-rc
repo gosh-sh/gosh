@@ -84,8 +84,8 @@ pipeline {
                 }
             }
             steps {
-                //runFunctionSet('buildRemoteGosh')
-                runFunctionSet('buildRemoteGoshDebug')
+                runFunctionSet('buildRemoteGosh')
+                //runFunctionSet('buildRemoteGoshDebug')
             }
         }
 
@@ -97,42 +97,6 @@ pipeline {
             }
             steps {
                 archiveAzureArtifacts()
-            }
-        }
-
-        stage('Tests: Func') {
-            when { expression { return params.TEST_FUNC } }
-            agent {
-                docker {
-                    image 'jenkins-docker-agent:1'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network host -v /root/jenkins-main/workspace:/tmp --add-host localnode:127.0.0.1'
-                }
-            }
-            steps {
-                script {
-                    sh "rm -rf tests_workspace_*"
-                    def basePort = 9000
-                    def files = getTestFiles("tests").toList()
-                    def versions = ["v4_x","v5_x/v5.0.0","v5_x/v5.1.0"]
-                    def batches = []
-                    for (int i = 0; i < files.size(); i += batchSize) {
-                        def end = Math.min(i + batchSize, files.size())
-                        batches.add(new ArrayList(files.subList(i, end)))  // <-- Modified
-                    }
-
-                    for (int j = 0; j < batches.size(); j++) {
-                        def batch = batches[j]
-                        for (version in versions) {
-                            sh "rm -rf ${version}_workspace_*"
-                            deployVersion(version, batch, basePort + (j * batchSize))
-                        }
-
-                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v4", "v4_x")
-                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v5.0", "v5_x/v5.0.0")
-                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v5.1", "v5_x/v5.1.0")
-                        sh 'docker ps -a --filter name=localnode-* -aq | grep -v "$(docker ps -a --filter name=localnode-9000 -q)" | xargs docker rm -f'
-                    }
-                }
             }
         }
 
@@ -171,6 +135,42 @@ pipeline {
 
                     env.REACT_APP_GOSH_ROOTADDR = sh script: "cat v1_x_workspace_0/contracts/gosh/VersionController.addr | tr -d '\n'", returnStdout: true
                     env.REACT_APP_GOSH = sh script: "cat v1_x_workspace_0/contracts/gosh/SystemContract.addr | tr -d '\n'", returnStdout: true
+                }
+            }
+        }
+
+        stage('Tests: Func') {
+            when { expression { return params.TEST_FUNC } }
+            agent {
+                docker {
+                    image 'jenkins-docker-agent:1'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v /opt:/opt --group-add docker --network host -v /root/jenkins-main/workspace:/tmp --add-host localnode:127.0.0.1'
+                }
+            }
+            steps {
+                script {
+                    sh "rm -rf tests_workspace_*"
+                    def basePort = 9000
+                    def files = getTestFiles("tests").toList()
+                    def versions = ["v4_x","v5_x/v5.0.0","v5_x/v5.1.0"]
+                    def batches = []
+                    for (int i = 0; i < files.size(); i += batchSize) {
+                        def end = Math.min(i + batchSize, files.size())
+                        batches.add(new ArrayList(files.subList(i, end)))  // <-- Modified
+                    }
+
+                    for (int j = 0; j < batches.size(); j++) {
+                        def batch = batches[j]
+                        for (version in versions) {
+                            sh "rm -rf ${version}_workspace_*"
+                            deployVersion(version, batch, basePort + (j * batchSize))
+                        }
+
+                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v4", "v4_x")
+                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v5.0", "v5_x/v5.0.0")
+                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v5.1", "v5_x/v5.1.0")
+                        sh 'docker ps -a --filter name=localnode-* -aq | grep -v "$(docker ps -a --filter name=localnode-9000 -q)" | xargs docker rm -f'
+                    }
                 }
             }
         }

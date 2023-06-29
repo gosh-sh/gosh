@@ -821,71 +821,9 @@ where
             )
         }
 
-        let mut attempts = 0;
-        let mut last_rest_cnt = 0;
-        let snapshot_addesses = parallel_snapshot_uploads.get_expected().clone();
-        while attempts < MAX_REDEPLOY_ATTEMPTS {
-            attempts += 1;
-            expected_contracts = parallel_snapshot_uploads
-                .wait_all_snapshots(self.blockchain.clone())
-                .await?;
-            tracing::trace!("Wait all snapshots result: {expected_contracts:?}");
-            if expected_contracts.is_empty() {
-                break;
-            }
-            if expected_contracts.len() != last_rest_cnt {
-                attempts = 0;
-            }
-            last_rest_cnt = expected_contracts.len();
-            tracing::trace!("Restart deploy on undeployed snapshots");
-            let expected = parallel_snapshot_uploads.get_expected().to_owned();
-            parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
-            for address in expected_contracts.clone() {
-                tracing::trace!("Get params of undeployed snapshot: {}", address,);
-                parallel_snapshot_uploads
-                    .add_to_push_list(self, String::from(address), Some(previous_repo_addr.clone()))
-                    .await?;
-            }
-        }
-        if attempts == MAX_REDEPLOY_ATTEMPTS {
-            anyhow::bail!(
-                "Failed to deploy all snapshots. Undeployed snapshots: {expected_contracts:?}"
-            )
-        }
         let db = self.get_db()?;
         for address in snapshot_addesses {
             db.delete_snapshot(&address)?;
-        }
-
-        let mut attempts = 0;
-        let mut last_rest_cnt = 0;
-        while attempts < MAX_REDEPLOY_ATTEMPTS {
-            attempts += 1;
-            expected_contracts = push_commits
-                .wait_all_commits(self.blockchain.clone())
-                .await?;
-            tracing::trace!("Wait all commits result: {expected_contracts:?}");
-            if expected_contracts.is_empty() {
-                break;
-            }
-            if expected_contracts.len() != last_rest_cnt {
-                attempts = 0;
-            }
-            last_rest_cnt = expected_contracts.len();
-            tracing::trace!("Restart deploy on undeployed commits");
-            let expected = push_commits.get_expected().to_owned();
-            push_commits = ParallelCommitUploadSupport::new();
-            for address in expected_contracts.clone() {
-                tracing::trace!("Get params of undeployed tree: {}", address,);
-                push_commits
-                    .add_to_push_list(self, String::from(address), push_semaphore.clone())
-                    .await?;
-            }
-        }
-        if attempts == MAX_REDEPLOY_ATTEMPTS {
-            anyhow::bail!(
-                "Failed to deploy all commits. Undeployed commits: {expected_contracts:?}"
-            )
         }
 
         if set_commit {
