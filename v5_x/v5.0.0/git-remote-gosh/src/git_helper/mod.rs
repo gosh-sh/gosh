@@ -210,7 +210,33 @@ where
         &self.repo_versions
     }
 
-    async fn load_repo_versions(&mut self) -> anyhow::Result<()> {
+    pub async fn get_all_repo_versions(&self) -> anyhow::Result<Vec<RepoVersion>> {
+        let versions = self.get_all_system_contracts().await?;
+        let mut all_versions = vec![];
+        for version in versions {
+            let address = BlockchainContractAddress::new(version.1.clone());
+            let system_contract = GoshContract::new(address, gosh_abi::GOSH);
+            let args = json!({"dao": self.remote.dao, "name": self.remote.repo});
+            let repo_addr: GetAddrDaoResult = system_contract
+                .run_static(self.blockchain.client(), "getAddrRepository", Some(args))
+                .await?;
+            let repo_contract = GoshContract::new(repo_addr.address.clone(), gosh_abi::REPO);
+            let res: anyhow::Result<Value> = repo_contract
+                .run_static(self.blockchain.client(), "getVersion", None)
+                .await;
+            if res.is_err() {
+                continue;
+            }
+            all_versions.push(RepoVersion {
+                version: version.0,
+                system_address: BlockchainContractAddress::new(version.1),
+                repo_address: repo_addr.address,
+            });
+        }
+        Ok(all_versions)
+    }
+
+    async fn get_all_system_contracts(&self) -> anyhow::Result<Vec<(String, String)>> {
         let version_controller_address: GetAddrDaoResult = self
             .blockchain
             .root_contract()
@@ -245,6 +271,11 @@ where
             .collect();
 
         tracing::trace!("Available system contract versions: {versions:?}");
+        Ok(versions)
+    }
+
+    async fn load_repo_versions(&mut self) -> anyhow::Result<()> {
+        let versions = self.get_all_system_contracts().await?;
 
         if self.blockchain.repo_contract().is_active(self.blockchain.client()).await? {
             let supported_contract_version = supported_contract_version();
@@ -467,7 +498,6 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
         let response = match (cmd, arg1, arg2) {
             (Some("option"), Some(arg1), Some(arg2)) => helper.option(arg1, arg2).await?,
             (Some("push"), Some(ref_arg), None) => {
-                eprintln!("\nWarning: This version has found issues. Please upgrade to the next version as soon as possible.\n");
                 is_batching_push_in_progress = true;
                 let push_result = helper.push(ref_arg).await?;
                 batch_response.push(push_result);
@@ -501,7 +531,7 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
             (Some("gosh_repo_version"), None, None) => helper.get_repo_version().await?,
             (Some("gosh_get_dao_tombstone"), None, None) => helper.get_dao_tombstone().await?,
             (Some("gosh_get_all_repo_versions"), None, None) => {
-                let repo_versions = helper.get_repo_versions();
+                let repo_versions = helper.get_all_repo_versions().await?;
                 let mut res: Vec<String> = repo_versions
                     .iter()
                     .map(|ver| {
