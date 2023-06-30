@@ -113,7 +113,7 @@ pipeline {
                     sh "rm -rf tests_workspace_*"
                     def basePort = 9000
                     def files = getTestFiles("tests").toList()
-                    def versions = ["v4_x","v5_x/v5.0.0","v5_x/v5.1.0"]
+                    def versions = ["v4_x", "v5_x/v5.0.0", "v5_x/v5.1.0"]
                     def batches = []
                     for (int i = 0; i < files.size(); i += batchSize) {
                         def end = Math.min(i + batchSize, files.size())
@@ -148,7 +148,7 @@ pipeline {
                 script {
                     sh "rm -rf tests_workspace_*"
                     def basePort = 9000
-                    def versions = ["v4_x","v5_x/v5.0.0", "v5_x/v5.1.0"]
+                    def versions = ["v3_x", "v4_x", "v5_x/v5.0.0", "v5_x/v5.1.0"]
 
                     def upgradeFiles = getTestFiles("tests/upgrade_tests").toList()
                     def upgradeBatches = []
