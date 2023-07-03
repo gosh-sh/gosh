@@ -16,23 +16,13 @@ ARG BRANCH=dev
 ENV BRANCH=${BRANCH}
 RUN <<EOF
     set -ex
-#    echo "$BRANCH"
-#    git clone --branch "$BRANCH" --depth 1 https://github.com/gosh-sh/gosh.git gosh
-#    cd gosh
-#    bash install.sh
-#    mv $HOME/.gosh/git-remote-gosh* /usr/local/bin/
-#    cd ..
-#    rm -rf gosh
-    wget "https://artprodsu6weu.artifacts.visualstudio.com/A1e9816a3-e2da-406c-be55-fff7d5f4b640/9c7d72d7-ac17-46c4-9a51-22e640f7c2f5/_apis/artifact/cGlwZWxpbmVhcnRpZmFjdDovL3NhbS1nb3NoL3Byb2plY3RJZC85YzdkNzJkNy1hYzE3LTQ2YzQtOWE1MS0yMmU2NDBmN2MyZjUvYnVpbGRJZC8xMTg4L2FydGlmYWN0TmFtZS9saW51eC1hbWQ2NA2/content?format=file&subPath=%2Fgit-remote-gosh_v4_0_0" -O git-remote-gosh_v4_0_0
-    wget "https://artprodsu6weu.artifacts.visualstudio.com/A1e9816a3-e2da-406c-be55-fff7d5f4b640/9c7d72d7-ac17-46c4-9a51-22e640f7c2f5/_apis/artifact/cGlwZWxpbmVhcnRpZmFjdDovL3NhbS1nb3NoL3Byb2plY3RJZC85YzdkNzJkNy1hYzE3LTQ2YzQtOWE1MS0yMmU2NDBmN2MyZjUvYnVpbGRJZC8xMTc4L2FydGlmYWN0TmFtZS9saW51eC1hbWQ2NA2/content?format=file&subPath=%2Fgit-remote-gosh" -O git-remote-gosh
-    chmod +x git-remote-gosh_v4_0_0
-    chmod +x git-remote-gosh
-    ./git-remote-gosh --version
-    ./git-remote-gosh_v4_0_0 --version
-    echo git-remote-gosh_v4_0_0 > dispatcher.ini
-    mv git-remote-gosh* /usr/local/bin/
-    mv dispatcher.ini /usr/local/bin/
-
+    echo "$BRANCH"
+    git clone --branch "$BRANCH" --depth 1 https://github.com/gosh-sh/gosh.git gosh
+    cd gosh
+    bash install.sh
+    mv $HOME/.gosh/git-remote-gosh* /usr/local/bin/
+    cd ..
+    rm -rf gosh
 EOF
 # WARNING: change workdir after
 
