@@ -1,6 +1,6 @@
-export async function processOutputDump(p: Deno.Process): Promise<string> {
-    const stdout = new TextDecoder().decode(await p.output())
-    const stderr = new TextDecoder().decode(await p.stderrOutput())
+export function processOutputDump(p: Deno.CommandOutput): string {
+    const stdout = new TextDecoder().decode(p.stdout)
+    const stderr = new TextDecoder().decode(p.stderr)
 
     const stdout_trimmed = stdout.slice(0, 300)
     const stderr_trimmed = stderr.slice(0, 300)

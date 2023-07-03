@@ -5,43 +5,38 @@ export async function runBash({
     script: string
     // deno-lint-ignore no-explicit-any
     env: any
-}): Promise<{ status: Deno.ProcessStatus; stdout: string; stderr: string }> {
-    const p = Deno.run({
-        cmd: ['bash', script],
+}): Promise<{ code: number; stdout: string; stderr: string }> {
+    const command = new Deno.Command("bash", {
+        args: [script],
         stdout: 'piped',
         stderr: 'piped',
         env: env,
     })
-    const [status, stdout, stderr] = await Promise.all([
-        p.status(),
-        p.output().then((res) => new TextDecoder().decode(res)),
-        p.stderrOutput().then((res) => new TextDecoder().decode(res)),
-    ])
-    return { status, stdout, stderr }
+
+    const { code, stdout, stderr } = await command.output()
+
+    return { code, stdout: new TextDecoder().decode(stdout), stderr: new TextDecoder().decode(stderr)}
 }
 
 export async function goshCli(...args: string[]) {
-    const cmd = ['gosh-cli', '-j', ...args]
-    const display_cmd = cmd.map((x) => `'${x}'`).join(' ')
+    const cmd_args = ['-j', ...args]
+    const display_cmd = cmd_args.map((x) => `'${x}'`).join(' ')
 
     // Print current time
     const now = new Date();
     console.debug(`Current timestamp: ${now}`)
 
     console.debug(`gosh cli: ${display_cmd}`)
-    const p = Deno.run({
-        cmd,
+    const p = new Deno.Command('gosh-cli', {
+        args: cmd_args,
         stderr: 'piped',
         stdout: 'piped',
     })
-    const [status, stdout, stderr] = await Promise.all([
-        p.status(),
-        p.output().then((res) => new TextDecoder().decode(res)),
-        p.stderrOutput().then((res) => new TextDecoder().decode(res)),
-    ])
-    // if (stdout) {
-    //     console.log('Stdout:', stdout)
-    // }
+    const status = await p.output()
+
+    const stdout = new TextDecoder().decode(status.stdout)
+    const stderr = new TextDecoder().decode(status.stderr)
+
     if (stderr) {
         console.log('Stderr:', stderr)
     }

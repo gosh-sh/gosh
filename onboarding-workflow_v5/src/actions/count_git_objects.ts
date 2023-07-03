@@ -26,20 +26,20 @@ export async function countGitObjects(github_id: string) {
 
         const github_full_repo_url = `https://github.com${github.github_url}`
 
-        const git_clone = Deno.run({
-            cmd: ['git', 'clone', github_full_repo_url, gitdir],
+        const git_clone = new Deno.Command('git', {
+            args: ['clone', github_full_repo_url, gitdir],
             cwd: workdir,
             stdout: 'piped',
             stderr: 'piped',
         })
-        const clone_status = await git_clone.status()
+        const clone_status = await git_clone.output()
         if (!clone_status.success) {
             console.log(`Can't clone`, github_id)
 
             await getDb()
                 .from('github')
                 .update({
-                    resolution: await processOutputDump(git_clone),
+                    resolution: await processOutputDump(clone_status),
                     ignore: true,
                 })
                 .eq('id', github.id)
@@ -47,26 +47,28 @@ export async function countGitObjects(github_id: string) {
         }
 
         // count git objects
-        const count_git_objects = Deno.run({
-            cmd: ['git', 'rev-list', '--all', '--count', '--objects'],
+        const count_git_objects = new Deno.Command('git', {
+            args: ['rev-list', '--all', '--count', '--objects'],
             cwd: gitdir,
             stdout: 'piped',
             stderr: 'piped',
         })
 
-        if (!(await count_git_objects.status()).success) {
+        const git_objects_status = await count_git_objects.output()
+
+        if (!git_objects_status.success) {
             console.log(`Fail to get number of git objects`, github_id)
 
             await getDb()
                 .from('github')
                 .update({
-                    resolution: await processOutputDump(count_git_objects),
+                    resolution: await processOutputDump(git_objects_status),
                 })
                 .eq('id', github.id)
             return
         }
 
-        const out_str = new TextDecoder().decode(await count_git_objects.output()).trim()
+        const out_str = new TextDecoder().decode(git_objects_status.stdout).trim()
 
         number_of_git_objects = parseInt(out_str, 10)
 
