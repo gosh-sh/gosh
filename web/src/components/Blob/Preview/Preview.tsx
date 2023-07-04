@@ -1,9 +1,10 @@
 import ReactMarkdown from 'react-markdown'
 import hljs from 'highlight.js'
+import rehypeRaw from 'rehype-raw'
+import remarkGfm from 'remark-gfm'
 import { GoshError, classNames } from 'react-gosh'
 import { Buffer } from 'buffer'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import rehypeRaw from 'rehype-raw'
 import { useBlobComments } from '../../../hooks/codecomment.hooks'
 import { toast } from 'react-toastify'
 import { ToastError } from '../../Toast'
@@ -137,7 +138,9 @@ const BlobPreview = (props: TBlobPreviewProps) => {
     if (filename.split('.').splice(-1)[0] === 'md') {
         return (
             <div className={classNames('markdown-body px-4 py-4', className)}>
-                <ReactMarkdown rehypePlugins={[rehypeRaw]}>{value || ''}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                    {value || ''}
+                </ReactMarkdown>
             </div>
         )
     }
