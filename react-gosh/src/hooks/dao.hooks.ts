@@ -654,9 +654,9 @@ function useDaoAutoTokenTransfer(dao?: IGoshDaoAdapter) {
                     tagName: stopTransferTagName,
                 },
             })
-            if (await stopTransferTag.isDeployed()) {
-                return { retry: false }
-            }
+            // if (await stopTransferTag.isDeployed()) {
+            //     return { retry: false }
+            // }
 
             // Transfer tokens from all prev dao versions
             let untransferred = 0
@@ -672,13 +672,13 @@ function useDaoAutoTokenTransfer(dao?: IGoshDaoAdapter) {
 
             // Deploy stop transfer tag
             if (untransferred === 0) {
-                await dao.wallet?.run('deployTag', {
-                    repoName: DAO_TOKEN_TRANSFER_TAG,
-                    nametag: stopTransferTagName,
-                    nameCommit: username,
-                    commit: profile,
-                    content: '',
-                })
+                // await dao.wallet?.run('deployTag', {
+                //     repoName: DAO_TOKEN_TRANSFER_TAG,
+                //     nametag: stopTransferTagName,
+                //     nameCommit: username,
+                //     commit: profile,
+                //     content: '',
+                // })
                 return { retry: false }
             }
             return { retry: true }
