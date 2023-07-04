@@ -250,7 +250,7 @@ pipeline {
 def buildDispatcher() {
     script {
         dir('gosh-dispatcher') {
-            sh '''
+            def shExitStatus = sh script: '''
                 #!/bin/bash
                 set -ex
                 set -o pipefail
@@ -295,7 +295,7 @@ def buildDispatcher() {
 def buildDispatcherDebug() {
     script {
         dir('gosh-dispatcher') {
-            sh '''
+            def shExitStatus = sh script: '''
                 #!/bin/bash
                 set -ex
                 set -o pipefail
@@ -318,7 +318,7 @@ def buildDispatcherDebug() {
 def buildRemoteGosh(version) {
     script {
         dir("${version}/git-remote-gosh") {
-            sh """
+            def shExitStatus = sh script: """
                 #!/bin/bash
                 set -ex
 
@@ -362,7 +362,7 @@ def buildRemoteGosh(version) {
 def buildRemoteGoshDebug(version) {
     script {
         dir("${version}/git-remote-gosh") {
-            sh """
+            def shExitStatus = sh script: """
                 #!/bin/bash
                 set -ex
 
