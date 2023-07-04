@@ -45,7 +45,7 @@ steps:
 # Linux
 - script: |
     set -ex
-    sudo apt install -y protobuf-compiler make clang pkg-config libssl-dev
+    sudo apt install -y protobuf-compiler make clang pkg-config libssl-dev libc6-dev-armhf-cross
   condition: eq( variables['Agent.OS'], 'Linux' )
   displayName: Install pre-requirements Linux
 # Mac
