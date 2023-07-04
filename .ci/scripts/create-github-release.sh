@@ -11,4 +11,4 @@ curl -sX POST -H "Accept: application/vnd.github+json" -H "Authorization: token 
     https://api.github.com/repos/gosh-sh/gosh/releases \
     -d "{\"tag_name\":\"${VERSION}\", \"target_commitish\":\"${BRANCH}\", \
     \"name\":\"Version: rc-${VERSION}\", \"body\":\"GOSH release\", \"draft\":false, \
-    \"prerelease\":true, \"generate_release_notes\":false}"
+    \"prerelease\":true, \"generate_release_notes\":false, \"make_latest\":true}"

@@ -253,6 +253,7 @@ def buildDispatcher() {
             sh '''
                 #!/bin/bash
                 set -ex
+                set -o pipefail
                 
                 # 2 = gosh-dispatcher
                 if [ \${DRYRUN} = "true" ]; then
@@ -282,7 +283,11 @@ def buildDispatcher() {
                     az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id $PIPELINE_2_ID --path linux-arm64 && sleep 2
                     az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id $PIPELINE_2_ID --path darwin-arm64 && sleep 2
                 fi
-            '''
+            ''', returnStatus: true
+
+            if (shExitStatus != 0) {
+                error("Failed to execute Bash script")
+            }
         }
     }
 }
@@ -293,6 +298,7 @@ def buildDispatcherDebug() {
             sh '''
                 #!/bin/bash
                 set -ex
+                set -o pipefail
 
                 cd ${WORKSPACE}
                 rm -rf linux-*
@@ -300,7 +306,11 @@ def buildDispatcherDebug() {
                 rm -rf windows-*
 
                 az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1178 --path linux-amd64 && sleep 2
-            '''
+            ''', returnStatus: true
+            
+            if (shExitStatus != 0) {
+                error("Failed to execute Bash script")
+            }
         }
     }
 }
@@ -340,7 +350,11 @@ def buildRemoteGosh(version) {
                     az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id \$PIPELINE_1_ID --path darwin-arm64 && sleep 2
                 fi
                 
-            """
+            """, returnStatus: true
+            
+            if (shExitStatus != 0) {
+                error("Failed to execute Bash script")
+            }
         }
     }
 }
@@ -359,7 +373,11 @@ def buildRemoteGoshDebug(version) {
                 az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1210 --path linux-amd64 && sleep 2
                 az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1211 --path linux-amd64 && sleep 2
                 az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1212 --path linux-amd64 && sleep 2
-            """
+            """, returnStatus: true
+            
+            if (shExitStatus != 0) {
+                error("Failed to execute Bash script")
+            }
         }
     }
 }

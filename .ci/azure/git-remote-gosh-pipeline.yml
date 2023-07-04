@@ -45,12 +45,12 @@ steps:
 # Linux
 - script: |
     set -ex
-    sudo apt install -y protobuf-compiler
+    sudo apt install -y protobuf-compiler make clang pkg-config libssl-dev
   condition: eq( variables['Agent.OS'], 'Linux' )
   displayName: Install pre-requirements Linux
 # Mac
 - script: |
-    brew install protobuf
+    brew install protobuf openssl cmake llvm
   condition: and(eq(variables['Agent.OS'], 'Darwin'), eq(variables['DRYRUN'], 'false'))
   displayName: Install pre-requirements MacOS
 # Windows
