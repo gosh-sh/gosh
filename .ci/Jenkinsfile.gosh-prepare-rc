@@ -253,7 +253,6 @@ def buildDispatcher() {
             def shExitStatus = sh script: '''
                 #!/bin/bash
                 set -ex
-                set -o pipefail
                 
                 # 2 = gosh-dispatcher
                 if [ \${DRYRUN} = "true" ]; then
@@ -298,7 +297,6 @@ def buildDispatcherDebug() {
             def shExitStatus = sh script: '''
                 #!/bin/bash
                 set -ex
-                set -o pipefail
 
                 cd ${WORKSPACE}
                 rm -rf linux-*
