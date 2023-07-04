@@ -106,7 +106,7 @@ async function pushRepo(
     dao_addr: string,
     github: Github,
     dao_bot: DaoBot,
-): Promise<Deno.ProcessStatus> {
+): Promise<Deno.CommandOutput> {
     console.log(`About to push`, github)
     const bot_name = getBotNameByDaoName(dao_bot.dao_name)
     const work_dir = `/tmp/${SYSTEM_CONTRACT_ADDR}/${dao_bot.dao_name}/${repo_name}`
@@ -129,8 +129,8 @@ async function pushRepo(
     const gosh_config_path = `${work_dir}/gosh-config.json`
     await Deno.writeTextFile(gosh_config_path, config)
 
-    const p = Deno.run({
-        cmd: ['bash', '/app/bin/upload_repo.sh'],
+    const command = new Deno.Command('bash', {
+        args: ['/app/bin/upload_repo.sh'],
         cwd: '/app/bin',
         env: {
             WORKDIR: work_dir,
@@ -143,6 +143,5 @@ async function pushRepo(
             GOSH_CONFIG_PATH: gosh_config_path,
         },
     })
-    const status = await p.status()
-    return status
+    return await command.output()
 }
