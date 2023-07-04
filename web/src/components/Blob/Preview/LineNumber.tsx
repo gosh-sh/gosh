@@ -17,7 +17,7 @@ const LineNumber = (props: TLineNumberProps) => {
     const { num, threads, threadIconProps, lineNumberProps, commentsOn } = props
 
     return (
-        <td className="p-0 w-16">
+        <td className="p-0 w-16 align-top">
             <div className="flex flex-nowrap items-center">
                 {commentsOn && (
                     <div className="flex flex-nowrap items-center justify-start">
