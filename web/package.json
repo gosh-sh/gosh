@@ -85,6 +85,7 @@
         "recoil": "^0.7.7",
         "recoil-persist": "^4.2.0",
         "rehype-raw": "^6.1.1",
+        "remark-gfm": "^3.0.1",
         "run-if-modified": "^1.0.3",
         "stream-browserify": "^3.0.0",
         "stream-http": "^3.2.0",

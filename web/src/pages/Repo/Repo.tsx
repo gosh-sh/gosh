@@ -257,13 +257,15 @@ const RepoPage = () => {
                     </div>
                 )}
 
-                <RepoReadme
-                    className="border border-gray-e6edff rounded-xl overflow-hidden"
-                    dao={daoName!}
-                    repo={repoName!}
-                    branch={branch!.name}
-                    blobs={blobs || []}
-                />
+                {branch && (
+                    <RepoReadme
+                        className="border border-gray-e6edff rounded-xl overflow-hidden"
+                        dao={daoName!}
+                        repo={repoName!}
+                        branch={branch.name}
+                        blobs={blobs || []}
+                    />
+                )}
             </div>
 
             {dao.details.version >= '5.0.0' && aiComments.length > 0 && (
