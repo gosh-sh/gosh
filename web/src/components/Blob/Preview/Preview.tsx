@@ -145,7 +145,7 @@ const BlobPreview = (props: TBlobPreviewProps) => {
         )
     }
     return (
-        <div className="overflow-y-scroll">
+        <div className="overflow-x-scroll">
             <table
                 className="code-table w-full text-xs"
                 onMouseLeave={() => setMouseDown(false)}
