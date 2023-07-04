@@ -47,6 +47,7 @@ const LineContent = (props: TLineContentProps) => {
             )}
             <div className="pl-4">
                 <pre
+                    className="whitespace-pre-wrap"
                     dangerouslySetInnerHTML={{
                         __html: content,
                     }}

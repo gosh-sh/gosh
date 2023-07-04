@@ -194,7 +194,7 @@ const LinesBlock = (props: TLinesBlockProps) => {
                     >
                         <td
                             className={classNames(
-                                'p-0 pr-2 w-[8rem]',
+                                'p-0 pr-2 w-[8rem] align-top',
                                 line.type === 'context'
                                     ? 'border-r border-r-gray-e6edff'
                                     : tdBorderStyle[line.type],
@@ -284,12 +284,14 @@ const LinesBlock = (props: TLinesBlockProps) => {
                                     <img src={commentBtn} className="w-full" />
                                 </div>
                             )}
+
                             <div className="pl-4">
-                                <pre>
+                                <pre className="whitespace-pre-wrap">
                                     <span data-pseudo-content={token} className="mr-1" />
                                     {content}
                                 </pre>
                             </div>
+
                             <div
                                 ref={(el) => {
                                     const { number } = getLineCommit(line)
