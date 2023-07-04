@@ -2,8 +2,8 @@ use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deploye
 use crate::blockchain::tree::load::check_if_tree_is_ready;
 use crate::{
     blockchain::{
-        get_commit_address, tree::TreeNode, user_wallet::WalletError, AddrVersion,
-        BlockchainContractAddress, BlockchainService, Snapshot, Tree,
+        tree::TreeNode, user_wallet::WalletError, AddrVersion, BlockchainContractAddress,
+        BlockchainService,
     },
     git_helper::{
         push::{
@@ -15,10 +15,10 @@ use crate::{
 };
 use anyhow::bail;
 use git_hash::ObjectId;
-use std::{collections::HashMap, sync::Arc, vec::Vec};
 use std::time::Duration;
-use tokio::{sync::Semaphore, task::JoinSet};
+use std::{collections::HashMap, sync::Arc, vec::Vec};
 use tokio::time::sleep;
+use tokio::{sync::Semaphore, task::JoinSet};
 use tokio_retry::RetryIf;
 use tracing::Instrument;
 
@@ -27,16 +27,16 @@ const WAIT_TREE_READY_MAX_ATTEMPTS: i32 = 3;
 // TODO: refactor this code and unite all this parallel pushes
 
 pub struct ParallelSnapshotUploadSupport {
-    expecting_deployed_contacts_addresses: HashMap<BlockchainContractAddress, ParallelSnapshot>,
+    expecting_deployed_contacts_addresses: Vec<String>,
     pushed_blobs: JoinSet<anyhow::Result<()>>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ParallelSnapshot {
-    branch_name: String,
-    file_path: String,
-    upgrade: bool,
-    commit_id: String,
+    pub branch_name: String,
+    pub file_path: String,
+    pub upgrade: bool,
+    pub commit_id: String,
 }
 
 impl ParallelSnapshot {
@@ -61,48 +61,37 @@ impl ParallelSnapshot {
 impl ParallelSnapshotUploadSupport {
     pub fn new() -> Self {
         Self {
-            expecting_deployed_contacts_addresses: HashMap::new(),
+            expecting_deployed_contacts_addresses: vec![],
             pushed_blobs: JoinSet::new(),
         }
     }
 
-    pub fn get_expected(&self) -> &HashMap<BlockchainContractAddress, ParallelSnapshot> {
+    pub fn get_expected(&self) -> &Vec<String> {
         &self.expecting_deployed_contacts_addresses
+    }
+
+    pub fn push_expected(&mut self, value: String) {
+        self.expecting_deployed_contacts_addresses.push(value);
     }
 
     #[instrument(level = "info", skip_all)]
     pub async fn add_to_push_list(
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
-        snapshot: ParallelSnapshot,
+        snapshot_address: String,
         prev_repo_address: Option<BlockchainContractAddress>,
     ) -> anyhow::Result<()> {
         let blockchain = context.blockchain.clone();
         let dao_address: BlockchainContractAddress = context.dao_addr.clone();
         let remote_network: String = context.remote.network.clone();
         let repo_address = context.repo_addr.clone();
-        let branch_name = snapshot.branch_name.clone();
 
-        let file_path = snapshot.file_path.clone();
-        let commit_str = snapshot.commit_id.clone();
-        let upgrade_commit = snapshot.upgrade.clone();
-
-        let mut repo_contract = blockchain.repo_contract().clone();
-        let snapshot_addr = Snapshot::calculate_address(
-            blockchain.client(),
-            &mut repo_contract,
-            &branch_name,
-            &file_path,
-        )
-        .await?;
-
-        tracing::trace!(
-            "Start push of snapshot: address: {snapshot_addr:?}, snapshot: {snapshot:?}"
-        );
+        tracing::trace!("Start push of snapshot: address: {snapshot_address:?}");
 
         self.expecting_deployed_contacts_addresses
-            .insert(snapshot_addr, snapshot.clone());
+            .push(snapshot_address.to_string());
 
+        let database = context.get_db()?.clone();
         self.pushed_blobs.spawn(
             async move {
                 push_initial_snapshot(
@@ -110,10 +99,8 @@ impl ParallelSnapshotUploadSupport {
                     repo_address,
                     dao_address,
                     remote_network,
-                    branch_name,
-                    file_path,
-                    upgrade_commit,
-                    commit_str,
+                    snapshot_address,
+                    database,
                     prev_repo_address,
                 )
                 .await
@@ -135,11 +122,11 @@ impl ParallelSnapshotUploadSupport {
         // - Make it configurable
         let addresses = self
             .expecting_deployed_contacts_addresses
-            .clone()
-            .into_keys()
+            .iter()
+            .map(|addr| BlockchainContractAddress::new(addr))
             .collect::<Vec<BlockchainContractAddress>>();
         tracing::debug!(
-            "Expecting the following diff contracts to be deployed: {:?}",
+            "Expecting the following snapshot contracts to be deployed: {:?}",
             addresses
         );
         while let Some(finished_task) = self.pushed_blobs.join_next().await {
@@ -158,18 +145,18 @@ impl ParallelSnapshotUploadSupport {
 }
 
 pub struct ParallelCommitUploadSupport {
-    expecting_deployed_contacts_addresses: HashMap<BlockchainContractAddress, ParallelCommit>,
+    expecting_deployed_contacts_addresses: Vec<String>,
     pushed_blobs: JoinSet<anyhow::Result<()>>,
 }
 
 #[derive(Clone, Debug)]
 pub struct ParallelCommit {
     pub commit_id: ObjectId,
-    branch: String,
-    tree_addr: BlockchainContractAddress,
-    raw_commit: String,
-    parents: Vec<AddrVersion>,
-    upgrade_commit: bool,
+    pub branch: String,
+    pub tree_addr: BlockchainContractAddress,
+    pub raw_commit: String,
+    pub parents: Vec<AddrVersion>,
+    pub upgrade_commit: bool,
 }
 
 impl ParallelCommit {
@@ -196,45 +183,35 @@ impl ParallelCommit {
 impl ParallelCommitUploadSupport {
     pub fn new() -> Self {
         Self {
-            expecting_deployed_contacts_addresses: HashMap::new(),
+            expecting_deployed_contacts_addresses: vec![],
             pushed_blobs: JoinSet::new(),
         }
     }
 
-    pub fn get_expected(&self) -> &HashMap<BlockchainContractAddress, ParallelCommit> {
+    pub fn get_expected(&self) -> &Vec<String> {
         &self.expecting_deployed_contacts_addresses
+    }
+
+    pub fn push_expected(&mut self, value: String) {
+        self.expecting_deployed_contacts_addresses.push(value);
     }
 
     #[instrument(level = "info", skip_all)]
     pub async fn add_to_push_list(
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
-        commit: ParallelCommit,
+        commit_address: String,
         push_semaphore: Arc<Semaphore>,
     ) -> anyhow::Result<()> {
         let blockchain = context.blockchain.clone();
         let dao_address: BlockchainContractAddress = context.dao_addr.clone();
         let remote = context.remote.clone();
+        let database = context.get_db()?.clone();
 
-        let commit_id = commit.commit_id.clone();
-        let branch = commit.branch.clone();
-        let tree_addr = commit.tree_addr.clone();
-        let raw_commit = commit.raw_commit.clone();
-        let parents = commit.parents.clone();
-        let upgrade_commit = commit.upgrade_commit.clone();
-
-        let mut repo_contract = blockchain.repo_contract().clone();
-        let commit_address = get_commit_address(
-            &blockchain.client(),
-            &mut repo_contract,
-            &commit_id.to_string(),
-        )
-        .await?;
-
-        tracing::trace!("Start push of commit: address: {commit_address:?}, snapshot: {commit:?}");
+        tracing::trace!("Start push of commit: address: {commit_address:?}");
 
         self.expecting_deployed_contacts_addresses
-            .insert(commit_address, commit.clone());
+            .push(commit_address.clone());
 
         let permit = push_semaphore.acquire_owned().await?;
 
@@ -253,16 +230,7 @@ impl ParallelCommitUploadSupport {
                     default_retry_strategy(),
                     || async {
                         blockchain
-                            .push_commit(
-                                &commit_id,
-                                &branch,
-                                &tree_addr,
-                                &remote,
-                                &dao_address,
-                                &raw_commit,
-                                &parents,
-                                upgrade_commit,
-                            )
+                            .push_commit(&commit_address, &remote, &dao_address, database.clone())
                             .await
                     },
                     condition,
@@ -289,11 +257,11 @@ impl ParallelCommitUploadSupport {
         // - Make it configurable
         let addresses = self
             .expecting_deployed_contacts_addresses
-            .clone()
-            .into_keys()
+            .iter()
+            .map(|addr| BlockchainContractAddress::new(addr))
             .collect::<Vec<BlockchainContractAddress>>();
         tracing::debug!(
-            "Expecting the following diff contracts to be deployed: {:?}",
+            "Expecting the following commit contracts to be deployed: {:?}",
             addresses
         );
         while let Some(finished_task) = self.pushed_blobs.join_next().await {
@@ -312,14 +280,14 @@ impl ParallelCommitUploadSupport {
 }
 
 pub struct ParallelTreeUploadSupport {
-    expecting_deployed_contacts_addresses: HashMap<BlockchainContractAddress, ParallelTree>,
+    expecting_deployed_contacts_addresses: Vec<String>,
     pushed_blobs: JoinSet<anyhow::Result<()>>,
 }
 
 #[derive(Clone, Debug)]
 pub struct ParallelTree {
     pub tree_id: ObjectId,
-    tree_nodes: HashMap<String, TreeNode>,
+    pub tree_nodes: HashMap<String, TreeNode>,
 }
 
 impl ParallelTree {
@@ -336,47 +304,36 @@ impl ParallelTree {
 impl ParallelTreeUploadSupport {
     pub fn new() -> Self {
         Self {
-            expecting_deployed_contacts_addresses: HashMap::new(),
+            expecting_deployed_contacts_addresses: vec![],
             pushed_blobs: JoinSet::new(),
         }
     }
 
-    pub fn get_expected(&self) -> &HashMap<BlockchainContractAddress, ParallelTree> {
+    pub fn get_expected(&self) -> &Vec<String> {
         &self.expecting_deployed_contacts_addresses
+    }
+
+    pub fn push_expected(&mut self, value: String) {
+        self.expecting_deployed_contacts_addresses.push(value);
     }
 
     #[instrument(level = "info", skip_all)]
     pub async fn add_to_push_list(
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
-        tree: ParallelTree,
+        tree_address: String,
         push_semaphore: Arc<Semaphore>,
     ) -> anyhow::Result<()> {
         let blockchain = context.blockchain.clone();
         let dao_address: BlockchainContractAddress = context.dao_addr.clone();
-        let remote_network: String = context.remote.network.clone();
         let repo_address = context.repo_addr.clone();
-        let network = context.remote.network.clone();
+        let remote_network = context.remote.network.clone();
         let repo = context.remote.repo.clone();
 
-        let tree_id = tree.tree_id.clone();
-        let tree_nodes = tree.tree_nodes.clone();
-
-        let mut repo_contract = blockchain.repo_contract().clone();
-        let tree_addr = Tree::calculate_address(
-            &Arc::clone(context.blockchain.client()),
-            &mut repo_contract,
-            &tree_id.to_string(),
-        )
-        .await?;
-
-        tracing::trace!(
-            "Start push of tree: address: {tree_addr:?}, tree_id: {:?}",
-            tree.tree_id
-        );
+        tracing::trace!("Start push of tree: address: {tree_address:?}");
 
         self.expecting_deployed_contacts_addresses
-            .insert(tree_addr, tree.clone());
+            .push(tree_address.clone());
 
         let permit = push_semaphore.clone().acquire_owned().await?;
 
@@ -389,6 +346,8 @@ impl ParallelTreeUploadSupport {
             }
         };
 
+        let database = context.get_db()?.clone();
+
         self.pushed_blobs.spawn(
             async move {
                 let res = RetryIf::spawn(
@@ -396,11 +355,11 @@ impl ParallelTreeUploadSupport {
                     || async {
                         inner_deploy_tree(
                             &blockchain,
-                            &network,
+                            &remote_network,
                             &dao_address,
                             &repo,
-                            &tree_id,
-                            &tree_nodes,
+                            &tree_address,
+                            database.clone(),
                         )
                         .await
                     },
@@ -427,11 +386,11 @@ impl ParallelTreeUploadSupport {
         // - Make it configurable
         let addresses = self
             .expecting_deployed_contacts_addresses
-            .clone()
-            .into_keys()
+            .iter()
+            .map(|addr| BlockchainContractAddress::new(addr))
             .collect::<Vec<BlockchainContractAddress>>();
         tracing::debug!(
-            "Expecting the following diff contracts to be deployed: {:?}",
+            "Expecting the following tree contracts to be deployed: {:?}",
             addresses
         );
         while let Some(finished_task) = self.pushed_blobs.join_next().await {
@@ -447,20 +406,21 @@ impl ParallelTreeUploadSupport {
         }
         let _ = wait_contracts_deployed(&blockchain, &addresses).await?;
 
-        let mut rest: HashMap<BlockchainContractAddress, usize> = addresses.iter().map(|addr| (addr.to_owned(), 0)).collect();
+        let mut rest: HashMap<BlockchainContractAddress, usize> =
+            addresses.iter().map(|addr| (addr.to_owned(), 0)).collect();
         let mut attempt = 0;
         loop {
             attempt += 1;
             let mut new_rest = HashMap::new();
             for (address, _) in &rest {
                 match check_if_tree_is_ready(&blockchain, address).await {
-                    Ok((true, _)) => {},
+                    Ok((true, _)) => {}
                     Ok((false, num)) => {
                         if &num != rest.get(address).unwrap() {
                             attempt = 0;
                         }
                         new_rest.insert(address.to_owned(), num);
-                    },
+                    }
                     _ => {
                         new_rest.insert(address.to_owned(), 0usize);
                     }

@@ -7,6 +7,7 @@ use reqwest_tracing::{OtelName, TracingMiddleware};
 use serde::Deserialize;
 use std::fmt::Debug;
 use std::{path::Path, time::Duration};
+use thiserror::Error;
 use tokio::fs::File;
 use tokio_retry::strategy::ExponentialBackoff;
 use tracing::Instrument;
@@ -15,6 +16,12 @@ type MiddlewareHttpClient = reqwest_middleware::ClientWithMiddleware;
 
 static MAX_RETRIES: usize = 20;
 static MAX_RETRY_DURATION: Duration = Duration::from_secs(30);
+
+#[derive(Error, Debug)]
+pub enum IpfsError {
+    #[error("Failed to access ipfs")]
+    SaveToIpfsError,
+}
 
 #[derive(Debug, Deserialize)]
 struct SaveRes {

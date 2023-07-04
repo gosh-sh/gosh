@@ -113,7 +113,7 @@ pipeline {
                     sh "rm -rf tests_workspace_*"
                     def basePort = 9000
                     def files = getTestFiles("tests").toList()
-                    def versions = ["v4_x", "v5_x/v5.1.0", "v5_x/v5.0.0"]
+                    def versions = ["v4_x", "v5_x/v5.0.0", "v5_x/v5.1.0"]
                     def batches = []
                     for (int i = 0; i < files.size(); i += batchSize) {
                         def end = Math.min(i + batchSize, files.size())
@@ -126,6 +126,7 @@ pipeline {
                             sh "rm -rf ${version}_workspace_*"
                             deployVersion(version, batch, basePort + (j * batchSize))
                         }
+
                         runFunctionalTests(batch, basePort + (j * batchSize), "Func v4", "v4_x")
                         runFunctionalTests(batch, basePort + (j * batchSize), "Func v5.0", "v5_x/v5.0.0")
                         runFunctionalTests(batch, basePort + (j * batchSize), "Func v5.1", "v5_x/v5.1.0")
@@ -147,7 +148,7 @@ pipeline {
                 script {
                     sh "rm -rf tests_workspace_*"
                     def basePort = 9000
-                    def versions = ["v4_x", "v5_x/v5.0.0", "v5_x/v5.1.0"]
+                    def versions = ["v3_x", "v4_x", "v5_x/v5.0.0", "v5_x/v5.1.0"]
 
                     def upgradeFiles = getTestFiles("tests/upgrade_tests").toList()
                     def upgradeBatches = []
@@ -164,8 +165,9 @@ pipeline {
                             deployVersion(version, batch, basePort + (j * batchSize))
                         }
 
-                        runUpgradeTests(batch, basePort + (j * batchSize), "v5_x/v5.0.0", "v5_x/v5.1.0")
                         runUpgradeTests(batch, basePort + (j * batchSize), "v4_x", "v5_x/v5.1.0")
+                        runUpgradeTests(batch, basePort + (j * batchSize), "v5_x/v5.0.0", "v5_x/v5.1.0")
+                        runUpgradeTests(batch, basePort + (j * batchSize), "v3_x", "v4_x")
                         sh 'docker ps -a --filter name=localnode-* -aq | grep -v "$(docker ps -a --filter name=localnode-9000 -q)" | xargs docker rm -f'
                     }
 
@@ -297,7 +299,7 @@ def buildDispatcherDebug() {
                 rm -rf darwin-*
                 rm -rf windows-*
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1140 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1178 --path linux-amd64 && sleep 2
             '''
         }
     }
@@ -353,12 +355,10 @@ def buildRemoteGoshDebug(version) {
                 cd ${WORKSPACE}
                 export VSTS_ARTIFACTTOOL_DISABLE_HARDLINKS=1
                 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1141 --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1142 --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1143 --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1144 --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1145 --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1146 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1209 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1210 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1211 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1212 --path linux-amd64 && sleep 2
             """
         }
     }

@@ -305,7 +305,7 @@ pub async fn load_messages_to(
     )
     .await
     .map(|r| r.result)
-        .map_err(|e| anyhow::format_err!("query error: {e}"))?;
+    .map_err(|e| anyhow::format_err!("query error: {e}"))?;
 
     let mut messages: Vec<DiffMessage> = Vec::new();
     let nodes = &result["data"]["blockchain"]["account"]["messages"];

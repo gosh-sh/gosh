@@ -14,7 +14,7 @@ keywords = ['git-remote', 'git', 'gosh']
 name = 'git-remote-gosh'
 resolver = '2'
 rust-version = "1.68"
-version = '5.1.25'
+version = '5.1.26'
 
 [profile.profiling]
 debug = 1
@@ -69,6 +69,8 @@ primitive-types = '0.12.1'
 proc-macro2 = "=1.0.52"
 reqwest-middleware = "0.2.0"
 reqwest-tracing = "0.4.0"
+rmp-serde = "1.1.1"
+rocksdb = "0.21.0"
 serde_json = '1.0.93'
 sha256 = '1.0.3'
 shellexpand = '2.1.2'

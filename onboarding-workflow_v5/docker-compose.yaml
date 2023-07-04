@@ -138,41 +138,43 @@ services:
     command: >
       deno run -A ./src/consumers/count_git_objects.ts
 
-#  consumer_create_large_gosh_repo:
-#     image: gosh-onboarding-v5
-#     restart: always
-#     depends_on:
-#       redis-v5:
-#         condition: service_healthy
-#     volumes:
-#       - './logs:/tmp/logs'
-#     environment:
-#       SUPABASE_URL: ${SUPABASE_URL}
-#       SUPABASE_KEY: ${SUPABASE_KEY}
-#       REDIS_URL: redis://redis-v5:6379
-#       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
-#       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
-#       GOSH_VERSION: ${GOSH_VERSION}
-#     command: >
-#       deno run -A ./src/consumers/create_large_gosh_repo.ts
+  consumer_create_large_gosh_repo:
+     image: gosh-onboarding-v5
+     restart: always
+     depends_on:
+       redis-v5:
+         condition: service_healthy
+     volumes:
+       - onbd_create_large_gosh_repo:/tmp
+       #- './logs:/tmp/logs'
+     environment:
+       SUPABASE_URL: ${SUPABASE_URL}
+       SUPABASE_KEY: ${SUPABASE_KEY}
+       REDIS_URL: redis://redis-v5:6379
+       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
+       GOSH_VERSION: ${GOSH_VERSION}
+     command: >
+       deno run -A ./src/consumers/create_large_gosh_repo.ts
 
-#  consumer_create_medium_gosh_repo:
-#    image: gosh-onboarding-v5
-#    restart: always
-#    depends_on:
-#      redis-v5:
-#        condition: service_healthy
-#    volumes:
-#      - './logs:/tmp/logs'
-#    environment:
-#      SUPABASE_URL: ${SUPABASE_URL}
-#      SUPABASE_KEY: ${SUPABASE_KEY}
-#      REDIS_URL: redis://redis-v5:6379
-#      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
-#      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
-#      GOSH_VERSION: ${GOSH_VERSION}
-#    command: >
-#      deno run -A ./src/consumers/create_medium_gosh_repo.ts
+  consumer_create_medium_gosh_repo:
+    image: gosh-onboarding-v5
+    restart: always
+    depends_on:
+      redis-v5:
+        condition: service_healthy
+    volumes:
+      - onbd_create_medium_gosh_repo:/tmp
+      #- './logs:/tmp/logs'
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      REDIS_URL: redis://redis-v5:6379
+      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
+      GOSH_VERSION: ${GOSH_VERSION}
+    command: >
+      deno run -A ./src/consumers/create_medium_gosh_repo.ts
 
   consumer_create_small_gosh_repo:
     image: gosh-onboarding-v5
@@ -181,7 +183,8 @@ services:
       redis-v5:
         condition: service_healthy
     volumes:
-      - './logs:/tmp/logs'
+      - onbd_create_small_gosh_repo:/tmp
+      #- './logs:/tmp/logs'
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
@@ -191,3 +194,8 @@ services:
       GOSH_VERSION: ${GOSH_VERSION}
     command: >
       deno run -A ./src/consumers/create_small_gosh_repo.ts
+
+volumes:
+  onbd_create_large_gosh_repo:
+  onbd_create_medium_gosh_repo:
+  onbd_create_small_gosh_repo:

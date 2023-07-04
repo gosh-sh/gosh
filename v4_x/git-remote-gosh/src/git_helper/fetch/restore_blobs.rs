@@ -1,5 +1,5 @@
 use super::GitHelper;
-use crate::blockchain::snapshot;
+
 use crate::ipfs::build_ipfs;
 use crate::{
     blockchain::{
@@ -13,7 +13,6 @@ use git_hash::ObjectId;
 use git_odb::{FindExt, Write};
 use git_repository::OdbHandle;
 use lru::LruCache;
-use tokio::sync::Mutex;
 use std::{
     collections::{HashMap, HashSet},
     num::NonZeroUsize,
@@ -21,6 +20,7 @@ use std::{
     sync::Arc,
     vec::Vec,
 };
+use tokio::sync::Mutex;
 use tracing::Instrument;
 
 const FETCH_MAX_TRIES: i32 = 3;
@@ -43,10 +43,7 @@ async fn load_data_from_ipfs(
 }
 
 #[instrument(level = "debug", skip(odb))]
-fn load_data_from_local(
-    odb: &OdbHandle,
-    blob_id: &ObjectId,
-) -> anyhow::Result<Vec<u8>> {
+fn load_data_from_local(odb: &OdbHandle, blob_id: &ObjectId) -> anyhow::Result<Vec<u8>> {
     tracing::trace!("load_data_from_local: blob_id={blob_id}");
     let mut blob_buffer: Vec<u8> = Vec::new();
     let data = odb.find_blob(blob_id, &mut blob_buffer)?.data.to_vec();
@@ -281,7 +278,11 @@ impl BlobsRebuildingPlan {
         appeared_at_snapshot_address: BlockchainContractAddress,
         blob_sha1: ObjectId,
     ) {
-        tracing::info!("Mark blob: {} -> {}", blob_sha1, appeared_at_snapshot_address);
+        tracing::info!(
+            "Mark blob: {} -> {}",
+            blob_sha1,
+            appeared_at_snapshot_address
+        );
         self.snapshot_address_to_blob_sha
             .entry(appeared_at_snapshot_address)
             .and_modify(|blobs| {
@@ -332,13 +333,9 @@ impl BlobsRebuildingPlan {
                 (snapshot.next_content, snapshot.next_ipfs.clone())
             };
 
-            let (blob, blob_data) = convert_snapshot_into_blob(
-                &ipfs_client,
-                &content,
-                &ipfs_hash,
-            )
-            .instrument(info_span!("convert_next_snapshot_into_blob").or_current())
-            .await?;
+            let (blob, blob_data) = convert_snapshot_into_blob(&ipfs_client, &content, &ipfs_hash)
+                .instrument(info_span!("convert_next_snapshot_into_blob").or_current())
+                .await?;
             let blob_oid = write_git_object(repo, blob).await?;
             if new_loading {
                 let mut visited = visited_ipfs.lock().await;
@@ -348,8 +345,9 @@ impl BlobsRebuildingPlan {
         } else {
             None
         };
-        let snapshot_current
-            = if snapshot.next_ipfs.is_some() && snapshot.next_ipfs == snapshot.current_ipfs { // deduplicate
+        let snapshot_current =
+            if snapshot.next_ipfs.is_some() && snapshot.next_ipfs == snapshot.current_ipfs {
+                // deduplicate
                 None // snapshot_next.clone()
             } else if snapshot_current_commit_sha.is_ok() {
                 let (blob, blob_data) = convert_snapshot_into_blob(

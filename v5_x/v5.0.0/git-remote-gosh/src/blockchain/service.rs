@@ -11,9 +11,9 @@ use super::{
 };
 use crate::abi as gosh_abi;
 use async_trait::async_trait;
-use std::collections::HashMap;
-use std::fmt::Debug;
+
 use crate::blockchain::check_contracts_deployed;
+use std::fmt::Debug;
 
 #[async_trait]
 pub trait BlockchainBranchesService {
@@ -163,14 +163,16 @@ impl BlockchainService for Everscale {
 #[cfg(test)]
 pub mod tests {
     use super::*;
+    use crate::database::GoshDB;
     use crate::{
-        blockchain::{snapshot::save::Diff, tree::TreeNode, user_wallet::UserWallet, AddrVersion},
+        blockchain::{snapshot::save::Diff, tree::TreeNode, user_wallet::UserWallet},
         config::Config,
         config::UserWalletConfig,
         utilities::Remote,
     };
     use git_hash::ObjectId;
     use std::collections::HashMap;
+    use std::sync::Arc;
 
     // see details: https://docs.rs/mockall/latest/mockall/#multiple-and-inherited-traits
     mockall::mock! {
@@ -278,14 +280,10 @@ pub mod tests {
         impl BlockchainCommitPusher for Everscale {
             async fn push_commit(
                 &self,
-                commit_id: &ObjectId,
-                branch: &str,
-                tree_addr: &BlockchainContractAddress,
+                commit_address: &str,
                 remote: &Remote,
                 dao_addr: &BlockchainContractAddress,
-                raw_commit: &str,
-                parents: &Vec<AddrVersion>,
-                upgrade_commit: bool,
+                database: Arc<GoshDB>,
             ) -> anyhow::Result<()>;
 
             async fn notify_commit(

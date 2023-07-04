@@ -110,24 +110,22 @@ where
         let visited_ipfs: Arc<Mutex<HashMap<String, git_hash::ObjectId>>> =
             Arc::new(Mutex::new(HashMap::new()));
         macro_rules! guard {
-            ($id:ident) => {
-                {
-                    let visited = visited.lock().await;
-                    if visited.contains(&$id) {
-                        continue;
-                    }
-                }
-                if $id.is_null() {
+            ($id:ident) => {{
+                let visited = visited.lock().await;
+                if visited.contains(&$id) {
                     continue;
                 }
-                {
-                    let mut visited = visited.lock().await;
-                    visited.insert($id.clone());
-                    if self.is_commit_in_local_cache(&$id) {
-                        continue;
-                    }
+            }
+            if $id.is_null() {
+                continue;
+            }
+            {
+                let mut visited = visited.lock().await;
+                visited.insert($id.clone());
+                if self.is_commit_in_local_cache(&$id) {
+                    continue;
                 }
-            };
+            }};
         }
 
         let mut commits_queue = VecDeque::<git_hash::ObjectId>::new();
@@ -241,7 +239,9 @@ where
                 let visited_ref = Arc::clone(&visited);
                 let visited_ipfs_ref = Arc::clone(&visited_ipfs);
                 tracing::debug!("branch={branch}: Restoring blobs");
-                blobs_restore_plan.restore(self, visited_ref, visited_ipfs_ref).await?;
+                blobs_restore_plan
+                    .restore(self, visited_ref, visited_ipfs_ref)
+                    .await?;
                 blobs_restore_plan = restore_blobs::BlobsRebuildingPlan::new();
                 continue;
             }
@@ -305,9 +305,12 @@ where
                                             oid,
                                             snapshot_address
                                         );
-                                        blobs_restore_plan.mark_blob_to_restore(snapshot_address, oid);
-                                    },
-                                    _ => { continue; }
+                                        blobs_restore_plan
+                                            .mark_blob_to_restore(snapshot_address, oid);
+                                    }
+                                    _ => {
+                                        continue;
+                                    }
                                 }
                             }
                         }
