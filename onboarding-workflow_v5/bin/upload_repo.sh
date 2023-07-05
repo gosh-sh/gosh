@@ -57,6 +57,7 @@ git-remote-gosh dispatcher_ini
 git remote add gosh "gosh://$GOSH_SYSTEM_CONTRACT_ADDR/$GOSH_DAO_NAME/$GOSH_REPO_NAME"
 export GOSH_TRACE=5
 export GOSH_REMOTE_WAIT_TIMEOUT=600
+export GOSH_REMOTE_WALLET_PARALLELISM=10
 git push --all gosh &>>"$LOG_FILE"
 PUSH_END=$SECONDS
 PUSH_DURATION=$((PUSH_END - PUSH_START))
