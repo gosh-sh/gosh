@@ -13,4 +13,4 @@ RELEASE_ID=$(curl -sH "Authorization: token ${TOKEN}" \
 
 curl -X PATCH -H "Accept: application/vnd.github+json" -H "Authorization: token ${TOKEN}" \
     https://api.github.com/repos/gosh-sh/gosh/releases/"$RELEASE_ID" \
-    -d "{\"name\":\"Version: ${VERSION}\", \"prerelease\":false, \"make_latest\":true}"
+    -d "{\"name\":\"Version: ${VERSION}\", \"prerelease\":false, \"make_latest\":\"true\"}"
