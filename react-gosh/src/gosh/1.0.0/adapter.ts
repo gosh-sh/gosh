@@ -1209,12 +1209,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
 
         const _parents = await Promise.all(
-            parents.map(async (item: any) => {
-                const _commit = await this._getCommit({ address: item.addr })
+            parents.map(async (item: string) => {
+                const _commit = await this._getCommit({ address: item })
                 const { value0 } = await _commit.runLocal('getNameCommit', {})
                 return {
-                    address: item.addr,
-                    version: item.version,
+                    address: item,
+                    version: '1.0.0',
                     name: value0,
                 }
             }),

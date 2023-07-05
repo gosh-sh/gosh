@@ -6,18 +6,18 @@ import { TUser, TUserPersist } from '../types'
 import { persistAtom } from './base'
 
 const userPersistAtom = atom<TUserPersist>({
-    key: 'UserPersistAtom',
+    key: 'UserPersistAtom1',
     default: {},
     effects_UNSTABLE: [persistAtom],
 })
 
 const userAtom = atom<TUser>({
-    key: 'UserAtom',
+    key: 'UserAtom1',
     default: {},
 })
 
 const userProfileSelector = selector<IGoshProfile | undefined>({
-    key: 'UserProfileSelector',
+    key: 'UserProfileSelector1',
     get: ({ get }) => {
         const user = get(userAtom)
         if (!user.profile || !user.keys) return
