@@ -12,6 +12,7 @@ import { useUser } from '../../hooks/user.hooks'
 import Loader from '../../../components/Loader/Loader'
 import { useOnboardingData } from '../../hooks/onboarding.hooks'
 import { useOauth } from '../../hooks/oauth.hooks'
+import { withRouteAnimation } from '../../hocs'
 
 const OnboardingPage = () => {
     const navigate = useNavigate()
@@ -70,4 +71,4 @@ const OnboardingPage = () => {
     )
 }
 
-export default OnboardingPage
+export default withRouteAnimation(OnboardingPage)

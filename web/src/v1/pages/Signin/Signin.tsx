@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react'
 import SigninPhraseForm from './PhraseForm'
 import SigninProfileForm from './ProfileForm'
 import { useUser } from '../../hooks/user.hooks'
+import { withRouteAnimation } from '../../hocs'
 
 const SigninPage = () => {
     const navigate = useNavigate()
@@ -80,4 +81,4 @@ const SigninPage = () => {
     )
 }
 
-export default SigninPage
+export default withRouteAnimation(SigninPage)
