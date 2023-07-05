@@ -3,10 +3,10 @@ import { classNames, TDao, TPushProgress, TRepository, TUserParam } from 'react-
 import RepoBreadcrumbs from '../Repo/Breadcrumbs'
 import { useNavigate } from 'react-router-dom'
 import BlobDiffPreview from '../Blob/DiffPreview'
-import yup from '../../yup-extended'
 import { Button } from '../Form'
 import { CommitFields } from './CommitFields/CommitFields'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
+import yup from '../../v1/yup-extended'
 
 export type TBlobDeleteFormValues = {
     title: string

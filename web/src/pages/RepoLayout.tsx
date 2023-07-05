@@ -16,6 +16,8 @@ import {
     TRepository,
     shortString,
     AppConfig,
+    useUser,
+    GoshAdapterFactory,
 } from 'react-gosh'
 import {
     IGoshDaoAdapter,
@@ -24,6 +26,7 @@ import {
 } from 'react-gosh/dist/gosh/interfaces'
 import { faFile } from '@fortawesome/free-regular-svg-icons'
 import Loader from '../components/Loader'
+import { withPin } from '../v1/hocs'
 
 export type TRepoLayoutOutletContext = {
     dao: {
@@ -41,6 +44,7 @@ export type TRepoLayoutOutletContext = {
 }
 
 const RepoLayout = () => {
+    const { persist, user } = useUser()
     const { daoName, repoName, branchName } = useParams()
     const { dao, repository, isFetching } = useRepo(daoName!, repoName!)
     const { updateBranches } = useBranches(repository.adapter)
@@ -80,6 +84,24 @@ const RepoLayout = () => {
 
         return tabs
     }
+
+    // TODO: Remove this after git part refactor
+    useEffect(() => {
+        Object.keys(AppConfig.versions)
+            .map((version) => {
+                return GoshAdapterFactory.create(version)
+            })
+            .map((gosh) => {
+                const { username } = persist
+                const { keys } = user
+                if (username && keys) {
+                    gosh.setAuth(username, keys)
+                } else {
+                    gosh.resetAuth()
+                }
+            })
+    }, [])
+    // /TODO: Remove this after git part refactor
 
     useEffect(() => {
         const _setup = async () => {
@@ -180,4 +202,4 @@ const RepoLayout = () => {
     )
 }
 
-export default RepoLayout
+export default withPin(RepoLayout, { redirect: false })

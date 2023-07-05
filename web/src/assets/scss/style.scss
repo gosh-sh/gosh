@@ -24,7 +24,7 @@ body,
 }
 
 .container {
-    @apply max-w-full px-5 lg:px-24;
+    @apply max-w-full px-5 lg:px-10 xl:px-24;
 
     &--full {
         @apply px-0 sm:px-5;

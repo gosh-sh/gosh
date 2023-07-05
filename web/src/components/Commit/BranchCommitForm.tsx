@@ -2,8 +2,8 @@ import { Form, Formik } from 'formik'
 import { classNames, TDao, TUserParam } from 'react-gosh'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { TPushProgress, TRepository } from 'react-gosh/dist/types/repo.types'
-import yup from '../../yup-extended'
 import { CommitFields } from './CommitFields/CommitFields'
+import yup from '../../v1/yup-extended'
 
 export type TBranchCommitFormValues = {
     title: string

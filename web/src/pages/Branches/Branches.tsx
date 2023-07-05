@@ -1,15 +1,9 @@
 import { useEffect, useState } from 'react'
-import {
-    faChevronRight,
-    faTrash,
-    faLock,
-    faCodeBranch,
-} from '@fortawesome/free-solid-svg-icons'
+import { faChevronRight, faLock, faCodeBranch } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Field, Form, Formik, FormikHelpers } from 'formik'
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { FormikInput } from '../../components/Formik'
-import Spinner from '../../components/Spinner'
 import { useBranchManagement, useBranches } from 'react-gosh'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import { EGoshError, GoshError } from 'react-gosh'
@@ -17,7 +11,7 @@ import { toast } from 'react-toastify'
 import { ToastError } from '../../components/Toast'
 import { TBranch } from 'react-gosh/dist/types/repo.types'
 import { BranchOperateProgress, BranchSelect } from '../../components/Branches'
-import yup from '../../yup-extended'
+import yup from '../../v1/yup-extended'
 import { Button, Input } from '../../components/Form'
 import CommitProgress from '../../components/Commit/CommitProgress'
 
@@ -250,68 +244,61 @@ export const BranchesPage = () => {
                         </div>
                         <div>
                             {dao.details.isAuthMember && (
-                                <>
-                                    <button
+                                <div className="flex gap-x-3">
+                                    <Button
                                         type="button"
-                                        className="btn btn--body px-2.5 py-1.5 text-xs rounded mr-3 !font-normal"
+                                        variant="outline-secondary"
+                                        size="sm"
                                         onClick={() => {
                                             branch.isProtected
                                                 ? onBranchUnlock(branch.name)
                                                 : onBranchLock(branch.name)
                                         }}
                                         disabled={branchProgress.isFetching}
-                                    >
-                                        {branchProgress.isFetching &&
+                                        isLoading={
+                                            branchProgress.isFetching &&
                                             branchProgress.type === '(un)lock' &&
-                                            branchProgress.name === branch.name && (
-                                                <Spinner size="xs" />
-                                            )}
-                                        <span>
-                                            {branch.isProtected ? 'Unprotect' : 'Protect'}
-                                        </span>
-                                    </button>
-                                    <button
+                                            branchProgress.name === branch.name
+                                        }
+                                    >
+                                        {branch.isProtected ? 'Unprotect' : 'Protect'}
+                                    </Button>
+                                    <Button
                                         type="button"
-                                        className="btn btn--body px-2.5 py-1.5 text-xs rounded mr-3 !font-normal"
+                                        variant="outline-secondary"
+                                        size="sm"
                                         onClick={() => onBranchSetHead(branch.name)}
                                         disabled={
                                             branchProgress.isFetching ||
                                             repository.details.head === branch.name
                                         }
+                                        isLoading={
+                                            branchProgress.isFetching &&
+                                            branchProgress.type === 'sethead' &&
+                                            branchProgress.name === branch.name
+                                        }
                                     >
-                                        {branchProgress.isFetching &&
-                                        branchProgress.type === 'sethead' &&
-                                        branchProgress.name === branch.name ? (
-                                            <Spinner size="xs" />
-                                        ) : (
-                                            <FontAwesomeIcon
-                                                icon={faCodeBranch}
-                                                size="sm"
-                                            />
-                                        )}
-                                        <span className="ml-2">Set head</span>
-                                    </button>
-                                    <button
+                                        Set head
+                                    </Button>
+                                    <Button
                                         type="button"
-                                        className="px-2.5 py-1.5 text-white text-xs rounded bg-rose-600
-                                        hover:bg-rose-500 disabled:bg-rose-400"
+                                        variant="outline-danger"
+                                        size="sm"
                                         onClick={() => onBranchDelete(branch.name)}
                                         disabled={
                                             branch.isProtected ||
                                             branchProgress.isFetching ||
                                             ['main', 'master'].indexOf(branch.name) >= 0
                                         }
+                                        isLoading={
+                                            branchProgress.isFetching &&
+                                            branchProgress.type === 'destroy' &&
+                                            branchProgress.name === branch.name
+                                        }
                                     >
-                                        {branchProgress.isFetching &&
-                                        branchProgress.type === 'destroy' &&
-                                        branchProgress.name === branch.name ? (
-                                            <Spinner size="xs" />
-                                        ) : (
-                                            <FontAwesomeIcon icon={faTrash} size="sm" />
-                                        )}
-                                        <span className="ml-2">Delete</span>
-                                    </button>
-                                </>
+                                        Delete
+                                    </Button>
+                                </div>
                             )}
                         </div>
 

@@ -2,6 +2,8 @@ import { AppConfig } from './appconfig'
 import { toast } from 'react-toastify'
 import { createAvatar } from '@dicebear/core'
 import { identicon } from '@dicebear/collection'
+import { supabase } from './supabase'
+import classNames from 'classnames'
 
 export const getClipboardData = async (event?: any): Promise<string | null> => {
     if (event?.clipboardData && event.clipboardData.getData) {
@@ -35,6 +37,19 @@ export const getIdenticonAvatar = (options: any) => {
         backgroundColor: ['fafafd'],
         ...options,
     })
+}
+
+export const getUsernameByEmail = async (email: string): Promise<string[] | null> => {
+    const { data, error } = await supabase.client
+        .from('users')
+        .select('gosh_username')
+        .eq('email', email)
+        .order('created_at', { ascending: true })
+    if (error) {
+        console.warn('Error query user by email', error)
+        return null
+    }
+    return data.length ? data.map(({ gosh_username }) => gosh_username) : null
 }
 
 /**
@@ -72,4 +87,19 @@ export const ToastOptionsShortcuts = {
         style: { width: '50%' },
         className: 'mx-auto',
     },
+}
+
+/**
+ * Select2 (react-select)
+ */
+export const Select2ClassNames = {
+    control: (props) => {
+        return classNames(
+            '!rounded-lg !border-gray-e6edff !text-sm !bg-white',
+            props.isDisabled ? '!text-gray-7c8db5' : null,
+        )
+    },
+    valueContainer: () => '!px-4 !py-1',
+    placeholder: () => '!text-black/40',
+    noOptionsMessage: () => '!text-sm',
 }

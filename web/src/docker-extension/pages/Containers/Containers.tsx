@@ -24,6 +24,7 @@ import {
 } from './../../interfaces'
 import { shortString } from 'react-gosh'
 import CopyClipboard from '../../../components/CopyClipboard'
+import { withPin } from '../../../v1/hocs'
 
 const StatusDot = ({ status }: { status: string }) => (
     <div className={cn('dd-status-dot', status)}></div>
@@ -522,4 +523,4 @@ const Main = () => {
     )
 }
 
-export default Main
+export default withPin(Main, { redirect: true })

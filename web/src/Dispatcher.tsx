@@ -66,8 +66,10 @@ const Dispatcher = () => {
             setAppContext((state) => ({ ...state, version }))
         }
 
-        _setAppContext()
-    }, [routeMatch?.params.daoName])
+        if (isInitialized) {
+            _setAppContext()
+        }
+    }, [isInitialized, routeMatch?.params.daoName])
 
     if (!isInitialized) {
         return <Loader>App is loading</Loader>

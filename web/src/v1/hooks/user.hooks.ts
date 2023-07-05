@@ -1,5 +1,10 @@
 import { KeyPair } from '@eversdk/core'
-import { useRecoilState, useRecoilValue, useResetRecoilState } from 'recoil'
+import {
+    useRecoilState,
+    useRecoilValue,
+    useResetRecoilState,
+    useSetRecoilState,
+} from 'recoil'
 import { AppConfig } from '../../appconfig'
 import { userAtom, userPersistAtom, userProfileSelector } from '../../store/user.state'
 import { TUserPersist } from '../../types/user.types'
@@ -7,12 +12,20 @@ import { validatePhrase } from '../../validators'
 import { EGoshError, GoshError } from '../../errors'
 import { validateUsername } from '../validators'
 import { systemContract } from '../blockchain/helpers'
+import { userPersistAtom as _userPersistAtom, userAtom as _userAtom } from 'react-gosh'
 
 export function useUser() {
     const [userPersist, setUserPersist] = useRecoilState(userPersistAtom)
     const [user, setUser] = useRecoilState(userAtom)
     const resetUserPersist = useResetRecoilState(userPersistAtom)
     const resetUser = useResetRecoilState(userAtom)
+
+    // TODO: for react-gosh; REMOVE after refactor
+    const _setUserPersist = useSetRecoilState(_userPersistAtom)
+    const _setUser = useSetRecoilState(_userAtom)
+    const _resetUserPersist = useResetRecoilState(_userPersistAtom)
+    const _resetUser = useResetRecoilState(_userAtom)
+    // /TODO: for react-gosh; REMOVE after refactor
 
     const getProfiles = async (phrase: string) => {
         const { valid, reason } = await validatePhrase(phrase)
@@ -38,6 +51,11 @@ export function useUser() {
     ) => {
         setUserPersist(persist)
         setUser({ ...persist, ...decrypted })
+
+        // TODO: for react-gosh; REMOVE after refactor
+        _setUserPersist(persist)
+        _setUser({ ...persist, ...decrypted })
+        // /TODO: for react-gosh; REMOVE after refactor
     }
 
     const signin = async (params: { username: string; phrase: string }) => {
@@ -56,6 +74,11 @@ export function useUser() {
         }
         resetUserPersist()
         setUserPersist((state) => ({ ...state, username, profile: profile.address }))
+
+        // TODO: for react-gosh; REMOVE after refactor
+        _resetUserPersist()
+        _setUserPersist((state) => ({ ...state, username, profile: profile.address }))
+        // /TODO: for react-gosh; REMOVE after refactor
     }
 
     const signup = async (params: { username: string; phrase: string }) => {
@@ -77,11 +100,21 @@ export function useUser() {
         await systemContract.createUserProfile(username, `0x${derived.public}`)
         resetUserPersist()
         setUserPersist((state) => ({ ...state, username, profile: profile.address }))
+
+        // TODO: for react-gosh; REMOVE after refactor
+        _resetUserPersist()
+        _setUserPersist((state) => ({ ...state, username, profile: profile.address }))
+        // /TODO: for react-gosh; REMOVE after refactor
     }
 
     const signout = () => {
         resetUser()
         resetUserPersist()
+
+        // TODO: for react-gosh; REMOVE after refactor
+        _resetUser()
+        _resetUserPersist()
+        // /TODO: for react-gosh; REMOVE after refactor
     }
 
     const _validateCredentials = async (params: any) => {

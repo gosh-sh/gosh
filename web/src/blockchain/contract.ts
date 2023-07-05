@@ -42,7 +42,9 @@ class BaseContract {
     }
 
     async boc(): Promise<string> {
-        if (!this.cachedBoc) this.cachedBoc = await this.account.boc()
+        if (!this.cachedBoc) {
+            this.cachedBoc = await this.account.boc()
+        }
         return this.cachedBoc
     }
 
@@ -183,11 +185,15 @@ class BaseContract {
     ): Promise<ResultOfProcessMessage> {
         const { logging = true, retries = 3 } = settings ?? {}
 
-        if (logging) console.debug('[Run]', { functionName, input, options })
+        if (logging) {
+            console.debug('[Run]', { functionName, input, options })
+        }
         const result = await retry(async () => {
             return await this.account.run(functionName, input, options)
         }, retries)
-        if (logging) console.debug('[Run result]', { functionName, result })
+        if (logging) {
+            console.debug('[Run result]', { functionName, result })
+        }
 
         return result
     }

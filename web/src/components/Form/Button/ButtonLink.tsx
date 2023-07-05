@@ -16,9 +16,9 @@ const styles: { [key: string]: string[] } = {
     custom: [],
     'outline-danger': [
         'bg-white text-red-ff3b30',
-        'border-red-ff3b30',
+        '!border-red-ff3b30',
         'hover:bg-red-ff3b30 hover:text-white',
-        'disabled:border-gray-e6edff disabled:text-gray-7c8db5',
+        'disabled:!border-gray-e6edff disabled:text-gray-e6edff',
     ],
     'outline-secondary': [
         'bg-gray-fafafd text-gray-53596d',

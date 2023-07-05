@@ -3,9 +3,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Form, Formik } from 'formik'
 import { classNames, useBranches } from 'react-gosh'
 import { TBranch } from 'react-gosh/dist/types/repo.types'
-import yup from '../../yup-extended'
 import { Button } from '../Form'
 import { BranchSelect } from './Dropdown'
+import yup from '../../v1/yup-extended'
 
 type TBranchCompareFormProps = {
     className?: string

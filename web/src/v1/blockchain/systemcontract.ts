@@ -52,6 +52,19 @@ export class SystemContract extends BaseContract {
         return new Repository(this.client, value0)
     }
 
+    async getRepositoryCodeHash(daoAddress: string): Promise<string> {
+        const { value0 } = await this.runLocal(
+            'getRepoDaoCode',
+            {
+                dao: daoAddress,
+            },
+            undefined,
+            { useCachedBoc: true },
+        )
+        const { hash } = await this.client.boc.get_boc_hash({ boc: value0 })
+        return hash
+    }
+
     async createUserProfile(username: string, pubkey: string) {
         // Get profile and check it's status
         const profile = await this.versionController.getUserProfile({ username })

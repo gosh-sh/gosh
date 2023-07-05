@@ -32,10 +32,11 @@ export default {
                 'blue-2b89ff': '#2b89ff',
                 'blue-348eff': '#348eff',
                 'blue-1e7aec': '#1e7aec',
-                'blue-2b89ff': '#2b89ff',
                 'green-34c759': '#34c759',
                 'green-deecdc': '#deecdc',
+                'green-2fbf5340': '#2fbf5340',
                 'red-ff3b30': '#ff3b30',
+                'red-ff624d40': '#ff624d40',
                 'yellow-faedcc': '#faedcc',
             },
             backgroundImage: {

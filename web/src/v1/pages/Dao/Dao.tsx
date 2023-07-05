@@ -1,28 +1,21 @@
-import { useOutletContext } from 'react-router-dom'
-// import ReposPage from '../DaoRepos'
-// import { DaoMembersSide, DaoSupplySide, DaoWalletSide } from '../../components/Dao'
-import { DaoDescription, DaoEventsRecent } from './components'
-// import { useDao } from '../../hooks/dao.hooks'
+import { DaoMemberWallet, DaoMembers, DaoSupply } from '../../components/Dao'
+import DaoRepositoriesPage from '../DaoRepositoryList/DaoRepositoryList'
+import { useDaoMember } from '../../hooks/dao.hooks'
 
 const DaoPage = () => {
-    // const { dao } = useOutletContext<TDaoLayoutOutletContext>()
-    // const wallet = useSmv(dao)
-    // const dao = useDao()
+    const member = useDaoMember()
 
     return (
         <div className="row flex-wrap">
             <div className="col !basis-full md:!basis-0">
-                {/* <DaoEventsRecent dao={dao} className="mb-5" />
-                <DaoDescription dao={dao} className="mb-5" />
-                <ReposPage /> */}
+                {/* <DaoEventsRecent dao={dao} className="mb-5" />*/}
+                <DaoRepositoriesPage count={5} />
             </div>
             <div className="col !max-w-full md:!max-w-side-right-md lg:!max-w-side-right">
                 <div className="flex flex-col gap-y-5">
-                    {/* <DaoSupplySide dao={dao} />
-                    {dao.details.isAuthenticated && (
-                        <DaoWalletSide dao={dao} wallet={wallet} />
-                    )}
-                    <DaoMembersSide dao={dao} /> */}
+                    <DaoSupply />
+                    {!!member.details.profile && <DaoMemberWallet />}
+                    <DaoMembers />
                 </div>
             </div>
         </div>

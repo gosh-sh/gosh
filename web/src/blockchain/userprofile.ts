@@ -96,8 +96,10 @@ export class UserProfile extends BaseContract {
     //     await this.run('setNewSystemContract', { systemcontract: address })
     // }
 
-    // async turnOn(wallet: TAddress, pubkey: string, keys: KeyPair): Promise<void> {
-    //     if (!pubkey.startsWith('0x')) pubkey = `0x${pubkey}`
-    //     await this.run('turnOn', { wallet, pubkey }, { signer: signerKeys(keys) })
-    // }
+    async turnOn(wallet: string, pubkey: string): Promise<void> {
+        if (!pubkey.startsWith('0x')) {
+            pubkey = `0x${pubkey}`
+        }
+        await this.run('turnOn', { wallet, pubkey })
+    }
 }

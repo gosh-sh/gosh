@@ -1,4 +1,5 @@
 import { GoshError } from './errors'
+import moment from 'moment'
 
 export const shortString = (
     data: string,
@@ -11,6 +12,12 @@ export const shortString = (
     const left = data.substring(0, start)
     const right = data.substring(data.length - end)
     return `${left}${delimiter}${right}`
+}
+
+export const getDurationDelta = (time: number) => {
+    const ms = moment(time).diff(moment())
+    const delta = moment.duration(ms)
+    return `${delta.days()}d ${delta.hours()}h ${delta.minutes()}m`
 }
 
 export const sleep = (ms: number = 0) => {

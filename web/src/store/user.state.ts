@@ -13,6 +13,7 @@ const userPersistAtom = atom<TUserPersist>({
 const userAtom = atom<TUser>({
     key: 'UserAtom',
     default: {},
+    dangerouslyAllowMutability: true,
 })
 
 const userProfileSelector = selector<UserProfile | null>({

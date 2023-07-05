@@ -6,7 +6,7 @@ import Loader from '../../../../components/Loader'
 import { Commiter } from '../../../../components/Commit'
 import { useBlobComments } from '../../../../hooks/codecomment.hooks'
 import { useOutletContext } from 'react-router-dom'
-import { TDaoLayoutOutletContext } from '../../../DaoLayout'
+import { TDaoLayoutOutletContext } from '../../../../v1/pages/DaoLayout'
 import { useEffect, useState } from 'react'
 
 type TRepoPullRequestEventProps = {
