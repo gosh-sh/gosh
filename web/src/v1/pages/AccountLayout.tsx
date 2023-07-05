@@ -1,8 +1,8 @@
-import { Outlet } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
 import { onboardingDataAtom } from '../store/onboarding.state'
 import { withPin, withRouteAnimation } from '../hocs'
 import OnboardingComplete from './Onboarding/components/Complete'
+import { AnimatedOutlet } from '../components/Outlet'
 
 const AccountLayout = () => {
     const { step } = useRecoilValue(onboardingDataAtom)
@@ -10,7 +10,7 @@ const AccountLayout = () => {
     return (
         <div className="container py-10">
             {step === 'complete' && <OnboardingComplete />}
-            <Outlet />
+            <AnimatedOutlet />
         </div>
     )
 }

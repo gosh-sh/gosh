@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
+import { Link, NavLink, useParams } from 'react-router-dom'
 import CopyClipboard from '../../components/CopyClipboard'
 import { Tooltip } from 'react-tooltip'
 import { getIdenticonAvatar } from '../../helpers'
@@ -11,6 +11,7 @@ import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
 import Alert from '../../components/Alert'
 import { shortString } from '../../utils'
 import { ToastStatus } from '../../components/Toast'
+import { AnimatedOutlet } from '../components/Outlet'
 
 const DaoLayout = () => {
     const { daoName } = useParams()
@@ -116,7 +117,7 @@ const DaoLayout = () => {
                 ))}
             </div>
 
-            <Outlet />
+            <AnimatedOutlet />
 
             <ToastStatus status={member.status} />
             <Tooltip id="common-tip" clickable />

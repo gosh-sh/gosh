@@ -2,7 +2,7 @@ import { ToastContainer } from 'react-toastify'
 import Header from './components/Header'
 import { ToastOptionsShortcuts } from '../helpers'
 import BaseModal from '../components/Modal/BaseModal'
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import AccountLayout from './pages/AccountLayout'
 import DaoLayout from './pages/DaoLayout'
@@ -38,14 +38,12 @@ import GotoPage from '../pages/Goto'
 // TODO: /Update after full refactor
 
 const App = () => {
-    const location = useLocation()
-
     return (
         <div className="wrapper">
             <Header />
             <main id="main" className="grow">
                 <AnimatePresence mode="wait">
-                    <Routes location={location} key={location.pathname}>
+                    <Routes>
                         <Route path="/" element={<Navigate to="onboarding" replace />} />
                         <Route path="/containers" element={<Containers />} />
                         <Route path="/onboarding">
