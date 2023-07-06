@@ -27,7 +27,6 @@ export class Dao extends BaseContract {
 
     async getMembers(): Promise<TDaoDetailsMemberItem[]> {
         const { value0 } = await this.runLocal('getWalletsFull', {}, undefined, {
-            useCachedBoc: true,
             retries: 1,
         })
         const members = Object.keys(value0).map((key) => ({
