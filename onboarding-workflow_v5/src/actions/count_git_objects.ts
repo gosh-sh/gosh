@@ -87,25 +87,25 @@ export async function countGitObjects(github_id: string) {
 
     // EXPLANATION: we split repos to 3 buckets by size: small | medium | large
     // TODO: more logs
-    let producer
-    if (number_of_git_objects < SMALL_REPO_OBJECTS_LIMIT) {
-        console.log('Added to the queue of small repos')
-        producer = createSmallGoshRepoProducer()
-    } else if (number_of_git_objects < MEDIUM_REPO_OBJECTS_LIMIT) {
-        console.log('Added to the queue of medium repos')
-        producer = createMediumGoshRepoProducer()
-    } else {
-        console.log('Added to the queue of large repos')
-        producer = createLargeGoshRepoProducer()
-    }
+    // let producer
+    // if (number_of_git_objects < SMALL_REPO_OBJECTS_LIMIT) {
+    //     console.log('Added to the queue of small repos')
+    //     producer = createSmallGoshRepoProducer()
+    // } else if (number_of_git_objects < MEDIUM_REPO_OBJECTS_LIMIT) {
+    //     console.log('Added to the queue of medium repos')
+    //     producer = createMediumGoshRepoProducer()
+    // } else {
+    //     console.log('Added to the queue of large repos')
+    //     producer = createLargeGoshRepoProducer()
+    // }
 
-    console.log('Schedule upload repository', github.id)
-    producer
-        .createJob({
-            github_id: github.id,
-        })
-        // deduplication
-        .setId(github.id)
-        .retries(5)
-        .save()
+    // console.log('Schedule upload repository', github.id)
+    // producer
+    //     .createJob({
+    //         github_id: github.id,
+    //     })
+    //  //   deduplication
+        // .setId(github.id)
+        // .retries(5)
+        // .save()
 }
