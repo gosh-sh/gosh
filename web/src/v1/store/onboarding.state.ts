@@ -1,5 +1,6 @@
 import { Octokit } from '@octokit/core'
 import { atom, selector, selectorFamily } from 'recoil'
+import { contextVersion } from '../constants'
 import {
     TOnboardingData,
     TOnboardingInvite,
@@ -10,7 +11,7 @@ import {
 import { OAuthSessionAtom } from './oauth.state'
 
 export const onboardingDataAtom = atom<TOnboardingData>({
-    key: 'OnboardingDataAtom',
+    key: `OnboardingDataAtom_${contextVersion}`,
     default: {
         invites: { items: [], isFetching: false },
         organizations: { items: [], isFetching: false },
@@ -25,12 +26,12 @@ export const onboardingStatusDataAtom = atom<{
     isFetching: boolean
     items: TOnboardingStatusDao[]
 }>({
-    key: 'OnboardingStatusDataAtom',
+    key: `OnboardingStatusDataAtom_${contextVersion}`,
     default: { isFetching: false, items: [] },
 })
 
 export const octokitSelector = selector<Octokit>({
-    key: 'OctokitSelector',
+    key: `OctokitSelector_${contextVersion}`,
     get: ({ get }) => {
         const session = get(OAuthSessionAtom)
         return new Octokit({ auth: session.session?.provider_token })
@@ -41,7 +42,7 @@ export const organizationsSelector = selector<{
     items: TOnboardingOrganization[]
     isFetching: boolean
 }>({
-    key: 'OrganizationsSelector',
+    key: `OrganizationsSelector_${contextVersion}`,
     get: ({ get }) => {
         return get(onboardingDataAtom).organizations
     },
@@ -54,7 +55,7 @@ export const organizationsSelector = selector<{
 })
 
 export const repositoriesCheckedSelector = selector<TOnboardingRepository[]>({
-    key: 'RepositoriesCheckedSelector',
+    key: `RepositoriesCheckedSelector_${contextVersion}`,
     get: ({ get }) => {
         const checked = []
         const { organizations } = get(onboardingDataAtom)
@@ -69,7 +70,7 @@ export const repositoriesSelector = selectorFamily<
     TOnboardingOrganization['repositories'],
     string | number
 >({
-    key: 'RepositoriesSelector',
+    key: `RepositoriesSelector_${contextVersion}`,
     get:
         (organizationId: string | number) =>
         ({ get }) => {
@@ -99,7 +100,7 @@ export const daoInvitesSelector = selector<{
     items: TOnboardingInvite[]
     isFetching: boolean
 }>({
-    key: 'DaoInvitesSelector',
+    key: `DaoInvitesSelector_${contextVersion}`,
     get: ({ get }) => {
         return get(onboardingDataAtom).invites
     },

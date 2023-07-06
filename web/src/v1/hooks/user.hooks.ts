@@ -11,7 +11,7 @@ import { TUserPersist } from '../../types/user.types'
 import { validatePhrase } from '../../validators'
 import { EGoshError, GoshError } from '../../errors'
 import { validateUsername } from '../validators'
-import { systemContract } from '../blockchain/helpers'
+import { systemContract } from '../constants'
 import { userPersistAtom as _userPersistAtom, userAtom as _userAtom } from 'react-gosh'
 
 export function useUser() {

@@ -1,14 +1,9 @@
-import {
-    useRecoilState,
-    useRecoilValue,
-    useResetRecoilState,
-    useSetRecoilState,
-} from 'recoil'
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { daoRepositoryListAtom } from '../store/repository.state'
 import { daoDetailsAtom, daoMemberAtom } from '../store/dao.state'
 import { TRepositoryListItem } from '../types/repository.types'
 import { getPaginatedAccounts } from '../../blockchain/utils'
-import { systemContract } from '../blockchain/helpers'
+import { systemContract } from '../constants'
 import { validateRepoName } from '../validators'
 import { EGoshError, GoshError } from '../../errors'
 import { executeByChunk, whileFinite } from '../../utils'
@@ -16,7 +11,6 @@ import { MAX_PARALLEL_READ } from '../../constants'
 import _ from 'lodash'
 import { useCallback, useEffect } from 'react'
 import { Repository } from '../blockchain/repository'
-import { useParams } from 'react-router-dom'
 
 export function useRepositoryCreate() {
     const { details: dao } = useRecoilValue(daoDetailsAtom)

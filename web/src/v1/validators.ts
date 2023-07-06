@@ -1,6 +1,6 @@
 import { EGoshError } from '../errors'
 import { TValidationResult } from '../types/validator.types'
-import { systemContract } from './blockchain/helpers'
+import { systemContract } from './constants'
 
 export const validateUsername = (name: string): TValidationResult => {
     const field = 'Username'

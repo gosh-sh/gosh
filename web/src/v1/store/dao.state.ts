@@ -1,4 +1,5 @@
 import { atom, selectorFamily } from 'recoil'
+import { contextVersion } from '../constants'
 import {
     TDaoDetails,
     TDaoEventList,
@@ -9,7 +10,7 @@ import {
 } from '../types/dao.types'
 
 export const userDaoListAtom = atom<TUserDaoList>({
-    key: 'UserDaoListAtom',
+    key: `UserDaoListAtom_${contextVersion}`,
     default: {
         isFetching: false,
         items: [],
@@ -17,7 +18,7 @@ export const userDaoListAtom = atom<TUserDaoList>({
 })
 
 export const daoDetailsAtom = atom<TDaoDetails>({
-    key: 'DaoDetailsAtom',
+    key: `DaoDetailsAtom_${contextVersion}`,
     default: {
         isFetching: false,
         details: {},
@@ -26,7 +27,7 @@ export const daoDetailsAtom = atom<TDaoDetails>({
 })
 
 export const daoMemberAtom = atom<TDaoMember>({
-    key: 'DaoMemberAtom',
+    key: `DaoMemberAtom_${contextVersion}`,
     default: {
         details: {
             profile: null,
@@ -42,7 +43,7 @@ export const daoMemberAtom = atom<TDaoMember>({
 })
 
 export const daoMemberListAtom = atom<TDaoMemberList>({
-    key: 'DaoMemberListAtom',
+    key: `DaoMemberListAtom_${contextVersion}`,
     default: {
         isFetching: false,
         items: [],
@@ -51,7 +52,7 @@ export const daoMemberListAtom = atom<TDaoMemberList>({
 })
 
 export const daoMemberListSelector = selectorFamily<TDaoMemberList, string>({
-    key: 'DaoMemberListSelector',
+    key: `DaoMemberListSelector_${contextVersion}`,
     get:
         (search) =>
         ({ get }) => {
@@ -72,7 +73,7 @@ export const daoMemberListSelector = selectorFamily<TDaoMemberList, string>({
 })
 
 export const daoEventListAtom = atom<TDaoEventList>({
-    key: 'DaoEventListAtom',
+    key: `DaoEventListAtom_${contextVersion}`,
     default: {
         isFetching: false,
         items: [],
@@ -81,7 +82,7 @@ export const daoEventListAtom = atom<TDaoEventList>({
 })
 
 export const daoEventSelector = selectorFamily<TDaoEventDetails | undefined, string>({
-    key: 'DaoEventSelector',
+    key: `DaoEventSelector_${contextVersion}`,
     get:
         (address) =>
         ({ get }) => {
