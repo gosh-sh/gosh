@@ -36,9 +36,11 @@ import { TToastStatus } from '../../types/common.types'
 import { getPaginatedAccounts } from '../../blockchain/utils'
 import { SmvEvent } from '../blockchain/smvproposal'
 import { GoshAdapterFactory } from 'react-gosh'
+import { daoRepositoryListAtom } from '../store/repository.state'
 
 export function useDaoCreate() {
     const profile = useProfile()
+    const setUserDaoList = useSetRecoilState(userDaoListAtom)
     const [status, setStatus] = useState<TToastStatus>()
 
     const createDao = async (name: string, members: string[]) => {
@@ -81,7 +83,7 @@ export function useDaoCreate() {
 
             // Create DAO
             setStatus({ type: 'pending', data: 'Deploy DAO' })
-            await profile.createDao(systemContract, name, [
+            const account = await profile.createDao(systemContract, name, [
                 profile.address,
                 ...membersProfileList,
             ])
@@ -89,6 +91,10 @@ export function useDaoCreate() {
                 type: 'success',
                 data: { title: 'Create DAO', content: 'DAO created' },
             })
+            setUserDaoList((state) => ({
+                ...state,
+                items: [{ account: account as Dao, name }, ...state.items],
+            }))
         } catch (e: any) {
             setStatus({ type: 'error', data: e })
             throw e
@@ -290,23 +296,25 @@ export function useUserDaoList(params: { count?: number; loadOnInit?: boolean } 
     }
 }
 
-export function useDao(params: { loadOnInit?: boolean } = {}) {
-    const { loadOnInit } = params
+export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {}) {
+    const { loadOnInit, subscribe } = params
     const { daoName } = useParams()
     const [data, setData] = useRecoilState(daoDetailsAtom)
     const resetDao = useResetRecoilState(daoDetailsAtom)
+    const resetDaoRepositories = useResetRecoilState(daoRepositoryListAtom)
+    const resetDaoEvents = useResetRecoilState(daoEventListAtom)
+    const resetDaoMembers = useResetRecoilState(daoMemberListAtom)
+    const resetDaoMember = useResetRecoilState(daoMemberAtom)
 
-    const getDetails = useCallback(async () => {
-        console.debug('GET DAO DETAILS')
-        const _dao = data.details.account
-        if (!_dao) {
+    const getDetails = async (account?: Dao) => {
+        if (!account) {
             return
         }
 
         try {
-            const members = await _dao.getMembers()
+            const members = await account.getMembers()
             const supply = _.sum(members.map(({ allowance }) => allowance))
-            const owner = await _dao.getOwner()
+            const owner = await account.getOwner()
             setData((state) => ({
                 ...state,
                 details: {
@@ -319,65 +327,85 @@ export function useDao(params: { loadOnInit?: boolean } = {}) {
         } catch (e: any) {
             console.error(e.message)
         }
-    }, [data.details.address])
+    }
+
+    const getDao = useCallback(async () => {
+        try {
+            if (!daoName) {
+                throw new GoshError('DAO name undefined')
+            }
+
+            setData((state) => ({ ...state, isFetching: true }))
+            const dao = await systemContract.getDao({ name: daoName })
+            if (!(await dao.isDeployed())) {
+                throw new GoshError('DAO does not exist', { name: daoName })
+            }
+            const version = await dao.getVersion()
+
+            // TODO: Remove this after git part refactor
+            const _gosh = GoshAdapterFactory.create(version)
+            const _adapter = await _gosh.getDao({ address: dao.address })
+            // TODO: /Remove this after git part refactor
+
+            setData((state) => ({
+                ...state,
+                details: {
+                    ...state.details,
+                    account: dao as Dao,
+                    _adapter,
+                    name: daoName,
+                    address: dao.address,
+                    version,
+                },
+                error: undefined,
+            }))
+            getDetails(dao as Dao)
+        } catch (e) {
+            setData((state) => ({ ...state, error: e }))
+            throw e
+        } finally {
+            setData((state) => ({ ...state, isFetching: false }))
+        }
+    }, [daoName])
 
     useEffect(() => {
-        const _getDao = async () => {
-            console.debug('GET DAO HOOK', data.details.name, daoName)
-            try {
-                if (!daoName) {
-                    throw new GoshError('DAO name undefined')
-                }
+        if (loadOnInit) {
+            getDao()
+        }
 
-                if (daoName !== data.details.name) {
-                    console.debug('Reset DAO')
-                    resetDao()
-                }
-
-                setData((state) => ({ ...state, isFetching: true }))
-                const dao = await systemContract.getDao({ name: daoName })
-                if (!(await dao.isDeployed())) {
-                    throw new GoshError('DAO does not exist', { name: daoName })
-                }
-                const version = await dao.getVersion()
-
-                // TODO: Remove this after git part refactor
-                const _gosh = GoshAdapterFactory.create(version)
-                const _adapter = await _gosh.getDao({ address: dao.address })
-                // TODO: /Remove this after git part refactor
-
-                setData((state) => ({
-                    ...state,
-                    details: {
-                        ...state.details,
-                        account: dao as Dao,
-                        _adapter,
-                        name: daoName,
-                        address: dao.address,
-                        version,
-                    },
-                    error: undefined,
-                }))
-            } catch (e) {
-                setData((state) => ({ ...state, error: e }))
-                throw e
-            } finally {
-                setData((state) => ({ ...state, isFetching: false }))
+        return () => {
+            if (loadOnInit) {
+                resetDao()
+                resetDaoRepositories()
+                resetDaoEvents()
+                resetDaoMembers()
+                resetDaoMember()
             }
         }
-
-        if (loadOnInit) {
-            _getDao()
-        }
-    }, [daoName, data.details.name, loadOnInit])
+    }, [getDao, loadOnInit])
 
     useEffect(() => {
-        if (loadOnInit) {
-            getDetails()
+        if (!subscribe || !data.details.address) {
+            return
         }
-    }, [getDetails, loadOnInit])
 
-    return { ...data }
+        let intervalBusy = false
+        const interval = setInterval(async () => {
+            if (intervalBusy) {
+                return
+            }
+
+            intervalBusy = true
+            await getDetails(data.details.account)
+            intervalBusy = false
+        }, 15000)
+
+        return () => {
+            clearInterval(interval)
+        }
+    }, [subscribe, data.details.address])
+
+    return data
 }
 
 export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean } = {}) {
@@ -443,70 +471,71 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
         }
     }, [data.details.isReady])
 
-    useEffect(() => {
-        const _getBaseDetails = async () => {
-            if (!dao.members?.length || !dao.account) {
-                return
-            }
-            if (!user.profile) {
-                setData((state) => ({
-                    ...state,
-                    details: { ...state.details, isFetched: true },
-                }))
-                return
-            }
-
-            const client = systemContract.client
-            const found = dao.members.find(
-                ({ profile }) => profile.address === user.profile,
-            )
-            const wallet = await dao.account.getMemberWallet({
-                profileAddress: user.profile,
-                keys: user.keys,
-            })
-            const profile = new UserProfile(client, user.profile!, user.keys)
-            activate(profile, wallet)
+    const getBaseDetails = useCallback(async () => {
+        if (!dao.members?.length || !dao.account) {
+            return
+        }
+        if (!user.profile) {
             setData((state) => ({
                 ...state,
-                details: {
-                    ...state.details,
-                    profile,
-                    wallet,
-                    allowance: found?.allowance || 0,
-                    isMember: !!found,
-                    isFetched: true,
-                },
+                details: { ...state.details, isFetched: true },
             }))
+            return
         }
 
-        if (loadOnInit) {
-            _getBaseDetails()
-        }
-    }, [user.profile, dao.members?.length, dao.address, loadOnInit])
+        const client = systemContract.client
+        const found = dao.members.find(({ profile }) => profile.address === user.profile)
+        const wallet = await dao.account.getMemberWallet({
+            profileAddress: user.profile,
+            keys: user.keys,
+        })
+        const profile = new UserProfile(client, user.profile!, user.keys)
+        activate(profile, wallet)
+        setData((state) => ({
+            ...state,
+            details: {
+                ...state.details,
+                profile,
+                wallet,
+                allowance: found?.allowance || 0,
+                isMember: !!found,
+                isFetched: true,
+            },
+        }))
+    }, [user.profile, dao.members?.length, dao.address])
 
     useEffect(() => {
-        if (subscribe) {
+        if (loadOnInit) {
+            getBaseDetails()
+        }
+    }, [getBaseDetails, loadOnInit])
+
+    useEffect(() => {
+        if (loadOnInit) {
             getBalance()
         }
+    }, [getBalance, loadOnInit])
 
-        let isBusy = false
+    useEffect(() => {
+        if (!subscribe) {
+            return
+        }
+
+        let intervalBusy = false
         const interval = setInterval(async () => {
-            if (!subscribe) {
-                clearInterval(interval)
-            }
-            if (isBusy) {
+            if (intervalBusy) {
                 return
             }
 
-            isBusy = true
+            intervalBusy = true
             await getBalance()
-            isBusy = false
+            intervalBusy = false
         }, 15000)
 
         return () => {
             clearInterval(interval)
         }
-    }, [data.details.isReady, subscribe])
+    }, [getBalance, subscribe])
 
     return data
 }
@@ -552,24 +581,6 @@ function useDaoEventHelper() {
     const { details: member } = useRecoilValue(daoMemberAtom)
 
     const nocallback = () => {}
-
-    const moveVoting2Regular = async (wallet: Wallet, needed: number) => {
-        // const smv = await this.getSmv()
-        // const regular = await smv.getWalletBalance(this.wallet)
-        // if (amount > regular) {
-        //     const delta = amount - regular
-        //     await smv.transferToWallet(delta)
-        //     const check = await whileFinite(async () => {
-        //         const _regular = await smv.getWalletBalance(this.wallet!)
-        //         if (_regular >= amount) {
-        //             return true
-        //         }
-        //     })
-        //     if (!check) {
-        //         throw new GoshError('Regular tokens topup failed')
-        //     }
-        // }
-    }
 
     const beforeCreate = async (
         min: number,
@@ -835,11 +846,6 @@ export function useDaoDeleteMemeber() {
         } catch (e: any) {
             setStatus({ type: 'error', data: e })
             throw e
-        } finally {
-            setMemberList((state) => ({
-                ...state,
-                items: state.items.map((item) => ({ ...item, isFetching: false })),
-            }))
         }
     }
 
@@ -920,7 +926,7 @@ export function useDaoEventList(params: { count?: number; loadOnInit?: boolean }
                 )
                 return {
                     ...state,
-                    items: [...state.items, ...different].map((item) => {
+                    items: [...different, ...state.items].map((item) => {
                         const found = intersect.find(
                             (_item) => _item.address === item.address,
                         )

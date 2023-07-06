@@ -75,10 +75,8 @@ export function useRepositoryCreate() {
 
 export function useDaoRepositoryList(params: { count: number }) {
     const { count } = params
-    const { daoName } = useParams()
     const { details: dao } = useRecoilValue(daoDetailsAtom)
     const [data, setData] = useRecoilState(daoRepositoryListAtom)
-    const resetData = useResetRecoilState(daoRepositoryListAtom)
 
     const getBlockchainItems = async (params: {
         daoAddress: string
@@ -112,11 +110,6 @@ export function useDaoRepositoryList(params: { count: number }) {
     const getRepositoryList = useCallback(async () => {
         try {
             if (!dao.address) {
-                return
-            }
-            if (dao.name !== daoName) {
-                console.debug('Reset DAO repositories')
-                resetData()
                 return
             }
 
@@ -155,7 +148,7 @@ export function useDaoRepositoryList(params: { count: number }) {
         } finally {
             setData((state) => ({ ...state, isFetching: false }))
         }
-    }, [dao.address, dao.name, daoName])
+    }, [dao.address])
 
     const getNext = useCallback(async () => {
         try {

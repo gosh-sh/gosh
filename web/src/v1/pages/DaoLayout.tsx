@@ -15,7 +15,7 @@ import { AnimatedOutlet } from '../components/Outlet'
 
 const DaoLayout = () => {
     const { daoName } = useParams()
-    const dao = useDao({ loadOnInit: true })
+    const dao = useDao({ loadOnInit: true, subscribe: true })
     const member = useDaoMember({ loadOnInit: true, subscribe: true })
     const { showBoundary } = useErrorBoundary()
 
