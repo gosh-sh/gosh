@@ -5,8 +5,9 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import classNames from 'classnames'
+import { Button } from '../Form'
 
-type TAlertProps = React.PropsWithChildren<any> & {
+type TAlertProps = React.HTMLAttributes<HTMLDivElement> & {
     variant: 'danger' | 'warning'
     dismiss?: boolean
     onDismiss?(): any
@@ -39,9 +40,13 @@ const Alert = (props: TAlertProps) => {
             <div className="grow">{children}</div>
             {dismiss && (
                 <div className="self-start">
-                    <button onClick={onDismiss}>
+                    <Button
+                        variant="custom"
+                        className="!p-1 text-red-ff624d40 hover:text-red-ff3b30"
+                        onClick={onDismiss}
+                    >
                         <FontAwesomeIcon icon={faTimes} size="lg" />
-                    </button>
+                    </Button>
                 </div>
             )}
         </div>
