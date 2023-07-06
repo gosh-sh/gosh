@@ -25,6 +25,17 @@ const renderApp = (version: string) => {
     }
 }
 
+const Preloader = (props: React.HTMLAttributes<HTMLDivElement>) => {
+    const { children } = props
+    return (
+        <div className="fixed w-screen h-screen left-0 top-0">
+            <div className="flex items-center justify-center w-full h-full">
+                {children}
+            </div>
+        </div>
+    )
+}
+
 const Dispatcher = () => {
     const { showBoundary } = useErrorBoundary()
     const routeMatch = useMatch('/o/:daoName/*')
@@ -62,6 +73,7 @@ const Dispatcher = () => {
                     }
                 }
             }
+            console.debug('setAppContext', version)
 
             setAppContext((state) => ({ ...state, version }))
         }
@@ -72,13 +84,27 @@ const Dispatcher = () => {
     }, [isInitialized, routeMatch?.params.daoName])
 
     if (!isInitialized) {
-        return <Loader>App is loading</Loader>
+        return (
+            <Preloader>
+                <Loader>App is loading</Loader>
+            </Preloader>
+        )
     }
     if (!version) {
-        return <Loader>Search context</Loader>
+        return (
+            <Preloader>
+                <Loader>Search context</Loader>
+            </Preloader>
+        )
     }
     return (
-        <Suspense fallback={<Loader>Render version context</Loader>}>
+        <Suspense
+            fallback={
+                <Preloader>
+                    <Loader>Render version context</Loader>
+                </Preloader>
+            }
+        >
             {renderApp(version)}
         </Suspense>
     )
