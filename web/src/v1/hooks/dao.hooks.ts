@@ -413,6 +413,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
     const { user } = useUser()
     const { details: dao } = useRecoilValue(daoDetailsAtom)
     const [data, setData] = useRecoilState(daoMemberAtom)
+    const resetData = useResetRecoilState(daoMemberAtom)
 
     const activate = async (profile: UserProfile, wallet: Wallet) => {
         if (!(await wallet.isDeployed())) {
@@ -461,6 +462,11 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
         }
 
         try {
+            if (!(await data.details.wallet.isDeployed())) {
+                resetData()
+                return
+            }
+
             const balance = await data.details.wallet.getBalance()
             setData((state) => ({
                 ...state,
@@ -489,6 +495,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
             profileAddress: user.profile,
             keys: user.keys,
         })
+        const walletDeployed = await wallet.isDeployed()
         const profile = new UserProfile(client, user.profile!, user.keys)
         activate(profile, wallet)
         setData((state) => ({
@@ -496,7 +503,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
             details: {
                 ...state.details,
                 profile,
-                wallet,
+                wallet: walletDeployed ? wallet : null,
                 allowance: found?.allowance || 0,
                 isMember: !!found,
                 isFetched: true,
