@@ -75,6 +75,10 @@ const ToastStatus = (props: TToastStatusProps) => {
                 toastRef.current = null
             }
         })
+
+        return () => {
+            toast.dismiss(toastRef.current)
+        }
     }, [])
 
     useEffect(() => {
