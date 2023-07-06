@@ -4,6 +4,9 @@ import { TDaoListItem } from '../../../types/dao.types'
 import classNames from 'classnames'
 import Spinner from '../../../../components/Spinner/Spinner'
 import Skeleton from '../../../../components/Skeleton'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faPiggyBank, faTag, faUsers } from '@fortawesome/free-solid-svg-icons'
+import { Tooltip } from 'react-tooltip'
 
 type TListItemSkeletonProps = React.HTMLAttributes<HTMLDivElement>
 
@@ -49,17 +52,49 @@ const ListItem = (props: TListItemProps) => {
         >
             <div className="row !flex-nowrap">
                 <div className="col overflow-hidden">
-                    <div className="mb-2 truncate">
+                    <div className="mb-4 truncate">
                         <h1 className="text-xl font-medium leading-5 capitalize">
                             {item.name}
                         </h1>
                     </div>
                     {item.onboarding && (
-                        <div className="mt-3 text-gray-53596d text-xs">
+                        <div className="my-3 text-gray-53596d text-xs">
                             <Spinner className="mr-2" />
                             Loading repos ({item.onboarding.length} left)
                         </div>
                     )}
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                        {item.version && (
+                            <div
+                                className="text-gray-53596d text-xs"
+                                data-tooltip-id="common-tip"
+                                data-tooltip-content="Version"
+                            >
+                                <FontAwesomeIcon icon={faTag} className="mr-2" />
+                                {item.version}
+                            </div>
+                        )}
+                        {item.supply && (
+                            <div
+                                className="text-gray-53596d text-xs"
+                                data-tooltip-id="common-tip"
+                                data-tooltip-content="Total supply"
+                            >
+                                <FontAwesomeIcon icon={faPiggyBank} className="mr-2" />
+                                {item.supply.toLocaleString()}
+                            </div>
+                        )}
+                        {item.members && (
+                            <div
+                                className="text-gray-53596d text-xs"
+                                data-tooltip-id="common-tip"
+                                data-tooltip-content="Members"
+                            >
+                                <FontAwesomeIcon icon={faUsers} className="mr-2" />
+                                {item.members.toLocaleString()}
+                            </div>
+                        )}
+                    </div>
                 </div>
                 <div className="col !grow-0">
                     <div className="overflow-hidden rounded-xl w-12 md:w-16 lg:w-20">
@@ -71,6 +106,8 @@ const ListItem = (props: TListItemProps) => {
                     </div>
                 </div>
             </div>
+
+            <Tooltip id="common-tip" clickable />
         </div>
     )
 }

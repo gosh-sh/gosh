@@ -8,6 +8,10 @@ import { Wallet } from '../blockchain/wallet'
 export type TDaoListItem = {
     account: Dao | null
     name: string
+    address: string
+    version: string
+    supply: number
+    members: number
     onboarding?: string[]
 }
 

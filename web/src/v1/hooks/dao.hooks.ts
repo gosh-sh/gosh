@@ -87,13 +87,24 @@ export function useDaoCreate() {
                 profile.address,
                 ...membersProfileList,
             ])
+            const version = await account.getVersion()
             setStatus({
                 type: 'success',
                 data: { title: 'Create DAO', content: 'DAO created' },
             })
             setUserDaoList((state) => ({
                 ...state,
-                items: [{ account: account as Dao, name }, ...state.items],
+                items: [
+                    {
+                        account: account as Dao,
+                        address: account.address,
+                        name,
+                        version,
+                        supply: members.length * 20,
+                        members: members.length,
+                    },
+                    ...state.items,
+                ],
             }))
         } catch (e: any) {
             setStatus({ type: 'error', data: e })
@@ -182,10 +193,15 @@ export function useUserDaoList(params: { count?: number; loadOnInit?: boolean } 
             async ({ decoded }) => {
                 const { goshdao, ver } = decoded.value
                 const systemContract = AppConfig.goshroot.getSystemContract(ver)
-                const account = await systemContract.getDao({ address: goshdao })
+                const account = (await systemContract.getDao({ address: goshdao })) as Dao
+                const members = await account.getMembers()
                 return {
-                    account: account as Dao,
+                    account,
                     name: await account.getName(),
+                    address: goshdao,
+                    version: ver,
+                    supply: _.sum(members.map(({ allowance }) => allowance)),
+                    members: members.length,
                 }
             },
         )
@@ -250,8 +266,10 @@ export function useUserDaoList(params: { count?: number; loadOnInit?: boolean } 
                 ...onboarding.map(({ name, repos }) => ({
                     account: null,
                     name,
-                    description: null,
-                    tags: null,
+                    address: '',
+                    version: '',
+                    supply: -1,
+                    members: -1,
                     onboarding: repos,
                 })),
                 ...blockchain.items,
