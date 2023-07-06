@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useDao, useDaoUpgrade } from '../../hooks/dao.hooks'
 import Alert from '../../../components/Alert'
@@ -7,13 +7,19 @@ import classNames from 'classnames'
 
 type TDaoNotificationProps = React.HTMLAttributes<HTMLDivElement>
 
-const DaoNotification = (props: TDaoNotificationProps) => {
+const DaoUpgradeNotification = (props: TDaoNotificationProps) => {
     const { className } = props
     const dao = useDao()
     const { alert } = useDaoUpgrade()
     const [show, setShow] = useState<boolean>(true)
 
     const onDismiss = () => setShow(false)
+
+    useEffect(() => {
+        if (alert) {
+            setShow(true)
+        }
+    }, [alert])
 
     return (
         <AnimatePresence>
@@ -49,7 +55,7 @@ const DaoNotification = (props: TDaoNotificationProps) => {
                     )}
 
                     {alert === 'isNotLatest' && (
-                        <Alert variant="warning" dismiss onDismiss={onDismiss}>
+                        <Alert variant="warning">
                             You are using old version of DAO.
                             <br />
                             <button
@@ -69,4 +75,4 @@ const DaoNotification = (props: TDaoNotificationProps) => {
     )
 }
 
-export { DaoNotification }
+export { DaoUpgradeNotification }

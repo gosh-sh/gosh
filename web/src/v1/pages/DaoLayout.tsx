@@ -3,7 +3,7 @@ import { Link, NavLink, useParams } from 'react-router-dom'
 import CopyClipboard from '../../components/CopyClipboard'
 import { Tooltip } from 'react-tooltip'
 import { getIdenticonAvatar } from '../../helpers'
-import { DaoNotification } from '../components/Dao'
+import { DaoUpgradeNotification } from '../components/Dao'
 import classNames from 'classnames'
 import { withRouteAnimation, withPin } from '../hocs'
 import { useDao, useDaoMember } from '../hooks/dao.hooks'
@@ -84,7 +84,7 @@ const DaoLayout = () => {
                 </div>
             </div>
 
-            <DaoNotification className="mb-6" />
+            <DaoUpgradeNotification className="mb-6" />
 
             <div
                 className={classNames(

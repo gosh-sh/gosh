@@ -1198,6 +1198,10 @@ export function useDaoUpgrade() {
                 return
             }
 
+            if (alert === 'isNotLatest') {
+                return
+            }
+
             // Check if using latest version of DAO or new version avaiable
             const versions = Object.keys(AppConfig.versions)
             const currVerIndex = versions.findIndex((v) => v === version)
@@ -1229,7 +1233,7 @@ export function useDaoUpgrade() {
         }
 
         _checkUpgrades()
-    }, [dao.details.name, dao.details.version, member.details.isMember])
+    }, [dao.details, member.details.isMember])
 
     const upgrade = async (version: string, comment: string) => {
         try {
