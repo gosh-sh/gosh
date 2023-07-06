@@ -5,6 +5,7 @@ import {
     BranchProtectEvent,
     BranchUnprotectEvent,
     PullRequestEvent,
+    DaoUpgradeEvent,
 } from './components'
 import { Tooltip } from 'react-tooltip'
 import { useEffect } from 'react'
@@ -125,13 +126,9 @@ const DaoEventPageInner = (props: { address: string }) => {
                             {event.type === EDaoEventType.PULL_REQUEST && (
                                 <PullRequestEvent data={event.data} />
                             )}
-
-                            {/*
-                        {event.type.kind === ESmvEventType.DAO_UPGRADE && (
-                            <DaoUpgradeEvent data={event.data} />
-                        )}
-
-                         */}
+                            {event.type === EDaoEventType.DAO_UPGRADE && (
+                                <DaoUpgradeEvent data={event.data} />
+                            )}
                         </div>
                     )}
                 </div>
