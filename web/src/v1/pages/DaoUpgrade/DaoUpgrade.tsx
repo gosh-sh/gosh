@@ -86,7 +86,8 @@ const DaoUpgradePage = () => {
                                 name="comment"
                                 component={FormikTextarea}
                                 disabled={isSubmitting || !versions?.length}
-                                placeholder="Leave comment (optional)"
+                                placeholder="Leave comment"
+                                maxRows={8}
                             />
                         </div>
 

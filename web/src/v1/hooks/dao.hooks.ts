@@ -7,7 +7,7 @@ import { AppConfig } from '../../appconfig'
 import { systemContract } from '../blockchain/helpers'
 import { supabase } from '../../supabase'
 import { executeByChunk, whileFinite } from '../../utils'
-import { MAX_PARALLEL_READ } from '../../constants'
+import { DISABLED_VERSIONS, MAX_PARALLEL_READ } from '../../constants'
 import {
     useRecoilState,
     useRecoilValue,
@@ -1178,6 +1178,7 @@ export function useDaoUpgrade() {
     const member = useRecoilValue(daoMemberAtom)
     const { beforeCreate } = useDaoEventHelper()
     const [versions, setVersions] = useState<string[]>()
+    const [alert, setAlert] = useState<'isNotLatest' | 'isUpgradeAvailable'>()
     const [status, setStatus] = useState<TToastStatus>()
 
     useEffect(() => {
@@ -1189,6 +1190,46 @@ export function useDaoUpgrade() {
 
         _getAvailableVersions()
     }, [dao.details.version])
+
+    useEffect(() => {
+        const _checkUpgrades = async () => {
+            const { version, name } = dao.details
+            if (!version || !member.details.isMember) {
+                return
+            }
+
+            // Check if using latest version of DAO or new version avaiable
+            const versions = Object.keys(AppConfig.versions)
+            const currVerIndex = versions.findIndex((v) => v === version)
+            const nextVersions = versions
+                .slice(currVerIndex + 1)
+                .filter((v) => DISABLED_VERSIONS.indexOf(v) < 0)
+            if (nextVersions.length && nextVersions.indexOf(version) < 0) {
+                const next = await Promise.all(
+                    nextVersions.map(async (ver) => {
+                        const gosh = AppConfig.goshroot.getSystemContract(ver)
+                        const account = await gosh.getDao({ name: name })
+                        return await account.isDeployed()
+                    }),
+                )
+
+                // There is a deployed DAO with greater version
+                if (next.some((v) => v === true)) {
+                    setAlert('isNotLatest')
+                    return
+                }
+
+                // Upgrade available
+                setAlert('isUpgradeAvailable')
+                return
+            }
+
+            // Reset upgrades alert
+            setAlert(undefined)
+        }
+
+        _checkUpgrades()
+    }, [dao.details.name, dao.details.version, member.details.isMember])
 
     const upgrade = async (version: string, comment: string) => {
         try {
@@ -1217,5 +1258,5 @@ export function useDaoUpgrade() {
         }
     }
 
-    return { versions, upgrade, status }
+    return { versions, upgrade, status, alert }
 }
