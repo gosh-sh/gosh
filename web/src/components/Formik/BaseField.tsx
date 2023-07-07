@@ -43,12 +43,22 @@ const BaseField = (props: IBaseFieldProps) => {
             )}
             {children}
             {help && (
-                <div className={classNames('text-xs text-gray-7c8db5', helpClassName)}>
+                <div
+                    className={classNames(
+                        'text-xs text-gray-7c8db5 mt-0.5',
+                        helpClassName,
+                    )}
+                >
                     {help}
                 </div>
             )}
             {errorEnabled && form.touched[field.name] && form.errors[field.name] && (
-                <div className={classNames('text-red-ff3b30 text-xs', errorClassName)}>
+                <div
+                    className={classNames(
+                        'text-red-ff3b30 text-xs mt-0.5',
+                        errorClassName,
+                    )}
+                >
                     <ErrorMessage name={field.name} />
                 </div>
             )}
