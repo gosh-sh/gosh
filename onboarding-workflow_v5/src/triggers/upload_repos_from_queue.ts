@@ -21,7 +21,11 @@ async function uploadRepos() {
             console.log('Start upload of repo ', github.id)
             console.log('Repo url ', github.github_url)
             console.log('Number of objects ', github.objects)
-            await initializeGoshRepo(github.id)
+            try {
+                await initializeGoshRepo(github.id)
+            } catch (err) {
+                console.error('Failed to upload repo', err)
+            }
         }
     } catch (err) {
         console.error('Failed to upload repos', err)
