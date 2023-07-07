@@ -168,7 +168,7 @@ class BaseContract {
             }
         }
 
-        await sleep(100)
+        await sleep(50)
         return await this.getMessages(
             { ...variables, cursor: pageInfo.startCursor },
             decode,

@@ -29,7 +29,7 @@ const Alert = (props: TAlertProps) => {
         <div
             className={classNames(
                 'flex flex-nowrap items-center gap-x-4',
-                'py-3 px-5 text-sm rounded-xl',
+                'py-3 px-5 text-sm rounded-xl shadow-sm',
                 variantMap[variant],
                 className,
             )}
