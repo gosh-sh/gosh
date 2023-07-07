@@ -1135,13 +1135,7 @@ export function useDaoEvent(
                 return
             }
 
-            let isBusy = false
             await event.account.account.subscribeMessages('id', async (message) => {
-                if (isBusy) {
-                    return
-                }
-
-                isBusy = true
                 console.debug('Subs get details for', event.address, message)
                 const details = await event.account!.getDetails({
                     wallet: member.wallet,
@@ -1155,7 +1149,6 @@ export function useDaoEvent(
                         return item
                     }),
                 }))
-                isBusy = false
             })
         }
 

@@ -2,6 +2,7 @@ import { TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
 import RepositoryABI from './abi/repository.abi.json'
 import { TRepositoryBranch } from '../types/repository.types'
+import { CommitTag } from './committag'
 
 export class Repository extends BaseContract {
     constructor(client: TonClient, address: string) {
@@ -24,5 +25,18 @@ export class Repository extends BaseContract {
                 version: item.commitversion,
             },
         }))
+    }
+
+    async getCommitTagCodeHash() {
+        const code = await this.runLocal('getTagCode', {}, undefined, {
+            useCachedBoc: true,
+        })
+        const { hash } = await this.client.boc.get_boc_hash({ boc: code.value0 })
+        return hash
+    }
+
+    async getCommitTag(params: { address: string }) {
+        const { address } = params
+        return new CommitTag(this.client, address)
     }
 }

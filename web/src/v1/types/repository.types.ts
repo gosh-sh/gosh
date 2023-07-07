@@ -22,3 +22,22 @@ export type TRepositoryBranch = {
         version: string
     }
 }
+
+export type TRepositoryCommit = {
+    repository: string
+    branch: string
+    name: string
+    parents: string[]
+    content: string
+    initupgrade: boolean
+}
+
+export type TRepositoryCommitTag = {
+    repository: string
+    name: string
+    content: string
+    commit: {
+        address: string
+        name: string
+    }
+}
