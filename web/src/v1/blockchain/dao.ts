@@ -37,16 +37,12 @@ export class Dao extends BaseContract {
         return members
     }
 
-    async getMemberWallet(params: {
-        profileAddress: string
-        index?: number
-        keys?: KeyPair
-    }) {
-        const { profileAddress, index = 0, keys } = params
+    async getMemberWallet(params: { profile: string; index?: number; keys?: KeyPair }) {
+        const { profile, index = 0, keys } = params
         const { value0 } = await this.runLocal(
             'getAddrWallet',
             {
-                pubaddr: profileAddress,
+                pubaddr: profile,
                 index,
             },
             undefined,

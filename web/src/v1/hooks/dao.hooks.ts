@@ -510,7 +510,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
         const client = systemContract.client
         const found = dao.members.find(({ profile }) => profile.address === user.profile)
         const wallet = await dao.account.getMemberWallet({
-            profileAddress: user.profile,
+            profile: user.profile,
             keys: user.keys,
         })
         const walletDeployed = await wallet.isDeployed()

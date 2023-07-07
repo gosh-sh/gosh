@@ -1,5 +1,3 @@
-import { faTimes } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Dialog } from '@headlessui/react'
 import { Field, Form, Formik } from 'formik'
 import yup from '../../../yup-extended'
@@ -10,6 +8,7 @@ import { appModalStateAtom } from '../../../../store/app.state'
 import { useRepositoryCreate } from '../../../hooks/repository.hooks'
 import { toast } from 'react-toastify'
 import { ToastError } from '../../../../components/Toast'
+import { ModalCloseButton } from '../../../../components/Modal'
 
 type TFormValues = {
     name: string
@@ -44,17 +43,7 @@ const RepositoryCreateModal = () => {
             >
                 {({ isSubmitting, setFieldValue }) => (
                     <Form>
-                        <div className="absolute right-2 top-2">
-                            <Button
-                                type="button"
-                                variant="custom"
-                                className="px-3 py-2 text-gray-7c8db5"
-                                disabled={isSubmitting}
-                                onClick={onModalReset}
-                            >
-                                <FontAwesomeIcon icon={faTimes} size="lg" />
-                            </Button>
-                        </div>
+                        <ModalCloseButton disabled={isSubmitting} />
                         <Dialog.Title className="mb-8 text-3xl text-center font-medium">
                             Create new repository
                         </Dialog.Title>

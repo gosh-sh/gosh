@@ -87,16 +87,16 @@ export class Wallet extends BaseContract {
         })
     }
 
-    async createDaoMember(profileAddress: string[]) {
+    async createDaoMember(profile: string[]) {
         await this.run('startProposalForDeployWalletDao', {
-            pubaddr: profileAddress,
+            pubaddr: profile,
             num_clients: await this.smvClientsCount(),
         })
     }
 
-    async deleteDaoMember(profileAddress: string[]) {
+    async deleteDaoMember(profile: string[]) {
         await this.run('startProposalForDeleteWalletDao', {
-            pubaddr: profileAddress,
+            pubaddr: profile,
             num_clients: await this.smvClientsCount(),
         })
     }
