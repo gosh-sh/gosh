@@ -8,7 +8,7 @@ interface IFormikCheckboxProps extends IBaseFieldProps {
 }
 
 const FormikCheckbox = (props: IFormikCheckboxProps) => {
-    const { inputProps = {}, field, form, ...rest } = props
+    const { inputProps = {}, helpClassName, field, form, ...rest } = props
 
     return (
         <BaseField {...props}>

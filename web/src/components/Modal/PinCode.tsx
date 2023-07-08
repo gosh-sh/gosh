@@ -80,14 +80,15 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
             </Dialog.Description>
 
             <div className="mt-4 w-full mx-auto">
-                <form>
+                <form autoComplete="off">
                     <PinInput
                         ref={(el) => (pinRef.current = el)}
                         length={4}
                         initialValue=""
                         type="numeric"
                         inputMode="number"
-                        secretDelay={10}
+                        secret
+                        // secretDelay={5}
                         focus
                         autoSelect={false}
                         style={{

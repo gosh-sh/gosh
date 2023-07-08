@@ -2,7 +2,7 @@ import { useOutletContext, useParams } from 'react-router-dom'
 import { classNames, ESmvEventType, shortString, useSmvEvent, useUser } from 'react-gosh'
 import { TDaoLayoutOutletContext } from '../DaoLayout'
 import Loader from '../../components/Loader'
-import { EventProgressBar, EventStatusBadge } from '../../components/DaoEvent'
+import { EventProgressBar, EventStatusBadge } from '../../v1/components/DaoEvent'
 import CopyClipboard from '../../components/CopyClipboard'
 import moment from 'moment'
 import {
