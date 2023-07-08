@@ -1,7 +1,7 @@
 import Skeleton from '../../../../components/Skeleton'
 import classNames from 'classnames'
 import { TDaoEventDetails } from '../../../types/dao.types'
-import { DaoEventStatusBadge } from '../../../../components/DaoEvent'
+import { DaoEventStatusBadge } from '../../../components/DaoEvent'
 import { getDurationDelta } from '../../../../utils'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCircle, faCircleCheck } from '@fortawesome/free-regular-svg-icons'
