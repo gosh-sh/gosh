@@ -4,7 +4,7 @@ import { useProfile, useUser } from './user.hooks'
 import { EGoshError, GoshError } from '../../errors'
 import { validateUsername } from '../validators'
 import { AppConfig } from '../../appconfig'
-import { systemContract } from '../constants'
+import { getSystemContract } from '../blockchain/helpers'
 import { supabase } from '../../supabase'
 import { executeByChunk, whileFinite } from '../../utils'
 import { DISABLED_VERSIONS, MAX_PARALLEL_READ } from '../../constants'
@@ -83,7 +83,7 @@ export function useDaoCreate() {
 
             // Create DAO
             setStatus({ type: 'pending', data: 'Deploy DAO' })
-            const account = await profile.createDao(systemContract, name, [
+            const account = await profile.createDao(getSystemContract(), name, [
                 profile.address,
                 ...membersProfileList,
             ])
@@ -354,7 +354,7 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
             }
 
             setData((state) => ({ ...state, isFetching: true }))
-            const dao = await systemContract.getDao({ name: daoName })
+            const dao = await getSystemContract().getDao({ name: daoName })
             if (!(await dao.isDeployed())) {
                 throw new GoshError('DAO does not exist', { name: daoName })
             }
@@ -507,7 +507,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
             return
         }
 
-        const client = systemContract.client
+        const client = getSystemContract().client
         const found = dao.members.find(({ profile }) => profile.address === user.profile)
         const wallet = await dao.account.getMemberWallet({
             profile: user.profile,
@@ -882,11 +882,9 @@ export function useDaoDeleteMemeber() {
 
 export function useDaoEventList(params: { count?: number; loadOnInit?: boolean } = {}) {
     const { count = 10, loadOnInit } = params
-    const { daoName } = useParams()
     const { details: dao } = useRecoilValue(daoDetailsAtom)
     const { details: member } = useRecoilValue(daoMemberAtom)
     const [data, setData] = useRecoilState(daoEventListAtom)
-    const resetData = useResetRecoilState(daoEventListAtom)
 
     const getBlockchainItems = async (params: {
         daoAccount: Dao
@@ -920,11 +918,6 @@ export function useDaoEventList(params: { count?: number; loadOnInit?: boolean }
     const getEventList = useCallback(async () => {
         try {
             if (!dao.address || !member.isFetched) {
-                return
-            }
-            if (dao.name !== daoName) {
-                console.debug('Reset DAO events')
-                resetData()
                 return
             }
 
@@ -966,7 +959,7 @@ export function useDaoEventList(params: { count?: number; loadOnInit?: boolean }
         } finally {
             setData((state) => ({ ...state, isFetching: false }))
         }
-    }, [dao.address, dao.name, daoName, member.isFetched])
+    }, [dao.address, member.isFetched])
 
     const getNext = useCallback(async () => {
         try {

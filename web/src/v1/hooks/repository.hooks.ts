@@ -3,7 +3,7 @@ import { daoRepositoryListAtom } from '../store/repository.state'
 import { daoDetailsAtom, daoMemberAtom } from '../store/dao.state'
 import { TRepositoryListItem } from '../types/repository.types'
 import { getPaginatedAccounts } from '../../blockchain/utils'
-import { systemContract } from '../constants'
+import { getSystemContract } from '../blockchain/helpers'
 import { validateRepoName } from '../validators'
 import { EGoshError, GoshError } from '../../errors'
 import { executeByChunk, whileFinite } from '../../utils'
@@ -34,7 +34,9 @@ export function useRepositoryCreate() {
         }
 
         // Check if repository is already deployed
-        const repo = await systemContract.getRepository({ path: `${dao.name}/${name}` })
+        const repo = await getSystemContract().getRepository({
+            path: `${dao.name}/${name}`,
+        })
         const account = repo as Repository
         if (await account.isDeployed()) {
             throw new GoshError('Value error', 'Repository already exists')
@@ -78,6 +80,7 @@ export function useDaoRepositoryList(params: { count: number }) {
         cursor?: string
     }) => {
         const { daoAddress, limit, cursor } = params
+        const systemContract = getSystemContract()
         const codeHash = await systemContract.getRepositoryCodeHash(daoAddress)
         const { results, lastId, completed } = await getPaginatedAccounts({
             filters: [`code_hash: {eq:"${codeHash}"}`],

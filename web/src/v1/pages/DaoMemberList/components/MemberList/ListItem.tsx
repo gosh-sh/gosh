@@ -13,16 +13,16 @@ import { Button } from '../../../../../components/Form'
 
 const basis = {
     contaner: 'flex-wrap justify-between lg:flex-nowrap',
-    name: 'basis-full lg:basis-3/12 grow-0',
+    name: 'basis-full lg:basis-4/12 grow-0',
     profile: 'basis-0 grow lg:basis-2/12 lg:grow-0',
     wallet: 'basis-0 grow lg:basis-2/12 lg:grow-0',
-    allowance: 'basis-0 grow lg:basis-2/12 lg:grow-0',
+    allowance: 'basis-0 grow',
     buttons: 'basis-full md:basis-0 md:grow-0',
 }
 
 const ListItemSkeleton = () => {
     return (
-        <div className="flex px-5 py-2 gap-x-4">
+        <div className="flex px-3 py-2 gap-x-4">
             {Array.from(new Array(5)).map((_, i) => (
                 <div key={i} className={classNames(i === 0 ? basis.name : basis.buttons)}>
                     <Skeleton className="py-2" skeleton={{ height: 10 }}>
@@ -40,12 +40,12 @@ const ListItemHeader = (props: React.HTMLAttributes<HTMLDivElement>) => {
     return (
         <div
             className={classNames(
-                'flex items-center px-3 py-3 gap-x-4',
+                'flex items-center justify-between px-3 py-3 gap-x-4',
                 'text-xs text-gray-7c8db5',
                 className,
             )}
         >
-            <div className="basis-auto md:grow lg:basis-3/12 lg:grow-0">name</div>
+            <div className="basis-auto md:grow lg:basis-4/12 lg:grow-0">name</div>
             <div className={basis.profile}>profile</div>
             <div className={basis.wallet}>wallet</div>
             <div className={basis.allowance}>karma</div>
