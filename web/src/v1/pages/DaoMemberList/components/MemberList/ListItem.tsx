@@ -1,5 +1,4 @@
 import CopyClipboard from '../../../../../components/CopyClipboard'
-import Spinner from '../../../../../components/Spinner'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import { TDaoMemberListItem } from '../../../../types/dao.types'
@@ -8,18 +7,50 @@ import Skeleton from '../../../../../components/Skeleton'
 import { useDao, useDaoDeleteMemeber, useDaoMember } from '../../../../hooks/dao.hooks'
 import { useNavigate } from 'react-router-dom'
 import { ToastStatus } from '../../../../../components/Toast'
+import classNames from 'classnames'
+import { MemberIcon } from '../../../../../components/Dao'
+import { Button } from '../../../../../components/Form'
+
+const basis = {
+    contaner: 'flex-wrap justify-between lg:flex-nowrap',
+    name: 'basis-full lg:basis-3/12 grow-0',
+    profile: 'basis-0 grow lg:basis-2/12 lg:grow-0',
+    wallet: 'basis-0 grow lg:basis-2/12 lg:grow-0',
+    allowance: 'basis-0 grow lg:basis-2/12 lg:grow-0',
+    buttons: 'basis-full md:basis-0 md:grow-0',
+}
 
 const ListItemSkeleton = () => {
     return (
-        <tr>
+        <div className="flex px-5 py-2 gap-x-4">
             {Array.from(new Array(5)).map((_, i) => (
-                <td key={i}>
-                    <Skeleton className="px-3 py-2" skeleton={{ height: 10 }}>
+                <div key={i} className={classNames(i === 0 ? basis.name : basis.buttons)}>
+                    <Skeleton className="py-2" skeleton={{ height: 10 }}>
                         <rect x="0" y="0" rx="6" ry="6" width="100%" height="10" />
                     </Skeleton>
-                </td>
+                </div>
             ))}
-        </tr>
+        </div>
+    )
+}
+
+const ListItemHeader = (props: React.HTMLAttributes<HTMLDivElement>) => {
+    const { className } = props
+
+    return (
+        <div
+            className={classNames(
+                'flex items-center px-3 py-3 gap-x-4',
+                'text-xs text-gray-7c8db5',
+                className,
+            )}
+        >
+            <div className="basis-auto md:grow lg:basis-3/12 lg:grow-0">name</div>
+            <div className={basis.profile}>profile</div>
+            <div className={basis.wallet}>wallet</div>
+            <div className={basis.allowance}>karma</div>
+            <div className={basis.buttons}></div>
+        </div>
     )
 }
 
@@ -47,47 +78,57 @@ const ListItem = (props: TListItemProps) => {
 
     return (
         <>
-            <tr>
-                <td className="px-3 py-2">{item.username}</td>
-                <td className="px-3 py-2 text-gray-7c8db5 font-light">
-                    {item.allowance}
-                </td>
-                <td className="px-3 py-2 text-gray-7c8db5 font-light text-sm">
+            <div
+                className={classNames(
+                    'flex items-center px-3 py-2 gap-x-4 gap-y-2',
+                    basis.contaner,
+                )}
+            >
+                <div className={basis.name}>
+                    <MemberIcon type="user" className="mr-2" size="sm" fixedWidth />
+                    {item.username}
+                </div>
+                <div className={basis.profile}>
                     <CopyClipboard
+                        className="font-light font-mono text-xs"
                         componentProps={{ text: item.profile.address }}
                         label={shortString(item.profile.address, 6, 6)}
                     />
-                </td>
-                <td className="px-3 py-2 text-gray-7c8db5 font-light text-sm">
+                </div>
+                <div className={basis.wallet}>
                     <CopyClipboard
+                        className="font-light font-mono text-xs"
                         componentProps={{ text: item.wallet.address }}
                         label={shortString(item.wallet.address, 6, 6)}
                     />
-                </td>
-                <td className="px-3 py-2 text-gray-7c8db5 font-light text-right">
+                </div>
+                <div className={basis.allowance}>{item.allowance.toLocaleString()}</div>
+                <div className={basis.buttons}>
                     {member.details.isMember && (
-                        <button
+                        <Button
                             type="button"
-                            className="hover:text-red-dd3a3a disabled:opacity-20 disabled:pointer-events-none"
+                            variant="outline-danger"
+                            size="sm"
+                            className={classNames(
+                                'w-full md:w-auto md:!border-transparent md:disabled:!border-transparent',
+                            )}
                             onClick={() => onDelete(item.username)}
                             disabled={
                                 item.isFetching ||
                                 item.profile.address === dao.details.owner
                             }
+                            isLoading={item.isFetching}
                         >
-                            {item.isFetching ? (
-                                <Spinner size="xs" />
-                            ) : (
-                                <FontAwesomeIcon icon={faTimes} size="lg" />
-                            )}
-                        </button>
+                            <FontAwesomeIcon icon={faTimes} size="lg" />
+                            <span className="ml-2 md:hidden">Delete member</span>
+                        </Button>
                     )}
-                </td>
-            </tr>
+                </div>
+            </div>
 
             <ToastStatus status={status} />
         </>
     )
 }
 
-export { ListItem, ListItemSkeleton }
+export { ListItem, ListItemSkeleton, ListItemHeader }
