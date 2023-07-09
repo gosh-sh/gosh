@@ -53,8 +53,8 @@ const DaoEventPageInner = (props: { address: string }) => {
 
     return (
         <>
-            <div className="flex items-center border-b border-b-gray-e8eeed pt-2 pb-4">
-                <div className="grow">
+            <div className="flex flex-wrap items-center gap-2 border-b border-b-gray-e8eeed pt-2 pb-4 relative">
+                <div className="basis-full lg:basis-auto grow">
                     <h3 className="text-xl font-medium">{event.label}</h3>
                 </div>
                 <div>
@@ -73,14 +73,16 @@ const DaoEventPageInner = (props: { address: string }) => {
                                 text: event.address,
                             }}
                         />
-                        <Button
-                            variant="custom"
-                            className="text-gray-7c8db5 hover:text-black"
-                            onClick={onItemClose}
-                        >
-                            <FontAwesomeIcon icon={faTimes} size="lg" />
-                        </Button>
                     </div>
+                </div>
+                <div className="absolute lg:relative right-0 top-0">
+                    <Button
+                        variant="custom"
+                        className="text-gray-7c8db5 hover:text-black"
+                        onClick={onItemClose}
+                    >
+                        <FontAwesomeIcon icon={faTimes} size="lg" />
+                    </Button>
                 </div>
             </div>
 

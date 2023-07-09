@@ -48,7 +48,7 @@ const DaoEventListPage = () => {
 
             <div
                 className={classNames(
-                    'fixed w-[80%] top-0 right-0 h-screen bg-white overflow-y-auto',
+                    'fixed w-full lg:w-[80%] top-0 right-0 h-screen bg-white overflow-y-auto',
                     'border border-gray-e6edff rounded-l-xl px-5 py-3.5',
                     'transition-all duration-300 shadow-xl',
                     eventOpened ? 'translate-x-0' : 'translate-x-full',
