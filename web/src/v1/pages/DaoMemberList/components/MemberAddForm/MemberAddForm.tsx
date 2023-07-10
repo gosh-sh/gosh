@@ -1,5 +1,12 @@
 import { useState } from 'react'
-import { ErrorMessage, FieldArray, FieldArrayRenderProps, Form, Formik } from 'formik'
+import {
+    ErrorMessage,
+    Field,
+    FieldArray,
+    FieldArrayRenderProps,
+    Form,
+    Formik,
+} from 'formik'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '../../../../../components/Form'
@@ -11,6 +18,7 @@ import successImage from '../../../../../assets/images/success.png'
 import { AppConfig } from '../../../../../appconfig'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useCreateDaoMemeber } from '../../../../hooks/dao.hooks'
+import { BaseField } from '../../../../../components/Formik'
 
 const getUsernameOptions = async (input: string) => {
     const options: any[] = []
@@ -39,28 +47,35 @@ const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
                     exit={{ opacity: 0, transition: { duration: 0.4 } }}
                 >
                     <div className="py-2">
-                        <AsyncSelect
-                            classNames={Select2ClassNames}
-                            isClearable
-                            placeholder="Input username"
-                            cacheOptions={false}
-                            defaultOptions={false}
-                            loadOptions={getUsernameOptions}
-                            onChange={(option) => {
-                                const _value = option ? option.value : ''
-                                form.setFieldValue(
-                                    `members.${index}`,
-                                    { _id: value._id, username: _value },
-                                    true,
-                                )
-                            }}
-                            isDisabled={form.isSubmitting}
-                        />
-                        <ErrorMessage
-                            className="text-xs text-red-ff3b30 mt-1"
-                            component="div"
-                            name={`members.${index}.username`}
-                        />
+                        <div>
+                            <Field
+                                name={`members.${index}.username`}
+                                component={BaseField}
+                            >
+                                <AsyncSelect
+                                    classNames={Select2ClassNames}
+                                    isClearable
+                                    placeholder="Input username"
+                                    cacheOptions={false}
+                                    defaultOptions={false}
+                                    loadOptions={getUsernameOptions}
+                                    onChange={(option) => {
+                                        const _value = option ? option.value : ''
+                                        form.setFieldValue(
+                                            `members.${index}`,
+                                            { _id: value._id, username: _value },
+                                            true,
+                                        )
+                                    }}
+                                    isDisabled={form.isSubmitting}
+                                />
+                            </Field>
+                            <ErrorMessage
+                                className="text-xs text-red-ff3b30 mt-1"
+                                component="div"
+                                name={`members.${index}.username`}
+                            />
+                        </div>
 
                         <div className="text-right mt-2">
                             <Button
