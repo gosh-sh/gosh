@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useDao, useDaoUpgrade } from '../../hooks/dao.hooks'
+import { useDao, useUpgradeDao } from '../../hooks/dao.hooks'
 import Alert from '../../../components/Alert'
 import { AnimatePresence, motion } from 'framer-motion'
 import classNames from 'classnames'
@@ -10,7 +10,7 @@ type TDaoNotificationProps = React.HTMLAttributes<HTMLDivElement>
 const DaoUpgradeNotification = (props: TDaoNotificationProps) => {
     const { className } = props
     const dao = useDao()
-    const { alert } = useDaoUpgrade()
+    const { alert } = useUpgradeDao()
     const [show, setShow] = useState<boolean>(true)
 
     const onDismiss = () => setShow(false)

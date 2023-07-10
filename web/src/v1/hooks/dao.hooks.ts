@@ -38,7 +38,7 @@ import { SmvEvent } from '../blockchain/smvproposal'
 import { GoshAdapterFactory } from 'react-gosh'
 import { daoRepositoryListAtom } from '../store/repository.state'
 
-export function useDaoCreate() {
+export function useCreateDao() {
     const profile = useProfile()
     const setUserDaoList = useSetRecoilState(userDaoListAtom)
     const [status, setStatus] = useState<TToastStatus>()
@@ -602,12 +602,12 @@ export function useDaoMemberList(params: { loadOnInit?: boolean } = {}) {
     }
 }
 
-function useDaoEventHelper() {
+function useDaoHelpers() {
     const { details: member } = useRecoilValue(daoMemberAtom)
 
     const nocallback = () => {}
 
-    const beforeCreate = async (
+    const beforeCreateEvent = async (
         min: number,
         options: {
             onPendingCallback?: (status: TToastStatus) => void
@@ -768,15 +768,15 @@ function useDaoEventHelper() {
     }
 
     return {
-        beforeCreate,
+        beforeCreateEvent,
         beforeVote,
     }
 }
 
-export function useDaoCreateMemeber() {
+export function useCreateDaoMemeber() {
     const [status, setStatus] = useState<TToastStatus>()
     const { details: member } = useRecoilValue(daoMemberAtom)
-    const { beforeCreate } = useDaoEventHelper()
+    const { beforeCreateEvent } = useDaoHelpers()
 
     const createMember = async (username: string[]) => {
         try {
@@ -800,7 +800,7 @@ export function useDaoCreateMemeber() {
             )
 
             // Prepare balance for create event
-            await beforeCreate(20, { onPendingCallback: setStatus })
+            await beforeCreateEvent(20, { onPendingCallback: setStatus })
 
             // Create add DAO member event
             // Skip `member.wallet` check, because `beforeCreate` checks it
@@ -822,11 +822,11 @@ export function useDaoCreateMemeber() {
     }
 }
 
-export function useDaoDeleteMemeber() {
+export function useDeleteDaoMemeber() {
     const [status, setStatus] = useState<TToastStatus>()
     const { details: member } = useRecoilValue(daoMemberAtom)
     const setMemberList = useSetRecoilState(daoMemberListAtom)
-    const { beforeCreate } = useDaoEventHelper()
+    const { beforeCreateEvent } = useDaoHelpers()
 
     const deleteMember = async (username: string[]) => {
         try {
@@ -858,7 +858,7 @@ export function useDaoDeleteMemeber() {
             )
 
             // Prepare balance for create event
-            await beforeCreate(20, { onPendingCallback: setStatus })
+            await beforeCreateEvent(20, { onPendingCallback: setStatus })
 
             // Create add DAO member event
             // Skip `member.wallet` check, because `beforeCreate` checks it
@@ -1035,7 +1035,7 @@ export function useDaoEvent(
     const { details: member } = useRecoilValue(daoMemberAtom)
     const [events, setEvents] = useRecoilState(daoEventListAtom)
     const event = useRecoilValue(daoEventSelector(address))
-    const { beforeVote } = useDaoEventHelper()
+    const { beforeVote } = useDaoHelpers()
     const [status, setStatus] = useState<TToastStatus>()
     const [error, setError] = useState<any>()
 
@@ -1159,10 +1159,10 @@ export function useDaoEvent(
     return { event, error, vote, status }
 }
 
-export function useDaoUpgrade() {
+export function useUpgradeDao() {
     const dao = useRecoilValue(daoDetailsAtom)
     const member = useRecoilValue(daoMemberAtom)
-    const { beforeCreate } = useDaoEventHelper()
+    const { beforeCreateEvent } = useDaoHelpers()
     const [versions, setVersions] = useState<string[]>()
     const [alert, setAlert] = useState<'isNotLatest' | 'isUpgradeAvailable'>()
     const [status, setStatus] = useState<TToastStatus>()
@@ -1232,7 +1232,7 @@ export function useDaoUpgrade() {
             }
 
             // Prepare balance for create event
-            await beforeCreate(20, { onPendingCallback: setStatus })
+            await beforeCreateEvent(20, { onPendingCallback: setStatus })
 
             // Create upgrade DAO event
             // Skip `member.wallet` check, because `beforeCreate` checks it

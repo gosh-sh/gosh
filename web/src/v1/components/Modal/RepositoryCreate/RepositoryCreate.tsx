@@ -5,7 +5,7 @@ import { FormikInput } from '../../../../components/Formik'
 import { Button } from '../../../../components/Form'
 import { useSetRecoilState } from 'recoil'
 import { appModalStateAtom } from '../../../../store/app.state'
-import { useRepositoryCreate } from '../../../hooks/repository.hooks'
+import { useCreateRepository } from '../../../hooks/repository.hooks'
 import { toast } from 'react-toastify'
 import { ToastError } from '../../../../components/Toast'
 import { ModalCloseButton } from '../../../../components/Modal'
@@ -16,7 +16,7 @@ type TFormValues = {
 
 const RepositoryCreateModal = () => {
     const setModal = useSetRecoilState(appModalStateAtom)
-    const { create: createRepository } = useRepositoryCreate()
+    const { create: createRepository } = useCreateRepository()
 
     const onModalReset = () => {
         setModal((state) => ({ ...state, isOpen: false }))

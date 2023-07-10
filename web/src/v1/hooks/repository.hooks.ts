@@ -12,7 +12,7 @@ import _ from 'lodash'
 import { useCallback, useEffect } from 'react'
 import { Repository } from '../blockchain/repository'
 
-export function useRepositoryCreate() {
+export function useCreateRepository() {
     const { details: dao } = useRecoilValue(daoDetailsAtom)
     const { details: member } = useRecoilValue(daoMemberAtom)
     const setRepositories = useSetRecoilState(daoRepositoryListAtom)

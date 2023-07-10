@@ -1,6 +1,6 @@
 import { Field, Form, Formik } from 'formik'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useDaoUpgrade } from '../../hooks/dao.hooks'
+import { useUpgradeDao } from '../../hooks/dao.hooks'
 import yup from '../../yup-extended'
 import { FormikSelect, FormikTextarea } from '../../../components/Formik'
 import { Button } from '../../../components/Form'
@@ -16,7 +16,7 @@ type TFormValues = {
 const DaoUpgradePage = () => {
     const { daoname } = useParams()
     const navigate = useNavigate()
-    const { versions, upgrade, status } = useDaoUpgrade()
+    const { versions, upgrade, status } = useUpgradeDao()
 
     const onDaoUpgrade = async (values: TFormValues) => {
         try {

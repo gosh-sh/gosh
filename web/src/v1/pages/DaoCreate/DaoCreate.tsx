@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { ToastStatus } from '../../../components/Toast'
 import yup from '../../yup-extended'
 import { Button } from '../../../components/Form'
-import { useDaoCreate } from '../../hooks/dao.hooks'
+import { useCreateDao } from '../../hooks/dao.hooks'
 
 type TFormValues = {
     name: string
@@ -13,7 +13,7 @@ type TFormValues = {
 
 const DaoCreatePage = () => {
     const navigate = useNavigate()
-    const { createDao, status } = useDaoCreate()
+    const { createDao, status } = useCreateDao()
 
     const onDaoCreate = async (values: TFormValues) => {
         const { name, members } = values

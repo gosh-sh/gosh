@@ -10,7 +10,7 @@ import yup from '../../../../yup-extended'
 import successImage from '../../../../../assets/images/success.png'
 import { AppConfig } from '../../../../../appconfig'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useDaoCreateMemeber } from '../../../../hooks/dao.hooks'
+import { useCreateDaoMemeber } from '../../../../hooks/dao.hooks'
 
 const getUsernameOptions = async (input: string) => {
     const options: any[] = []
@@ -103,7 +103,7 @@ type TFormValues = {
 }
 
 const MemberAddForm = () => {
-    const { status, createMember } = useDaoCreateMemeber()
+    const { status, createMember } = useCreateDaoMemeber()
     const [transition, setTransition] = useState<{ form: boolean; success: boolean }>({
         form: true,
         success: false,
