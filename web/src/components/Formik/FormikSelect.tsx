@@ -1,5 +1,5 @@
 import { Select } from '../Form'
-import BaseField, { IBaseFieldProps } from './BaseField'
+import { BaseField, IBaseFieldProps } from './BaseField'
 
 interface IFormikSelectProps extends IBaseFieldProps {
     inputProps: React.InputHTMLAttributes<HTMLSelectElement>

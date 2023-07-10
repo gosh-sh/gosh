@@ -66,4 +66,4 @@ const BaseField = (props: IBaseFieldProps) => {
     )
 }
 
-export default BaseField
+export { BaseField }

@@ -24,4 +24,4 @@ const MemberIcon = (props: TMemberIconProps) => {
     return <FontAwesomeIcon icon={icon || icons[type]} {...rest} />
 }
 
-export default MemberIcon
+export { MemberIcon }

@@ -1,5 +1,5 @@
 import { Slider } from '../Form'
-import BaseField, { IBaseFieldProps } from './BaseField'
+import { BaseField, IBaseFieldProps } from './BaseField'
 
 interface IFormikSliderProps extends IBaseFieldProps {
     inputProps: React.InputHTMLAttributes<HTMLInputElement> & {
