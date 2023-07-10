@@ -75,13 +75,13 @@ export function useDaoRepositoryList(params: { count: number }) {
     const [data, setData] = useRecoilState(daoRepositoryListAtom)
 
     const getBlockchainItems = async (params: {
-        daoAddress: string
+        daoaddr: string
         limit: number
         cursor?: string
     }) => {
-        const { daoAddress, limit, cursor } = params
+        const { daoaddr, limit, cursor } = params
         const systemContract = getSystemContract()
-        const codeHash = await systemContract.getRepositoryCodeHash(daoAddress)
+        const codeHash = await systemContract.getRepositoryCodeHash(daoaddr)
         const { results, lastId, completed } = await getPaginatedAccounts({
             filters: [`code_hash: {eq:"${codeHash}"}`],
             limit,
@@ -112,7 +112,7 @@ export function useDaoRepositoryList(params: { count: number }) {
 
             setData((state) => ({ ...state, isFetching: true }))
             const blockchain = await getBlockchainItems({
-                daoAddress: dao.address,
+                daoaddr: dao.address,
                 limit: Math.max(data.items.length, count),
             })
             setData((state) => {
@@ -151,7 +151,7 @@ export function useDaoRepositoryList(params: { count: number }) {
         try {
             setData((state) => ({ ...state, isFetching: true }))
             const blockchain = await getBlockchainItems({
-                daoAddress: dao.address!,
+                daoaddr: dao.address!,
                 limit: count,
                 cursor: data.cursor,
             })

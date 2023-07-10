@@ -316,7 +316,7 @@ export function useUserDaoList(params: { count?: number; loadOnInit?: boolean } 
 
 export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {}) {
     const { loadOnInit, subscribe } = params
-    const { daoName } = useParams()
+    const { daoname } = useParams()
     const [data, setData] = useRecoilState(daoDetailsAtom)
     const resetDao = useResetRecoilState(daoDetailsAtom)
     const resetDaoRepositories = useResetRecoilState(daoRepositoryListAtom)
@@ -349,14 +349,14 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
 
     const getDao = useCallback(async () => {
         try {
-            if (!daoName) {
+            if (!daoname) {
                 throw new GoshError('DAO name undefined')
             }
 
             setData((state) => ({ ...state, isFetching: true }))
-            const dao = await getSystemContract().getDao({ name: daoName })
+            const dao = await getSystemContract().getDao({ name: daoname })
             if (!(await dao.isDeployed())) {
-                throw new GoshError('DAO does not exist', { name: daoName })
+                throw new GoshError('DAO does not exist', { name: daoname })
             }
             const version = await dao.getVersion()
 
@@ -371,7 +371,7 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
                     ...state.details,
                     account: dao as Dao,
                     _adapter,
-                    name: daoName,
+                    name: daoname,
                     address: dao.address,
                     version,
                 },
@@ -384,7 +384,7 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
         } finally {
             setData((state) => ({ ...state, isFetching: false }))
         }
-    }, [daoName])
+    }, [daoname])
 
     useEffect(() => {
         if (loadOnInit) {

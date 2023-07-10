@@ -58,7 +58,7 @@ const App = () => {
                             <Route path="orgs" element={<UserDaoListPage />} />
                             <Route path="settings" element={<SettingsPage />} />
                         </Route>
-                        <Route path="/o/:daoName" element={<DaoLayout />}>
+                        <Route path="/o/:daoname" element={<DaoLayout />}>
                             <Route index element={<DaoPage />} />
                             <Route path="repos" element={<DaoRepositoryListPage />} />
                             <Route

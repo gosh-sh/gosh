@@ -14,21 +14,21 @@ import { ToastStatus } from '../../components/Toast'
 import { AnimatedOutlet } from '../components/Outlet'
 
 const DaoLayout = () => {
-    const { daoName } = useParams()
+    const { daoname } = useParams()
     const dao = useDao({ loadOnInit: true, subscribe: true })
     const member = useDaoMember({ loadOnInit: true, subscribe: true })
     const { showBoundary } = useErrorBoundary()
 
     const getTabs = () => {
         const tabs = [
-            { to: `/o/${daoName}`, title: 'Overview', order: 0 },
-            { to: `/o/${daoName}/events`, title: 'DAO', order: 1 },
-            { to: `/o/${daoName}/repos`, title: 'Repositories', order: 2 },
-            { to: `/o/${daoName}/members`, title: 'Members', order: 3 },
+            { to: `/o/${daoname}`, title: 'Overview', order: 0 },
+            { to: `/o/${daoname}/events`, title: 'DAO', order: 1 },
+            { to: `/o/${daoname}/repos`, title: 'Repositories', order: 2 },
+            { to: `/o/${daoname}/members`, title: 'Members', order: 3 },
         ]
 
         if (member.details.isMember) {
-            tabs.push({ to: `/o/${daoName}/settings`, title: 'Settings', order: 4 })
+            tabs.push({ to: `/o/${daoname}/settings`, title: 'Settings', order: 4 })
         }
 
         return tabs.sort((a, b) => a.order - b.order)
@@ -46,7 +46,7 @@ const DaoLayout = () => {
                 <div className="col !grow-0">
                     <div className="overflow-hidden rounded-xl w-12 md:w-16 lg:w-20">
                         <img
-                            src={getIdenticonAvatar({ seed: daoName }).toDataUriSync()}
+                            src={getIdenticonAvatar({ seed: daoname }).toDataUriSync()}
                             className="w-full"
                             alt=""
                         />
@@ -55,10 +55,10 @@ const DaoLayout = () => {
                 <div className="col">
                     <h1 className="mb-2">
                         <Link
-                            to={`/o/${daoName}`}
+                            to={`/o/${daoname}`}
                             className="font-medium text-2xl capitalize"
                         >
-                            {daoName}
+                            {daoname}
                         </Link>
                         <span
                             className="mx-2 align-super text-xs font-normal text-gray-7c8db5"

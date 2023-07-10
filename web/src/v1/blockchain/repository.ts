@@ -1,7 +1,7 @@
 import { TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
 import RepositoryABI from './abi/repository.abi.json'
-import { TRepositoryBranch } from '../types/repository.types'
+import { TBranch } from '../types/repository.types'
 import { CommitTag } from './committag'
 
 export class Repository extends BaseContract {
@@ -16,7 +16,7 @@ export class Repository extends BaseContract {
         return value0
     }
 
-    async getBranches(): Promise<TRepositoryBranch[]> {
+    async getBranches(): Promise<TBranch[]> {
         const { value0 } = await this.runLocal('getAllAddress', {})
         return value0.map((item: any) => ({
             name: item.branchname,

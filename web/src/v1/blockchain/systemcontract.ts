@@ -52,12 +52,10 @@ export class SystemContract extends BaseContract {
         return new Repository(this.client, value0)
     }
 
-    async getRepositoryCodeHash(daoAddress: string): Promise<string> {
+    async getRepositoryCodeHash(daoaddr: string): Promise<string> {
         const { value0 } = await this.runLocal(
             'getRepoDaoCode',
-            {
-                dao: daoAddress,
-            },
+            { dao: daoaddr },
             undefined,
             { useCachedBoc: true },
         )

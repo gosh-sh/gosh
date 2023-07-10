@@ -1,14 +1,14 @@
 import { TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
 import CommitABI from './abi/commit.abi.json'
-import { TRepositoryCommit } from '../types/repository.types'
+import { TCommit } from '../types/repository.types'
 
 export class Commit extends BaseContract {
     constructor(client: TonClient, address: string) {
         super(client, CommitABI, address)
     }
 
-    async getDetails(): Promise<TRepositoryCommit> {
+    async getDetails(): Promise<TCommit> {
         const details = await this.runLocal('getCommit', {}, undefined, {
             useCachedBoc: true,
         })

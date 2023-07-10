@@ -7,17 +7,17 @@ import Alert from '../../components/Alert'
 import { AnimatedOutlet } from '../components/Outlet'
 
 const DaoSettingsLayout = () => {
-    const { daoName } = useParams()
+    const { daoname } = useParams()
     const member = useDaoMember()
 
     const getTabs = () => {
         const tabs = []
-        tabs.push({ to: `/o/${daoName}/settings/upgrade`, title: 'Upgrade' })
+        tabs.push({ to: `/o/${daoname}/settings/upgrade`, title: 'Upgrade' })
         return tabs
     }
 
     if (!member.details.isMember) {
-        return <Navigate to={`/o/${daoName}`} />
+        return <Navigate to={`/o/${daoname}`} />
     }
     return (
         <div className="flex gap-x-8 gap-y-8 flex-wrap md:flex-nowrap">

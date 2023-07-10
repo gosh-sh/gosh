@@ -12,7 +12,7 @@ const BranchProtectEvent = (props: TBranchProtectEventProps) => {
     return (
         <div className="flex flex-col gap-2 py-3">
             <div className="flex items-center gap-6">
-                <div className="text-xs text-gray-53596d">Repository</div>
+                <div className="basis-2/12 text-xs text-gray-53596d">Repository</div>
                 <div className="text-sm">
                     <Link
                         to={`/o/${dao.details.name}/r/${data.repoName}/branches`}
@@ -23,7 +23,7 @@ const BranchProtectEvent = (props: TBranchProtectEventProps) => {
                 </div>
             </div>
             <div className="flex items-center gap-6">
-                <div className="text-xs text-gray-53596d">Branch</div>
+                <div className="basis-2/12 text-xs text-gray-53596d">Branch</div>
                 <div className="text-sm">{data.branchName}</div>
             </div>
         </div>

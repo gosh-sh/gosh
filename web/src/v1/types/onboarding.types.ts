@@ -45,7 +45,7 @@ export type TOnboardingOrganization = {
 }
 
 export type TOnboardingRepository = {
-    daoName: string
+    daoname: string
     id: number
     name: string
     description: string
@@ -55,7 +55,7 @@ export type TOnboardingRepository = {
 
 export type TOnboardingInvite = {
     id: string
-    daoName: string
+    daoname: string
     accepted: boolean | null
 }
 

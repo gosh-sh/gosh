@@ -24,7 +24,7 @@ const PullRequestEvent = (props: TPullRequestEventProps) => {
         <div>
             <div className="flex flex-col gap-2 py-3">
                 <div className="flex items-center gap-6">
-                    <div className="text-xs text-gray-53596d">Repository</div>
+                    <div className="basis-2/12 text-xs text-gray-53596d">Repository</div>
                     <div className="text-sm">
                         <Link
                             to={`/o/${dao.details.name}/r/${data.repoName}/branches`}
@@ -35,13 +35,15 @@ const PullRequestEvent = (props: TPullRequestEventProps) => {
                     </div>
                 </div>
                 <div className="flex items-center gap-6">
-                    <div className="text-xs text-gray-53596d">Branch</div>
+                    <div className="basis-2/12 text-xs text-gray-53596d">Branch</div>
                     <div className="text-sm">{data.branchName}</div>
                 </div>
                 {!isFetching && commit && (
                     <>
                         <div className="flex items-center gap-6">
-                            <div className="text-xs text-gray-53596d">Commit</div>
+                            <div className="basis-2/12 text-xs text-gray-53596d">
+                                Commit
+                            </div>
                             <div className="text-sm">
                                 <CopyClipboard
                                     label={shortString(commit.name, 7, 0, '')}
@@ -52,13 +54,17 @@ const PullRequestEvent = (props: TPullRequestEventProps) => {
                             </div>
                         </div>
                         <div className="flex items-center gap-6">
-                            <div className="text-xs text-gray-53596d">Commit at</div>
+                            <div className="basis-2/12 text-xs text-gray-53596d">
+                                Commit at
+                            </div>
                             <div className="text-sm">
                                 {getCommitTime(commit.committer).toLocaleString()}
                             </div>
                         </div>
                         <div className="flex items-center gap-6">
-                            <div className="text-xs text-gray-53596d">Commit by</div>
+                            <div className="basis-2/12 text-xs text-gray-53596d">
+                                Commit by
+                            </div>
                             <div className="text-sm">
                                 <Commiter committer={commit.committer} />
                             </div>

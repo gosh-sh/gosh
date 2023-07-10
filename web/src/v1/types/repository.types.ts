@@ -4,7 +4,7 @@ export type TRepositoryListItem = {
     account: Repository | null
     name: string
     version: string
-    branches: TRepositoryBranch[]
+    branches: TBranch[]
 }
 
 export type TRepositoryList = {
@@ -15,7 +15,7 @@ export type TRepositoryList = {
     error?: any
 }
 
-export type TRepositoryBranch = {
+export type TBranch = {
     name: string
     commit: {
         address: string
@@ -23,7 +23,7 @@ export type TRepositoryBranch = {
     }
 }
 
-export type TRepositoryCommit = {
+export type TCommit = {
     repository: string
     branch: string
     name: string
@@ -32,8 +32,8 @@ export type TRepositoryCommit = {
     initupgrade: boolean
 }
 
-export type TRepositoryCommitTag = {
-    repository: string
+export type TCommitTag = {
+    reponame: string
     name: string
     content: string
     commit: {

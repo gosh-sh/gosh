@@ -14,7 +14,7 @@ type TFormValues = {
 }
 
 const DaoUpgradePage = () => {
-    const { daoName } = useParams()
+    const { daoname } = useParams()
     const navigate = useNavigate()
     const { versions, upgrade, status } = useDaoUpgrade()
 
@@ -24,7 +24,7 @@ const DaoUpgradePage = () => {
                 .filter((i) => !!i)
                 .join('\n')
             await upgrade(values.version, comment)
-            navigate(`/o/${daoName}/events`)
+            navigate(`/o/${daoname}/events`)
         } catch (e: any) {
             console.error(e.message)
         }
