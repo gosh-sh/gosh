@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { MemberAddForm, MemberList } from './components'
+import { MemberAddForm, MemberList, MemberInviteList } from './components'
 import { useDaoMember } from '../../hooks/dao.hooks'
 
 const DaoMemberListPage = () => {
@@ -26,6 +26,9 @@ const DaoMemberListPage = () => {
                 >
                     <div className="border rounded-xl p-5 md:p-8 basis-full lg:basis-5/12">
                         <MemberAddForm />
+                    </div>
+                    <div className="border rounded-xl overflow-hidden grow lg:basis-6/12">
+                        <MemberInviteList />
                     </div>
                 </div>
             )}

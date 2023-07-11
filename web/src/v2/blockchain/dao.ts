@@ -1,14 +1,20 @@
 import { KeyPair, TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
-import DaoABI from './abi/goshdao.abi.json'
+import DaoABI from './abi/dao.abi.json'
 import { TDaoDetailsMemberItem } from '../types/dao.types'
 import { UserProfile } from '../../blockchain/userprofile'
 import { Wallet } from './wallet'
 import { SmvEvent } from './smvproposal'
+import { GoshError } from 'react-gosh'
 
 export class Dao extends BaseContract {
     constructor(client: TonClient, address: string) {
         super(client, DaoABI, address)
+    }
+
+    async isMember(profile: string): Promise<boolean> {
+        const { value0 } = await this.runLocal('isMember', { pubaddr: profile })
+        return value0
     }
 
     async getName(): Promise<string> {
@@ -18,6 +24,11 @@ export class Dao extends BaseContract {
         return value0
     }
 
+    async getDetails() {
+        const details = await this.runLocal('getDetails', {})
+        return details
+    }
+
     async getOwner(): Promise<string> {
         const { value0 } = await this.runLocal('getOwner', {}, undefined, {
             useCachedBoc: true,
@@ -25,34 +36,52 @@ export class Dao extends BaseContract {
         return value0
     }
 
-    async getMembers(): Promise<TDaoDetailsMemberItem[]> {
-        const { value0 } = await this.runLocal('getWalletsFull', {}, undefined, {
-            retries: 1,
-        })
-        const members = Object.keys(value0).map((key) => ({
+    async getMembers(parse?: any): Promise<TDaoDetailsMemberItem[]> {
+        if (!parse) {
+            const { value0 } = await this.runLocal('getWalletsFull', {}, undefined, {
+                retries: 1,
+            })
+            parse = value0
+        }
+
+        const members = Object.keys(parse).map((key) => ({
             profile: new UserProfile(this.client, `0:${key.slice(2)}`),
-            wallet: new Wallet(this.client, value0[key].member),
-            allowance: parseInt(value0[key].count),
+            wallet: new Wallet(this.client, parse[key].member),
+            allowance: parseInt(parse[key].count),
         }))
         return members
     }
 
     async getMemberWallet(params: {
-        profileAddress: string
+        address?: string
+        profile?: string
         index?: number
         keys?: KeyPair
     }) {
-        const { profileAddress, index = 0, keys } = params
-        const { value0 } = await this.runLocal(
-            'getAddrWallet',
-            {
-                pubaddr: profileAddress,
-                index,
-            },
-            undefined,
-            { useCachedBoc: true },
-        )
-        return new Wallet(this.client, value0, keys)
+        const { address, profile, index = 0, keys } = params
+
+        if (!address && !profile) {
+            throw new GoshError(
+                'Value error',
+                'Address or profile address should be provided',
+            )
+        }
+
+        let _address = address
+        if (!_address) {
+            const { value0 } = await this.runLocal(
+                'getAddrWallet',
+                {
+                    pubaddr: profile,
+                    index,
+                },
+                undefined,
+                { useCachedBoc: true },
+            )
+            _address = value0
+        }
+
+        return new Wallet(this.client, _address!, keys)
     }
 
     async getEventCodeHash(): Promise<string> {
@@ -66,5 +95,12 @@ export class Dao extends BaseContract {
     async getEvent(params: { address: string }): Promise<SmvEvent> {
         const { address } = params
         return new SmvEvent(this.client, address)
+    }
+
+    async createLimitedWallet(profile: string) {
+        await this.run('deployWalletsOutMember', {
+            pubmem: [{ member: profile, count: 0 }],
+            index: 0,
+        })
     }
 }

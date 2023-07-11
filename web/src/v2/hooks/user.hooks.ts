@@ -11,7 +11,7 @@ import { TUserPersist } from '../../types/user.types'
 import { validatePhrase } from '../../validators'
 import { EGoshError, GoshError } from '../../errors'
 import { validateUsername } from '../validators'
-import { systemContract } from '../constants'
+import { getSystemContract } from '../blockchain/helpers'
 import { userPersistAtom as _userPersistAtom, userAtom as _userAtom } from 'react-gosh'
 
 export function useUser() {
@@ -97,7 +97,7 @@ export function useUser() {
         const derived = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
             phrase,
         })
-        await systemContract.createUserProfile(username, `0x${derived.public}`)
+        await getSystemContract().createUserProfile(username, `0x${derived.public}`)
         resetUserPersist()
         setUserPersist((state) => ({ ...state, username, profile: profile.address }))
 

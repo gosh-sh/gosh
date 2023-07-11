@@ -1,24 +1,46 @@
-import { Repository } from '../blockchain/repository'
+import { GoshRepository } from '../blockchain/repository'
 
-export type TRepositoryListItem = {
-    account: Repository | null
+export type TGoshRepositoryListItem = {
+    account: GoshRepository | null
     name: string
     version: string
-    branches: TRepositoryBranch[]
+    branches: TGoshBranch[]
+    description: string
+    head: string
+    isReady: boolean
 }
 
-export type TRepositoryList = {
+export type TGoshRepositoryList = {
     isFetching: boolean
-    items: TRepositoryListItem[]
+    items: TGoshRepositoryListItem[]
     cursor?: string
     hasNext?: boolean
     error?: any
 }
 
-export type TRepositoryBranch = {
+export type TGoshBranch = {
     name: string
     commit: {
         address: string
         version: string
+    }
+}
+
+export type TGoshCommit = {
+    repository: string
+    branch: string
+    name: string
+    parents: string[]
+    content: string
+    initupgrade: boolean
+}
+
+export type TGoshCommitTag = {
+    reponame: string
+    name: string
+    content: string
+    commit: {
+        address: string
+        name: string
     }
 }

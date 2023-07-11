@@ -1,11 +1,26 @@
 import {
     DaoEventVotingForm,
+    DaoEventReviewForm,
     MemberAddEvent,
     MemberDeleteEvent,
     BranchProtectEvent,
     BranchUnprotectEvent,
     PullRequestEvent,
     DaoUpgradeEvent,
+    RepositoryCreateEvent,
+    MultiEvent,
+    MintTokensEvent,
+    AddRegularTokensEvent,
+    AddVotingTokensEvent,
+    CreateDaoTagEvent,
+    DeleteDaoTagEvent,
+    ShowDaoEventProgressEvent,
+    AllowDaoEventDiscussionEvent,
+    AskDaoMembershipEvent,
+    DisableMintTokensEvent,
+    MemberUpdateEvent,
+    CreateTaskEvent,
+    DeleteTaskEvent,
 } from './components'
 import { Tooltip } from 'react-tooltip'
 import { useEffect } from 'react'
@@ -15,14 +30,17 @@ import { getDurationDelta, shortString } from '../../../utils'
 import { Button } from '../../../components/Form'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
-import { DaoEventProgressBar, DaoEventStatusBadge } from '../../../components/DaoEvent'
 import { EDaoEventType } from '../../../types/common.types'
 import Skeleton from '../../../components/Skeleton'
 import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
 import Alert from '../../../components/Alert'
+import { DaoEventProgressBar, DaoEventStatusBadge } from '../../components/DaoEvent'
+import { MemberIcon } from '../../../components/Dao'
+import { useUser } from '../../hooks/user.hooks'
 
 const DaoEventPageInner = (props: { address: string }) => {
     const { address } = props
+    const { user } = useUser()
     const dao = useDao()
     const member = useDaoMember()
     const eventList = useDaoEventList()
@@ -53,8 +71,8 @@ const DaoEventPageInner = (props: { address: string }) => {
 
     return (
         <>
-            <div className="flex items-center border-b border-b-gray-e8eeed pt-2 pb-4">
-                <div className="grow">
+            <div className="flex flex-wrap items-center gap-2 border-b border-b-gray-e8eeed pt-2 pb-4 relative">
+                <div className="basis-full lg:basis-auto grow">
                     <h3 className="text-xl font-medium">{event.label}</h3>
                 </div>
                 <div>
@@ -73,14 +91,16 @@ const DaoEventPageInner = (props: { address: string }) => {
                                 text: event.address,
                             }}
                         />
-                        <Button
-                            variant="custom"
-                            className="text-gray-7c8db5 hover:text-black"
-                            onClick={onItemClose}
-                        >
-                            <FontAwesomeIcon icon={faTimes} size="lg" />
-                        </Button>
                     </div>
+                </div>
+                <div className="absolute lg:relative right-0 top-0">
+                    <Button
+                        variant="custom"
+                        className="text-gray-7c8db5 hover:text-black"
+                        onClick={onItemClose}
+                    >
+                        <FontAwesomeIcon icon={faTimes} size="lg" />
+                    </Button>
                 </div>
             </div>
 
@@ -88,13 +108,23 @@ const DaoEventPageInner = (props: { address: string }) => {
                 <div className="col !basis-full md:!basis-0">
                     <div className="flex flex-col gap-4">
                         <div className="flex items-center gap-6">
-                            <div className="text-xs text-gray-53596d">Status</div>
+                            <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
+                                Status
+                            </div>
                             <DaoEventStatusBadge event={event} />
                         </div>
                         <div className="flex items-center gap-6">
-                            <div className="text-xs text-gray-53596d">End date</div>
+                            <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
+                                End date
+                            </div>
                             <div className="text-sm">
-                                {getDurationDelta(event.time.finish)}
+                                {event.status.completed
+                                    ? new Date(
+                                          event.time.completed || event.time.finish,
+                                      ).toLocaleDateString()
+                                    : event.time.finish > 0
+                                    ? getDurationDelta(event.time.finish)
+                                    : 'Review required'}
                             </div>
                         </div>
                     </div>
@@ -111,6 +141,8 @@ const DaoEventPageInner = (props: { address: string }) => {
 
                     {event.data && (
                         <div className="overflow-clip">
+                            {event.data.comment && <div>{event.data.comment}</div>}
+
                             {event.type === EDaoEventType.DAO_MEMBER_ADD && (
                                 <MemberAddEvent data={event.data} />
                             )}
@@ -129,19 +161,100 @@ const DaoEventPageInner = (props: { address: string }) => {
                             {event.type === EDaoEventType.DAO_UPGRADE && (
                                 <DaoUpgradeEvent data={event.data} />
                             )}
+                            {event.type === EDaoEventType.REPO_CREATE && (
+                                <RepositoryCreateEvent
+                                    data={event.data}
+                                    isCompleted={event.status.completed}
+                                />
+                            )}
+                            {event.type === EDaoEventType.DAO_TOKEN_MINT && (
+                                <MintTokensEvent data={event.data} />
+                            )}
+                            {event.type === EDaoEventType.DAO_TOKEN_REGULAR_ADD && (
+                                <AddRegularTokensEvent data={event.data} />
+                            )}
+                            {event.type === EDaoEventType.DAO_TOKEN_VOTING_ADD && (
+                                <AddVotingTokensEvent data={event.data} />
+                            )}
+                            {event.type === EDaoEventType.DAO_TAG_ADD && (
+                                <CreateDaoTagEvent data={event.data} />
+                            )}
+                            {event.type === EDaoEventType.DAO_TAG_REMOVE && (
+                                <DeleteDaoTagEvent data={event.data} />
+                            )}
+                            {event.type === EDaoEventType.DAO_EVENT_HIDE_PROGRESS && (
+                                <ShowDaoEventProgressEvent data={event.data} />
+                            )}
+                            {event.type === EDaoEventType.DAO_EVENT_ALLOW_DISCUSSION && (
+                                <AllowDaoEventDiscussionEvent data={event.data} />
+                            )}
+                            {event.type ===
+                                EDaoEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE && (
+                                <AskDaoMembershipEvent data={event.data} />
+                            )}
+                            {event.type === EDaoEventType.DAO_TOKEN_MINT_DISABLE && (
+                                <DisableMintTokensEvent data={event.data} />
+                            )}
+                            {event.type === EDaoEventType.DAO_ALLOWANCE_CHANGE && (
+                                <MemberUpdateEvent data={event.data} />
+                            )}
+                            {event.type === EDaoEventType.TASK_CREATE && (
+                                <CreateTaskEvent data={event.data} />
+                            )}
+                            {event.type === EDaoEventType.TASK_DELETE && (
+                                <DeleteTaskEvent data={event.data} />
+                            )}
+                            {event.type === EDaoEventType.MULTI_PROPOSAL && (
+                                <MultiEvent event={event} />
+                            )}
                         </div>
                     )}
                 </div>
 
                 <div className="col !basis-full md:!basis-[18rem] lg:!basis-[20.4375rem] !grow-0">
                     <div className="border border-gray-e6edff rounded-xl p-5">
-                        <DaoEventProgressBar event={event} />
+                        <DaoEventProgressBar
+                            event={event}
+                            isProgressOn={dao.details.isEventProgressOn}
+                        />
                     </div>
 
-                    {!event.status.completed && member.details.isMember && (
+                    {!event.status.completed &&
+                        member.details.isMember &&
+                        !event.reviewers.length && (
+                            <div className="mt-5 border border-gray-e6edff rounded-xl p-5">
+                                <h3 className="mb-4 text-xl font-medium">Your vote</h3>
+                                <DaoEventVotingForm event={event} />
+                            </div>
+                        )}
+
+                    {!!event.reviewers.length && (
                         <div className="mt-5 border border-gray-e6edff rounded-xl p-5">
-                            <h3 className="mb-4 text-xl font-medium">Your vote</h3>
-                            <DaoEventVotingForm event={event} />
+                            <h3 className="mb-4 text-xl font-medium">Event review</h3>
+                            <div className="text-sm">
+                                Review required from:
+                                <ul className="mt-1">
+                                    {event.reviewers.map((item, index) => (
+                                        <li key={index} className="py-1">
+                                            <MemberIcon
+                                                type={item.usertype}
+                                                size="sm"
+                                                fixedWidth
+                                                className="mr-2"
+                                            />
+                                            {item.username}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            {event.reviewers.find(
+                                ({ username }) => username === user.username,
+                            ) && (
+                                <div className="mt-3">
+                                    <DaoEventReviewForm event={event} />
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

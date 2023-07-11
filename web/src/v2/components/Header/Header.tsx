@@ -10,7 +10,6 @@ import { faBlog } from '@fortawesome/free-solid-svg-icons'
 import { appModalStateAtom } from '../../../store/app.state'
 import MDDocumentModal from '../../../components/Modal/MDDocument/MDDocumentModal'
 import { onExternalLinkClick } from '../../../helpers'
-import { useState } from 'react'
 import { useUser } from '../../hooks/user.hooks'
 import { AppConfig } from '../../../appconfig'
 import { ButtonLink } from '../../../components/Form'
@@ -19,7 +18,6 @@ const Header = () => {
     const user = useUser()
     const location = useLocation()
     const setModal = useSetRecoilState(appModalStateAtom)
-    const [alertShow, setAlertShow] = useState<boolean>(true)
 
     return (
         <header>

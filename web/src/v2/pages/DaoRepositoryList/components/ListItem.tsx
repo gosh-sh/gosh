@@ -44,6 +44,8 @@ const ListItem = (props: TRepositoryListItemProps) => {
                 </span>
             </div>
 
+            {item.description && <div className="mt-2 text-xs">{item.description}</div>}
+
             <div className="flex gap-4 mt-3 text-sm text-gray-7c8db5 justify-between">
                 <div className="flex gap-4">
                     <div data-tooltip-id="common-tip" data-tooltip-content="Branches">

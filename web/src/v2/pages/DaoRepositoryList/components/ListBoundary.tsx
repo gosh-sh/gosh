@@ -41,7 +41,11 @@ const ListBoundaryInner = (props: { count: number }) => {
 
             {repositoryList.isEmpty && (
                 <div className="text-sm text-gray-7c8db5 text-center p-4">
-                    There are no repositories
+                    <p>There are no repositories</p>
+                    <p className="text-xs">
+                        If DAO was recently upgraded, check DAO events for transferring
+                        repositories
+                    </p>
                 </div>
             )}
 

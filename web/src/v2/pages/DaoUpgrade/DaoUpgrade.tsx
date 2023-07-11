@@ -1,6 +1,6 @@
 import { Field, Form, Formik } from 'formik'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useDaoUpgrade } from '../../hooks/dao.hooks'
+import { useDao, useUpgradeDao } from '../../hooks/dao.hooks'
 import yup from '../../yup-extended'
 import { FormikSelect, FormikTextarea } from '../../../components/Formik'
 import { Button } from '../../../components/Form'
@@ -14,9 +14,10 @@ type TFormValues = {
 }
 
 const DaoUpgradePage = () => {
-    const { daoName } = useParams()
+    const { daoname } = useParams()
     const navigate = useNavigate()
-    const { versions, upgrade, status } = useDaoUpgrade()
+    const dao = useDao()
+    const { versions, upgrade, status } = useUpgradeDao()
 
     const onDaoUpgrade = async (values: TFormValues) => {
         try {
@@ -24,7 +25,7 @@ const DaoUpgradePage = () => {
                 .filter((i) => !!i)
                 .join('\n')
             await upgrade(values.version, comment)
-            navigate(`/o/${daoName}/events`)
+            navigate(`/o/${daoname}/events`)
         } catch (e: any) {
             console.error(e.message)
         }
@@ -37,6 +38,13 @@ const DaoUpgradePage = () => {
             {!versions?.length && (
                 <Alert variant="warning" className="mb-4">
                     DAO can not be upgraded: there are no versions ahead
+                </Alert>
+            )}
+
+            {!dao.details.isUpgraded && (
+                <Alert variant="danger" className="mb-4">
+                    You should complete current DAO upgrade process to upgrade to another
+                    version
                 </Alert>
             )}
 
@@ -65,7 +73,11 @@ const DaoUpgradePage = () => {
                             <Field
                                 name="version"
                                 component={FormikSelect}
-                                disabled={isSubmitting || !versions?.length}
+                                disabled={
+                                    isSubmitting ||
+                                    !versions?.length ||
+                                    !dao.details.isUpgraded
+                                }
                             >
                                 {versions?.map((version, index) => (
                                     <option
@@ -85,7 +97,11 @@ const DaoUpgradePage = () => {
                             <Field
                                 name="comment"
                                 component={FormikTextarea}
-                                disabled={isSubmitting || !versions?.length}
+                                disabled={
+                                    isSubmitting ||
+                                    !versions?.length ||
+                                    !dao.details.isUpgraded
+                                }
                                 placeholder="Leave comment"
                                 maxRows={8}
                             />
@@ -94,7 +110,11 @@ const DaoUpgradePage = () => {
                         <div className="mt-4">
                             <Button
                                 type="submit"
-                                disabled={isSubmitting || !versions?.length}
+                                disabled={
+                                    isSubmitting ||
+                                    !versions?.length ||
+                                    !dao.details.isUpgraded
+                                }
                                 isLoading={isSubmitting}
                             >
                                 Create proposal for DAO upgrade

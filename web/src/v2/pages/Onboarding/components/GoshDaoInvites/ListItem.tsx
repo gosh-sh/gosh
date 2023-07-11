@@ -23,7 +23,7 @@ const DaoInviteListItem = (props: TOrganizationListItemProps) => {
                 <div className="grow pl-4 overflow-hidden">
                     <div className="relative mb-1">
                         <div className="text-xl font-medium leading-tight whitespace-nowrap text-ellipsis overflow-hidden max-w-[80%]">
-                            {item.daoName}
+                            {item.daoname}
                         </div>
                     </div>
                     <div className="flex items-center justify-end gap-4 mt-3">

@@ -1,6 +1,6 @@
 import { EGoshError } from '../errors'
 import { TValidationResult } from '../types/validator.types'
-import { systemContract } from './constants'
+import { getSystemContract } from './blockchain/helpers'
 
 export const validateUsername = (name: string): TValidationResult => {
     const field = 'Username'
@@ -116,7 +116,7 @@ export const validateOnboardingDao = async (name: string): Promise<TValidationRe
         return validated
     }
 
-    const dao = await systemContract.getDao({ name })
+    const dao = await getSystemContract().getDao({ name })
     if (await dao.isDeployed()) {
         return { valid: false, reason: EGoshError.DAO_EXISTS }
     }
@@ -133,7 +133,7 @@ export const validateOnboardingRepo = async (
         return validated
     }
 
-    const repo = await systemContract.getRepository({
+    const repo = await getSystemContract().getRepository({
         path: `${dao}/${name}`,
     })
     if (await repo.isDeployed()) {

@@ -1,100 +1,148 @@
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { daoRepositoryListAtom } from '../store/repository.state'
 import { daoDetailsAtom, daoMemberAtom } from '../store/dao.state'
-import { TRepositoryListItem } from '../types/repository.types'
+import { TGoshRepositoryListItem } from '../types/repository.types'
 import { getPaginatedAccounts } from '../../blockchain/utils'
-import { systemContract } from '../constants'
+import { getSystemContract } from '../blockchain/helpers'
 import { validateRepoName } from '../validators'
 import { EGoshError, GoshError } from '../../errors'
 import { executeByChunk, whileFinite } from '../../utils'
 import { MAX_PARALLEL_READ } from '../../constants'
 import _ from 'lodash'
-import { useCallback, useEffect } from 'react'
-import { Repository } from '../blockchain/repository'
+import { useCallback, useEffect, useState } from 'react'
+import { GoshRepository } from '../blockchain/repository'
+import { TToastStatus } from '../../types/common.types'
+import { useDaoHelpers } from './dao.hooks'
 
-export function useRepositoryCreate() {
+export function useCreateRepository() {
     const { details: dao } = useRecoilValue(daoDetailsAtom)
     const { details: member } = useRecoilValue(daoMemberAtom)
     const setRepositories = useSetRecoilState(daoRepositoryListAtom)
+    const { beforeCreateEvent } = useDaoHelpers()
+    const [status, setStatus] = useState<TToastStatus>()
 
-    const create = async (name: string) => {
-        name = name.toLowerCase()
-        const { valid, reason } = validateRepoName(name)
-        if (!valid) {
-            throw new GoshError(EGoshError.REPO_NAME_INVALID, reason)
-        }
-        if (!dao.name) {
-            throw new GoshError('Value error', 'DAO name undefined')
-        }
-        if (!member.isMember) {
-            throw new GoshError('Access error', 'Not a DAO member')
-        }
-        if (!member.isReady || !member.wallet) {
-            throw new GoshError('Access error', 'Wallet is missing or is not activated')
-        }
+    const create = useCallback(
+        async (name: string, description?: string) => {
+            try {
+                setStatus({ type: 'pending', data: 'Creating repository' })
 
-        // Check if repository is already deployed
-        const repo = await systemContract.getRepository({ path: `${dao.name}/${name}` })
-        const account = repo as Repository
-        if (await account.isDeployed()) {
-            throw new GoshError('Value error', 'Repository already exists')
-        }
+                name = name.toLowerCase()
+                const { valid, reason } = validateRepoName(name)
+                if (!valid) {
+                    throw new GoshError(EGoshError.REPO_NAME_INVALID, reason)
+                }
+                if (!dao.name) {
+                    throw new GoshError('Value error', 'DAO name undefined')
+                }
+                if (!member.isMember) {
+                    throw new GoshError('Access error', 'Not a DAO member')
+                }
+                if (!member.isReady || !member.wallet) {
+                    throw new GoshError(
+                        'Access error',
+                        'Wallet is missing or is not activated',
+                    )
+                }
 
-        // Deploy repository
-        await member.wallet.createRepository({ name })
-        const wait = await whileFinite(async () => await account.isDeployed())
-        if (!wait) {
-            throw new GoshError('Timeout error', 'Create repository timeout reached')
-        }
+                // Check if repository is already deployed
+                const repo = await getSystemContract().getRepository({
+                    path: `${dao.name}/${name}`,
+                })
+                const account = repo as GoshRepository
+                if (await account.isDeployed()) {
+                    throw new GoshError('Value error', 'Repository already exists')
+                }
 
-        // Update state
-        const item = {
-            account,
-            name,
-            version: await account.getVersion(),
-            branches: await account.getBranches(),
-        }
-        setRepositories((state) => ({
-            ...state,
-            items: [item, ...state.items],
-        }))
+                // Prepare balance for create event (if not alone)
+                const alone = dao.members?.length === 1
+                if (!alone) {
+                    await beforeCreateEvent(20, { onPendingCallback: setStatus })
+                }
 
-        return repo
-    }
+                // Deploy repository
+                setStatus({ type: 'pending', data: 'Create repository' })
+                await member.wallet.createRepository({
+                    name,
+                    description,
+                    comment: `Create repository ${name}`,
+                    alone,
+                })
 
-    return {
-        create,
-    }
+                // If alone, wait for repository to be deployed and
+                // update state
+                if (alone) {
+                    const wait = await whileFinite(async () => await account.isDeployed())
+                    if (!wait) {
+                        throw new GoshError(
+                            'Timeout error',
+                            'Create repository timeout reached',
+                        )
+                    }
+
+                    const version = await account.getVersion()
+                    const details = await account.getDetails()
+                    setRepositories((state) => ({
+                        ...state,
+                        items: [{ account, version, ...details }, ...state.items],
+                    }))
+                    setStatus({
+                        type: 'success',
+                        data: {
+                            title: 'Create repository',
+                            content: 'Repository created',
+                        },
+                    })
+                } else {
+                    setStatus({
+                        type: 'success',
+                        data: {
+                            title: 'Create repository',
+                            content: 'Create repository event created',
+                        },
+                    })
+                }
+
+                return { repository: account, isEvent: !alone }
+            } catch (e: any) {
+                setStatus({ type: 'error', data: e })
+                throw e
+            }
+        },
+        [dao.name, dao.members?.length, member.isMember, member.isReady],
+    )
+
+    return { create, status }
 }
 
-export function useDaoRepositoryList(params: { count: number }) {
-    const { count } = params
+export function useDaoRepositoryList(params: { count?: number } = {}) {
+    const { count = 5 } = params
     const { details: dao } = useRecoilValue(daoDetailsAtom)
     const [data, setData] = useRecoilState(daoRepositoryListAtom)
 
     const getBlockchainItems = async (params: {
-        daoAddress: string
+        daoaddr: string
         limit: number
         cursor?: string
     }) => {
-        const { daoAddress, limit, cursor } = params
-        const codeHash = await systemContract.getRepositoryCodeHash(daoAddress)
+        const { daoaddr, limit, cursor } = params
+        const systemContract = getSystemContract()
+        const codeHash = await systemContract.getRepositoryCodeHash(daoaddr)
         const { results, lastId, completed } = await getPaginatedAccounts({
             filters: [`code_hash: {eq:"${codeHash}"}`],
             limit,
             lastId: cursor,
         })
-        const items = await executeByChunk<{ id: string }, TRepositoryListItem>(
+        const items = await executeByChunk<{ id: string }, TGoshRepositoryListItem>(
             results,
             MAX_PARALLEL_READ,
             async ({ id }) => {
                 const repo = await systemContract.getRepository({ address: id })
-                const account = repo as Repository
+                const account = repo as GoshRepository
+                const details = await account.getDetails()
                 return {
                     account,
-                    name: await account.getName(),
                     version: await account.getVersion(),
-                    branches: await account.getBranches(),
+                    ...details,
                 }
             },
         )
@@ -109,8 +157,8 @@ export function useDaoRepositoryList(params: { count: number }) {
 
             setData((state) => ({ ...state, isFetching: true }))
             const blockchain = await getBlockchainItems({
-                daoAddress: dao.address,
-                limit: Math.max(data.items.length, count),
+                daoaddr: dao.address,
+                limit: count,
             })
             setData((state) => {
                 const different = _.differenceWith(
@@ -142,13 +190,13 @@ export function useDaoRepositoryList(params: { count: number }) {
         } finally {
             setData((state) => ({ ...state, isFetching: false }))
         }
-    }, [dao.address])
+    }, [dao.address, count])
 
     const getNext = useCallback(async () => {
         try {
             setData((state) => ({ ...state, isFetching: true }))
             const blockchain = await getBlockchainItems({
-                daoAddress: dao.address!,
+                daoaddr: dao.address!,
                 limit: count,
                 cursor: data.cursor,
             })

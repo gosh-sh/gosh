@@ -1,19 +1,32 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useDao, useDaoUpgrade } from '../../hooks/dao.hooks'
+import { useDao, useUpgradeDao } from '../../hooks/dao.hooks'
 import Alert from '../../../components/Alert'
 import { AnimatePresence, motion } from 'framer-motion'
 import classNames from 'classnames'
+import { Button } from '../../../components/Form'
+import { useSetRecoilState } from 'recoil'
+import { appModalStateAtom } from '../../../store/app.state'
+import { DaoUpgradeCompleteModal } from '../Modal'
 
 type TDaoNotificationProps = React.HTMLAttributes<HTMLDivElement>
 
 const DaoUpgradeNotification = (props: TDaoNotificationProps) => {
     const { className } = props
+    const setModal = useSetRecoilState(appModalStateAtom)
     const dao = useDao()
-    const { alert } = useDaoUpgrade()
+    const { alert } = useUpgradeDao()
     const [show, setShow] = useState<boolean>(true)
 
     const onDismiss = () => setShow(false)
+
+    const onCompleteUpgrade = () => {
+        setModal({
+            static: true,
+            isOpen: true,
+            element: <DaoUpgradeCompleteModal />,
+        })
+    }
 
     useEffect(() => {
         if (alert) {
@@ -67,6 +80,23 @@ const DaoUpgradeNotification = (props: TDaoNotificationProps) => {
                                 Reload
                             </button>{' '}
                             page to go to the latest version
+                        </Alert>
+                    )}
+
+                    {alert === 'isUpgradeUncompleted' && (
+                        <Alert variant="danger">
+                            <h1 className="font-medium">DAO has been upgraded</h1>
+                            <div>
+                                Upgrade process must be completed to continue using DAO
+                                <Button
+                                    size="sm"
+                                    variant="outline-danger"
+                                    className="block mt-2"
+                                    onClick={onCompleteUpgrade}
+                                >
+                                    Complete upgrade
+                                </Button>
+                            </div>
                         </Alert>
                     )}
                 </motion.div>

@@ -1,24 +1,56 @@
 import { useState } from 'react'
-import { ErrorMessage, FieldArray, FieldArrayRenderProps, Form, Formik } from 'formik'
+import {
+    ErrorMessage,
+    Field,
+    FieldArray,
+    FieldArrayRenderProps,
+    Form,
+    Formik,
+} from 'formik'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '../../../../../components/Form'
-import { Select2ClassNames } from '../../../../../helpers'
-import { ToastStatus } from '../../../../../components/Toast'
-import AsyncSelect from 'react-select/async'
+import {
+    Select2ClassNames,
+    ToastOptionsShortcuts,
+    getUsernameByEmail,
+} from '../../../../../helpers'
+import { ToastError, ToastStatus } from '../../../../../components/Toast'
+import AsyncCreatableSelect from 'react-select/async-creatable'
 import yup from '../../../../yup-extended'
 import successImage from '../../../../../assets/images/success.png'
 import { AppConfig } from '../../../../../appconfig'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useDaoCreateMemeber } from '../../../../hooks/dao.hooks'
+import { useDao, useCreateDaoMemeber } from '../../../../hooks/dao.hooks'
+import { BaseField, FormikInput, FormikTextarea } from '../../../../../components/Formik'
+import { validateEmail } from '../../../../../validators'
+import classNames from 'classnames'
+import { toast } from 'react-toastify'
+import copyClipboard from 'copy-to-clipboard'
+import Alert from '../../../../../components/Alert/Alert'
+import { MemberIcon } from '../../../../../components/Dao'
 
 const getUsernameOptions = async (input: string) => {
+    if (input.indexOf('@') >= 0) {
+        const username = await getUsernameByEmail(input)
+        if (username) {
+            return username.map((item) => ({
+                label: item,
+                value: { name: item, type: 'user' },
+            }))
+        }
+        return []
+    }
+
     const options: any[] = []
     const profileQuery = await AppConfig.goshroot.getUserProfile({
         username: input.toLowerCase(),
     })
     if (await profileQuery.isDeployed()) {
-        options.push({ label: input.toLowerCase(), value: input.toLowerCase() })
+        options.push({
+            label: input.toLowerCase(),
+            value: { name: input.toLowerCase(), type: 'user' },
+        })
     }
 
     return options
@@ -27,83 +59,168 @@ const getUsernameOptions = async (input: string) => {
 const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
     const { form, remove, push } = props as FieldArrayRenderProps
     const values = form.values as TFormValues
+    const dao = useDao()
 
     return (
-        <AnimatePresence>
-            {values.members.map((value, index) => (
-                <motion.div
-                    key={value._id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.8 }}
-                    exit={{ opacity: 0, transition: { duration: 0.4 } }}
-                >
-                    <div className="py-2">
-                        <AsyncSelect
-                            classNames={Select2ClassNames}
-                            isClearable
-                            placeholder="Input username"
-                            cacheOptions={false}
-                            defaultOptions={false}
-                            loadOptions={getUsernameOptions}
-                            onChange={(option) => {
-                                const _value = option ? option.value : ''
-                                form.setFieldValue(
-                                    `members.${index}`,
-                                    { _id: value._id, username: _value },
-                                    true,
-                                )
-                            }}
-                            isDisabled={form.isSubmitting}
-                        />
-                        <ErrorMessage
-                            className="text-xs text-red-ff3b30 mt-1"
-                            component="div"
-                            name={`members.${index}.username`}
-                        />
+        <>
+            <div className="divide-y divide-gray-e6edff">
+                <AnimatePresence>
+                    {values.members.map((value, index) => (
+                        <motion.div
+                            key={value._id}
+                            className={classNames(index === 0 ? 'pb-6' : 'py-6')}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.8 }}
+                            exit={{ opacity: 0, transition: { duration: 0.4 } }}
+                        >
+                            <div className="text-right">
+                                <Button
+                                    type="button"
+                                    variant="custom"
+                                    className="!p-0 py-1 text-xs text-gray-7c8db5"
+                                    disabled={form.isSubmitting}
+                                    onClick={() => remove(index)}
+                                >
+                                    <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                                    Remove
+                                </Button>
+                            </div>
 
-                        <div className="text-right mt-2">
-                            <Button
-                                type="button"
-                                variant="custom"
-                                className="!p-0 py-1 text-sm text-gray-7c8db5"
-                                disabled={form.isSubmitting}
-                                onClick={() => remove(index)}
-                            >
-                                <FontAwesomeIcon
-                                    icon={faTimes}
-                                    size="lg"
-                                    className="mr-2"
+                            <div className="mt-2">
+                                <Field
+                                    name={`members.${index}.username`}
+                                    component={BaseField}
+                                >
+                                    <AsyncCreatableSelect
+                                        classNames={Select2ClassNames}
+                                        isClearable={true}
+                                        placeholder="Input username or email"
+                                        cacheOptions={false}
+                                        defaultOptions={false}
+                                        loadOptions={getUsernameOptions}
+                                        formatOptionLabel={(data) => {
+                                            return (
+                                                <div>
+                                                    <MemberIcon
+                                                        type={data.value.type}
+                                                        size="sm"
+                                                        className="mr-2"
+                                                    />
+                                                    {data.label}
+                                                </div>
+                                            )
+                                        }}
+                                        formatCreateLabel={(input) => {
+                                            return `Send invitation to ${input}`
+                                        }}
+                                        isValidNewOption={(input) => {
+                                            return !!input && validateEmail(input)
+                                        }}
+                                        getNewOptionData={(input, label) => {
+                                            return {
+                                                label,
+                                                value: {
+                                                    name: input,
+                                                    type: 'email',
+                                                },
+                                            }
+                                        }}
+                                        onChange={(value) => {
+                                            form.setFieldValue(
+                                                `members.${index}.username`,
+                                                value ? value.value.name : '',
+                                                true,
+                                            )
+                                            form.setFieldValue(
+                                                `members.${index}.type`,
+                                                value ? value.value.type : '',
+                                                true,
+                                            )
+                                        }}
+                                        isDisabled={form.isSubmitting}
+                                    />
+                                </Field>
+                                <ErrorMessage
+                                    className="text-xs text-red-ff3b30 mt-0.5"
+                                    component="div"
+                                    name={`members.${index}.username`}
                                 />
-                                Remove
-                            </Button>
-                        </div>
-                    </div>
-                </motion.div>
-            ))}
+                            </div>
+
+                            <div className="mt-3">
+                                <Field
+                                    name={`members.${index}.allowance`}
+                                    component={FormikInput}
+                                    placeholder="Karma"
+                                    autoComplete="off"
+                                    help={`DAO reserve ${dao.details.supply?.reserve.toLocaleString()}`}
+                                    disabled={form.isSubmitting}
+                                />
+                                <ErrorMessage
+                                    className="text-xs text-red-ff3b30 mt-1"
+                                    component="div"
+                                    name={`members.${index}.allowance`}
+                                />
+                            </div>
+
+                            <div className="mt-3">
+                                <Field
+                                    name={`members.${index}.comment`}
+                                    component={FormikTextarea}
+                                    placeholder="Comment your decision"
+                                    autoComplete="off"
+                                    maxRows={3}
+                                    disabled={form.isSubmitting}
+                                />
+                                <ErrorMessage
+                                    className="text-xs text-red-ff3b30 mt-1"
+                                    component="div"
+                                    name={`members.${index}.comment`}
+                                />
+                            </div>
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
+            </div>
 
             <div className="text-gray-7c8db5">
                 {values.members.length < 10 && (
                     <button
                         type="button"
                         disabled={form.isSubmitting}
-                        onClick={() => push({ _id: `${Math.random()}`, username: '' })}
+                        onClick={() =>
+                            push({
+                                _id: `${Math.random()}`,
+                                username: '',
+                                type: 'user',
+                                allowance: '',
+                                comment: '',
+                            })
+                        }
                     >
                         <FontAwesomeIcon icon={faPlus} className="mr-2" />
                         Add member
                     </button>
                 )}
             </div>
-        </AnimatePresence>
+        </>
     )
 }
 
 type TFormValues = {
-    members: { _id: string; username: string }[]
+    members: {
+        _id: string
+        username: string
+        type: 'user' | 'email'
+        allowance: string
+        comment: string
+    }[]
 }
 
 const MemberAddForm = () => {
-    const { status, createMember } = useDaoCreateMemeber()
+    const dao = useDao()
+    const { status, createMember, createInvitation } = useCreateDaoMemeber()
     const [transition, setTransition] = useState<{ form: boolean; success: boolean }>({
         form: true,
         success: false,
@@ -112,16 +229,36 @@ const MemberAddForm = () => {
     const onCreateMember = async (values: TFormValues) => {
         try {
             const { members } = values
-            await createMember(members.map(({ username }) => username))
+            const args = members.map((item) => ({
+                user: { name: item.username, type: item.type },
+                allowance: parseInt(item.allowance),
+                comment: item.comment,
+            }))
+            await createMember(args)
             setTransition({ form: false, success: true })
         } catch (e: any) {
             console.error(e.message)
         }
     }
 
+    const onCreateInvitationLink = async () => {
+        try {
+            const token = await createInvitation()
+            const copyResult = copyClipboard(
+                `${window.location.origin}/o/${dao.details.name}/onboarding?token=${token}`,
+                { format: 'text/plain' },
+            )
+            if (copyResult) {
+                toast.success('Copied', ToastOptionsShortcuts.CopyMessage)
+            }
+        } catch (e: any) {
+            console.error(e.message)
+            toast.error(<ToastError error={e} />)
+        }
+    }
+
     return (
         <>
-            <ToastStatus status={status} />
             <AnimatePresence mode="wait" initial={false}>
                 {transition.form && (
                     <motion.div
@@ -140,8 +277,15 @@ const MemberAddForm = () => {
                                     .array()
                                     .of(
                                         yup.object({
-                                            _id: yup.string().required(),
                                             username: yup
+                                                .string()
+                                                .required('Field is required'),
+                                            allowance: yup
+                                                .number()
+                                                .integer()
+                                                .positive()
+                                                .required('Field is required'),
+                                            comment: yup
                                                 .string()
                                                 .required('Field is required'),
                                         }),
@@ -171,6 +315,42 @@ const MemberAddForm = () => {
                                 </Form>
                             )}
                         </Formik>
+
+                        <hr className="mt-10 mb-6 bg-gray-e6edff" />
+
+                        <div>
+                            <div className="mb-2 text-sm text-gray-7c8db5">
+                                Or send one-time invitation link to single user
+                            </div>
+                            <Formik onSubmit={onCreateInvitationLink} initialValues={{}}>
+                                {({ isSubmitting }) => (
+                                    <Form>
+                                        <Button
+                                            type="submit"
+                                            className="w-full"
+                                            isLoading={isSubmitting}
+                                            disabled={
+                                                isSubmitting ||
+                                                !dao.details.isAskMembershipOn
+                                            }
+                                        >
+                                            Get one-time invitation link
+                                        </Button>
+
+                                        {!dao.details.isAskMembershipOn && (
+                                            <Alert
+                                                variant="warning"
+                                                className="mt-2 text-xs"
+                                            >
+                                                Enable "Allow external users to request
+                                                DAO membership" option in DAO settings to
+                                                enable invites by email/link
+                                            </Alert>
+                                        )}
+                                    </Form>
+                                )}
+                            </Formik>
+                        </div>
                     </motion.div>
                 )}
 
@@ -199,15 +379,22 @@ const MemberAddForm = () => {
                                 <h3 className="text-xl font-medium text-center mb-4">
                                     Success
                                 </h3>
+                                <p className="text-gray-7c8db5 text-sm mb-3">
+                                    Users invited by email will receive invitation email
+                                    message
+                                </p>
+
                                 <p className="text-gray-7c8db5 text-sm">
-                                    Users invited by GOSH username are added to proposal
-                                    and waiting for voting
+                                    Users invited by GOSH username are added to event and
+                                    waiting for voting
                                 </p>
                             </div>
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <ToastStatus status={status} />
         </>
     )
 }

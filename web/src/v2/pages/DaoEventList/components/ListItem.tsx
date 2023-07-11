@@ -1,14 +1,14 @@
 import Skeleton from '../../../../components/Skeleton'
 import classNames from 'classnames'
 import { TDaoEventDetails } from '../../../types/dao.types'
-import { DaoEventStatusBadge } from '../../../../components/DaoEvent'
 import { getDurationDelta } from '../../../../utils'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCircle, faCircleCheck } from '@fortawesome/free-regular-svg-icons'
 import { useDao, useDaoEvent, useDaoEventList } from '../../../hooks/dao.hooks'
+import { DaoEventStatusBadge } from '../../../components/DaoEvent'
 
 const basis = {
-    contaner: 'flex-wrap justify-between lg:flex-nowrap',
+    contaner: 'flex-wrap lg:flex-nowrap',
     name: 'basis-full lg:basis-4/12 xl:basis-6/12 grow-0',
     status: 'basis-0 grow lg:basis-2/12 lg:grow-0',
     value: 'basis-0 grow lg:basis-2/12 lg:grow-0',
@@ -78,16 +78,32 @@ const ListItem = (props: TListItemProps) => {
             )}
             onClick={onItemClick}
         >
-            <div className={classNames(basis.name, 'text-sm truncate')}>
-                <FontAwesomeIcon
-                    icon={event.votes.yours > 0 ? faCircleCheck : faCircle}
-                    className={classNames(
-                        'mr-2',
-                        event.votes.yours > 0 ? 'text-green-34c759' : 'text-gray-e6edff',
-                    )}
-                    size="lg"
-                />
-                {event.label}
+            <div
+                className={classNames(
+                    basis.name,
+                    'text-sm flex flex-nowrap items-center gap-x-2 overflow-hidden',
+                )}
+            >
+                <div>
+                    <FontAwesomeIcon
+                        icon={event.votes.yours > 0 ? faCircleCheck : faCircle}
+                        className={classNames(
+                            'mr-2',
+                            event.votes.yours > 0
+                                ? 'text-green-34c759'
+                                : 'text-gray-e6edff',
+                        )}
+                        size="lg"
+                    />
+                </div>
+                <div className="truncate">
+                    <div className="truncate text-ellipsis">
+                        {event.data?.comment || event.label}
+                    </div>
+                    <div className="inline-block text-[0.65rem] leading-4 bg-gray-d6e4ee whitespace-nowrap rounded-md px-2">
+                        {event.label}
+                    </div>
+                </div>
             </div>
             <div className={classNames(basis.status, 'flex items-center')}>
                 <DaoEventStatusBadge event={event} />

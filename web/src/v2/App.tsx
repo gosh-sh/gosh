@@ -21,6 +21,10 @@ import DaoEventListPage from './pages/DaoEventList'
 import Containers from '../docker-extension/pages/Containers'
 import DaoSettingsLayout from './pages/DaoSettingsLayout'
 import DaoUpgradePage from './pages/DaoUpgrade'
+import DaoSetupPage from './pages/DaoSetup/DaoSetup'
+import OnboardingDaoPage from './pages/OnboardingDao'
+import DaoTaskListPage from './pages/DaoTaskList'
+import TaskCreatePage from './pages/TaskCreate'
 
 // TODO: Update after full refactor
 import RepoLayout from '../pages/RepoLayout'
@@ -58,20 +62,27 @@ const App = () => {
                             <Route path="orgs" element={<UserDaoListPage />} />
                             <Route path="settings" element={<SettingsPage />} />
                         </Route>
-                        <Route path="/o/:daoName" element={<DaoLayout />}>
+                        <Route path="/o/:daoname" element={<DaoLayout />}>
                             <Route index element={<DaoPage />} />
+                            <Route path="onboarding" element={<OnboardingDaoPage />} />
                             <Route path="repos" element={<DaoRepositoryListPage />} />
                             <Route
                                 path="events/:address?"
                                 element={<DaoEventListPage />}
                             />
                             <Route path="members" element={<DaoMemberListPage />} />
+                            <Route path="tasks">
+                                <Route index element={<DaoTaskListPage />} />
+                                <Route path="create" element={<TaskCreatePage />} />
+                                <Route path=":address" element={<DaoTaskListPage />} />
+                            </Route>
                             <Route path="settings" element={<DaoSettingsLayout />}>
                                 <Route
                                     index
-                                    element={<Navigate to="upgrade" replace={true} />}
+                                    element={<Navigate to="setup" replace={true} />}
                                 />
                                 <Route path="upgrade" element={<DaoUpgradePage />} />
+                                <Route path="setup" element={<DaoSetupPage />} />
                             </Route>
                         </Route>
                         <Route path="/o/:daoName/r/:repoName" element={<RepoLayout />}>

@@ -2,13 +2,26 @@ import { Link } from 'react-router-dom'
 import classNames from 'classnames'
 import { getIdenticonAvatar } from '../../../helpers'
 import { useDao, useDaoMember } from '../../hooks/dao.hooks'
+import { Button } from '../../../components/Form'
+import { useSetRecoilState } from 'recoil'
+import { appModalStateAtom } from '../../../store/app.state'
+import { RequestDaoMembershipModal } from '../Modal'
 
 type TDaoMembersProps = React.HTMLAttributes<HTMLDivElement>
 
 const DaoMembers = (props: TDaoMembersProps) => {
     const { className } = props
+    const setModal = useSetRecoilState(appModalStateAtom)
     const dao = useDao()
     const member = useDaoMember()
+
+    const onRequestDaoMembership = () => {
+        setModal({
+            static: false,
+            isOpen: true,
+            element: <RequestDaoMembershipModal />,
+        })
+    }
 
     return (
         <div
@@ -47,6 +60,40 @@ const DaoMembers = (props: TDaoMembersProps) => {
                     </div>
                 )}
             </div>
+
+            {member.details.profile && !member.details.isMember && (
+                <>
+                    <hr className="my-5 bg-gray-e6edff" />
+                    {!dao.details.isAskMembershipOn ? (
+                        <div>
+                            <h3 className="mb-4 text-xl font-medium">
+                                This is a private organization
+                            </h3>
+                            <div className="text-gray-7c8db5">
+                                Please contact one of the DAO members to ask to invite you
+                            </div>
+                        </div>
+                    ) : (
+                        <div>
+                            <h3 className="mb-4 text-xl font-medium">
+                                You are not a member
+                            </h3>
+                            <div>
+                                <Button
+                                    className={classNames(
+                                        'w-full !border-gray-e6edff bg-gray-fafafd',
+                                        'hover:!border-gray-53596d',
+                                    )}
+                                    variant="outline-secondary"
+                                    onClick={onRequestDaoMembership}
+                                >
+                                    Request membership
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </>
+            )}
         </div>
     )
 }

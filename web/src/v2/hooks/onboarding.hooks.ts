@@ -110,7 +110,7 @@ export function useOnboardingData(oauth?: TOAuthSession) {
                 if (found) {
                     return found
                 }
-                return { id: item.id, daoName: item.dao_name, accepted: null }
+                return { id: item.id, daoname: item.dao_name, accepted: null }
             }),
             isFetching: false,
         }))
@@ -194,7 +194,7 @@ export function useOnboardingRepositories(organization: TOnboardingOrganization)
               )
 
         const items = data.map((item: any) => ({
-            daoName: organization.name,
+            daoname: organization.name,
             id: item.id,
             name: item.name,
             description: item.description,
@@ -340,11 +340,11 @@ export function useOnboardingSignup(oauth: TOAuthSession) {
             const goshAddress = Object.values(AppConfig.versions).reverse()[0]
             const goshProtocol = `gosh://${goshAddress}`
             for (const item of repositories) {
-                const { daoName, name } = item
+                const { daoname, name } = item
                 await createDbGithubRecord({
                     user_id: dbUser.id,
-                    github_url: `/${daoName}/${name}`,
-                    gosh_url: `${goshProtocol}/${daoName.toLowerCase()}/${name.toLowerCase()}`,
+                    github_url: `/${daoname}/${name}`,
+                    gosh_url: `${goshProtocol}/${daoname.toLowerCase()}/${name.toLowerCase()}`,
                 })
             }
 
@@ -368,15 +368,15 @@ export function useOnboardingSignup(oauth: TOAuthSession) {
             // Validate onboarding data
             const validationResult = await Promise.all(
                 repositories.map(async (item) => {
-                    const daoName = item.daoName.toLowerCase()
-                    const repoName = item.name.toLowerCase()
+                    const daoname = item.daoname.toLowerCase()
+                    const reponame = item.name.toLowerCase()
 
-                    const daoValidation = await validateOnboardingDao(daoName)
+                    const daoValidation = await validateOnboardingDao(daoname)
                     if (!daoValidation.valid) {
                         return false
                     }
 
-                    const repoValidation = await validateOnboardingRepo(daoName, repoName)
+                    const repoValidation = await validateOnboardingRepo(daoname, reponame)
                     if (!repoValidation.valid) {
                         return false
                     }

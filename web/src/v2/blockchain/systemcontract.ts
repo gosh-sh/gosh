@@ -3,10 +3,16 @@ import { BaseContract } from '../../blockchain/contract'
 import GoshABI from './abi/systemcontract.abi.json'
 import { GoshError } from '../../errors'
 import { Dao } from './dao'
-import { Repository } from './repository'
+import { GoshRepository } from './repository'
 import { AppConfig } from '../../appconfig'
 import { VersionController } from '../../blockchain/versioncontroller'
-import { whileFinite } from '../../utils'
+import { executeByChunk, whileFinite } from '../../utils'
+import { GoshTag } from './goshtag'
+import { Task } from './task'
+import { contextVersion } from '../constants'
+import { getAllAccounts } from '../../blockchain/utils'
+import { MAX_PARALLEL_READ } from '../../constants'
+import { GoshCommitTag } from './committag'
 
 export class SystemContract extends BaseContract {
     versionController: VersionController
@@ -14,6 +20,11 @@ export class SystemContract extends BaseContract {
     constructor(client: TonClient, address: string) {
         super(client, GoshABI, address)
         this.versionController = AppConfig.goshroot
+    }
+
+    async getGoshTag(params: { address: string }) {
+        const { address } = params
+        return new GoshTag(this.client, address)
     }
 
     async getDao(params: { name?: string; address?: string }) {
@@ -36,7 +47,7 @@ export class SystemContract extends BaseContract {
     async getRepository(options: { path?: string; address?: string }) {
         const { path, address } = options
         if (address) {
-            return new Repository(this.client, address)
+            return new GoshRepository(this.client, address)
         }
 
         if (!path) {
@@ -49,20 +60,57 @@ export class SystemContract extends BaseContract {
             undefined,
             { useCachedBoc: true },
         )
-        return new Repository(this.client, value0)
+        return new GoshRepository(this.client, value0)
     }
 
-    async getRepositoryCodeHash(daoAddress: string): Promise<string> {
+    async getRepositoryCodeHash(daoaddr: string): Promise<string> {
         const { value0 } = await this.runLocal(
             'getRepoDaoCode',
-            {
-                dao: daoAddress,
-            },
+            { dao: daoaddr },
             undefined,
             { useCachedBoc: true },
         )
         const { hash } = await this.client.boc.get_boc_hash({ boc: value0 })
         return hash
+    }
+
+    async getDaoTaskTagCodeHash(daoaddr: string, tag: string): Promise<string> {
+        const { value0 } = await this.runLocal(
+            'getTaskTagDaoCode',
+            { dao: daoaddr, tag },
+            undefined,
+            { useCachedBoc: true },
+        )
+        const { hash } = await this.client.boc.get_boc_hash({ boc: value0 })
+        return hash
+    }
+
+    async getTask(options: {
+        address?: string
+        daoname?: string
+        reponame?: string
+        taskname?: string
+    }) {
+        const { daoname, reponame, taskname, address } = options
+
+        let _address = address
+        if (!_address) {
+            if (!daoname || !reponame || !taskname) {
+                throw new GoshError(
+                    'Value error',
+                    'DAO / repository / task name is undefined',
+                )
+            }
+
+            const { value0 } = await this.runLocal('getTaskAddr', {
+                dao: daoname,
+                repoName: reponame,
+                nametask: taskname,
+            })
+            _address = value0
+        }
+
+        return new Task(this.client, _address!)
     }
 
     async createUserProfile(username: string, pubkey: string) {

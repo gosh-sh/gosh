@@ -7,6 +7,9 @@ import {
     TDaoMember,
     TDaoMemberList,
     TUserDaoList,
+    TDaoInviteList,
+    TDaoTaskList,
+    TTaskDetails,
 } from '../types/dao.types'
 
 export const userDaoListAtom = atom<TUserDaoList>({
@@ -21,6 +24,7 @@ export const daoDetailsAtom = atom<TDaoDetails>({
     key: `DaoDetailsAtom_${contextVersion}`,
     default: {
         isFetching: false,
+        isFetchingData: false,
         details: {},
     },
     dangerouslyAllowMutability: true,
@@ -36,6 +40,7 @@ export const daoMemberAtom = atom<TDaoMember>({
             balance: null,
             isFetched: false,
             isMember: false,
+            isLimited: false,
             isReady: false,
         },
     },
@@ -87,6 +92,34 @@ export const daoEventSelector = selectorFamily<TDaoEventDetails | undefined, str
         (address) =>
         ({ get }) => {
             const list = get(daoEventListAtom)
+            return list.items.find((item) => item.address === address)
+        },
+    dangerouslyAllowMutability: true,
+})
+
+export const daoInviteListAtom = atom<TDaoInviteList>({
+    key: `DaoInviteListAtom${contextVersion}`,
+    default: {
+        isFetching: false,
+        items: [],
+    },
+})
+
+export const daoTaskListAtom = atom<TDaoTaskList>({
+    key: `DaoTaskListAtom_${contextVersion}`,
+    default: {
+        isFetching: false,
+        items: [],
+    },
+    dangerouslyAllowMutability: true,
+})
+
+export const daoTaskSelector = selectorFamily<TTaskDetails | undefined, string>({
+    key: `DaoTaskSelector_${contextVersion}`,
+    get:
+        (address) =>
+        ({ get }) => {
+            const list = get(daoTaskListAtom)
             return list.items.find((item) => item.address === address)
         },
     dangerouslyAllowMutability: true,
