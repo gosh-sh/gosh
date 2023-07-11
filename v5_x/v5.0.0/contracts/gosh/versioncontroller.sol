@@ -239,6 +239,10 @@ contract VersionController is Modifiers {
         return data;
     }
 
+    function getTagCode(TvmCell tagcode,  address repo, string ver) external pure returns(TvmCell) {
+        return GoshLib.buildTagCode(tagcode, repo, ver);
+    }
+
     function getVersions() external view returns(mapping(uint256 => SystemContractV)) {
         return _SystemContractCode;
     }
