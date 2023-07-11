@@ -90,11 +90,15 @@ const DaoEventPageInner = (props: { address: string }) => {
                 <div className="col !basis-full md:!basis-0">
                     <div className="flex flex-col gap-4">
                         <div className="flex items-center gap-6">
-                            <div className="text-xs text-gray-53596d">Status</div>
+                            <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
+                                Status
+                            </div>
                             <DaoEventStatusBadge event={event} />
                         </div>
                         <div className="flex items-center gap-6">
-                            <div className="text-xs text-gray-53596d">End date</div>
+                            <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
+                                End date
+                            </div>
                             <div className="text-sm">
                                 {getDurationDelta(event.time.finish)}
                             </div>
