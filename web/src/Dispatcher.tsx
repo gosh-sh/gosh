@@ -9,6 +9,7 @@ import { AppConfig } from './appconfig'
 
 const App_v1 = lazy(() => import('./v1/App'))
 const App_v2 = lazy(() => import('./v2/App'))
+const App_v3 = lazy(() => import('./v3/App'))
 
 const renderApp = (version: string) => {
     switch (version) {
@@ -17,9 +18,7 @@ const renderApp = (version: string) => {
         case '2.0.0':
             return <App_v2 />
         case '3.0.0':
-            return <App_v2 />
-        case '4.0.0':
-            return <App_v2 />
+            return <App_v3 />
         default:
             return <Alert variant="danger">Version {version} is not supported</Alert>
     }
