@@ -77,7 +77,7 @@ export type TDaoMemberList = {
 }
 
 export type TDaoEventDetails = {
-    account: SmvEvent | null
+    account: SmvEvent
     address: string
     platformId: string
     type: number

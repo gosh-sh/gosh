@@ -58,7 +58,7 @@ const ListItem = (props: TListItemProps) => {
     const { event } = props
     const dao = useDao()
     const eventList = useDaoEventList()
-    useDaoEvent(event.address, { loadOnInit: true, subscribe: true })
+    useDaoEvent(event.address, { subscribe: true })
 
     const onItemClick = () => {
         window.history.replaceState(

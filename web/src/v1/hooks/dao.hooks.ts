@@ -1035,26 +1035,7 @@ export function useDaoEvent(
     const { details: member } = useRecoilValue(daoMemberAtom)
     const [events, setEvents] = useRecoilState(daoEventListAtom)
     const event = useRecoilValue(daoEventSelector(address))
-    const { beforeVote } = useDaoHelpers()
-    const [status, setStatus] = useState<TToastStatus>()
     const [error, setError] = useState<any>()
-
-    const getEventData = async (account: SmvEvent, type: number) => {
-        try {
-            const verbose = await account.getData(type, { verbose: true })
-            setEvents((state) => ({
-                ...state,
-                items: state.items.map((item) => {
-                    if (item.address === account.address) {
-                        return { ...item, data: verbose }
-                    }
-                    return item
-                }),
-            }))
-        } catch (e: any) {
-            setError(e)
-        }
-    }
 
     const getEvent = useCallback(async () => {
         if (!dao.account || !address || !member.isFetched) {
@@ -1067,7 +1048,9 @@ export function useDaoEvent(
 
             // Fetch event details from blockchain
             if (!found || !found.status.completed) {
-                const account = await dao.account.getEvent({ address })
+                const account = found
+                    ? found.account
+                    : await dao.account.getEvent({ address })
                 const details = await account.getDetails({ wallet: member.wallet })
                 found = { account, address, ...found, ...details }
                 setEvents((state) => {
@@ -1097,25 +1080,90 @@ export function useDaoEvent(
         }
     }, [address, dao.address, member.isFetched])
 
-    const vote = async (params: { choice: boolean; amount: number }) => {
-        const { choice, amount } = params
+    const getEventData = async (account: SmvEvent, type: number) => {
         try {
-            if (!event?.platformId) {
-                throw new GoshError('Send vote error', 'Platform id undefined')
-            }
+            const verbose = await account.getData(type, { verbose: true })
+            setEvents((state) => ({
+                ...state,
+                items: state.items.map((item) => {
+                    if (item.address === account.address) {
+                        return { ...item, data: verbose }
+                    }
+                    return item
+                }),
+            }))
+        } catch (e: any) {
+            setError(e)
+        }
+    }
 
+    const subscribeEvent = useCallback(async () => {
+        if (!event?.address || !event.account) {
+            return
+        }
+
+        await event.account.account.subscribeMessages('body', async ({ body }) => {
+            const decoded = await event.account!.decodeMessageBody(body, 0)
+            const triggers = ['acceptReviewer', 'rejectReviewer', 'updateHead', 'vote']
+            if (decoded && triggers.indexOf(decoded.name) >= 0) {
+                const details = await event.account!.getDetails({
+                    wallet: member.wallet,
+                })
+                setEvents((state) => ({
+                    ...state,
+                    items: state.items.map((item) => {
+                        if (item.address === event!.address) {
+                            return { ...item, ...details }
+                        }
+                        return item
+                    }),
+                }))
+            }
+        })
+    }, [event?.address, member.isFetched])
+
+    useEffect(() => {
+        if (loadOnInit) {
+            getEvent()
+        }
+    }, [getEvent, loadOnInit])
+
+    useEffect(() => {
+        if (subscribe) {
+            getEvent()
+            subscribeEvent()
+        }
+
+        return () => {
+            if (subscribe) {
+                event?.account?.account.free()
+            }
+        }
+    }, [getEvent, subscribeEvent, subscribe])
+
+    return { event, error }
+}
+
+export function useVoteDaoEvent() {
+    const { details: member } = useRecoilValue(daoMemberAtom)
+    const { beforeVote } = useDaoHelpers()
+    const [status, setStatus] = useState<TToastStatus>()
+
+    const vote = async (params: {
+        platformId: string
+        choice: boolean
+        amount: number
+    }) => {
+        const { platformId, choice, amount } = params
+        try {
             // Prepare balance for create event
-            await beforeVote(amount, event.platformId, {
+            await beforeVote(amount, platformId, {
                 onPendingCallback: setStatus,
             })
 
             // Send vote
             // Skip `member.wallet` check, because `beforeVote` checks it
-            await member.wallet!.smvVote({
-                platformId: event.platformId,
-                choice,
-                amount,
-            })
+            await member.wallet!.smvVote({ platformId, choice, amount })
 
             setStatus({
                 type: 'success',
@@ -1130,47 +1178,7 @@ export function useDaoEvent(
         }
     }
 
-    useEffect(() => {
-        if (loadOnInit) {
-            getEvent()
-        }
-    }, [getEvent, loadOnInit])
-
-    useEffect(() => {
-        const _subscribe = async () => {
-            if (!event?.address || !event.account) {
-                return
-            }
-
-            await event.account.account.subscribeMessages('id', async (message) => {
-                console.debug('Subs get details for', event.address, message)
-                const details = await event.account!.getDetails({
-                    wallet: member.wallet,
-                })
-                setEvents((state) => ({
-                    ...state,
-                    items: state.items.map((item) => {
-                        if (item.address === event!.address) {
-                            return { ...item, ...details }
-                        }
-                        return item
-                    }),
-                }))
-            })
-        }
-
-        if (subscribe) {
-            _subscribe()
-        }
-
-        return () => {
-            if (subscribe) {
-                event?.account?.account.free()
-            }
-        }
-    }, [event?.address, subscribe])
-
-    return { event, error, vote, status }
+    return { vote, status }
 }
 
 export function useUpgradeDao() {

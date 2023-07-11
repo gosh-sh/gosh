@@ -6,7 +6,7 @@ import yup from '../../../../yup-extended'
 import classNames from 'classnames'
 import { useCallback, useEffect, useState } from 'react'
 import { TDaoEventDetails } from '../../../../types/dao.types'
-import { useDaoEvent, useDaoMember } from '../../../../hooks/dao.hooks'
+import { useDaoMember, useVoteDaoEvent } from '../../../../hooks/dao.hooks'
 
 type TDaoEventVotingFormProps = {
     event: TDaoEventDetails
@@ -20,7 +20,7 @@ type TFormValues = {
 const DaoEventVotingForm = (props: TDaoEventVotingFormProps) => {
     const { event } = props
     const member = useDaoMember()
-    const { vote, status } = useDaoEvent(event.address)
+    const { vote, status } = useVoteDaoEvent()
     const [start, setStart] = useState<number>(() =>
         Math.round((event.time.start - Date.now()) / 1000),
     )
@@ -38,7 +38,11 @@ const DaoEventVotingForm = (props: TDaoEventVotingFormProps) => {
 
     const onSubmit = async (values: TFormValues) => {
         try {
-            await vote({ choice: values.approve!, amount: values.amount })
+            await vote({
+                platformId: event.platformId,
+                choice: values.approve!,
+                amount: values.amount,
+            })
         } catch (e: any) {
             console.error(e.message)
         }
