@@ -925,7 +925,7 @@ export function useDaoEventList(params: { count?: number; loadOnInit?: boolean }
             const blockchain = await getBlockchainItems({
                 daoAccount: dao.account!,
                 daoWallet: member.wallet,
-                limit: Math.max(data.items.length, count),
+                limit: count,
             })
             setData((state) => {
                 const different = _.differenceWith(
@@ -959,7 +959,7 @@ export function useDaoEventList(params: { count?: number; loadOnInit?: boolean }
         } finally {
             setData((state) => ({ ...state, isFetching: false }))
         }
-    }, [dao.address, member.isFetched])
+    }, [dao.address, member.isFetched, count])
 
     const getNext = useCallback(async () => {
         try {
@@ -1063,20 +1063,34 @@ export function useDaoEvent(
 
         try {
             // Search for event in event list state atom
-            let details = events.items.find((item) => item.address === address)
+            let found = events.items.find((item) => item.address === address)
+
             // Fetch event details from blockchain
-            if (!details) {
+            if (!found || !found.status.completed) {
                 const account = await dao.account.getEvent({ address })
-                const _details = await account.getDetails({ wallet: member.wallet })
-                details = { account, address, ..._details }
-                setEvents((state) => ({
-                    ...state,
-                    items: [...state.items, details!],
-                }))
+                const details = await account.getDetails({ wallet: member.wallet })
+                found = { account, address, ...found, ...details }
+                setEvents((state) => {
+                    const updated = [...state.items]
+                    if (!updated.find(({ address }) => address === found?.address)) {
+                        updated.push(found!)
+                    }
+
+                    return {
+                        ...state,
+                        items: updated.map((item) => {
+                            if (item.address === address) {
+                                return { ...item, ...found }
+                            }
+                            return item
+                        }),
+                    }
+                })
             }
+
             // Fetch event data if not present
-            if (!details.data) {
-                getEventData(details.account!, details.type)
+            if (!found.data) {
+                getEventData(found.account!, found.type)
             }
         } catch (e: any) {
             setError(e)

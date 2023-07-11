@@ -1,21 +1,21 @@
-import { Repository } from '../blockchain/repository'
+import { GoshRepository } from '../blockchain/repository'
 
-export type TRepositoryListItem = {
-    account: Repository | null
+export type TGoshRepositoryListItem = {
+    account: GoshRepository | null
     name: string
     version: string
-    branches: TBranch[]
+    branches: TGoshBranch[]
 }
 
-export type TRepositoryList = {
+export type TGoshRepositoryList = {
     isFetching: boolean
-    items: TRepositoryListItem[]
+    items: TGoshRepositoryListItem[]
     cursor?: string
     hasNext?: boolean
     error?: any
 }
 
-export type TBranch = {
+export type TGoshBranch = {
     name: string
     commit: {
         address: string
@@ -23,7 +23,7 @@ export type TBranch = {
     }
 }
 
-export type TCommit = {
+export type TGoshCommit = {
     repository: string
     branch: string
     name: string
@@ -32,7 +32,7 @@ export type TCommit = {
     initupgrade: boolean
 }
 
-export type TCommitTag = {
+export type TGoshCommitTag = {
     reponame: string
     name: string
     content: string

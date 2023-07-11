@@ -1,10 +1,10 @@
 import { TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
 import RepositoryABI from './abi/repository.abi.json'
-import { TBranch } from '../types/repository.types'
-import { CommitTag } from './committag'
+import { TGoshBranch } from '../types/repository.types'
+import { GoshCommitTag } from './committag'
 
-export class Repository extends BaseContract {
+export class GoshRepository extends BaseContract {
     constructor(client: TonClient, address: string) {
         super(client, RepositoryABI, address)
     }
@@ -16,7 +16,7 @@ export class Repository extends BaseContract {
         return value0
     }
 
-    async getBranches(): Promise<TBranch[]> {
+    async getBranches(): Promise<TGoshBranch[]> {
         const { value0 } = await this.runLocal('getAllAddress', {})
         return value0.map((item: any) => ({
             name: item.branchname,
@@ -37,6 +37,6 @@ export class Repository extends BaseContract {
 
     async getCommitTag(params: { address: string }) {
         const { address } = params
-        return new CommitTag(this.client, address)
+        return new GoshCommitTag(this.client, address)
     }
 }

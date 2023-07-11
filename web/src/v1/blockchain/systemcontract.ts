@@ -3,7 +3,7 @@ import { BaseContract } from '../../blockchain/contract'
 import GoshABI from './abi/systemcontract.abi.json'
 import { GoshError } from '../../errors'
 import { Dao } from './dao'
-import { Repository } from './repository'
+import { GoshRepository } from './repository'
 import { AppConfig } from '../../appconfig'
 import { VersionController } from '../../blockchain/versioncontroller'
 import { whileFinite } from '../../utils'
@@ -36,7 +36,7 @@ export class SystemContract extends BaseContract {
     async getRepository(options: { path?: string; address?: string }) {
         const { path, address } = options
         if (address) {
-            return new Repository(this.client, address)
+            return new GoshRepository(this.client, address)
         }
 
         if (!path) {
@@ -49,7 +49,7 @@ export class SystemContract extends BaseContract {
             undefined,
             { useCachedBoc: true },
         )
-        return new Repository(this.client, value0)
+        return new GoshRepository(this.client, value0)
     }
 
     async getRepositoryCodeHash(daoaddr: string): Promise<string> {

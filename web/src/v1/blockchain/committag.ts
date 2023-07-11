@@ -1,17 +1,17 @@
 import { TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
 import CommitTagABI from './abi/committag.abi.json'
-import { TCommitTag } from '../types/repository.types'
+import { TGoshCommitTag } from '../types/repository.types'
 import { sha1 } from 'react-gosh'
-import { Commit } from './commit'
-import { Repository } from './repository'
+import { GoshCommit } from './commit'
+import { GoshRepository } from './repository'
 
-export class CommitTag extends BaseContract {
+export class GoshCommitTag extends BaseContract {
     constructor(client: TonClient, address: string) {
         super(client, CommitTagABI, address)
     }
 
-    async getDetails(): Promise<TCommitTag> {
+    async getDetails(): Promise<TGoshCommitTag> {
         const { value0: content } = await this.runLocal('getContent', {}, undefined, {
             useCachedBoc: true,
         })
@@ -19,9 +19,9 @@ export class CommitTag extends BaseContract {
         const { value0 } = await this.runLocal('getCommit', {}, undefined, {
             useCachedBoc: true,
         })
-        const commit = new Commit(this.client, value0)
+        const commit = new GoshCommit(this.client, value0)
         const commitData = await commit.getDetails()
-        const repository = new Repository(this.client, commitData.repository)
+        const repository = new GoshRepository(this.client, commitData.repository)
 
         return {
             reponame: await repository.getName(),

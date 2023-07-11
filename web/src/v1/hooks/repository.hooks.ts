@@ -1,7 +1,7 @@
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { daoRepositoryListAtom } from '../store/repository.state'
 import { daoDetailsAtom, daoMemberAtom } from '../store/dao.state'
-import { TRepositoryListItem } from '../types/repository.types'
+import { TGoshRepositoryListItem } from '../types/repository.types'
 import { getPaginatedAccounts } from '../../blockchain/utils'
 import { getSystemContract } from '../blockchain/helpers'
 import { validateRepoName } from '../validators'
@@ -10,7 +10,7 @@ import { executeByChunk, whileFinite } from '../../utils'
 import { MAX_PARALLEL_READ } from '../../constants'
 import _ from 'lodash'
 import { useCallback, useEffect } from 'react'
-import { Repository } from '../blockchain/repository'
+import { GoshRepository } from '../blockchain/repository'
 
 export function useCreateRepository() {
     const { details: dao } = useRecoilValue(daoDetailsAtom)
@@ -37,7 +37,7 @@ export function useCreateRepository() {
         const repo = await getSystemContract().getRepository({
             path: `${dao.name}/${name}`,
         })
-        const account = repo as Repository
+        const account = repo as GoshRepository
         if (await account.isDeployed()) {
             throw new GoshError('Value error', 'Repository already exists')
         }
@@ -87,12 +87,12 @@ export function useDaoRepositoryList(params: { count: number }) {
             limit,
             lastId: cursor,
         })
-        const items = await executeByChunk<{ id: string }, TRepositoryListItem>(
+        const items = await executeByChunk<{ id: string }, TGoshRepositoryListItem>(
             results,
             MAX_PARALLEL_READ,
             async ({ id }) => {
                 const repo = await systemContract.getRepository({ address: id })
-                const account = repo as Repository
+                const account = repo as GoshRepository
                 return {
                     account,
                     name: await account.getName(),
