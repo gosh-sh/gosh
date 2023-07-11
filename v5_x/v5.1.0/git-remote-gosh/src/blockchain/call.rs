@@ -167,7 +167,7 @@ impl BlockchainCall for Everscale {
         )
         .instrument(info_span!("blockchain_client::send_message").or_current())
         .await
-            .map_err(|e| anyhow::format_err!("send_message error: {e}"))?;
+        .map_err(|e| anyhow::format_err!("send_message error: {e}"))?;
 
         if let Some(expected_address) = expected_address {
             let start = Instant::now();

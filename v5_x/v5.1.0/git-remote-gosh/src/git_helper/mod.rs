@@ -9,6 +9,7 @@ use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
 use crate::blockchain::get_commit_address;
 use crate::cache::proxy::CacheProxy;
+use crate::database::GoshDB;
 use crate::{
     abi as gosh_abi,
     blockchain::{
@@ -21,6 +22,8 @@ use crate::{
     logger::set_log_verbosity,
     utilities::Remote,
 };
+use crate::blockchain::contract::ContractRead;
+use crate::git_helper::push::GetPreviousResult;
 
 pub mod ever_client;
 #[cfg(test)]
@@ -57,6 +60,7 @@ pub struct GitHelper<
     cache: Arc<CacheProxy>,
     upgraded_commits: Vec<String>,
     repo_versions: Vec<RepoVersion>,
+    database: Option<Arc<GoshDB>>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -75,7 +79,7 @@ struct GetTombstoneResult {
 mod fetch;
 
 // Note: this module implements push method on GitHelper
-mod push;
+pub(crate) mod push;
 
 mod list;
 
@@ -162,7 +166,29 @@ where
             cache: Arc::new(cache),
             upgraded_commits: vec![],
             repo_versions: vec![],
+            database: None,
         })
+    }
+
+    pub fn open_db(&mut self) -> anyhow::Result<()> {
+        self.database = Some(Arc::new(GoshDB::new()?));
+        Ok(())
+    }
+
+    pub fn get_db(&self) -> anyhow::Result<Arc<GoshDB>> {
+        if let Some(db) = &self.database {
+            Ok(db.clone())
+        } else {
+            anyhow::bail!("Database is closed")
+        }
+    }
+
+    pub fn delete_db(&mut self) -> anyhow::Result<()> {
+        if let Some(db) = &mut self.database {
+            Arc::get_mut(db).unwrap().delete()?;
+            self.database = None;
+        }
+        Ok(())
     }
 
     async fn capabilities(&self) -> anyhow::Result<Vec<String>> {
@@ -184,7 +210,33 @@ where
         &self.repo_versions
     }
 
-    async fn load_repo_versions(&mut self) -> anyhow::Result<()> {
+    pub async fn get_all_repo_versions(&self) -> anyhow::Result<Vec<RepoVersion>> {
+        let versions = self.get_all_system_contracts().await?;
+        let mut all_versions = vec![];
+        for version in versions {
+            let address = BlockchainContractAddress::new(version.1.clone());
+            let system_contract = GoshContract::new(address, gosh_abi::GOSH);
+            let args = json!({"dao": self.remote.dao, "name": self.remote.repo});
+            let repo_addr: GetAddrDaoResult = system_contract
+                .run_static(self.blockchain.client(), "getAddrRepository", Some(args))
+                .await?;
+            let repo_contract = GoshContract::new(repo_addr.address.clone(), gosh_abi::REPO);
+            let res: anyhow::Result<Value> = repo_contract
+                .run_static(self.blockchain.client(), "getVersion", None)
+                .await;
+            if res.is_err() {
+                continue;
+            }
+            all_versions.push(RepoVersion {
+                version: version.0,
+                system_address: BlockchainContractAddress::new(version.1),
+                repo_address: repo_addr.address,
+            });
+        }
+        Ok(all_versions)
+    }
+
+    async fn get_all_system_contracts(&self) -> anyhow::Result<Vec<(String, String)>> {
         let version_controller_address: GetAddrDaoResult = self
             .blockchain
             .root_contract()
@@ -219,25 +271,41 @@ where
             .collect();
 
         tracing::trace!("Available system contract versions: {versions:?}");
-        for version in versions {
-            let address = BlockchainContractAddress::new(version.1.clone());
-            let system_contract = GoshContract::new(address, gosh_abi::GOSH);
-            let args = json!({"dao": self.remote.dao, "name": self.remote.repo});
-            let repo_addr: GetAddrDaoResult = system_contract
-                .run_static(self.blockchain.client(), "getAddrRepository", Some(args))
-                .await?;
-            let repo_contract = GoshContract::new(repo_addr.address.clone(), gosh_abi::REPO);
-            let res: anyhow::Result<Value> = repo_contract
-                .run_static(self.blockchain.client(), "getVersion", None)
-                .await;
-            if res.is_err() {
-                continue;
-            }
+        Ok(versions)
+    }
+
+    async fn load_repo_versions(&mut self) -> anyhow::Result<()> {
+        let versions = self.get_all_system_contracts().await?;
+
+        if self.blockchain.repo_contract().is_active(self.blockchain.client()).await? {
+            let supported_contract_version = supported_contract_version();
+            let version_stripped = supported_contract_version.replace("\"", "");
+            let system_contract = versions.iter().find(|v| v.0 == version_stripped)
+                .ok_or(anyhow::format_err!("Failed to get cur version system contract"))?;
             self.repo_versions.push(RepoVersion {
-                version: version.0,
-                system_address: BlockchainContractAddress::new(version.1),
-                repo_address: repo_addr.address,
+                version: version_stripped,
+                repo_address: self.repo_addr.clone(),
+                system_address: BlockchainContractAddress::new(system_contract.1.clone()),
             });
+            let mut previous: GetPreviousResult = self
+                .blockchain
+                .repo_contract()
+                .read_state(self.blockchain.client(), "getPrevious", None)
+                .await?;
+
+            while let Some(prev_repo) = &previous.previous {
+                let system_contract = versions.iter().find(|v| v.0 == prev_repo.version)
+                    .ok_or(anyhow::format_err!("Failed to get prev version system contract"))?;
+
+                self.repo_versions.push(RepoVersion {
+                    version: prev_repo.version.clone(),
+                    repo_address: prev_repo.address.clone(),
+                    system_address: BlockchainContractAddress::new(system_contract.1.clone()),
+                });
+                let prev_repo_contract = GoshContract::new(&prev_repo.address, gosh_abi::REPO);
+                previous = prev_repo_contract.read_state(self.blockchain.client(), "getPrevious", None)
+                    .await?;
+            }
         }
         self.repo_versions
             .sort_by(|ver1, ver2| ver2.version.cmp(&ver1.version));
@@ -325,7 +393,6 @@ where
                 version: repo_version.version.clone(),
                 commit_address,
             });
-
         }
         anyhow::bail!("Failed to find commit with id {commit_id} in all repo versions.")
     }
@@ -464,7 +531,7 @@ pub async fn run(config: Config, url: &str, dispatcher_call: bool) -> anyhow::Re
             (Some("gosh_repo_version"), None, None) => helper.get_repo_version().await?,
             (Some("gosh_get_dao_tombstone"), None, None) => helper.get_dao_tombstone().await?,
             (Some("gosh_get_all_repo_versions"), None, None) => {
-                let repo_versions = helper.get_repo_versions();
+                let repo_versions = helper.get_all_repo_versions().await?;
                 let mut res: Vec<String> = repo_versions
                     .iter()
                     .map(|ver| {
@@ -542,6 +609,7 @@ pub mod tests {
             cache,
             upgraded_commits: vec![],
             repo_versions: vec![],
+            database: None,
         }
     }
 }

@@ -21,7 +21,7 @@ use ton_client::net::ParamsOfQuery;
 use tokio::sync::Semaphore;
 
 pub mod create_branch;
-mod parallel_diffs_upload_support;
+pub(crate) mod parallel_diffs_upload_support;
 mod utilities;
 pub use utilities::ipfs_content::is_going_to_ipfs;
 mod push_diff;
@@ -29,9 +29,9 @@ mod push_tag;
 mod push_tree;
 use push_tag::push_tag;
 mod delete_tag;
-mod parallel_snapshot_upload_support;
+pub(crate) mod parallel_snapshot_upload_support;
 
-use crate::blockchain::branch_list;
+use crate::blockchain::{branch_list, Snapshot};
 use crate::git_helper::push::parallel_snapshot_upload_support::{
     ParallelCommit, ParallelCommitUploadSupport, ParallelSnapshot, ParallelSnapshotUploadSupport,
     ParallelTreeUploadSupport,
@@ -115,6 +115,7 @@ where
             file_diff.patch.clone(),
             file_diff.after_patch.clone(),
         );
+
         parallel_diffs_upload_support.push(self, diff).await?;
         statistics.diffs += 1;
         Ok(())
@@ -142,24 +143,54 @@ where
             let branch_name = branch_name.to_string();
             let file_path = file_path.to_string();
             let commit_str = commit_id.to_string();
-            tracing::trace!("Search prev commit repo: {:?} {:?}", self.repo_versions, parents_for_upgrade);
+            tracing::trace!(
+                "Search prev commit repo: {:?} {:?}",
+                self.repo_versions,
+                parents_for_upgrade
+            );
             let prev_repo_address = if upgrade_commit {
-                Some(self.repo_versions.iter().find(|repo| repo.version == parents_for_upgrade[0].version).expect("Failed to find prev repo address").repo_address.clone())
+                Some(
+                    self.repo_versions
+                        .iter()
+                        .find(|repo| repo.version == parents_for_upgrade[0].version)
+                        .expect("Failed to find prev repo address")
+                        .repo_address
+                        .clone(),
+                )
             } else {
                 None
             };
-            parallel_snapshot_uploads
-                .add_to_push_list(
-                    self,
-                    ParallelSnapshot::new(branch_name, file_path, upgrade_commit, commit_str),
-                    prev_repo_address,
-                )
-                .await?;
+
+            let mut repo_contract = self.blockchain.repo_contract().clone();
+            let snapshot_addr = Snapshot::calculate_address(
+                self.blockchain.client(),
+                &mut repo_contract,
+                &branch_name,
+                &file_path,
+            )
+            .await?;
+            let snapshot_addr = String::from(snapshot_addr);
+
+            if !self.get_db()?.snapshot_exists(&snapshot_addr)? {
+                let snapshot =
+                    ParallelSnapshot::new(branch_name, file_path, upgrade_commit, commit_str);
+                self.get_db()?
+                    .put_snapshot(&snapshot, snapshot_addr.clone())?;
+
+                parallel_snapshot_uploads
+                    .add_to_push_list(self, snapshot_addr, prev_repo_address)
+                    .await?;
+            } else {
+                parallel_snapshot_uploads.push_expected(snapshot_addr);
+            }
         }
         if !upgrade_commit {
-            let file_diff =
-                utilities::generate_blob_diff(&self.local_repository().objects, None, Some(blob_id))
-                    .await?;
+            let file_diff = utilities::generate_blob_diff(
+                &self.local_repository().objects,
+                None,
+                Some(blob_id),
+            )
+            .await?;
             let diff = ParallelDiff::new(
                 *commit_id,
                 branch_name.to_string(),
@@ -199,6 +230,7 @@ where
             file_diff.patch.clone(),
             file_diff.after_patch.clone(),
         );
+
         parallel_diffs_upload_support.push(self, diff).await?;
         statistics.diffs += 1;
         Ok(())
@@ -357,7 +389,7 @@ where
             )
             .await
             .map(|r| r.result)
-                .map_err(|e| anyhow::format_err!("query error: {e}"))?;
+            .map_err(|e| anyhow::format_err!("query error: {e}"))?;
 
             let raw_data = result["data"]["accounts"].clone();
             let existing_commits: Vec<AccountStatus> = serde_json::from_value(raw_data)?;
@@ -418,23 +450,18 @@ where
                     &mut repo_contract,
                     &id.to_string(),
                 )
-                    .await?;
+                .await?;
                 let commit_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
                 if commit_contract.is_active(self.blockchain.client()).await? {
-                    tracing::trace!(
-                        "Found parent {id} in version {}",
-                        repo_version.version
-                    );
+                    tracing::trace!("Found parent {id} in version {}", repo_version.version);
                     tracing::trace!("Start upgrade of the parent: {id}");
                     let branch: GetNameCommitResult = commit_contract
                         .run_local(self.blockchain.client(), "getNameBranch", None)
                         .await?;
-                    let parents_for_upgrade = vec![
-                        AddrVersion {
-                            address: parent,
-                            version: repo_version.version.clone(),
-                        }
-                    ];
+                    let parents_for_upgrade = vec![AddrVersion {
+                        address: parent,
+                        version: repo_version.version.clone(),
+                    }];
                     self.check_and_upgrade_previous_commit(
                         id.to_string(),
                         &branch.name,
@@ -442,14 +469,11 @@ where
                         set_commit,
                         parents_for_upgrade,
                     )
-                        .await?;
+                    .await?;
 
                     break;
                 } else {
-                    tracing::trace!(
-                        "Not found parent {id} in version {}",
-                        repo_version.version
-                    );
+                    tracing::trace!("Not found parent {id} in version {}", repo_version.version);
                 }
             }
         }
@@ -526,20 +550,31 @@ where
             let tree_addr = tree_addr.clone();
             let branch_name = remote_branch_name.to_owned().clone();
 
-            push_commits
-                .add_to_push_list(
-                    self,
-                    ParallelCommit::new(
-                        object_id,
-                        branch_name,
-                        tree_addr,
-                        raw_commit,
-                        parents,
-                        upgrade_commit,
-                    ),
-                    push_semaphore.clone(),
-                )
-                .await?;
+            let commit = ParallelCommit::new(
+                object_id,
+                branch_name,
+                tree_addr,
+                raw_commit,
+                parents,
+                upgrade_commit,
+            );
+            let mut repo_contract = self.blockchain.repo_contract().clone();
+            let commit_address = get_commit_address(
+                self.blockchain.client(),
+                &mut repo_contract,
+                &object_id.to_string(),
+            )
+            .await?;
+            let commit_address = String::from(commit_address);
+            if !self.get_db()?.commit_exists(&commit_address)? {
+                self.get_db()?.put_commit(commit, commit_address.clone())?;
+
+                push_commits
+                    .add_to_push_list(self, commit_address, push_semaphore.clone())
+                    .await?;
+            } else {
+                push_commits.push_expected(commit_address);
+            }
         }
 
         let tree_diff = utilities::build_tree_diff_from_commits(
@@ -614,7 +649,7 @@ where
             &mut repo_contract,
             &ancestor_commit,
         )
-            .await?;
+        .await?;
         tracing::trace!("ancestor address: {ancestor_address}");
 
         // 2) Check that ancestor contract exists
@@ -652,7 +687,7 @@ where
             &mut prev_repo_contract,
             &ancestor_commit,
         )
-            .await?;
+        .await?;
         tracing::trace!("prev ver ancestor commit address: {prev_ancestor_address}");
 
         // 5) get previous version commit data
@@ -695,8 +730,8 @@ where
         let push_semaphore = Arc::new(Semaphore::new(PARALLEL_PUSH_LIMIT));
         let mut parallel_tree_uploads = ParallelTreeUploadSupport::new();
         let mut parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
-        let mut parents_of_commits: HashMap<String, Vec<String>> =
-            HashMap::from([(ZERO_SHA.to_owned(), vec![]), ("".to_owned(), vec![])]);
+        let mut parents_of_commits: HashMap<String, Vec<String>> = 
+        HashMap::from([(ZERO_SHA.to_owned(), vec![]), ("".to_owned(), vec![])]);
         let mut visited_trees: HashSet<ObjectId> = HashSet::new();
         let mut statistics = PushBlobStatistics::new();
 
@@ -742,7 +777,7 @@ where
                 // Not supported yet
                 git_object::Kind::Tag => unimplemented!(),
                 git_object::Kind::Tree => {
-                    let _ = push_tree(
+                    push_tree(
                         self,
                         &object_id,
                         &mut visited_trees,
@@ -774,17 +809,9 @@ where
             let expected = push_commits.get_expected().to_owned();
             push_commits = ParallelCommitUploadSupport::new();
             for address in expected_contracts.clone() {
-                let commit = expected
-                    .get(&address)
-                    .ok_or(anyhow::format_err!("Failed to get diff params"))?
-                    .clone();
-                tracing::trace!(
-                    "Get params of undeployed tree: {} {:?}",
-                    address,
-                    commit.commit_id
-                );
+                tracing::trace!("Get params of undeployed tree: {}", address,);
                 push_commits
-                    .add_to_push_list(self, commit, push_semaphore.clone())
+                    .add_to_push_list(self, String::from(address), push_semaphore.clone())
                     .await?;
             }
         }
@@ -792,6 +819,12 @@ where
             anyhow::bail!(
                 "Failed to deploy all commits. Undeployed commits: {expected_contracts:?}"
             )
+        }
+
+        let snapshot_addresses = parallel_snapshot_uploads.get_expected().clone();
+        let db = self.get_db()?;
+        for address in snapshot_addresses {
+            db.delete_snapshot(&address)?;
         }
 
         if set_commit {
@@ -837,6 +870,7 @@ where
         // and snapshots were not created since git didn't count them as changed.
         // Our second attempt is to calculated tree diff from one commit to another.
         tracing::debug!("push_ref {} : {}", local_ref, remote_ref);
+        self.open_db()?;
         let local_branch_name: &str = get_ref_name(local_ref)?;
         let remote_branch_name: &str = get_ref_name(remote_ref)?;
 
@@ -957,6 +991,7 @@ where
             match object_kind {
                 git_object::Kind::Commit => {
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)
+                    // TODO: check only the first commit
                     self.check_parents(object_id, remote_branch_name, local_branch_name, true)
                         .await?;
                     self.push_commit_object(
@@ -986,7 +1021,7 @@ where
                 // Not supported yet
                 git_object::Kind::Tag => unimplemented!(),
                 git_object::Kind::Tree => {
-                    let _ = push_tree(
+                    push_tree(
                         self,
                         &object_id,
                         &mut visited_trees,
@@ -997,6 +1032,10 @@ where
                 }
             }
         }
+        // push dangling diffs
+        parallel_diffs_upload_support.push_dangling(self).await?;
+        let number_of_files_changed = parallel_diffs_upload_support.get_parallels_number();
+
         tracing::trace!("Start of wait for contracts to be deployed");
         let mut expected_contracts = vec![];
         let mut attempts = 0;
@@ -1018,17 +1057,9 @@ where
             let expected = parallel_tree_uploads.get_expected().to_owned();
             parallel_tree_uploads = ParallelTreeUploadSupport::new();
             for address in expected_contracts.clone() {
-                let tree = expected
-                    .get(&address)
-                    .ok_or(anyhow::format_err!("Failed to get diff params"))?
-                    .clone();
-                tracing::trace!(
-                    "Get params of undeployed tree: {} {:?}",
-                    address,
-                    tree.tree_id
-                );
+                tracing::trace!("Get params of undeployed tree: {}", address,);
                 parallel_tree_uploads
-                    .add_to_push_list(self, tree, push_semaphore.clone())
+                    .add_to_push_list(self, String::from(address), push_semaphore.clone())
                     .await?;
             }
         }
@@ -1037,8 +1068,6 @@ where
         }
 
         // wait for all spawned collections to finish
-        parallel_diffs_upload_support.push_dangling(self).await?;
-        let number_of_files_changed = parallel_diffs_upload_support.get_parallels_number();
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
         while attempts < MAX_REDEPLOY_ATTEMPTS {
@@ -1058,13 +1087,8 @@ where
             let expected = parallel_diffs_upload_support.get_expected().to_owned();
             parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
             for address in expected_contracts.clone() {
-                let (coord, parallel, is_last) = expected
-                    .get(&address)
-                    .ok_or(anyhow::format_err!("Failed to get diff params"))?
-                    .clone();
-                // parallel_diffs_upload_support.push(self, diff).await?;
                 parallel_diffs_upload_support
-                    .add_to_push_list(self, &coord, &parallel, is_last)
+                    .add_to_push_list(self, String::from(address))
                     .await?;
             }
             parallel_diffs_upload_support.push_dangling(self).await?;
@@ -1092,17 +1116,9 @@ where
             let expected = parallel_snapshot_uploads.get_expected().to_owned();
             parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
             for address in expected_contracts.clone() {
-                let snapshot = expected
-                    .get(&address)
-                    .ok_or(anyhow::format_err!("Failed to get diff params"))?
-                    .clone();
-                tracing::trace!(
-                    "Get params of undeployed snapshot: {} {:?}",
-                    address,
-                    snapshot
-                );
+                tracing::trace!("Get params of undeployed snapshot: {}", address,);
                 parallel_snapshot_uploads
-                    .add_to_push_list(self, snapshot, None)
+                    .add_to_push_list(self, String::from(address), None)
                     .await?;
             }
         }
@@ -1131,17 +1147,9 @@ where
             let expected = push_commits.get_expected().to_owned();
             push_commits = ParallelCommitUploadSupport::new();
             for address in expected_contracts.clone() {
-                let commit = expected
-                    .get(&address)
-                    .ok_or(anyhow::format_err!("Failed to get diff params"))?
-                    .clone();
-                tracing::trace!(
-                    "Get params of undeployed tree: {} {:?}",
-                    address,
-                    commit.commit_id
-                );
+                tracing::trace!("Get params of undeployed tree: {}", address,);
                 push_commits
-                    .add_to_push_list(self, commit, push_semaphore.clone())
+                    .add_to_push_list(self, String::from(address), push_semaphore.clone())
                     .await?;
             }
         }
@@ -1150,6 +1158,9 @@ where
                 "Failed to deploy all commits. Undeployed commits: {expected_contracts:?}"
             )
         }
+
+        // clear database after all objects were deployed
+        self.delete_db()?;
 
         // 9. Set commit (move HEAD)
         ancestor_commit_id = match ancestor_commit_object {

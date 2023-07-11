@@ -31,6 +31,7 @@ pub mod abi;
 pub mod blockchain;
 pub mod cache;
 pub mod config;
+pub(crate) mod database;
 pub mod git_helper;
 pub mod ipfs;
 pub mod logger;

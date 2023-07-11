@@ -87,7 +87,7 @@ struct DeleteSnapshotParams {
 
 // Note: making fields verbose
 // It must be very clear what is going on
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PushDiffCoordinate {
     pub index_of_parallel_thread: u32,
     pub order_of_diff_in_the_parallel_thread: u32,

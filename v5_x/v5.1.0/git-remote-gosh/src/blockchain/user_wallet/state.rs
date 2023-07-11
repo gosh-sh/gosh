@@ -20,6 +20,7 @@ use super::inner_calls::{
 use super::inner_state::{TWalletMirrorIndex, UserWalletsMirrorsInnerState, Wallet};
 
 const WALLET_CONTRACTS_PARALLELISM: usize = 100usize;
+const GOSH_REMOTE_WALLET_PARALLELISM: &str = "GOSH_REMOTE_WALLET_PARALLELISM";
 
 #[derive(Error, Debug)]
 pub enum WalletError {
@@ -151,7 +152,13 @@ impl UserWalletMirrors {
                 dao_address.to_owned(),
                 wallet_config.to_owned(),
             );
-            self.semaphore.add_permits(WALLET_CONTRACTS_PARALLELISM);
+            let wallet_parallelism = std::env::var(GOSH_REMOTE_WALLET_PARALLELISM)
+                .ok()
+                .map(|num| usize::from_str_radix(&num, 10).ok())
+                .flatten()
+                .unwrap_or(WALLET_CONTRACTS_PARALLELISM);
+            tracing::trace!("Add permits to wallet semaphore: {wallet_parallelism}");
+            self.semaphore.add_permits(wallet_parallelism);
         }
         Ok(())
     }
@@ -197,7 +204,13 @@ impl UserWalletMirrors {
                         }
                         Ok(mirror) => {
                             self.inner.write().await.add(wallet_index, mirror);
-                            self.semaphore.add_permits(WALLET_CONTRACTS_PARALLELISM);
+                            let wallet_parallelism = std::env::var(GOSH_REMOTE_WALLET_PARALLELISM)
+                                .ok()
+                                .map(|num| usize::from_str_radix(&num, 10).ok())
+                                .flatten()
+                                .unwrap_or(WALLET_CONTRACTS_PARALLELISM);
+                            tracing::trace!("Add permits to wallet semaphore: {wallet_parallelism}");
+                            self.semaphore.add_permits(wallet_parallelism);
                         }
                     }
                 }

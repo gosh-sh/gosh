@@ -156,8 +156,8 @@ impl GoshContract {
         function_name: &str,
         args: Option<serde_json::Value>,
     ) -> anyhow::Result<T>
-        where
-            T: de::DeserializeOwned,
+    where
+        T: de::DeserializeOwned,
     {
         let result = run_local(context, self, function_name, args).await?;
         tracing::trace!("run_local result: {:?}", result);
@@ -171,10 +171,12 @@ impl GoshContract {
     }
 
     pub async fn is_active(&self, context: &EverClient) -> anyhow::Result<bool> {
-        match self.load_account(context).await? {
+        let res = match self.load_account(context).await? {
             None => Ok(false),
             Some(v) => Ok(v.status == 1),
-        }
+        };
+        tracing::trace!("Check account {} is active: {:?}", self.address, res);
+        res
     }
 }
 

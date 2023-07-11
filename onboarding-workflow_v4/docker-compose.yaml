@@ -145,7 +145,8 @@ services:
        redis-v4:
          condition: service_healthy
      volumes:
-       - './logs:/tmp/logs'
+      - onbd_create_large_gosh_repo:/tmp
+      #- './logs:/tmp/logs'
      environment:
        SUPABASE_URL: ${SUPABASE_URL}
        SUPABASE_KEY: ${SUPABASE_KEY}
@@ -163,7 +164,8 @@ services:
       redis-v4:
         condition: service_healthy
     volumes:
-      - './logs:/tmp/logs'
+      - onbd_create_medium_gosh_repo:/tmp
+      #- './logs:/tmp/logs'
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
@@ -181,7 +183,8 @@ services:
       redis-v4:
         condition: service_healthy
     volumes:
-      - './logs:/tmp/logs'
+      - onbd_create_small_gosh_repo:/tmp
+      #- './logs:/tmp/logs'
     environment:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_KEY: ${SUPABASE_KEY}
@@ -191,3 +194,8 @@ services:
       GOSH_VERSION: ${GOSH_VERSION}
     command: >
       deno run -A ./src/consumers/create_small_gosh_repo.ts
+
+volumes:
+  onbd_create_large_gosh_repo:
+  onbd_create_medium_gosh_repo:
+  onbd_create_small_gosh_repo:

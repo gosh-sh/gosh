@@ -20,7 +20,7 @@ where
     let mut deployment_results: JoinSet<anyhow::Result<Vec<BlockchainContractAddress>>> =
         JoinSet::new();
     for chunk in addresses.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {
-        let mut waiting_for_addresses = Vec::from(addresses);
+        let mut waiting_for_addresses = Vec::from(chunk);
         let b = blockchain.clone();
         deployment_results.spawn(
             async move {
@@ -35,10 +35,7 @@ where
                         );
                         return Ok(waiting_for_addresses);
                     }
-                    match b
-                        .check_contracts_state(&waiting_for_addresses, true)
-                        .await
-                    {
+                    match b.check_contracts_state(&waiting_for_addresses, true).await {
                         Ok(found_addresses) => {
                             let available: HashSet<BlockchainContractAddress> =
                                 HashSet::from_iter(found_addresses.iter().cloned());

@@ -107,7 +107,7 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
                         </div>
                     )}
                 </div>
-                <div className="text-xs">
+                <div className="text-xs overflow-x-scroll">
                     {isBuffer && (
                         <div className="text-center py-3">Binary data not shown</div>
                     )}

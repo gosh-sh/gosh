@@ -108,7 +108,7 @@ pub async fn get_set_commit_created_at_time(
         )
         .await
         .map(|r| r.result)
-            .map_err(|e| anyhow::format_err!("query error: {e}"))?;
+        .map_err(|e| anyhow::format_err!("query error: {e}"))?;
 
         let extracted_messages = &result["data"]["blockchain"]["account"]["messages"];
         let messages: Messages = serde_json::from_value(extracted_messages.clone())?;

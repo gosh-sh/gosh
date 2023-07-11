@@ -1,9 +1,10 @@
 import ReactMarkdown from 'react-markdown'
 import hljs from 'highlight.js'
+import rehypeRaw from 'rehype-raw'
+import remarkGfm from 'remark-gfm'
 import { GoshError, classNames } from 'react-gosh'
 import { Buffer } from 'buffer'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import rehypeRaw from 'rehype-raw'
 import { useBlobComments } from '../../../hooks/codecomment.hooks'
 import { toast } from 'react-toastify'
 import { ToastError } from '../../Toast'
@@ -137,87 +138,91 @@ const BlobPreview = (props: TBlobPreviewProps) => {
     if (filename.split('.').splice(-1)[0] === 'md') {
         return (
             <div className={classNames('markdown-body px-4 py-4', className)}>
-                <ReactMarkdown rehypePlugins={[rehypeRaw]}>{value || ''}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                    {value || ''}
+                </ReactMarkdown>
             </div>
         )
     }
     return (
-        <table
-            className="code-table w-full text-xs"
-            onMouseLeave={() => setMouseDown(false)}
-        >
-            <tbody>
-                {highlighted.map((line, index) => {
-                    const number = index + 1
-                    const tdContent = !line || line === '</span>' ? '&nbsp;' : line
-                    const lineThreads = threads.items.filter(
-                        (item) => item.startLine === number,
-                    )
-                    return (
-                        <tr
-                            key={index}
-                            id={`code-line-${number}`}
-                            className={classNames(
-                                selectedLines.lines?.indexOf(number) >= 0
-                                    ? 'bg-yellow-faedcc'
-                                    : null,
-                            )}
-                        >
-                            <LineNumber
-                                commentsOn={commentsOn}
-                                num={number}
-                                threads={lineThreads.slice(0, 2)}
-                                threadIconProps={{
-                                    onClick: (e) => {
-                                        const data = (e.target as any).dataset
-                                        toggleThread(data.id)
-                                    },
-                                    onMouseEnter: (e) => {
-                                        const data = (e.target as any).dataset
-                                        hoverThread(data.id, true)
-                                    },
-                                    onMouseLeave: (e) => {
-                                        const data = (e.target as any).dataset
-                                        hoverThread(data.id, false)
-                                    },
-                                }}
-                                lineNumberProps={{
-                                    onClick: () => {
-                                        toggleLineSelection(number, commit)
-                                    },
-                                    onMouseDown: () => {
-                                        toggleLineSelection(number, commit)
-                                        setMouseDown(true)
-                                    },
-                                    onMouseUp: () => setMouseDown(false),
-                                    onMouseEnter: () => {
-                                        if (mouseDown) {
-                                            toggleLineSelection(number, commit, {
-                                                multiple: mouseDown,
-                                            })
-                                        }
-                                    },
-                                }}
-                            />
-                            <LineContent
-                                commentsOn={dao.details.isAuthMember && commentsOn}
-                                commentFormRefs={commentFormRefs}
-                                line={number}
-                                content={tdContent}
-                                showForm={commentFormLine.line === number}
-                                containerProps={{
-                                    onMouseEnter: () => setMouseDown(false),
-                                }}
-                                commentButtonProps={{
-                                    onClick: () => toggleLineForm(number, commit),
-                                }}
-                                onCommentFormSubmit={onAddCommentSubmit}
-                            />
-                        </tr>
-                    )
-                })}
-            </tbody>
-        </table>
+        <div className="overflow-x-scroll">
+            <table
+                className="code-table w-full text-xs"
+                onMouseLeave={() => setMouseDown(false)}
+            >
+                <tbody>
+                    {highlighted.map((line, index) => {
+                        const number = index + 1
+                        const tdContent = !line || line === '</span>' ? '&nbsp;' : line
+                        const lineThreads = threads.items.filter(
+                            (item) => item.startLine === number,
+                        )
+                        return (
+                            <tr
+                                key={index}
+                                id={`code-line-${number}`}
+                                className={classNames(
+                                    selectedLines.lines?.indexOf(number) >= 0
+                                        ? 'bg-yellow-faedcc'
+                                        : null,
+                                )}
+                            >
+                                <LineNumber
+                                    commentsOn={commentsOn}
+                                    num={number}
+                                    threads={lineThreads.slice(0, 2)}
+                                    threadIconProps={{
+                                        onClick: (e) => {
+                                            const data = (e.target as any).dataset
+                                            toggleThread(data.id)
+                                        },
+                                        onMouseEnter: (e) => {
+                                            const data = (e.target as any).dataset
+                                            hoverThread(data.id, true)
+                                        },
+                                        onMouseLeave: (e) => {
+                                            const data = (e.target as any).dataset
+                                            hoverThread(data.id, false)
+                                        },
+                                    }}
+                                    lineNumberProps={{
+                                        onClick: () => {
+                                            toggleLineSelection(number, commit)
+                                        },
+                                        onMouseDown: () => {
+                                            toggleLineSelection(number, commit)
+                                            setMouseDown(true)
+                                        },
+                                        onMouseUp: () => setMouseDown(false),
+                                        onMouseEnter: () => {
+                                            if (mouseDown) {
+                                                toggleLineSelection(number, commit, {
+                                                    multiple: mouseDown,
+                                                })
+                                            }
+                                        },
+                                    }}
+                                />
+                                <LineContent
+                                    commentsOn={dao.details.isAuthMember && commentsOn}
+                                    commentFormRefs={commentFormRefs}
+                                    line={number}
+                                    content={tdContent}
+                                    showForm={commentFormLine.line === number}
+                                    containerProps={{
+                                        onMouseEnter: () => setMouseDown(false),
+                                    }}
+                                    commentButtonProps={{
+                                        onClick: () => toggleLineForm(number, commit),
+                                    }}
+                                    onCommentFormSubmit={onAddCommentSubmit}
+                                />
+                            </tr>
+                        )
+                    })}
+                </tbody>
+            </table>
+        </div>
     )
 }
 

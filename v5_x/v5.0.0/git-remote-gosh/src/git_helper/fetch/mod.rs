@@ -110,24 +110,22 @@ where
         let visited_ipfs: Arc<Mutex<HashMap<String, git_hash::ObjectId>>> =
             Arc::new(Mutex::new(HashMap::new()));
         macro_rules! guard {
-            ($id:ident) => {
-                {
-                    let visited = visited.lock().await;
-                    if visited.contains(&$id) {
-                        continue;
-                    }
-                }
-                if $id.is_null() {
+            ($id:ident) => {{
+                let visited = visited.lock().await;
+                if visited.contains(&$id) {
                     continue;
                 }
-                {
-                    let mut visited = visited.lock().await;
-                    visited.insert($id.clone());
-                    if self.is_commit_in_local_cache(&$id) {
-                        continue;
-                    }
+            }
+            if $id.is_null() {
+                continue;
+            }
+            {
+                let mut visited = visited.lock().await;
+                visited.insert($id.clone());
+                if self.is_commit_in_local_cache(&$id) {
+                    continue;
                 }
-            };
+            }};
         }
 
         let mut commits_queue = VecDeque::<git_hash::ObjectId>::new();
@@ -140,106 +138,14 @@ where
         let mut tree_obj_queue = VecDeque::<TreeObjectsQueueItem>::new();
         let mut blobs_restore_plan = restore_blobs::BlobsRebuildingPlan::new();
         let sha = git_hash::ObjectId::from_str(sha)?;
-        commits_queue.push_back(sha);
+        commits_queue.push_front(sha);
 
         let mut dangling_trees = vec![];
         let mut dangling_commits = vec![];
         let mut next_commit_of_prev_version = vec![];
         loop {
-            if blobs_restore_plan.is_available() {
-                let visited_ref = Arc::clone(&visited);
-                let visited_ipfs_ref = Arc::clone(&visited_ipfs);
-                tracing::debug!("branch={branch}: Restoring blobs");
-                blobs_restore_plan.restore(self, visited_ref, visited_ipfs_ref).await?;
-                blobs_restore_plan = restore_blobs::BlobsRebuildingPlan::new();
-                continue;
-            }
-            if let Some(tree_node_to_load) = tree_obj_queue.pop_front() {
-                tracing::debug!("branch={branch}: Loading tree: {:?}", tree_node_to_load);
-                let id = tree_node_to_load.oid;
-                tracing::debug!("branch={branch}: Loading tree: {}", id);
-                guard!(id);
-                tracing::debug!("branch={branch}: Ok. Guard passed. Loading tree: {}", id);
-                let path_to_node = tree_node_to_load.path;
-                let tree_object_id = format!("{}", tree_node_to_load.oid);
-                let mut repo_contract = self.blockchain.repo_contract().clone();
-                let address = blockchain::Tree::calculate_address(
-                    &Arc::clone(self.blockchain.client()),
-                    &mut repo_contract,
-                    &tree_object_id,
-                )
-                .await?;
-
-                let onchain_tree_object =
-                    blockchain::Tree::load(&self.blockchain.client(), &address).await?;
-                let tree_object: git_object::Tree = onchain_tree_object.into();
-
-                tracing::debug!("branch={branch}: Tree obj parsed {}", id);
-                for entry in &tree_object.entries {
-                    let oid = entry.oid;
-                    match entry.mode {
-                        git_object::tree::EntryMode::Tree => {
-                            tracing::debug!("branch={branch}: Tree entry: tree {}->{}", id, oid);
-                            let to_load = TreeObjectsQueueItem {
-                                path: format!("{}/{}", path_to_node, entry.filename),
-                                oid,
-                                branches: tree_node_to_load.branches.clone(),
-                            };
-                            tree_obj_queue.push_back(to_load);
-                        }
-                        git_object::tree::EntryMode::Commit => (),
-                        git_object::tree::EntryMode::Blob
-                        | git_object::tree::EntryMode::BlobExecutable
-                        | git_object::tree::EntryMode::Link => {
-                            tracing::debug!("branch={branch}: Tree entry: blob {}->{}", id, oid);
-                            let file_path = format!("{}/{}", path_to_node, entry.filename);
-                            for branch in tree_node_to_load.branches.iter() {
-                                let mut repo_contract = self.blockchain.repo_contract().clone();
-                                let snapshot_address = blockchain::Snapshot::calculate_address(
-                                    &Arc::clone(self.blockchain.client()),
-                                    &mut repo_contract,
-                                    branch,
-                                    // Note:
-                                    // Removing prefixing "/" in the path
-                                    &file_path[1..],
-                                )
-                                .await?;
-                                let snapshot_contract =
-                                    GoshContract::new(&snapshot_address, gosh_abi::SNAPSHOT);
-                                match snapshot_contract.is_active(self.blockchain.client()).await {
-                                    Ok(true) => {
-                                        tracing::debug!(
-                                            "branch={branch}: Adding a blob to search for. Path: {}, id: {}, snapshot: {}",
-                                            file_path,
-                                            oid,
-                                            snapshot_address
-                                        );
-                                        blobs_restore_plan.mark_blob_to_restore(snapshot_address, oid);
-                                    },
-                                    _ => { continue; }
-                                }
-                            }
-                        }
-                        _ => {
-                            tracing::debug!("branch={branch}: IT MUST BE NOTED!");
-                            panic!();
-                        }
-                    }
-                }
-                tracing::trace!("Push to dangling tree: {}", tree_object_id);
-                dangling_trees.push(tree_object);
-                continue;
-            }
-            if !dangling_trees.is_empty() {
-                tracing::trace!("Writing dangling trees");
-                for obj in dangling_trees.iter().rev() {
-                    self.write_git_tree(obj)?;
-                }
-                dangling_trees.clear();
-            }
-
             tracing::trace!("commits_queue={:?}", commits_queue);
-            if let Some(id) = commits_queue.pop_front() {
+            if let Some(id) = commits_queue.pop_back() {
                 guard!(id);
                 let address = &self.calculate_commit_address(&id).await?;
                 let onchain_commit =
@@ -307,9 +213,9 @@ where
                     next_commit_of_prev_version.push((prev_version, id.to_string()));
                     // }
                 } else {
-                    tree_obj_queue.push_back(to_load);
+                    tree_obj_queue.push_front(to_load);
                     for parent_id in &obj.parents {
-                        commits_queue.push_back(*parent_id);
+                        commits_queue.push_front(*parent_id);
                     }
                     tracing::trace!("Push to dangling commits: {}", id);
                     dangling_commits.push(obj);
@@ -324,6 +230,106 @@ where
                 }
                 dangling_commits.clear();
                 continue;
+            }
+            break;
+        }
+
+        loop {
+            if blobs_restore_plan.is_available() {
+                let visited_ref = Arc::clone(&visited);
+                let visited_ipfs_ref = Arc::clone(&visited_ipfs);
+                tracing::debug!("branch={branch}: Restoring blobs");
+                blobs_restore_plan
+                    .restore(self, visited_ref, visited_ipfs_ref)
+                    .await?;
+                blobs_restore_plan = restore_blobs::BlobsRebuildingPlan::new();
+                continue;
+            }
+            if let Some(tree_node_to_load) = tree_obj_queue.pop_front() {
+                tracing::debug!("branch={branch}: Loading tree: {:?}", tree_node_to_load);
+                let id = tree_node_to_load.oid;
+                tracing::debug!("branch={branch}: Loading tree: {}", id);
+                guard!(id);
+                tracing::debug!("branch={branch}: Ok. Guard passed. Loading tree: {}", id);
+                let path_to_node = tree_node_to_load.path;
+                let tree_object_id = format!("{}", tree_node_to_load.oid);
+                let mut repo_contract = self.blockchain.repo_contract().clone();
+                let address = blockchain::Tree::calculate_address(
+                    &Arc::clone(self.blockchain.client()),
+                    &mut repo_contract,
+                    &tree_object_id,
+                )
+                .await?;
+
+                let onchain_tree_object =
+                    blockchain::Tree::load(&self.blockchain.client(), &address).await?;
+                let tree_object: git_object::Tree = onchain_tree_object.into();
+
+                tracing::debug!("branch={branch}: Tree obj parsed {}", id);
+                for entry in &tree_object.entries {
+                    let oid = entry.oid;
+                    match entry.mode {
+                        git_object::tree::EntryMode::Tree => {
+                            tracing::debug!("branch={branch}: Tree entry: tree {}->{}", id, oid);
+                            let to_load = TreeObjectsQueueItem {
+                                path: format!("{}/{}", path_to_node, entry.filename),
+                                oid,
+                                branches: tree_node_to_load.branches.clone(),
+                            };
+                            tree_obj_queue.push_back(to_load);
+                        }
+                        git_object::tree::EntryMode::Commit => (),
+                        git_object::tree::EntryMode::Blob
+                        | git_object::tree::EntryMode::BlobExecutable
+                        | git_object::tree::EntryMode::Link => {
+                            tracing::debug!("branch={branch}: Tree entry: blob {}->{}", id, oid);
+                            let file_path = format!("{}/{}", path_to_node, entry.filename);
+                            for branch in tree_node_to_load.branches.iter() {
+                                let mut repo_contract = self.blockchain.repo_contract().clone();
+                                let snapshot_address = blockchain::Snapshot::calculate_address(
+                                    &Arc::clone(self.blockchain.client()),
+                                    &mut repo_contract,
+                                    branch,
+                                    // Note:
+                                    // Removing prefixing "/" in the path
+                                    &file_path[1..],
+                                )
+                                .await?;
+                                let snapshot_contract =
+                                    GoshContract::new(&snapshot_address, gosh_abi::SNAPSHOT);
+                                match snapshot_contract.is_active(self.blockchain.client()).await {
+                                    Ok(true) => {
+                                        tracing::debug!(
+                                            "branch={branch}: Adding a blob to search for. Path: {}, id: {}, snapshot: {}",
+                                            file_path,
+                                            oid,
+                                            snapshot_address
+                                        );
+                                        blobs_restore_plan
+                                            .mark_blob_to_restore(snapshot_address, oid);
+                                    }
+                                    _ => {
+                                        continue;
+                                    }
+                                }
+                            }
+                        }
+                        _ => {
+                            tracing::debug!("branch={branch}: IT MUST BE NOTED!");
+                            panic!();
+                        }
+                    }
+                }
+                tracing::trace!("Push to dangling tree: {}", tree_object_id);
+                dangling_trees.push(tree_object);
+                continue;
+            }
+            if !dangling_trees.is_empty() {
+                tracing::trace!("Writing dangling trees");
+                for obj in dangling_trees.iter().rev() {
+                    self.write_git_tree(obj)?;
+                }
+                dangling_trees.clear();
             }
             break;
         }

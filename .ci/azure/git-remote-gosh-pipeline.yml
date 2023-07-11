@@ -1,6 +1,6 @@
 variables:
 - name: RUSTUP_TOOLCHAIN
-  value: 1.68.0
+  value: 1.70.0
 
 trigger: none
 pr: none
@@ -50,7 +50,7 @@ steps:
   displayName: Install pre-requirements Linux
 # Mac
 - script: |
-    brew install protobuf
+    brew install protobuf openssl cmake llvm
   condition: and(eq(variables['Agent.OS'], 'Darwin'), eq(variables['DRYRUN'], 'false'))
   displayName: Install pre-requirements MacOS
 # Windows
@@ -102,8 +102,9 @@ steps:
 - script: |
     set -ex
     sudo apt update -y
-    sudo apt install -y build-essential g++-x86-64-linux-gnu libc6-dev-amd64-cross g++-aarch64-linux-gnu libc6-dev-arm64-cross gcc-aarch64-linux-gnu
-    rustup target add aarch64-unknown-linux-gnu 
+    sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+    sudo apt install -y clang build-essential g++-x86-64-linux-gnu libc6-dev-amd64-cross g++-aarch64-linux-gnu libc6-dev-arm64-cross gcc-aarch64-linux-gnu
+    rustup target add aarch64-unknown-linux-gnu
     cargo build --release --target aarch64-unknown-linux-gnu
   env:
     CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: x86_64-linux-gnu-gcc
@@ -112,6 +113,7 @@ steps:
     CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
     CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
     CXX_aarch64_unknown_linux_gnu: aarch64-linux-gnu-g++
+    BINDGEN_EXTRA_CLANG_ARGS": '--sysroot /usr/arm-linux-gnueabi'
   workingDirectory: $(versionNo)/git-remote-gosh
   condition: and(eq(variables['Agent.OS'], 'Linux'), eq(variables['DRYRUN'], 'false'))
   displayName: Build Linux arm64
