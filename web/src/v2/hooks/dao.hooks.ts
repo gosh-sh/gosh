@@ -44,7 +44,7 @@ import {
 import { useParams } from 'react-router-dom'
 import { Dao } from '../blockchain/dao'
 import { UserProfile } from '../../blockchain/userprofile'
-import { Wallet } from '../blockchain/wallet'
+import { DaoWallet } from '../blockchain/daowallet'
 import { EDaoEventType, TToastStatus } from '../../types/common.types'
 import { getAllAccounts, getPaginatedAccounts } from '../../blockchain/utils'
 import { SmvEvent } from '../blockchain/smvproposal'
@@ -91,7 +91,7 @@ export function useCreateDao() {
             const wallet = (await dao.getMemberWallet({
                 profile: profile.address,
                 keys: user.keys,
-            })) as Wallet
+            })) as DaoWallet
             await profile.turnOn(wallet.address, user.keys.public)
 
             // Mint tokens
@@ -566,7 +566,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
     const { details: dao } = useRecoilValue(daoDetailsAtom)
     const [data, setData] = useRecoilState(daoMemberAtom)
 
-    const activate = async (profile: UserProfile, wallet: Wallet) => {
+    const activate = async (profile: UserProfile, wallet: DaoWallet) => {
         try {
             setData((state) => ({
                 ...state,
@@ -1388,7 +1388,7 @@ export function useDaoEventList(params: { count?: number; loadOnInit?: boolean }
 
     const getBlockchainItems = async (params: {
         dao: Dao
-        wallet: Wallet | null
+        wallet: DaoWallet | null
         limit: number
         cursor?: string
     }) => {
@@ -1881,7 +1881,7 @@ export function useUpgradeDaoComplete() {
     }
 
     const upgradeRepositories = async (params: {
-        wallet: Wallet
+        wallet: DaoWallet
         daoname: string
         daover: string
         alone: boolean

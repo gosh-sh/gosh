@@ -3,7 +3,7 @@ import { UserProfile } from '../../blockchain/userprofile'
 import { TToastStatus } from '../../types/common.types'
 import { Dao } from '../blockchain/dao'
 import { SmvEvent } from '../blockchain/smvproposal'
-import { Wallet } from '../blockchain/wallet'
+import { DaoWallet } from '../blockchain/daowallet'
 
 export type TDaoListItem = {
     account: Dao | null
@@ -25,7 +25,7 @@ export type TUserDaoList = {
 
 export type TDaoDetailsMemberItem = {
     profile: UserProfile
-    wallet: Wallet
+    wallet: DaoWallet
     allowance: number
 }
 
@@ -52,7 +52,7 @@ export type TDaoMember = {
     status?: TToastStatus
     details: {
         profile: UserProfile | null
-        wallet: Wallet | null
+        wallet: DaoWallet | null
         allowance: number | null
         balance: {
             total: number

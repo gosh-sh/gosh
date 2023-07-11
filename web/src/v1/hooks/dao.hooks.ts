@@ -31,7 +31,7 @@ import {
 import { useParams } from 'react-router-dom'
 import { Dao } from '../blockchain/dao'
 import { UserProfile } from '../../blockchain/userprofile'
-import { Wallet } from '../blockchain/wallet'
+import { DaoWallet } from '../blockchain/daowallet'
 import { TToastStatus } from '../../types/common.types'
 import { getPaginatedAccounts } from '../../blockchain/utils'
 import { SmvEvent } from '../blockchain/smvproposal'
@@ -433,7 +433,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
     const [data, setData] = useRecoilState(daoMemberAtom)
     const resetData = useResetRecoilState(daoMemberAtom)
 
-    const activate = async (profile: UserProfile, wallet: Wallet) => {
+    const activate = async (profile: UserProfile, wallet: DaoWallet) => {
         if (!(await wallet.isDeployed())) {
             return
         }
@@ -888,7 +888,7 @@ export function useDaoEventList(params: { count?: number; loadOnInit?: boolean }
 
     const getBlockchainItems = async (params: {
         daoAccount: Dao
-        daoWallet: Wallet | null
+        daoWallet: DaoWallet | null
         limit: number
         cursor?: string
     }) => {

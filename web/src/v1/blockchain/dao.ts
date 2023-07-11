@@ -3,7 +3,7 @@ import { BaseContract } from '../../blockchain/contract'
 import DaoABI from './abi/dao.abi.json'
 import { TDaoDetailsMemberItem } from '../types/dao.types'
 import { UserProfile } from '../../blockchain/userprofile'
-import { Wallet } from './wallet'
+import { DaoWallet } from './daowallet'
 import { SmvEvent } from './smvproposal'
 
 export class Dao extends BaseContract {
@@ -31,7 +31,7 @@ export class Dao extends BaseContract {
         })
         const members = Object.keys(value0).map((key) => ({
             profile: new UserProfile(this.client, `0:${key.slice(2)}`),
-            wallet: new Wallet(this.client, value0[key].member),
+            wallet: new DaoWallet(this.client, value0[key].member),
             allowance: parseInt(value0[key].count),
         }))
         return members
@@ -48,7 +48,7 @@ export class Dao extends BaseContract {
             undefined,
             { useCachedBoc: true },
         )
-        return new Wallet(this.client, value0, keys)
+        return new DaoWallet(this.client, value0, keys)
     }
 
     async getEventCodeHash(): Promise<string> {

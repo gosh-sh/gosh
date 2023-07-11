@@ -3,7 +3,7 @@ import { BaseContract } from '../../blockchain/contract'
 import DaoABI from './abi/dao.abi.json'
 import { TDaoDetailsMemberItem } from '../types/dao.types'
 import { UserProfile } from '../../blockchain/userprofile'
-import { Wallet } from './wallet'
+import { DaoWallet } from './daowallet'
 import { SmvEvent } from './smvproposal'
 import { GoshError } from 'react-gosh'
 
@@ -52,7 +52,7 @@ export class Dao extends BaseContract {
 
         const members = Object.keys(parse).map((key) => ({
             profile: new UserProfile(this.client, `0:${key.slice(2)}`),
-            wallet: new Wallet(this.client, parse[key].member),
+            wallet: new DaoWallet(this.client, parse[key].member),
             allowance: parseInt(parse[key].count),
         }))
         return members
@@ -84,7 +84,7 @@ export class Dao extends BaseContract {
             _address = value0
         }
 
-        return new Wallet(this.client, _address!, keys)
+        return new DaoWallet(this.client, _address!, keys)
     }
 
     async getEventCodeHash(): Promise<string> {

@@ -1,6 +1,6 @@
 import { KeyPair, TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
-import WalletABI from './abi/goshwallet.abi.json'
+import WalletABI from './abi/daowallet.abi.json'
 import { SmvLocker } from './smvlocker'
 import { SmvClient } from './smvclient'
 import { TGoshCommitTag } from '../types/repository.types'
@@ -10,7 +10,7 @@ import { MAX_PARALLEL_READ, SYSTEM_TAG } from '../../constants'
 import { ETaskReward, TTaskGrant } from '../types/dao.types'
 import { UserProfile } from '../../blockchain/userprofile'
 
-export class Wallet extends BaseContract {
+export class DaoWallet extends BaseContract {
     constructor(client: TonClient, address: string, keys?: KeyPair) {
         super(client, WalletABI, address, { keys })
     }
@@ -59,19 +59,6 @@ export class Wallet extends BaseContract {
 
     async setRepositoriesUpgraded(): Promise<void> {
         await this.run('setRepoUpgraded', { res: true })
-    }
-
-    async setTasksUpgraded(params: { cell?: boolean | undefined }) {
-        const { cell } = params
-
-        if (cell) {
-            const { value0 } = await this.runLocal('getCellForRedeployedTask', {
-                time: null,
-            })
-            return value0
-        } else {
-            await this.run('setRedeployedTask', {})
-        }
     }
 
     async smvLockerBusy() {
@@ -627,53 +614,6 @@ export class Wallet extends BaseContract {
         })
     }
 
-    async transferTask(params: { accountData: any; reponame: string }) {
-        const { accountData, reponame } = params
-
-        const constructorParams = {
-            nametask: accountData._nametask,
-            repoName: reponame,
-            ready: accountData._ready,
-            candidates: accountData._candidates.map((item: any) => ({
-                ...item,
-                daoMembers: {},
-            })),
-            grant: accountData._grant,
-            hashtag: accountData._hashtag,
-            indexFinal: accountData._indexFinal,
-            locktime: accountData._locktime,
-            fullAssign: accountData._fullAssign,
-            fullReview: accountData._fullReview,
-            fullManager: accountData._fullManager,
-            assigners: accountData._assigners,
-            reviewers: accountData._reviewers,
-            managers: accountData._managers,
-            assignfull: accountData._assignfull,
-            reviewfull: accountData._reviewfull,
-            managerfull: accountData._managerfull,
-            assigncomplete: accountData._assigncomplete,
-            reviewcomplete: accountData._reviewcomplete,
-            managercomplete: accountData._managercomplete,
-            allassign: accountData._allassign,
-            allreview: accountData._allreview,
-            allmanager: accountData._allmanager,
-            lastassign: accountData._lastassign,
-            lastreview: accountData._lastreview,
-            lastmanager: accountData._lastmanager,
-            balance: accountData._balance,
-        }
-
-        const { value0: cell } = await this.runLocal('getCellForTask', constructorParams)
-        const { value0 } = await this.runLocal('getCellForRedeployTask', {
-            reponame: constructorParams.repoName,
-            nametask: constructorParams.nametask,
-            hashtag: constructorParams.hashtag,
-            data: cell,
-            time: null,
-        })
-        return value0
-    }
-
     async createMultiEvent(params: {
         proposals: { type: EDaoEventType; params: any }[]
         comment?: string
@@ -796,16 +736,6 @@ export class Wallet extends BaseContract {
                 }
                 if (type === EDaoEventType.TASK_DELETE) {
                     return await this.deleteTask({ ...params, cell: true })
-                }
-                if (type === EDaoEventType.DELAY) {
-                    const { value0 } = await this.runLocal('getCellDelay', {})
-                    return value0
-                }
-                if (type === EDaoEventType.TASK_REDEPLOY) {
-                    return await this.transferTask(params)
-                }
-                if (type === EDaoEventType.TASK_REDEPLOYED) {
-                    return await this.setTasksUpgraded({ ...params, cell: true })
                 }
                 return null
             },

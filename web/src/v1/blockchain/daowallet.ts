@@ -1,10 +1,10 @@
 import { KeyPair, TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
-import WalletABI from './abi/goshwallet.abi.json'
+import WalletABI from './abi/daowallet.abi.json'
 import { SmvLocker } from './smvlocker'
 import { SmvClient } from './smvclient'
 
-export class Wallet extends BaseContract {
+export class DaoWallet extends BaseContract {
     constructor(client: TonClient, address: string, keys?: KeyPair) {
         super(client, WalletABI, address, { keys })
     }

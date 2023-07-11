@@ -2,7 +2,7 @@ import { TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
 import SmvEventABI from './abi/smvproposal.abi.json'
 import { DaoEventType, MAX_PARALLEL_READ, SYSTEM_TAG } from '../../constants'
-import { Wallet } from './wallet'
+import { DaoWallet } from './daowallet'
 import { EDaoEventType } from '../../types/common.types'
 import { GoshError } from '../../errors'
 import { executeByChunk, sleep } from '../../utils'
@@ -15,7 +15,7 @@ export class SmvEvent extends BaseContract {
         super(client, SmvEventABI, address)
     }
 
-    async getDetails(params: { wallet?: Wallet | null }) {
+    async getDetails(params: { wallet?: DaoWallet | null }) {
         const { wallet } = params
         const details = await this.runLocal('getDetails', {})
 
@@ -42,7 +42,7 @@ export class SmvEvent extends BaseContract {
             Object.keys(details.value9),
             MAX_PARALLEL_READ,
             async (walletaddr: string) => {
-                const wallet = new Wallet(this.client, walletaddr)
+                const wallet = new DaoWallet(this.client, walletaddr)
                 const profile = await wallet.getProfile()
                 return {
                     username: await profile.getName(),
