@@ -47,7 +47,7 @@ import { UserProfile } from '../../blockchain/userprofile'
 import { DaoWallet } from '../blockchain/daowallet'
 import { EDaoEventType, TToastStatus } from '../../types/common.types'
 import { getAllAccounts, getPaginatedAccounts } from '../../blockchain/utils'
-import { SmvEvent } from '../blockchain/smvproposal'
+import { DaoEvent } from '../blockchain/daoevent'
 import { GoshAdapterFactory } from 'react-gosh'
 import { daoRepositoryListAtom } from '../store/repository.state'
 import { TSystemContract } from '../../types/blockchain.types'
@@ -1583,7 +1583,7 @@ export function useDaoEvent(
         }
     }, [address, dao.address, member.isFetched])
 
-    const getEventData = async (account: SmvEvent, type: number) => {
+    const getEventData = async (account: DaoEvent, type: number) => {
         try {
             const verbose = await account.getData(type, { verbose: true })
             setEvents((state) => ({

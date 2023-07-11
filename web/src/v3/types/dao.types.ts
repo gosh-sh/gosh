@@ -2,7 +2,7 @@ import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { UserProfile } from '../../blockchain/userprofile'
 import { TToastStatus } from '../../types/common.types'
 import { Dao } from '../blockchain/dao'
-import { SmvEvent } from '../blockchain/smvproposal'
+import { DaoEvent } from '../blockchain/daoevent'
 import { DaoWallet } from '../blockchain/daowallet'
 import { Task } from '../blockchain/task'
 import { TGoshCommit } from './repository.types'
@@ -101,7 +101,7 @@ export type TDaoEventReviewer = {
 }
 
 export type TDaoEventDetails = {
-    account: SmvEvent
+    account: DaoEvent
     address: string
     platformId: string
     type: number

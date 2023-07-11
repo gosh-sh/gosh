@@ -8,7 +8,7 @@ import { GoshError } from '../../errors'
 import { executeByChunk } from '../../utils'
 import { AppConfig } from '../../appconfig'
 
-export class SmvEvent extends BaseContract {
+export class DaoEvent extends BaseContract {
     constructor(client: TonClient, address: string) {
         super(client, SmvEventABI, address)
     }

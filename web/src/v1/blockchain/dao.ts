@@ -4,7 +4,7 @@ import DaoABI from './abi/dao.abi.json'
 import { TDaoDetailsMemberItem } from '../types/dao.types'
 import { UserProfile } from '../../blockchain/userprofile'
 import { DaoWallet } from './daowallet'
-import { SmvEvent } from './smvproposal'
+import { DaoEvent } from './daoevent'
 
 export class Dao extends BaseContract {
     constructor(client: TonClient, address: string) {
@@ -59,8 +59,8 @@ export class Dao extends BaseContract {
         return hash
     }
 
-    async getEvent(params: { address: string }): Promise<SmvEvent> {
+    async getEvent(params: { address: string }): Promise<DaoEvent> {
         const { address } = params
-        return new SmvEvent(this.client, address)
+        return new DaoEvent(this.client, address)
     }
 }

@@ -10,7 +10,7 @@ import { AppConfig } from '../../appconfig'
 import _ from 'lodash'
 import { TDaoEventReviewer, TTaskGrantPair } from '../types/dao.types'
 
-export class SmvEvent extends BaseContract {
+export class DaoEvent extends BaseContract {
     constructor(client: TonClient, address: string) {
         super(client, SmvEventABI, address)
     }
