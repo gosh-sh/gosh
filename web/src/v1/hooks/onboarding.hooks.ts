@@ -194,7 +194,7 @@ export function useOnboardingRepositories(organization: TOnboardingOrganization)
               )
 
         const items = data.map((item: any) => ({
-            daoName: organization.name,
+            daoname: organization.name,
             id: item.id,
             name: item.name,
             description: item.description,

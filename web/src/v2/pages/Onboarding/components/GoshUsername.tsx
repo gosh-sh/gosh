@@ -40,7 +40,7 @@ const GoshUsername = (props: TGoshUsernameProps) => {
             // Signup with onboarding
             const username = values.username.trim().toLowerCase()
             const seed = data.phrase.join(' ')
-            const isAllValid = await signup(values.username)
+            const isAllValid = await signup(username)
             toast.update(toastId.current, {
                 ...ToastOptionsShortcuts.Default,
                 type: toast.TYPE.SUCCESS,
