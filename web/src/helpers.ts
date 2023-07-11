@@ -93,7 +93,7 @@ export const ToastOptionsShortcuts = {
  * Select2 (react-select)
  */
 export const Select2ClassNames = {
-    control: (props) => {
+    control: (props: any) => {
         return classNames(
             '!rounded-lg !border-gray-e6edff !text-sm !bg-white',
             props.isDisabled ? '!text-gray-7c8db5' : null,
@@ -101,5 +101,7 @@ export const Select2ClassNames = {
     },
     valueContainer: () => '!px-4 !py-1',
     placeholder: () => '!text-black/40',
+    menuList: () => '!py-0',
     noOptionsMessage: () => '!text-sm',
+    option: () => '!text-sm',
 }

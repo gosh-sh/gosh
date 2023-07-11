@@ -38,7 +38,7 @@ const Preloader = (props: React.HTMLAttributes<HTMLDivElement>) => {
 
 const Dispatcher = () => {
     const { showBoundary } = useErrorBoundary()
-    const routeMatch = useMatch('/o/:daoName/*')
+    const routeMatch = useMatch('/o/:daoname/*')
     const [{ version }, setAppContext] = useRecoilState(appContextAtom)
     const [isInitialized, setIsInitialized] = useState<boolean>(false)
 
@@ -62,18 +62,17 @@ const Dispatcher = () => {
             const versions = Object.keys(AppConfig.versions).reverse()
 
             let version = versions[0]
-            if (routeMatch?.params.daoName) {
+            if (routeMatch?.params.daoname) {
                 for (const ver of versions) {
-                    console.debug(routeMatch.params.daoName, ver)
+                    console.debug(routeMatch.params.daoname, ver)
                     const sc = AppConfig.goshroot.getSystemContract(ver)
-                    const dc = await sc.getDao({ name: routeMatch.params.daoName })
+                    const dc = await sc.getDao({ name: routeMatch.params.daoname })
                     if (await dc.isDeployed()) {
                         version = ver
                         break
                     }
                 }
             }
-            console.debug('setAppContext', version)
 
             setAppContext((state) => ({ ...state, version }))
         }
@@ -81,7 +80,7 @@ const Dispatcher = () => {
         if (isInitialized) {
             _setAppContext()
         }
-    }, [isInitialized, routeMatch?.params.daoName])
+    }, [isInitialized, routeMatch?.params.daoname])
 
     if (!isInitialized) {
         return (
@@ -101,7 +100,7 @@ const Dispatcher = () => {
         <Suspense
             fallback={
                 <Preloader>
-                    <Loader>Render version context</Loader>
+                    <Loader>Render version context {version}</Loader>
                 </Preloader>
             }
         >
