@@ -649,7 +649,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
         const client = getSystemContract().client
         const found = dao.members.find(({ profile }) => profile.address === user.profile)
         const wallet = await dao.account.getMemberWallet({
-            profile: user.profile,
+            data: { profile: user.profile },
             keys: user.keys,
         })
         const walletDeployed = await wallet.isDeployed()
@@ -969,7 +969,7 @@ export function useDaoHelpers() {
     const checkDaoWallet = async (profile: string) => {
         const isMember = await dao.account!.isMember(profile)
         if (!isMember) {
-            const wallet = await dao.account!.getMemberWallet({ profile })
+            const wallet = await dao.account!.getMemberWallet({ data: { profile } })
             await dao.account!.createLimitedWallet(profile)
             const wait = await whileFinite(async () => {
                 return await wallet.isDeployed()
@@ -2723,6 +2723,10 @@ export function useCreateTask() {
             comment?: string
         }) => {
             try {
+                if (!dao.name) {
+                    throw new GoshError('Value error', 'DAO name undefined')
+                }
+
                 setStatus({ type: 'pending', data: 'Validating data' })
 
                 // Get task config
@@ -2743,9 +2747,11 @@ export function useCreateTask() {
 
                 // Check if task already exists
                 const account = await getSystemContract().getTask({
-                    daoname: dao.name,
-                    reponame: params.reponame,
-                    taskname: params.taskname,
+                    data: {
+                        daoname: dao.name,
+                        reponame: params.reponame,
+                        taskname: params.taskname,
+                    },
                 })
                 if (await account.isDeployed()) {
                     throw new GoshError('Create task error', {
@@ -2780,7 +2786,7 @@ export function useCreateTask() {
                 throw e
             }
         },
-        [member.isMember, member.isReady],
+        [dao.name, member.isMember, member.isReady],
     )
 
     return {

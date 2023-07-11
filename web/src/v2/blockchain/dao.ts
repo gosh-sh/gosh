@@ -17,6 +17,11 @@ export class Dao extends BaseContract {
         return value0
     }
 
+    async isMintOn(): Promise<boolean> {
+        const { _allowMint } = await this.runLocal('_allowMint', {})
+        return _allowMint
+    }
+
     async getName(): Promise<string> {
         const { value0 } = await this.runLocal('getNameDao', {}, undefined, {
             useCachedBoc: true,
@@ -54,27 +59,24 @@ export class Dao extends BaseContract {
 
     async getMemberWallet(params: {
         address?: string
-        profile?: string
-        index?: number
         keys?: KeyPair
+        data?: {
+            profile: string
+            index?: number
+        }
     }) {
-        const { address, profile, index = 0, keys } = params
+        const { address, data, keys } = params
 
-        if (!address && !profile) {
-            throw new GoshError(
-                'Value error',
-                'Address or profile address should be provided',
-            )
+        if (!address && !data) {
+            throw new GoshError('Value error', 'Data or address not passed')
         }
 
         let _address = address
         if (!_address) {
+            const { profile, index = 0 } = data!
             const { value0 } = await this.runLocal(
                 'getAddrWallet',
-                {
-                    pubaddr: profile,
-                    index,
-                },
+                { pubaddr: profile, index },
                 undefined,
                 { useCachedBoc: true },
             )
@@ -95,6 +97,19 @@ export class Dao extends BaseContract {
     async getEvent(params: { address: string }): Promise<SmvEvent> {
         const { address } = params
         return new SmvEvent(this.client, address)
+    }
+
+    async getTaskCodeHash(reponame: string): Promise<string> {
+        const { value0 } = await this.runLocal(
+            'getTaskCode',
+            { repoName: reponame },
+            undefined,
+            {
+                useCachedBoc: true,
+            },
+        )
+        const { hash } = await this.client.boc.get_boc_hash({ boc: value0 })
+        return hash
     }
 
     async createLimitedWallet(profile: string) {

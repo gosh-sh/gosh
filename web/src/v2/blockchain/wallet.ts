@@ -734,6 +734,9 @@ export class Wallet extends BaseContract {
                 if (type === EDaoEventType.TASK_CREATE) {
                     return await this.createTask({ ...params, cell: true })
                 }
+                if (type === EDaoEventType.TASK_DELETE) {
+                    return await this.deleteTask({ ...params, cell: true })
+                }
                 return null
             },
         )

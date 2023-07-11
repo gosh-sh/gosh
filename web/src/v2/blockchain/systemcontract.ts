@@ -6,13 +6,9 @@ import { Dao } from './dao'
 import { GoshRepository } from './repository'
 import { AppConfig } from '../../appconfig'
 import { VersionController } from '../../blockchain/versioncontroller'
-import { executeByChunk, whileFinite } from '../../utils'
+import { whileFinite } from '../../utils'
 import { GoshTag } from './goshtag'
 import { Task } from './task'
-import { contextVersion } from '../constants'
-import { getAllAccounts } from '../../blockchain/utils'
-import { MAX_PARALLEL_READ } from '../../constants'
-import { GoshCommitTag } from './committag'
 
 export class SystemContract extends BaseContract {
     versionController: VersionController
@@ -87,21 +83,21 @@ export class SystemContract extends BaseContract {
 
     async getTask(options: {
         address?: string
-        daoname?: string
-        reponame?: string
-        taskname?: string
+        data?: {
+            daoname: string
+            reponame: string
+            taskname: string
+        }
     }) {
-        const { daoname, reponame, taskname, address } = options
+        const { address, data } = options
+
+        if (!address && !data) {
+            throw new GoshError('Value error', 'Data or address not passed')
+        }
 
         let _address = address
         if (!_address) {
-            if (!daoname || !reponame || !taskname) {
-                throw new GoshError(
-                    'Value error',
-                    'DAO / repository / task name is undefined',
-                )
-            }
-
+            const { daoname, reponame, taskname } = data!
             const { value0 } = await this.runLocal('getTaskAddr', {
                 dao: daoname,
                 repoName: reponame,
