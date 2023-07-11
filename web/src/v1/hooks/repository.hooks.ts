@@ -113,7 +113,7 @@ export function useDaoRepositoryList(params: { count: number }) {
             setData((state) => ({ ...state, isFetching: true }))
             const blockchain = await getBlockchainItems({
                 daoaddr: dao.address,
-                limit: Math.max(data.items.length, count),
+                limit: count,
             })
             setData((state) => {
                 const different = _.differenceWith(
@@ -145,7 +145,7 @@ export function useDaoRepositoryList(params: { count: number }) {
         } finally {
             setData((state) => ({ ...state, isFetching: false }))
         }
-    }, [dao.address])
+    }, [dao.address, count])
 
     const getNext = useCallback(async () => {
         try {
