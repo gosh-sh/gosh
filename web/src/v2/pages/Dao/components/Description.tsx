@@ -2,6 +2,7 @@ import classNames from 'classnames'
 import { useDao, useDaoMember } from '../../../hooks/dao.hooks'
 import ReactMarkdown from 'react-markdown'
 import rehypeRaw from 'rehype-raw'
+import remarkGfm from 'remark-gfm'
 
 type TDaoDescriptionProps = React.HTMLAttributes<HTMLDivElement>
 
@@ -34,7 +35,10 @@ const DaoDescription = (props: TDaoDescriptionProps) => {
                 </div>
             ) : (
                 <div className="markdown-body px-4 py-4">
-                    <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+                    <ReactMarkdown
+                        rehypePlugins={[rehypeRaw]}
+                        remarkPlugins={[remarkGfm]}
+                    >
                         {dao.details.description}
                     </ReactMarkdown>
                 </div>
