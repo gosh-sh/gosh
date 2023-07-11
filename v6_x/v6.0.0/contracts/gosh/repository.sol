@@ -119,7 +119,7 @@ contract Repository is Modifiers{
             this.smvdeployrepotagin{value: 0.1 ton, flag: 1}(hashtag.values());
             return;
         }
-        if ((ver == "4.0.0") || (ver == "5.0.0") || (ver == "5.1.0")){
+        if ((ver == "4.0.0") || (ver == "5.0.0") || (ver == "5.1.0") || (ver == "6.0.0")){
             mapping(uint256 => string) hashtag;
             bool ans;
             (ans, _Branches, _protectedBranch, _head, hashtag, _description) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => bool), string, mapping(uint256 => string), string));

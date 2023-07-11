@@ -214,7 +214,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             uint256 zero;
             this.returnWalletsVersionv4{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
         }
-        if ((ver == "5.0.0") || (ver == "5.1.0")) {
+        if ((ver == "5.0.0") || (ver == "5.1.0") || (ver == "6.0.0")) {
             mapping(uint256 => MemberToken) wallets;
             mapping(uint256 => string) hashtag;
             ( _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, wallets, hashtag, _my_wallets, _daoMembers, _reserve, , _totalsupply , _versions, _paidMembership) = abi.decode(a, (bool, bool, bool, bool, mapping(uint256 => MemberToken), mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string), mapping(uint8 => PaidMember)));
@@ -300,7 +300,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     function returnWalletsVersion(string ver, uint256 key, mapping(uint256 => MemberToken) wallets, mapping(uint256 => string) tags) public internalMsg senderIs(address(this)) accept {
         uint256 zero;
-        if ((ver == "5.0.0") || (ver == "5.1.0")) {
+        if ((ver == "5.0.0") || (ver == "5.1.0") || (ver == "6.0.0")) {
             optional(uint256, MemberToken) res = wallets.next(key);
             if ((key != zero) && (res.hasValue() == false)) { this.smvdeploytagin{value:0.2 ton, flag: 1}(address.makeAddrStd(0, key), tags.values()); }
             if (res.hasValue()) {
