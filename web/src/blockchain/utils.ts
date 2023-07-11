@@ -50,6 +50,39 @@ export const zstd = {
     },
 }
 
+export const goshipfs = {
+    async write(content: string, filename?: string): Promise<string> {
+        const form = new FormData()
+        const blob = new Blob([content])
+        form.append('file', blob, filename)
+
+        const response = await fetch(
+            `${AppConfig.goshipfs}/api/v0/add?pin=true&quiet=true`,
+            {
+                method: 'POST',
+                body: form,
+            },
+        )
+
+        if (!response.ok) {
+            throw new Error(`Error while uploading (${JSON.stringify(response)})`)
+        }
+        const responseBody = await response.json()
+        const { Hash: cid } = responseBody
+        return cid
+    },
+    async read(cid: string): Promise<Buffer> {
+        const response = await fetch(`${AppConfig.goshipfs}/ipfs/${cid.toString()}`, {
+            method: 'GET',
+        })
+
+        if (!response.ok) {
+            throw new Error(`Error while uploading (${JSON.stringify(response)})`)
+        }
+        return Buffer.from(await response.arrayBuffer())
+    },
+}
+
 export const getPaginatedAccounts = async (params: {
     filters?: string[]
     result?: string[]

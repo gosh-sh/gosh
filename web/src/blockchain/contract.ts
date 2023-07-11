@@ -186,7 +186,7 @@ class BaseContract {
         const { logging = true, retries = 3 } = settings ?? {}
 
         if (logging) {
-            console.debug('[Run]', { functionName, input, options })
+            console.debug('[Run]', { functionName, input })
         }
         const result = await retry(async () => {
             return await this.account.run(functionName, input, options)
