@@ -103,4 +103,19 @@ export class VersionController extends BaseContract {
         })
         return new DaoProfile(this.client, value0)
     }
+
+    async getCommitTagCode(params: {
+        tagcode: string
+        repoaddr: string
+        version: string
+    }): Promise<string> {
+        const { tagcode, repoaddr, version } = params
+        const { value0 } = await this.runLocal(
+            'getTagCode',
+            { tagcode, repo: repoaddr, ver: version },
+            undefined,
+            { useCachedBoc: true },
+        )
+        return value0
+    }
 }
