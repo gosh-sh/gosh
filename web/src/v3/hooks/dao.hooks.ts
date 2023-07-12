@@ -84,13 +84,15 @@ export function useCreateDao() {
 
             // Create DAO
             setStatus({ type: 'pending', data: 'Create DAO' })
-            const dao = await profile.createDao(systemContract, name, [profile.address])
+            const dao = (await profile.createDao(systemContract, name, [
+                profile.address,
+            ])) as Dao
             const version = await dao.getVersion()
 
             // Authorize DAO wallet
             setStatus({ type: 'pending', data: 'Authorize DAO' })
             const wallet = (await dao.getMemberWallet({
-                profile: profile.address,
+                data: { profile: profile.address },
                 keys: user.keys,
             })) as DaoWallet
             await profile.turnOn(wallet.address, user.keys.public)
