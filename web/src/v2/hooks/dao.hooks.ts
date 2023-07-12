@@ -830,6 +830,7 @@ export function useDaoHelpers() {
                 }
 
                 onSuccessCallback({ type: 'success', data: 'Prepare balances completed' })
+                return
             }
 
             throw new GoshError('Balance error', {
