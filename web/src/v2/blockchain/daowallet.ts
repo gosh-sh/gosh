@@ -88,6 +88,13 @@ export class DaoWallet extends BaseContract {
         await this.run('unlockVoting', { amount })
     }
 
+    async smvReleaseTokens() {
+        const balance = await this.account.getBalance()
+        if (parseInt(balance, 16) > 5000 * 10 ** 9) {
+            await this.run('updateHead', {})
+        }
+    }
+
     async smvEventVotes(platformId: string) {
         const locker = await this.getSmvLocker()
         const { value0 } = await this.runLocal(
@@ -478,6 +485,10 @@ export class DaoWallet extends BaseContract {
 
     async sendTokensToDaoWallet(profile: string, amount: number): Promise<void> {
         await this.run('sendToken', { pubaddr: profile, grant: amount })
+    }
+
+    async sendTokensToUpgradedDao(amount: number, version: string) {
+        await this.run('sendTokenToNewVersion', { grant: amount, newversion: version })
     }
 
     async createDaoTag(params: {

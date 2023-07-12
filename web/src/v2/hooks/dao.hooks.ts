@@ -572,13 +572,13 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
 
     const activate = async (profile: UserProfile, wallet: DaoWallet) => {
         try {
-            setData((state) => ({
-                ...state,
-                status: { type: 'pending', data: 'Activating account' },
-            }))
-
             // Deploy limited wallet
             if (!(await wallet.isDeployed())) {
+                setData((state) => ({
+                    ...state,
+                    status: { type: 'pending', data: 'Create DAO wallet' },
+                }))
+
                 await dao.account!.createLimitedWallet(profile.address)
                 const wait = await whileFinite(async () => {
                     return await wallet.isDeployed()
@@ -593,6 +593,10 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
 
             // Activate wallet
             if (!(await wallet.isTurnedOn())) {
+                setData((state) => ({
+                    ...state,
+                    status: { type: 'pending', data: 'Activating DAO wallet' },
+                }))
                 await profile.turnOn(wallet.address, user.keys!.public)
             }
 
