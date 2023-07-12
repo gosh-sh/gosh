@@ -8,10 +8,12 @@ import { supabase } from '../../supabase'
 import { Buffer } from 'buffer'
 import { executeByChunk, splitByChunk, whileFinite } from '../../utils'
 import {
+    DAO_TOKEN_TRANSFER_TAG,
     DISABLED_VERSIONS,
     MAX_PARALLEL_READ,
     MAX_PARALLEL_WRITE,
     SYSTEM_TAG,
+    VESTING_BALANCE_TAG,
 } from '../../constants'
 import {
     useRecoilState,
@@ -449,10 +451,11 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
         try {
             setData((state) => ({ ...state, isFetchingData: true }))
 
+            const daoname = await dao.getName()
             const details = await dao.getDetails()
             const members = await dao.getMembers(details.wallets)
-            const { summary, description } = await getDescription(repository)
             const tasks = await getTaskCount(dao)
+            const { summary, description } = await getDescription(daoname, repository)
 
             setData((state) => ({
                 ...state,
@@ -485,17 +488,25 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
         }
     }
 
-    const getDescription = async (repository: GoshRepository) => {
+    const getDescription = async (daoname: string, repository: GoshRepository) => {
         if (!(await repository.isDeployed())) {
             return { summary: '', description: '' }
         }
 
         // Get DAO description
+        const { commit } = await repository.getBranch('main')
+        const repover = await repository.getVersion()
+        if (commit.version !== repover) {
+            const reponame = await repository.getName()
+            repository = (await AppConfig.goshroot
+                .getSystemContract(commit.version)
+                .getRepository({ path: `${daoname}/${reponame}` })) as GoshRepository
+        }
+
         const [summary, description] = await Promise.all(
             ['description.txt', 'README.md'].map(async (filename) => {
                 const snapshot = await repository.getSnapshot({
-                    branch: 'main',
-                    filename,
+                    data: { branch: 'main', filename },
                 })
                 if (await snapshot.isDeployed()) {
                     const result = await snapshot.getContent()
@@ -574,13 +585,13 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
 
     const activate = async (profile: UserProfile, wallet: DaoWallet) => {
         try {
-            setData((state) => ({
-                ...state,
-                status: { type: 'pending', data: 'Activating account' },
-            }))
-
             // Deploy limited wallet
             if (!(await wallet.isDeployed())) {
+                setData((state) => ({
+                    ...state,
+                    status: { type: 'pending', data: 'Create DAO wallet' },
+                }))
+
                 await dao.account!.createLimitedWallet(profile.address)
                 const wait = await whileFinite(async () => {
                     return await wallet.isDeployed()
@@ -595,6 +606,10 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
 
             // Activate wallet
             if (!(await wallet.isTurnedOn())) {
+                setData((state) => ({
+                    ...state,
+                    status: { type: 'pending', data: 'Activating DAO wallet' },
+                }))
                 await profile.turnOn(wallet.address, user.keys!.public)
             }
 
@@ -674,6 +689,91 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
         }))
     }, [user.profile, dao.members?.length, dao.address])
 
+    const transferTokensFromPrevDao = useCallback(async () => {
+        if (
+            !dao.name ||
+            !dao.version ||
+            !dao.account ||
+            !user.profile ||
+            !user.keys ||
+            !data.details.isReady
+        ) {
+            return { retry: false }
+        }
+
+        // Extra check for member DAO wallet to be deployed
+        // `data.details.isReady` checks it, but check twice better
+        if (!data.details.wallet?.isDeployed()) {
+            return { retry: false }
+        }
+
+        const systemContract = getSystemContract()
+        const tagname = `${DAO_TOKEN_TRANSFER_TAG}:${user.username}`
+
+        // Check if stoptag exists
+        const repository = await systemContract.getRepository({
+            path: `${dao.name}/${DAO_TOKEN_TRANSFER_TAG}`,
+        })
+        const stoptag = await systemContract.getCommitTag({
+            data: {
+                repoaddr: repository.address,
+                tagname,
+            },
+        })
+        if (stoptag) {
+            return { retry: false }
+        }
+
+        // Go by prev DAO one by one and calculate untransferred balances
+        setData((state) => ({
+            ...state,
+            status: { type: 'pending', data: 'Transferring tokens' },
+        }))
+        const transfer: { wallet: DaoWallet; amount: number }[] = []
+        let daoaddrPrev = await dao.account.getPrevious()
+        while (daoaddrPrev) {
+            const daoPrev = await systemContract.getDao({ address: daoaddrPrev })
+            const daoverPrev = await daoPrev.getVersion()
+            if (daoverPrev === '1.0.0') {
+                break
+            }
+
+            const walletPrev = await daoPrev.getMemberWallet({
+                data: { profile: user.profile },
+                keys: user.keys,
+            })
+            const { voting, locked, regular } = await walletPrev.getBalance()
+            const untransferred = Math.max(voting, locked) + regular
+            if (untransferred > 0) {
+                transfer.push({ wallet: walletPrev, amount: untransferred })
+            }
+
+            daoaddrPrev = await daoPrev.getPrevious()
+        }
+
+        // Transfer tokens to current DAO
+        await Promise.all(
+            transfer.map(async ({ wallet, amount }) => {
+                await wallet.smvReleaseTokens()
+                await wallet.smvUnlockTokens(0)
+                await wallet.sendTokensToUpgradedDao(amount, dao.version!)
+            }),
+        )
+
+        // Deploy stop transfer tag
+        if (transfer.length > 0) {
+            await data.details.wallet.createCommitTag({
+                reponame: DAO_TOKEN_TRANSFER_TAG,
+                name: tagname,
+                content: '',
+                commit: { address: user.profile, name: user.username! },
+            })
+        }
+
+        setData((state) => ({ ...state, status: undefined }))
+        return { retry: transfer.length > 0 }
+    }, [dao.name, dao.version, user.profile, user.keys, data.details.isReady])
+
     useEffect(() => {
         if (loadOnInit) {
             getBaseDetails()
@@ -706,6 +806,31 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
             clearInterval(interval)
         }
     }, [getDetails, subscribe])
+
+    useEffect(() => {
+        if (!subscribe) {
+            return
+        }
+
+        transferTokensFromPrevDao()
+        let isIntervalBusy = false
+        const interval = setInterval(async () => {
+            if (isIntervalBusy) {
+                return
+            }
+
+            isIntervalBusy = true
+            const { retry } = await transferTokensFromPrevDao()
+            isIntervalBusy = false
+            if (!retry) {
+                clearInterval(interval)
+            }
+        }, 20000)
+
+        return () => {
+            clearInterval(interval)
+        }
+    }, [transferTokensFromPrevDao, subscribe])
 
     return data
 }
@@ -828,6 +953,7 @@ export function useDaoHelpers() {
                 }
 
                 onSuccessCallback({ type: 'success', data: 'Prepare balances completed' })
+                return
             }
 
             throw new GoshError('Balance error', {
@@ -1813,6 +1939,7 @@ export function useUpgradeDao() {
 export function useUpgradeDaoComplete() {
     const dao = useDao()
     const member = useDaoMember()
+    const { beforeCreateEvent } = useDaoHelpers()
     const [status, setStatus] = useState<TToastStatus>()
 
     const getRepositories = async (daoname: string) => {
@@ -1903,7 +2030,7 @@ export function useUpgradeDaoComplete() {
         // Deploy repositories or create multi event
         setStatus({ type: 'pending', data: 'Transfer repositories' })
         let isEvent = false
-        const args = repositories.map(({ name, address, version }) => ({
+        const args = upgradeable.map(({ name, address, version }) => ({
             name,
             previous: { addr: address, version },
             comment: 'Upgrade repository',
@@ -1995,11 +2122,10 @@ export function useUpgradeDaoComplete() {
         if (cells.length === 0) {
             await wallet.setTasksUpgraded({ cell: false })
             return { isEvent: false }
-        } else if (cells.length === 1) {
-            cells.push({ type: EDaoEventType.DELAY, params: {} })
         }
 
         // Create multi event
+        cells.push({ type: EDaoEventType.TASK_REDEPLOYED, params: {} })
         await executeByChunk(
             splitByChunk(cells, 50),
             MAX_PARALLEL_WRITE,
@@ -2052,12 +2178,8 @@ export function useUpgradeDaoComplete() {
             ) {
                 throw new GoshError('Value error', 'DAO details undefined')
             }
-            if (!member.details.isReady) {
-                throw new GoshError(
-                    'Wallet error',
-                    'Wallet does not exist or not activated',
-                )
-            }
+            // Check for ability to create events
+            await beforeCreateEvent(20, { onPendingCallback: setStatus })
 
             // Get all repositories from all DAO versions
             setStatus({ type: 'pending', data: 'Fetching repositories' })
@@ -2395,13 +2517,7 @@ export function useSendDaoTokens() {
                                         comment: `Add DAO member ${username}`,
                                     },
                                 },
-                                {
-                                    type: EDaoEventType.DAO_TOKEN_MINT,
-                                    params: {
-                                        amount: 0,
-                                        comment: 'This is a service needed part',
-                                    },
-                                },
+                                { type: EDaoEventType.DELAY, params: {} },
                                 {
                                     type: EDaoEventType.DAO_TOKEN_VOTING_ADD,
                                     params: {

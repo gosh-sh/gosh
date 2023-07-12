@@ -13,6 +13,8 @@ import { MemberAddEvent } from '../MemberAddEvent/MemberAddEvent'
 import { MemberDeleteEvent } from '../MemberDeleteEvent/MemberDeleteEvent'
 import { MemberUpdateEvent } from '../MemberUpdateEvent/MemberUpdateEvent'
 import { MintTokensEvent } from '../MintTokensEvent/MintTokensEvent'
+import { RedeployTaskCompleteEvent } from '../RedeployTaskCompleteEvent/RedeployTaskCompleteEvent'
+import { RedeployTaskEvent } from '../RedeployTaskEvent/RedeployTaskEvent'
 import { RepositoryCreateEvent } from '../RepositoryCreateEvent/RepositoryCreateEvent'
 import { ShowDaoEventProgressEvent } from '../ShowDaoEventProgressEvent/ShowDaoEventProgressEvent'
 
@@ -82,6 +84,12 @@ const MultiEvent = (props: TMultiEventProps) => {
                         )}
                         {item.type === EDaoEventType.TASK_DELETE && (
                             <DeleteTaskEvent key={index} data={item.data} />
+                        )}
+                        {item.type === EDaoEventType.TASK_REDEPLOY && (
+                            <RedeployTaskEvent key={index} data={item.data} />
+                        )}
+                        {item.type === EDaoEventType.TASK_REDEPLOYED && (
+                            <RedeployTaskCompleteEvent key={index} data={item.data} />
                         )}
                     </div>
                 ))}

@@ -3,12 +3,15 @@ import { Form, Formik } from 'formik'
 import { Button } from '../../../../components/Form'
 import { useSetRecoilState } from 'recoil'
 import { appModalStateAtom } from '../../../../store/app.state'
-import { useUpgradeDaoComplete } from '../../../hooks/dao.hooks'
+import { useDao, useUpgradeDaoComplete } from '../../../hooks/dao.hooks'
 import { ToastStatus } from '../../../../components/Toast'
 import { ModalCloseButton } from '../../../../components/Modal'
+import { useNavigate } from 'react-router-dom'
 
 const DaoUpgradeCompleteModal = () => {
     const setModal = useSetRecoilState(appModalStateAtom)
+    const navigate = useNavigate()
+    const dao = useDao()
     const { upgrade, status } = useUpgradeDaoComplete()
 
     const onModalReset = () => {
@@ -19,6 +22,7 @@ const DaoUpgradeCompleteModal = () => {
         try {
             await upgrade()
             onModalReset()
+            navigate(`/o/${dao.details.name}/events`)
         } catch (e: any) {
             console.error(e.message)
         }

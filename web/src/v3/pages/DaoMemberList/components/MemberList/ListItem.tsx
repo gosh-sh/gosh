@@ -12,6 +12,8 @@ import { FormikInput } from '../../../../../components/Formik'
 import classNames from 'classnames'
 import { Button } from '../../../../../components/Form'
 import { MemberIcon } from '../../../../../components/Dao'
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons'
+import { Tooltip } from 'react-tooltip'
 
 const basis = {
     contaner: 'flex-wrap lg:flex-nowrap',
@@ -158,13 +160,24 @@ const ListItem = (props: TListItemProps) => {
                                 autoComplete="off"
                                 placeholder="New balance value"
                                 inputProps={{
-                                    after: (
-                                        <div className="text-xs text-gray-7c8db5 pr-3 md:hidden">
-                                            <div className="whitespace-nowrap leading-5 py-2">
-                                                Balance
+                                    after:
+                                        item.allowance > item.balance ? (
+                                            <div
+                                                className="text-xs text-red-dd3a3a py-2.5 pr-3"
+                                                data-tooltip-id={`member-balance-tip-${item.profile}`}
+                                            >
+                                                <FontAwesomeIcon
+                                                    icon={faQuestionCircle}
+                                                    className="ml-1"
+                                                />
                                             </div>
-                                        </div>
-                                    ),
+                                        ) : (
+                                            <div className="text-xs text-gray-7c8db5 pr-3 md:hidden">
+                                                <div className="whitespace-nowrap leading-5 py-2">
+                                                    Balance
+                                                </div>
+                                            </div>
+                                        ),
                                 }}
                             />
                             <ErrorMessage
@@ -172,6 +185,12 @@ const ListItem = (props: TListItemProps) => {
                                 component="div"
                                 name={`items.${index}.balance`}
                             />
+                            <Tooltip id={`member-balance-tip-${item.profile}`} clickable>
+                                <div>
+                                    Member might have untransferred tokens from previous
+                                    DAO versions
+                                </div>
+                            </Tooltip>
                         </>
                     ) : (
                         item.balance.toLocaleString()

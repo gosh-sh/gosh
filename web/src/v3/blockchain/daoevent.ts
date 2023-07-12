@@ -222,7 +222,7 @@ export class DaoEvent extends BaseContract {
     }
 
     async parseTaskCreateEventParams(data: any) {
-        const { tag, ...rest } = data
+        const { tag, hashtag, ...rest } = data
 
         const grant: { [key: string]: TTaskGrantPair[] } = {}
         const grantTotal: { [key: string]: number } = {}
@@ -237,13 +237,15 @@ export class DaoEvent extends BaseContract {
             reward += grantTotal[key]
         }
 
+        const tags = tag || hashtag
+
         return {
             ...rest,
             grant,
             grantTotal,
             reward,
-            tagsRaw: tag,
-            tags: tag.filter((item: string) => item !== SYSTEM_TAG),
+            tagsRaw: tags,
+            tags: tags.filter((item: string) => item !== SYSTEM_TAG),
         }
     }
 
@@ -276,8 +278,9 @@ export class DaoEvent extends BaseContract {
     }
 
     private async getMultiEventData(params: { data: string; verbose?: boolean }) {
-        const { data, verbose } = params
+        const { verbose } = params
 
+        let data = params.data
         const { proposalKind } = await this.runLocal(
             'getGoshProposalKindData',
             { Data: data },
@@ -340,6 +343,20 @@ export class DaoEvent extends BaseContract {
             fn = 'getTagUpgradeProposalParamsData'
         } else if (type === EDaoEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE) {
             fn = 'getAbilityInviteProposalParamsData'
+        } else if (type === EDaoEventType.TASK_REDEPLOY) {
+            const decoded = await this.runLocal(
+                'getRedeployTaskProposalParamsData',
+                { Data: data },
+                undefined,
+                { useCachedBoc: true },
+            )
+            data = decoded.data
+            fn = 'getTaskData'
+            parser = this.parseTaskCreateEventParams
+        } else if (type === EDaoEventType.TASK_REDEPLOYED) {
+            return { type, label: DaoEventType[type], data: {} }
+        } else if (type === EDaoEventType.DELAY) {
+            return { type, label: DaoEventType[type], data: {} }
         } else {
             throw new GoshError(`Multi event type "${type}" is unknown`)
         }
