@@ -393,6 +393,7 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
     const resetDaoEvents = useResetRecoilState(daoEventListAtom)
     const resetDaoMembers = useResetRecoilState(daoMemberListAtom)
     const resetDaoMember = useResetRecoilState(daoMemberAtom)
+    const resetDaoTasks = useResetRecoilState(daoTaskListAtom)
 
     const getDao = useCallback(async () => {
         try {
@@ -452,7 +453,6 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
             const members = await dao.getMembers(details.wallets)
             const { summary, description } = await getDescription(repository)
             const tasks = await getTaskCount(dao)
-            console.debug('D', details)
 
             setData((state) => ({
                 ...state,
@@ -532,6 +532,7 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
                 resetDao()
                 resetDaoRepositories()
                 resetDaoEvents()
+                resetDaoTasks()
                 resetDaoMembers()
                 resetDaoMember()
             }
