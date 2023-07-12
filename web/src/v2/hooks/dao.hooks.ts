@@ -492,8 +492,7 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
         const [summary, description] = await Promise.all(
             ['description.txt', 'README.md'].map(async (filename) => {
                 const snapshot = await repository.getSnapshot({
-                    branch: 'main',
-                    filename,
+                    data: { branch: 'main', filename },
                 })
                 if (await snapshot.isDeployed()) {
                     const result = await snapshot.getContent()
