@@ -27,6 +27,20 @@ contract VersionController is Modifiers {
         tvm.accept();
     }
 
+    function checkKeyBlock3(address goshdao, address repo, uint128 seqno, string prev, string ver) public view {
+        require(_SystemContractCode.exists(tvm.hash(prev)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        require(_SystemContractCode.exists(tvm.hash(ver)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        require(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(ver)].Value, tvm.pubkey()) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(prev)].Value, tvm.pubkey())).checkKeyBlock5{value: 0.1 ton, flag: 1}(goshdao, repo, seqno, ver);
+    }
+
+    function checkKeyBlock4(address goshdao, address repo, uint128 seqno, uint256[] pubkeys, string prev, string ver) public view {
+        require(_SystemContractCode.exists(tvm.hash(prev)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        require(_SystemContractCode.exists(tvm.hash(ver)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        require(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(prev)].Value, tvm.pubkey()) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(ver)].Value, tvm.pubkey())).checkKeyBlock6{value: 0.1 ton, flag: 1}(goshdao, repo, seqno, pubkeys);
+    }
+
     function deploySystemContract(string version) public onlyOwner accept saveMsg {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         TvmCell s1 = GoshLib.composeSystemContractStateInit(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey());

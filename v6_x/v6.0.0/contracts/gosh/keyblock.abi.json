@@ -1,0 +1,129 @@
+{
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"systemcontract","type":"address"},
+				{"name":"wallet_code","type":"cell"},
+				{"name":"isZero","type":"bool"},
+				{"name":"data","type":"cell"},
+				{"name":"signatures","type":"cell[]"},
+				{"name":"newpubkeys","type":"uint256[]"},
+				{"name":"previousversion","type":"optional(string)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "askSignature",
+			"inputs": [
+				{"name":"goshdao","type":"address"},
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"previousversion","type":"string"},
+				{"name":"ver","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkSignature",
+			"inputs": [
+				{"name":"pubkeys","type":"uint256[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkSignatures",
+			"inputs": [
+				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkSignaturePub",
+			"inputs": [
+				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"index","type":"uint128"},
+				{"name":"index1","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getKeyBlockIn",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCheckMasterBlock",
+			"inputs": [
+				{"name":"signatures","type":"cell[]"}
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
+			]
+		},
+		{
+			"name": "getStatus",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"seqNo","type":"uint128"},
+				{"name":"goshdao","type":"address"},
+				{"name":"repo","type":"address"},
+				{"name":"systemcontract","type":"address"},
+				{"name":"isZero","type":"bool"},
+				{"name":"isReady","type":"bool"},
+				{"name":"data","type":"cell"},
+				{"name":"signatures","type":"cell[]"},
+				{"name":"newpubkeys","type":"uint256[]"},
+				{"name":"previousversion","type":"optional(string)"}
+			]
+		},
+		{
+			"name": "getVersion",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
+			]
+		}
+	],
+	"data": [
+		{"key":1,"name":"_seqNo","type":"uint128"},
+		{"key":2,"name":"_goshdao","type":"address"},
+		{"key":3,"name":"_repo","type":"address"}
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
+		{"name":"_seqNo","type":"uint128"},
+		{"name":"_goshdao","type":"address"},
+		{"name":"_repo","type":"address"},
+		{"name":"_systemcontract","type":"address"},
+		{"name":"_isZero","type":"bool"},
+		{"name":"_isReady","type":"bool"},
+		{"name":"_data","type":"cell"},
+		{"name":"_signatures","type":"cell[]"},
+		{"name":"_newpubkeys","type":"uint256[]"},
+		{"name":"_previousversion","type":"optional(string)"},
+		{"name":"_code","type":"map(uint8,cell)"}
+	]
+}

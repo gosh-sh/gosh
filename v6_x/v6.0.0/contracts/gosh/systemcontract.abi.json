@@ -265,6 +265,52 @@
 			]
 		},
 		{
+			"name": "checkKeyBlock",
+			"inputs": [
+				{"name":"goshdao","type":"address"},
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"prev","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkKeyBlock5",
+			"inputs": [
+				{"name":"goshdao","type":"address"},
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"ver","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkKeyBlock6",
+			"inputs": [
+				{"name":"goshdao","type":"address"},
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"pubkeys","type":"uint256[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkKeyBlock2",
+			"inputs": [
+				{"name":"goshdao","type":"address"},
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"prev","type":"string"},
+				{"name":"ver","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "checkOldTaskVersion2",
 			"inputs": [
 				{"name":"name","type":"string"},
@@ -469,6 +515,14 @@
 		},
 		{
 			"name": "setTask",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setKeyBlock",
 			"inputs": [
 				{"name":"code","type":"cell"}
 			],

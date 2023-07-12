@@ -26,6 +26,7 @@
 				{"name":"codedaotag","type":"cell"},
 				{"name":"coderepotag","type":"cell"},
 				{"name":"codetopic","type":"cell"},
+				{"name":"codekeyblock","type":"cell"},
 				{"name":"TokenLockerCode","type":"cell"},
 				{"name":"SMVPlatformCode","type":"cell"},
 				{"name":"SMVClientCode","type":"cell"},

@@ -19,6 +19,7 @@ import "../goshdao.sol";
 import "../tag.sol";
 import "../profile.sol";
 import "../profiledao.sol";
+import "../keyblock.sol";
 
 library GoshLib {
     string constant versionLib = "6.0.0";
@@ -64,6 +65,17 @@ library GoshLib {
             code: deployCode,
             contr: Repository,
             varInit: { _name: name }
+        })));
+    }
+
+    function calculateKeyBlockAddress(TvmCell code, address systemcontract, address goshdao, address repo, uint128 seqno) public returns (address) {
+        TvmCell deployCode = buildKeyBlockCode(
+            code, systemcontract, goshdao, repo, versionLib
+        );
+        return address(tvm.hash(tvm.buildStateInit({
+            code: deployCode,
+            contr: KeyBlock,
+            varInit: { _seqNo: seqno, _goshdao: goshdao, _repo: repo }
         })));
     }
 
@@ -205,6 +217,17 @@ library GoshLib {
             varInit: {_name : name, _versioncontroller: versionController}
         });
         return s1;
+    }
+
+    function composeKeyBlockStateInit(TvmCell code, address systemcontract, address goshdao, address repo, uint128 seqno) public returns(TvmCell) {
+        TvmCell deployCode = buildKeyBlockCode(
+            code, systemcontract, goshdao, repo, versionLib
+        );
+        return tvm.buildStateInit({
+            code: deployCode,
+            contr: KeyBlock,
+            varInit: { _seqNo: seqno, _goshdao: goshdao, _repo: repo }
+        });
     }
 
     function composeWalletStateInit(TvmCell code, address systemcontract, address goshdao, address pubaddr, uint128 index) public returns(TvmCell) {
@@ -366,6 +389,24 @@ library GoshLib {
         TvmBuilder b;
         b.store(goshaddr);
         b.store(dao);
+        b.store(version);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        return tvm.setCodeSalt(originalCode, b.toCell());
+    }
+
+    function buildKeyBlockCode(
+        TvmCell originalCode,
+        address goshaddr,
+        address dao,
+        address repo,
+        string version
+    ) public returns (TvmCell) {
+        TvmBuilder b;
+        b.store(goshaddr);
+        b.store(dao);
+        b.store(repo);
         b.store(version);
         uint256 hash = tvm.hash(b.toCell());
         delete b;

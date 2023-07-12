@@ -11,6 +11,31 @@
 			]
 		},
 		{
+			"name": "checkKeyBlock3",
+			"inputs": [
+				{"name":"goshdao","type":"address"},
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"prev","type":"string"},
+				{"name":"ver","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkKeyBlock4",
+			"inputs": [
+				{"name":"goshdao","type":"address"},
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"prev","type":"string"},
+				{"name":"ver","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deploySystemContract",
 			"inputs": [
 				{"name":"version","type":"string"}

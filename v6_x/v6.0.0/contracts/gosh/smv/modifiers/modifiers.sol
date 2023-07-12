@@ -19,6 +19,7 @@ interface IObject {
     function returnWallet(uint128, uint128, uint128, address, address, uint128, address, uint128, optional(uint256), bool, optional(uint128)) external;
     function returnTag(string, address, string, string, string) external;
     function returnTask(TvmCell) external;
+    function returnKeyBlock(TvmCell) external;
 }
 
 abstract contract Modifiers is ReplayProtection {   
@@ -48,6 +49,7 @@ abstract contract Modifiers is ReplayProtection {
     uint8 constant m_RepoTagCode = 16;
     uint8 constant m_TopicCode = 17;
     uint8 constant m_BigTaskCode = 18;
+    uint8 constant m_KeyBlockCode = 19;
     
     //Deploy constants
     uint128 constant FEE_DEPLOY_DAO = 100000 ton;
@@ -72,6 +74,7 @@ abstract contract Modifiers is ReplayProtection {
     uint128 constant FEE_DEPLOY_TASK_TAG = 7.8 ton;
     uint128 constant FEE_DEPLOY_BIGTASK = 7.9 ton;
     uint128 constant FEE_DEPLOY_TOPIC = 4.8 ton;
+    uint128 constant FEE_DEPLOY_KEYBLOCK = 25.5 ton;
     
     //SMV configuration
     uint32 constant SETCOMMIT_PROPOSAL_START_AFTER = 0 seconds;

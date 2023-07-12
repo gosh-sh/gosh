@@ -24,6 +24,7 @@
 				{"name":"codedaotag","type":"cell"},
 				{"name":"coderepotag","type":"cell"},
 				{"name":"topiccode","type":"cell"},
+				{"name":"codekeyblock","type":"cell"},
 				{"name":"versions","type":"map(uint256,string)"},
 				{"name":"limit_wallets","type":"uint128"},
 				{"name":"access","type":"optional(uint256)"},
