@@ -77,7 +77,20 @@
 		{
 			"name": "getCheckMasterBlock",
 			"inputs": [
+				{"name":"data","type":"cell"},
 				{"name":"signatures","type":"cell[]"}
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
+			]
+		},
+		{
+			"name": "getCheckShardBlock",
+			"inputs": [
+				{"name":"masterData","type":"cell"},
+				{"name":"mastersignatures","type":"cell[]"},
+				{"name":"shardData","type":"cell"},
+				{"name":"shardsignatures","type":"cell[]"}
 			],
 			"outputs": [
 				{"name":"value0","type":"bool"}

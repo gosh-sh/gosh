@@ -97,19 +97,29 @@ contract KeyBlock is Modifiers{
         IObject(msg.sender).returnKeyBlock{value: 0.1 ton, flag: 1}(data);
     }
 
-    function getCheckMasterBlock(TvmCell[] signatures) external view returns(bool) {
+    function CheckMasterBlock(TvmCell data, TvmCell[] signatures) private view returns(bool) {
         bool result = true;
         uint128 count = 0;
         for (uint i = 0; i < signatures.length; i++){
             bool res = false;
             for (uint j = 0; j < _newpubkeys.length; j++){
-                if (tvm.checkSign(_data.toSlice(), signatures[i].toSlice(), _newpubkeys[j]) == true) { res = true; }
+                if (tvm.checkSign(data.toSlice(), signatures[i].toSlice(), _newpubkeys[j]) == true) { res = true; }
             }    
             count += 1;
             if (res == false) { result = false; }
         }
         uint128 num = count * 100 / uint128(_newpubkeys.length);
         if (num < 66) { result = false; }
+        return result;
+    }
+
+    function getCheckMasterBlock(TvmCell data, TvmCell[] signatures) public view returns(bool) {
+        return CheckMasterBlock(data, signatures);
+    }
+
+    function getCheckShardBlock(TvmCell masterData, TvmCell[] mastersignatures, TvmCell shardData, TvmCell[] shardsignatures) external view returns(bool) {
+        bool result = CheckMasterBlock(masterData, mastersignatures);
+        shardData; shardsignatures;
         return result;
     }
 
