@@ -86,6 +86,11 @@ contract KeyBlock is Modifiers{
         this.checkSignaturePub{value: 0.1 ton, flag: 1}(pubkeys, index, index1 + 1);
     } 
 
+    function destroy(address pubaddr, uint128 index) public {
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        selfdestruct(_systemcontract);
+    }
+
     //Getters
     function getKeyBlockIn() public view minValue(0.5 ton) {
         TvmCell data = abi.encode (_seqNo, _goshdao, _repo, _systemcontract, _isZero, _isReady, _data, _signatures, _newpubkeys, _previousversion);

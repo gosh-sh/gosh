@@ -1038,6 +1038,29 @@
 			]
 		},
 		{
+			"name": "deployKeyBlock",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"iszero","type":"bool"},
+				{"name":"data","type":"cell"},
+				{"name":"signatures","type":"cell[]"},
+				{"name":"newpubkeys","type":"uint256[]"},
+				{"name":"previousversion","type":"optional(string)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyKeyBlock",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployTag",
 			"inputs": [
 				{"name":"repoName","type":"string"},

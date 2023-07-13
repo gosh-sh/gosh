@@ -1379,6 +1379,37 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
+    function deployKeyBlock(
+        address repo,
+        uint128 seqno,
+        bool iszero,
+        TvmCell data,
+        TvmCell[] signatures,
+        uint256[] newpubkeys,
+        optional(string) previousversion
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        TvmCell s1 = GoshLib.composeKeyBlockStateInit(_code[m_KeyBlockCode], _systemcontract, _goshdao, repo, seqno);
+        new KeyBlock{
+            stateInit: s1, value: FEE_DEPLOY_KEYBLOCK, wid: 0, bounce: true, flag: 1
+        }(_pubaddr, _index, _systemcontract, _code[m_WalletCode], iszero, data, signatures, newpubkeys, previousversion);
+        getMoney();
+    }
+
+    function destroyKeyBlock(
+        address repo,
+        uint128 seqno
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        address key = GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], _systemcontract, _goshdao, repo, seqno);
+        KeyBlock(key).destroy{value: 0.1 ton, flag: 1}(_pubaddr, _index);
+        getMoney();
+    }
+
     //Tag part
     function deployTag(
         string repoName,
