@@ -2,7 +2,7 @@
 
 set -e
 set -o pipefail
-
+set -x
 . "$(dirname "$0")/util.sh"
 
 #
@@ -25,16 +25,33 @@ touch "$LOG_FILE"
 #
 # Prepare constants for this run
 #
-THIS_RUN_WORKDIR="${WORKDIR}/${GIT_REPO_URL//[^a-zA-Z0-9]/}-${BASHPID}-$(date +%s)"
+BASE_REPO_DIRNAME="${WORKDIR}/${GIT_REPO_URL//[^a-zA-Z0-9]/}"
+# Check workdir existence
+set +e
+set +o pipefail
+LS=$(ls -dc $BASE_REPO_DIRNAME* 2>/dev/null)
+set -e
+set -o pipefail
+
+if [ -n "$LS" ]; then
+    THIS_RUN_WORKDIR=$(printf '%s\n' $LS | head -n 1)
+else
+    THIS_RUN_WORKDIR="${BASE_REPO_DIRNAME}-${BASHPID}-$(date +%s)"
+fi
+
+log "THIS_RUN_WORKDIR=${THIS_RUN_WORKDIR}"
+
 mkdir -p "$THIS_RUN_WORKDIR"
 cd "$THIS_RUN_WORKDIR"
 
-# ---------
-log "Cloning github repo..."
-CLONE_START=$SECONDS
-git clone "$GIT_REPO_URL" "repo"
-CLONE_END=$SECONDS
-log "...clone complete. Cloned from github in $((CLONE_END - CLONE_START)) seconds."
+if [ ! -d "repo" ]; then
+    # ---------
+    log "Cloning github repo..."
+    CLONE_START=$SECONDS
+    git clone "$GIT_REPO_URL" "repo"
+    CLONE_END=$SECONDS
+    log "...clone complete. Cloned from github in $((CLONE_END - CLONE_START)) seconds."
+fi
 
 # ---------
 export GOSH_CONFIG_PATH
@@ -54,7 +71,10 @@ PUSH_START=$SECONDS
 cd ./repo
 git-remote-gosh_v5_1_0 --version
 git-remote-gosh dispatcher_ini
-git remote add gosh "gosh://$GOSH_SYSTEM_CONTRACT_ADDR/$GOSH_DAO_NAME/$GOSH_REPO_NAME"
+REMOTE_GOSH_TRACKED=$(git remote | grep gosh || true)
+if [ -z "$REMOTE_GOSH_TRACKED" ]; then
+    git remote add gosh "gosh://$GOSH_SYSTEM_CONTRACT_ADDR/$GOSH_DAO_NAME/$GOSH_REPO_NAME"
+fi
 export GOSH_TRACE=5
 export GOSH_REMOTE_WAIT_TIMEOUT=600
 export GOSH_REMOTE_WALLET_PARALLELISM=10
