@@ -96,4 +96,9 @@ if  diff --brief --recursive "repo" "repo_clone" --exclude ".git" --no-dereferen
 fi
 log "Compare status: $DIFF_STATUS"
 
+if (( $DIFF_STATUS == 0 )); then
+    rm $LOG_FILE
+    rm -fr $THIS_RUN_WORKDIR
+fi
+
 exit $DIFF_STATUS
