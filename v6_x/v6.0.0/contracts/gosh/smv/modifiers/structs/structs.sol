@@ -12,6 +12,24 @@ struct Subtask {
     string name;
 }
 
+struct Block {
+    int32 global_id;
+    TvmCell info;
+    TvmCell value_flow;
+    TvmCell state_update;
+    TvmCell out_msg_queue_updates;
+    TvmCell extra;
+}
+
+struct BlockExtra {
+    TvmCell in_msg_descr;
+    TvmCell out_msg_descr;
+    TvmCell account_blocks;
+    uint256 rand_seed;
+    uint256 created_by;
+    optional(TvmCell) custom;
+}
+
 struct PaidMember {
     uint128 fiatValue;
     uint128 decimals;

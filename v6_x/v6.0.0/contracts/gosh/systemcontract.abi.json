@@ -292,7 +292,8 @@
 				{"name":"goshdao","type":"address"},
 				{"name":"repo","type":"address"},
 				{"name":"seqno","type":"uint128"},
-				{"name":"pubkeys","type":"uint256[]"}
+				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"blockhash","type":"uint256"}
 			],
 			"outputs": [
 			]
@@ -304,6 +305,7 @@
 				{"name":"repo","type":"address"},
 				{"name":"seqno","type":"uint128"},
 				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"blockhash","type":"uint256"},
 				{"name":"prev","type":"string"},
 				{"name":"ver","type":"string"}
 			],

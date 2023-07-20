@@ -14,6 +14,7 @@
 				{"name":"data","type":"cell"},
 				{"name":"signatures","type":"cell[]"},
 				{"name":"newpubkeys","type":"uint256[]"},
+				{"name":"prevblockhash","type":"uint256"},
 				{"name":"previousversion","type":"optional(string)"}
 			],
 			"outputs": [
@@ -34,6 +35,7 @@
 		{
 			"name": "checkSignature",
 			"inputs": [
+				{"name":"blockhash","type":"uint256"},
 				{"name":"pubkeys","type":"uint256[]"}
 			],
 			"outputs": [
@@ -68,8 +70,59 @@
 			]
 		},
 		{
-			"name": "getKeyBlockIn",
+			"name": "getResult",
 			"inputs": [
+				{"name":"result","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "continueCheck",
+			"inputs": [
+				{"name":"newhash","type":"uint256"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "CheckMasterBlockIn",
+			"inputs": [
+				{"name":"data","type":"cell"},
+				{"name":"signatures","type":"cell[]"},
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"},
+				{"name":"count","type":"uint128"},
+				{"name":"res","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "emptyHashes",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "pushHashes",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"hashes","type":"uint256[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "pushHashesIn",
+			"inputs": [
+				{"name":"hashes","type":"uint256[]"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -77,23 +130,28 @@
 		{
 			"name": "getCheckMasterBlock",
 			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
 				{"name":"data","type":"cell"},
-				{"name":"signatures","type":"cell[]"}
+				{"name":"signatures","type":"cell[]"},
+				{"name":"lastsession","type":"bool"}
 			],
 			"outputs": [
-				{"name":"value0","type":"bool"}
 			]
 		},
 		{
-			"name": "getCheckShardBlock",
+			"name": "getKeyBlockIn",
 			"inputs": [
-				{"name":"masterData","type":"cell"},
-				{"name":"mastersignatures","type":"cell[]"},
-				{"name":"shardData","type":"cell"},
-				{"name":"shardsignatures","type":"cell[]"}
 			],
 			"outputs": [
-				{"name":"value0","type":"bool"}
+			]
+		},
+		{
+			"name": "getHashes",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"hashes","type":"uint256[]"}
 			]
 		},
 		{
@@ -145,7 +203,11 @@
 		{"name":"_data","type":"cell"},
 		{"name":"_signatures","type":"cell[]"},
 		{"name":"_newpubkeys","type":"uint256[]"},
+		{"name":"_prevblockhash","type":"uint256"},
 		{"name":"_previousversion","type":"optional(string)"},
-		{"name":"_code","type":"map(uint8,cell)"}
+		{"name":"_code","type":"map(uint8,cell)"},
+		{"name":"_statuscheck","type":"bool"},
+		{"name":"_lastsession","type":"bool"},
+		{"name":"_hashblocks","type":"uint256[]"}
 	]
 }

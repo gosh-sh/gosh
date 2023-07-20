@@ -34,11 +34,11 @@ contract VersionController is Modifiers {
         SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(prev)].Value, tvm.pubkey())).checkKeyBlock5{value: 0.1 ton, flag: 1}(goshdao, repo, seqno, ver);
     }
 
-    function checkKeyBlock4(address goshdao, address repo, uint128 seqno, uint256[] pubkeys, string prev, string ver) public view {
+    function checkKeyBlock4(address goshdao, address repo, uint128 seqno, uint256[] pubkeys, uint256 blockhash, string prev, string ver) public view {
         require(_SystemContractCode.exists(tvm.hash(prev)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         require(_SystemContractCode.exists(tvm.hash(ver)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         require(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(prev)].Value, tvm.pubkey()) == msg.sender, ERR_SENDER_NO_ALLOWED);
-        SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(ver)].Value, tvm.pubkey())).checkKeyBlock6{value: 0.1 ton, flag: 1}(goshdao, repo, seqno, pubkeys);
+        SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(ver)].Value, tvm.pubkey())).checkKeyBlock6{value: 0.1 ton, flag: 1}(goshdao, repo, seqno, pubkeys, blockhash);
     }
 
     function deploySystemContract(string version) public onlyOwner accept saveMsg {
