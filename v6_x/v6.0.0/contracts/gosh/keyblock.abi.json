@@ -140,6 +140,16 @@
 			]
 		},
 		{
+			"name": "getCheckObject",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"data","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getKeyBlockIn",
 			"inputs": [
 			],

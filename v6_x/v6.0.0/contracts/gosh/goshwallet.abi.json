@@ -1093,6 +1093,16 @@
 			]
 		},
 		{
+			"name": "getCheckObject",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"data","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployTag",
 			"inputs": [
 				{"name":"repoName","type":"string"},
