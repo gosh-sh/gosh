@@ -5,6 +5,8 @@ import {
     deployDao,
     getAddrDao,
     isDaoMember,
+    countDaoMembers,
+    getDaoMemberNames,
     setRepoUpdated,
     turnOnDao,
 } from '../eversdk/dao.ts'
@@ -106,6 +108,46 @@ export async function initDaoBot(dao_bot: DaoBot) {
             bot_profile_addr,
         )
         throw new Error(`DAO exists but account is not a member of DAO`)
+    }
+
+    const number_of_members = await countDaoMembers(dao_addr)
+    if (number_of_members > 1) {
+        const member_names = (await getDaoMemberNames(dao_addr)).filter(n => n != bot_name)
+        const { data: githubs, error } = await getDb()
+            .from('github')
+            .select('users(auth_user, gosh_username)')
+            .eq('dao_bot', dao_bot.id)
+
+        if (error) {
+            console.log('DB error', error)
+            throw new Error(`DB error ${error.message}`)
+        }
+
+        const gosh_users = githubs
+            .filter((github) => !!github.users && !Array.isArray(github.users))
+            .map((github) => ({
+                id: (github.users! as { auth_user: string }).auth_user,
+                name: (github.users! as { gosh_username: string }).gosh_username,
+            }))
+            .reduce((acc, user) => // remove duplicates
+                acc.findIndex(el => el.id == user.id && el.name == user.name) > -1 ? acc : [...acc, user],
+                []
+            )
+
+        for (const user of gosh_users) {
+            if (!member_names.includes(user.name)) {
+                const auth_user = await getUserByIdOrFail(user.id)
+                await emailOnboardingRename(auth_user)
+            }
+        }
+
+        console.log(
+            'There are already members in the DAO',
+            dao_addr,
+            'bot_profile_addr',
+            bot_profile_addr,
+        )
+        throw new Error(`There are already members in the DAO`)
     }
 
     // ensure wallet has access
