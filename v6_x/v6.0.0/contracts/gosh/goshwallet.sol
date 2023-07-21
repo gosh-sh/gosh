@@ -1869,6 +1869,17 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         m_pseudoDAOBalance += grant;
         getMoney();
     }
+
+    function sendTokenToDaoWrapper(
+        uint128 grant
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(grant <= m_pseudoDAOBalance, ERR_TOO_LOW_BALANCE);
+        m_pseudoDAOBalance -= grant;
+        GoshDao(_goshdao).receiveTokentoWrapper{value: 0.1 ton, flag: 1}(_pubaddr, _index, grant);
+        getMoney();
+    }
     
     function sendTokenToDaoReserve(
         uint128 grant

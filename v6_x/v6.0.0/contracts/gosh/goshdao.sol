@@ -1280,6 +1280,15 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _reserve += grant;
         getMoney();
     }
+
+    function receiveTokentoWrapper(
+        address pubaddr,
+        uint128 index,
+        uint128 grant
+    ) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index)) accept saveMsg {
+        _reserve += grant;
+        getMoney();
+    }
     
     function deleteWallets(address[] pubmem, uint128 index) public senderIs(address(this)) {
         tvm.accept();

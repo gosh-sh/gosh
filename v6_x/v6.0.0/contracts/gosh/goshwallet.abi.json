@@ -1334,6 +1334,14 @@
 			]
 		},
 		{
+			"name": "sendTokenToDaoWrapper",
+			"inputs": [
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "sendTokenToDaoReserve",
 			"inputs": [
 				{"name":"grant","type":"uint128"}
