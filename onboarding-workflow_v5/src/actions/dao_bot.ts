@@ -138,15 +138,13 @@ export async function initDaoBot(dao_bot: DaoBot) {
             if (!member_names.includes(user.name)) {
                 const auth_user = await getUserByIdOrFail(user.id)
                 await emailOnboardingRename(auth_user)
+                console.log(
+                    `User tries to onboard to the existing DAO ${dao_bot.dao_name} <${dao_addr}>.`,
+                    `User: ${user.name}`,
+                )
             }
         }
 
-        console.log(
-            'There are already members in the DAO',
-            dao_addr,
-            'bot_profile_addr',
-            bot_profile_addr,
-        )
         throw new Error(`There are already members in the DAO`)
     }
 

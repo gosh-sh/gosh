@@ -97,6 +97,7 @@ fi
 log "Compare status: $DIFF_STATUS"
 
 if (( $DIFF_STATUS == 0 )); then
+    cd /tmp
     rm $LOG_FILE
     rm -fr $THIS_RUN_WORKDIR
 fi

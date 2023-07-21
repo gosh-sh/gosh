@@ -14,21 +14,22 @@ while (true) {
 
 async function uploadRepos() {
     const release = await mutex.acquire()
+    let repos: Github[]
     try {
-        const repos: Github[] = await getReposForUpload()
-
-        for (const github of repos) {
-            console.log('Start upload of repo ', github.id)
-            console.log('Repo url ', github.github_url)
-            console.log('Number of objects ', github.objects)
-            try {
-                await initializeGoshRepo(github.id)
-            } catch (err) {
-                console.error('Failed to upload repo', err)
-            }
-        }
+        repos = await getReposForUpload()
     } catch (err) {
-        console.error('Failed to upload repos', err)
+        console.error('Failed to get repo list', err)
+    }
+
+    for (const github of repos) {
+        console.log('Start upload of repo ', github.id)
+        console.log('Repo url ', github.github_url)
+        console.log('Number of objects ', github.objects)
+        try {
+            await initializeGoshRepo(github.id)
+        } catch (err) {
+            console.error('Failed to upload repo', err)
+        }
     }
     release()
 }
