@@ -68,14 +68,25 @@ library GoshLib {
         })));
     }
 
-    function calculateKeyBlockAddress(TvmCell code, address systemcontract, address goshdao, address repo, uint128 seqno) public returns (address) {
+    function calculateKeyBlockAddress(TvmCell code, TvmCell data, address systemcontract, address goshdao, address repo, uint128 seqno) public returns (address) {
         TvmCell deployCode = buildKeyBlockCode(
             code, systemcontract, goshdao, repo, versionLib
         );
         return address(tvm.hash(tvm.buildStateInit({
             code: deployCode,
             contr: KeyBlock,
-            varInit: { _seqNo: seqno, _goshdao: goshdao, _repo: repo }
+            varInit: { _seqNo: seqno, _goshdao: goshdao, _repo: repo, _data: data }
+        })));
+    }
+
+    function calculateMasterBlockAddress(TvmCell code, TvmCell data, address systemcontract, address goshdao, address repo, uint128 seqno) public returns (address) {
+        TvmCell deployCode = buildMasterBlockCode(
+            code, systemcontract, goshdao, repo, versionLib
+        );
+        return address(tvm.hash(tvm.buildStateInit({
+            code: deployCode,
+            contr: KeyBlock,
+            varInit: { _seqNo: seqno, _goshdao: goshdao, _repo: repo, _data: data }
         })));
     }
 
@@ -219,14 +230,25 @@ library GoshLib {
         return s1;
     }
 
-    function composeKeyBlockStateInit(TvmCell code, address systemcontract, address goshdao, address repo, uint128 seqno) public returns(TvmCell) {
+    function composeKeyBlockStateInit(TvmCell code, TvmCell data, address systemcontract, address goshdao, address repo, uint128 seqno) public returns(TvmCell) {
         TvmCell deployCode = buildKeyBlockCode(
             code, systemcontract, goshdao, repo, versionLib
         );
         return tvm.buildStateInit({
             code: deployCode,
             contr: KeyBlock,
-            varInit: { _seqNo: seqno, _goshdao: goshdao, _repo: repo }
+            varInit: { _seqNo: seqno, _goshdao: goshdao, _repo: repo, _data: data }
+        });
+    }
+
+    function composeMasterBlockStateInit(TvmCell code, TvmCell data, address systemcontract, address goshdao, address repo, uint128 seqno) public returns(TvmCell) {
+        TvmCell deployCode = buildMasterBlockCode(
+            code, systemcontract, goshdao, repo, versionLib
+        );
+        return tvm.buildStateInit({
+            code: deployCode,
+            contr: KeyBlock,
+            varInit: { _seqNo: seqno, _goshdao: goshdao, _repo: repo, _data: data }
         });
     }
 
@@ -408,6 +430,25 @@ library GoshLib {
         b.store(dao);
         b.store(repo);
         b.store(version);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        return tvm.setCodeSalt(originalCode, b.toCell());
+    }
+
+    function buildMasterBlockCode(
+        TvmCell originalCode,
+        address goshaddr,
+        address dao,
+        address repo,
+        string version
+    ) public returns (TvmCell) {
+        TvmBuilder b;
+        b.store(goshaddr);
+        b.store(dao);
+        b.store(repo);
+        b.store(version);
+        b.store("master");
         uint256 hash = tvm.hash(b.toCell());
         delete b;
         b.store(hash);

@@ -217,30 +217,53 @@ contract SystemContract is Modifiers {
     }
 
     function checkKeyBlock(address goshdao, address repo, uint128 seqno, string prev) public view {
-        address addr = GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], address(this), goshdao, repo, seqno);
+        TvmCell empt;
+        address addr = GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, address(this), goshdao, repo, seqno);
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (version == prev) {
-            KeyBlock(GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], address(this), goshdao, repo, seqno - 1)).askSignature{value:0.4 ton, flag: 1}(goshdao, repo, seqno - 1, prev, version);
+            KeyBlock(GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, address(this), goshdao, repo, seqno - 1)).askSignature{value:0.4 ton, flag: 1}(goshdao, repo, seqno - 1, prev, version);
         }
         else {
             VersionController(_versionController).checkKeyBlock3{value:0.1 ton, flag: 1}(goshdao, repo, seqno, prev, version);
         }
     }
 
+    function setNewBlock(address goshdao, address repo, uint128 seqno, string prev) public view {
+        TvmCell empt;
+        address addr = GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, address(this), goshdao, repo, seqno);
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        if (version == prev) {
+            KeyBlock(GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, address(this), goshdao, repo, seqno - 1)).setNewBlock3{value:0.4 ton, flag: 1}();
+        }
+        else {
+            VersionController(_versionController).setNewBlock2{value:0.1 ton, flag: 1}(goshdao, repo, seqno, prev, version);
+        }
+    }
+
     function checkKeyBlock5(address goshdao, address repo, uint128 seqno, string ver) public senderIs(_versionController) accept view {
-        KeyBlock(GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], address(this), goshdao, repo, seqno - 1)).askSignature{value:0.4 ton, flag: 1}(goshdao, repo, seqno - 1, version, ver);
+        TvmCell empt;
+        KeyBlock(GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, address(this), goshdao, repo, seqno - 1)).askSignature{value:0.4 ton, flag: 1}(goshdao, repo, seqno - 1, version, ver);
+    }
+
+    function setNewBlock5(address goshdao, address repo, uint128 seqno, string ver) public senderIs(_versionController) accept view {
+        ver;
+        TvmCell empt;
+        KeyBlock(GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, address(this), goshdao, repo, seqno - 1)).setNewBlock3{value:0.4 ton, flag: 1}();
     }
 
     function checkKeyBlock6(address goshdao, address repo, uint128 seqno, uint256[] pubkeys, uint256 blockhash) public senderIs(_versionController) accept view {
-        KeyBlock(GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], address(this), goshdao, repo, seqno + 1)).checkSignature{value:0.4 ton, flag: 1}(blockhash, pubkeys);
+        TvmCell empt;
+        KeyBlock(GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, address(this), goshdao, repo, seqno + 1)).checkSignature{value:0.4 ton, flag: 1}(blockhash, pubkeys);
     }
 
     function checkKeyBlock2(address goshdao, address repo, uint128 seqno, uint256[] pubkeys, uint256 blockhash, string prev, string ver) public view {
-        address addr = GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], address(this), goshdao, repo, seqno);
-        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
+        TvmCell empt;
+        address addr = GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, address(this), goshdao, repo, seqno);
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);        
         if (version == prev) {
-            KeyBlock(GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], address(this), goshdao, repo, seqno + 1)).checkSignature{value:0.4 ton, flag: 1}(blockhash, pubkeys);
+            KeyBlock(GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, address(this), goshdao, repo, seqno + 1)).checkSignature{value:0.4 ton, flag: 1}(blockhash, pubkeys);
         }
         else {
             VersionController(_versionController).checkKeyBlock4{value:0.1 ton, flag: 1}(goshdao, repo, seqno, pubkeys, blockhash, prev, ver);

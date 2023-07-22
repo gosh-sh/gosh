@@ -276,7 +276,29 @@
 			]
 		},
 		{
+			"name": "setNewBlock",
+			"inputs": [
+				{"name":"goshdao","type":"address"},
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"prev","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "checkKeyBlock5",
+			"inputs": [
+				{"name":"goshdao","type":"address"},
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"ver","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setNewBlock5",
 			"inputs": [
 				{"name":"goshdao","type":"address"},
 				{"name":"repo","type":"address"},

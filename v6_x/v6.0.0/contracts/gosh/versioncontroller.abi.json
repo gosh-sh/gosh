@@ -23,6 +23,18 @@
 			]
 		},
 		{
+			"name": "setNewBlock2",
+			"inputs": [
+				{"name":"goshdao","type":"address"},
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"prev","type":"string"},
+				{"name":"ver","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "checkKeyBlock4",
 			"inputs": [
 				{"name":"goshdao","type":"address"},

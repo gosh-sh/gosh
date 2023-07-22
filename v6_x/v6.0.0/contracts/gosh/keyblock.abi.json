@@ -10,12 +10,14 @@
 				{"name":"index","type":"uint128"},
 				{"name":"systemcontract","type":"address"},
 				{"name":"wallet_code","type":"cell"},
+				{"name":"keyblock_code","type":"cell"},
 				{"name":"isZero","type":"bool"},
 				{"name":"data","type":"cell"},
 				{"name":"signatures","type":"cell[]"},
 				{"name":"newpubkeys","type":"uint256[]"},
 				{"name":"prevblockhash","type":"uint256"},
-				{"name":"previousversion","type":"optional(string)"}
+				{"name":"previousversion","type":"optional(string)"},
+				{"name":"isMaster","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -37,6 +39,13 @@
 			"inputs": [
 				{"name":"blockhash","type":"uint256"},
 				{"name":"pubkeys","type":"uint256[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setNewBlock3",
+			"inputs": [
 			],
 			"outputs": [
 			]
@@ -72,7 +81,9 @@
 		{
 			"name": "getResult",
 			"inputs": [
-				{"name":"result","type":"bool"}
+				{"name":"data","type":"cell"},
+				{"name":"result","type":"bool"},
+				{"name":"isMaster","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -80,8 +91,10 @@
 		{
 			"name": "continueCheck",
 			"inputs": [
+				{"name":"data","type":"cell"},
 				{"name":"newhash","type":"uint256"},
-				{"name":"index","type":"uint128"}
+				{"name":"index","type":"uint128"},
+				{"name":"isMaster","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -194,7 +207,8 @@
 	"data": [
 		{"key":1,"name":"_seqNo","type":"uint128"},
 		{"key":2,"name":"_goshdao","type":"address"},
-		{"key":3,"name":"_repo","type":"address"}
+		{"key":3,"name":"_repo","type":"address"},
+		{"key":4,"name":"_data","type":"cell"}
 	],
 	"events": [
 	],
@@ -210,6 +224,7 @@
 		{"name":"_systemcontract","type":"address"},
 		{"name":"_isZero","type":"bool"},
 		{"name":"_isReady","type":"bool"},
+		{"name":"_isMaster","type":"bool"},
 		{"name":"_data","type":"cell"},
 		{"name":"_signatures","type":"cell[]"},
 		{"name":"_newpubkeys","type":"uint256[]"},
@@ -218,6 +233,7 @@
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_statuscheck","type":"bool"},
 		{"name":"_lastsession","type":"bool"},
+		{"name":"_newblock","type":"bool"},
 		{"name":"_hashblocks","type":"uint256[]"}
 	]
 }
