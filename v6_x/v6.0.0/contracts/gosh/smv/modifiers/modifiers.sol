@@ -22,6 +22,10 @@ interface IObject {
     function returnKeyBlock(TvmCell) external;
 }
 
+abstract contract Wrapper {
+    constructor() {}
+}
+
 abstract contract Modifiers is ReplayProtection {   
     string constant versionModifiers = "6.0.0";
     
@@ -50,6 +54,7 @@ abstract contract Modifiers is ReplayProtection {
     uint8 constant m_TopicCode = 17;
     uint8 constant m_BigTaskCode = 18;
     uint8 constant m_KeyBlockCode = 19;
+    uint8 constant m_WrapperCode = 20;
     
     //Deploy constants
     uint128 constant FEE_DEPLOY_DAO = 100000 ton;
@@ -75,6 +80,7 @@ abstract contract Modifiers is ReplayProtection {
     uint128 constant FEE_DEPLOY_BIGTASK = 7.9 ton;
     uint128 constant FEE_DEPLOY_TOPIC = 4.8 ton;
     uint128 constant FEE_DEPLOY_KEYBLOCK = 25.5 ton;
+    uint128 constant FEE_DEPLOY_WRAPPER = 28 ton;
     
     //SMV configuration
     uint32 constant SETCOMMIT_PROPOSAL_START_AFTER = 0 seconds;

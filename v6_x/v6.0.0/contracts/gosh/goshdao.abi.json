@@ -27,6 +27,7 @@
 				{"name":"coderepotag","type":"cell"},
 				{"name":"codetopic","type":"cell"},
 				{"name":"codekeyblock","type":"cell"},
+				{"name":"codewrapper","type":"cell"},
 				{"name":"TokenLockerCode","type":"cell"},
 				{"name":"SMVPlatformCode","type":"cell"},
 				{"name":"SMVClientCode","type":"cell"},
@@ -1508,6 +1509,7 @@
 		{"name":"_isRepoUpgraded","type":"bool"},
 		{"name":"_abilityInvite","type":"bool"},
 		{"name":"_isCheck","type":"bool"},
+		{"name":"_wrapper","type":"address"},
 		{"components":[{"name":"fiatValue","type":"uint128"},{"name":"decimals","type":"uint128"},{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"details","type":"string"},{"name":"accessKey","type":"uint256"}],"name":"_paidMembership","type":"map(uint8,tuple)"}
 	]
 }

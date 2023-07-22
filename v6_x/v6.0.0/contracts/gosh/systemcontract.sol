@@ -184,6 +184,7 @@ contract SystemContract is Modifiers {
             _code[m_RepoTagCode],
             _code[m_TopicCode],
             _code[m_KeyBlockCode],
+            _code[m_WrapperCode],
             m_TokenLockerCode,
             m_SMVPlatformCode,
             m_SMVClientCode,
@@ -418,6 +419,11 @@ contract SystemContract is Modifiers {
     function setDao(TvmCell code) public  onlyOwner accept {
         require(_flag == true, ERR_GOSH_UPDATE);
         _code[m_DaoCode] = code;
+    }
+
+    function setWrapper(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
+        _code[m_WrapperCode] = code;
     }
 
     function setTree(TvmCell code) public  onlyOwner accept {

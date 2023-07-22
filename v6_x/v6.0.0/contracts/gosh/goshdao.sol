@@ -81,6 +81,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
     bool public _abilityInvite = false;
     bool public _isCheck = false;
 
+    address _wrapper;
+
     mapping(uint8 => PaidMember) _paidMembership;
     
     constructor(
@@ -105,6 +107,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         TvmCell coderepotag,
         TvmCell codetopic,
         TvmCell codekeyblock,
+        TvmCell codewrapper,
         /////////////////////
         TvmCell TokenLockerCode,
         TvmCell SMVPlatformCode,
@@ -135,6 +138,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _code[m_RepoTagCode] = coderepotag;
         _code[m_TopicCode] = codetopic;
         _code[m_KeyBlockCode] = codekeyblock;
+        _code[m_WrapperCode] = codewrapper;
         /////
         m_TokenLockerCode = TokenLockerCode;
         m_SMVPlatformCode = SMVPlatformCode;
@@ -157,6 +161,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
             this.deployWalletsConst{value: 0.1 ton, flag: 1}(pubmem, 0); 
         }
         ProfileDao(_profiledao).deployedDao{value: 0.1 ton, flag: 1}(_nameDao, version);
+//        TvmCell _dataflex;
+//        TvmCell _contract = tvm.buildStateInit(_code[m_WrapperCode], _dataflex);
+//        TvmCell payload = tvm.encodeBody(Wrapper); 
+//		_wrapper = address.makeAddrStd(0, tvm.hash(_contract));
+//		_wrapper.transfer({stateInit: _contract, body: payload, value: FEE_DEPLOY_WRAPPER});
     }
     
     function deployedWallet(address systemcontract, address goshdao, uint128 index, string ver) public   {

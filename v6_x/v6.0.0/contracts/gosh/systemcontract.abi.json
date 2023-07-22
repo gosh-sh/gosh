@@ -594,6 +594,14 @@
 			]
 		},
 		{
+			"name": "setWrapper",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setTree",
 			"inputs": [
 				{"name":"code","type":"cell"}
