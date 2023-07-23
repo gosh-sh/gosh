@@ -1385,6 +1385,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         bool iszero,
         TvmCell data,
         TvmCell[] signatures,
+        TvmCell[] newsignatures,
         uint256[] newpubkeys,
         uint256 blockhash,
         optional(string) previousversion
@@ -1396,7 +1397,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell s1 = GoshLib.composeKeyBlockStateInit(_code[m_KeyBlockCode], empt, _systemcontract, _goshdao, repo, seqno);
         new KeyBlock{
             stateInit: s1, value: FEE_DEPLOY_KEYBLOCK, wid: 0, bounce: true, flag: 1
-        }(_pubaddr, _index, _systemcontract, _code[m_WalletCode], _code[m_KeyBlockCode], iszero, data, signatures, newpubkeys, blockhash, previousversion, false);
+        }(_pubaddr, _index, _systemcontract, _code[m_WalletCode], _code[m_KeyBlockCode], iszero, data, signatures, newsignatures, newpubkeys, blockhash, previousversion, false);
         getMoney();
     }
 

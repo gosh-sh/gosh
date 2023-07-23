@@ -1045,6 +1045,7 @@
 				{"name":"iszero","type":"bool"},
 				{"name":"data","type":"cell"},
 				{"name":"signatures","type":"cell[]"},
+				{"name":"newsignatures","type":"cell[]"},
 				{"name":"newpubkeys","type":"uint256[]"},
 				{"name":"blockhash","type":"uint256"},
 				{"name":"previousversion","type":"optional(string)"}

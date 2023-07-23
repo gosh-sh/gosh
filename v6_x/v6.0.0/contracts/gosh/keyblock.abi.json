@@ -14,6 +14,7 @@
 				{"name":"isZero","type":"bool"},
 				{"name":"data","type":"cell"},
 				{"name":"signatures","type":"cell[]"},
+				{"name":"newsignatures","type":"cell[]"},
 				{"name":"newpubkeys","type":"uint256[]"},
 				{"name":"prevblockhash","type":"uint256"},
 				{"name":"previousversion","type":"optional(string)"},
@@ -53,8 +54,10 @@
 		{
 			"name": "checkSignatures",
 			"inputs": [
+				{"name":"signatures","type":"cell[]"},
 				{"name":"pubkeys","type":"uint256[]"},
-				{"name":"index","type":"uint128"}
+				{"name":"index","type":"uint128"},
+				{"name":"count","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -62,9 +65,11 @@
 		{
 			"name": "checkSignaturePub",
 			"inputs": [
+				{"name":"signatures","type":"cell[]"},
 				{"name":"pubkeys","type":"uint256[]"},
 				{"name":"index","type":"uint128"},
-				{"name":"index1","type":"uint128"}
+				{"name":"index1","type":"uint128"},
+				{"name":"count","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -225,8 +230,10 @@
 		{"name":"_isZero","type":"bool"},
 		{"name":"_isReady","type":"bool"},
 		{"name":"_isMaster","type":"bool"},
+		{"name":"_final","type":"uint128"},
 		{"name":"_data","type":"cell"},
 		{"name":"_signatures","type":"cell[]"},
+		{"name":"_newsignatures","type":"cell[]"},
 		{"name":"_newpubkeys","type":"uint256[]"},
 		{"name":"_prevblockhash","type":"uint256"},
 		{"name":"_previousversion","type":"optional(string)"},

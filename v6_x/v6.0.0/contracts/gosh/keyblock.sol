@@ -25,8 +25,10 @@ contract KeyBlock is Modifiers{
     bool _isZero = false;
     bool _isReady = false;
     bool _isMaster = false;
+    uint128 _final = 0;
     TvmCell static _data;
     TvmCell[] _signatures;
+    TvmCell[] _newsignatures;
     uint256[] _newpubkeys;
     uint256 _prevblockhash;
     optional(string) _previousversion;
@@ -46,6 +48,7 @@ contract KeyBlock is Modifiers{
         bool isZero,
         TvmCell data,
         TvmCell[] signatures,
+        TvmCell[] newsignatures,
         uint256[] newpubkeys,
         uint256 prevblockhash,
         optional(string) previousversion,
@@ -56,6 +59,7 @@ contract KeyBlock is Modifiers{
         _systemcontract = systemcontract;
         _signatures = signatures;
         _newpubkeys = newpubkeys;
+        _newsignatures = newsignatures;
         _previousversion = previousversion;
         _isMaster = isMaster;
         _prevblockhash = prevblockhash;
@@ -82,28 +86,37 @@ contract KeyBlock is Modifiers{
     function checkSignature(uint256 blockhash, uint256[] pubkeys) public senderIs(_systemcontract) accept {
         if (blockhash != _prevblockhash) { selfdestruct(_systemcontract); }
         if (_signatures.length * 100 / pubkeys.length <= 66) { selfdestruct(_systemcontract); }
-        this.checkSignatures{value: 0.1 ton, flag: 1}(pubkeys, 0);
+        if (_newsignatures.length * 100 / _newpubkeys.length <= 66) { selfdestruct(_systemcontract); }
+        this.checkSignatures{value: 0.1 ton, flag: 1}(_signatures, pubkeys, 0, 0);
+        this.checkSignatures{value: 0.1 ton, flag: 1}(_newsignatures, _newpubkeys, 0, 0);
     } 
 
     function setNewBlock3() public senderIs(_systemcontract) accept {
         _newblock = true;
     } 
 
-    function checkSignatures(uint256[] pubkeys, uint128 index) public senderIs(address(this)) accept {
-        if (_signatures.length >= index) { _isReady = true; SystemContract(_systemcontract).setNewBlock{value: 0.1 ton, flag: 1}(_goshdao, _repo, _seqNo, _previousversion.get()); }
-        this.checkSignaturePub{value: 0.1 ton, flag: 1}(pubkeys, index, 0);
+    function checkSignatures(TvmCell[] signatures, uint256[] pubkeys, uint128 index, uint128 count) public senderIs(address(this)) accept {
+        if (signatures.length >= index) { 
+            if (count * 100 / pubkeys.length <= 66) { selfdestruct(_systemcontract); }
+            _final = _final + 1;
+            if (_final < 2) { return; }
+            _isReady = true; 
+            SystemContract(_systemcontract).setNewBlock{value: 0.1 ton, flag: 1}(_goshdao, _repo, _seqNo, _previousversion.get()); 
+        }
+        this.checkSignaturePub{value: 0.1 ton, flag: 1}(signatures, pubkeys, index, 0, count);
     } 
 
-    function checkSignaturePub(uint256[] pubkeys, uint128 index, uint128 index1) public senderIs(address(this)) accept {
+    function checkSignaturePub(TvmCell[] signatures, uint256[] pubkeys, uint128 index, uint128 index1, uint128 count) public view senderIs(address(this)) accept {
         if (_signatures.length >= index) { 
-            selfdestruct(_systemcontract);
+            this.checkSignatures{value: 0.1 ton, flag: 1}(signatures, pubkeys, index + 1, count);
         }
         bool signatureIsValid = tvm.checkSign(_data.toSlice(), _signatures[index].toSlice(), pubkeys[index1]);
         if (signatureIsValid == true) {
-            this.checkSignatures{value: 0.1 ton, flag: 1}(pubkeys, index + 1);  
+            count = count + 1;
+            this.checkSignatures{value: 0.1 ton, flag: 1}(signatures, pubkeys, index + 1, count);  
             return;  
         }
-        this.checkSignaturePub{value: 0.1 ton, flag: 1}(pubkeys, index, index1 + 1);
+        this.checkSignaturePub{value: 0.1 ton, flag: 1}(signatures, pubkeys, index, index1 + 1, count);
     } 
 
     function destroy(address pubaddr, uint128 index) public {
@@ -116,7 +129,7 @@ contract KeyBlock is Modifiers{
             TvmCell s1 = GoshLib.composeMasterBlockStateInit(_code[m_KeyBlockCode], data, _systemcontract, _goshdao, _repo, _seqNo);
             new KeyBlock{
                 stateInit: s1, value: FEE_DEPLOY_KEYBLOCK, wid: 0, bounce: true, flag: 1
-            }(address(this), 0, _systemcontract, _code[m_WalletCode], _code[m_KeyBlockCode], _isZero, _data, _signatures, _newpubkeys, _prevblockhash, null, false);  
+            }(address(this), 0, _systemcontract, _code[m_WalletCode], _code[m_KeyBlockCode], _isZero, _data, _signatures, _newsignatures, _newpubkeys, _prevblockhash, null, false);  
         }
         _statuscheck = false;
     }
