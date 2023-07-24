@@ -103,21 +103,25 @@ contract KeyBlock is Modifiers{
             _isReady = true; 
             SystemContract(_systemcontract).setNewBlock{value: 0.1 ton, flag: 1}(_goshdao, _repo, _seqNo, _previousversion.get()); 
         }
-        this.checkSignaturePub{value: 0.1 ton, flag: 1}(signatures, pubkeys, index, 0, count);
+        mapping(uint128=>bool) pubcheck;
+        this.checkSignaturePub{value: 0.1 ton, flag: 1}(signatures, pubkeys, index, 0, count, pubcheck);
     } 
 
-    function checkSignaturePub(bytes[] signatures, uint256[] pubkeys, uint128 index, uint128 index1, uint128 count) public view senderIs(address(this)) accept {
+    function checkSignaturePub(bytes[] signatures, uint256[] pubkeys, uint128 index, uint128 index1, uint128 count, mapping(uint128=>bool) pubcheck) public view senderIs(address(this)) accept {
         if (signatures.length <= index1) { 
             this.checkSignatures{value: 0.1 ton, flag: 1}(signatures, pubkeys, index + 1, count);
             return;
         }
-        bool signatureIsValid = tvm.checkSign(_data.toSlice(), signatures[index].toSlice(), pubkeys[index1]);
-        if (signatureIsValid == true) {
-            count = count + 1;
-            this.checkSignatures{value: 0.1 ton, flag: 1}(signatures, pubkeys, index + 1, count);  
-            return;  
+        if (pubcheck.exists(index1)  == false) {
+            bool signatureIsValid = tvm.checkSign(_data.toSlice(), signatures[index].toSlice(), pubkeys[index1]);
+            if (signatureIsValid == true) {
+                count = count + 1;
+                pubcheck[index1] = true;
+                this.checkSignatures{value: 0.1 ton, flag: 1}(signatures, pubkeys, index + 1, count);  
+                return;  
+            }
         }
-        this.checkSignaturePub{value: 0.1 ton, flag: 1}(signatures, pubkeys, index, index1 + 1, count);
+        this.checkSignaturePub{value: 0.1 ton, flag: 1}(signatures, pubkeys, index, index1 + 1, count, pubcheck);
     } 
 
     function destroy(address pubaddr, uint128 index) public {

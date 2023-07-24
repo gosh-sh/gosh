@@ -69,7 +69,8 @@
 				{"name":"pubkeys","type":"uint256[]"},
 				{"name":"index","type":"uint128"},
 				{"name":"index1","type":"uint128"},
-				{"name":"count","type":"uint128"}
+				{"name":"count","type":"uint128"},
+				{"name":"pubcheck","type":"map(uint128,bool)"}
 			],
 			"outputs": [
 			]
