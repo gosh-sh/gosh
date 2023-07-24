@@ -263,6 +263,7 @@ contract SystemContract is Modifiers {
         bytes empt;
         address addr = GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, address(this), goshdao, repo, seqno);
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);        
+        tvm.accept();
         if (version == prev) {
             KeyBlock(GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, address(this), goshdao, repo, seqno + 1)).checkSignature{value:0.4 ton, flag: 1}(blockhash, pubkeys);
         }
