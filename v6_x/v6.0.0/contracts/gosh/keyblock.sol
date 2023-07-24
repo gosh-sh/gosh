@@ -80,7 +80,7 @@ contract KeyBlock is Modifiers{
 
     function askSignature(address goshdao, address repo, uint128 seqno, string previousversion, string ver) public view minValue(0.3 ton) accept {
         seqno;
-        SystemContract(_systemcontract).checkKeyBlock2{flag: 1}(goshdao, repo, _seqNo, _newpubkeys, tvm.hash(_data), previousversion, ver);
+        SystemContract(_systemcontract).checkKeyBlock2{value: 0.1 ton, flag: 1}(goshdao, repo, _seqNo, _newpubkeys, tvm.hash(_data), previousversion, ver);
     } 
 
     function checkSignature(uint256 blockhash, uint256[] pubkeys) public senderIs(_systemcontract) accept {
