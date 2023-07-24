@@ -26,9 +26,9 @@ contract KeyBlock is Modifiers{
     bool _isReady = false;
     bool _isMaster = false;
     uint128 _final = 0;
-    TvmCell static _data;
-    TvmCell[] _signatures;
-    TvmCell[] _newsignatures;
+    bytes static _data;
+    bytes[] _signatures;
+    bytes[] _newsignatures;
     uint256[] _newpubkeys;
     uint256 _prevblockhash;
     optional(string) _previousversion;
@@ -46,9 +46,9 @@ contract KeyBlock is Modifiers{
         TvmCell wallet_code,
         TvmCell keyblock_code,
         bool isZero,
-        TvmCell data,
-        TvmCell[] signatures,
-        TvmCell[] newsignatures,
+        bytes data,
+        bytes[] signatures,
+        bytes[] newsignatures,
         uint256[] newpubkeys,
         uint256 prevblockhash,
         optional(string) previousversion,
@@ -95,7 +95,7 @@ contract KeyBlock is Modifiers{
         _newblock = true;
     } 
 
-    function checkSignatures(TvmCell[] signatures, uint256[] pubkeys, uint128 index, uint128 count) public senderIs(address(this)) accept {
+    function checkSignatures(bytes[] signatures, uint256[] pubkeys, uint128 index, uint128 count) public senderIs(address(this)) accept {
         if (signatures.length >= index) { 
             if (count * 100 / pubkeys.length <= 66) { selfdestruct(_systemcontract); }
             _final = _final + 1;
@@ -106,7 +106,7 @@ contract KeyBlock is Modifiers{
         this.checkSignaturePub{value: 0.1 ton, flag: 1}(signatures, pubkeys, index, 0, count);
     } 
 
-    function checkSignaturePub(TvmCell[] signatures, uint256[] pubkeys, uint128 index, uint128 index1, uint128 count) public view senderIs(address(this)) accept {
+    function checkSignaturePub(bytes[] signatures, uint256[] pubkeys, uint128 index, uint128 index1, uint128 count) public view senderIs(address(this)) accept {
         if (_signatures.length >= index) { 
             this.checkSignatures{value: 0.1 ton, flag: 1}(signatures, pubkeys, index + 1, count);
         }
@@ -124,7 +124,7 @@ contract KeyBlock is Modifiers{
         selfdestruct(_systemcontract);
     }
 
-    function getResult(TvmCell data, bool result, bool isMaster) public senderIs(address(this)) {
+    function getResult(bytes data, bool result, bool isMaster) public senderIs(address(this)) {
         if ((result == true) && (isMaster == true)) {
             TvmCell s1 = GoshLib.composeMasterBlockStateInit(_code[m_KeyBlockCode], data, _systemcontract, _goshdao, _repo, _seqNo);
             new KeyBlock{
@@ -134,7 +134,7 @@ contract KeyBlock is Modifiers{
         _statuscheck = false;
     }
 
-    function continueCheck(TvmCell data, uint256 newhash, uint128 index, bool isMaster) public view senderIs(address(this)) accept {
+    function continueCheck(bytes data, uint256 newhash, uint128 index, bool isMaster) public view senderIs(address(this)) accept {
         uint128 count = 0;
         for (uint128 i = 0; index + i < _hashblocks.length; i++) {
             newhash = tvm.hash(abi.encode(newhash, _hashblocks[index + i]));
@@ -149,7 +149,7 @@ contract KeyBlock is Modifiers{
         }
     }
 
-    function CheckMasterBlockIn(TvmCell data, TvmCell[] signatures, uint128 index1, uint128 index2, uint128 count, bool res) public view senderIs(address(this)) {
+    function CheckMasterBlockIn(bytes data, bytes[] signatures, uint128 index1, uint128 index2, uint128 count, bool res) public view senderIs(address(this)) {
         if (_lastsession == false) { 
             this.continueCheck{value: 0.1 ton}(data, tvm.hash(data), 0, true);
             return; 
@@ -196,7 +196,7 @@ contract KeyBlock is Modifiers{
         }
     }
 
-    function getCheckMasterBlock(address pubaddr, uint128 index, TvmCell data, TvmCell[] signatures, bool lastsession) public {
+    function getCheckMasterBlock(address pubaddr, uint128 index, bytes data, bytes[] signatures, bool lastsession) public {
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         require(_statuscheck == false, ERR_PROGRAM_EXIST);
         tvm.accept();
@@ -205,7 +205,7 @@ contract KeyBlock is Modifiers{
         this.CheckMasterBlockIn{value:0.1 ton}(data, signatures, 0, 0, 0, false);
     }
 
-    function getCheckObject(address pubaddr, uint128 index, TvmCell data) public {
+    function getCheckObject(address pubaddr, uint128 index, bytes data) public {
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         require(_statuscheck == false, ERR_PROGRAM_EXIST);
         tvm.accept();
@@ -223,7 +223,7 @@ contract KeyBlock is Modifiers{
         return (_hashblocks);
     }
 
-    function getStatus() external view returns(uint128 seqNo, address goshdao, address repo, address systemcontract, bool isZero, bool isReady, TvmCell data, TvmCell[] signatures, uint256[] newpubkeys, optional(string) previousversion) {
+    function getStatus() external view returns(uint128 seqNo, address goshdao, address repo, address systemcontract, bool isZero, bool isReady, bytes data, bytes[] signatures, uint256[] newpubkeys, optional(string) previousversion) {
         return (_seqNo, _goshdao, _repo, _systemcontract, _isZero, _isReady, _data, _signatures, _newpubkeys, _previousversion);
     }
 

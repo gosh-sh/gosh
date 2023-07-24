@@ -68,7 +68,7 @@ library GoshLib {
         })));
     }
 
-    function calculateKeyBlockAddress(TvmCell code, TvmCell data, address systemcontract, address goshdao, address repo, uint128 seqno) public returns (address) {
+    function calculateKeyBlockAddress(TvmCell code, bytes data, address systemcontract, address goshdao, address repo, uint128 seqno) public returns (address) {
         TvmCell deployCode = buildKeyBlockCode(
             code, systemcontract, goshdao, repo, versionLib
         );
@@ -79,7 +79,7 @@ library GoshLib {
         })));
     }
 
-    function calculateMasterBlockAddress(TvmCell code, TvmCell data, address systemcontract, address goshdao, address repo, uint128 seqno) public returns (address) {
+    function calculateMasterBlockAddress(TvmCell code, bytes data, address systemcontract, address goshdao, address repo, uint128 seqno) public returns (address) {
         TvmCell deployCode = buildMasterBlockCode(
             code, systemcontract, goshdao, repo, versionLib
         );
@@ -230,7 +230,7 @@ library GoshLib {
         return s1;
     }
 
-    function composeKeyBlockStateInit(TvmCell code, TvmCell data, address systemcontract, address goshdao, address repo, uint128 seqno) public returns(TvmCell) {
+    function composeKeyBlockStateInit(TvmCell code, bytes data, address systemcontract, address goshdao, address repo, uint128 seqno) public returns(TvmCell) {
         TvmCell deployCode = buildKeyBlockCode(
             code, systemcontract, goshdao, repo, versionLib
         );
@@ -241,7 +241,7 @@ library GoshLib {
         });
     }
 
-    function composeMasterBlockStateInit(TvmCell code, TvmCell data, address systemcontract, address goshdao, address repo, uint128 seqno) public returns(TvmCell) {
+    function composeMasterBlockStateInit(TvmCell code, bytes data, address systemcontract, address goshdao, address repo, uint128 seqno) public returns(TvmCell) {
         TvmCell deployCode = buildMasterBlockCode(
             code, systemcontract, goshdao, repo, versionLib
         );

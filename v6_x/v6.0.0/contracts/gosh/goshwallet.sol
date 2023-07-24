@@ -1383,9 +1383,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address repo,
         uint128 seqno,
         bool iszero,
-        TvmCell data,
-        TvmCell[] signatures,
-        TvmCell[] newsignatures,
+        bytes data,
+        bytes[] signatures,
+        bytes[] newsignatures,
         uint256[] newpubkeys,
         uint256 blockhash,
         optional(string) previousversion
@@ -1393,7 +1393,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        TvmCell empt;
+        bytes empt;
         TvmCell s1 = GoshLib.composeKeyBlockStateInit(_code[m_KeyBlockCode], empt, _systemcontract, _goshdao, repo, seqno);
         new KeyBlock{
             stateInit: s1, value: FEE_DEPLOY_KEYBLOCK, wid: 0, bounce: true, flag: 1
@@ -1408,7 +1408,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);        
-        TvmCell empt;
+        bytes empt;
         address key = GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, _systemcontract, _goshdao, repo, seqno);
         KeyBlock(key).destroy{value: 0.1 ton, flag: 1}(_pubaddr, _index);
         getMoney();
@@ -1421,7 +1421,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        TvmCell empt;
+        bytes empt;
         address key = GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, _systemcontract, _goshdao, repo, seqno);
         KeyBlock(key).emptyHashes{value: 1 ton, flag: 1}(_pubaddr, _index);
         getMoney();
@@ -1435,7 +1435,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        TvmCell empt;
+        bytes empt;
         address key = GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, _systemcontract, _goshdao, repo, seqno);
         KeyBlock(key).pushHashes{value: 1 ton, flag: 1}(_pubaddr, _index, hashes);
         getMoney();
@@ -1444,14 +1444,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function getCheckMasterKeyBlock(
         address repo,
         uint128 seqno,
-        TvmCell data, 
-        TvmCell[] signatures, 
+        bytes data, 
+        bytes[] signatures, 
         bool lastsession
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        TvmCell empt;
+        bytes empt;
         address key = GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, _systemcontract, _goshdao, repo, seqno);
         KeyBlock(key).getCheckMasterBlock{value: 10 ton, flag: 1}(_pubaddr, _index, data, signatures, lastsession);
         getMoney();
@@ -1460,12 +1460,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function getCheckObject(
         address repo,
         uint128 seqno,
-        TvmCell data
+        bytes data
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        TvmCell empt;
+        bytes empt;
         address key = GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, _systemcontract, _goshdao, repo, seqno);
         KeyBlock(key).getCheckObject{value: 10 ton, flag: 1}(_pubaddr, _index, data);
         getMoney();

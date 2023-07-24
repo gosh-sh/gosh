@@ -1043,9 +1043,9 @@
 				{"name":"repo","type":"address"},
 				{"name":"seqno","type":"uint128"},
 				{"name":"iszero","type":"bool"},
-				{"name":"data","type":"cell"},
-				{"name":"signatures","type":"cell[]"},
-				{"name":"newsignatures","type":"cell[]"},
+				{"name":"data","type":"bytes"},
+				{"name":"signatures","type":"bytes[]"},
+				{"name":"newsignatures","type":"bytes[]"},
 				{"name":"newpubkeys","type":"uint256[]"},
 				{"name":"blockhash","type":"uint256"},
 				{"name":"previousversion","type":"optional(string)"}
@@ -1086,8 +1086,8 @@
 			"inputs": [
 				{"name":"repo","type":"address"},
 				{"name":"seqno","type":"uint128"},
-				{"name":"data","type":"cell"},
-				{"name":"signatures","type":"cell[]"},
+				{"name":"data","type":"bytes"},
+				{"name":"signatures","type":"bytes[]"},
 				{"name":"lastsession","type":"bool"}
 			],
 			"outputs": [
@@ -1098,7 +1098,7 @@
 			"inputs": [
 				{"name":"repo","type":"address"},
 				{"name":"seqno","type":"uint128"},
-				{"name":"data","type":"cell"}
+				{"name":"data","type":"bytes"}
 			],
 			"outputs": [
 			]
