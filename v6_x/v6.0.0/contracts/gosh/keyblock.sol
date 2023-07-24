@@ -110,7 +110,7 @@ contract KeyBlock is Modifiers{
         if (signatures.length <= index1) { 
             this.checkSignatures{value: 0.1 ton, flag: 1}(signatures, pubkeys, index + 1, count);
         }
-        bool signatureIsValid = tvm.checkSign(_data.toSlice(), _signatures[index].toSlice(), pubkeys[index1]);
+        bool signatureIsValid = tvm.checkSign(_data.toSlice(), signatures[index].toSlice(), pubkeys[index1]);
         if (signatureIsValid == true) {
             count = count + 1;
             this.checkSignatures{value: 0.1 ton, flag: 1}(signatures, pubkeys, index + 1, count);  
