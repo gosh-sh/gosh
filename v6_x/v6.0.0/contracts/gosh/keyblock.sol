@@ -107,7 +107,7 @@ contract KeyBlock is Modifiers{
     } 
 
     function checkSignaturePub(bytes[] signatures, uint256[] pubkeys, uint128 index, uint128 index1, uint128 count) public view senderIs(address(this)) accept {
-        if (_signatures.length <= index1) { 
+        if (signatures.length <= index1) { 
             this.checkSignatures{value: 0.1 ton, flag: 1}(signatures, pubkeys, index + 1, count);
         }
         bool signatureIsValid = tvm.checkSign(_data.toSlice(), _signatures[index].toSlice(), pubkeys[index1]);
