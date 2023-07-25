@@ -87,15 +87,16 @@ contract KeyBlock is Modifiers{
         if (blockhash != _prevblockhash) { selfdestruct(_systemcontract); }
         if (_signatures.length * 100 / pubkeys.length <= 66) { selfdestruct(_systemcontract); }
         if (_newsignatures.length * 100 / _newpubkeys.length <= 66) { selfdestruct(_systemcontract); }
-        this.checkSignatures{value: 0.1 ton, flag: 1}(_signatures, pubkeys, 0, 0);
-        this.checkSignatures{value: 0.1 ton, flag: 1}(_newsignatures, _newpubkeys, 0, 0);
+        mapping(uint128=>bool) pubcheck;
+        this.checkSignatures{value: 0.1 ton, flag: 1}(_signatures, pubkeys, 0, 0, pubcheck);
+        this.checkSignatures{value: 0.1 ton, flag: 1}(_newsignatures, _newpubkeys, 0, 0, pubcheck);
     } 
 
     function setNewBlock3() public senderIs(_systemcontract) accept {
         _newblock = true;
     } 
 
-    function checkSignatures(bytes[] signatures, uint256[] pubkeys, uint128 index, uint128 count) public senderIs(address(this)) accept {
+    function checkSignatures(bytes[] signatures, uint256[] pubkeys, uint128 index, uint128 count, mapping(uint128=>bool) pubcheck) public senderIs(address(this)) accept {
         if (signatures.length <= index) { 
             if (count * 100 / pubkeys.length <= 66) { selfdestruct(_systemcontract); return; }
             _final = _final + 1;
@@ -103,13 +104,12 @@ contract KeyBlock is Modifiers{
             _isReady = true; 
             SystemContract(_systemcontract).setNewBlock{value: 0.1 ton, flag: 1}(_goshdao, _repo, _seqNo, _previousversion.get()); 
         }
-        mapping(uint128=>bool) pubcheck;
         this.checkSignaturePub{value: 0.1 ton, flag: 1}(signatures, pubkeys, index, 0, count, pubcheck);
     } 
 
     function checkSignaturePub(bytes[] signatures, uint256[] pubkeys, uint128 index, uint128 index1, uint128 count, mapping(uint128=>bool) pubcheck) public view senderIs(address(this)) accept {
         if (signatures.length <= index1) { 
-            this.checkSignatures{value: 0.1 ton, flag: 1}(signatures, pubkeys, index + 1, count);
+            this.checkSignatures{value: 0.1 ton, flag: 1}(signatures, pubkeys, index + 1, count, pubcheck);
             return;
         }
         if (pubcheck.exists(index1)  == false) {
@@ -117,7 +117,7 @@ contract KeyBlock is Modifiers{
             if (signatureIsValid == true) {
                 count = count + 1;
                 pubcheck[index1] = true;
-                this.checkSignatures{value: 0.1 ton, flag: 1}(signatures, pubkeys, index + 1, count);  
+                this.checkSignatures{value: 0.1 ton, flag: 1}(signatures, pubkeys, index + 1, count, pubcheck);  
                 return;  
             }
         }
