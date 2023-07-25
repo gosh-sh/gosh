@@ -103,6 +103,7 @@ contract KeyBlock is Modifiers{
             if (_final < 2) { return; }
             _isReady = true; 
             SystemContract(_systemcontract).setNewBlock{value: 0.1 ton, flag: 1}(_goshdao, _repo, _seqNo, _previousversion.get()); 
+            return;
         }
         this.checkSignaturePub{value: 0.1 ton, flag: 1}(signatures, pubkeys, index, 0, count, pubcheck);
     } 
