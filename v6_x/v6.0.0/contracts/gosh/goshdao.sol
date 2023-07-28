@@ -410,7 +410,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
         
     function volunteertree() public senderIs(address(this)) accept {
-        _volunteertree[0].transfer(100 ton);
+        _volunteertree[0].transfer(300 ton);
         delete _volunteertree[0];
         this.volunteertree();
         getMoney();
@@ -437,7 +437,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (address(this).balance < 2000) { _volunteertree.push(msg.sender); getMoney(); return; }
-        addr.transfer(100 ton);
+        addr.transfer(300 ton);
         getMoney();
     }
     
