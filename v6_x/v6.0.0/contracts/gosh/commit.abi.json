@@ -34,6 +34,15 @@
 			]
 		},
 		{
+			"name": "setPinned",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "allCorrect",
 			"inputs": [
 				{"name":"number","type":"uint128"},
@@ -382,7 +391,8 @@
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"parents","type":"tuple[]"},
 				{"name":"content","type":"string"},
 				{"name":"initupgrade","type":"bool"},
-				{"name":"isCorrectCommit","type":"bool"}
+				{"name":"isCorrectCommit","type":"bool"},
+				{"name":"isPinned","type":"bool"}
 			]
 		},
 		{
@@ -468,6 +478,7 @@
 		{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"_task","type":"optional(tuple)"},
 		{"name":"_isCorrect","type":"bool"},
 		{"name":"_numcommits","type":"uint128"},
+		{"name":"_isPinned","type":"bool"},
 		{"name":"timeMoney","type":"uint128"}
 	]
 }

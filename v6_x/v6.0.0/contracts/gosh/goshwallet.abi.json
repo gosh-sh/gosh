@@ -959,6 +959,15 @@
 			]
 		},
 		{
+			"name": "setPinnedCommit",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"commitName","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployCommit",
 			"inputs": [
 				{"name":"repoName","type":"string"},

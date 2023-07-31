@@ -1246,6 +1246,15 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     //Commit part
+    function setPinnedCommit(
+        string repoName,
+        string commitName
+    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode],  GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName), commitName)).setPinned{value:0.75 ton, flag: 1}(_pubaddr, _index);
+    }
+
     function deployCommit(
         string repoName,
         string branchName,

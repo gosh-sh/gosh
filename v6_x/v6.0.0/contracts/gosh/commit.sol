@@ -51,6 +51,7 @@ contract Commit is Modifiers {
     optional(ConfigCommit) _task;
     bool _isCorrect = false;
     uint128 _numcommits = 0;
+    bool _isPinned = false;
 
     uint128 timeMoney = 0;
  
@@ -106,6 +107,13 @@ contract Commit is Modifiers {
     function isCorrect(string newname) public senderIs(_rootRepo){
         tvm.accept();
         Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, newname, 0, null);
+        getMoney();
+    }
+
+    function setPinned(address pubaddr, uint128 index) public {
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, "//PINTAG//" + _nameCommit, 0, null);
         getMoney();
     }
 
@@ -229,7 +237,14 @@ contract Commit is Modifiers {
 
     function treeAccept(string branch, optional(address) branchcommit, uint128 typer) public senderIs(_tree) {
         if (typer == 1) { Repository(_rootRepo).initCommit{value: 0.14 ton, flag:1}(_nameCommit, branch, _parents[0]); }
-        if (typer == 0) { Repository(_rootRepo).commitCorrect{value: 0.22 ton, flag: 1}(branch, _nameCommit); }
+        if (typer == 0) { 
+            if (branch == "//PINTAG//" + _nameCommit) {
+                _isPinned = true;
+            }
+            else {
+                Repository(_rootRepo).commitCorrect{value: 0.22 ton, flag: 1}(branch, _nameCommit); 
+            }
+        }
         if (typer == 2) { 
             Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch, branchcommit.get(), _nameCommit, _number, _numbercommits, _task);
             _number = 0;
@@ -502,13 +517,14 @@ contract Commit is Modifiers {
         AddrVersion[] parents,
         string content,
         bool initupgrade,
-        bool isCorrectCommit
+        bool isCorrectCommit,
+        bool isPinned
     ) {
-        return (_rootRepo, _nameBranch, _nameCommit, _parents, _commit, _initupgrade, _isCorrect);
+        return (_rootRepo, _nameBranch, _nameCommit, _parents, _commit, _initupgrade, _isCorrect, _isPinned);
     }
     
     function getCommitIn() public view minValue(0.5 ton) {
-        IObject(msg.sender).returnCommit{value: 0.1 ton, flag: 1}(_rootRepo, _nameBranch, _nameCommit, _parents, _commit, _initupgrade, _isCorrect);
+        IObject(msg.sender).returnCommit{value: 0.1 ton, flag: 1}(_rootRepo, _nameBranch, _nameCommit, _parents, _commit, _initupgrade, _isCorrect, _isPinned);
     }
 
     function getCount() external view returns(uint128, bool) {
