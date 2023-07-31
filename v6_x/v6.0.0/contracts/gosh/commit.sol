@@ -50,6 +50,7 @@ contract Commit is Modifiers {
     optional(string) _prevversion;
     optional(ConfigCommit) _task;
     bool _isCorrect = false;
+    uint128 _numcommits = 0;
 
     uint128 timeMoney = 0;
  
@@ -199,6 +200,7 @@ contract Commit is Modifiers {
         _number = number;
         _numbercommits = numberCommits;
         _approved = 0;
+        _numcommits = 0;
         _task = task;
         this._sendAllDiff{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, 0, _number);
         this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, address(this), numberCommits);
@@ -274,16 +276,38 @@ contract Commit is Modifiers {
         address newC,
         uint128 numberCommits) public senderIs(address(this)) {
         if (branchCommit  == address(this)) {
-                if (numberCommits != 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
+//                if (numberCommits != 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
                 Commit(newC).ChainAccept{value: 0.3 ton, bounce: true , flag: 1}(_nameCommit, branchName, branchCommit, newC);
         }
         else {
             if (_parents.length == 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
             if (numberCommits == 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
-            Commit(_parents[0].addr).CommitCheckCommit{value: 0.3 ton, bounce: true, flag: 1 }(_nameCommit, branchName, branchCommit , newC, numberCommits - 1);
+            this._sendCheckChainLoop{value: 0.1 ton, flag: 1}(branchName, branchCommit, newC, numberCommits, 0);
         }
         getMoney();
     }
+
+    function addCommitCheckNumber(
+        string nameCommit) public {
+        require(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, nameCommit) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        _numcommits = _numcommits + 1;
+        getMoney();
+    }
+
+    function _sendCheckChainLoop(
+        string branchName,
+        address branchCommit,
+        address newC,
+        uint128 numberCommits,
+        uint128 index) public senderIs(address(this)) accept {
+        if (index >= _parents.length) { return; }
+        getMoney();
+        Commit(newC).addCommitCheckNumber{value:0.1 ton , flag: 1}(_nameCommit);
+        Commit(_parents[index].addr).CommitCheckCommit{value: 0.3 ton, bounce: true, flag: 1 }(_nameCommit, branchName, branchCommit , newC, numberCommits - 1);            
+        this._sendCheckChainLoop{value: 0.1 ton, flag: 1}(branchName, branchCommit, newC, numberCommits, index + 1);
+    }
+        
 
     function abortDiff(string branch, address branchCommit, uint128 index) public senderIs(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0)) {
         tvm.accept();
@@ -312,9 +336,11 @@ contract Commit is Modifiers {
         tvm.accept();
         require(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, name) == msg.sender, ERR_SENDER_NO_ALLOWED);
         require(newC == address(this), ERR_WRONG_DATA);
+        getMoney();
+        _numcommits = _numcommits - 1;
+        if (_numcommits != 0) { return; }
         _continueChain = false;
         _commitcheck = true;
-        getMoney();
         if (_continueDiff == true) { return; }
         this.acceptAll{value: 0.15 ton, bounce: true, flag: 1}(branchName, branchCommit);
     }

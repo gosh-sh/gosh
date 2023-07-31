@@ -189,6 +189,26 @@
 			]
 		},
 		{
+			"name": "addCommitCheckNumber",
+			"inputs": [
+				{"name":"nameCommit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "_sendCheckChainLoop",
+			"inputs": [
+				{"name":"branchName","type":"string"},
+				{"name":"branchCommit","type":"address"},
+				{"name":"newC","type":"address"},
+				{"name":"numberCommits","type":"uint128"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "abortDiff",
 			"inputs": [
 				{"name":"branch","type":"string"},
@@ -447,6 +467,7 @@
 		{"name":"_prevversion","type":"optional(string)"},
 		{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"_task","type":"optional(tuple)"},
 		{"name":"_isCorrect","type":"bool"},
+		{"name":"_numcommits","type":"uint128"},
 		{"name":"timeMoney","type":"uint128"}
 	]
 }
