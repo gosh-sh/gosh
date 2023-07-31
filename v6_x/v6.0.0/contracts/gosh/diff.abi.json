@@ -25,6 +25,7 @@
 		{
 			"name": "allCorrect",
 			"inputs": [
+				{"name":"branch","type":"string"}
 			],
 			"outputs": [
 			]
@@ -85,7 +86,8 @@
 		{
 			"name": "applyDiff",
 			"inputs": [
-				{"name":"index","type":"uint128"}
+				{"name":"index","type":"uint128"},
+				{"name":"branch","type":"string"}
 			],
 			"outputs": [
 			]
@@ -174,6 +176,7 @@
 		{"name":"_name","type":"string"},
 		{"name":"check","type":"bool"},
 		{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"removeIpfs","type":"bool"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"_diff","type":"tuple[]"},
+		{"name":"_timebranch","type":"string"},
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_systemcontract","type":"address"},
 		{"name":"_approved","type":"uint128"},

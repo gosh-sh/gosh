@@ -33,6 +33,7 @@ contract DiffC is Modifiers {
     string _name;
     bool check = false;
     Diff[] _diff;
+    string _timebranch;
     mapping(uint8 => TvmCell) _code;
     address _systemcontract;
     uint128 _approved = 0;
@@ -95,10 +96,11 @@ contract DiffC is Modifiers {
     }
     
     //Commit part
-    function allCorrect() public {
+    function allCorrect(string branch) public {
         tvm.accept();
         require(checkAllAccess(msg.sender), ERR_SENDER_NO_ALLOWED);
-        this.applyDiff{value: 0.1 ton, flag: 1}(0);
+        this.applyDiff{value: 0.1 ton, flag: 1}(0, branch);
+        _timebranch = branch;
         getMoney();
     }
     
@@ -202,18 +204,18 @@ contract DiffC is Modifiers {
         getMoney();
     }
     
-    function applyDiff(uint128 index) public senderIs(address(this)) {
+    function applyDiff(uint128 index, string branch) public senderIs(address(this)) {
         tvm.accept();
         getMoney();
         if (address(this).balance < 5 ton) { _saved = PauseDiff(1, address.makeAddrNone(), index); return; }
         if (index > _diff.length) { delete _diff; return; }
         if (index == _diff.length) { 
-            if (_last == false) { DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, _index2 + 1)).allCorrect{value : 0.2 ton, flag: 1}(); }
+            if (_last == false) { DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, _index2 + 1)).allCorrect{value : 0.2 ton, flag: 1}(branch); }
             selfdestruct(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit)); return;
         }
-        Snapshot(_diff[index].snap).approve{value : 0.2 ton, flag: 1}(_index1, _index2, _diff[index]); 
+        Snapshot(_diff[index].snap).approve{value : 0.2 ton, flag: 1}(_index1, _index2, _diff[index], branch); 
         Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _diff[index].commit)).getAcceptedDiff{value : 0.2 ton, flag: 1}(_diff[index], _index1, index, _nameBranch);
-        this.applyDiff{value: 0.1 ton, flag: 1}(index + 1);
+        this.applyDiff{value: 0.1 ton, flag: 1}(index + 1, _timebranch);
     }
     
     function cancelDiff(uint128 index) public senderIs(address(this)) {
@@ -246,7 +248,7 @@ contract DiffC is Modifiers {
                     this.sendDiff{value: 0.1 ton, flag: 1}(val.index, val.branchcommit);
                 }
                 if (val.send == 1) {
-                    this.applyDiff{value: 0.1 ton, flag: 1}(val.index);
+                    this.applyDiff{value: 0.1 ton, flag: 1}(val.index, _timebranch);
                 }
                 if (val.send == 2) {
                     this.cancelDiff{value: 0.1 ton, flag: 1}(val.index);

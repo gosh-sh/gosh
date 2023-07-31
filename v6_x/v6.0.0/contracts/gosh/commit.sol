@@ -108,10 +108,10 @@ contract Commit is Modifiers {
         getMoney();
     }
 
-    function allCorrect(uint128 number) public senderIs(_rootRepo){
+    function allCorrect(uint128 number, string branch) public senderIs(_rootRepo){
         tvm.accept();
         _isCorrect = true;
-        this._acceptCommitRepo{value: 0.2 ton, bounce: true, flag: 1}(0, number);
+        this._acceptCommitRepo{value: 0.2 ton, bounce: true, flag: 1}(0, number, branch);
         getMoney();
     }
     
@@ -130,7 +130,7 @@ contract Commit is Modifiers {
     }
 
 
-    function _acceptCommitRepo(uint128 index, uint128 number) public senderIs(address(this)) {
+    function _acceptCommitRepo(uint128 index, uint128 number, string branch) public senderIs(address(this)) {
         tvm.accept();
         getMoney();
         if (index >= number) {
@@ -138,8 +138,8 @@ contract Commit is Modifiers {
             _diffcheck = false;
             return;
         }
-        DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0)).allCorrect{value : 0.2 ton, flag: 1}();
-        this._acceptCommitRepo{value: 0.2 ton, bounce: true, flag: 1}(index + 1, number);
+        DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0)).allCorrect{value : 0.2 ton, flag: 1}(branch);
+        this._acceptCommitRepo{value: 0.2 ton, bounce: true, flag: 1}(index + 1, number, branch);
     }
 
     function cancelCommit(string namecommit, uint128 number) public {

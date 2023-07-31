@@ -243,7 +243,7 @@ contract Repository is Modifiers{
             ConfigCommitBase tasksend = ConfigCommitBase({task: taskf.task, commit: getCommitAddr(namecommit), number_commit: number_commit, pubaddrassign: taskf.pubaddrassign, pubaddrreview: taskf.pubaddrreview, pubaddrmanager: taskf.pubaddrmanager, daoMembers: taskf.daoMembers});
             Task(taskf.task).isReady{value: 0.1 ton, flag: 1}(tasksend);
         }
-        Commit(getCommitAddr(namecommit)).allCorrect{value: 0.1 ton, flag: 1}(number);
+        Commit(getCommitAddr(namecommit)).allCorrect{value: 0.1 ton, flag: 1}(number, nameBranch);
     }
 
     function fromInitUpgrade2(string nameCommit, address commit, string ver, string branch) public view senderIs(getCommitAddr(nameCommit)) accept {

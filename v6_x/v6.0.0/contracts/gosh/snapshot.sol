@@ -133,7 +133,6 @@ contract Snapshot is Modifiers {
         tvm.accept();
         getMoney();
         uint256 empty;
-        
         if ((_applying == true) && (msg.sender != GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _commits, index1, index2))) {
             DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty);
             return;
@@ -148,10 +147,10 @@ contract Snapshot is Modifiers {
             	return;
             }            
             if (tvm.hash(gosh.unzip(diff.patch.get())) == diff.sha256) {
-                       _snapshot = diff.patch.get();
-                       _ipfs = null;
-                        DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(true, namecommit, tvm.hash(gosh.unzip(_snapshot)));
-                        _applying = true;
+                _snapshot = diff.patch.get();
+                _ipfs = null;
+                DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(true, namecommit, tvm.hash(gosh.unzip(_snapshot)));
+                _applying = true;
             }
             else {
                 DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, tvm.hash(gosh.unzip(diff.patch.get())));
@@ -178,9 +177,9 @@ contract Snapshot is Modifiers {
                 return;
             }
             if (tvm.hash(gosh.unzip(res.get())) == diff.sha256) {
-                       _snapshot = res.get();
-                        DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(true, namecommit, tvm.hash(gosh.unzip(_snapshot)));
-                        _applying = true;
+                _snapshot = res.get();
+                DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(true, namecommit, tvm.hash(gosh.unzip(_snapshot)));
+                _applying = true;
             }
             else {
                 DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, tvm.hash(gosh.unzip(res.get())));
@@ -200,7 +199,7 @@ contract Snapshot is Modifiers {
         _applying = false;
     }
 
-    function approve(uint128 index1, uint128 index2, Diff diff) public {
+    function approve(uint128 index1, uint128 index2, Diff diff, string branch) public {
         diff;
         require(msg.sender == GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _commits, index1, index2), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
@@ -212,6 +211,9 @@ contract Snapshot is Modifiers {
         _oldcommits = _commits;
         _ipfsold = _ipfs;
         _applying = false;
+        if (_branch != branch) {
+            selfdestruct(_systemcontract);
+        }
     }
 
     //Private getters
