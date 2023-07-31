@@ -1,8 +1,9 @@
-use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
-use crate::blockchain::tree::load::check_if_tree_is_ready;
 use crate::{
     blockchain::{
-        tree::TreeNode, user_wallet::WalletError, AddrVersion, BlockchainContractAddress,
+        contract::{wait_contracts_deployed::wait_contracts_deployed, GoshContract},
+        gosh_abi,
+        tree::{load::check_if_tree_is_ready, TreeNode},
+        user_wallet::WalletError, AddrVersion, BlockchainContractAddress,
         BlockchainService,
     },
     git_helper::{
@@ -330,10 +331,17 @@ impl ParallelTreeUploadSupport {
         let remote_network = context.remote.network.clone();
         let repo = context.remote.repo.clone();
 
-        tracing::trace!("Start push of tree: address: {tree_address:?}");
-
-        self.expecting_deployed_contacts_addresses
-            .push(tree_address.clone());
+        let tree_contract =
+            GoshContract::new(BlockchainContractAddress::new(&tree_address), gosh_abi::TREE);
+        let skip_deploy = if tree_contract.is_active(blockchain.client()).await? {
+            tracing::trace!("Tree contract deployed: address: {tree_address:?}");
+            true
+        } else {
+            tracing::trace!("Start push of tree: address: {tree_address:?}");
+            self.expecting_deployed_contacts_addresses
+                .push(tree_address.clone());
+            false
+        };
 
         let permit = push_semaphore.clone().acquire_owned().await?;
 
@@ -360,6 +368,7 @@ impl ParallelTreeUploadSupport {
                             &repo,
                             &tree_address,
                             database.clone(),
+                            skip_deploy,
                         )
                         .await
                     },
