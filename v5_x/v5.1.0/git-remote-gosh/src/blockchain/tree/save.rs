@@ -1,6 +1,6 @@
 use crate::blockchain::{
-    self, call::BlockchainCall, contract::ContractInfo, user_wallet::UserWallet,
-    BlockchainContractAddress, BlockchainService, Everscale, GoshBlobBitFlags, Tree,
+    self, call::BlockchainCall, contract::ContractInfo, gosh_abi, user_wallet::UserWallet,
+    BlockchainContractAddress, BlockchainService, Everscale, GoshBlobBitFlags, GoshContract, Tree,
 };
 use async_trait::async_trait;
 use git_object;
@@ -60,7 +60,6 @@ pub trait DeployTree {
         tree_address: &str,
         repo_name: &str,
         nodes: &mut HashMap<String, TreeNode>,
-        skip_deploy: bool,
     ) -> anyhow::Result<()>;
 }
 
@@ -75,7 +74,6 @@ impl DeployTree for Everscale {
         tree_address: &str,
         repo_name: &str,
         nodes: &mut HashMap<String, TreeNode>, // change to moved hashmap
-        skip_deploy: bool, // don't deploy tree contract, just call deployAddTree
     ) -> anyhow::Result<()> {
         let wallet_contract = wallet.take_one().await?;
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
@@ -88,7 +86,10 @@ impl DeployTree for Everscale {
                     .await?;
             let mut nodes = nodes.to_owned();
             let chunk: HashMap<String, TreeNode> = HashMap::new();
-            if skip_deploy {
+            let tree_contract =
+                GoshContract::new(BlockchainContractAddress::new(&tree_address), gosh_abi::TREE);
+
+            if tree_contract.is_active(self.client()).await? {
                 // check existing tree nodes
                 let onchain_tree_object =
                     blockchain::Tree::load(self.client(), &tree_address).await?;

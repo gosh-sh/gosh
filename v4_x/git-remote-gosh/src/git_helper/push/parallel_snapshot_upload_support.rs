@@ -331,17 +331,8 @@ impl ParallelTreeUploadSupport {
         let remote_network = context.remote.network.clone();
         let repo = context.remote.repo.clone();
 
-        let tree_contract =
-            GoshContract::new(BlockchainContractAddress::new(&tree_address), gosh_abi::TREE);
-        let skip_deploy = if tree_contract.is_active(blockchain.client()).await? {
-            tracing::trace!("Tree contract deployed: address: {tree_address:?}");
-            true
-        } else {
-            tracing::trace!("Start push of tree: address: {tree_address:?}");
-            self.expecting_deployed_contacts_addresses
-                .push(tree_address.clone());
-            false
-        };
+        self.expecting_deployed_contacts_addresses
+            .push(tree_address.clone());
 
         let permit = push_semaphore.clone().acquire_owned().await?;
 
@@ -368,7 +359,6 @@ impl ParallelTreeUploadSupport {
                             &repo,
                             &tree_address,
                             database.clone(),
-                            skip_deploy,
                         )
                         .await
                     },

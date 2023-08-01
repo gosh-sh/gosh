@@ -216,7 +216,6 @@ pub mod tests {
                 tree_address: &str,
                 repo_name: &str,
                 nodes: &mut HashMap<String, TreeNode>,
-                skip_deploy: bool,
             ) -> anyhow::Result<()>;
         }
 

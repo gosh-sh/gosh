@@ -151,7 +151,6 @@ pub async fn inner_deploy_tree(
     remote_repo: &str,
     tree_address: &str,
     database: Arc<GoshDB>,
-    skip_deploy: bool,
 ) -> anyhow::Result<()> {
     let mut tree = database.get_tree(tree_address)?;
     tracing::trace!("inner_deploy_tree: remote_network={remote_network}, dao_addr={dao_addr}, remote_repo={remote_repo}, tree_id={}", tree.tree_id);
@@ -163,7 +162,6 @@ pub async fn inner_deploy_tree(
             tree_address,
             &remote_repo,
             &mut tree.tree_nodes,
-            skip_deploy,
         )
         .await
 }
