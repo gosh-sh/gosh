@@ -1,8 +1,8 @@
-use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
-use crate::blockchain::tree::load::check_if_tree_is_ready;
 use crate::{
     blockchain::{
-        tree::TreeNode, user_wallet::WalletError, AddrVersion, BlockchainContractAddress,
+        contract::wait_contracts_deployed::wait_contracts_deployed,
+        tree::{load::check_if_tree_is_ready, TreeNode},
+        user_wallet::WalletError, AddrVersion, BlockchainContractAddress,
         BlockchainService,
     },
     git_helper::{
@@ -329,8 +329,6 @@ impl ParallelTreeUploadSupport {
         let repo_address = context.repo_addr.clone();
         let remote_network = context.remote.network.clone();
         let repo = context.remote.repo.clone();
-
-        tracing::trace!("Start push of tree: address: {tree_address:?}");
 
         self.expecting_deployed_contacts_addresses
             .push(tree_address.clone());

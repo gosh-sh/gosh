@@ -1,8 +1,6 @@
-use crate::blockchain::contract::ContractInfo;
-use crate::blockchain::user_wallet::UserWallet;
 use crate::blockchain::{
-    call::BlockchainCall, BlockchainContractAddress, BlockchainService, Everscale,
-    GoshBlobBitFlags, Tree,
+    self, call::BlockchainCall, contract::ContractInfo, gosh_abi, user_wallet::UserWallet,
+    BlockchainContractAddress, BlockchainService, Everscale, GoshBlobBitFlags, GoshContract, Tree,
 };
 use async_trait::async_trait;
 use git_object;
@@ -59,12 +57,13 @@ pub trait DeployTree {
         &self,
         wallet: &UserWallet,
         sha: &str,
+        tree_address: &str,
         repo_name: &str,
-        nodes: &HashMap<String, TreeNode>,
+        nodes: &mut HashMap<String, TreeNode>,
     ) -> anyhow::Result<()>;
 }
 
-static TREE_NODES_CHUNK_MAX_SIZE: usize = 200;
+static TREE_NODES_CHUNK_MAX_SIZE: usize = 50;
 
 #[async_trait]
 impl DeployTree for Everscale {
@@ -72,8 +71,9 @@ impl DeployTree for Everscale {
         &self,
         wallet: &UserWallet,
         sha: &str,
+        tree_address: &str,
         repo_name: &str,
-        nodes: &HashMap<String, TreeNode>, // change to moved hashmap
+        nodes: &mut HashMap<String, TreeNode>, // change to moved hashmap
     ) -> anyhow::Result<()> {
         let wallet_contract = wallet.take_one().await?;
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
@@ -86,21 +86,31 @@ impl DeployTree for Everscale {
                     .await?;
             let mut nodes = nodes.to_owned();
             let chunk: HashMap<String, TreeNode> = HashMap::new();
-            let params = DeployTreeArgs {
-                sha: sha.to_owned(),
-                repo_name: repo_name.to_owned(),
-                nodes: chunk,
-                number: nodes_cnt as u128,
-            };
-            tracing::trace!("DeployTreeArgs: {params:?}");
-            self.send_message(
-                wallet_contract.deref(),
-                "deployTree",
-                Some(serde_json::to_value(params.clone())?),
-                None,
-            )
-            .await
-            .map(|_| ())?;
+            let tree_contract =
+                GoshContract::new(BlockchainContractAddress::new(&tree_address), gosh_abi::TREE);
+
+            if tree_contract.is_active(self.client()).await? {
+                // check existing tree nodes
+                let onchain_tree_object =
+                    blockchain::Tree::load(self.client(), &tree_address).await?;
+                nodes.retain(|k, _| !onchain_tree_object.objects.contains_key(k));
+            } else {
+                let params = DeployTreeArgs {
+                    sha: sha.to_owned(),
+                    repo_name: repo_name.to_owned(),
+                    nodes: chunk,
+                    number: nodes_cnt as u128,
+                };
+                tracing::trace!("DeployTreeArgs: {params:?}");
+                self.send_message(
+                    wallet_contract.deref(),
+                    "deployTree",
+                    Some(serde_json::to_value(params.clone())?),
+                    None,
+                )
+                .await
+                .map(|_| ())?;
+            }
             while nodes.len() > 0 {
                 let mut counter = 0;
                 let chunk: HashMap<String, TreeNode>;
