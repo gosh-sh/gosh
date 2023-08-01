@@ -52,6 +52,22 @@
 			]
 		},
 		{
+			"name": "sendSetCorrect",
+			"inputs": [
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendCommitSetCorrect",
+			"inputs": [
+				{"name":"namecommit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "fromInitUpgrade",
 			"inputs": [
 				{"name":"commit","type":"address"},
@@ -180,7 +196,6 @@
 			"inputs": [
 				{"name":"value0","type":"bytes"},
 				{"name":"value1","type":"optional(string)"},
-				{"name":"branch","type":"string"},
 				{"name":"path","type":"string"}
 			],
 			"outputs": [
@@ -192,7 +207,8 @@
 				{"name":"branchName","type":"string"},
 				{"name":"branchCommit","type":"address"},
 				{"name":"newC","type":"address"},
-				{"name":"numberCommits","type":"uint128"}
+				{"name":"numberCommits","type":"uint128"},
+				{"name":"save","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -291,7 +307,17 @@
 				{"name":"branchName","type":"string"},
 				{"name":"branchCommit","type":"address"},
 				{"name":"newC","type":"address"},
-				{"name":"numberCommits","type":"uint128"}
+				{"name":"numberCommits","type":"uint128"},
+				{"name":"save","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "canDelete",
+			"inputs": [
+				{"name":"commit","type":"address"},
+				{"name":"path","type":"string"}
 			],
 			"outputs": [
 			]
@@ -464,6 +490,7 @@
 		{"name":"_count","type":"uint128"},
 		{"name":"_countready","type":"bool"},
 		{"name":"_check","type":"map(address,int128)"},
+		{"name":"_save","type":"map(address,bool)"},
 		{"name":"_diffcheck","type":"bool"},
 		{"name":"_commitcheck","type":"bool"},
 		{"name":"_continueChain","type":"bool"},

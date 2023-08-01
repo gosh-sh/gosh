@@ -303,9 +303,9 @@ contract Repository is Modifiers{
         }
     }
 
-    function isDeleteSnap(string branch, string name) public view minValue(0.2 ton) senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], address(this), branch, name)){
+    function isDeleteSnap(string commitSha, string name) public view minValue(0.2 ton) senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], address(this), commitSha, name)){
         tvm.accept();
-        require(_Branches.exists(tvm.hash(branch)) == false, ERR_BRANCH_EXIST);
+        require(_Branches.exists(tvm.hash(commitSha)) == false, ERR_BRANCH_EXIST);
         Snapshot(msg.sender).destroyfinal{value:0.1 ton, flag: 1}();
     }
 
@@ -358,8 +358,8 @@ contract Repository is Modifiers{
         return _protectedBranch;
     }
 
-    function getSnapCode(string branch) external view returns(TvmCell) {
-        return GoshLib.buildSnapshotCode(_code[m_SnapshotCode], address(this), branch, version);
+    function getSnapCode() external view returns(TvmCell) {
+        return GoshLib.buildSnapshotCode(_code[m_SnapshotCode], address(this), version);
     }
 
     function getAddrBranch(string name) external view returns(Item) {
@@ -376,7 +376,7 @@ contract Repository is Modifiers{
     }
 
     function getSnapshotAddr(string branch, string name) external view returns(address) {
-        TvmCell deployCode = GoshLib.buildSnapshotCode(_code[m_SnapshotCode], address(this), branch, version);
+        TvmCell deployCode = GoshLib.buildSnapshotCode(_code[m_SnapshotCode], address(this), version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
         return address.makeAddrStd(0, tvm.hash(stateInit));
     }

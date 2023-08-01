@@ -260,7 +260,7 @@
 		{
 			"name": "isDeleteSnap",
 			"inputs": [
-				{"name":"branch","type":"string"},
+				{"name":"commitSha","type":"string"},
 				{"name":"name","type":"string"}
 			],
 			"outputs": [
@@ -325,7 +325,6 @@
 		{
 			"name": "getSnapCode",
 			"inputs": [
-				{"name":"branch","type":"string"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}

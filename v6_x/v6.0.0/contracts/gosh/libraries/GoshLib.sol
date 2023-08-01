@@ -51,9 +51,9 @@ library GoshLib {
         return address.makeAddrStd(0, tvm.hash(stateInit));
     }
 
-    function calculateSnapshotAddress(TvmCell code, address repo, string branch, string name) public returns(address) {
-        TvmCell deployCode = buildSnapshotCode(code, repo, branch, versionLib);
-        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
+    function calculateSnapshotAddress(TvmCell code, address repo, string commitsha, string name) public returns(address) {
+        TvmCell deployCode = buildSnapshotCode(code, repo, versionLib);
+        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: name, _baseCommit: commitsha}});
         return address.makeAddrStd(0, tvm.hash(stateInit));
     }
 
@@ -498,12 +498,10 @@ library GoshLib {
     function buildSnapshotCode(
         TvmCell originalCode,
         address repo,
-        string branch,
         string version
     ) public returns (TvmCell) {
         TvmBuilder b;
         b.store(repo);
-        b.store(branch);
         b.store(version);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }

@@ -15,8 +15,6 @@
 				{"name":"codeDiff","type":"cell"},
 				{"name":"WalletCode","type":"cell"},
 				{"name":"codeTree","type":"cell"},
-				{"name":"branch","type":"string"},
-				{"name":"name","type":"string"},
 				{"name":"index","type":"uint128"},
 				{"name":"data","type":"bytes"},
 				{"name":"ipfsdata","type":"optional(string)"},
@@ -29,7 +27,7 @@
 			"name": "returnTreeAnswer",
 			"inputs": [
 				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"},
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"value1","type":"optional(tuple)"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"uint256"}],"name":"value1","type":"optional(tuple)"},
 				{"name":"sha","type":"string"}
 			],
 			"outputs": [
@@ -71,8 +69,14 @@
 			"inputs": [
 				{"name":"index1","type":"uint128"},
 				{"name":"index2","type":"uint128"},
-				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"removeIpfs","type":"bool"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"diff","type":"tuple"},
-				{"name":"branch","type":"string"}
+				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"removeIpfs","type":"bool"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"diff","type":"tuple"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "canDelete",
+			"inputs": [
 			],
 			"outputs": [
 			]
@@ -158,7 +162,8 @@
 		}
 	],
 	"data": [
-		{"key":1,"name":"NameOfFile","type":"string"}
+		{"key":1,"name":"_baseCommit","type":"string"},
+		{"key":2,"name":"NameOfFile","type":"string"}
 	],
 	"events": [
 	],
@@ -169,7 +174,6 @@
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
 		{"name":"__value","type":"uint256"},
 		{"name":"_baseCommit","type":"string"},
-		{"name":"_basemaybe","type":"string"},
 		{"name":"_pubaddr","type":"address"},
 		{"name":"_rootRepo","type":"address"},
 		{"name":"_snapshot","type":"bytes"},
@@ -184,7 +188,6 @@
 		{"name":"NameOfFile","type":"string"},
 		{"name":"_applying","type":"bool"},
 		{"name":"_name","type":"string"},
-		{"name":"_branch","type":"string"},
 		{"name":"_ready","type":"bool"},
 		{"name":"timeMoney","type":"uint128"},
 		{"name":"_flag","type":"bool"}

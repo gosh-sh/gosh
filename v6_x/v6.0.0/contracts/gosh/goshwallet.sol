@@ -1197,9 +1197,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     //Snapshot part
     function deployNewSnapshot(string branch, string commit, address repo, string name, bytes snapshotdata, optional(string) snapshotipfs) public onlyOwnerPubkeyOptional(_access)  accept saveMsg{
         require(_tombstone == false, ERR_TOMBSTONE);
-        TvmCell deployCode = GoshLib.buildSnapshotCode(_code[m_SnapshotCode], repo, branch, version);
+        TvmCell deployCode = GoshLib.buildSnapshotCode(_code[m_SnapshotCode], repo, version);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
-        new Snapshot{stateInit:stateInit, value: FEE_DEPLOY_SNAPSHOT, wid: 0, flag: 1}(_pubaddr, _systemcontract, _goshdao, repo, _code[m_SnapshotCode], _code[m_CommitCode], _code[m_DiffCode], _code[m_WalletCode], _code[m_TreeCode], branch, name, _index, snapshotdata, snapshotipfs, commit);
+        new Snapshot{stateInit:stateInit, value: FEE_DEPLOY_SNAPSHOT, wid: 0, flag: 1}(_pubaddr, _systemcontract, _goshdao, repo, _code[m_SnapshotCode], _code[m_CommitCode], _code[m_DiffCode], _code[m_WalletCode], _code[m_TreeCode], _index, snapshotdata, snapshotipfs, commit);
         getMoney();
     }
 
@@ -3300,12 +3300,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, repo, nametask);
     }
 
-    function getSnapshotAddr(string branch, address repo, string name) external view returns(address) {
-        return GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], repo, branch, name);
+    function getSnapshotAddr(string commitSha, address repo, string name) external view returns(address) {
+        return GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], repo, commitSha, name);
     }
 
-    function getSnapshotCode(string branch, address repo) external view returns(TvmCell) {
-        return GoshLib.buildSnapshotCode(_code[m_SnapshotCode], repo, branch, version);
+    function getSnapshotCode(address repo) external view returns(TvmCell) {
+        return GoshLib.buildSnapshotCode(_code[m_SnapshotCode], repo, version);
     }
 
     function getConfig() external view returns(uint128) {

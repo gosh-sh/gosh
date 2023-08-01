@@ -213,7 +213,7 @@ contract DiffC is Modifiers {
             if (_last == false) { DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, _index2 + 1)).allCorrect{value : 0.2 ton, flag: 1}(branch); }
             selfdestruct(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit)); return;
         }
-        Snapshot(_diff[index].snap).approve{value : 0.2 ton, flag: 1}(_index1, _index2, _diff[index], branch); 
+        Snapshot(_diff[index].snap).approve{value : 0.2 ton, flag: 1}(_index1, _index2, _diff[index]); 
         Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _diff[index].commit)).getAcceptedDiff{value : 0.2 ton, flag: 1}(_diff[index], _index1, index, _nameBranch);
         this.applyDiff{value: 0.1 ton, flag: 1}(index + 1, _timebranch);
     }

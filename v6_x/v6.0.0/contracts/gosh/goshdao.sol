@@ -384,7 +384,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         getMoney();
     }
     
-    function sendMoneySnap(string branch, address repo, string name) public senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], repo, branch, name)) {
+    function sendMoneySnap(string commitSha, address repo, string name) public senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], repo, commitSha, name)) {
         tvm.accept();
         if (address(this).balance < 2000) { _volunteersnap.push(msg.sender); getMoney(); return; }
         msg.sender.transfer(1000 ton);
