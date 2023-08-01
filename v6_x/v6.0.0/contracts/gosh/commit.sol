@@ -106,8 +106,11 @@ contract Commit is Modifiers {
 
     function isCorrect(string newname) public senderIs(_rootRepo){
         tvm.accept();
-        Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, newname, 0, null);
         getMoney();
+        if (newname == "//PINTAG//" + _nameCommit) {
+            Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, newname, 0, null);
+        }
+        Repository(_rootRepo).commitCorrect{value: 0.22 ton, flag: 1}(newname, _nameCommit); 
     }
 
     function setPinned(address pubaddr, uint128 index) public {
@@ -240,9 +243,6 @@ contract Commit is Modifiers {
         if (typer == 0) { 
             if (branch == "//PINTAG//" + _nameCommit) {
                 _isPinned = true;
-            }
-            else {
-                Repository(_rootRepo).commitCorrect{value: 0.22 ton, flag: 1}(branch, _nameCommit); 
             }
         }
         if (typer == 2) { 
