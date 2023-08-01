@@ -58,8 +58,9 @@
 			"name": "checkFull",
 			"inputs": [
 				{"name":"namecommit","type":"string"},
+				{"name":"branch","type":"optional(string)"},
 				{"name":"repo","type":"address"},
-				{"name":"branch","type":"string"},
+				{"name":"commitsha","type":"string"},
 				{"name":"typer","type":"uint128"},
 				{"name":"branchcommit","type":"optional(address)"}
 			],
@@ -72,7 +73,7 @@
 				{"name":"index","type":"uint256"},
 				{"name":"path","type":"string"},
 				{"name":"typer","type":"uint128"},
-				{"name":"branch","type":"string"},
+				{"name":"commitsha","type":"string"},
 				{"name":"branchcommit","type":"optional(address)"}
 			],
 			"outputs": [
@@ -93,7 +94,7 @@
 			"name": "getCheckTree",
 			"inputs": [
 				{"name":"name","type":"string"},
-				{"name":"branch","type":"string"},
+				{"name":"commitsha","type":"string"},
 				{"name":"path","type":"string"},
 				{"name":"branchcommit","type":"optional(address)"},
 				{"name":"typer","type":"uint128"}
@@ -227,10 +228,11 @@
 		{"name":"_needAnswer","type":"uint128"},
 		{"name":"_check","type":"bool"},
 		{"name":"_root","type":"bool"},
-		{"name":"_checkbranch","type":"string"},
+		{"name":"_commitsha","type":"string"},
 		{"name":"_checkaddr","type":"address"},
 		{"name":"_flag","type":"bool"},
 		{"components":[{"name":"index","type":"uint256"},{"name":"path","type":"string"},{"name":"typer","type":"uint128"},{"name":"branch","type":"string"},{"name":"branchcommit","type":"optional(address)"}],"name":"_saved","type":"optional(tuple)"},
+		{"name":"_branch","type":"optional(string)"},
 		{"name":"_number","type":"uint128"},
 		{"name":"_neednumber","type":"uint128"},
 		{"name":"_isReady","type":"bool"},

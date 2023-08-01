@@ -108,16 +108,13 @@ contract Commit is Modifiers {
     function isCorrect(string newname) public senderIs(_rootRepo){
         tvm.accept();
         getMoney();
-        if (newname == "//PINTAG//" + _nameCommit) {
-            Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, newname, 0, null);
-        }
         Repository(_rootRepo).commitCorrect{value: 0.22 ton, flag: 1}(newname, _nameCommit); 
     }
 
     function setPinned(address pubaddr, uint128 index) public {
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, "//PINTAG//" + _nameCommit, 0, null);
+        Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, null, _rootRepo, "//PINTAG//" + _nameCommit, 0, null);
         getMoney();
     }
 
@@ -153,7 +150,7 @@ contract Commit is Modifiers {
     
     function continueUpgrade(bool res, string branch) public senderIs(_parents[0].addr) accept {
         if (res == false) { selfdestruct(_systemcontract); }
-        Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch, 1, null);
+        Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, branch, _rootRepo, branch, 1, null);
     }
     
     function stopUpgrade() public senderIs(_rootRepo) accept {
@@ -217,7 +214,7 @@ contract Commit is Modifiers {
             require(numberCommits == 1, ERR_BAD_PARENT);
             if (_nameCommit == "0000000000000000000000000000000000000000") {  Repository(_rootRepo).initCommit{value: 0.14 ton, flag:1}(_nameCommit, branch, _parents[0]); }
             else { 
-                if (_parents[0].version == "1.0.0") { Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, _rootRepo, branch, 1, null); }
+                if (_parents[0].version == "1.0.0") { Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, branch, _rootRepo, _nameCommit, 1, null); }
                 else { Repository(_rootRepo).fromInitUpgrade2{value: 0.6 ton, flag: 1}(_nameCommit, _parents[0].addr, _parents[0].version, branch); } 
             }
             return;
@@ -257,15 +254,15 @@ contract Commit is Modifiers {
         _continueDiff = true;
     }
 
-    function treeAccept(string branch, optional(address) branchcommit, uint128 typer) public senderIs(_tree) {
-        if (typer == 1) { Repository(_rootRepo).initCommit{value: 0.14 ton, flag:1}(_nameCommit, branch, _parents[0]); }
+    function treeAccept(string commitsha, optional(string) branch, optional(address) branchcommit, uint128 typer) public senderIs(_tree) {
+        if (typer == 1) { Repository(_rootRepo).initCommit{value: 0.14 ton, flag:1}(_nameCommit, branch.get(), _parents[0]); }
         if (typer == 0) { 
-            if (branch == "//PINTAG//" + _nameCommit) {
+            if (commitsha == "//PINTAG//" + _nameCommit) {
                 _isPinned = true;
             }
         }
         if (typer == 2) { 
-            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch, branchcommit.get(), _nameCommit, _number, _numbercommits, _task);
+            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch.get(), branchcommit.get(), _nameCommit, _number, _numbercommits, _task);
             _number = 0;
         }
         getMoney();

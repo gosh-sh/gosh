@@ -162,7 +162,8 @@
 		{
 			"name": "treeAccept",
 			"inputs": [
-				{"name":"branch","type":"string"},
+				{"name":"commitsha","type":"string"},
+				{"name":"branch","type":"optional(string)"},
 				{"name":"branchcommit","type":"optional(address)"},
 				{"name":"typer","type":"uint128"}
 			],
