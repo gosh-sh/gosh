@@ -167,7 +167,7 @@ contract Repository is Modifiers{
 
     function initCommit(string namecommit, string branch, AddrVersion commit) public senderIs(getCommitAddr(namecommit)) accept {
         require(_previousversion.hasValue(), ERR_WRONG_DATA);
-        require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
+        require(_Brancshes.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
         if (commit.version == "1.0.0") {
             _Branches[tvm.hash(branch)] = Item(branch, msg.sender, version);
             return;
