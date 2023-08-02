@@ -7,7 +7,7 @@
 			"name": "constructor",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"uint256"}],"name":"data","type":"map(uint256,tuple)"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"string"}],"name":"data","type":"map(uint256,tuple)"},
 				{"name":"rootGosh","type":"address"},
 				{"name":"goshdao","type":"address"},
 				{"name":"WalletCode","type":"cell"},
@@ -26,7 +26,7 @@
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"},
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"uint256"}],"name":"tree1","type":"map(uint256,tuple)"}
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"string"}],"name":"tree1","type":"map(uint256,tuple)"}
 			],
 			"outputs": [
 			]
@@ -35,7 +35,7 @@
 			"name": "addTreeself",
 			"inputs": [
 				{"name":"index","type":"uint256"},
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"uint256"}],"name":"tree1","type":"map(uint256,tuple)"}
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"string"}],"name":"tree1","type":"map(uint256,tuple)"}
 			],
 			"outputs": [
 			]
@@ -157,7 +157,7 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"bool"},
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"uint256"}],"name":"value1","type":"map(uint256,tuple)"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"string"}],"name":"value1","type":"map(uint256,tuple)"},
 				{"name":"value2","type":"uint256"},
 				{"name":"value3","type":"string"},
 				{"name":"value4","type":"address"}
@@ -175,7 +175,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"uint256"}],"name":"value0","type":"map(uint256,tuple)"}
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"string"}],"name":"value0","type":"map(uint256,tuple)"}
 			]
 		},
 		{
@@ -218,7 +218,7 @@
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
 		{"name":"__value","type":"uint256"},
 		{"name":"_shaTreeLocal","type":"uint256"},
-		{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"uint256"}],"name":"_tree","type":"map(uint256,tuple)"},
+		{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"string"}],"name":"_tree","type":"map(uint256,tuple)"},
 		{"name":"_shaTree","type":"string"},
 		{"name":"_repo","type":"address"},
 		{"name":"_pubaddr","type":"address"},

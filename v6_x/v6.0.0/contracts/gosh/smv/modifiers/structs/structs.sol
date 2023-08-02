@@ -70,7 +70,7 @@ struct TreeObject {
     string name;
     string sha1;
     uint256 sha256;
-    uint256 commit;
+    string commit;
 }
 
 struct Diff {
