@@ -186,7 +186,6 @@
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"NameOfFile","type":"string"},
 		{"name":"_applying","type":"bool"},
-		{"name":"_name","type":"string"},
 		{"name":"_ready","type":"bool"},
 		{"name":"timeMoney","type":"uint128"},
 		{"name":"_flag","type":"bool"}

@@ -33,7 +33,6 @@ contract Snapshot is Modifiers {
     mapping(uint8 => TvmCell) _code;
     string static NameOfFile;
     bool _applying = false;
-    string _name; 
     bool _ready = false;
     
     uint128 timeMoney = 0; 
@@ -72,9 +71,7 @@ contract Snapshot is Modifiers {
         _ipfsold = ipfsdata;
         _ipfs = ipfsdata;
         _code[m_TreeCode] = codeTree;
-        if (_baseCommit.empty()) { 
-            require(data.empty(), ERR_NOT_EMPTY_DATA);
-            require(ipfsdata.hasValue() == false, ERR_NOT_EMPTY_DATA);
+        if (data.empty()) { 
             _ready = true;
         }
         else {
@@ -82,7 +79,7 @@ contract Snapshot is Modifiers {
             if (ipfsdata.hasValue() == true) { _ready = true; return; }
             
             Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits))
-                .getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, _name);
+                .getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, NameOfFile);
         }
         getMoney();
     }
@@ -92,7 +89,7 @@ contract Snapshot is Modifiers {
         if (_flag == true) { return; }
         if (address(this).balance > 1000 ton) { return; }
         _flag = true;
-        GoshDao(_goshdao).sendMoneySnap{value : 0.2 ton, flag: 1}(_baseCommit, _rootRepo, _name);
+        GoshDao(_goshdao).sendMoneySnap{value : 0.2 ton, flag: 1}(_baseCommit, _rootRepo, NameOfFile);
     }
     
     function returnTreeAnswer(Request value0, optional(TreeObject) value1, string sha) public senderIs(GoshLib.calculateTreeAddress(_code[m_TreeCode], sha, _rootRepo)) {
@@ -104,16 +101,16 @@ contract Snapshot is Modifiers {
     function isReady(uint256 sha1, optional(address) branchcommit, uint128 typer) public view minValue(0.15 ton) {
         if ((typer == 2) && (_applying == true)){
             if ((sha1 == tvm.hash(gosh.unzip(_snapshot))) || (_ipfs.hasValue() == true)) {
-                Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(_name, _ready, branchcommit, typer);
+                Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(NameOfFile, _ready, branchcommit, typer);
             } else { 
-                Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(_name, false, branchcommit, typer); 
+                Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(NameOfFile, false, branchcommit, typer); 
             }
         }
         else {
             if ((sha1 == tvm.hash(gosh.unzip(_oldsnapshot))) || (_ipfsold.hasValue() == true)) {
-                Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(_name, _ready, branchcommit, typer);
+                Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(NameOfFile, _ready, branchcommit, typer);
             } else { 
-                Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(_name, false, branchcommit, typer); 
+                Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(NameOfFile, false, branchcommit, typer); 
             }
         }
     }
@@ -230,7 +227,7 @@ contract Snapshot is Modifiers {
     //Selfdestruct
     function destroy(address pubaddr, uint128 index) public view minValue(0.3 ton) accept {
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
-        Repository(_rootRepo).isDeleteSnap{value: 0.4 ton, flag: 1} (_baseCommit, _name);
+        Repository(_rootRepo).isDeleteSnap{value: 0.4 ton, flag: 1} (_baseCommit, NameOfFile);
     }
     
     function destroyfinal() public senderIs(_rootRepo) {
