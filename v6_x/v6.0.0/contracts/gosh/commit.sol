@@ -52,6 +52,7 @@ contract Commit is Modifiers {
     bool _isCorrect = false;
     uint128 _numcommits = 0;
     bool _isPinned = false;
+    uint128 _timeaccept = 0;
 
     uint128 timeMoney = 0;
  
@@ -87,7 +88,7 @@ contract Commit is Modifiers {
         _tree = tree;
         _initupgrade = upgrade;
         _save[address(this)] = true;
-        if (_nameCommit == "0000000000000000000000000000000000000000") { _isCorrect = true; } 
+        if (_nameCommit == "0000000000000000000000000000000000000000") { _isCorrect = true; _timeaccept = block.timestamp; } 
         if (parents.length != 0) { _prevversion = _parents[0].version; }
         if (_initupgrade == true) { require(parents.length == 1, ERR_BAD_COUNT_PARENTS); }
         getMoney();
@@ -120,6 +121,7 @@ contract Commit is Modifiers {
     function allCorrect(uint128 number, string branch) public senderIs(_rootRepo){
         tvm.accept();
         _isCorrect = true;
+        _timeaccept = block.timestamp;
         this.sendSetCorrect{value: 0.1 ton, flag: 1}(0);
         this._acceptCommitRepo{value: 0.2 ton, bounce: true, flag: 1}(0, number, branch);
         getMoney();
@@ -127,18 +129,20 @@ contract Commit is Modifiers {
 
     function sendSetCorrect(uint128 index) public senderIs(address(this)) accept {
         if (index >= _parents.length) { return; }
-        Commit(_parents[index].addr).sendCommitSetCorrect{value: 0.3 ton, bounce: true, flag: 1 }(_nameCommit); 
+        Commit(_parents[index].addr).sendCommitSetCorrect{value: 0.3 ton, bounce: true, flag: 1 }(_nameCommit, _timeaccept); 
         this.sendSetCorrect{value: 0.1 ton, flag: 1}(index + 1);           
         getMoney();
     }
 
     function sendCommitSetCorrect(
-        string namecommit) public {
+        string namecommit,
+        uint128 time) public {
         require(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, namecommit) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         getMoney();
         if (_isCorrect == true) { return; }
         _isCorrect = true;
+        _timeaccept = time;
         this.sendSetCorrect{value: 0.1 ton, flag: 1}(0);    
     }
     
@@ -535,6 +539,7 @@ contract Commit is Modifiers {
     }
 
     function getCommit() external view returns (
+        uint128 time,
         address repo,
         string sha,
         AddrVersion[] parents,
@@ -543,11 +548,11 @@ contract Commit is Modifiers {
         bool isCorrectCommit,
         bool isPinned
     ) {
-        return (_rootRepo, _nameCommit, _parents, _commit, _initupgrade, _isCorrect, _isPinned);
+        return (_timeaccept, _rootRepo, _nameCommit, _parents, _commit, _initupgrade, _isCorrect, _isPinned);
     }
     
     function getCommitIn() public view minValue(0.5 ton) {
-        IObject(msg.sender).returnCommit{value: 0.1 ton, flag: 1}(_rootRepo, _nameCommit, _parents, _commit, _initupgrade, _isCorrect, _isPinned);
+        IObject(msg.sender).returnCommit{value: 0.1 ton, flag: 1}(_timeaccept, _rootRepo, _nameCommit, _parents, _commit, _initupgrade, _isCorrect, _isPinned);
     }
 
     function getCount() external view returns(uint128, bool) {

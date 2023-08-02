@@ -61,7 +61,8 @@
 		{
 			"name": "sendCommitSetCorrect",
 			"inputs": [
-				{"name":"namecommit","type":"string"}
+				{"name":"namecommit","type":"string"},
+				{"name":"time","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -403,6 +404,7 @@
 			"inputs": [
 			],
 			"outputs": [
+				{"name":"time","type":"uint128"},
 				{"name":"repo","type":"address"},
 				{"name":"sha","type":"string"},
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"parents","type":"tuple[]"},
@@ -496,6 +498,7 @@
 		{"name":"_isCorrect","type":"bool"},
 		{"name":"_numcommits","type":"uint128"},
 		{"name":"_isPinned","type":"bool"},
+		{"name":"_timeaccept","type":"uint128"},
 		{"name":"timeMoney","type":"uint128"}
 	]
 }
