@@ -926,7 +926,7 @@
 		{
 			"name": "deployNewSnapshot",
 			"inputs": [
-				{"name":"branch","type":"string"},
+				{"name":"commitsha","type":"string"},
 				{"name":"commit","type":"string"},
 				{"name":"repo","type":"address"},
 				{"name":"name","type":"string"},

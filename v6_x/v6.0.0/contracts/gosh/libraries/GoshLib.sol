@@ -57,6 +57,11 @@ library GoshLib {
         return address.makeAddrStd(0, tvm.hash(stateInit));
     }
 
+    function composeSnapshotStateInit(TvmCell code, address repo, string commitsha, string name) public returns(TvmCell) {
+        TvmCell deployCode = buildSnapshotCode(code, repo, versionLib);
+        return tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: name, _baseCommit: commitsha}});
+    }
+
     function calculateRepositoryAddress(TvmCell code, address systemcontract, address goshdao, string name) public returns (address) {
         TvmCell deployCode = buildRepositoryCode(
             code, systemcontract, goshdao, versionLib
