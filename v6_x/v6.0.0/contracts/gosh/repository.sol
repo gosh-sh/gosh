@@ -375,10 +375,8 @@ contract Repository is Modifiers{
         return AllBranches;
     }
 
-    function getSnapshotAddr(string branch, string name) external view returns(address) {
-        TvmCell deployCode = GoshLib.buildSnapshotCode(_code[m_SnapshotCode], address(this), version);
-        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: branch + "/" + name}});
-        return address.makeAddrStd(0, tvm.hash(stateInit));
+    function getSnapshotAddr(string commitsha, string name) external view returns(address) {
+        return GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], this, commitsha, name);
     }
 
     function getDiffAddr (string commitName, uint128 index1, uint128 index2) external view returns(address) {

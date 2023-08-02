@@ -350,7 +350,7 @@
 		{
 			"name": "getSnapshotAddr",
 			"inputs": [
-				{"name":"branch","type":"string"},
+				{"name":"commitsha","type":"string"},
 				{"name":"name","type":"string"}
 			],
 			"outputs": [
