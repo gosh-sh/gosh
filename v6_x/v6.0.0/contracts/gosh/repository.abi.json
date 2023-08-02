@@ -116,8 +116,7 @@
 		{
 			"name": "commitCanceled",
 			"inputs": [
-				{"name":"namecommit","type":"string"},
-				{"name":"branch","type":"string"}
+				{"name":"namecommit","type":"string"}
 			],
 			"outputs": [
 			]

@@ -927,7 +927,6 @@
 			"name": "deployNewSnapshot",
 			"inputs": [
 				{"name":"commitsha","type":"string"},
-				{"name":"commit","type":"string"},
 				{"name":"repo","type":"address"},
 				{"name":"name","type":"string"},
 				{"name":"snapshotdata","type":"bytes"},
@@ -971,7 +970,6 @@
 			"name": "deployCommit",
 			"inputs": [
 				{"name":"repoName","type":"string"},
-				{"name":"branchName","type":"string"},
 				{"name":"commitName","type":"string"},
 				{"name":"fullCommit","type":"string"},
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"parents","type":"tuple[]"},

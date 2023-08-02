@@ -10,7 +10,6 @@
 				{"name":"rootGosh","type":"address"},
 				{"name":"pubaddr","type":"address"},
 				{"name":"nameRepo","type":"string"},
-				{"name":"nameBranch","type":"string"},
 				{"name":"commit","type":"string"},
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"parents","type":"tuple[]"},
 				{"name":"repo","type":"address"},
@@ -374,14 +373,6 @@
 			]
 		},
 		{
-			"name": "getNameBranch",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"string"}
-			]
-		},
-		{
 			"name": "getAddrRepository",
 			"inputs": [
 			],
@@ -413,7 +404,6 @@
 			],
 			"outputs": [
 				{"name":"repo","type":"address"},
-				{"name":"branch","type":"string"},
 				{"name":"sha","type":"string"},
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"parents","type":"tuple[]"},
 				{"name":"content","type":"string"},
@@ -479,7 +469,6 @@
 		{"name":"_rootRepo","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_nameCommit","type":"string"},
-		{"name":"_nameBranch","type":"string"},
 		{"name":"_commit","type":"string"},
 		{"name":"_name","type":"string"},
 		{"name":"check","type":"bool"},

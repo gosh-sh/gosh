@@ -25,7 +25,6 @@ contract Commit is Modifiers {
     address _rootRepo;
     address _goshdao;
     string static _nameCommit;
-    string _nameBranch;
     string _commit;
     string _name;
     bool check = false;
@@ -60,7 +59,6 @@ contract Commit is Modifiers {
         address rootGosh,
         address pubaddr,
         string nameRepo,
-        string nameBranch,
         string commit,
         AddrVersion[] parents,
         address repo,
@@ -82,7 +80,6 @@ contract Commit is Modifiers {
         _parents = parents;
         _name = nameRepo;
         _rootRepo = repo;
-        _nameBranch = nameBranch;
         _commit = commit;
         _code[m_CommitCode] = CommitCode;
         _code[m_SnapshotCode] = SnapshotCode;
@@ -176,7 +173,7 @@ contract Commit is Modifiers {
         tvm.accept();
         require(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, namecommit) == msg.sender, ERR_SENDER_NO_ALLOWED);
         getMoney();
-        Repository(_rootRepo).commitCanceled{value: 0.1 ton, flag: 1}(_nameCommit, _nameBranch);
+        Repository(_rootRepo).commitCanceled{value: 0.1 ton, flag: 1}(_nameCommit);
         _task = null;
         this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(0, number);
     }
@@ -525,10 +522,6 @@ contract Commit is Modifiers {
         return _nameCommit;
     }
 
-    function getNameBranch() external view returns(string) {
-        return _nameBranch;
-    }
-
     function getAddrRepository() external view returns(address) {
         return _rootRepo;
     }
@@ -543,7 +536,6 @@ contract Commit is Modifiers {
 
     function getCommit() external view returns (
         address repo,
-        string branch,
         string sha,
         AddrVersion[] parents,
         string content,
@@ -551,11 +543,11 @@ contract Commit is Modifiers {
         bool isCorrectCommit,
         bool isPinned
     ) {
-        return (_rootRepo, _nameBranch, _nameCommit, _parents, _commit, _initupgrade, _isCorrect, _isPinned);
+        return (_rootRepo, _nameCommit, _parents, _commit, _initupgrade, _isCorrect, _isPinned);
     }
     
     function getCommitIn() public view minValue(0.5 ton) {
-        IObject(msg.sender).returnCommit{value: 0.1 ton, flag: 1}(_rootRepo, _nameBranch, _nameCommit, _parents, _commit, _initupgrade, _isCorrect, _isPinned);
+        IObject(msg.sender).returnCommit{value: 0.1 ton, flag: 1}(_rootRepo, _nameCommit, _parents, _commit, _initupgrade, _isCorrect, _isPinned);
     }
 
     function getCount() external view returns(uint128, bool) {

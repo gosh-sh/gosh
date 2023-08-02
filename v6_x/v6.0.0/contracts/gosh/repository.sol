@@ -189,8 +189,8 @@ contract Repository is Modifiers{
         }
     }
 
-    function commitCanceled(string namecommit, string branch) public senderIs(getCommitAddr(namecommit)) view accept {
-        namecommit; branch;
+    function commitCanceled(string namecommit) public senderIs(getCommitAddr(namecommit)) view accept {
+        namecommit;
     }
 
     function correctCommit(string namecommit, string branch) public senderIs(_previousversion.get().addr) accept {

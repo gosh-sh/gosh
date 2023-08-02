@@ -51,8 +51,7 @@ contract Snapshot is Modifiers {
         TvmCell codeTree,
         uint128 index,
         bytes data,
-        optional(string) ipfsdata,
-        string commit
+        optional(string) ipfsdata
     ) {
         tvm.accept();
         _pubaddr = pubaddr;
@@ -66,13 +65,12 @@ contract Snapshot is Modifiers {
         _goshdao = goshdao;
         _code[m_WalletCode] = WalletCode;
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
-        _oldcommits = commit;
-        _commits = commit;
+        _oldcommits = _baseCommit;
+        _commits = _baseCommit;
         _oldsnapshot = data;
         _snapshot = data;
         _ipfsold = ipfsdata;
         _ipfs = ipfsdata;
-        _baseCommit = commit;
         _code[m_TreeCode] = codeTree;
         if (_baseCommit.empty()) { 
             require(data.empty(), ERR_NOT_EMPTY_DATA);

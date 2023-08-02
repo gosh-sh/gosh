@@ -996,7 +996,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         AddrVersion[] emptyArr;
         if (previous.hasValue() == false) {
-            _deployCommit(nameRepo, "main", "0000000000000000000000000000000000000000", "", emptyArr, address.makeAddrNone(), false);
+            _deployCommit(nameRepo, "0000000000000000000000000000000000000000", "", emptyArr, address.makeAddrNone(), false);
         }
         TvmCell s1 = GoshLib.composeRepositoryStateInit(_code[m_RepositoryCode], _systemcontract, _goshdao, nameRepo);
         new Repository {stateInit: s1, value: FEE_DEPLOY_REPO, wid: 0, flag: 1}(
@@ -1195,9 +1195,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     //Snapshot part
-    function deployNewSnapshot(string commitsha, string commit, address repo, string name, bytes snapshotdata, optional(string) snapshotipfs) public onlyOwnerPubkeyOptional(_access)  accept saveMsg{
+    function deployNewSnapshot(string commitsha, address repo, string name, bytes snapshotdata, optional(string) snapshotipfs) public onlyOwnerPubkeyOptional(_access)  accept saveMsg{
         require(_tombstone == false, ERR_TOMBSTONE);
-        new Snapshot{stateInit:GoshLib.composeSnapshotStateInit(_code[m_SnapshotCode], repo, commitsha, name), value: FEE_DEPLOY_SNAPSHOT, wid: 0, flag: 1}(_pubaddr, _systemcontract, _goshdao, repo, _code[m_SnapshotCode], _code[m_CommitCode], _code[m_DiffCode], _code[m_WalletCode], _code[m_TreeCode], _index, snapshotdata, snapshotipfs, commit);
+        new Snapshot{stateInit:GoshLib.composeSnapshotStateInit(_code[m_SnapshotCode], repo, commitsha, name), value: FEE_DEPLOY_SNAPSHOT, wid: 0, flag: 1}(_pubaddr, _systemcontract, _goshdao, repo, _code[m_SnapshotCode], _code[m_CommitCode], _code[m_DiffCode], _code[m_WalletCode], _code[m_TreeCode], _index, snapshotdata, snapshotipfs);
         getMoney();
     }
 
@@ -1255,7 +1255,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function deployCommit(
         string repoName,
-        string branchName,
         string commitName,
         string fullCommit,
         AddrVersion[] parents,
@@ -1265,12 +1264,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(parents.length <= 7, ERR_TOO_MANY_PARENTS);
-        _deployCommit(repoName, branchName, commitName, fullCommit, parents, tree, upgrade);
+        _deployCommit(repoName, commitName, fullCommit, parents, tree, upgrade);
     }
 
     function _deployCommit(
         string repoName,
-        string branchName,
         string commitName,
         string fullCommit,
         AddrVersion[] parents,
@@ -1280,7 +1278,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
         TvmCell s1 = GoshLib.composeCommitStateInit(_code[m_CommitCode], commitName, repo);
         new Commit {stateInit: s1, value: FEE_DEPLOY_COMMIT, bounce: true, flag: 1, wid: 0}(
-            _goshdao, _systemcontract, _pubaddr, repoName, branchName, fullCommit, parents, repo, _code[m_WalletCode], _code[m_CommitCode], _code[m_DiffCode], _code[m_SnapshotCode], tree, _index, upgrade);
+            _goshdao, _systemcontract, _pubaddr, repoName, fullCommit, parents, repo, _code[m_WalletCode], _code[m_CommitCode], _code[m_DiffCode], _code[m_SnapshotCode], tree, _index, upgrade);
         getMoney();
     }
 
