@@ -213,8 +213,9 @@ pub mod tests {
                 &self,
                 wallet: &UserWallet,
                 sha: &str,
+                tree_address: &str,
                 repo_name: &str,
-                nodes: &HashMap<String, TreeNode>,
+                nodes: &mut HashMap<String, TreeNode>,
             ) -> anyhow::Result<()>;
         }
 

@@ -74,7 +74,7 @@ const singinOAuthSupabase = async (provider: Provider) => {
 }
 
 const signoutOAuthSupabase = async () => {
-    const { error } = await supabase.auth.signOut()
+    const { error } = await supabase.auth.signOut({ scope: 'local' })
     if (error) {
         throw new GoshError(error.message)
     }
