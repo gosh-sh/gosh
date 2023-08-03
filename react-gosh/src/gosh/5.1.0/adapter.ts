@@ -3068,7 +3068,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 const { value0 } = await _commit.runLocal('getNameCommit', {})
                 return {
                     address: item.addr,
-                    version: item.version,
+                    version: item.version.replace(/"/g, ''),
                     name: value0,
                 }
             }),
@@ -3085,7 +3085,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             author: parsed.author,
             committer: parsed.committer,
             parents: _parents,
-            version: commit.version,
+            version: commit.version.replace(/"/g, ''),
             initupgrade,
         }
     }
