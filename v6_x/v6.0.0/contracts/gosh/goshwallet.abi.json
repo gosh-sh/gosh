@@ -2306,6 +2306,15 @@
 			]
 		},
 		{
+			"name": "calculateInnerTreeHash2",
+			"inputs": [
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"_tree","type":"map(uint256,tuple)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
+			]
+		},
+		{
 			"name": "calculateInnerTreeHash",
 			"inputs": [
 				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"_tree","type":"map(uint256,tuple)"}
