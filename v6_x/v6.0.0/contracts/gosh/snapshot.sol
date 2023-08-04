@@ -92,7 +92,7 @@ contract Snapshot is Modifiers {
         GoshDao(_goshdao).sendMoneySnap{value : 0.2 ton, flag: 1}(_baseCommit, _rootRepo, NameOfFile);
     }
     
-    function returnTreeAnswer(Request value0, optional(TreeObject) value1, string sha) public senderIs(GoshLib.calculateTreeAddress(_code[m_TreeCode], sha, _rootRepo)) {
+    function returnTreeAnswer(Request value0, optional(TreeObject) value1, string sha, uint256 shainnertree) public senderIs(GoshLib.calculateTreeAddress(_code[m_TreeCode], sha, shainnertree, _rootRepo)) {
         if (value1.hasValue() == false) { selfdestruct(_systemcontract); return; }
         if (value1.get().sha256 != value0.sha) { selfdestruct(_systemcontract); return; }
         _ready = true;

@@ -350,8 +350,8 @@ contract Repository is Modifiers{
         return true;
     }
 
-    function getTreeAddr(string treeName) external view returns(address) {
-        return GoshLib.calculateTreeAddress(_code[m_TreeCode], treeName, address(this));
+    function getTreeAddr(string treeName, uint256 shainnertree) external view returns(address) {
+        return GoshLib.calculateTreeAddress(_code[m_TreeCode], treeName, shainnertree, address(this));
     }
 
     function getProtectedBranch() external view returns(mapping(uint256 => bool)) {

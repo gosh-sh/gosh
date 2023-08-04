@@ -307,7 +307,8 @@
 		{
 			"name": "getTreeAddr",
 			"inputs": [
-				{"name":"treeName","type":"string"}
+				{"name":"treeName","type":"string"},
+				{"name":"shainnertree","type":"uint256"}
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}
