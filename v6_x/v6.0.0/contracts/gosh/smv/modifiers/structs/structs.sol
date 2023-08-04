@@ -68,8 +68,9 @@ struct TreeObject {
     string mode;
     string typeObj;
     string name;
-    string sha1;
-    uint256 sha256;
+    string gitsha;
+    optional(uint256) tvmshatree;
+    optional(uint256) tvmshafile;
     string commit;
 }
 

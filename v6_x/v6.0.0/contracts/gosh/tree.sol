@@ -143,13 +143,13 @@ contract Tree is Modifiers {
             TreeObject obj;
             (index, obj) = res.get();
             if (obj.mode == "040000") { _needAnswer += 1;
-                if (path != "" ) { Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], obj.sha1, obj.sha256, _repo)).getCheckTree{value: 0.2 ton, flag: 1}(_shaTree, _shaInnerTree, commitsha, path + obj.name, branchcommit, typer); }
-                else { Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], obj.sha1, obj.sha256, _repo)).getCheckTree{value: 0.2 ton, flag: 1}(_shaTree, _shaInnerTree, commitsha, obj.name, branchcommit, typer); }
+                if (path != "" ) { Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], obj.gitsha, obj.tvmshatree.get(), _repo)).getCheckTree{value: 0.2 ton, flag: 1}(_shaTree, _shaInnerTree, commitsha, path + obj.name, branchcommit, typer); }
+                else { Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], obj.gitsha, obj.tvmshatree.get(), _repo)).getCheckTree{value: 0.2 ton, flag: 1}(_shaTree, _shaInnerTree, commitsha, obj.name, branchcommit, typer); }
             }
             else if ((obj.mode == "100644") || (obj.mode == "100664") || (obj.mode == "100755") || (obj.mode == "120000")) {
                 _needAnswer += 1;
-                if (path != "" ) { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, commitsha, path + obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.sha256, branchcommit, typer); }
-                else { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, commitsha, obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.sha256, branchcommit, typer); }
+                if (path != "" ) { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, commitsha, path + obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.tvmshafile.get(), branchcommit, typer); }
+                else { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, commitsha, obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.tvmshafile.get(), branchcommit, typer); }
             }
             this.checkTree{value: 0.2 ton, flag: 1}(index, path, typer, commitsha, branchcommit);
         }
@@ -280,7 +280,7 @@ contract Tree is Modifiers {
             string nowPath = value0.lastPath.substr(0, pos.get());
             value0.lastPath = value0.lastPath.substr(pos.get() + 1);
             if (_tree.exists(tvm.hash("tree:" + nowPath))) {
-                Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], _tree[tvm.hash("tree:" + nowPath)].sha1, _tree[tvm.hash("tree:" + nowPath)].sha256, _repo)).getShaInfoTree{value: 0.25 ton, flag: 1}(_shaTree, _shaInnerTree, value0);
+                Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], _tree[tvm.hash("tree:" + nowPath)].gitsha, _tree[tvm.hash("tree:" + nowPath)].tvmshatree.get(), _repo)).getShaInfoTree{value: 0.25 ton, flag: 1}(_shaTree, _shaInnerTree, value0);
             }
             else {
                 Snapshot(value0.answer).returnTreeAnswer{value: 0.21 ton, flag: 1}(value0, null, _shaTree, _shaInnerTree);
