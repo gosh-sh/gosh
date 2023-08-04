@@ -6,6 +6,8 @@ import {initializeGoshRepo} from "../actions/gosh_repo.ts";
 
 const mutex = new Mutex()
 
+export const REPO_OBJECTS_LIMIT = 2000
+
 while (true) {
     await uploadRepos()
     console.log('Sleep...')
@@ -18,10 +20,16 @@ async function uploadRepos() {
         const repos: Github[] = await getReposForUpload()
 
         for (const github of repos) {
-            console.log('Start upload of repo ', github.id)
-            console.log('Repo url ', github.github_url)
-            console.log('Number of objects ', github.objects)
-            await initializeGoshRepo(github.id)
+            if (github.objects < REPO_OBJECTS_LIMIT) {
+                console.log('Start upload of repo ', github.id)
+                console.log('Repo url ', github.github_url)
+                console.log('Number of objects ', github.objects)
+                await initializeGoshRepo(github.id)
+            } else {
+                console.log('Skip upload of repo ', github.id)
+                console.log('Repo url ', github.github_url)
+                console.log('Number of objects ', github.objects)
+            }
         }
     } catch (err) {
         console.error('Failed to upload repos', err)
