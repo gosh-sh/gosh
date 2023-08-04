@@ -3399,12 +3399,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function calculateInnerTreeHash(
         mapping(uint256 => TreeObject) _tree
     ) external pure returns(uint256) {
-        TvmBuilder b;
-        b.store(_tree);
-        return tvm.hash(b.toCell());
+        return calculateInnerTreeHashPrivate(_tree, 0, 0);
     }
 
-    function calculateInnerTreeHash(
+    function calculateInnerTreeHashPrivate(
         mapping(uint256 => TreeObject) _tree,
         uint256 key,
         uint256 finalhash
