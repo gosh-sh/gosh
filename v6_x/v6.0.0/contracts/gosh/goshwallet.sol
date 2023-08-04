@@ -3416,6 +3416,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             TreeObject data;
             (newkey, data) = res.get();
             b.store(data);
+            return newkey;
             res = _tree.next(newkey);
             index = index + 1;
             if (index == 10) {
