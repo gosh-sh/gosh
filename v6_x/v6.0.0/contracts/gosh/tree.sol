@@ -123,7 +123,7 @@ contract Tree is Modifiers {
             if (index == 10) {
                 index = 0;
                 finalhash = tvm.hash(b.toCell());
-                this.calculateInnerTreeHash(newkey, finalhash);
+                this.calculateInnerTreeHash{value: 0.1 ton, flag: 1}(newkey, finalhash);
                 return;
             }
             (newkey, data) = res.get();
