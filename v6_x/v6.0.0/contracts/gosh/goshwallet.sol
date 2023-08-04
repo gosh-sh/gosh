@@ -3397,4 +3397,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, time.get());
     }
+
+    function calculateInnerTreeHash(
+        mapping(uint256 => TreeObject) _tree
+    ) external pure returns(uint256) {
+        TvmBuilder b;
+        b.store(_tree);
+        return tvm.hash(b.toCell());
+    }
 }

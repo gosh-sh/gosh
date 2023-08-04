@@ -2308,6 +2308,15 @@
 			]
 		},
 		{
+			"name": "calculateInnerTreeHash",
+			"inputs": [
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"string"}],"name":"_tree","type":"map(uint256,tuple)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
 			"name": "proposalIsCompleted",
 			"inputs": [
 				{"name":"proposal","type":"address"}

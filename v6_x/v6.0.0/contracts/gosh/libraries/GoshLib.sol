@@ -698,12 +698,4 @@ library GoshLib {
         b.store(hash);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
-
-    function calculateInnerTreeHash(
-        mapping(uint256 => TreeObject) _tree
-    ) external returns(uint256) {
-        TvmBuilder b;
-        b.store(_tree);
-        return tvm.hash(b.toCell());
-    }
 }

@@ -75,6 +75,16 @@
 			]
 		},
 		{
+			"name": "sendContent",
+			"inputs": [
+				{"name":"snapshot","type":"bytes"},
+				{"name":"ipfs","type":"optional(string)"},
+				{"name":"commit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "canDelete",
 			"inputs": [
 			],
