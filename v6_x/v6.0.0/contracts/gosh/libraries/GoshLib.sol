@@ -45,9 +45,9 @@ library GoshLib {
         return address.makeAddrStd(0, tvm.hash(stateInit));    
     }   
 
-    function calculateTreeAddress(TvmCell code, string shaTree, uint256 shainnertree, address rootRepo) public returns(address) {
+    function calculateTreeAddress(TvmCell code, uint256 shainnertree, address rootRepo) public returns(address) {
         TvmCell deployCode = buildTreeCode(code, versionLib);
-        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Tree, varInit: {_shaTree: shaTree, _shaInnerTree: shainnertree, _repo: rootRepo}});
+        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Tree, varInit: {_shaInnerTree: shainnertree, _repo: rootRepo}});
         return address.makeAddrStd(0, tvm.hash(stateInit));
     }
 
@@ -267,9 +267,9 @@ library GoshLib {
         return _contract;
     }
     
-    function composeTreeStateInit(TvmCell code, string shaTree, uint256 shainnertree, address repo) public returns(TvmCell) {
+    function composeTreeStateInit(TvmCell code, uint256 shainnertree, address repo) public returns(TvmCell) {
         TvmCell deployCode = buildTreeCode(code, versionLib);
-        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Tree, varInit: {_shaTree: shaTree, _shaInnerTree: shainnertree, _repo: repo}});
+        TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Tree, varInit: {_shaInnerTree: shainnertree, _repo: repo}});
         return stateInit;
     }
 

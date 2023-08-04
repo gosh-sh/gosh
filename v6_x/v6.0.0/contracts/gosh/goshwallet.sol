@@ -2113,23 +2113,21 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function destroyTree(
         string repoName,
-        string shaTree,
         uint256 shainnerTree
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], shaTree, shainnerTree, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).destroy{value: 0.2 ton, flag: 1}(_pubaddr, _index);
+        Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnerTree, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).destroy{value: 0.2 ton, flag: 1}(_pubaddr, _index);
     }
 
     function deployAddTree(
         string repoName,
-        string shaTree,
         uint256 shainnerTree,
         mapping(uint256 => TreeObject) datatree
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], shaTree, shainnerTree, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).addTree{value: 0.2 ton, flag: 1}(_pubaddr, _index, datatree);
+        Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnerTree, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).addTree{value: 0.2 ton, flag: 1}(_pubaddr, _index, datatree);
     }
 
     function _deployTree(
@@ -2140,10 +2138,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint128  number
     ) internal {
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
-        TvmCell s1 = GoshLib.composeTreeStateInit(_code[m_TreeCode], shaTree, shainnerTree, repo);
+        TvmCell s1 = GoshLib.composeTreeStateInit(_code[m_TreeCode], shainnerTree, repo);
         new Tree{
             stateInit: s1, value: FEE_DEPLOY_TREE, wid: 0, bounce: true, flag: 1
-        }(_pubaddr, datatree, _systemcontract, _goshdao, _code[m_WalletCode], _code[m_DiffCode], _code[m_TreeCode], _code[m_CommitCode], _code[m_SnapshotCode], number, _index);
+        }(_pubaddr, datatree, _systemcontract, _goshdao, _code[m_WalletCode], _code[m_DiffCode], _code[m_TreeCode], _code[m_CommitCode], _code[m_SnapshotCode], shaTree, number, _index);
         getMoney();
     }
 

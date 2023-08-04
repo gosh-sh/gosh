@@ -432,8 +432,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
         getMoney();
     }
     
-    function sendMoneyTree(address repo, string shaTree, uint256 shainnertree) public {
-        address addr = GoshLib.calculateTreeAddress(_code[m_TreeCode], shaTree, shainnertree, repo);
+    function sendMoneyTree(address repo, uint256 shainnertree) public {
+        address addr = GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnertree, repo);
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (address(this).balance < 2000) { _volunteertree.push(msg.sender); getMoney(); return; }
