@@ -85,6 +85,7 @@ contract Tree is Modifiers {
         tvm.accept();
         getMoney();
         if (_isReady == true) { return; }
+        if (_neednumber == _number) { return; }
         optional(uint256, TreeObject) res = tree1.next(index);
         if (res.hasValue()) {
             TreeObject obj;
@@ -92,11 +93,7 @@ contract Tree is Modifiers {
             if (_tree.exists(index) == false) { 
                 _number += 1; 
                 if (_neednumber == _number) {
-                    TvmBuilder b;
-                    b.store(_tree);
-                    uint256 calchash = tvm.hash(b.toCell());
-                    if (calchash != _shaInnerTree) { selfdestruct(_systemcontract); return; }
-                    _isReady = true;   
+                    this.calculateInnerTreeHash{value: 0.1 ton, flag: 1}(0, 0);
                 }
             }
             _tree[index] = obj;
@@ -104,13 +101,38 @@ contract Tree is Modifiers {
         }
         else {
             if (_neednumber == _number) {
-                TvmBuilder b;
-                b.store(_tree);
-                uint256 calchash = tvm.hash(b.toCell());
-                if (calchash != _shaInnerTree) { selfdestruct(_systemcontract); return; }
-                _isReady = true;   
+                this.calculateInnerTreeHash{value: 0.1 ton, flag: 1}(0, 0);
             }
         }
+    }
+
+    function calculateInnerTreeHash(
+        uint256 key,
+        uint256 finalhash
+    ) public senderIs(address(this)) accept {
+        TvmBuilder b;
+        b.store(finalhash);
+        optional(uint256, TreeObject) res = _tree.next(key);
+        uint128 index = 0;
+        while (res.hasValue()) {
+            uint256 newkey;
+            TreeObject data;
+            b.store(data);
+            res = _tree.next(key);
+            index = index + 1;
+            if (index == 10) {
+                index = 0;
+                finalhash = tvm.hash(b.toCell());
+                this.calculateInnerTreeHash(newkey, finalhash);
+                return;
+            }
+            (newkey, data) = res.get();
+        }
+        if (index != 0) {
+            finalhash = tvm.hash(b.toCell());
+        }
+        if (finalhash != _shaInnerTree) { selfdestruct(_systemcontract); return; }
+        _isReady = true;   
     }
 
     function SendDiff2(string namecommit, string branch, address branchcommit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task, bool isUpgrade) public senderIs(GoshLib.calculateCommitAddress(_code[m_CommitCode], _repo, namecommit)){

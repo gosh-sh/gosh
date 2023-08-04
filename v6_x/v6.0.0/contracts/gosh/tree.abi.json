@@ -41,6 +41,15 @@
 			]
 		},
 		{
+			"name": "calculateInnerTreeHash",
+			"inputs": [
+				{"name":"key","type":"uint256"},
+				{"name":"finalhash","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "SendDiff2",
 			"inputs": [
 				{"name":"namecommit","type":"string"},

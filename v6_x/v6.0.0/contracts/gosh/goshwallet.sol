@@ -3405,4 +3405,34 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         b.store(_tree);
         return tvm.hash(b.toCell());
     }
+
+    function calculateInnerTreeHash(
+        mapping(uint256 => TreeObject) _tree,
+        uint256 key,
+        uint256 finalhash
+    ) private pure returns(uint256) {
+        TvmBuilder b;
+        b.store(finalhash);
+        optional(uint256, TreeObject) res = _tree.next(key);
+        uint128 index = 0;
+        while (res.hasValue()) {
+            uint256 newkey;
+            TreeObject data;
+            (newkey, data) = res.get();
+            b.store(data);
+            res = _tree.next(key);
+            index = index + 1;
+            if (index == 10) {
+                index = 0;
+                finalhash = tvm.hash(b.toCell());
+                TvmBuilder c;
+                b = c;
+                b.store(finalhash);
+            }
+        }
+        if (index != 0) {
+            finalhash = tvm.hash(b.toCell());
+        }
+        return finalhash;
+    }
 }
