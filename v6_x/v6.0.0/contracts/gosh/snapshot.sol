@@ -18,7 +18,7 @@ import "diff.sol";
 
 contract Snapshot is Modifiers {
     string constant version = "6.0.0";
-    
+
     string static _baseCommit;
     address _pubaddr;
     address _rootRepo;
@@ -34,8 +34,8 @@ contract Snapshot is Modifiers {
     string static NameOfFile;
     bool _applying = false;
     bool _ready = false;
-    
-    uint128 timeMoney = 0; 
+
+    uint128 timeMoney = 0;
     bool _flag = false;
 
     constructor(
@@ -71,19 +71,19 @@ contract Snapshot is Modifiers {
         _ipfsold = ipfsdata;
         _ipfs = ipfsdata;
         _code[m_TreeCode] = codeTree;
-        if (data.empty()) { 
+        if (data.empty()) {
             _ready = true;
         }
         else {
             //ignore ipfs snapshot check
             if (ipfsdata.hasValue() == true) { _ready = true; return; }
-            
+
             Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits))
                 .getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, NameOfFile);
         }
         getMoney();
     }
-    
+
     function getMoney() private {
         if (block.timestamp - timeMoney > 3600) { _flag = false; timeMoney = block.timestamp; }
         if (_flag == true) { return; }
@@ -91,26 +91,26 @@ contract Snapshot is Modifiers {
         _flag = true;
         GoshDao(_goshdao).sendMoneySnap{value : 0.2 ton, flag: 1}(_baseCommit, _rootRepo, NameOfFile);
     }
-    
+
     function returnTreeAnswer(Request value0, optional(TreeObject) value1, uint256 shainnertree) public senderIs(GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnertree, _rootRepo)) {
         if (value1.hasValue() == false) { selfdestruct(_systemcontract); return; }
         if (value1.get().tvmshafile.get() != value0.sha) { selfdestruct(_systemcontract); return; }
         _ready = true;
     }
-    
+
     function isReady(uint256 sha1, optional(address) branchcommit, uint128 typer) public view minValue(0.15 ton) {
         if ((typer == 2) && (_applying == true)){
             if ((sha1 == tvm.hash(gosh.unzip(_snapshot))) || (_ipfs.hasValue() == true)) {
                 Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(NameOfFile, _ready, branchcommit, typer);
-            } else { 
-                Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(NameOfFile, false, branchcommit, typer); 
+            } else {
+                Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(NameOfFile, false, branchcommit, typer);
             }
         }
         else {
             if ((sha1 == tvm.hash(gosh.unzip(_oldsnapshot))) || (_ipfsold.hasValue() == true)) {
                 Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(NameOfFile, _ready, branchcommit, typer);
-            } else { 
-                Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(NameOfFile, false, branchcommit, typer); 
+            } else {
+                Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(NameOfFile, false, branchcommit, typer);
             }
         }
     }
@@ -126,14 +126,14 @@ contract Snapshot is Modifiers {
             return;
         } else {
             require(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, namecommit, index1, index2) == msg.sender, ERR_SENDER_NO_ALLOWED);
-            _applying = true; 
+            _applying = true;
             _commits = namecommit;
         }
         if (diff.removeIpfs == true) {
-            if ((diff.ipfs.hasValue()) || (_ipfs.hasValue() == false) || (diff.patch.hasValue() == false)) { 
-            	DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty); 
+            if ((diff.ipfs.hasValue()) || (_ipfs.hasValue() == false) || (diff.patch.hasValue() == false)) {
+            	DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty);
             	return;
-            }            
+            }
             if (tvm.hash(gosh.unzip(diff.patch.get())) == diff.sha256) {
                 _snapshot = diff.patch.get();
                 _ipfs = null;
@@ -196,7 +196,7 @@ contract Snapshot is Modifiers {
         _applying = false;
         this.sendContent{value: 0.1 ton, flag: 1}(_snapshot, _ipfsold, _commits);
         if (_snapshot.empty()) { selfdestruct(_systemcontract); return; }
-        Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits)).canDelete(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _baseCommit), NameOfFile);
+        Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits)).canDelete{value: 0.1 ton, flag: 1}(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits), NameOfFile);
     }
 
     function sendContent(bytes snapshot, optional(string) ipfs, string commit) public pure senderIs(address(this)) accept {
@@ -215,18 +215,18 @@ contract Snapshot is Modifiers {
         address addr = address.makeAddrStd(0, tvm.hash(stateInit));
         return addr;
     }
-    
+
     receive() external {
         if (msg.sender == _goshdao) {
             _flag = false;
         }
     }
-    
+
     onBounce(TvmSlice body) external {
         body;
         if (msg.sender == GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits)) { selfdestruct(_systemcontract); }
     }
-    
+
     fallback() external {
         if (msg.sender == GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits)) { selfdestruct(_systemcontract); }
     }
@@ -236,7 +236,7 @@ contract Snapshot is Modifiers {
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         Repository(_rootRepo).isDeleteSnap{value: 0.4 ton, flag: 1} (_baseCommit, NameOfFile);
     }
-    
+
     function destroyfinal() public senderIs(_rootRepo) {
         selfdestruct(_systemcontract);
     }
@@ -247,7 +247,7 @@ contract Snapshot is Modifiers {
     {
         return (_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit, _ready);
     }
-    
+
     function getSnapshotIn() public view minValue(0.5 ton)
     {
         IObject(msg.sender).returnSnap{value: 0.1 ton, flag: 1}(_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit, _ready);
@@ -260,7 +260,7 @@ contract Snapshot is Modifiers {
     function getAddrRepository() external view returns(address) {
         return _rootRepo;
     }
-    
+
     function getBaseCommit() external view returns(string) {
         return _baseCommit;
     }
@@ -268,7 +268,7 @@ contract Snapshot is Modifiers {
     function getVersion() external pure returns(string, string) {
         return ("snapshot", version);
     }
-    
+
     function getOwner() external view returns(address) {
         return _pubaddr;
     }

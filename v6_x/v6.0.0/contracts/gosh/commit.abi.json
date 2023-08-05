@@ -317,7 +317,7 @@
 		{
 			"name": "canDelete",
 			"inputs": [
-				{"name":"commit","type":"address"},
+				{"name":"newcommit","type":"address"},
 				{"name":"path","type":"string"}
 			],
 			"outputs": [
