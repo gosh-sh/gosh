@@ -94,7 +94,8 @@ contract Tree is Modifiers {
             if (_tree.exists(index) == false) { 
                 _number += 1; 
                 if (_neednumber == _number) {
-                    this.calculateInnerTreeHash{value: 0.1 ton, flag: 1}(0, 0);
+//                    this.calculateInnerTreeHash{value: 0.1 ton, flag: 1}(0, 0);
+                    _isReady = true;
                 }
             }
             _tree[index] = obj;
@@ -102,7 +103,8 @@ contract Tree is Modifiers {
         }
         else {
             if (_neednumber == _number) {
-                this.calculateInnerTreeHash{value: 0.1 ton, flag: 1}(0, 0);
+//                this.calculateInnerTreeHash{value: 0.1 ton, flag: 1}(0, 0);
+                _isReady = true;
             }
         }
     }
