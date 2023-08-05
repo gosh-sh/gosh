@@ -318,6 +318,7 @@
 			"name": "canDelete",
 			"inputs": [
 				{"name":"newcommit","type":"address"},
+				{"name":"basecommit","type":"string"},
 				{"name":"path","type":"string"}
 			],
 			"outputs": [

@@ -197,6 +197,7 @@
 		{"name":"NameOfFile","type":"string"},
 		{"name":"_applying","type":"bool"},
 		{"name":"_ready","type":"bool"},
+		{"name":"_pushcommit","type":"string"},
 		{"name":"timeMoney","type":"uint128"},
 		{"name":"_flag","type":"bool"}
 	]

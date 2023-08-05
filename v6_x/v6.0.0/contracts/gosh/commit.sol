@@ -442,7 +442,7 @@ contract Commit is Modifiers {
         getMoney();
     }
 
-    function canDelete(address newcommit, string path) public view senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _rootRepo, _nameCommit, path)) accept {
+    function canDelete(address newcommit, string basecommit, string path) public view senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _rootRepo, basecommit, path)) accept {
         if (_save[newcommit] != true) { Snapshot(msg.sender).canDelete{value: 0.1 ton, flag: 1}(); }
     }
 
