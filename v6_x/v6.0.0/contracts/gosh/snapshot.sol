@@ -95,7 +95,7 @@ contract Snapshot is Modifiers {
     
     function returnTreeAnswer(Request value0, optional(TreeObject) value1, uint256 shainnertree) public senderIs(GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnertree, _rootRepo)) {
         if (value1.hasValue() == false) { selfdestruct(_systemcontract); return; }
-        if (value1.get().tvmshatree.get() != value0.sha) { selfdestruct(_systemcontract); return; }
+        if (value1.get().tvmshafile.get() != value0.sha) { selfdestruct(_systemcontract); return; }
         _ready = true;
     }
     
