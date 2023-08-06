@@ -7,7 +7,7 @@
 			"name": "constructor",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"string"}],"name":"data","type":"map(uint256,tuple)"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"data","type":"map(uint256,tuple)"},
 				{"name":"rootGosh","type":"address"},
 				{"name":"goshdao","type":"address"},
 				{"name":"WalletCode","type":"cell"},
@@ -15,6 +15,7 @@
 				{"name":"codeTree","type":"cell"},
 				{"name":"codeCommit","type":"cell"},
 				{"name":"SnapshotCode","type":"cell"},
+				{"name":"shaTree","type":"string"},
 				{"name":"number","type":"uint128"},
 				{"name":"index","type":"uint128"}
 			],
@@ -26,7 +27,7 @@
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"},
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"string"}],"name":"tree1","type":"map(uint256,tuple)"}
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"tree1","type":"map(uint256,tuple)"}
 			],
 			"outputs": [
 			]
@@ -35,7 +36,16 @@
 			"name": "addTreeself",
 			"inputs": [
 				{"name":"index","type":"uint256"},
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"string"}],"name":"tree1","type":"map(uint256,tuple)"}
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"tree1","type":"map(uint256,tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "calculateInnerTreeHash",
+			"inputs": [
+				{"name":"key","type":"uint256"},
+				{"name":"finalhash","type":"uint256"}
 			],
 			"outputs": [
 			]
@@ -93,7 +103,7 @@
 		{
 			"name": "getCheckTree",
 			"inputs": [
-				{"name":"name","type":"string"},
+				{"name":"shainnertree","type":"uint256"},
 				{"name":"commitsha","type":"string"},
 				{"name":"path","type":"string"},
 				{"name":"branchcommit","type":"optional(address)"},
@@ -105,7 +115,7 @@
 		{
 			"name": "gotCheckTree",
 			"inputs": [
-				{"name":"name","type":"string"},
+				{"name":"shainnertree","type":"uint256"},
 				{"name":"res","type":"bool"},
 				{"name":"branchcommit","type":"optional(address)"},
 				{"name":"typer","type":"uint128"}
@@ -136,7 +146,7 @@
 		{
 			"name": "getShaInfoTree",
 			"inputs": [
-				{"name":"sha","type":"string"},
+				{"name":"shainnertree","type":"uint256"},
 				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"}
 			],
 			"outputs": [
@@ -157,7 +167,7 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"bool"},
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"string"}],"name":"value1","type":"map(uint256,tuple)"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"value1","type":"map(uint256,tuple)"},
 				{"name":"value2","type":"uint256"},
 				{"name":"value3","type":"string"},
 				{"name":"value4","type":"address"}
@@ -175,7 +185,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"string"}],"name":"value0","type":"map(uint256,tuple)"}
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"value0","type":"map(uint256,tuple)"}
 			]
 		},
 		{
@@ -183,8 +193,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"uint256"},
-				{"name":"value1","type":"string"}
+				{"name":"value0","type":"uint256"}
 			]
 		},
 		{
@@ -206,7 +215,7 @@
 		}
 	],
 	"data": [
-		{"key":1,"name":"_shaTree","type":"string"},
+		{"key":1,"name":"_shaInnerTree","type":"uint256"},
 		{"key":2,"name":"_repo","type":"address"}
 	],
 	"events": [
@@ -217,9 +226,8 @@
 		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
 		{"name":"__value","type":"uint256"},
-		{"name":"_shaTreeLocal","type":"uint256"},
-		{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"string"}],"name":"_tree","type":"map(uint256,tuple)"},
-		{"name":"_shaTree","type":"string"},
+		{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"_tree","type":"map(uint256,tuple)"},
+		{"name":"_shaInnerTree","type":"uint256"},
 		{"name":"_repo","type":"address"},
 		{"name":"_pubaddr","type":"address"},
 		{"name":"_systemcontract","type":"address"},
@@ -233,6 +241,7 @@
 		{"name":"_flag","type":"bool"},
 		{"components":[{"name":"index","type":"uint256"},{"name":"path","type":"string"},{"name":"typer","type":"uint128"},{"name":"branch","type":"string"},{"name":"branchcommit","type":"optional(address)"}],"name":"_saved","type":"optional(tuple)"},
 		{"name":"_branch","type":"optional(string)"},
+		{"name":"_shaTree","type":"string"},
 		{"name":"_number","type":"uint128"},
 		{"name":"_neednumber","type":"uint128"},
 		{"name":"_isReady","type":"bool"},

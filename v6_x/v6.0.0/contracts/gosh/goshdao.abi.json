@@ -229,7 +229,7 @@
 			"name": "sendMoneyTree",
 			"inputs": [
 				{"name":"repo","type":"address"},
-				{"name":"shaTree","type":"string"}
+				{"name":"shainnertree","type":"uint256"}
 			],
 			"outputs": [
 			]

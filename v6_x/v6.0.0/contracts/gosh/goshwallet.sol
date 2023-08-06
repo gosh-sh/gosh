@@ -2102,44 +2102,46 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function deployTree(
         string repoName,
         string shaTree,
+        uint256 shainnerTree,
         mapping(uint256 => TreeObject) datatree,
         uint128 number
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        _deployTree(repoName, shaTree, datatree, number);
+        _deployTree(repoName, shaTree, shainnerTree, datatree, number);
     }
 
     function destroyTree(
         string repoName,
-        string shaTree
+        uint256 shainnerTree
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], shaTree, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).destroy{value: 0.2 ton, flag: 1}(_pubaddr, _index);
+        Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnerTree, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).destroy{value: 0.2 ton, flag: 1}(_pubaddr, _index);
     }
 
     function deployAddTree(
         string repoName,
-        string shaTree,
+        uint256 shainnerTree,
         mapping(uint256 => TreeObject) datatree
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], shaTree, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).addTree{value: 0.2 ton, flag: 1}(_pubaddr, _index, datatree);
+        Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnerTree, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).addTree{value: 0.2 ton, flag: 1}(_pubaddr, _index, datatree);
     }
 
     function _deployTree(
         string repoName,
         string shaTree,
+        uint256 shainnerTree,
         mapping(uint256 => TreeObject) datatree,
         uint128  number
     ) internal {
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
-        TvmCell s1 = GoshLib.composeTreeStateInit(_code[m_TreeCode], shaTree, repo);
+        TvmCell s1 = GoshLib.composeTreeStateInit(_code[m_TreeCode], shainnerTree, repo);
         new Tree{
             stateInit: s1, value: FEE_DEPLOY_TREE, wid: 0, bounce: true, flag: 1
-        }(_pubaddr, datatree, _systemcontract, _goshdao, _code[m_WalletCode], _code[m_DiffCode], _code[m_TreeCode], _code[m_CommitCode], _code[m_SnapshotCode], number, _index);
+        }(_pubaddr, datatree, _systemcontract, _goshdao, _code[m_WalletCode], _code[m_DiffCode], _code[m_TreeCode], _code[m_CommitCode], _code[m_SnapshotCode], shaTree, number, _index);
         getMoney();
     }
 
@@ -3392,5 +3394,41 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = TASK_REDEPLOYED_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, time.get());
+    }
+
+    function calculateInnerTreeHash(
+        mapping(uint256 => TreeObject) _tree
+    ) external pure returns(uint256) {
+        return calculateInnerTreeHashPrivate(_tree, 0, 0);
+    }
+
+    function calculateInnerTreeHashPrivate(
+        mapping(uint256 => TreeObject) _tree,
+        uint256 key,
+        uint256 finalhash
+    ) private pure returns(uint256) {
+        TvmBuilder b;
+        b.store(finalhash);
+        optional(uint256, TreeObject) res = _tree.next(key);
+        uint128 index = 0;
+        while (res.hasValue()) {
+            uint256 newkey;
+            TreeObject data;
+            (newkey, data) = res.get();
+            b.store(data);
+            res = _tree.next(newkey);
+            index = index + 1;
+            if (index == 10) {
+                index = 0;
+                finalhash = tvm.hash(b.toCell());
+                TvmBuilder c;
+                b = c;
+                b.store(finalhash);
+            }
+        }
+        if (index != 0) {
+            finalhash = tvm.hash(b.toCell());
+        }
+        return finalhash;
     }
 }

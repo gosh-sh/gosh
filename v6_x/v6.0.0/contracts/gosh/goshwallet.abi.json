@@ -1511,7 +1511,8 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"shaTree","type":"string"},
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"string"}],"name":"datatree","type":"map(uint256,tuple)"},
+				{"name":"shainnerTree","type":"uint256"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"datatree","type":"map(uint256,tuple)"},
 				{"name":"number","type":"uint128"}
 			],
 			"outputs": [
@@ -1521,7 +1522,7 @@
 			"name": "destroyTree",
 			"inputs": [
 				{"name":"repoName","type":"string"},
-				{"name":"shaTree","type":"string"}
+				{"name":"shainnerTree","type":"uint256"}
 			],
 			"outputs": [
 			]
@@ -1530,8 +1531,8 @@
 			"name": "deployAddTree",
 			"inputs": [
 				{"name":"repoName","type":"string"},
-				{"name":"shaTree","type":"string"},
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"string"}],"name":"datatree","type":"map(uint256,tuple)"}
+				{"name":"shainnerTree","type":"uint256"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"datatree","type":"map(uint256,tuple)"}
 			],
 			"outputs": [
 			]
@@ -2302,6 +2303,15 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "calculateInnerTreeHash",
+			"inputs": [
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"_tree","type":"map(uint256,tuple)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
 			]
 		},
 		{

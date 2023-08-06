@@ -34,6 +34,7 @@ contract Snapshot is Modifiers {
     string static NameOfFile;
     bool _applying = false;
     bool _ready = false;
+    string _pushcommit;
     
     uint128 timeMoney = 0; 
     bool _flag = false;
@@ -92,9 +93,9 @@ contract Snapshot is Modifiers {
         GoshDao(_goshdao).sendMoneySnap{value : 0.2 ton, flag: 1}(_baseCommit, _rootRepo, NameOfFile);
     }
     
-    function returnTreeAnswer(Request value0, optional(TreeObject) value1, string sha) public senderIs(GoshLib.calculateTreeAddress(_code[m_TreeCode], sha, _rootRepo)) {
+    function returnTreeAnswer(Request value0, optional(TreeObject) value1, uint256 shainnertree) public senderIs(GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnertree, _rootRepo)) {
         if (value1.hasValue() == false) { selfdestruct(_systemcontract); return; }
-        if (value1.get().sha256 != value0.sha) { selfdestruct(_systemcontract); return; }
+        if (value1.get().tvmshafile.get() != value0.sha) { selfdestruct(_systemcontract); return; }
         _ready = true;
     }
     
@@ -127,7 +128,8 @@ contract Snapshot is Modifiers {
         } else {
             require(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, namecommit, index1, index2) == msg.sender, ERR_SENDER_NO_ALLOWED);
             _applying = true; 
-            _commits = namecommit;
+            _commits = diff.commit;
+            _pushcommit = namecommit;
         }
         if (diff.removeIpfs == true) {
             if ((diff.ipfs.hasValue()) || (_ipfs.hasValue() == false) || (diff.patch.hasValue() == false)) { 
@@ -194,7 +196,15 @@ contract Snapshot is Modifiers {
         _oldcommits = _commits;
         _ipfsold = _ipfs;
         _applying = false;
-        Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits)).canDelete(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _baseCommit), NameOfFile);
+        this.sendContent{value: 0.1 ton, flag: 1}(_snapshot, _ipfsold, _commits);
+        if (_snapshot.empty()) { selfdestruct(_systemcontract); return; }
+        Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits)).canDelete(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _pushcommit), _baseCommit, NameOfFile);
+        _pushcommit = _commits;
+    }
+
+    function sendContent(bytes snapshot, optional(string) ipfs, string commit) public pure senderIs(address(this)) accept {
+        snapshot; ipfs; commit;
+        return;
     }
 
     function canDelete() public senderIs(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits)) accept {

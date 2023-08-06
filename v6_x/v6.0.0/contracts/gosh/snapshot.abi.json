@@ -26,8 +26,8 @@
 			"name": "returnTreeAnswer",
 			"inputs": [
 				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"},
-				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"},{"name":"commit","type":"string"}],"name":"value1","type":"optional(tuple)"},
-				{"name":"sha","type":"string"}
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"value1","type":"optional(tuple)"},
+				{"name":"shainnertree","type":"uint256"}
 			],
 			"outputs": [
 			]
@@ -69,6 +69,16 @@
 				{"name":"index1","type":"uint128"},
 				{"name":"index2","type":"uint128"},
 				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"removeIpfs","type":"bool"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"diff","type":"tuple"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendContent",
+			"inputs": [
+				{"name":"snapshot","type":"bytes"},
+				{"name":"ipfs","type":"optional(string)"},
+				{"name":"commit","type":"string"}
 			],
 			"outputs": [
 			]
@@ -187,6 +197,7 @@
 		{"name":"NameOfFile","type":"string"},
 		{"name":"_applying","type":"bool"},
 		{"name":"_ready","type":"bool"},
+		{"name":"_pushcommit","type":"string"},
 		{"name":"timeMoney","type":"uint128"},
 		{"name":"_flag","type":"bool"}
 	]
