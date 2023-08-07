@@ -95,7 +95,8 @@
 				{"name":"name","type":"string"},
 				{"name":"_ready","type":"bool"},
 				{"name":"branchcommit","type":"optional(address)"},
-				{"name":"typer","type":"uint128"}
+				{"name":"typer","type":"uint128"},
+				{"name":"baseCommit","type":"string"}
 			],
 			"outputs": [
 			]
