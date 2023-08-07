@@ -166,8 +166,14 @@ contract Tree is Modifiers {
             }
             else if ((obj.mode == "100644") || (obj.mode == "100664") || (obj.mode == "100755") || (obj.mode == "120000")) {
                 _needAnswer += 1;
-                if (path != "" ) { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, commitsha, path + obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.tvmshafile.get(), branchcommit, typer); }
-                else { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, commitsha, obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.tvmshafile.get(), branchcommit, typer); }
+                if (typer == 4) {
+                    if (path != "" ) { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, obj.commit, path + obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.tvmshafile.get(), branchcommit, typer); }
+                    else { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, obj.commit, obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.tvmshafile.get(), branchcommit, typer); }
+                }
+                else {
+                    if (path != "" ) { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, commitsha, path + obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.tvmshafile.get(), branchcommit, typer); }
+                    else { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, commitsha, obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.tvmshafile.get(), branchcommit, typer); }
+                }
             }
             this.checkTree{value: 0.2 ton, flag: 1}(index, path, typer, commitsha, branchcommit);
         }
