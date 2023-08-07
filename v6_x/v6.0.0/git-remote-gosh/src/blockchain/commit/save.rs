@@ -30,8 +30,6 @@ const GOSH_REMOTE_WAIT_TIMEOUT_ENV: &str = "GOSH_REMOTE_WAIT_TIMEOUT";
 pub struct DeployCommitParams {
     #[serde(rename = "repoName")]
     pub repo_name: String,
-    #[serde(rename = "branchName")]
-    pub branch_name: String,
     #[serde(rename = "commitName")]
     pub commit_id: String,
     #[serde(rename = "fullCommit")]
@@ -118,7 +116,6 @@ impl BlockchainCommitPusher for Everscale {
         let commit = database.get_commit(commit_address)?;
         let args = DeployCommitParams {
             repo_name: remote.repo.clone(),
-            branch_name: commit.branch,
             commit_id: commit.commit_id.clone(),
             raw_commit: commit.raw_commit,
             parents: commit.parents,

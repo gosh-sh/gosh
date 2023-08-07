@@ -286,10 +286,11 @@ where
                             let file_path = format!("{}/{}", path_to_node, entry.filename);
                             for branch in tree_node_to_load.branches.iter() {
                                 let mut repo_contract = self.blockchain.repo_contract().clone();
+                                // TODO: Get commit sha from tree
                                 let snapshot_address = blockchain::Snapshot::calculate_address(
                                     &Arc::clone(self.blockchain.client()),
                                     &mut repo_contract,
-                                    branch,
+                                    branch, // change to commit
                                     // Note:
                                     // Removing prefixing "/" in the path
                                     &file_path[1..],

@@ -18,16 +18,23 @@ pub struct TreeNode {
     #[serde(rename = "typeObj")]
     pub type_obj: String,
     name: String,
-    sha1: String,
-    sha256: String,
+    #[serde(rename = "gitsha")]
+    git_sha: String,
+    #[serde(rename = "tvmshatree")]
+    tvm_sha_tree: Option<String>,
+    #[serde(rename = "tvmshafile")]
+    tvm_sha_file: Option<String>,
+    commit: String,
 }
 
 #[derive(Serialize, Debug, Clone)]
 pub struct DeployTreeArgs {
-    #[serde(rename = "shaTree")]
-    pub sha: String,
     #[serde(rename = "repoName")]
     pub repo_name: String,
+    #[serde(rename = "shaTree")]
+    pub sha_tree: String,
+    #[serde(rename = "shainnerTree")]
+    pub sha_inner_tree: String,
     #[serde(rename = "datatree")]
     nodes: HashMap<String, TreeNode>,
     number: u128,
@@ -35,20 +42,12 @@ pub struct DeployTreeArgs {
 
 #[derive(Serialize, Debug)]
 pub struct DeployAddTreeArgs {
-    #[serde(rename = "shaTree")]
-    pub sha: String,
     #[serde(rename = "repoName")]
     pub repo_name: String,
+    #[serde(rename = "shainnerTree")]
+    pub sha_inner_tree: String,
     #[serde(rename = "datatree")]
     nodes: HashMap<String, TreeNode>,
-}
-
-#[derive(Serialize, Debug, Clone)]
-pub struct SetTreeFinishMarkArgs {
-    #[serde(rename = "shaTree")]
-    pub sha: String,
-    #[serde(rename = "repoName")]
-    pub repo_name: String,
 }
 
 #[async_trait]
@@ -60,6 +59,7 @@ pub trait DeployTree {
         tree_address: &str,
         repo_name: &str,
         nodes: &mut HashMap<String, TreeNode>,
+        sha_inner_hash: &str,
     ) -> anyhow::Result<()>;
 }
 
@@ -74,6 +74,7 @@ impl DeployTree for Everscale {
         tree_address: &str,
         repo_name: &str,
         nodes: &mut HashMap<String, TreeNode>, // change to moved hashmap
+        sha_inner_hash: &str,
     ) -> anyhow::Result<()> {
         let wallet_contract = wallet.take_one().await?;
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
@@ -96,8 +97,9 @@ impl DeployTree for Everscale {
                 nodes.retain(|k, _| !onchain_tree_object.objects.contains_key(k));
             } else {
                 let params = DeployTreeArgs {
-                    sha: sha.to_owned(),
                     repo_name: repo_name.to_owned(),
+                    sha_tree: sha.to_owned(),
+                    sha_inner_tree: sha_inner_hash.to_string(),
                     nodes: chunk,
                     number: nodes_cnt as u128,
                 };
@@ -113,13 +115,13 @@ impl DeployTree for Everscale {
             }
             while nodes.len() > 0 {
                 let mut counter = 0;
-                let chunk: HashMap<String, TreeNode>;
+                let mut chunk = HashMap::new();
                 (chunk, nodes) = nodes.into_iter().partition(|(_, _)| {
                     counter += 1;
                     counter <= TREE_NODES_CHUNK_MAX_SIZE
                 });
                 let params = DeployAddTreeArgs {
-                    sha: sha.to_owned(),
+                    sha_inner_tree: sha_inner_hash.to_string(),
                     repo_name: repo_name.to_owned(),
                     nodes: chunk,
                 };
@@ -143,8 +145,8 @@ impl DeployTree for Everscale {
     }
 }
 
-impl<'a> From<(String, &'a tree::EntryRef<'a>)> for TreeNode {
-    fn from((sha256, entry): (String, &tree::EntryRef)) -> Self {
+impl<'a> From<(Option<String>, Option<String>, String, &'a tree::EntryRef<'a>)> for TreeNode {
+    fn from((file_hash, tree_hash, commit, entry): (Option<String>, Option<String>, String, &tree::EntryRef)) -> Self {
         Self {
             flags: (GoshBlobBitFlags::Compressed as u8).to_string(),
             mode: std::str::from_utf8(entry.mode.as_bytes())
@@ -152,8 +154,10 @@ impl<'a> From<(String, &'a tree::EntryRef<'a>)> for TreeNode {
                 .to_owned(),
             type_obj: convert_to_type_obj(entry.mode),
             name: entry.filename.to_string(),
-            sha1: entry.oid.to_hex().to_string(),
-            sha256,
+            git_sha: entry.oid.to_hex().to_string(),
+            tvm_sha_file: file_hash,
+            tvm_sha_tree: tree_hash,
+            commit,
         }
     }
 }

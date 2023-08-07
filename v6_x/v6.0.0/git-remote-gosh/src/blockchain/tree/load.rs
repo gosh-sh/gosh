@@ -15,6 +15,7 @@ pub struct TreeComponent {
     pub name: String,
     pub sha1: String,
     pub sha256: String,
+    pub commit: String,
 }
 
 #[derive(Deserialize, Debug)]

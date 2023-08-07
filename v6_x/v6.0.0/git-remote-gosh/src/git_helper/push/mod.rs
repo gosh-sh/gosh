@@ -162,10 +162,11 @@ where
             };
 
             let mut repo_contract = self.blockchain.repo_contract().clone();
+            let commit_sha = commit_id.to_string().clone();
             let snapshot_addr = Snapshot::calculate_address(
                 self.blockchain.client(),
                 &mut repo_contract,
-                &branch_name,
+                &commit_sha,
                 &file_path,
             )
             .await?;
@@ -509,6 +510,7 @@ where
 
         let mut commit_iter = commit.try_into_commit_iter().unwrap();
         let tree_id = commit_iter.tree_id()?;
+
         let mut parent_ids: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
         if !parent_ids.is_empty() {
             parents_of_commits.insert(oid.to_owned(), parent_ids.clone());
@@ -777,14 +779,14 @@ where
                 // Not supported yet
                 git_object::Kind::Tag => unimplemented!(),
                 git_object::Kind::Tree => {
-                    push_tree(
-                        self,
-                        &object_id,
-                        &mut visited_trees,
-                        &mut parallel_tree_uploads,
-                        push_semaphore.clone(),
-                    )
-                    .await?;
+                    // push_tree(
+                    //     self,
+                    //     &object_id,
+                    //     &mut visited_trees,
+                    //     &mut parallel_tree_uploads,
+                    //     push_semaphore.clone(),
+                    // )
+                    // .await?;
                 }
             }
         }
@@ -983,7 +985,35 @@ where
         let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
 
         tracing::trace!("List of objects: {commit_and_tree_list:?}");
+
+        eprintln!("{:?}", commit_and_tree_list);
+        for oid in &commit_and_tree_list {
+            let object_id = git_hash::ObjectId::from_str(oid)?;
+            let object_kind = self.local_repository().find_object(object_id)?.kind;
+            if object_kind == git_object::Kind::Commit {
+                let mut buffer: Vec<u8> = Vec::new();
+                let commit = self
+                    .local_repository()
+                    .objects
+                    .try_find(object_id, &mut buffer)?
+                    .expect("Commit should exists");
+                let commit_iter = commit.try_into_commit_iter().unwrap();
+                let parent_ids: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
+
+                eprintln!("Id: {:?}", oid);
+                eprintln!("Parents: {:?}\n", parent_ids);
+            }
+        }
+
+        let zero_wallet_contract = self
+            .blockchain
+            .user_wallet(&self.dao_addr, &self.remote.network)
+            .await?
+            .take_zero_wallet()
+            .await?;
         // iterate through the git objects list and push them
+        let mut current_commit= String::new();
+        let mut snapshot_to_commit = HashMap::new();
         for oid in &commit_and_tree_list {
             let object_id = git_hash::ObjectId::from_str(oid)?;
             let object_kind = self.local_repository().find_object(object_id)?.kind;
@@ -1010,6 +1040,7 @@ where
                         vec![],
                     )
                     .await?;
+                    current_commit = oid.to_string();
                 }
                 git_object::Kind::Blob => {
                     // Note: handled in the Commit section
@@ -1025,6 +1056,9 @@ where
                         self,
                         &object_id,
                         &mut visited_trees,
+                        &current_commit,
+                        &snapshot_to_commit,
+                        &zero_wallet_contract,
                         &mut parallel_tree_uploads,
                         push_semaphore.clone(),
                     )

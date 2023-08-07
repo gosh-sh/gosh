@@ -35,6 +35,7 @@ impl From<ParallelCommit> for DBCommit {
 pub struct DBTree {
     tree_id: String,
     tree_nodes: HashMap<String, TreeNode>,
+    sha_inner_tree: String,
 }
 
 impl DBTree {
@@ -42,6 +43,7 @@ impl DBTree {
         ParallelTree {
             tree_id: ObjectId::from_str(&self.tree_id).unwrap(),
             tree_nodes: self.tree_nodes,
+            sha_inner_tree: self.sha_inner_tree,
         }
     }
 }
@@ -51,6 +53,7 @@ impl From<ParallelTree> for DBTree {
         Self {
             tree_id: value.tree_id.to_string(),
             tree_nodes: value.tree_nodes,
+            sha_inner_tree: value.sha_inner_tree,
         }
     }
 }

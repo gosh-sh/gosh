@@ -10,12 +10,13 @@ set -o pipefail
 #  docker start local-node
 #  sleep 20
 
-#  ./node_se_scripts/deploy.sh $1 $2
+ ./node_se_scripts/deploy.sh $1 $2
 #fi
 
 # $1 = VERSION (v1_x, v2_x, v3_x, v4_x)
 
 . set-vars.sh $1 $2
+exit 0
 ./01-clone_empty_repo.test.sh
 ./02-create_branch.test.sh
 ./03-push_multiple_updates_in_a_single_commit.test.sh

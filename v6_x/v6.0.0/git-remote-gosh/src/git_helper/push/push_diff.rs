@@ -111,7 +111,7 @@ pub async fn inner_push_diff(
     let snapshot_addr: BlockchainContractAddress = (Snapshot::calculate_address(
         &blockchain.client(),
         &mut repo_contract,
-        &branch_name,
+        &branch_name, // TODO: change to commit sha
         &file_path,
     ))
     .await?;
@@ -371,7 +371,7 @@ where
         let snapshot_addr = Snapshot::calculate_address(
             blockchain.client(),
             &mut repo_contract,
-            &branch_name,
+            &commit_id,
             &file_path,
         )
         .await?;

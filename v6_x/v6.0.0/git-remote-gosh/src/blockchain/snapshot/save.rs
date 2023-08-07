@@ -61,10 +61,8 @@ struct DeployDiffParams {
 struct DeploySnapshotParams {
     #[serde(rename = "repo")]
     repo_address: BlockchainContractAddress,
-    #[serde(rename = "branch")]
-    branch_name: String,
-    #[serde(rename = "commit")]
-    commit_id: String,
+    #[serde(rename = "commitsha")]
+    commit_sha: String,
     #[serde(rename = "name")]
     file_path: String,
     #[serde(rename = "snapshotdata")]
@@ -180,8 +178,7 @@ impl DeployNewSnapshot for Everscale {
         tracing::trace!("deploy_new_snapshot: repo_address={repo_address}, branch_name={branch_name}, commit_id={commit_id}, file_path={file_path}");
         let args = DeploySnapshotParams {
             repo_address,
-            branch_name,
-            commit_id,
+            commit_sha: commit_id,
             file_path,
             content,
             ipfs,

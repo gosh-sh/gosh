@@ -288,15 +288,17 @@ pub struct ParallelTreeUploadSupport {
 pub struct ParallelTree {
     pub tree_id: ObjectId,
     pub tree_nodes: HashMap<String, TreeNode>,
+    pub sha_inner_tree: String,
 }
 
 impl ParallelTree {
     #[instrument(level = "info", skip_all, name = "new_ParallelDiff")]
-    pub fn new(tree_id: ObjectId, tree_nodes: HashMap<String, TreeNode>) -> Self {
-        tracing::trace!("new_ParallelTree tree_id:{tree_id:?}, tree_nodes:{tree_nodes:?}");
+    pub fn new(tree_id: ObjectId, tree_nodes: HashMap<String, TreeNode>, sha_inner_tree: String) -> Self {
+        tracing::trace!("new_ParallelTree tree_id:{tree_id:?}, tree_nodes:{tree_nodes:?}, sha_inner_tree:{sha_inner_tree}");
         Self {
             tree_id,
             tree_nodes,
+            sha_inner_tree,
         }
     }
 }

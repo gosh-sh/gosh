@@ -95,12 +95,13 @@ impl Snapshot {
     pub async fn calculate_address(
         context: &EverClient,
         repo_contract: &mut GoshContract,
-        branch_name: &str,
+        commit_sha: &str,
         file_path: &str,
     ) -> anyhow::Result<BlockchainContractAddress> {
-        tracing::trace!("calculate_address: repo_contract.address={}, branch_name={branch_name}, file_path={file_path}", repo_contract.address);
+        tracing::trace!("calculate_address: commit_sha={commit_sha}, repo_contract.address={}, file_path={file_path}", repo_contract.address);
         let params = serde_json::json!({
-            "branch": branch_name,
+            "commitSha": commit_sha,
+            "repo": repo_contract.address.clone(),
             "name": file_path
         });
         let result: GetSnapshotAddrResult = repo_contract

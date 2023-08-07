@@ -108,10 +108,11 @@ where
             let file_path = entry.filepath.to_string();
             let mut repo_contract = blockchain.repo_contract().clone();
 
+
             let expected_snapshot_addr = Snapshot::calculate_address(
                 self.context.blockchain.client(),
                 &mut repo_contract,
-                &self.new_branch,
+                &self.new_branch, // TODO: change to commit
                 &file_path,
             )
             .await?;
@@ -189,7 +190,8 @@ where
         let mut is_first_branch = true;
         self.prepare_commit_for_branching().await?;
         if self.ancestor_commit != git_hash::ObjectId::from_str(ZERO_SHA)? {
-            self.push_initial_snapshots().await?;
+            // TODO: not push all snapshots on create branch, only necessary
+            // self.push_initial_snapshots().await?;
             is_first_branch = false;
         }
         self.preinit_branch().await?;

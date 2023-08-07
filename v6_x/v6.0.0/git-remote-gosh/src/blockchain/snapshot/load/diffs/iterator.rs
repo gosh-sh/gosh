@@ -124,12 +124,16 @@ impl DiffMessagesIterator {
                 let commit_data = get_commit_by_addr(client, &commit_addr)
                     .await?
                     .expect("commit data should be here");
-                let original_branch = commit_data.branch;
+
+                let original_branch = commit_data.branch.clone();
+
+                // TODO: ensure that it is right SHA otherwise change to smth meaningful
+                let commit_sha = commit_data.sha;
                 // find what is it pointing to
                 let original_snapshot = Snapshot::calculate_address(
                     client,
                     repo_contract,
-                    &original_branch,
+                    &commit_sha,
                     &file_path,
                 )
                 .await?;
