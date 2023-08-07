@@ -70,7 +70,8 @@ contract Tree is Modifiers {
         _code[m_DiffCode] = codeDiff;
         _code[m_TreeCode] = codeTree;
         _code[m_CommitCode] = codeCommit;
-        this.addTreeself{value: 0.2 ton, flag: 1}(uint256(0), data);
+        if (_neednumber == 0) { _isReady = true; }
+        else { this.addTreeself{value: 0.2 ton, flag: 1}(uint256(0), data); }
         getMoney();
     }
 
