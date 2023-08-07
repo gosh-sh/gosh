@@ -119,6 +119,7 @@ contract Snapshot is Modifiers {
     function applyDiff(string namecommit, Diff diff, uint128 index1, uint128 index2) public {
         require(msg.isExternal == false, ERR_INVALID_SENDER);
         require(_ready == true, ERR_SNAPSHOT_NOT_READY);
+        require(diff.nameSnap == NameOfFile, ERR_INVALID_SENDER);
         tvm.accept();
         getMoney();
         uint256 empty;
@@ -196,14 +197,14 @@ contract Snapshot is Modifiers {
         _oldcommits = _commits;
         _ipfsold = _ipfs;
         _applying = false;
-        this.sendContent{value: 0.1 ton, flag: 1}(NameOfFile, _snapshot, _ipfsold, _commits);
+        this.sendContent{value: 0.1 ton, flag: 1}(_snapshot, _ipfsold, _commits);
         if (_snapshot.empty()) { selfdestruct(_systemcontract); return; }
         Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits)).canDelete(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _pushcommit), _baseCommit, NameOfFile);
         _pushcommit = _commits;
     }
 
-    function sendContent(string name, bytes snapshot, optional(string) ipfs, string commit) public pure senderIs(address(this)) accept {
-        name; snapshot; ipfs; commit;
+    function sendContent(bytes snapshot, optional(string) ipfs, string commit) public pure senderIs(address(this)) accept {
+        snapshot; ipfs; commit;
         return;
     }
 

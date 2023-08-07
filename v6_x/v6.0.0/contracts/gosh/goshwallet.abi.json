@@ -949,7 +949,7 @@
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
 				{"name":"commitName","type":"string"},
-				{"components":[{"name":"snap","type":"address"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"removeIpfs","type":"bool"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"diffs","type":"tuple[]"},
+				{"components":[{"name":"snap","type":"address"},{"name":"nameSnap","type":"string"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"removeIpfs","type":"bool"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"diffs","type":"tuple[]"},
 				{"name":"index1","type":"uint128"},
 				{"name":"index2","type":"uint128"},
 				{"name":"last","type":"bool"}
