@@ -76,6 +76,7 @@ struct TreeObject {
 
 struct Diff {
     address snap;
+    string nameSnap;
     string commit;
     optional(bytes) patch;
     optional(string) ipfs;

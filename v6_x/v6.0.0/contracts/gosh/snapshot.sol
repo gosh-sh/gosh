@@ -119,6 +119,7 @@ contract Snapshot is Modifiers {
     function applyDiff(string namecommit, Diff diff, uint128 index1, uint128 index2) public {
         require(msg.isExternal == false, ERR_INVALID_SENDER);
         require(_ready == true, ERR_SNAPSHOT_NOT_READY);
+        require(diff.nameSnap == NameOfFile, ERR_INVALID_SENDER);
         tvm.accept();
         getMoney();
         uint256 empty;
