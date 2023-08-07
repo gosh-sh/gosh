@@ -118,6 +118,11 @@ contract Commit is Modifiers {
         getMoney();
     }
 
+    function cleanTree() public senderIs(_rootRepo) accept {
+        Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, null, _rootRepo, _nameCommit, 4, null);
+        getMoney();
+    }
+
     function allCorrect(uint128 number, string branch) public senderIs(_rootRepo){
         tvm.accept();
         _isCorrect = true;

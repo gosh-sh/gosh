@@ -42,6 +42,13 @@
 			]
 		},
 		{
+			"name": "cleanTree",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "allCorrect",
 			"inputs": [
 				{"name":"number","type":"uint128"},

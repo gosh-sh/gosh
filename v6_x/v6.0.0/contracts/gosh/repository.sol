@@ -162,6 +162,7 @@ contract Repository is Modifiers{
         require(_Branches.exists(tvm.hash(name)), ERR_BRANCH_NOT_EXIST);
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         require(_protectedBranch[tvm.hash(name)] == false, ERR_BRANCH_PROTECTED);
+        Commit(_Branches[tvm.hash(name)].commitaddr).cleanTree{value: 0.1 ton, flag: 1}();
         delete _Branches[tvm.hash(name)];
     }
 

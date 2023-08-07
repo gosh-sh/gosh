@@ -1614,6 +1614,19 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     //Task part
+    function approveSmallTask(
+        string namebigtask,
+        string repoName,
+        uint128 taskindex,
+        ConfigCommitBase commit
+    ) public senderIs(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))) accept {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        BigTask(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).approveSmallTask{value: 1 ton, flag: 1}(_pubaddr, _index, taskindex, commit);
+        getMoney();
+    }
+
+
     function deployTaskFromBigTask(
         string namebigtask,
         string repoName,
