@@ -196,14 +196,14 @@ contract Snapshot is Modifiers {
         _oldcommits = _commits;
         _ipfsold = _ipfs;
         _applying = false;
-        this.sendContent{value: 0.1 ton, flag: 1}(_snapshot, _ipfsold, _commits);
+        this.sendContent{value: 0.1 ton, flag: 1}(NameOfFile, _snapshot, _ipfsold, _commits);
         if (_snapshot.empty()) { selfdestruct(_systemcontract); return; }
         Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits)).canDelete(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _pushcommit), _baseCommit, NameOfFile);
         _pushcommit = _commits;
     }
 
-    function sendContent(bytes snapshot, optional(string) ipfs, string commit) public pure senderIs(address(this)) accept {
-        snapshot; ipfs; commit;
+    function sendContent(string name, bytes snapshot, optional(string) ipfs, string commit) public pure senderIs(address(this)) accept {
+        name; snapshot; ipfs; commit;
         return;
     }
 

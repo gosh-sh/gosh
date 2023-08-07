@@ -76,6 +76,7 @@
 		{
 			"name": "sendContent",
 			"inputs": [
+				{"name":"name","type":"string"},
 				{"name":"snapshot","type":"bytes"},
 				{"name":"ipfs","type":"optional(string)"},
 				{"name":"commit","type":"string"}
