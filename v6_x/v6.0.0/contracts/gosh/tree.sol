@@ -95,7 +95,7 @@ contract Tree is Modifiers {
             if (_tree.exists(index) == false) { 
                 _number += 1; 
                 if (_neednumber == _number) {
-//                    this.calculateInnerTreeHash{value: 0.1 ton, flag: 1}(0, 0);
+                    this.calculateInnerTreeHash{value: 0.1 ton, flag: 1}(0, 0);
                     _isReady = true;
                 }
             }
@@ -104,7 +104,7 @@ contract Tree is Modifiers {
         }
         else {
             if (_neednumber == _number) {
-//                this.calculateInnerTreeHash{value: 0.1 ton, flag: 1}(0, 0);
+                this.calculateInnerTreeHash{value: 0.1 ton, flag: 1}(0, 0);
                 _isReady = true;
             }
         }
@@ -114,26 +114,20 @@ contract Tree is Modifiers {
         uint256 key,
         uint256 finalhash
     ) public senderIs(address(this)) accept {
-        TvmBuilder b;
-        b.store(finalhash);
         optional(uint256, TreeObject) res = _tree.next(key);
         uint128 index = 0;
+        uint256 newkey;
+        TreeObject data;
         while (res.hasValue()) {
-            uint256 newkey;
-            TreeObject data;
-            b.store(data);
-            res = _tree.next(key);
+            (newkey, data) = res.get();
             index = index + 1;
+            finalhash = tvm.hash(abi.encode(finalhash, data));
             if (index == 10) {
                 index = 0;
-                finalhash = tvm.hash(b.toCell());
                 this.calculateInnerTreeHash{value: 0.1 ton, flag: 1}(newkey, finalhash);
                 return;
             }
-            (newkey, data) = res.get();
-        }
-        if (index != 0) {
-            finalhash = tvm.hash(b.toCell());
+            res = _tree.next(key);
         }
         if (finalhash != _shaInnerTree) { selfdestruct(_systemcontract); return; }
         _isReady = true;   
