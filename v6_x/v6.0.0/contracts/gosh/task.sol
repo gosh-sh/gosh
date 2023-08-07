@@ -177,6 +177,15 @@ contract Task is Modifiers{
         this.checkdaoMember{value:0.1 ton, flag: 1}(daoMember, key);
     }
 
+    function isReadyBig(ConfigCommitBase commit) public senderIs(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())) accept {
+        require(_waitForUpdate == false, ERR_WRONG_UPGRADE_STATUS);
+        require(((_ready == false)), ERR_TASK_COMPLETED);
+        require(((_isFix == true) || (_candidates.length == 0)), ERR_TASK_COMPLETED);
+        _candidates.push(commit);
+        if (_isFix == true) { this.calculateAssignLength{value : 0.15 ton, flag: 1}(uint128(0)); }
+        else { this.calculateAssignLength{value : 0.15 ton, flag: 1}(uint128(_candidates.length - 1)); }
+    }
+
     function isReady(ConfigCommitBase commit) public senderIs(_repo) {
         require(_waitForUpdate == false, ERR_WRONG_UPGRADE_STATUS);
         require(((_ready == false)), ERR_TASK_COMPLETED);

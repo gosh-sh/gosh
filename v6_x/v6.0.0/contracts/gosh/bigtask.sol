@@ -173,7 +173,14 @@ contract BigTask is Modifiers{
         _indexFinal = index;
     }
 
+    function approveSmallTask(address pubaddr, uint128 index, uint128 taskindex, ConfigCommitBase commit) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
+        require(_candidates[0].pubaddrmanager.exists(pubaddr), ERR_INVALID_SENDER);
+        Task(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, _subtask[taskindex].name)).isReadyBig{value: 0.2 ton, flag: 1}(commit);
+        return;
+    }
+
     function approveReady(address pubaddr, uint128 index) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
+        require(_candidates[0].pubaddrmanager.exists(pubaddr), ERR_INVALID_SENDER);
         if (_approvedSubTask != _subtasksize) { return; }
         _ready = true;
         _locktime = block.timestamp;
@@ -187,6 +194,7 @@ contract BigTask is Modifiers{
         ConfigGrant grant,
         uint128 value,
         optional(ConfigCommitBase) workers ) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
+        require(_candidates[0].pubaddrmanager.exists(pubaddr), ERR_INVALID_SENDER);
         if (_subtasksize >= 100) { return; }
         require(_ready == false, ERR_TASK_COMPLETED);
         if ((_candidates[_indexFinal].pubaddrassign.exists(pubaddr) == false) && (_candidates[_indexFinal].pubaddrreview.exists(pubaddr) == false) && (_candidates[_indexFinal].pubaddrmanager.exists(pubaddr) == false)) { return; }
@@ -234,6 +242,7 @@ contract BigTask is Modifiers{
     function destroySubTask(address pubaddr,
         uint128 index,
         uint128 index1) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
+        require(_candidates[0].pubaddrmanager.exists(pubaddr), ERR_INVALID_SENDER);
         require(_ready == false, ERR_TASK_COMPLETED);
         _fullSubtaskValue -= _subtask[index1].value;
         Task(GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, _repo, _subtask[index1].name)).destroyBig{value: 0.1 ton, flag: 1}();
@@ -392,6 +401,7 @@ contract BigTask is Modifiers{
 
     function destroy(address pubaddr, uint128 index) public view {
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        require(_candidates[0].pubaddrmanager.exists(pubaddr), ERR_INVALID_SENDER);
         require(_ready == false, ERR_TASK_COMPLETED);
         tvm.accept();
         GoshDao(_goshdao).returnTaskTokenBig{value: 0.2 ton, flag: 1}(_nametask, _repo, _freebalance + _balance - _subtaskgranted);
