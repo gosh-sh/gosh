@@ -96,7 +96,6 @@ contract Tree is Modifiers {
                 _number += 1; 
                 if (_neednumber == _number) {
                     this.calculateInnerTreeHash{value: 0.1 ton, flag: 1}(0, 0);
-                    _isReady = true;
                 }
             }
             _tree[index] = obj;
@@ -105,7 +104,6 @@ contract Tree is Modifiers {
         else {
             if (_neednumber == _number) {
                 this.calculateInnerTreeHash{value: 0.1 ton, flag: 1}(0, 0);
-                _isReady = true;
             }
         }
     }
@@ -122,12 +120,12 @@ contract Tree is Modifiers {
             (newkey, data) = res.get();
             index = index + 1;
             finalhash = tvm.hash(abi.encode(finalhash, data));
-            if (index == 10) {
+            if (index == 3) {
                 index = 0;
                 this.calculateInnerTreeHash{value: 0.1 ton, flag: 1}(newkey, finalhash);
                 return;
             }
-            res = _tree.next(key);
+            res = _tree.next(newkey);
         }
         if (finalhash != _shaInnerTree) { selfdestruct(_systemcontract); return; }
         _isReady = true;   
