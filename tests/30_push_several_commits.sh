@@ -29,7 +29,7 @@ echo "***** Pushing file to the repo *****"
 echo main > 1.txt
 git add 1.txt
 git commit -m main
-git push
+GOSH_TRACE=5 git push &> ../trace30.log
 
 echo "***** Create dev branch *****"
 git checkout -b dev

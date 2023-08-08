@@ -99,7 +99,7 @@ pub async fn inner_push_diff(
 ) -> anyhow::Result<()> {
     let (parallel_diff, diff_coordinate, is_last) = database.get_diff(diff_address)?;
 
-    let commit_id = parallel_diff.commit_id;
+    let commit_id = parallel_diff.commit_id.to_string();
     let branch_name = parallel_diff.branch_name;
     let blob_id = parallel_diff.blob_id;
     let file_path = parallel_diff.file_path;
@@ -111,7 +111,7 @@ pub async fn inner_push_diff(
     let snapshot_addr: BlockchainContractAddress = (Snapshot::calculate_address(
         &blockchain.client(),
         &mut repo_contract,
-        &branch_name, // TODO: change to commit sha
+        &commit_id, // TODO: change to correct commit sha
         &file_path,
     ))
     .await?;
@@ -158,7 +158,6 @@ pub async fn inner_push_diff(
         blob_id.to_string()
     };
 
-    let commit_id = commit_id.to_string();
     let diff = match blob_dst {
         BlobDst::Ipfs(ipfs) => {
             let patch = if is_previous_oversized {
@@ -169,6 +168,7 @@ pub async fn inner_push_diff(
             };
             Diff {
                 snapshot_addr,
+                snapshot_file_path: file_path, // TODO: change to full path
                 commit_id,
                 patch,
                 ipfs: Some(ipfs),
@@ -179,6 +179,7 @@ pub async fn inner_push_diff(
         }
         BlobDst::Patch(patch) => Diff {
             snapshot_addr,
+            snapshot_file_path: file_path, // TODO: change to full path
             commit_id,
             patch: Some(patch),
             ipfs: None,
@@ -188,6 +189,7 @@ pub async fn inner_push_diff(
         },
         BlobDst::SetContent(content) => Diff {
             snapshot_addr,
+            snapshot_file_path: file_path, // TODO: change to full path
             commit_id,
             patch: Some(content),
             ipfs: None,
@@ -407,7 +409,7 @@ where
             (content_string, commit_id, None)
         }
     } else {
-        ("".to_string(), "".to_string(), None)
+        ("".to_string(), commit_id, None)
     };
     RetryIf::spawn(
         default_retry_strategy(),

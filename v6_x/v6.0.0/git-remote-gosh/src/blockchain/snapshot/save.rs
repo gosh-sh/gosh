@@ -29,10 +29,13 @@ pub struct GetVersionResult {
     pub version: String,
 }
 
+// TODO: leave only one struct Diff
 #[derive(Serialize, Debug)]
 pub struct Diff {
     #[serde(rename = "snap")]
     pub snapshot_addr: BlockchainContractAddress,
+    #[serde(rename = "nameSnap")]
+    pub snapshot_file_path: String,
     #[serde(rename = "commit")]
     pub commit_id: String,
     pub patch: Option<String>,
@@ -69,6 +72,8 @@ struct DeploySnapshotParams {
     content: String,
     #[serde(rename = "snapshotipfs")]
     ipfs: Option<String>,
+    #[serde(rename = "isPin")]
+    is_pin: bool,
 }
 
 #[derive(Serialize, Debug)]
@@ -182,6 +187,7 @@ impl DeployNewSnapshot for Everscale {
             file_path,
             content,
             ipfs,
+            is_pin: false,
         };
         let wallet_contract = wallet.take_one().await?;
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());

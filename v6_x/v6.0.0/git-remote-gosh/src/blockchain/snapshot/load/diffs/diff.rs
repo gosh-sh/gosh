@@ -1,9 +1,12 @@
 use std::iter::Iterator;
 
+// TODO: leave only one struct Diff
 #[derive(Deserialize, Debug, Clone, PartialEq)]
 pub struct Diff {
     #[serde(rename = "snap")]
     snapshot_contract_address: String,
+    #[serde(rename = "nameSnap")]
+    pub snapshot_file_path: String,
     pub commit: String,
     patch: Option<String>,
     pub ipfs: Option<String>,
@@ -11,6 +14,7 @@ pub struct Diff {
     pub remove_ipfs: bool,
     #[serde(rename = "sha1")]
     pub modified_blob_sha1: Option<String>,
+    pub sha256: String,
 }
 
 impl Diff {

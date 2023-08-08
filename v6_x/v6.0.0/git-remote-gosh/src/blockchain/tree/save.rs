@@ -11,6 +11,8 @@ use std::sync::Arc;
 
 const MAX_RETRIES_FOR_CHUNKS_TO_APPEAR: i32 = 20;
 
+
+// TODO: the same as TreeComponent leave only one
 #[derive(Serialize, Debug, Clone, Deserialize)]
 pub struct TreeNode {
     flags: String,
@@ -83,7 +85,7 @@ impl DeployTree for Everscale {
             tracing::trace!("Start tree upload by chunks");
             let mut repo_contract = self.repo_contract().clone();
             let tree_address =
-                Tree::calculate_address(&Arc::clone(self.client()), &mut repo_contract, sha)
+                Tree::calculate_address(&Arc::clone(self.client()), &mut repo_contract, sha_inner_hash)
                     .await?;
             let mut nodes = nodes.to_owned();
             let chunk: HashMap<String, TreeNode> = HashMap::new();

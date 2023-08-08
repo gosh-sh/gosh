@@ -7,6 +7,7 @@ use data_contract_macro_derive::DataContract;
 use std::collections::HashMap;
 use crate::blockchain::tree::TreeNode;
 
+// TODO: the same as TreeNode leave only one
 #[derive(Deserialize, Debug)]
 pub struct TreeComponent {
     pub flags: Number,
@@ -14,8 +15,12 @@ pub struct TreeComponent {
     #[serde(rename = "typeObj")]
     pub type_obj: String,
     pub name: String,
-    pub sha1: String,
-    pub sha256: String,
+    #[serde(rename = "gitsha")]
+    pub git_sha: String,
+    #[serde(rename = "tvmshatree")]
+    pub tvm_sha_tree: Option<String>,
+    #[serde(rename = "tvmshafile")]
+    pub tvm_sha_file: Option<String>,
     pub commit: String,
 }
 
@@ -90,7 +95,7 @@ impl Into<git_object::tree::Entry> for TreeComponent {
             _ => unreachable!(),
         };
         let filename = self.name.into();
-        let oid = git_hash::ObjectId::from_hex(self.sha1.as_bytes()).expect("SHA1 must be correct");
+        let oid = git_hash::ObjectId::from_hex(self.git_sha.as_bytes()).expect("SHA1 must be correct");
         git_object::tree::Entry {
             mode,
             filename,
