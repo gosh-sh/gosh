@@ -185,7 +185,10 @@ contract Tree is Modifiers {
         }
     }
 
-    function answerIs(string name, bool _ready, optional(address) branchcommit, uint128 typer, string baseCommit) public senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, baseCommit, name)) {
+    function answerIs(string name, bool _ready, optional(address) branchcommit, uint128 typer, string baseCommit) public {
+        if (msg.sender != GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, baseCommit, name)) {
+            require(msg.sender == GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, "//PINTAG//" + baseCommit, name), ERR_INVALID_SENDER);
+        }
         tvm.accept();
         getMoney();
         require(_check == true, ERR_PROCCESS_END);
