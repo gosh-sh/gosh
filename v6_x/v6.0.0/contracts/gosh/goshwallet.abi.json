@@ -930,7 +930,8 @@
 				{"name":"repo","type":"address"},
 				{"name":"name","type":"string"},
 				{"name":"snapshotdata","type":"bytes"},
-				{"name":"snapshotipfs","type":"optional(string)"}
+				{"name":"snapshotipfs","type":"optional(string)"},
+				{"name":"isPin","type":"bool"}
 			],
 			"outputs": [
 			]

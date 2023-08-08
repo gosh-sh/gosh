@@ -17,6 +17,8 @@
 				{"name":"codeTree","type":"cell"},
 				{"name":"index","type":"uint128"},
 				{"name":"data","type":"bytes"},
+				{"name":"isPin","type":"bool"},
+				{"name":"commit","type":"string"},
 				{"name":"ipfsdata","type":"optional(string)"}
 			],
 			"outputs": [
@@ -118,7 +120,8 @@
 				{"name":"value4","type":"bytes"},
 				{"name":"value5","type":"optional(string)"},
 				{"name":"value6","type":"string"},
-				{"name":"value7","type":"bool"}
+				{"name":"value7","type":"bool"},
+				{"name":"value8","type":"bool"}
 			]
 		},
 		{
@@ -199,6 +202,7 @@
 		{"name":"_ready","type":"bool"},
 		{"name":"_pushcommit","type":"string"},
 		{"name":"timeMoney","type":"uint128"},
-		{"name":"_flag","type":"bool"}
+		{"name":"_flag","type":"bool"},
+		{"name":"_isPin","type":"bool"}
 	]
 }
