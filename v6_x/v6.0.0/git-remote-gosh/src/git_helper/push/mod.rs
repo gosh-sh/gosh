@@ -1441,14 +1441,24 @@ fn get_list_of_commit_objects(
             .collect(),
     };
 
+    let mut commit_objects: Vec<git_repository::Commit> = Vec::new();
+    for commit in commits.iter().rev() {
+        let commit = commit.object()?.into_commit();
+        commit_objects.push(commit);
+    }
+
+    commit_objects.sort_by_key(|commit| {
+        commit.time().unwrap()
+    });
+    commit_objects.reverse();
+
     let mut res = Vec::new();
     // observation from `git rev-list --reverse`
     // 1) commits are going in reverse order (from old to new)
     // 2) but for each commit tree elements are going in BFS order
     //
     // so if we just rev() commits we'll have topological order for free
-    for commit in commits.iter().rev() {
-        let commit = commit.object()?.into_commit();
+    for commit in commit_objects.iter().rev() {
         res.push(commit.id.to_string());
         let tree = commit.tree()?;
         res.push(tree.id.to_string());
