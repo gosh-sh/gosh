@@ -5,6 +5,7 @@ use crate::blockchain::{
 use ::git_object;
 use data_contract_macro_derive::DataContract;
 use std::collections::HashMap;
+use crate::blockchain::tree::TreeNode;
 
 #[derive(Deserialize, Debug)]
 pub struct TreeComponent {
@@ -46,10 +47,16 @@ struct GetTreeResult {
     address: BlockchainContractAddress,
 }
 
+#[derive(Deserialize)]
+pub struct CalculateHashResult {
+    #[serde(rename = "value0")]
+    hash: String,
+}
+
 impl Tree {
     pub async fn calculate_address(
         context: &EverClient,
-        repo_contract: &mut GoshContract,
+        repo_contract: &GoshContract,
         sha_inner_tree: &str,
     ) -> anyhow::Result<BlockchainContractAddress> {
         let params = serde_json::json!({ "shainnertree": sha_inner_tree });
@@ -57,6 +64,18 @@ impl Tree {
             .run_static(context, "getTreeAddr", Some(params))
             .await?;
         Ok(result.address)
+    }
+
+    pub async fn inner_tree_hash(
+        context: &EverClient,
+        wallet_contract: &GoshContract,
+        tree: &HashMap<String, TreeNode>,
+    ) -> anyhow::Result<String> {
+        let params = serde_json::json!({ "_tree": tree });
+        let result: CalculateHashResult = wallet_contract
+            .run_static(context, "calculateInnerTreeHash", Some(params))
+            .await?;
+        Ok(result.hash)
     }
 }
 
