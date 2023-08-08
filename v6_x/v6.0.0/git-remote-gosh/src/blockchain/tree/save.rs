@@ -145,8 +145,8 @@ impl DeployTree for Everscale {
     }
 }
 
-impl<'a> From<(Option<String>, Option<String>, String, &'a tree::EntryRef<'a>)> for TreeNode {
-    fn from((file_hash, tree_hash, commit, entry): (Option<String>, Option<String>, String, &tree::EntryRef)) -> Self {
+impl<'a> From<(Option<String>, Option<String>, String, &'a tree::Entry)> for TreeNode {
+    fn from((file_hash, tree_hash, commit, entry): (Option<String>, Option<String>, String, &tree::Entry)) -> Self {
         Self {
             flags: (GoshBlobBitFlags::Compressed as u8).to_string(),
             mode: std::str::from_utf8(entry.mode.as_bytes())

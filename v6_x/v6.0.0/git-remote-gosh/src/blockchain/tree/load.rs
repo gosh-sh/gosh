@@ -50,9 +50,9 @@ impl Tree {
     pub async fn calculate_address(
         context: &EverClient,
         repo_contract: &mut GoshContract,
-        tree_obj_sha1: &str,
+        sha_inner_tree: &str,
     ) -> anyhow::Result<BlockchainContractAddress> {
-        let params = serde_json::json!({ "treeName": tree_obj_sha1 });
+        let params = serde_json::json!({ "shainnertree": sha_inner_tree });
         let result: GetTreeResult = repo_contract
             .run_static(context, "getTreeAddr", Some(params))
             .await?;

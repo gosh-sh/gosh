@@ -3,7 +3,7 @@ use crate::{
     git_helper::GitHelper,
 };
 use git_hash::ObjectId;
-use git_object::tree::EntryRef;
+use git_object::tree::{Entry, EntryMode, EntryRef};
 use git_odb::{Find, FindExt};
 use std::iter::Iterator;
 use std::{
@@ -11,7 +11,6 @@ use std::{
     sync::Arc,
     str::FromStr,
 };
-use async_recursion::async_recursion;
 
 use crate::cache::Cache;
 
@@ -31,110 +30,253 @@ pub struct CalculateHashResult {
     hash: String,
 }
 
-#[instrument(level = "trace", skip_all)]
-#[async_recursion]
-async fn construct_tree_node(
-    context: GitHelper<impl BlockchainService>,
-    // blockchain: &impl BlockchainService,
-    // repository: Arc<git_repository::Repository>,
-    e: &EntryRef<'_>,
-    to_deploy: &mut VecDeque<ObjectId>,
-    current_commit: &str,
-    snapshot_to_commit: &HashMap<String, String>,
-    wallet_contract: &GoshContract,
-) -> anyhow::Result<(String, TreeNode)> {
-    tracing::trace!("construct_tree_node: e={e:?}");
-    let mut buffer = vec![];
-    use git_object::tree::EntryMode::*;
-    let (file_hash, tree_hash, commit) = match e.mode {
-        Tree | Link | Commit => {
-            let tree_id = git_hash::ObjectId::from_str(&e.oid.to_string())?;
-            let mut buffer: Vec<u8> = Vec::new();
-            tracing::trace!("Get tree refs for {}", tree_id);
-            // let entry_ref_iter = repository
-            let entry_ref_iter = context
-                .local_repository()
-                .objects
-                .try_find(tree_id, &mut buffer)?
-                .expect("Local object must be there")
-                .try_into_tree_iter()
-                .unwrap()
-                .entries()?;
-            // let tree = construct_tree(blockchain, repository, entry_ref_iter, to_deploy, current_commit, snapshot_to_commit, wallet_contract).await?;
-            let tree = construct_tree(context, entry_ref_iter, to_deploy, current_commit, snapshot_to_commit, wallet_contract).await?;
-            let args = json!({ "tree": tree });
-            let hash: CalculateHashResult = wallet_contract.run_static(
-                // blockchain.client(),
-                context.blockchain.client(),
-                "calculateInnerTreeHash",
-                Some(args),
-            ).await?;
-            (None, Some(hash.hash), "".to_string())
-        }
-        Blob | BlobExecutable => {
-            // let content = repository
-            let content = context
-                .local_repository()
-                .objects
-                .find_blob(e.oid, &mut buffer)?
-                .data;
+// #[instrument(level = "trace", skip_all)]
+// async fn construct_tree_node(
+//     context: &GitHelper<impl BlockchainService>,
+//     e: &EntryRef<'_>,
+//     to_deploy: &mut VecDeque<ObjectId>,
+//     current_commit: &str,
+//     snapshot_to_commit: &HashMap<String, String>,
+//     wallet_contract: &GoshContract,
+// ) -> anyhow::Result<(String, TreeNode)> {
+//     tracing::trace!("construct_tree_node: e={e:?}");
+//     let mut buffer = vec![];
+//     use git_object::tree::EntryMode::*;
+//     let (file_hash, tree_hash, commit) = match e.mode {
+//         Tree | Link | Commit => {
+//             let tree_id = git_hash::ObjectId::from_str(&e.oid.to_string())?;
+//             let mut buffer: Vec<u8> = Vec::new();
+//             tracing::trace!("Get tree refs for {}", tree_id);
+//             // let entry_ref_iter = repository
+//             let entry_ref_iter = context
+//                 .local_repository()
+//                 .objects
+//                 .try_find(tree_id, &mut buffer)?
+//                 .expect("Local object must be there")
+//                 .try_into_tree_iter()
+//                 .unwrap()
+//                 .entries()?;
+//             // let tree = construct_tree(blockchain, repository, entry_ref_iter, to_deploy, current_commit, snapshot_to_commit, wallet_contract).await?;
+//             // let tree = construct_tree(context, entry_ref_iter, to_deploy, current_commit, snapshot_to_commit, wallet_contract).await?;
+//             // let args = json!({ "tree": tree });
+//             // let hash: CalculateHashResult = wallet_contract.run_static(
+//             //     blockchain.client(),
+//             //     context.blockchain.client(),
+//                 // "calculateInnerTreeHash",
+//                 // Some(args),
+//             // ).await?;
+//             (None, None, "".to_string())
+//         }
+//         Blob | BlobExecutable => {
+//             // let content = repository
+//             let content = context
+//                 .local_repository()
+//                 .objects
+//                 .find_blob(e.oid, &mut buffer)?
+//                 .data;
+//
+//             let file_hash = if is_going_to_ipfs(content) {
+//                 // NOTE:
+//                 // Here is a problem: we calculate if this blob is going to ipfs
+//                 // one way (blockchain::snapshot::save::is_going_to_ipfs)
+//                 // and it's different here.
+//                 // However!
+//                 // 1. This sha will be validated for files NOT in IPFS
+//                 // 2. We can be sure if this check passed than this file surely
+//                 //    goes to IPFS
+//                 // 3. If we though that this file DOES NOT go to IPFS and calculated
+//                 //    tvm_hash instead it will not break
+//                 sha256::digest(content)
+//             } else {
+//                 // tvm_hash(&blockchain.client(), content).await?
+//                 tvm_hash(&context.blockchain.client(), content).await?
+//             };
+//             // TODO: change current_commit to a right one
+//             (Some(format!("0x{file_hash}")), None, current_commit.to_string())
+//         }
+//     };
+//     let file_name = e.filename.to_string();
+//     let tree_node = TreeNode::from((file_hash, tree_hash, commit, e));
+//     let type_obj = &tree_node.type_obj;
+//     let key = tvm_hash(
+//         // &blockchain.client(),
+//         &context.blockchain.client(),
+//         format!("{}:{}", type_obj, file_name).as_bytes(),
+//     )
+//     .await?;
+//     Ok((format!("0x{}", key), tree_node))
+// }
 
-            let file_hash = if is_going_to_ipfs(content) {
-                // NOTE:
-                // Here is a problem: we calculate if this blob is going to ipfs
-                // one way (blockchain::snapshot::save::is_going_to_ipfs)
-                // and it's different here.
-                // However!
-                // 1. This sha will be validated for files NOT in IPFS
-                // 2. We can be sure if this check passed than this file surely
-                //    goes to IPFS
-                // 3. If we though that this file DOES NOT go to IPFS and calculated
-                //    tvm_hash instead it will not break
-                sha256::digest(content)
-            } else {
-                // tvm_hash(&blockchain.client(), content).await?
-                tvm_hash(&context.blockchain.client(), content).await?
-            };
-            // TODO: change current_commit to a right one
-            (Some(format!("0x{file_hash}")), None, current_commit.to_string())
-        }
-    };
-    let file_name = e.filename.to_string();
-    let tree_node = TreeNode::from((file_hash, tree_hash, commit, e));
-    let type_obj = &tree_node.type_obj;
-    let key = tvm_hash(
-        // &blockchain.client(),
-        &context.blockchain.client(),
-        format!("{}:{}", type_obj, file_name).as_bytes(),
-    )
-    .await?;
-    Ok((format!("0x{}", key), tree_node))
+fn flatten_tree(
+    context: &GitHelper<impl BlockchainService>,
+    tree_id: ObjectId,
+    path_prefix: &str,
+) -> anyhow::Result<HashMap<String, Entry>> {
+    let mut map = HashMap::new();
+    let mut buffer: Vec<u8> = Vec::new();
+    let entry_ref_iter = context
+        .local_repository()
+        .objects
+        .try_find(tree_id, &mut buffer)?
+        .expect("Local object must be there")
+        .try_into_tree_iter()
+        .unwrap()
+        .entries()?;
+    use git_object::tree::EntryMode::*;
+    for entry in entry_ref_iter {
+        let path = match entry.mode {
+            Tree | Link | Commit => {
+                let dir = entry.filename.to_string();
+                let subtree = flatten_tree(context, entry.oid.to_owned(), &dir)?;
+                for (k, v) in subtree {
+                    map.insert(
+                        format!("{}/{}", path_prefix, k),
+                        v
+                    );
+                }
+                dir
+            }
+            Blob | BlobExecutable => {
+                format!("{}/{}", path_prefix, entry.filename)
+
+            }
+        };
+        map.insert(path, Entry::from(entry));
+    }
+    Ok(map)
 }
 
 #[instrument(level = "trace", skip_all)]
 async fn construct_tree(
     context: &GitHelper<impl BlockchainService>,
-    // blockchain: &impl BlockchainService,
-    // repository: Arc<git_repository::Repository>,
-    entry_ref_iter: Vec<EntryRef<'_>>,
+    tree_id: ObjectId,
     to_deploy: &mut VecDeque<ObjectId>,
+    visited: &mut HashSet<ObjectId>,
     current_commit: &str,
     snapshot_to_commit: &HashMap<String, String>,
     wallet_contract: &GoshContract,
 ) -> anyhow::Result<HashMap<String, TreeNode>> {
-    tracing::trace!("Construct tree for blockchain.");
-    let mut tree_nodes: HashMap<String, TreeNode> = HashMap::new();
+    // flatten tree map to get rid of recursive calls of async funcs
+    let flat_tree = flatten_tree(context, tree_id, "")?;
+    let mut nodes = HashMap::new();
+    let mut paths = Vec::new();
+    // prepare file entries
+    use git_object::tree::EntryMode::*;
+    for (path, entry) in &flat_tree {
+        match entry.mode {
+            Blob | BlobExecutable => {
+                // let content = repository
+                let mut buffer = vec![];
+                let content = context
+                    .local_repository()
+                    .objects
+                    .find_blob(entry.oid, &mut buffer)?
+                    .data;
 
-    for e in entry_ref_iter.iter() {
-        if e.mode == git_object::tree::EntryMode::Tree {
-            to_deploy.push_back(e.oid.into());
+                let file_hash = if is_going_to_ipfs(content) {
+                    // NOTE:
+                    // Here is a problem: we calculate if this blob is going to ipfs
+                    // one way (blockchain::snapshot::save::is_going_to_ipfs)
+                    // and it's different here.
+                    // However!
+                    // 1. This sha will be validated for files NOT in IPFS
+                    // 2. We can be sure if this check passed than this file surely
+                    //    goes to IPFS
+                    // 3. If we though that this file DOES NOT go to IPFS and calculated
+                    //    tvm_hash instead it will not break
+                    sha256::digest(content)
+                } else {
+                    // tvm_hash(&blockchain.client(), content).await?
+                    tvm_hash(&context.blockchain.client(), content).await?
+                };
+
+                // TODO: change to actual commit (take from snapshot to commit or current)
+                let commit = current_commit.to_string();
+
+                let file_name = entry.filename.to_string();
+                let tree_node = TreeNode::from((Some(format!("0x{file_hash}")), None, commit, entry));
+                let type_obj = &tree_node.type_obj;
+                let key = tvm_hash(
+                    &context.blockchain.client(),
+                    format!("{}:{}", type_obj, file_name).as_bytes(),
+                )
+                    .await?;
+                nodes.insert(entry.oid, (format!("0x{}", key), tree_node));
+            }
+            _ => {
+                paths.push(path.to_string());
+            }
         }
-        // let repo_clone = repository.clone();
-        // let (hash, tree_node) = construct_tree_node(blockchain, repo_clone, e, to_deploy, current_commit, snapshot_to_commit, wallet_contract).await?;
-        let (hash, tree_node) = construct_tree_node(context, e, to_deploy, current_commit, snapshot_to_commit, wallet_contract).await?;
-        tree_nodes.insert(hash, tree_node);
     }
 
+    // after all single files prepared, prepare subtrees
+    // start from longest paths
+    paths.sort();
+    paths.reverse();
+    for path in paths {
+        let entry = flat_tree.get(&path).ok_or(anyhow::format_err!("Failed to get tree value"))?;
+        match entry.mode {
+            Tree | Link | Commit => {
+                let mut subtree = HashMap::new();
+
+                let tree_id = git_hash::ObjectId::from_str(&entry.oid.to_string())?;
+                to_deploy.push_back(tree_id);
+                visited.insert(tree_id);
+                let mut buffer: Vec<u8> = Vec::new();
+                let entry_ref_iter = context
+                    .local_repository()
+                    .objects
+                    .try_find(tree_id, &mut buffer)?
+                    .expect("Local object must be there")
+                    .try_into_tree_iter()
+                    .unwrap()
+                    .entries()?;
+
+                for file_entry in entry_ref_iter {
+                    let (key, tree_node) = nodes.remove(file_entry.oid).ok_or(anyhow::format_err!("Failed to get tree node"))?;
+                    subtree.insert(key, tree_node);
+                }
+
+                let args = json!({ "tree": subtree });
+                let tree_hash: CalculateHashResult = wallet_contract.run_static(
+                    context.blockchain.client(),
+                "calculateInnerTreeHash",
+                Some(args),
+                ).await?;
+                let tree_hash = tree_hash.hash;
+
+                // For trees commit is set to empty string
+                let commit = "".to_string();
+
+                let file_name = entry.filename.to_string();
+                let tree_node = TreeNode::from((None, Some(format!("0x{tree_hash}")), commit, entry));
+                let type_obj = &tree_node.type_obj;
+                let key = tvm_hash(
+                    &context.blockchain.client(),
+                    format!("{}:{}", type_obj, file_name).as_bytes(),
+                )
+                    .await?;
+                nodes.insert(entry.oid, (format!("0x{}", key), tree_node));
+            }
+            _ => {}
+        }
+    }
+
+    let mut tree_nodes = HashMap::new();
+    let mut buffer: Vec<u8> = Vec::new();
+    let entry_ref_iter = context
+        .local_repository()
+        .objects
+        .try_find(tree_id, &mut buffer)?
+        .expect("Local object must be there")
+        .try_into_tree_iter()
+        .unwrap()
+        .entries()?;
+
+    for file_entry in entry_ref_iter {
+        let (key, tree_node) = nodes.remove(file_entry.oid).ok_or(anyhow::format_err!("Failed to get tree node"))?;
+        tree_nodes.insert(key, tree_node);
+    }
     Ok(tree_nodes)
 }
 
@@ -163,18 +305,8 @@ pub async fn push_tree(
         }
 
         visited.insert(tree_id);
-        let mut buffer: Vec<u8> = Vec::new();
-        tracing::trace!("Get tree refs for {}", tree_id);
-        let entry_ref_iter = context
-            .local_repository()
-            .objects
-            .try_find(tree_id, &mut buffer)?
-            .expect("Local object must be there")
-            .try_into_tree_iter()
-            .unwrap()
-            .entries()?;
-        // let tree_nodes = construct_tree(&context.blockchain, context.local_repository.clone(), entry_ref_iter, &mut to_deploy, current_commit, snapshot_to_commit, wallet_contract).await?;
-        let tree_nodes = construct_tree(context, entry_ref_iter, &mut to_deploy, current_commit, snapshot_to_commit, wallet_contract).await?;
+
+        let tree_nodes = construct_tree(context, tree_id, &mut to_deploy, visited, current_commit, snapshot_to_commit, wallet_contract).await?;
         let args = json!({ "tree": &tree_nodes });
         let hash: CalculateHashResult = wallet_contract.run_static(
             context.blockchain.client(),
