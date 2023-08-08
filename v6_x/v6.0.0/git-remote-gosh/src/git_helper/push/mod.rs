@@ -1422,6 +1422,7 @@ fn get_list_of_commit_objects(
     commit_objects.sort_by_key(|commit| {
         commit.time().unwrap()
     });
+    commit_objects.reverse();
 
     let mut res = Vec::new();
     // observation from `git rev-list --reverse`
