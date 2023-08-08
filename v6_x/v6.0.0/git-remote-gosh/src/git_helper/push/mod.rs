@@ -497,6 +497,9 @@ where
         parallel_snapshot_uploads: &mut ParallelSnapshotUploadSupport,
         upgrade_commit: bool,
         parents_for_upgrade: Vec<AddrVersion>,
+        snapshot_to_commit: &HashMap<String, String>,
+        wallet_contract: &GoshContract,
+        parallel_tree_upload_support: &mut ParallelTreeUploadSupport,
     ) -> anyhow::Result<()> {
         tracing::trace!("push_commit_object: object_id={object_id}, remote_branch_name={remote_branch_name}, local_branch_name={local_branch_name}, prev_commit_id={prev_commit_id:?}");
         let mut buffer: Vec<u8> = Vec::new();
@@ -510,6 +513,16 @@ where
 
         let mut commit_iter = commit.try_into_commit_iter().unwrap();
         let tree_id = commit_iter.tree_id()?;
+
+        let tree_addr = push_tree(
+            self,
+            &tree_id,
+            oid,
+            snapshot_to_commit,
+            wallet_contract,
+            parallel_tree_upload_support,
+            push_semaphore.clone(),
+        ).await?;
 
         let mut parent_ids: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
         if !parent_ids.is_empty() {
@@ -542,7 +555,7 @@ where
         if upgrade_commit && !parents_for_upgrade.is_empty() {
             parents = parents_for_upgrade.clone();
         }
-        let tree_addr = self.calculate_tree_address(tree_id).await?;
+        // let tree_addr = self.calculate_tree_address(tree_id).await?;
 
         {
             let blockchain = self.blockchain.clone();
@@ -743,6 +756,14 @@ where
             .id;
         let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
 
+        let snapshot_to_commit = HashMap::new();
+        let zero_wallet_contract = self
+            .blockchain
+            .user_wallet(&self.dao_addr, &self.remote.network)
+            .await?
+            .take_zero_wallet()
+            .await?;
+
         // iterate through the git objects list and push them
         let mut prev_commit_id = None;
         for oid in &commit_objects_list {
@@ -766,6 +787,9 @@ where
                         &mut parallel_snapshot_uploads,
                         true,
                         parents_for_upgrade.clone(),
+                        &snapshot_to_commit,
+                        &zero_wallet_contract,
+                        &mut parallel_tree_uploads,
                     )
                     .await?;
                 }
@@ -977,7 +1001,6 @@ where
         let push_semaphore = Arc::new(Semaphore::new(PARALLEL_PUSH_LIMIT));
         let mut parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
         let mut parallel_tree_uploads = ParallelTreeUploadSupport::new();
-        let mut visited_trees: HashSet<ObjectId> = HashSet::new();
         let mut statistics = PushBlobStatistics::new();
 
         let latest_commit_id = latest_commit.object()?.id;
@@ -1013,7 +1036,10 @@ where
             .await?;
         // iterate through the git objects list and push them
         let mut current_commit= String::new();
-        let mut snapshot_to_commit = HashMap::new();
+
+        // TODO: read last onchain commit and init map from its tree
+        let snapshot_to_commit = HashMap::new();
+
         for oid in &commit_and_tree_list {
             let object_id = git_hash::ObjectId::from_str(oid)?;
             let object_kind = self.local_repository().find_object(object_id)?.kind;
@@ -1038,6 +1064,9 @@ where
                         &mut parallel_snapshot_uploads,
                         false,
                         vec![],
+                        &snapshot_to_commit,
+                        &zero_wallet_contract,
+                        &mut parallel_tree_uploads,
                     )
                     .await?;
                     current_commit = oid.to_string();
@@ -1052,17 +1081,16 @@ where
                 // Not supported yet
                 git_object::Kind::Tag => unimplemented!(),
                 git_object::Kind::Tree => {
-                    push_tree(
-                        self,
-                        &object_id,
-                        &mut visited_trees,
-                        &current_commit,
-                        &snapshot_to_commit,
-                        &zero_wallet_contract,
-                        &mut parallel_tree_uploads,
-                        push_semaphore.clone(),
-                    )
-                    .await?;
+                    // push_tree(
+                    //     // self,
+                    //     // &object_id,
+                    //     // &current_commit,
+                    //     &snapshot_to_commit,
+                    //     &zero_wallet_contract,
+                    //     &mut parallel_tree_uploads,
+                    //     push_semaphore.clone(),
+                    // )
+                    // .await?;
                 }
             }
         }

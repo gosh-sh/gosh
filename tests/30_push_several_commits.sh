@@ -36,7 +36,7 @@ git checkout -b dev
 echo dev > 1.txt
 git add 1.txt
 git commit -m dev
-git push
+git push  -u origin dev
 
 echo "***** Push to main branch *****"
 git checkout main

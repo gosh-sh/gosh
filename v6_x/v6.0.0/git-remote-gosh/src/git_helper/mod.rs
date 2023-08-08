@@ -57,7 +57,6 @@ pub struct GitHelper<
     pub dao_addr: BlockchainContractAddress,
     pub repo_addr: BlockchainContractAddress,
     local_repository: Arc<git_repository::Repository>,
-    cache: Arc<CacheProxy>, // TODO: looks like we don't use this cache. Mb delete it
     upgraded_commits: Vec<String>,
     repo_versions: Vec<RepoVersion>,
     database: Option<Arc<GoshDB>>,
@@ -164,7 +163,6 @@ where
             dao_addr: dao.address,
             repo_addr,
             local_repository,
-            cache: Arc::new(cache),
             upgraded_commits: vec![],
             repo_versions: vec![],
             database: None,
