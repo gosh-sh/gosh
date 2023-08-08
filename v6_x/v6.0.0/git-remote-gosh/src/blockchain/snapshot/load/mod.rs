@@ -100,8 +100,7 @@ impl Snapshot {
     ) -> anyhow::Result<BlockchainContractAddress> {
         tracing::trace!("calculate_address: commit_sha={commit_sha}, repo_contract.address={}, file_path={file_path}", repo_contract.address);
         let params = serde_json::json!({
-            "commitSha": commit_sha,
-            "repo": repo_contract.address.clone(),
+            "commitsha": commit_sha,
             "name": file_path
         });
         let result: GetSnapshotAddrResult = repo_contract
