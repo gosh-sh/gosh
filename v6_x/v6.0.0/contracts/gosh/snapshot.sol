@@ -38,6 +38,7 @@ contract Snapshot is Modifiers {
     
     uint128 timeMoney = 0; 
     bool _flag = false;
+    bool _isPin;
 
     constructor(
         address pubaddr,
@@ -51,6 +52,8 @@ contract Snapshot is Modifiers {
         TvmCell codeTree,
         uint128 index,
         bytes data,
+        bool isPin,
+        string commit,
         optional(string) ipfsdata
     ) {
         tvm.accept();
@@ -64,6 +67,8 @@ contract Snapshot is Modifiers {
         _systemcontract = rootgosh;
         _goshdao = goshdao;
         _code[m_WalletCode] = WalletCode;
+        _isPin = isPin;
+        if (isPin == true) { _baseCommit = commit; }
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         _oldcommits = _baseCommit;
         _commits = _baseCommit;
@@ -254,9 +259,9 @@ contract Snapshot is Modifiers {
 
     //Getters
     function getSnapshot() external view
-        returns(string, bytes, optional(string), string, bytes, optional(string), string, bool)
+        returns(string, bytes, optional(string), string, bytes, optional(string), string, bool, bool)
     {
-        return (_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit, _ready);
+        return (_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit, _ready, _isPin);
     }
     
     function getSnapshotIn() public view minValue(0.5 ton)
