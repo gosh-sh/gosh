@@ -700,6 +700,31 @@
 			]
 		},
 		{
+			"name": "getIndexProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"data","type":"cell"},
+				{"name":"index","type":"uint128"},
+				{"name":"typetr","type":"uint128"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getIndexProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"data","type":"cell"},
+				{"name":"index","type":"uint128"},
+				{"name":"typetr","type":"uint128"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
 			"name": "getDaoTransferTokenProposalParamsData",
 			"inputs": [
 				{"name":"Data","type":"cell"}
