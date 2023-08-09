@@ -300,7 +300,10 @@ contract Commit is Modifiers {
         getMoney();
     }
 
-    function getAcceptedContent(bytes value0, optional(string) value1, string path) public senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _rootRepo, _nameCommit, path)){
+    function getAcceptedContent(bytes value0, optional(string) value1, string path) public {
+        if (msg.sender != GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _rootRepo, _nameCommit, path)) {
+            require(msg.sender == GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _rootRepo, "//PINTAG//" + _nameCommit, path), ERR_INVALID_SENDER);
+        }
         getMoney();
         tvm.accept();
         if (value1.hasValue()) {
