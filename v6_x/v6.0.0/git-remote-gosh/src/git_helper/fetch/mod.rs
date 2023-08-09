@@ -10,7 +10,7 @@ use git_odb::{Find, Write};
 use tokio::sync::Mutex;
 
 use crate::blockchain::contract::GoshContract;
-use crate::blockchain::{gosh_abi, GetNameBranchResult};
+use crate::blockchain::{gosh_abi, GetNameBranchResult, Tree};
 
 use bstr::ByteSlice;
 use std::{
@@ -21,6 +21,7 @@ use std::{
 };
 
 use git_object::tree::EntryMode;
+use crate::blockchain::tree::load::type_obj_to_entry_mod;
 
 mod restore_blobs;
 
@@ -133,7 +134,7 @@ where
         struct TreeObjectsQueueItem {
             pub path: String,
             pub oid: git_hash::ObjectId,
-            pub branches: HashSet<String>,
+            pub address: BlockchainContractAddress,
         }
         let mut tree_obj_queue = VecDeque::<TreeObjectsQueueItem>::new();
         let mut blobs_restore_plan = restore_blobs::BlobsRebuildingPlan::new();
@@ -152,6 +153,7 @@ where
                     match blockchain::GoshCommit::load(&self.blockchain.client(), address).await {
                         Ok(commit) => commit,
                         Err(e) => {
+                            tracing::trace!("Failed to load commit in current version: {e}");
                             let version = self.find_commit(&id.to_string()).await?.version;
                             tracing::trace!(
                                 "push to next_commit_of_prev_version=({},{})",
@@ -173,37 +175,9 @@ where
                 );
                 let obj = git_object::Object::from(data.decode()?).into_commit();
                 tracing::debug!("Received commit {}", id);
-                let mut branches = HashSet::new();
-                branches.insert(onchain_commit.branch.clone());
 
-                tracing::debug!(
-                    "branch={branch}: existing remote branches: {:?}",
-                    remote_branches
-                );
-                // don't collect parent branches for deleted one
-                if remote_branches.contains(&onchain_commit.branch) {
-                    for parent in onchain_commit.parents.clone() {
-                        let parent = BlockchainContractAddress::new(parent.address);
-                        let parent_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
-                        let branch: GetNameBranchResult = parent_contract
-                            .run_local(self.blockchain.client(), "getNameBranch", None)
-                            .await?;
-                        tracing::debug!("commit={id}: extracted branch {:?}", branch.name);
-                        branches.insert(branch.name);
-                    }
-                } else {
-                    branches.insert(branch.to_owned());
-                }
-
-                let to_load = TreeObjectsQueueItem {
-                    path: "".to_owned(),
-                    oid: obj.tree,
-                    branches,
-                };
-                tracing::debug!("New tree root: {}", &to_load.oid);
                 if onchain_commit.initupgrade {
                     // Object can be first in the tree and have no parents
-                    // if !obj.parents.is_empty() {
                     let prev_version = onchain_commit.parents[0].clone().version;
                     tracing::trace!(
                         "push to next_commit_of_prev_version=({},{})",
@@ -211,8 +185,18 @@ where
                         prev_version
                     );
                     next_commit_of_prev_version.push((prev_version, id.to_string()));
-                    // }
                 } else {
+                    let tree_address = Tree::get_address_from_commit(
+                        self.blockchain.client(),
+                        &address,
+                    ).await?;
+
+                    let to_load = TreeObjectsQueueItem {
+                        path: "".to_owned(),
+                        oid: obj.tree,
+                        address: tree_address,
+                    };
+                    tracing::debug!("New tree root: {}", &to_load.oid);
                     tree_obj_queue.push_front(to_load);
                     for parent_id in &obj.parents {
                         commits_queue.push_front(*parent_id);
@@ -240,7 +224,7 @@ where
                 let visited_ipfs_ref = Arc::clone(&visited_ipfs);
                 tracing::debug!("branch={branch}: Restoring blobs");
                 blobs_restore_plan
-                    .restore(self, visited_ref, visited_ipfs_ref)
+                    .restore(self, visited_ref, visited_ipfs_ref, branch)
                     .await?;
                 blobs_restore_plan = restore_blobs::BlobsRebuildingPlan::new();
                 continue;
@@ -253,74 +237,72 @@ where
                 tracing::debug!("branch={branch}: Ok. Guard passed. Loading tree: {}", id);
                 let path_to_node = tree_node_to_load.path;
                 let tree_object_id = format!("{}", tree_node_to_load.oid);
-                let mut repo_contract = self.blockchain.repo_contract().clone();
-                let address = blockchain::Tree::calculate_address(
-                    &Arc::clone(self.blockchain.client()),
-                    &mut repo_contract,
-                    &tree_object_id,
-                )
-                .await?;
+                let address = tree_node_to_load.address;
 
                 let onchain_tree_object =
-                    blockchain::Tree::load(&self.blockchain.client(), &address).await?;
-                let tree_object: git_object::Tree = onchain_tree_object.into();
+                    blockchain::Tree::load(self.blockchain.client(), &address).await?;
 
-                tracing::debug!("branch={branch}: Tree obj parsed {}", id);
-                for entry in &tree_object.entries {
-                    let oid = entry.oid;
-                    match entry.mode {
+                for (_, tree_component) in &onchain_tree_object.objects {
+                    let mode: EntryMode = type_obj_to_entry_mod(tree_component.type_obj.as_str());
+                    let oid = git_hash::ObjectId::from_hex(tree_component.git_sha.as_bytes()).expect("SHA1 must be correct");
+                    match mode {
                         git_object::tree::EntryMode::Tree => {
                             tracing::debug!("branch={branch}: Tree entry: tree {}->{}", id, oid);
+                            let repo_contract = self.blockchain.repo_contract().clone();
+                            let sha_inner_tree = tree_component.tvm_sha_tree.clone().ok_or(anyhow::format_err!("Failed to get sha of inner tree: {}", tree_component.git_sha))?;
+                            let sub_tree_address = Tree::calculate_address(
+                                self.blockchain.client(),
+                                &repo_contract,
+                                &sha_inner_tree,
+                            ).await?;
                             let to_load = TreeObjectsQueueItem {
-                                path: format!("{}/{}", path_to_node, entry.filename),
+                                path: format!("{}/{}", path_to_node, tree_component.name),
                                 oid,
-                                branches: tree_node_to_load.branches.clone(),
+                                address: sub_tree_address
                             };
                             tree_obj_queue.push_back(to_load);
-                        }
-                        git_object::tree::EntryMode::Commit => (),
+                        },
                         git_object::tree::EntryMode::Blob
                         | git_object::tree::EntryMode::BlobExecutable
                         | git_object::tree::EntryMode::Link => {
                             tracing::debug!("branch={branch}: Tree entry: blob {}->{}", id, oid);
-                            let file_path = format!("{}/{}", path_to_node, entry.filename);
-                            for branch in tree_node_to_load.branches.iter() {
-                                let mut repo_contract = self.blockchain.repo_contract().clone();
-                                // TODO: Get commit sha from tree
-                                let snapshot_address = blockchain::Snapshot::calculate_address(
-                                    &Arc::clone(self.blockchain.client()),
-                                    &mut repo_contract,
-                                    branch, // change to commit
-                                    // Note:
-                                    // Removing prefixing "/" in the path
-                                    &file_path[1..],
-                                )
+                            let file_path = &tree_component.name;
+                            let mut repo_contract = self.blockchain.repo_contract().clone();
+
+                            let snapshot_address = blockchain::Snapshot::calculate_address(
+                                &Arc::clone(self.blockchain.client()),
+                                &mut repo_contract,
+                                &tree_component.commit,
+                                file_path,
+                            )
                                 .await?;
-                                let snapshot_contract =
-                                    GoshContract::new(&snapshot_address, gosh_abi::SNAPSHOT);
-                                match snapshot_contract.is_active(self.blockchain.client()).await {
-                                    Ok(true) => {
-                                        tracing::debug!(
-                                            "branch={branch}: Adding a blob to search for. Path: {}, id: {}, snapshot: {}",
-                                            file_path,
-                                            oid,
-                                            snapshot_address
-                                        );
-                                        blobs_restore_plan
-                                            .mark_blob_to_restore(snapshot_address, oid);
-                                    }
-                                    _ => {
-                                        continue;
-                                    }
+                            let snapshot_contract =
+                                GoshContract::new(&snapshot_address, gosh_abi::SNAPSHOT);
+                            match snapshot_contract.is_active(self.blockchain.client()).await {
+                                Ok(true) => {
+                                    tracing::debug!(
+                                        "branch={branch}: Adding a blob to search for. Path: {}, id: {}, snapshot: {}",
+                                        file_path,
+                                        oid,
+                                        snapshot_address
+                                    );
+                                    blobs_restore_plan
+                                        .mark_blob_to_restore(snapshot_address, oid);
+                                }
+                                _ => {
+                                    continue;
                                 }
                             }
-                        }
+                        },
+                        git_object::tree::EntryMode::Commit => (),
                         _ => {
-                            tracing::debug!("branch={branch}: IT MUST BE NOTED!");
-                            panic!();
+                            unreachable!()
                         }
                     }
                 }
+
+                let tree_object: git_object::Tree = onchain_tree_object.into();
+
                 tracing::trace!("Push to dangling tree: {}", tree_object_id);
                 dangling_trees.push(tree_object);
                 continue;

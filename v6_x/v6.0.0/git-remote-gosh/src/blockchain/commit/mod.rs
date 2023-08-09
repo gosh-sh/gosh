@@ -13,14 +13,16 @@ use super::contract::GoshContract;
 #[abi = "commit.abi.json"]
 #[abi_data_fn = "getCommit"]
 pub struct GoshCommit {
+    time: String,
     repo: String,
-    pub branch: String,
     pub sha: String,
     pub parents: Vec<AddrVersion>,
     pub content: String,
     pub initupgrade: bool,
     #[serde(rename = "isCorrectCommit")]
     is_correct_commit: bool,
+    #[serde(rename = "isPinned")]
+    is_pinned: bool,
 }
 
 #[derive(Deserialize, Debug, Clone)]

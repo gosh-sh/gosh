@@ -91,6 +91,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     blobs: &mut HashSet<git_hash::ObjectId>,
     visited: Arc<Mutex<HashSet<git_hash::ObjectId>>>,
     visited_ipfs: Arc<Mutex<HashMap<String, git_hash::ObjectId>>>,
+    branch: &str,
 ) -> anyhow::Result<HashSet<git_hash::ObjectId>> {
     tracing::info!("Iteration in restore: {} -> {:?}", snapshot_address, blobs);
     {
@@ -144,7 +145,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     // TODO: convert to async iterator
     // This should download next messages seemless
     let mut messages =
-        blockchain::snapshot::diffs::DiffMessagesIterator::new(snapshot_address, repo_contract);
+        blockchain::snapshot::diffs::DiffMessagesIterator::new(snapshot_address, repo_contract, branch.to_string());
     let mut preserved_message: Option<DiffMessage> = None;
     let mut transition_content: Option<Vec<u8>> = None;
     let mut parsed = vec![];
@@ -375,6 +376,7 @@ impl BlobsRebuildingPlan {
         git_helper: &mut GitHelper<impl BlockchainService>,
         visited: Arc<Mutex<HashSet<git_hash::ObjectId>>>,
         visited_ipfs: Arc<Mutex<HashMap<String, git_hash::ObjectId>>>,
+        branch: &str,
     ) -> anyhow::Result<()> {
         // Idea behind
         // --
@@ -408,6 +410,7 @@ impl BlobsRebuildingPlan {
             let mut blobs_to_restore = blobs.clone();
             let visited_ref = Arc::clone(&visited);
             let visited_ipfs_ref = Arc::clone(&visited_ipfs);
+            let branch_ref = branch.to_string();
             fetched_blobs.push(tokio::spawn(
                 async move {
                     let attempt = 0;
@@ -421,6 +424,7 @@ impl BlobsRebuildingPlan {
                             &mut blobs_to_restore,
                             visited_ref.clone(),
                             visited_ipfs_ref.clone(),
+                            &branch_ref,
                         )
                         .await;
                         if result.is_ok() || attempt > FETCH_MAX_TRIES {

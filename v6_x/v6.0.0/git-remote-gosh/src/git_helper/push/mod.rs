@@ -563,11 +563,9 @@ where
             let dao_addr = self.dao_addr.clone();
             let object_id = object_id.clone();
             let tree_addr = tree_addr.clone();
-            let branch_name = remote_branch_name.to_owned().clone();
 
             let commit = ParallelCommit::new(
                 object_id,
-                branch_name,
                 tree_addr,
                 raw_commit,
                 parents,

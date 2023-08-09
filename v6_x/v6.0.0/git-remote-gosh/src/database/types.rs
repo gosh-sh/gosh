@@ -11,7 +11,6 @@ use std::str::FromStr;
 #[derive(Serialize, Deserialize)]
 pub struct DBCommit {
     pub commit_id: String,
-    pub branch: String,
     pub tree_addr: BlockchainContractAddress,
     pub raw_commit: String,
     pub parents: Vec<AddrVersion>,
@@ -22,7 +21,6 @@ impl From<ParallelCommit> for DBCommit {
     fn from(value: ParallelCommit) -> Self {
         Self {
             commit_id: value.commit_id.to_string(),
-            branch: value.branch,
             tree_addr: value.tree_addr,
             raw_commit: value.raw_commit,
             parents: value.parents,

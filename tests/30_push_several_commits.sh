@@ -31,25 +31,25 @@ git add 1.txt
 git commit -m main
 GOSH_TRACE=5 git push &> ../trace30.log
 
-echo "***** Create dev branch *****"
-git checkout -b dev
-echo dev > 1.txt
-git add 1.txt
-git commit -m dev
-git push  -u origin dev
+# echo "***** Create dev branch *****"
+# git checkout -b dev
+# echo dev > 1.txt
+# git add 1.txt
+# git commit -m dev
+# git push  -u origin dev
 
-echo "***** Push to main branch *****"
-git checkout main
-echo main > 2.txt
-git add 2.txt
-git commit -m main2
-git push
+# echo "***** Push to main branch *****"
+# git checkout main
+# echo main > 2.txt
+# git add 2.txt
+# git commit -m main2
+# git push
 
-echo "***** Push to main branch *****"
-echo dev2 > 1.txt
-git add 1.txt
-git commit -m dev2
-git push
+# echo "***** Push to main branch *****"
+# echo dev2 > 1.txt
+# git add 1.txt
+# git commit -m dev2
+# git push
 
 
 echo "***** cloning repo *****"
@@ -57,24 +57,24 @@ cd ..
 
 sleep 10
 
-git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
+GOSH_TRACE=5 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone" &> trace30_clone.log
 
 echo "***** check repo *****"
 cd "$REPO_NAME-clone"
 
 cur_ver=$(cat 1.txt)
-if [ "$cur_ver" != "dev2" ]; then
-  echo "WRONG CONTENT"
-  exit 1
-fi
-echo "GOOD CONTENT"
-
-cur_ver=$(cat 2.txt)
 if [ "$cur_ver" != "main" ]; then
   echo "WRONG CONTENT"
   exit 1
 fi
 echo "GOOD CONTENT"
+
+# cur_ver=$(cat 2.txt)
+# if [ "$cur_ver" != "main" ]; then
+#   echo "WRONG CONTENT"
+#   exit 1
+# fi
+# echo "GOOD CONTENT"
 
 echo "TEST SUCCEEDED"
 

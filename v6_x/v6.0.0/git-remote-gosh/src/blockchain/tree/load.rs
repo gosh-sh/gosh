@@ -71,6 +71,17 @@ impl Tree {
         Ok(result.address)
     }
 
+    pub async fn get_address_from_commit(
+        context: &EverClient,
+        commit_address: &BlockchainContractAddress,
+    ) -> anyhow::Result<BlockchainContractAddress> {
+        let commit_contract = GoshContract::new(commit_address, gosh_abi::COMMIT);
+        let result: GetTreeResult = commit_contract
+            .run_local(context, "gettree", None)
+            .await?;
+        Ok(result.address)
+    }
+
     pub async fn inner_tree_hash(
         context: &EverClient,
         wallet_contract: &GoshContract,
@@ -84,16 +95,20 @@ impl Tree {
     }
 }
 
+pub fn type_obj_to_entry_mod(type_obj: &str) -> git_object::tree::EntryMode {
+    match type_obj {
+        "tree" => git_object::tree::EntryMode::Tree,
+        "blob" => git_object::tree::EntryMode::Blob,
+        "blobExecutable" => git_object::tree::EntryMode::BlobExecutable,
+        "link" => git_object::tree::EntryMode::Link,
+        "commit" => git_object::tree::EntryMode::Commit,
+        _ => unreachable!(),
+    }
+}
+
 impl Into<git_object::tree::Entry> for TreeComponent {
     fn into(self) -> git_object::tree::Entry {
-        let mode = match self.type_obj.as_str() {
-            "tree" => git_object::tree::EntryMode::Tree,
-            "blob" => git_object::tree::EntryMode::Blob,
-            "blobExecutable" => git_object::tree::EntryMode::BlobExecutable,
-            "link" => git_object::tree::EntryMode::Link,
-            "commit" => git_object::tree::EntryMode::Commit,
-            _ => unreachable!(),
-        };
+        let mode = type_obj_to_entry_mod(self.type_obj.as_str());
         let filename = self.name.into();
         let oid = git_hash::ObjectId::from_hex(self.git_sha.as_bytes()).expect("SHA1 must be correct");
         git_object::tree::Entry {

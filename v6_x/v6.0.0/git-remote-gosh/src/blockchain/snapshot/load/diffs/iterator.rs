@@ -28,6 +28,7 @@ pub struct DiffMessagesIterator {
     buffer: Vec<DiffMessage>,
     buffer_cursor: usize,
     next: Option<NextChunk>,
+    branch: String,
 }
 
 #[derive(Debug, Clone)]
@@ -78,6 +79,7 @@ impl DiffMessagesIterator {
     pub fn new(
         snapshot_address: impl Into<BlockchainContractAddress>,
         repo_contract: &mut GoshContract,
+        branch: String,
     ) -> Self {
         tracing::trace!(
             "new_DiffMessagesIterator: repo_contract.address={}",
@@ -88,6 +90,7 @@ impl DiffMessagesIterator {
             buffer: vec![],
             buffer_cursor: 0,
             next: Some(NextChunk::MessagesPage(snapshot_address.into(), None)),
+            branch,
         }
     }
 
@@ -106,6 +109,7 @@ impl DiffMessagesIterator {
         current_snapshot_address: &BlockchainContractAddress,
         repo_contract: &mut GoshContract,
         next_page_info: Option<String>,
+        branch: &str,
     ) -> anyhow::Result<Option<NextChunk>> {
         let address = current_snapshot_address;
         Ok(match next_page_info {
@@ -124,8 +128,6 @@ impl DiffMessagesIterator {
                 let commit_data = get_commit_by_addr(client, &commit_addr)
                     .await?
                     .expect("commit data should be here");
-
-                let original_branch = commit_data.branch.clone();
 
                 // TODO: ensure that it is right SHA otherwise change to smth meaningful
                 let commit_sha = commit_data.sha;
@@ -152,7 +154,7 @@ impl DiffMessagesIterator {
                     "First commit in this branch to the file {} is {} and it was branched from {} -> snapshot addr: {}",
                     file_path,
                     original_commit,
-                    original_branch,
+                    branch,
                     original_snapshot
                 );
                 // generate filter
@@ -161,7 +163,7 @@ impl DiffMessagesIterator {
                         client,
                         repo_contract,
                         &original_commit,
-                        &original_branch,
+                        branch,
                     )
                     .await?
                 } else {
@@ -232,6 +234,7 @@ impl DiffMessagesIterator {
                     &address,
                     &mut self.repo_contract,
                     next_page_info,
+                    &self.branch,
                 )
                 .await?
             }
@@ -244,6 +247,7 @@ impl DiffMessagesIterator {
                     &address,
                     &mut self.repo_contract,
                     page.cursor,
+                    &self.branch,
                 )
                 .await?
             }
