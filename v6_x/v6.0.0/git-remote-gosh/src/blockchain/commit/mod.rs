@@ -13,16 +13,18 @@ use super::contract::GoshContract;
 #[abi = "commit.abi.json"]
 #[abi_data_fn = "getCommit"]
 pub struct GoshCommit {
-    time: String,
-    repo: String,
+    #[serde(rename = "time")]
+    _time: String,
+    #[serde(rename = "repo")]
+    _repo: String,
     pub sha: String,
     pub parents: Vec<AddrVersion>,
     pub content: String,
     pub initupgrade: bool,
     #[serde(rename = "isCorrectCommit")]
-    is_correct_commit: bool,
+    _is_correct_commit: bool,
     #[serde(rename = "isPinned")]
-    is_pinned: bool,
+    _is_pinned: bool,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -60,11 +62,11 @@ struct SetCommitArgs {
     #[serde(rename = "nameBranch")]
     branch: String,
     #[serde(rename = "oldcommit")]
-    prev_commit: String,
+    _prev_commit: String,
     #[serde(rename = "namecommit")]
     commit_id: String,
     #[serde(rename = "number")]
-    num_of_files: NumberU64,
+    _num_of_files: NumberU64,
 }
 
 #[instrument(level = "info", skip_all)]

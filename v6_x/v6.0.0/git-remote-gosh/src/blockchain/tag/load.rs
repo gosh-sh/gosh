@@ -10,15 +10,15 @@ pub struct GetTagContentResult {
 
 #[derive(Debug, Clone)]
 pub struct Lightweight {
-    name: String,
-    commit_id: String,
+    _name: String,
+    _commit_id: String,
 }
 
 #[derive(Debug, Clone)]
 pub struct Annotated {
-    name: String,
-    id: String,
-    commit_id: String,
+    _name: String,
+    _id: String,
+    _commit_id: String,
     pub(crate) content: Vec<u8>,
 }
 
@@ -45,8 +45,8 @@ pub async fn get_content(
         let tag_name = head.split(' ').nth(1).unwrap();
         let commit_id = iter.next().unwrap().split(' ').nth(1).unwrap();
         TagObject::Lightweight(Lightweight {
-            name: tag_name.to_owned(),
-            commit_id: commit_id.to_owned(),
+            _name: tag_name.to_owned(),
+            _commit_id: commit_id.to_owned(),
         })
     } else {
         // annotated tag: "id <TAG_ID>\nobject <COMMIT_ID>\ntype commit\ntag <TAG_NAME>\n..."
@@ -56,9 +56,9 @@ pub async fn get_content(
         let commit_id = content_iter.next().unwrap().split(' ').nth(1).unwrap();
         let tag_name = content_iter.nth(1).unwrap().split(' ').nth(1).unwrap();
         TagObject::Annotated(Annotated {
-            name: tag_name.to_owned(),
-            id: tag_id.to_owned(),
-            commit_id: commit_id.to_owned(),
+            _name: tag_name.to_owned(),
+            _id: tag_id.to_owned(),
+            _commit_id: commit_id.to_owned(),
             content: content.as_bytes().to_vec(),
         })
     };

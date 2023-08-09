@@ -25,17 +25,17 @@ pub struct TreeComponent {
 }
 
 #[derive(Deserialize, Debug)]
-pub struct GetDetailsResult {
+struct GetDetailsResult {
     #[serde(rename = "value0")]
     pub is_ready: bool,
     #[serde(rename = "value1")]
     objects: HashMap<String, TreeComponent>,
     #[serde(rename = "value2")]
-    sha_tree_local: String,
+    _sha_tree_local: String,
     #[serde(rename = "value3")]
-    sha_tree: String,
+    _sha_tree: String,
     #[serde(rename = "value4")]
-    pubaddr: BlockchainContractAddress,
+    _pubaddr: BlockchainContractAddress,
 }
 
 #[derive(Deserialize, Debug, DataContract)]

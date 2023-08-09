@@ -1007,25 +1007,6 @@ where
 
         tracing::trace!("List of objects: {commit_and_tree_list:?}");
 
-        eprintln!("{:?}", commit_and_tree_list);
-        for oid in &commit_and_tree_list {
-            let object_id = git_hash::ObjectId::from_str(oid)?;
-            let object_kind = self.local_repository().find_object(object_id)?.kind;
-            if object_kind == git_object::Kind::Commit {
-                let mut buffer: Vec<u8> = Vec::new();
-                let commit = self
-                    .local_repository()
-                    .objects
-                    .try_find(object_id, &mut buffer)?
-                    .expect("Commit should exists");
-                let commit_iter = commit.try_into_commit_iter().unwrap();
-                let parent_ids: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
-
-                eprintln!("Id: {:?}", oid);
-                eprintln!("Parents: {:?}\n", parent_ids);
-            }
-        }
-
         let zero_wallet_contract = self
             .blockchain
             .user_wallet(&self.dao_addr, &self.remote.network)

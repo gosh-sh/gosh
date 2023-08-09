@@ -29,27 +29,27 @@ echo "***** Pushing file to the repo *****"
 echo main > 1.txt
 git add 1.txt
 git commit -m main
-GOSH_TRACE=5 git push &> ../trace30.log
+git push
 
-# echo "***** Create dev branch *****"
-# git checkout -b dev
-# echo dev > 1.txt
-# git add 1.txt
-# git commit -m dev
-# git push  -u origin dev
+echo "***** Create dev branch *****"
+git checkout -b dev
+echo dev > 1.txt
+git add 1.txt
+git commit -m dev
+GOSH_TRACE=5 git push  -u origin dev  &> ../trace30_dev.log
 
-# echo "***** Push to main branch *****"
-# git checkout main
-# echo main > 2.txt
-# git add 2.txt
-# git commit -m main2
-# git push
+echo "***** Push to main branch *****"
+git checkout main
+echo main > 2.txt
+git add 2.txt
+git commit -m main2
+git push
 
-# echo "***** Push to main branch *****"
-# echo dev2 > 1.txt
-# git add 1.txt
-# git commit -m dev2
-# git push
+echo "***** Push to main branch *****"
+echo dev2 > 1.txt
+git add 1.txt
+git commit -m dev2
+git push
 
 
 echo "***** cloning repo *****"
