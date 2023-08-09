@@ -80,6 +80,19 @@
 			]
 		},
 		{
+			"name": "getCellForIndex",
+			"inputs": [
+				{"name":"data","type":"cell"},
+				{"name":"index","type":"uint128"},
+				{"name":"typetr","type":"uint128"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "deployWallet",
 			"inputs": [
 			],

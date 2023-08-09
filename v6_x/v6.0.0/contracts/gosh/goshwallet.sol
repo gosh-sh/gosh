@@ -188,6 +188,17 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
+    function getCellForIndex(
+        TvmCell data, 
+        uint128 index, 
+        uint128 typetr,
+        string comment, 
+        optional(uint32) time) external pure returns(TvmCell) {
+        uint256 proposalKind =  INDEX_PROPOSAL_KIND;        
+        if (time.hasValue() == false) { time = block.timestamp; }
+        return abi.encode(proposalKind, data, index, typetr, comment, time.get());
+    }
+
     function deployWallet() public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 20 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
