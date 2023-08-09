@@ -31,6 +31,7 @@ pub struct ParallelDiff {
     pub original_snapshot_content: Vec<u8>,
     pub diff: Vec<u8>,
     pub new_snapshot_content: Vec<u8>,
+    pub snapshot_address: String,
 }
 
 impl ParallelDiff {
@@ -43,8 +44,9 @@ impl ParallelDiff {
         original_snapshot_content: Vec<u8>,
         diff: Vec<u8>,
         new_snapshot_content: Vec<u8>,
+        snapshot_address: String,
     ) -> Self {
-        tracing::trace!("new_ParallelDiff: commit_id={commit_id}, branch_name={branch_name}, blob_id={blob_id}, file_path={file_path}");
+        tracing::trace!("new_ParallelDiff: commit_id={commit_id}, branch_name={branch_name}, blob_id={blob_id}, file_path={file_path}, snapshot_address={snapshot_address}");
         Self {
             commit_id,
             branch_name,
@@ -53,6 +55,7 @@ impl ParallelDiff {
             original_snapshot_content,
             diff,
             new_snapshot_content,
+            snapshot_address,
         }
     }
 }

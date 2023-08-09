@@ -4,7 +4,8 @@ use crate::blockchain::{
 };
 use ::git_object;
 use data_contract_macro_derive::DataContract;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
+use git_object::tree::EntryMode;
 use crate::blockchain::tree::TreeNode;
 
 // TODO: the same as TreeNode leave only one
@@ -148,4 +149,41 @@ where
         res.objects.len()
     );
     Ok((res.is_ready, res.objects.len()))
+}
+
+pub async fn construct_map_of_snapshots(
+    context: &EverClient,
+    repo_contract: &GoshContract,
+    tree: Tree,
+    prefix: &str,
+    snapshot_to_commit: &mut HashMap<String, String>,
+    queue: &mut VecDeque<(Tree, String)>,
+) -> anyhow::Result<()> {
+    tracing::trace!("construct_map_of_snapshots: prefix:{}", prefix);
+    for (_, entry) in tree.objects {
+        let mode: EntryMode = type_obj_to_entry_mod(entry.type_obj.as_str());
+        match mode {
+            git_object::tree::EntryMode::Tree => {
+                let subtree_address = Tree::calculate_address(
+                    context,
+                    repo_contract,
+                    &entry.tvm_sha_tree.unwrap(),
+                ).await?;
+                let subtree = Tree::load(
+                    context,
+                    &subtree_address,
+                ).await?;
+                let full_path = format!("{}{}/", prefix, entry.name);
+                queue.push_back((subtree, full_path));
+            },
+            git_object::tree::EntryMode::Blob
+            | git_object::tree::EntryMode::BlobExecutable
+            | git_object::tree::EntryMode::Link => {
+                let full_path = format!("{}{}", prefix, entry.name);
+                snapshot_to_commit.insert(full_path, entry.commit);
+            },
+            _ => {}
+        }
+    }
+    Ok(())
 }

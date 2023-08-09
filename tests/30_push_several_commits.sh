@@ -29,30 +29,30 @@ echo "***** Pushing file to the repo *****"
 echo main > 1.txt
 git add 1.txt
 git commit -m main
-git push
+GOSH_TRACE=5 git push &> ../trace30_1.log
 
-echo "***** Create dev branch *****"
-git checkout -b dev
-echo dev > 1.txt
-git add 1.txt
-git commit -m dev
-GOSH_TRACE=5 git push  -u origin dev  &> ../trace30_dev.log
+# echo "***** Create dev branch *****"
+# git checkout -b dev
+# echo dev > 1.txt
+# git add 1.txt
+# git commit -m dev
+# GOSH_TRACE=5 git push  -u origin dev  &> ../trace30_dev.log
 
 echo "***** Push to main branch *****"
 git checkout main
-echo main > 2.txt
-git add 2.txt
-git commit -m main2
-git push
-
-echo "***** Push to main branch *****"
-echo dev2 > 1.txt
+echo main2 > 1.txt
 git add 1.txt
-git commit -m dev2
-git push
+git commit -m main2
+GOSH_TRACE=5 git push &> ../trace30.log
+
+# echo "***** Push to main branch *****"
+# echo dev2 > 1.txt
+# git add 1.txt
+# git commit -m dev2
+# git push
 
 
-echo "***** cloning repo *****"
+# echo "***** cloning repo *****"
 cd ..
 
 sleep 10
@@ -63,7 +63,7 @@ echo "***** check repo *****"
 cd "$REPO_NAME-clone"
 
 cur_ver=$(cat 1.txt)
-if [ "$cur_ver" != "main" ]; then
+if [ "$cur_ver" != "main2" ]; then
   echo "WRONG CONTENT"
   exit 1
 fi

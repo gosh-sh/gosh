@@ -190,8 +190,6 @@ where
         let mut is_first_branch = true;
         self.prepare_commit_for_branching().await?;
         if self.ancestor_commit != git_hash::ObjectId::from_str(ZERO_SHA)? {
-            // TODO: not push all snapshots on create branch, only necessary
-            // self.push_initial_snapshots().await?;
             is_first_branch = false;
         }
         self.preinit_branch().await?;

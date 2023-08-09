@@ -65,6 +65,7 @@ pub struct DBDiff {
     original_snapshot_content: Vec<u8>,
     diff: Vec<u8>,
     new_snapshot_content: Vec<u8>,
+    snapshot_address: String,
     coordinates: PushDiffCoordinate,
     is_last: bool,
 }
@@ -79,6 +80,7 @@ impl DBDiff {
             original_snapshot_content: self.original_snapshot_content,
             diff: self.diff,
             new_snapshot_content: self.new_snapshot_content,
+            snapshot_address: self.snapshot_address,
         };
         (diff, self.coordinates, self.is_last)
     }
@@ -94,6 +96,7 @@ impl From<(&ParallelDiff, PushDiffCoordinate, bool)> for DBDiff {
             original_snapshot_content: value.0.original_snapshot_content.clone(),
             diff: value.0.diff.clone(),
             new_snapshot_content: value.0.new_snapshot_content.clone(),
+            snapshot_address: value.0.snapshot_address.clone(),
             coordinates: value.1,
             is_last: value.2,
         }

@@ -106,15 +106,8 @@ pub async fn inner_push_diff(
     let original_snapshot_content = &parallel_diff.original_snapshot_content;
     let diff = &parallel_diff.diff;
     let new_snapshot_content = &parallel_diff.new_snapshot_content;
+    let snapshot_addr: BlockchainContractAddress = BlockchainContractAddress::new(&parallel_diff.snapshot_address);
 
-    let mut repo_contract = blockchain.repo_contract().clone();
-    let snapshot_addr: BlockchainContractAddress = (Snapshot::calculate_address(
-        &blockchain.client(),
-        &mut repo_contract,
-        &commit_id, // TODO: change to correct commit sha
-        &file_path,
-    ))
-    .await?;
     tracing::trace!("inner_push_diff: snapshot_addr={snapshot_addr}, commit_id={commit_id}, branch_name={branch_name}, blob_id={blob_id}, file_path={file_path}, diff_coordinate={diff_coordinate:?}, last_commit_id={last_commit_id}, is_last={is_last}");
     let diff = compress_zstd(diff, None)?;
     tracing::trace!("compressed to {} size", diff.len());

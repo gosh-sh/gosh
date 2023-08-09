@@ -66,7 +66,7 @@ async fn construct_tree(
     context: &GitHelper<impl BlockchainService>,
     tree_id: &ObjectId,
     current_commit: &str,
-    snapshot_to_commit: &HashMap<String, String>,
+    snapshot_to_commit: &mut HashMap<String, String>,
     wallet_contract: &GoshContract,
     to_deploy: &mut Vec<ParallelTree>,
 ) -> anyhow::Result<HashMap<String, TreeNode>> {
@@ -108,10 +108,14 @@ async fn construct_tree(
                     tvm_hash(&context.blockchain.client(), content).await?
                 };
 
-                // TODO: change to actual commit (take from snapshot to commit or current)
-                let commit = current_commit.to_string();
-
                 let file_name = entry.filename.to_string();
+
+                let commit = snapshot_to_commit
+                    .get(&file_name)
+                    .map(|val| val.as_str())
+                    .unwrap_or(current_commit)
+                    .to_string();
+
                 let tree_node = TreeNode::from((Some(format!("0x{file_hash}")), None, commit, entry));
                 let type_obj = &tree_node.type_obj;
                 let key = tvm_hash(
@@ -219,7 +223,7 @@ pub async fn push_tree(
     context: &mut GitHelper<impl BlockchainService + 'static>,
     root_tree_id: &ObjectId,
     current_commit: &str,
-    snapshot_to_commit: &HashMap<String, String>,
+    snapshot_to_commit: &mut HashMap<String, String>,
     wallet_contract: &GoshContract,
     handlers: &mut ParallelTreeUploadSupport,
     push_semaphore: Arc<Semaphore>,

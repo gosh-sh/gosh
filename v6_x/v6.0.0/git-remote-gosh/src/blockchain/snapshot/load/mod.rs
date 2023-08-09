@@ -15,31 +15,34 @@ pub mod diffs;
 #[abi = "snapshot.abi.json"]
 #[abi_data_fn = "getSnapshot"]
 pub struct Snapshot {
-    #[serde(rename = "value0")]
+    #[serde(rename = "temporaryCommit")]
     pub next_commit: String,
 
-    #[serde(rename = "value1")]
+    #[serde(rename = "temporarySnapData")]
     #[serde(deserialize_with = "snapshot_content_custom_deserialization")]
     pub next_content: Vec<u8>,
 
-    #[serde(rename = "value2")]
+    #[serde(rename = "temporaryIpfs")]
     pub next_ipfs: Option<String>,
 
-    #[serde(rename = "value3")]
+    #[serde(rename = "approvedCommit")]
     pub current_commit: String,
 
-    #[serde(rename = "value4")]
+    #[serde(rename = "approvedSnapData")]
     #[serde(deserialize_with = "snapshot_content_custom_deserialization")]
     pub current_content: Vec<u8>,
 
-    #[serde(rename = "value5")]
+    #[serde(rename = "approvedIpfs")]
     pub current_ipfs: Option<String>,
 
-    #[serde(rename = "value6")]
+    #[serde(rename = "baseCommit")]
     pub original_commit: String,
 
-    #[serde(rename = "value7")]
+    #[serde(rename = "isSnapReady")]
     pub ready_for_diffs: bool,
+
+    #[serde(rename = "isPin")]
+    pub is_pinned: bool,
 }
 
 fn crop_vec(v: &Vec<u8>) -> String {
@@ -94,7 +97,7 @@ impl Snapshot {
     #[instrument(level = "info", skip_all)]
     pub async fn calculate_address(
         context: &EverClient,
-        repo_contract: &mut GoshContract,
+        repo_contract: &GoshContract,
         commit_sha: &str,
         file_path: &str,
     ) -> anyhow::Result<BlockchainContractAddress> {
