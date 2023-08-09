@@ -259,7 +259,7 @@ contract Snapshot is Modifiers {
 
     //Getters
     function getSnapshot() external view
-        returns(string, bytes, optional(string), string, bytes, optional(string), string, bool, bool)
+        returns(string temporaryCommit, bytes temporarySnapData, optional(string) temporaryIpfs, string approvedCommit, bytes approvedSnapData, optional(string) approvedIpfs, string baseCommit, bool isSnapReady, bool isPin)
     {
         return (_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit, _ready, _isPin);
     }
