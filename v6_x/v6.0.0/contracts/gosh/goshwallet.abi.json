@@ -49,11 +49,32 @@
 			]
 		},
 		{
-			"name": "saveData",
+			"name": "updateIndex",
+			"inputs": [
+				{"name":"data","type":"cell"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyIndex",
+			"inputs": [
+				{"name":"data","type":"cell"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startProposalForIndex",
 			"inputs": [
 				{"name":"data","type":"cell"},
 				{"name":"index","type":"uint128"},
-				{"name":"factory","type":"address"}
+				{"name":"typetr","type":"uint128"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"comment","type":"string"},
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]

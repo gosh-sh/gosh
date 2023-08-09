@@ -133,17 +133,59 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function deployIndex(TvmCell data, uint128 index) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 20 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        if (_indexes.exists(index) == false) {
-            GoshDao(_goshdao).askAddr(_pubaddr, _index, data, index);
-        } else {
-            IObject(_indexes[index]).deployIndex(_nameDao, _pubaddr, index, data);
-        }
+        SystemContract(_systemcontract).deployIndex{value: 0.1 ton, flag: 1}(_pubaddr, _index, _nameDao, data, index, false);
+        return;
+    }
+
+    function _deployIndex(TvmCell data, uint128 index) private view {
+        require(address(this).balance > 20 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        SystemContract(_systemcontract).deployIndex{value: 0.1 ton, flag: 1}(_pubaddr, _index, _nameDao, data, index, true);
+        return;
     }
     
-    function saveData(TvmCell data, uint128 index, address factory) public senderIs(_systemcontract)  accept saveMsg {
+    function updateIndex(TvmCell data, uint128 index) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        require(address(this).balance > 20 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);        
+        SystemContract(_systemcontract).updateIndex{value: 0.1 ton, flag: 1}(_pubaddr, _index, _nameDao, data, index, false);
+        return;
+    }
+
+    function _updateIndex(TvmCell data, uint128 index) private view {
+        require(address(this).balance > 20 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        _indexes[index] = factory;
-        IObject(_indexes[index]).deployIndex(_nameDao, _pubaddr, index, data);
+        SystemContract(_systemcontract).updateIndex{value: 0.1 ton, flag: 1}(_pubaddr, _index, _nameDao, data, index, true);
+        return;
+    }
+
+    function destroyIndex(TvmCell data, uint128 index) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
+        require(address(this).balance > 20 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        SystemContract(_systemcontract).destroyIndex{value: 0.1 ton, flag: 1}(_pubaddr, _index, _nameDao, data, index, false);
+        return;
+    }
+
+    function _destroyIndex(TvmCell data, uint128 index) private view {
+        require(address(this).balance > 20 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);        
+        SystemContract(_systemcontract).destroyIndex{value: 0.1 ton, flag: 1}(_pubaddr, _index, _nameDao, data, index, true);
+        return;
+    }
+
+    function startProposalForIndex(
+        TvmCell data, 
+        uint128 index, 
+        uint128 typetr,
+        uint128 num_clients,
+        string comment, 
+        address[] reviewers
+    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        uint256 proposalKind =  INDEX_PROPOSAL_KIND;
+        TvmCell c = abi.encode(proposalKind, data, index, typetr, comment, block.timestamp);
+        _startProposalForOperation(c, INDEX_PROPOSAL_START_AFTER, INDEX_PROPOSAL_DURATION, num_clients, reviewers);
+        getMoney();
     }
 
     function deployWallet() public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
@@ -1624,7 +1666,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string repoName,
         uint128 taskindex,
         ConfigCommitBase commit
-    ) public senderIs(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))) accept {
+    ) public onlyOwnerPubkeyOptional(_access) accept {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         BigTask(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).approveSmallTask{value: 1 ton, flag: 1}(_pubaddr, _index, taskindex, commit);
@@ -2971,6 +3013,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == BIGTASK_DESTROY_PROPOSAL_KIND) {
                 (, string taskName, string repoName,) = abi.decode(propData,(uint256, string, string, uint32));
                 _destroyBigTask(taskName, repoName);
+            } else
+            if (kind == INDEX_PROPOSAL_KIND) {
+                (, TvmCell data, uint128 index, uint128 typetr,,) = abi.decode(propData,(uint256, TvmCell, uint128, uint128, string, uint32));
+                if (typetr == 0) { _deployIndex(data, index); }
+                if (typetr == 1) { _updateIndex(data, index); }
+                if (typetr == 2) { _destroyIndex(data, index); }
             } 
         }
     }
@@ -3169,6 +3217,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == BIGTASK_DESTROY_PROPOSAL_KIND) {
                 (, string taskName, string repoName,) = abi.decode(propData,(uint256, string, string, uint32));
                 _destroyBigTask(taskName, repoName);
+            } else
+            if (kind == INDEX_PROPOSAL_KIND) {
+                (, TvmCell data, uint128 index, uint128 typetr,,) = abi.decode(propData,(uint256, TvmCell, uint128, uint128, string, uint32));
+                if (typetr == 0) { _deployIndex(data, index); }
+                if (typetr == 1) { _updateIndex(data, index); }
+                if (typetr == 2) { _destroyIndex(data, index); }
             } 
         }
     }
