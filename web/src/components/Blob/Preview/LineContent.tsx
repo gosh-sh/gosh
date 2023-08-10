@@ -76,7 +76,7 @@ const LineContent = (props: TLineContentProps) => {
                                     rows={1}
                                     maxRows={6}
                                     className="!border-0"
-                                    resize={false}
+                                    autoResize={false}
                                 />
                                 <div className="border-t border-gray-e6edff flex items-center justify-between px-4 py-1">
                                     <div className="grow"></div>

@@ -78,6 +78,11 @@ class BaseContract implements IContract {
         return response.result[0].acc_type === AccountType.active
     }
 
+    async getVersion() {
+        const { value1 } = await this.runLocal('getVersion', {})
+        return value1
+    }
+
     async getMessages(
         variables: {
             msgType: string[]

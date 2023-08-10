@@ -52,4 +52,5 @@ export const SmvEventTypes: { [key: number]: string } = {
     42: 'Delete big task',
     43: 'Create big task',
     44: 'Upgrade big task',
+    45: 'Index event',
 }

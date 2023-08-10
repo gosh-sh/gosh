@@ -535,6 +535,7 @@ interface IGoshProfile extends IContract {
     getDaos(): Promise<IGoshDaoAdapter[]>
     getOwners(): Promise<string[]>
     getGoshAddress(): Promise<TAddress>
+    getVersion(): Promise<string>
 
     deployDao(
         gosh: IGoshAdapter,

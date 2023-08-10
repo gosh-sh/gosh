@@ -44,6 +44,7 @@ enum ESmvEventType {
     BIGTASK_DELETE = 42,
     BIGTASK_CREATE = 43,
     BIGTASK_UPGRADE = 44,
+    INDEX_EVENT = 45,
 }
 
 type TSmvDetails = {

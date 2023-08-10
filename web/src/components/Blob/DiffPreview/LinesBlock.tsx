@@ -317,7 +317,7 @@ const LinesBlock = (props: TLinesBlockProps) => {
                                                 placeholder="Say something"
                                                 rows={2}
                                                 className="!border-0"
-                                                resize={false}
+                                                autoResize={false}
                                             />
                                             <div className="border-t border-gray-e6edff flex items-center justify-between px-4 py-1">
                                                 <div className="grow"></div>
