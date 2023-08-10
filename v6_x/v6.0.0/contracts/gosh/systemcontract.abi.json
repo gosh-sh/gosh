@@ -12,6 +12,45 @@
 			]
 		},
 		{
+			"name": "deployIndex",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"indexw","type":"uint128"},
+				{"name":"namedao","type":"string"},
+				{"name":"data","type":"cell"},
+				{"name":"index","type":"uint128"},
+				{"name":"isProposal","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateIndex",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"indexw","type":"uint128"},
+				{"name":"namedao","type":"string"},
+				{"name":"data","type":"cell"},
+				{"name":"index","type":"uint128"},
+				{"name":"isProposal","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyIndex",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"indexw","type":"uint128"},
+				{"name":"namedao","type":"string"},
+				{"name":"data","type":"cell"},
+				{"name":"index","type":"uint128"},
+				{"name":"isProposal","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "returnMoney",
 			"inputs": [
 				{"name":"value","type":"uint128"}
@@ -202,24 +241,6 @@
 			"inputs": [
 				{"name":"newcode","type":"cell"},
 				{"name":"cell","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "askIndexAddr",
-			"inputs": [
-				{"name":"name","type":"string"},
-				{"name":"Data","type":"cell"},
-				{"name":"index","type":"uint128"},
-				{"name":"sender","type":"address"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "deployIndexFactory",
-			"inputs": [
 			],
 			"outputs": [
 			]
@@ -517,6 +538,15 @@
 			"name": "setDiff",
 			"inputs": [
 				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setIndexes",
+			"inputs": [
+				{"name":"code","type":"cell"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -933,11 +963,11 @@
 			]
 		},
 		{
-			"name": "_indexes",
+			"name": "_indexesCode",
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"_indexes","type":"map(uint128,address)"}
+				{"name":"_indexesCode","type":"map(uint128,cell)"}
 			]
 		},
 		{
@@ -962,7 +992,7 @@
 		{"name":"_versionController","type":"address"},
 		{"name":"_flag","type":"bool"},
 		{"name":"_code","type":"map(uint8,cell)"},
-		{"name":"_indexes","type":"map(uint128,address)"},
+		{"name":"_indexesCode","type":"map(uint128,cell)"},
 		{"name":"_limit_wallets","type":"uint128"},
 		{"name":"m_TokenLockerCode","type":"cell"},
 		{"name":"m_SMVPlatformCode","type":"cell"},

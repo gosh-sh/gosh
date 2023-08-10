@@ -610,6 +610,19 @@ function getDaoTransferTokenProposalParams () external view
     (proposalKind, wallet, newwallet, grant, oldversion, comment,) = abi.decode(propData,(uint256, address, address, uint128, string, string, uint32));
 }
 
+function getIndexProposalParamsData (TvmCell Data) external pure
+         returns (uint256  proposalKind, TvmCell data, uint128 index, uint128 typetr, string comment)
+{
+    (proposalKind, data, index, typetr, comment,) = abi.decode(Data,(uint256, TvmCell, uint128, uint128, string, uint32));
+}
+
+function getIndexProposalParams () external view
+         returns( uint256  proposalKind, TvmCell data, uint128 index, uint128 typetr, string comment)
+{
+    (proposalKind, data, index, typetr, comment,) = abi.decode(propData,(uint256, TvmCell, uint128, uint128, string, uint32));
+}
+
+
 function getDaoTransferTokenProposalParamsData (TvmCell Data) external pure
          returns( uint256  proposalKind, address wallet, address newwallet, uint128 grant, string oldversion, string comment)
 {

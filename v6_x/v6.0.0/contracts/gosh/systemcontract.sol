@@ -30,7 +30,7 @@ contract SystemContract is Modifiers {
     address _versionController;
     bool _flag = true;
     mapping(uint8 => TvmCell) public _code;
-    mapping(uint128 => address) public _indexes;
+    mapping(uint128 => TvmCell) public _indexesCode;
 
     //Limits
     uint128 _limit_wallets = 64;
@@ -52,6 +52,21 @@ contract SystemContract is Modifiers {
         tvm.accept();
         _code = code;
         _versionController = msg.sender;
+    }
+
+    function deployIndex(address pubaddr, uint128 indexw, string namedao, TvmCell data, uint128 index, bool isProposal) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), pubaddr, indexw))  accept {
+        data; index; isProposal;
+        return;
+    }
+    
+    function updateIndex(address pubaddr, uint128 indexw, string namedao, TvmCell data, uint128 index, bool isProposal) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), pubaddr, indexw))  accept {
+        data; index; isProposal;
+        return;
+    }
+
+    function destroyIndex(address pubaddr, uint128 indexw, string namedao, TvmCell data, uint128 index, bool isProposal) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), pubaddr, indexw))  accept {
+        data; index; isProposal;
+        return;
     }
 
     function returnMoney(uint128 value) public view senderIs(_versionController) accept {
@@ -143,18 +158,6 @@ contract SystemContract is Modifiers {
         address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), "gosh");
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         VersionController(_versionController).updateCodeDao{value : 0.3 ton, flag: 1}(newcode, cell, version);
-    }
-
-    function askIndexAddr(string name, TvmCell Data, uint128 index, address sender) public accept saveMsg {
-        address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), name);
-        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
-        if (_indexes.exists(index)) {
-            GoshWallet(sender).saveData{value: 0.1 ton, flag: 1}(Data, index, _indexes[index]);
-        }
-    }
-
-    function deployIndexFactory() public accept saveMsg {
-        return;
     }
 
     function deployDao(string name, address pubaddr, optional(address) previous, address[] pubmem) public accept saveMsg {
@@ -375,6 +378,11 @@ contract SystemContract is Modifiers {
     function setDiff(TvmCell code) public  onlyOwner accept {
         require(_flag == true, ERR_GOSH_UPDATE);
         _code[m_DiffCode] = code;
+    }
+
+    function setIndexes(TvmCell code, uint128 index) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
+        _indexesCode[index] = code;
     }
 
     function setRepository(TvmCell code) public  onlyOwner accept {

@@ -55,6 +55,7 @@ abstract contract Modifiers is ReplayProtection {
     uint8 constant m_BigTaskCode = 18;
     uint8 constant m_KeyBlockCode = 19;
     uint8 constant m_WrapperCode = 20;
+    uint8 constant m_FactoryCode = 21;
     
     //Deploy constants
     uint128 constant FEE_DEPLOY_DAO = 100000 ton;
@@ -208,6 +209,9 @@ abstract contract Modifiers is ReplayProtection {
     
     uint32 constant BIGTASK_UPGRADE_PROPOSAL_START_AFTER  = 0 seconds;
     uint32 constant BIGTASK_UPGRADE_PROPOSAL_DURATION  = 1 weeks; 
+    
+    uint32 constant INDEX_PROPOSAL_START_AFTER  = 0 seconds;
+    uint32 constant INDEX_PROPOSAL_DURATION  = 1 weeks; 
 
     uint256 constant SETCOMMIT_PROPOSAL_KIND = 1;
     uint256 constant ADD_PROTECTED_BRANCH_PROPOSAL_KIND = 2;
@@ -253,6 +257,7 @@ abstract contract Modifiers is ReplayProtection {
     uint256 constant BIGTASK_DESTROY_PROPOSAL_KIND = 42;
     uint256 constant BIGTASK_DEPLOY_PROPOSAL_KIND = 43;
     uint256 constant BIGTASK_UPGRADE_PROPOSAL_KIND = 44;
+    uint256 constant INDEX_PROPOSAL_KIND = 45;
     
     uint128 constant ALONE_DEPLOY_WALLET = 1;
     uint128 constant ALONE_SET_CONFIG = 2;
