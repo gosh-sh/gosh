@@ -148,6 +148,11 @@ where
     Ok((res.is_ready, res.objects.len()))
 }
 
+pub struct SnapshotMonitor {
+    base_commit: String,
+    latest_commit: String,
+}
+
 pub async fn construct_map_of_snapshots(
     context: &EverClient,
     repo_contract: &GoshContract,

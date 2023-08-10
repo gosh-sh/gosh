@@ -256,7 +256,7 @@ where
                                 &sha_inner_tree,
                             ).await?;
                             let to_load = TreeObjectsQueueItem {
-                                path: format!("{}/{}", path_to_node, tree_component.name),
+                                path: format!("{}{}/", path_to_node, tree_component.name),
                                 oid,
                                 address: sub_tree_address
                             };
@@ -266,14 +266,14 @@ where
                         | git_object::tree::EntryMode::BlobExecutable
                         | git_object::tree::EntryMode::Link => {
                             tracing::debug!("branch={branch}: Tree entry: blob {}->{}", id, oid);
-                            let file_path = &tree_component.name;
+                            let file_path = format!("{}{}", path_to_node, &tree_component.name);
                             let mut repo_contract = self.blockchain.repo_contract().clone();
 
                             let snapshot_address = blockchain::Snapshot::calculate_address(
                                 &Arc::clone(self.blockchain.client()),
                                 &mut repo_contract,
                                 &tree_component.commit,
-                                file_path,
+                                &file_path,
                             )
                                 .await?;
                             let snapshot_contract =

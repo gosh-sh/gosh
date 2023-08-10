@@ -1149,7 +1149,7 @@ where
         }
 
         // TODO: add mechanism of deploy merge commit "fork" in one branch
-
+        // snapshot to commit needs to contain latest commit that changed this snapshot
         for oid in &commit_and_tree_list {
             let object_id = git_hash::ObjectId::from_str(oid)?;
             let object_kind = self.local_repository().find_object(object_id)?.kind;

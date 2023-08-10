@@ -49,6 +49,15 @@ build: copy_abi clear_screen
 install: copy_abi clear_screen
 	cargo install --path .
 
+.PHONY: install_offline
+install_offline: copy_abi clear_screen
+	cargo install --path . --offline
+
+.PHONY: check
+check: clear_screen
+	cargo check --release
+
+
 .PHONY: test
 test: copy_abi clear_screen
 	cargo test

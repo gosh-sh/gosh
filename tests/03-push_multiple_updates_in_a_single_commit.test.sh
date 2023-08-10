@@ -41,7 +41,7 @@ git add .
 git commit -m "test-push-$CHANGE"
 
 echo "***** awaiting push into $BRANCH_NAME *****"
-git push -u origin $BRANCH_NAME
+GOSH_TRACE=5 git push -u origin $BRANCH_NAME &> ../trace_3.log
 
 # echo "***** awaiting set commit into $BRANCH_NAME *****"
 # wait_set_commit $REPO_ADDR $BRANCH_NAME
@@ -53,7 +53,7 @@ cd ..
 
 sleep 10
 
-git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
+GOSH_TRACE=5 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone" &> trace_3_clone.log
 
 echo "***** comparing repositories *****"
 DIFF_STATUS=1

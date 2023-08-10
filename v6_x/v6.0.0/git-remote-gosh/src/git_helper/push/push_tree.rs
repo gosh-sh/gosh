@@ -41,18 +41,18 @@ fn flatten_tree(
     for entry in entry_ref_iter {
         let path = match entry.mode {
             Tree | Link | Commit => {
-                let dir = entry.filename.to_string();
+                let dir = format!("{}/", entry.filename);
                 let subtree = flatten_tree(context, &entry.oid.to_owned(), &dir)?;
                 for (k, v) in subtree {
                     map.insert(
-                        format!("{}/{}", path_prefix, k),
+                        format!("{}{}", path_prefix, k),
                         v
                     );
                 }
-                dir
+                entry.filename.to_string()
             }
             Blob | BlobExecutable => {
-                format!("{}/{}", path_prefix, entry.filename)
+                format!("{}{}", path_prefix, entry.filename)
 
             }
         };
@@ -123,7 +123,7 @@ async fn construct_tree(
                     format!("{}:{}", type_obj, file_name).as_bytes(),
                 )
                     .await?;
-                nodes.insert(entry.oid, (format!("0x{}", key), tree_node));
+                nodes.insert(entry.oid.to_string(), (format!("0x{}", key), tree_node));
             }
             _ => {
                 paths.push(path.to_string());
@@ -156,7 +156,10 @@ async fn construct_tree(
                     .entries()?;
 
                 for file_entry in entry_ref_iter {
-                    let (key, tree_node) = nodes.remove(file_entry.oid).ok_or(anyhow::format_err!("Failed to get tree node"))?;
+                    tracing::trace!("looking for file: {:?}",file_entry);
+                    let val = nodes.get(&file_entry.oid.to_string());
+                    tracing::trace!("val: {val:?}");
+                    let (key, tree_node) = nodes.remove(&file_entry.oid.to_string()).ok_or(anyhow::format_err!("Failed to get tree node: {}", file_entry.oid))?;
                     subtree.insert(key, tree_node);
                 }
 
@@ -170,14 +173,14 @@ async fn construct_tree(
                 let commit = "".to_string();
 
                 let file_name = entry.filename.to_string();
-                let tree_node = TreeNode::from((None, Some(format!("0x{tree_hash}")), commit, entry));
+                let tree_node = TreeNode::from((None, Some(tree_hash.clone()), commit, entry));
                 let type_obj = &tree_node.type_obj;
                 let key = tvm_hash(
                     &context.blockchain.client(),
                     format!("{}:{}", type_obj, file_name).as_bytes(),
                 )
                     .await?;
-                nodes.insert(entry.oid, (format!("0x{}", key), tree_node));
+                nodes.insert(entry.oid.to_string(), (format!("0x{}", key), tree_node));
                 let parallel_tree = ParallelTree::new(tree_id, subtree, tree_hash);
                 to_deploy.push(parallel_tree);
             }
@@ -198,11 +201,11 @@ async fn construct_tree(
         .entries()?;
     tracing::trace!("root tree entries: {entry_ref_iter:?}");
     for file_entry in entry_ref_iter {
-        let entry = file_entry.oid.to_owned();
+        let entry = file_entry.oid.to_string();
         tracing::trace!("look for root entry: {entry:?}");
         tracing::trace!("nodes: {nodes:?}");
         tracing::trace!("contains: {}", nodes.contains_key(&entry));
-        let (key, tree_node) = nodes.remove(&file_entry.oid.to_owned()).ok_or(anyhow::format_err!("Failed to get tree node"))?;
+        let (key, tree_node) = nodes.remove(&entry).ok_or(anyhow::format_err!("Failed to get tree node"))?;
         tree_nodes.insert(key, tree_node);
     }
 
