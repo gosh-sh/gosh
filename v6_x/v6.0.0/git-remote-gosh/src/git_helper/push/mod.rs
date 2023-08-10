@@ -1144,17 +1144,11 @@ where
                         break;
                     }
                 }
-                // TODO: filter does not work
-                // because in map commit where the snap was created and we have to check
-                // last approved commit of snapshot
-
                 tracing::trace!("Loaded map: {:?}", snapshot_to_commit);
-                // let commit_ancestors = self.get_commit_ancestors(onchain_commit)?;
-                // tracing::trace!("Commit ancestors: {commit_ancestors:?}");
-                // snapshot_to_commit.retain(|_k, v| commit_ancestors.contains(v));
-                // tracing::trace!("Retained map: {:?}", snapshot_to_commit);
             }
         }
+
+        // TODO: add mechanism of deploy merge commit "fork" in one branch
 
         for oid in &commit_and_tree_list {
             let object_id = git_hash::ObjectId::from_str(oid)?;
