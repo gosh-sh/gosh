@@ -304,12 +304,6 @@ contract Repository is Modifiers{
         }
     }
 
-    function isDeleteSnap(string commitSha, string name) public view minValue(0.2 ton) senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], address(this), commitSha, name)){
-        tvm.accept();
-        require(_Branches.exists(tvm.hash(commitSha)) == false, ERR_BRANCH_EXIST);
-        Snapshot(msg.sender).destroyfinal{value:0.1 ton, flag: 1}();
-    }
-
     function smvdeployrepotag (address pub, uint128 index, string[] tag) public accept {
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pub, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         require(tag.length + _counttag <= _limittag, ERR_TOO_MANY_TAGS);

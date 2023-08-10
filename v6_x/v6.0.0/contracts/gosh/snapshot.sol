@@ -249,12 +249,8 @@ contract Snapshot is Modifiers {
     }
 
     //Selfdestruct
-    function destroy(address pubaddr, uint128 index) public view minValue(0.3 ton) accept {
+    function destroy(address pubaddr, uint128 index) public minValue(0.3 ton) accept {
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
-        Repository(_rootRepo).isDeleteSnap{value: 0.4 ton, flag: 1} (_baseCommit, NameOfFile);
-    }
-    
-    function destroyfinal() public senderIs(_rootRepo) {
         selfdestruct(_systemcontract);
     }
 
