@@ -76,8 +76,8 @@ pipeline {
                 }
             }
             steps {
-                buildDispatcher()
-                //buildDispatcherDebug()
+                //buildDispatcher()
+                buildDispatcherDebug()
             }
         }
         stage('Build: Git Helper') {
@@ -308,7 +308,7 @@ def buildDispatcherDebug() {
                 rm -rf darwin-*
                 rm -rf windows-*
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1178 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1348 --path linux-amd64 && sleep 2
             ''', returnStatus: true
             
             if (shExitStatus != 0) {
