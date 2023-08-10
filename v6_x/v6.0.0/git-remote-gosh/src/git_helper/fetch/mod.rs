@@ -290,6 +290,8 @@ where
                                         .mark_blob_to_restore(snapshot_address, oid);
                                 }
                                 _ => {
+                                    // TODO: need to look through messages
+                                    // take data from constructor and apply patches till necessary commit
                                     continue;
                                 }
                             }

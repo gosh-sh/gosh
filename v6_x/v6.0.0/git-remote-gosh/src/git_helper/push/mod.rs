@@ -1147,6 +1147,8 @@ where
             }
         }
 
+        let mut number_of_commits = 0;
+
         // TODO: add mechanism of deploy merge commit "fork" in one branch
         // snapshot to commit needs to contain latest commit that changed this snapshot
         for oid in &commit_and_tree_list {
@@ -1155,6 +1157,16 @@ where
             tracing::trace!("Push object: {object_id:?} {object_kind:?}");
             match object_kind {
                 git_object::Kind::Commit => {
+                    number_of_commits += 1;
+                    // in case of fast forward commits can be already deployed for another branch
+                    // Do not deploy them again
+                    let commit_address = self.calculate_commit_address(&object_id).await?;
+                    let commit_contract = GoshContract::new(&commit_address, gosh_abi::COMMIT);
+                    match commit_contract.is_active(self.blockchain.client()).await {
+                        Ok(true) => { continue },
+                        _ => {}
+                    }
+
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)
                     // TODO: check only the first commit
                     self.check_parents(object_id, remote_branch_name, local_branch_name, true)
@@ -1338,11 +1350,7 @@ where
             None => "".to_owned(),
         };
 
-        let number_of_commits = calculate_left_distance(
-            parents_of_commits,
-            &latest_commit_id.clone().to_string(),
-            &ancestor_commit_id,
-        ); // TODO: this number can be wrong with slow network
+        // TODO: this number can be wrong with slow network
         self.blockchain
             .notify_commit(
                 &latest_commit_id,

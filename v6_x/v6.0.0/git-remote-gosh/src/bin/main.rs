@@ -42,10 +42,9 @@ async fn main_internal() -> anyhow::Result<()> {
     let _enter = root.enter();
     let config = git_remote_gosh::config::Config::init()?;
     let supported_contract_version = supported_contract_version();
-    let version_stripped = supported_contract_version.replace("\"", "");
     let version = option_env!("GOSH_BUILD_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
-    tracing::info!("git-remote-gosh v{version} (GOSH v{})", version_stripped);
-    eprintln!("git-remote-gosh v{version} (GOSH v{})", version_stripped);
+    tracing::info!("git-remote-gosh v{version} (GOSH v{})", supported_contract_version);
+    eprintln!("git-remote-gosh v{version} (GOSH v{})", supported_contract_version);
     let matches = Command::new("git-remote-gosh")
         .about("GOSH network helper for git")
         .arg(Arg::new("name"))
