@@ -257,15 +257,6 @@
 			]
 		},
 		{
-			"name": "isDeleteSnap",
-			"inputs": [
-				{"name":"commitSha","type":"string"},
-				{"name":"name","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "smvdeployrepotag",
 			"inputs": [
 				{"name":"pub","type":"address"},
