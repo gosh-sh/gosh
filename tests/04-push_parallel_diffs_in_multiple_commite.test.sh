@@ -55,7 +55,7 @@ git add .
 git commit -m "test-push-now-$CHANGE"
 
 echo "***** awaiting push into $BRANCH_NAME *****"
-git push -u origin $BRANCH_NAME
+GOSH_TRACE=5 git push -u origin $BRANCH_NAME &> ../trace_04.log
 delay 60
 
 echo "***** cloning repo *****"

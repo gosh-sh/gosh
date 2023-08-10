@@ -1067,7 +1067,6 @@ where
             tracing::trace!("prev_commit_id={prev_commit_id:?}");
         }
 
-        // TODO: remove repeated code
         let latest_commit = self
             .local_repository()
             .find_reference(local_ref)?
