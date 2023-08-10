@@ -1,12 +1,12 @@
-type TListEmptyProps = {
-    children?: React.ReactNode
-}
+import classNames from 'classnames'
+
+type TListEmptyProps = React.HTMLAttributes<HTMLDivElement>
 
 const ListEmpty = (props: TListEmptyProps) => {
-    const { children } = props
+    const { children, className } = props
 
     return (
-        <div className="signup__norepos">
+        <div className={classNames('signup__norepos', className)}>
             <p className="signup__norepos-title">Nothing to show</p>
             <p className="signup__norepos-content">{children}</p>
         </div>
