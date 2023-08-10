@@ -235,7 +235,7 @@ contract Commit is Modifiers {
         _number = number;
         _numbercommits = numberCommits;
         _approved = 0;
-        _numcommits = 0;
+        _numcommits = 1;
         _task = task;
         this._sendAllDiff{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, 0, _number);
         this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, address(this), numberCommits, true);
@@ -346,7 +346,7 @@ contract Commit is Modifiers {
         uint128 index) public senderIs(address(this)) accept {
         if (index >= _parents.length) { return; }
         getMoney();
-        Commit(newC).addCommitCheckNumber{value:0.1 ton , flag: 1}(_nameCommit);
+        if (index != 0) { Commit(newC).addCommitCheckNumber{value:0.1 ton , flag: 1}(_nameCommit); }
         if ((index != 0) || (_save[newC] != true)){
             Commit(_parents[index].addr).CommitCheckCommit{value: 0.3 ton, bounce: true, flag: 1 }(_nameCommit, branchName, branchCommit , newC, numberCommits - 1, false);
         }
@@ -381,10 +381,10 @@ contract Commit is Modifiers {
         this.acceptAll{value: 0.15 ton, bounce: true, flag: 1}(branch, branchCommit);
     }
 
-    function ChainAccept(string name, string branchName, address branchCommit, address newC) public senderIs(branchCommit) {
-        tvm.accept();
+    function ChainAccept(string name, string branchName, address branchCommit, address newC) public {
         require(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, name) == msg.sender, ERR_SENDER_NO_ALLOWED);
         require(newC == address(this), ERR_WRONG_DATA);
+        tvm.accept();
         getMoney();
         _numcommits = _numcommits - 1;
         if (_numcommits != 0) { return; }
