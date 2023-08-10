@@ -121,14 +121,7 @@ impl Snapshot {
         let snapshot = GoshContract::new(address, gosh_abi::SNAPSHOT);
         let result: GetSnapshotFilePath = snapshot.read_state(context, "getName", None).await?;
         tracing::trace!("received file path `{result:?}` for snapshot {snapshot:?}",);
-        // Note: Fix! Contract returns file path prefixed with a branch name
-        let mut path = result.file_path;
-        // path = path
-        //     .split_once('/')
-        //     .expect("Must be prefixed")
-        //     .1
-        //     .to_string();
-        Ok(path)
+        Ok(result.file_path)
     }
 }
 

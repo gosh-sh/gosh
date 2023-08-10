@@ -1,7 +1,4 @@
-use crate::blockchain::{
-    gosh_abi, run_local, BlockchainContractAddress, BlockchainService, EverClient, GoshContract,
-    Number,
-};
+use crate::blockchain::{gosh_abi, run_local, BlockchainContractAddress, BlockchainService, EverClient, GoshContract, Number, Snapshot};
 use ::git_object;
 use data_contract_macro_derive::DataContract;
 use std::collections::{HashMap, VecDeque};
@@ -158,6 +155,7 @@ pub async fn construct_map_of_snapshots(
     prefix: &str,
     snapshot_to_commit: &mut HashMap<String, String>,
     queue: &mut VecDeque<(Tree, String)>,
+    commit_ancestors: &Vec<String>,
 ) -> anyhow::Result<()> {
     tracing::trace!("construct_map_of_snapshots: prefix:{}", prefix);
     for (_, entry) in tree.objects {
@@ -180,7 +178,26 @@ pub async fn construct_map_of_snapshots(
             | git_object::tree::EntryMode::BlobExecutable
             | git_object::tree::EntryMode::Link => {
                 let full_path = format!("{}{}", prefix, entry.name);
-                snapshot_to_commit.insert(full_path, entry.commit);
+                tracing::trace!("Check snapshot {}", full_path);
+                let snapshot_address = Snapshot::calculate_address(
+                    context,
+                    repo_contract,
+                    &entry.commit,
+                    &full_path
+                ).await?;
+                tracing::trace!("snapshot address {}", snapshot_address);
+                let snapshot = Snapshot::load(
+                    context,
+                    &snapshot_address,
+                ).await?;
+                tracing::trace!("snapshot data: {:?}", snapshot);
+                tracing::trace!("commits chain: {:?}", commit_ancestors);
+                if commit_ancestors.contains(&snapshot.current_commit) {
+                    tracing::trace!("snapshot belongs to the commits chain");
+                    snapshot_to_commit.insert(full_path, entry.commit);
+                } else {
+                    tracing::trace!("snapshot does not belong to the commits chain");
+                }
             },
             _ => {}
         }

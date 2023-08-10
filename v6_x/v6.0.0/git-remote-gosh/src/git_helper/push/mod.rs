@@ -499,7 +499,6 @@ where
         parents_of_commits: &mut HashMap<String, Vec<String>>,
         push_commits: &mut ParallelCommitUploadSupport,
         push_semaphore: Arc<Semaphore>,
-        prev_commit_id: &mut Option<ObjectId>,
         statistics: &mut PushBlobStatistics,
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
         parallel_snapshot_uploads: &mut ParallelSnapshotUploadSupport,
@@ -509,7 +508,7 @@ where
         wallet_contract: &GoshContract,
         parallel_tree_upload_support: &mut ParallelTreeUploadSupport,
     ) -> anyhow::Result<()> {
-        tracing::trace!("push_commit_object: object_id={object_id}, remote_branch_name={remote_branch_name}, local_branch_name={local_branch_name}, prev_commit_id={prev_commit_id:?}");
+        tracing::trace!("push_commit_object: object_id={object_id}, remote_branch_name={remote_branch_name}, local_branch_name={local_branch_name}");
         let mut buffer: Vec<u8> = Vec::new();
         let commit = self
             .local_repository()
@@ -522,16 +521,8 @@ where
         let mut commit_iter = commit.try_into_commit_iter().unwrap();
         let tree_id = commit_iter.tree_id()?;
 
-        let tree_addr = push_tree(
-            self,
-            &tree_id,
-            oid,
-            snapshot_to_commit,
-            wallet_contract,
-            parallel_tree_upload_support,
-            push_semaphore.clone(),
-        ).await?;
-
+        let prev_commit_id = commit_iter.parent_ids().next();
+        tracing::trace!("prev_commit_id={prev_commit_id:?}");
         let mut parent_ids: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
         if !parent_ids.is_empty() {
             parents_of_commits.insert(oid.to_owned(), parent_ids.clone());
@@ -565,42 +556,10 @@ where
         }
         // let tree_addr = self.calculate_tree_address(tree_id).await?;
 
-        {
-            let blockchain = self.blockchain.clone();
-            let remote = self.remote.clone();
-            let dao_addr = self.dao_addr.clone();
-            let object_id = object_id.clone();
-            let tree_addr = tree_addr.clone();
-
-            let commit = ParallelCommit::new(
-                object_id,
-                tree_addr,
-                raw_commit,
-                parents,
-                upgrade_commit,
-            );
-            let mut repo_contract = self.blockchain.repo_contract().clone();
-            let commit_address = get_commit_address(
-                self.blockchain.client(),
-                &mut repo_contract,
-                &object_id.to_string(),
-            )
-            .await?;
-            let commit_address = String::from(commit_address);
-            if !self.get_db()?.commit_exists(&commit_address)? {
-                self.get_db()?.put_commit(commit, commit_address.clone())?;
-
-                push_commits
-                    .add_to_push_list(self, commit_address, push_semaphore.clone())
-                    .await?;
-            } else {
-                push_commits.push_expected(commit_address);
-            }
-        }
 
         let tree_diff = utilities::build_tree_diff_from_commits(
             self.local_repository(),
-            prev_commit_id.clone().to_owned(),
+            prev_commit_id,
             object_id,
         )?;
         for added in tree_diff.added {
@@ -620,30 +579,50 @@ where
         }
         if !upgrade_commit {
             for update in tree_diff.updated {
+                tracing::trace!("push update diff");
+                // Commit modifies file but snapshot can be updated in the other branch
+                // In this case it will be absent in the snapshot_to_commit map
+                // and we need to deploy a new snapshot with updated content
                 let file_path = update.1.filepath.to_string();
-                let snapshot_commit = snapshot_to_commit
-                    .get(&file_path)
-                    .ok_or(
-                        anyhow::format_err!("Failed to get commit for snapshot of file: {}", file_path)
-                    )?;
-                let repo_contract = self.blockchain.repo_contract().clone();
-                let snapshot_address = Snapshot::calculate_address(
-                    self.blockchain.client(),
-                    &repo_contract,
-                    snapshot_commit,
-                    &file_path
-                ).await?;
-                self.push_blob_update(
-                    &file_path,
-                    &update.0.oid,
-                    &update.1.oid,
-                    &object_id, // commit_id.as_ref().unwrap(),
-                    local_branch_name,
-                    statistics,
-                    parallel_diffs_upload_support,
-                    String::from(snapshot_address),
-                )
-                .await?;
+                match snapshot_to_commit.get(&file_path) {
+                    Some(snapshot_commit) => {
+                        tracing::trace!("push update diff to existing snapshot");
+                        let repo_contract = self.blockchain.repo_contract().clone();
+                        let snapshot_address = Snapshot::calculate_address(
+                            self.blockchain.client(),
+                            &repo_contract,
+                            snapshot_commit,
+                            &file_path
+                        ).await?;
+                        self.push_blob_update(
+                            &file_path,
+                            &update.0.oid,
+                            &update.1.oid,
+                            &object_id, // commit_id.as_ref().unwrap(),
+                            local_branch_name,
+                            statistics,
+                            parallel_diffs_upload_support,
+                            String::from(snapshot_address),
+                        )
+                            .await?;
+                    },
+                    None => {
+                        tracing::trace!("push update diff to new snapshot");
+                        self.push_new_blob(
+                            &file_path,
+                            &update.1.oid,
+                            &object_id,
+                            local_branch_name,
+                            statistics,
+                            parallel_diffs_upload_support,
+                            parallel_snapshot_uploads,
+                            upgrade_commit,
+                            parents_for_upgrade.clone(),
+                        )
+                            .await?;
+                        snapshot_to_commit.insert(file_path, object_id.to_string());
+                    }
+                }
             }
 
             for deleted in tree_diff.deleted {
@@ -673,7 +652,50 @@ where
                 snapshot_to_commit.remove(&file_path);
             }
         }
-        *prev_commit_id = Some(object_id);
+
+        let tree_addr = push_tree(
+            self,
+            &tree_id,
+            oid,
+            snapshot_to_commit,
+            wallet_contract,
+            parallel_tree_upload_support,
+            push_semaphore.clone(),
+        ).await?;
+
+        {
+            let blockchain = self.blockchain.clone();
+            let remote = self.remote.clone();
+            let dao_addr = self.dao_addr.clone();
+            let object_id = object_id.clone();
+            let tree_addr = tree_addr.clone();
+
+            let commit = ParallelCommit::new(
+                object_id,
+                tree_addr,
+                raw_commit,
+                parents,
+                upgrade_commit,
+            );
+            let mut repo_contract = self.blockchain.repo_contract().clone();
+            let commit_address = get_commit_address(
+                self.blockchain.client(),
+                &mut repo_contract,
+                &object_id.to_string(),
+            )
+                .await?;
+            let commit_address = String::from(commit_address);
+            if !self.get_db()?.commit_exists(&commit_address)? {
+                self.get_db()?.put_commit(commit, commit_address.clone())?;
+
+                push_commits
+                    .add_to_push_list(self, commit_address, push_semaphore.clone())
+                    .await?;
+            } else {
+                push_commits.push_expected(commit_address);
+            }
+        }
+
         Ok(())
     }
 
@@ -801,7 +823,6 @@ where
             .await?;
 
         // iterate through the git objects list and push them
-        let mut prev_commit_id = None;
         for oid in &commit_objects_list {
             let object_id = git_hash::ObjectId::from_str(oid)?;
             let object_kind = self.local_repository().find_object(object_id)?.kind;
@@ -817,7 +838,6 @@ where
                         &mut parents_of_commits,
                         &mut push_commits,
                         push_semaphore.clone(),
-                        &mut prev_commit_id,
                         &mut statistics,
                         &mut parallel_diffs_upload_support,
                         &mut parallel_snapshot_uploads,
@@ -921,7 +941,37 @@ where
         Ok(())
     }
 
-    // find ancestor commit
+    fn get_commit_ancestors(
+        &self,
+        start_commit: &ObjectId,
+    ) -> anyhow::Result<Vec<String>> {
+        let mut res = vec![];
+        res.push(start_commit.to_string());
+        let mut queue = VecDeque::new();
+        queue.push_back(start_commit.to_owned());
+
+        loop {
+            if let Some(object_id) = queue.pop_front() {
+                let mut buffer: Vec<u8> = Vec::new();
+                let commit = self
+                    .local_repository()
+                    .objects
+                    .try_find(object_id, &mut buffer)?
+                    .expect("Commit should exists");
+
+                let commit_iter = commit.try_into_commit_iter().unwrap();
+                for parent in commit_iter.parent_ids() {
+                    res.push(parent.to_string());
+                    queue.push_back(parent);
+                }
+            } else {
+                break;
+            }
+        }
+        Ok(res)
+    }
+
+
     #[instrument(level = "trace", skip_all)]
     async fn push_ref(&mut self, local_ref: &str, remote_ref: &str) -> anyhow::Result<String> {
         // Note:
@@ -1077,6 +1127,7 @@ where
                 ).await?;
                 let mut queue = VecDeque::new();
                 queue.push_back((tree, "".to_string()));
+                let commit_ancestors = self.get_commit_ancestors(onchain_commit)?;
                 loop {
                     if let Some((tree, prefix)) = queue.pop_back() {
                         let repo_contract = self.blockchain.repo_contract().clone();
@@ -1086,14 +1137,22 @@ where
                             tree,
                             &prefix,
                             &mut snapshot_to_commit,
-                            &mut queue
+                            &mut queue,
+                            &commit_ancestors,
                         ).await?;
                     } else {
                         break;
                     }
                 }
+                // TODO: filter does not work
+                // because in map commit where the snap was created and we have to check
+                // last approved commit of snapshot
+
                 tracing::trace!("Loaded map: {:?}", snapshot_to_commit);
-                // TODO: need to clear map from snapshots that were changed in commits that are not ancestors to the last one.
+                // let commit_ancestors = self.get_commit_ancestors(onchain_commit)?;
+                // tracing::trace!("Commit ancestors: {commit_ancestors:?}");
+                // snapshot_to_commit.retain(|_k, v| commit_ancestors.contains(v));
+                // tracing::trace!("Retained map: {:?}", snapshot_to_commit);
             }
         }
 
@@ -1115,7 +1174,6 @@ where
                         &mut parents_of_commits,
                         &mut push_commits,
                         push_semaphore.clone(),
-                        &mut prev_commit_id,
                         &mut statistics,
                         &mut parallel_diffs_upload_support,
                         &mut parallel_snapshot_uploads,
