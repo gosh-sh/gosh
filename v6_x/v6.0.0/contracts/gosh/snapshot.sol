@@ -204,7 +204,7 @@ contract Snapshot is Modifiers {
 
     function approve(uint128 index1, uint128 index2, Diff diff) public {
         diff;
-        require(msg.sender == GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _commits, index1, index2), ERR_SENDER_NO_ALLOWED);
+        require(msg.sender == GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _pushcommit, index1, index2), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         _oldsnapshot = _snapshot;
         _oldcommits = _commits;
