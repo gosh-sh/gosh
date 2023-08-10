@@ -135,7 +135,7 @@ contract Snapshot is Modifiers {
         tvm.accept();
         getMoney();
         uint256 empty;
-        if ((_applying == true) && (msg.sender != GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _commits, index1, index2))) {
+        if ((_applying == true) && (msg.sender != GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _pushcommit, index1, index2))) {
             DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty);
             return;
         } else {
@@ -193,11 +193,12 @@ contract Snapshot is Modifiers {
 
     function cancelDiff(uint128 index1, uint128 index2, string commit) public {
         commit;
-        require(msg.sender == GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _commits, index1, index2), ERR_SENDER_NO_ALLOWED);
+        require(msg.sender == GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _pushcommit, index1, index2), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         _snapshot = _oldsnapshot;
         _ipfs = _ipfsold;
         _commits = _oldcommits;
+        _pushcommit = _oldcommits;
         _applying = false;
     }
 
@@ -259,8 +260,7 @@ contract Snapshot is Modifiers {
 
     //Getters
     function getSnapshot() external view
-        returns(string temporaryCommit, bytes temporarySnapData, optional(string) temporaryIpfs, string approvedCommit, bytes approvedSnapData, optional(string) approvedIpfs, string baseCommit, bool isSnapReady, bool isPin)
-    {
+        returns(string temporaryCommit, bytes temporarySnapData, optional(string) temporaryIpfs, string approvedCommit, bytes approvedSnapData, optional(string) approvedIpfs, string baseCommit, bool isSnapReady, bool isPin)    {
         return (_commits, _snapshot, _ipfs, _oldcommits, _oldsnapshot, _ipfsold, _baseCommit, _ready, _isPin);
     }
     

@@ -95,23 +95,24 @@ import {
     TTaskUpgradeParams,
     TTaskUpgradeResult,
     TDaoTokenDaoTransferParams,
-    TDaoTokenDaoTransferResult,
     TUpgradeVersionControllerParams,
     TDaoStartPaidMembershipParams,
     TDaoStartPaidMembershipResult,
     TDaoStopPaidMembershipParams,
     TDaoStopPaidMembershipResult,
     TCodeCommentThreadCreateParams,
+    TCodeCommentThreadCreateResult,
     TCodeCommentThreadGetCodeParams,
     TCodeCommentThreadGetCodeResult,
     TCodeCommentThreadGetParams,
     TCodeCommentThreadGetResult,
     TCodeCommentCreateParams,
-    TCodeCommentThreadCreateResult,
+    TCodeCommentCreateResult,
     TBigTaskCreateParams,
     TBigTaskCreateResult,
     TSubTaskCreateParams,
     TSubTaskDeleteParams,
+    TSubTaskDeleteResult,
     TBigTaskApproveParams,
     TBigTaskApproveResult,
     TBigTaskDeleteParams,
@@ -119,6 +120,7 @@ import {
     TBigTaskUpgradeParams,
     TBigTaskUpgradeResult,
     TCodeCommentThreadResdolveParams,
+    TBigTaskDetails,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -142,6 +144,7 @@ import {
     IGoshHelperTag,
     IGoshTopic,
     IGoshProfileDao,
+    IGoshBigTask,
     IGoshCommitTag,
 } from '../interfaces'
 import { Gosh } from './gosh'
@@ -162,6 +165,7 @@ import {
     goshipfs,
     executeByChunk,
     splitByChunk,
+    getMessages,
 } from '../../helpers'
 import { GoshCommit } from './goshcommit'
 import { GoshTree } from './goshtree'
@@ -169,6 +173,7 @@ import { GoshCommitTag } from './goshcommittag'
 import * as Diff from 'diff'
 import { GoshDiff } from './goshdiff'
 import {
+    BIGTASK_TAG,
     MAX_ONCHAIN_SIZE,
     MAX_PARALLEL_READ,
     MAX_PARALLEL_WRITE,
@@ -187,12 +192,15 @@ import { GoshHelperTag } from './goshhelpertag'
 import { GoshTopic } from './goshtopic'
 import { GoshAdapterFactory } from '../factories'
 import { GoshProfileDao } from '../goshprofiledao'
+import { GoshRoot } from '../goshroot'
+import { GoshBigTask } from './goshbigtask'
+import ABI from '../../resources/contracts/abi.json'
 
-class GoshAdapter_2_0_0 implements IGoshAdapter {
-    private static instance: GoshAdapter_2_0_0
+class GoshAdapter_6_0_0 implements IGoshAdapter {
+    private static instance: GoshAdapter_6_0_0
     private auth?: { username: string; keys: KeyPair }
 
-    static version: string = '2.0.0'
+    static version: string = '6.0.0'
 
     client: TonClient
     goshroot: IGoshRoot
@@ -204,11 +212,11 @@ class GoshAdapter_2_0_0 implements IGoshAdapter {
         this.gosh = new Gosh(this.client, goshaddr)
     }
 
-    static getInstance(goshroot: IGoshRoot, goshaddr: TAddress): GoshAdapter_2_0_0 {
-        if (!GoshAdapter_2_0_0.instance) {
-            GoshAdapter_2_0_0.instance = new GoshAdapter_2_0_0(goshroot, goshaddr)
+    static getInstance(goshroot: IGoshRoot, goshaddr: TAddress): GoshAdapter_6_0_0 {
+        if (!GoshAdapter_6_0_0.instance) {
+            GoshAdapter_6_0_0.instance = new GoshAdapter_6_0_0(goshroot, goshaddr)
         }
-        return GoshAdapter_2_0_0.instance
+        return GoshAdapter_6_0_0.instance
     }
 
     isValidUsername(username: string): TValidationResult {
@@ -248,12 +256,33 @@ class GoshAdapter_2_0_0 implements IGoshAdapter {
         })
     }
 
-    async isValidDao(name: string[]): Promise<{ username: string; address: string }[]> {
-        throw new Error('Method is unavailable in current version')
+    async isValidDao(name: string[]): Promise<{ username: string; address: TAddress }[]> {
+        return await executeByChunk(name, MAX_PARALLEL_READ, async (item) => {
+            item = item.trim()
+            const { valid, reason } = this.isValidDaoName(item)
+            if (!valid) {
+                throw new GoshError(`${item}: ${reason}`)
+            }
+
+            const dao = await this.getDao({ name: item, useAuth: false })
+            if (!(await dao.isDeployed())) {
+                throw new GoshError(`${item}: DAO does not exist`)
+            }
+
+            return { username: item, address: dao.getAddress() }
+        })
     }
 
     async isValidUser(user: TUserParam): Promise<{ user: TUserParam; address: string }> {
-        throw new Error('Method is unavailable in current version')
+        if (user.type === 'dao') {
+            const validated = await this.isValidDao([user.name])
+            return { user, address: validated[0].address }
+        } else if (user.type === 'user') {
+            const validated = await this.isValidProfile([user.name])
+            return { user, address: validated[0].address }
+        } else {
+            throw new GoshError('Incorrect user type', user)
+        }
     }
 
     async setAuth(username: string, keys: KeyPair): Promise<void> {
@@ -265,16 +294,17 @@ class GoshAdapter_2_0_0 implements IGoshAdapter {
     }
 
     getVersion(): string {
-        return GoshAdapter_2_0_0.version
+        return GoshAdapter_6_0_0.version
     }
 
     async getProfile(options: {
         username?: string
         address?: TAddress
+        keys?: KeyPair
     }): Promise<IGoshProfile> {
-        const { username, address } = options
+        const { username, address, keys } = options
         if (address) {
-            return new GoshProfile(this.client, address)
+            return new GoshProfile(this.client, address, keys)
         }
         if (!username) {
             throw new GoshError(EGoshError.USER_NAME_UNDEFINED)
@@ -288,7 +318,7 @@ class GoshAdapter_2_0_0 implements IGoshAdapter {
             undefined,
             { useCachedBoc: true },
         )
-        return new GoshProfile(this.client, value0)
+        return new GoshProfile(this.client, value0, keys)
     }
 
     async getDao(options: {
@@ -341,8 +371,27 @@ class GoshAdapter_2_0_0 implements IGoshAdapter {
     }
 
     async getUserByAddress(address: string): Promise<TUserParam> {
-        const profile = await this.getProfile({ address })
-        return { name: await profile.getName(), type: 'user' }
+        const base = new GoshRoot(this.client, address)
+
+        let type = null
+        try {
+            const { value0 } = await base.runLocal('getVersion', {}, undefined, {
+                retries: 0,
+            })
+            type = value0
+        } catch {
+            type = 'profile'
+        }
+
+        if (type === 'profile') {
+            const profile = await this.getProfile({ address })
+            return { name: await profile.getName(), type: 'user' }
+        } else if (type === 'goshdao') {
+            const profile = await this.getDao({ address, useAuth: false })
+            return { name: await profile.getName(), type: 'dao' }
+        }
+
+        throw new GoshError('Can not resolve address type', { address })
     }
 
     async getRepository(options: {
@@ -440,7 +489,26 @@ class GoshAdapter_2_0_0 implements IGoshAdapter {
         address?: string | undefined
         data?: { daoName: string; repoName: string; tagName: string } | undefined
     }): Promise<IGoshCommitTag> {
-        throw new Error('Method is unavailable in current version')
+        const { address, data } = params
+
+        if (address) {
+            return new GoshCommitTag(this.client, address)
+        }
+
+        if (data) {
+            const { daoName, repoName, tagName } = data
+            const { value0 } = await this.gosh.runLocal('getTagAddress', {
+                daoName,
+                repoName,
+                tagName,
+            })
+            return new GoshCommitTag(this.client, value0)
+        }
+
+        throw new GoshError(
+            'Get commit tag error',
+            'Either address or data should be provided',
+        )
     }
 
     async deployProfile(username: string, pubkey: string): Promise<IGoshProfile> {
@@ -520,8 +588,8 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 
         let pubaddr: string
         if (user) {
-            const validated = await this.gosh.isValidProfile([user.name])
-            pubaddr = validated[0].address
+            const validated = await this.gosh.isValidUser(user)
+            pubaddr = validated.address
         } else if (profile) {
             pubaddr = profile
         } else {
@@ -571,6 +639,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     async getDetails(): Promise<TDao> {
         const details = await this.dao.runLocal('getDetails', {})
         const owner = details.pubaddr
+        const { _isTaskRedeployed } = await this.dao.runLocal('_isTaskRedeployed', {})
 
         return {
             address: this.dao.address,
@@ -584,7 +653,8 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             },
             owner,
             tags: Object.values(details.hashtag),
-            isMintOn: details.allowMint,
+            isMintOn: await this._isMintOn(),
+            isMintOnPrevDiff: await this._isMintOnPrevDiff(),
             isEventProgressOn: !details.hide_voting_results,
             isEventDiscussionOn: details.allow_discussion_on_proposals,
             isAskMembershipOn: details.abilityInvite,
@@ -593,10 +663,13 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             isAuthMember: await this._isAuthMember(),
             isAuthLimited: await this._isAuthLimited(),
             isRepoUpgraded: details.isRepoUpgraded,
-            isTaskRedeployed: true,
-            isMemberOf: [],
+            isTaskRedeployed: _isTaskRedeployed,
+            isMemberOf: Object.keys(details.my_wallets).map((dao) => ({
+                dao: `0:${dao.slice(2)}`,
+                wallet: details.my_wallets[dao],
+            })),
             hasRepoIndex: !!(await this._getSystemRepository()),
-            isUpgraded: details.isRepoUpgraded,
+            isUpgraded: details.isRepoUpgraded && _isTaskRedeployed,
         }
     }
 
@@ -673,8 +746,9 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         address?: TAddress
         index?: number
         create?: boolean
+        keys?: KeyPair
     }): Promise<IGoshWallet> {
-        const { profile, address, index, create } = options
+        const { profile, address, index, create, keys } = options
         if (address) {
             return new GoshWallet(this.client, address)
         }
@@ -683,7 +757,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
         const addr = await this._getWalletAddress(profile, index ?? 0)
-        const wallet = new GoshWallet(this.client, addr)
+        const wallet = new GoshWallet(this.client, addr, { keys })
         if (create && !(await wallet.isDeployed())) {
             await this._createLimitedWallet(profile)
         }
@@ -693,19 +767,19 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     async getReviewers(
         user: TUserParam[],
     ): Promise<{ username: string; profile: string; wallet: string }[]> {
-        const profiles = await this.gosh.isValidProfile(user.map(({ name }) => name))
-        return await executeByChunk(
-            profiles,
-            MAX_PARALLEL_READ,
-            async ({ username, address }) => {
-                const wallet = await this.getMemberWallet({
-                    profile: address,
-                    index: 0,
-                    create: true,
-                })
-                return { username, profile: address, wallet: wallet.address }
-            },
-        )
+        return await executeByChunk(user, MAX_PARALLEL_READ, async (item) => {
+            const profile = await this.gosh.isValidUser(item)
+            const wallet = await this.getMemberWallet({
+                profile: profile.address,
+                index: 0,
+                create: true,
+            })
+            return {
+                username: item.name,
+                profile: profile.address,
+                wallet: wallet.address,
+            }
+        })
     }
 
     async getTaskCodeHash(repository: string): Promise<string> {
@@ -741,27 +815,54 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         let team
         if (details.candidates.length) {
             const candidate = details.candidates[0]
-            const commit = await repository.getCommit({ address: candidate.commit })
+
+            let commit: TCommit | undefined
+            if (candidate.commit) {
+                const _commit = new GoshCommit(this.client, candidate.commit)
+                const _version = await _commit.getVersion()
+                if (_version !== repository.getVersion()) {
+                    const _gosh = GoshAdapterFactory.create(_version)
+                    const _repository = await _gosh.getRepository({
+                        address: repository.getAddress(),
+                    })
+                    commit = await _repository.getCommit({ address: candidate.commit })
+                } else {
+                    commit = await repository.getCommit({ address: candidate.commit })
+                }
+            }
+
             const assigners = await Promise.all(
                 Object.keys(candidate.pubaddrassign).map(async (address) => {
-                    const profile = await this.gosh.getProfile({ address })
-                    return { username: await profile.getName(), address }
+                    if (candidate.daoMembers[address]) {
+                        return { username: candidate.daoMembers[address], address }
+                    } else {
+                        const profile = await this.gosh.getUserByAddress(address)
+                        return { username: profile.name, address }
+                    }
                 }),
             )
             const reviewers = await Promise.all(
                 Object.keys(candidate.pubaddrreview).map(async (address) => {
-                    const profile = await this.gosh.getProfile({ address })
-                    return { username: await profile.getName(), address }
+                    if (candidate.daoMembers[address]) {
+                        return { username: candidate.daoMembers[address], address }
+                    } else {
+                        const profile = await this.gosh.getUserByAddress(address)
+                        return { username: profile.name, address }
+                    }
                 }),
             )
             const managers = await Promise.all(
                 Object.keys(candidate.pubaddrmanager).map(async (address) => {
-                    const profile = await this.gosh.getProfile({ address })
-                    return { username: await profile.getName(), address }
+                    if (candidate.daoMembers[address]) {
+                        return { username: candidate.daoMembers[address], address }
+                    } else {
+                        const profile = await this.gosh.getUserByAddress(address)
+                        return { username: profile.name, address }
+                    }
                 }),
             )
             team = {
-                commit: { branch: commit.branch, name: commit.name },
+                commit: commit ? { branch: commit.branch, name: commit.name } : undefined,
                 assigners,
                 reviewers,
                 managers,
@@ -783,10 +884,111 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async getBigTask(options: {
-        name?: string | undefined
-        address?: string | undefined
-    }): Promise<TTaskDetails> {
-        throw new Error('Method is unavailable in current version')
+        repository?: string
+        name?: string
+        address?: TAddress
+    }): Promise<TBigTaskDetails> {
+        const task = await this._getBigTask(options)
+        const details = await task.runLocal('getStatus', {})
+        const repository = await this.getRepository({ address: details.repo })
+
+        // Clean tags
+        const tagsClean = [...details.hashtag]
+        const _systemTagIndex = tagsClean.findIndex(
+            (item: string) => item === BIGTASK_TAG,
+        )
+        if (_systemTagIndex >= 0) {
+            tagsClean.splice(_systemTagIndex, 1)
+        }
+
+        // Parse candidates
+        let team
+        if (details.candidates.length) {
+            const candidate = details.candidates[0]
+            const commit = candidate.commit
+                ? await repository.getCommit({ address: candidate.commit })
+                : undefined
+            const assigners = await Promise.all(
+                Object.keys(candidate.pubaddrassign).map(async (address) => {
+                    if (candidate.daoMembers[address]) {
+                        return { username: candidate.daoMembers[address], address }
+                    } else {
+                        const profile = await this.gosh.getUserByAddress(address)
+                        return { username: profile.name, address }
+                    }
+                }),
+            )
+            const reviewers = await Promise.all(
+                Object.keys(candidate.pubaddrreview).map(async (address) => {
+                    if (candidate.daoMembers[address]) {
+                        return { username: candidate.daoMembers[address], address }
+                    } else {
+                        const profile = await this.gosh.getUserByAddress(address)
+                        return { username: profile.name, address }
+                    }
+                }),
+            )
+            const managers = await Promise.all(
+                Object.keys(candidate.pubaddrmanager).map(async (address) => {
+                    if (candidate.daoMembers[address]) {
+                        return { username: candidate.daoMembers[address], address }
+                    } else {
+                        const profile = await this.gosh.getUserByAddress(address)
+                        return { username: profile.name, address }
+                    }
+                }),
+            )
+            team = {
+                commit: commit ? { branch: commit.branch, name: commit.name } : undefined,
+                assigners,
+                reviewers,
+                managers,
+            }
+        }
+
+        return {
+            account: task,
+            address: task.address,
+            name: details.nametask,
+            repository: await repository.getName(),
+            team,
+            config: details.grant,
+            confirmed: details.ready,
+            confirmedAt: details.locktime,
+            tags: tagsClean,
+            tagsRaw: details.hashtag,
+        }
+    }
+
+    async getCodeCommetThreadCodeHash(
+        params: TCodeCommentThreadGetCodeParams,
+    ): Promise<TCodeCommentThreadGetCodeResult> {
+        const { daoAddress, objectAddress, commitName, filename } = params
+        const { value0 } = await this.gosh.gosh.runLocal('getCommentCode', {
+            dao: daoAddress,
+            object: objectAddress,
+            commit: commitName,
+            nameoffile: filename,
+        })
+        const { hash } = await this.client.boc.get_boc_hash({ boc: value0 })
+        return hash
+    }
+
+    async getCodeCommentThread(
+        params: TCodeCommentThreadGetParams,
+    ): Promise<TCodeCommentThreadGetResult> {
+        const thread = await this._getCodeCommentThread({ address: params.address })
+        const data = await thread.runLocal('getObject', {})
+        return {
+            account: thread,
+            address: thread.address,
+            name: data.value0,
+            content: data.value1,
+            metadata: JSON.parse(data.value5),
+            isResolved: data.value6,
+            createdBy: data.value7,
+            createdAt: parseInt(data.value8),
+        }
     }
 
     async getTopicCodeHash(): Promise<string> {
@@ -814,18 +1016,6 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             content: value1,
             object: value2,
         }
-    }
-
-    async getCodeCommetThreadCodeHash(
-        params: TCodeCommentThreadGetCodeParams,
-    ): Promise<TCodeCommentThreadGetCodeResult> {
-        throw new Error('Method is unavailable in current version')
-    }
-
-    async getCodeCommentThread(
-        params: TCodeCommentThreadGetParams,
-    ): Promise<TCodeCommentThreadGetResult> {
-        throw new Error('Method is unavailable in current version')
     }
 
     async getSmv(): Promise<IGoshSmvAdapter> {
@@ -908,7 +1098,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async createMember(params: TDaoMemberCreateParams): Promise<TDaoMemberCreateResult> {
-        const { members = [], reviewers = [], cell } = params
+        const { members = [], reviewers = [], cell, alone } = params
 
         if (!members.length) {
             return
@@ -917,9 +1107,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
-        // Get members' profiles
-        const usernames = members.map(({ user }) => user.name)
-        const profiles = await this.gosh.isValidProfile(usernames)
+        // Get members profiles
+        const profiles = await Promise.all(
+            members.map(async ({ user }) => {
+                return await this.gosh.isValidUser(user)
+            }),
+        )
 
         // Prepare proposal comment
         const note = []
@@ -930,26 +1123,33 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
 
         // Prepare proposal arguments
-        const pubaddr = profiles.map(({ username, address }) => {
-            const found = members.find((item) => item.user.name === username)
+        const daos: (string | null)[] = []
+        const pubaddr = profiles.map(({ user, address }) => {
+            const found = members.find((item) => item.user.name === user.name)
             if (!found) {
-                throw new GoshError(`Member '${username}' not found in arguments`)
+                throw new GoshError(`Member '${user.name}' not found in arguments`)
             }
-            return { member: address, count: found.allowance }
+
+            daos.push(found.user.type === 'dao' ? user.name : null)
+            return { member: address, count: found.allowance, expired: found.expired }
         })
 
         if (cell) {
             const { value0 } = await this.wallet.runLocal('getCellDeployWalletDao', {
                 pubaddr,
+                dao: daos,
                 comment: note.length ? note.join('\n\n') : '',
             })
             return value0
+        } else if (alone) {
+            await this.wallet.run('AloneDeployWalletDao', { pubaddr })
         } else {
             const _reviewers = await this.getReviewers(reviewers)
             const smv = await this.getSmv()
             await smv.validateProposalStart(0)
             await this.wallet.run('startProposalForDeployWalletDao', {
                 pubaddr,
+                dao: daos,
                 comment: note.length ? note.join('\n\n') : '',
                 reviewers: _reviewers.map(({ wallet }) => wallet),
                 num_clients: await smv.getClientsCount(),
@@ -965,7 +1165,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
 
         const profiles = await executeByChunk(user, MAX_PARALLEL_READ, async (item) => {
-            const profile = await this.gosh.getProfile({ username: item.name })
+            const profile = await this.gosh.isValidUser(item)
             return profile.address
         })
 
@@ -1163,7 +1363,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
 
         // Get profile by username
-        const profile = (await this.gosh.isValidProfile([user.name]))[0]
+        const profile = await this.gosh.isValidUser(user)
 
         // TODO: May be better to move this to hook
         // Deploy limited wallet if not a DAO member
@@ -1205,7 +1405,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
 
         // Get profile by username
-        const profile = (await this.gosh.isValidProfile([user.name]))[0]
+        const profile = await this.gosh.isValidUser(user)
 
         // TODO: May be better to move this to hook
         // Deploy limited wallet if not a DAO member
@@ -1242,7 +1442,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError(EGoshError.WALLET_UNDEFINED)
         }
 
-        const profile = (await this.gosh.isValidProfile([user.name]))[0]
+        const profile = await this.gosh.isValidUser(user)
         const wallet = await this.getMemberWallet({ profile: profile.address })
         if (!(await wallet.isDeployed())) {
             await this._createLimitedWallet(profile.address)
@@ -1262,31 +1462,216 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async sendDaoToken(params: TDaoTokenDaoSendParams): Promise<void> {
-        throw new Error('Method is unavailable in current version')
+        const { wallet, profile, amount, comment = '', reviewers = [], cell } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellForSendDaoToken', {
+                wallet,
+                pubaddr: profile,
+                grant: amount,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForSendDaoToken', {
+                wallet,
+                pubaddr: profile,
+                grant: amount,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
     async voteDao(params: TDaoVoteParams): Promise<TDaoVoteResult> {
-        throw new Error('Method is unavailable in current version')
+        const {
+            wallet,
+            platformId,
+            choice,
+            amount,
+            comment = '',
+            reviewers = [],
+            cell,
+        } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellDaoVote', {
+                wallet,
+                platform_id: platformId,
+                choice,
+                amount,
+                num_clients_base: 0,
+                note: '',
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForDaoVote', {
+                wallet,
+                platform_id: platformId,
+                choice,
+                amount,
+                num_clients_base: 0,
+                note: '',
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
     async reviewDao(params: TDaoReviewParams): Promise<TDaoReviewResult> {
-        throw new Error('Method is unavailable in current version')
+        const {
+            wallet,
+            eventAddress,
+            choice,
+            comment = '',
+            reviewers = [],
+            cell,
+        } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellForDaoReview', {
+                wallet,
+                propaddress: eventAddress,
+                isAccept: choice,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForDaoReview', {
+                wallet,
+                propaddress: eventAddress,
+                isAccept: choice,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
     async receiveTaskBountyDao(
         params: TTaskReceiveBountyDaoParams,
     ): Promise<TTaskReceiveBountyDaoResult> {
-        throw new Error('Method is unavailable in current version')
+        const { wallet, repoName, taskName, comment = '', reviewers = [], cell } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellForDaoAskGrant', {
+                wallet,
+                repoName,
+                taskName,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForDaoAskGrant', {
+                wallet,
+                repoName,
+                taskName,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
     async lockDaoToken(params: TDaoTokenDaoLockParams): Promise<TDaoTokenDaoLockResult> {
-        throw new Error('Method is unavailable in current version')
+        const { wallet, isLock, amount, comment = '', reviewers = [], cell } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellForDaoLockVote', {
+                wallet,
+                isLock,
+                grant: amount,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForDaoLockVote', {
+                wallet,
+                isLock,
+                grant: amount,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
-    async transferDaoToken(
-        params: TDaoTokenDaoTransferParams,
-    ): Promise<TDaoTokenDaoTransferResult> {
-        throw new Error('Method is unavailable in current version')
+    async transferDaoToken(params: TDaoTokenDaoTransferParams): Promise<void> {
+        const {
+            walletPrev,
+            walletCurr,
+            amount,
+            versionPrev,
+            comment = '',
+            reviewers = [],
+            cell,
+        } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellDaoTransferTokens', {
+                wallet: walletPrev,
+                newwallet: walletCurr,
+                grant: amount,
+                oldversion: versionPrev,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForDaoTransferTokens', {
+                wallet: walletPrev,
+                newwallet: walletCurr,
+                grant: amount,
+                oldversion: versionPrev,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
     async createTag(params: TDaoTagCreateParams): Promise<TDaoTagCreateResult> {
@@ -1358,91 +1743,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         const { proposals, reviewers = [] } = params
 
         // Prepare cells
-        const cells = await executeByChunk(proposals, 10, async ({ type, params }) => {
-            if (type === ESmvEventType.REPO_CREATE) {
-                return await this.createRepository({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.BRANCH_LOCK) {
-                const repository = await this.getRepository({ name: params.repository })
-                return await repository.lockBranch({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.BRANCH_UNLOCK) {
-                const repository = await this.getRepository({ name: params.repository })
-                return await repository.unlockBranch({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_MEMBER_ADD) {
-                return await this.createMember({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_MEMBER_DELETE) {
-                return await this.deleteMember({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_UPGRADE) {
-                return await this.upgrade({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.TASK_CREATE) {
-                return await this.createTask({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.TASK_DELETE) {
-                return await this.deleteTask({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_TOKEN_VOTING_ADD) {
-                return await this.addVotingTokens({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_TOKEN_REGULAR_ADD) {
-                return await this.addRegularTokens({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_TOKEN_MINT) {
-                return await this.mint({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_TOKEN_MINT_DISABLE) {
-                return await this.disableMint({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_TAG_ADD) {
-                return await this.createTag({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_TAG_REMOVE) {
-                return await this.deleteTag({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_ALLOWANCE_CHANGE) {
-                return await this.updateMemberAllowance({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.REPO_TAG_ADD) {
-                const repository = await this.getRepository({ name: params.repository })
-                return await repository.createTag({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.REPO_TAG_REMOVE) {
-                const repository = await this.getRepository({ name: params.repository })
-                return await repository.deleteTag({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.REPO_UPDATE_DESCRIPTION) {
-                const repository = await this.getRepository({ name: params.repository })
-                return await repository.updateDescription({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_EVENT_ALLOW_DISCUSSION) {
-                return await this.updateEventAllowDiscussion({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_EVENT_HIDE_PROGRESS) {
-                return await this.updateEventShowProgress({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE) {
-                return await this.updateAskMembershipAllowance({ ...params, cell: true })
-            }
-            return null
-        })
-
-        // Compose cells
-        const clean = cells.filter((cell) => typeof cell === 'string')
-        const count = clean.length
-        for (let i = clean.length - 1; i > 0; i--) {
-            const cellA = clean[i - 1]
-            const cellB = clean[i]
-            const { value0 } = await this.wallet.runLocal('AddCell', {
-                data1: cellA,
-                data2: cellB,
-            })
-            clean.splice(i - 1, 2, value0)
-            await sleep(100)
-        }
+        const { cell, count } = await this._createMultiProposalData(proposals)
 
         // Create proposal
         const _reviewers = await this.getReviewers(reviewers)
@@ -1450,7 +1751,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         await smv.validateProposalStart()
         await this.wallet.run('startMultiProposal', {
             number: count,
-            proposals: clean[0],
+            proposals: cell,
             reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: await smv.getClientsCount(),
         })
@@ -1459,7 +1760,28 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     async createMultiProposalAsDao(
         params: TEventMultipleCreateProposalAsDaoParams,
     ): Promise<void> {
-        throw new Error('Method is unavailable in current version')
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
+        const { wallet, proposals, reviewersBase = [], reviewers = [] } = params
+
+        // Prepare cells
+        const { cell, count } = await this._createMultiProposalData(proposals)
+
+        // Create proposal
+        const _reviewers = await this.getReviewers(reviewers)
+        const _reviewersBase = await this.getReviewers(reviewersBase)
+        const smv = await this.getSmv()
+        await smv.validateProposalStart()
+        await this.wallet.run('startMultiProposalAsDao', {
+            wallet,
+            number: count,
+            proposals: cell,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
+            num_clients: await smv.getClientsCount(),
+            reviewers_base: _reviewersBase.map(({ wallet }) => wallet),
+            num_clients_base: 0,
+        })
     }
 
     async createTask(params: TTaskCreateParams): Promise<TTaskCreateResult> {
@@ -1468,6 +1790,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             name,
             config,
             tags = [],
+            candidates,
             comment = '',
             reviewers = [],
             cell,
@@ -1481,13 +1804,25 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             throw new GoshError('Task already exists', { name })
         }
 
-        const tagList = [SYSTEM_TAG, ...tags]
+        const _candidates = candidates
+            ? {
+                  task: _task.address,
+                  commit: candidates.commitAddress,
+                  number_commit: candidates.commitCount,
+                  pubaddrassign: candidates.pubaddrassign,
+                  pubaddrreview: candidates.pubaddrreview,
+                  pubaddrmanager: candidates.pubaddrmanager,
+                  daoMembers: candidates.daoMembers,
+              }
+            : undefined
+        const _tags = [SYSTEM_TAG, ...tags]
         if (cell) {
             const { value0 } = await this.wallet.runLocal('getCellTaskDeploy', {
                 repoName: repository,
                 taskName: name,
                 grant: config,
-                tag: tagList,
+                tag: _tags,
+                workers: _candidates,
                 comment,
             })
             return value0
@@ -1499,7 +1834,8 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
                 repoName: repository,
                 taskName: name,
                 grant: config,
-                tag: tagList,
+                tag: _tags,
+                workers: _candidates,
                 comment,
                 reviewers: _reviewers.map(({ wallet }) => wallet),
                 num_clients: await smv.getClientsCount(),
@@ -1512,11 +1848,19 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         if (!this.wallet) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
-        await this.wallet.run('askGrantToken', {
-            repoName: repository,
-            nametask: name,
-            typegrant: type,
-        })
+
+        if (!!type) {
+            await this.wallet.run('askGrantToken', {
+                repoName: repository,
+                nametask: name,
+                typegrant: type,
+            })
+        } else {
+            await this.wallet.run('askGrantTokenFull', {
+                repoName: repository,
+                nametask: name,
+            })
+        }
     }
 
     async deleteTask(params: TTaskDeleteParams): Promise<TTaskDeleteResult> {
@@ -1548,45 +1892,341 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async transferTask(params: TTaskTransferParams): Promise<TTaskTransferResult> {
-        throw new Error('Method is unavailable in current version')
+        const { accountData, repoName } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const constructorParams = {
+            nametask: accountData._nametask,
+            repoName,
+            ready: accountData._ready,
+            candidates: accountData._candidates.map((item: any) => ({
+                ...item,
+                daoMembers: {},
+            })),
+            grant: { ...accountData._grant, subtask: [] },
+            hashtag: accountData._hashtag,
+            indexFinal: accountData._indexFinal,
+            locktime: accountData._locktime,
+            fullAssign: accountData._fullAssign,
+            fullReview: accountData._fullReview,
+            fullManager: accountData._fullManager,
+            assigners: accountData._assigners,
+            reviewers: accountData._reviewers,
+            managers: accountData._managers,
+            assignfull: accountData._assignfull,
+            reviewfull: accountData._reviewfull,
+            managerfull: accountData._managerfull,
+            assigncomplete: accountData._assigncomplete,
+            reviewcomplete: accountData._reviewcomplete,
+            managercomplete: accountData._managercomplete,
+            allassign: accountData._allassign,
+            allreview: accountData._allreview,
+            allmanager: accountData._allmanager,
+            lastassign: accountData._lastassign,
+            lastreview: accountData._lastreview,
+            lastmanager: accountData._lastmanager,
+            balance: accountData._balance,
+        }
+
+        const { value0: cell } = await this.wallet.runLocal(
+            'getCellForTask',
+            constructorParams,
+        )
+        const { value0 } = await this.wallet.runLocal('getCellForRedeployTask', {
+            reponame: constructorParams.repoName,
+            nametask: constructorParams.nametask,
+            hashtag: constructorParams.hashtag,
+            data: cell,
+            time: null,
+        })
+        return value0
     }
 
     async upgradeTask(params: TTaskUpgradeParams): Promise<TTaskUpgradeResult> {
-        throw new Error('Method is unavailable in current version')
+        const {
+            repoName,
+            taskName,
+            taskPrev,
+            tag,
+            comment = '',
+            reviewers = [],
+            cell,
+        } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellForTaskUpgrade', {
+                reponame: repoName,
+                nametask: taskName,
+                oldversion: taskPrev.version,
+                oldtask: taskPrev.address,
+                hashtag: tag,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForTaskUpgrade', {
+                reponame: repoName,
+                nametask: taskName,
+                oldversion: taskPrev.version,
+                oldtask: taskPrev.address,
+                hashtag: tag,
+                comment: comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
     async upgradeTaskComplete(
         params: TTaskUpgradeCompleteParams,
     ): Promise<TTaskUpgradeCompleteResult> {
-        throw new Error('Method is unavailable in current version')
+        const { cell } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellForRedeployedTask', {
+                time: null,
+            })
+            return value0
+        } else {
+            await this.wallet.run('setRedeployedTask', {})
+        }
     }
 
     async createBigTask(params: TBigTaskCreateParams): Promise<TBigTaskCreateResult> {
-        throw new Error('Method is unavailable in current version')
+        const {
+            repositoryName,
+            name,
+            config,
+            assigners,
+            balance,
+            tags = [],
+            comment = '',
+            reviewers = [],
+            cell,
+        } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const _task = await this._getBigTask({ repositoryName, name })
+        if (await _task.isDeployed()) {
+            throw new GoshError('Task already exists', { name })
+        }
+
+        const _tags = [BIGTASK_TAG, ...tags]
+        const assignersData = { task: _task.address, ...assigners }
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellBigTaskDeploy', {
+                repoName: repositoryName,
+                taskName: name,
+                grant: config,
+                assignersdata: assignersData,
+                freebalance: balance,
+                tag: _tags,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForBigTaskDeploy', {
+                repoName: repositoryName,
+                taskName: name,
+                grant: config,
+                assignersdata: assignersData,
+                freebalance: balance,
+                tag: _tags,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
     async approveBigTask(params: TBigTaskApproveParams): Promise<TBigTaskApproveResult> {
-        throw new Error('Method is unavailable in current version')
+        const { repositoryName, name, comment = '', reviewers = [], cell } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellTaskConfirm', {
+                repoName: repositoryName,
+                taskName: name,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForBigTaskConfirm', {
+                repoName: repositoryName,
+                taskName: name,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
     async deleteBigTask(params: TBigTaskDeleteParams): Promise<TBigTaskDeleteResult> {
-        throw new Error('Method is unavailable in current version')
+        const { repositoryName, name, comment = '', reviewers = [], cell } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellBigTaskDestroy', {
+                repoName: repositoryName,
+                taskName: name,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForBigTaskDestroy', {
+                repoName: repositoryName,
+                taskName: name,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
     async receiveBigTaskBounty(params: TTaskReceiveBountyParams): Promise<void> {
-        throw new Error('Method is unavailable in current version')
+        const { repository, name, type } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (!!type) {
+            await this.wallet.run('askGrantBigToken', {
+                repoName: repository,
+                nametask: name,
+                typegrant: type,
+            })
+        } else {
+            await this.wallet.run('askGrantBigTokenFull', {
+                repoName: repository,
+                nametask: name,
+            })
+        }
     }
 
     async upgradeBigTask(params: TBigTaskUpgradeParams): Promise<TBigTaskUpgradeResult> {
-        throw new Error('Method is unavailable in current version')
+        const {
+            repositoryName,
+            name,
+            prevVersion,
+            prevAddress,
+            tags = [],
+            comment = '',
+            reviewers = [],
+            cell,
+        } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellForBigTaskUpgrade', {
+                reponame: repositoryName,
+                nametask: name,
+                oldversion: prevVersion,
+                oldtask: prevAddress,
+                hashtag: tags,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForBigTaskUpgrade', {
+                reponame: repositoryName,
+                nametask: name,
+                oldversion: prevVersion,
+                oldtask: prevAddress,
+                hashtag: tags,
+                comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
     async createSubTask(params: TSubTaskCreateParams): Promise<void> {
-        throw new Error('Method is unavailable in current version')
+        const {
+            repositoryName,
+            bigtaskName,
+            name,
+            config,
+            balance,
+            tags = [],
+            candidates,
+        } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const _name = `${bigtaskName}:${name}`
+        const _task = await this.getTaskAccount({
+            repository: repositoryName,
+            name: _name,
+        })
+        const _candidates = candidates
+            ? {
+                  task: _task.address,
+                  commit: candidates.commitAddress,
+                  number_commit: candidates.commitCount,
+                  pubaddrassign: candidates.pubaddrassign,
+                  pubaddrreview: candidates.pubaddrreview,
+                  pubaddrmanager: candidates.pubaddrmanager,
+                  daoMembers: candidates.daoMembers,
+              }
+            : undefined
+        const _tags = [SYSTEM_TAG, ...tags]
+        await this.wallet.run('deploySubTask', {
+            namebigtask: bigtaskName,
+            repoName: repositoryName,
+            nametask: _name,
+            hashtag: _tags,
+            workers: _candidates,
+            grant: config,
+            value: balance,
+        })
     }
 
-    async deleteSubTask(params: TSubTaskDeleteParams): Promise<void> {
-        throw new Error('Method is unavailable in current version')
+    async deleteSubTask(params: TSubTaskDeleteParams): Promise<TSubTaskDeleteResult> {
+        const { repositoryName, bigtaskName, index } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        await this.wallet.run('destroySubTask', {
+            repoName: repositoryName,
+            namebigtask: bigtaskName,
+            index,
+        })
     }
 
     async sendEventReview(params: TDaoEventSendReviewParams): Promise<void> {
@@ -1675,35 +2315,153 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     async upgradeVersionController(
         params: TUpgradeVersionControllerParams,
     ): Promise<void> {
-        throw new Error('Method is unavailable in current version')
+        const { code, cell, comment = '', reviewers = [] } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
+
+        const _reviewers = await this.getReviewers(reviewers)
+        const smv = await this.getSmv()
+        await smv.validateProposalStart()
+        await this.wallet.run('startProposalForUpgradeVersionController', {
+            UpgradeCode: code,
+            cell,
+            comment,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
+            num_clients: await smv.getClientsCount(),
+        })
     }
 
     async startPaidMembership(
         params: TDaoStartPaidMembershipParams,
     ): Promise<TDaoStartPaidMembershipResult> {
-        throw new Error('Method is unavailable in current version')
+        const {
+            index,
+            cost,
+            reserve,
+            subscriptionAmount,
+            subscriptionTime,
+            accessKey,
+            details,
+            comment = '',
+            reviewers = [],
+            cell,
+        } = params
+        const programParams = {
+            newProgram: {
+                fiatValue: cost.value,
+                decimals: cost.decimals,
+                paidMembershipValue: reserve,
+                valuePerSubs: subscriptionAmount,
+                timeForSubs: subscriptionTime,
+                accessKey: accessKey,
+                details,
+            },
+            Programindex: index,
+        }
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellStartPaidMembership', {
+                ...programParams,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForStartPaidMembership', {
+                ...programParams,
+                comment: comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
     async stopPaidMembership(
         params: TDaoStopPaidMembershipParams,
     ): Promise<TDaoStopPaidMembershipResult> {
-        throw new Error('Method is unavailable in current version')
+        const { index, comment = '', reviewers = [], cell } = params
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        if (cell) {
+            const { value0 } = await this.wallet.runLocal('getCellStopPaidMembership', {
+                Programindex: index,
+                comment,
+            })
+            return value0
+        } else {
+            const _reviewers = await this.getReviewers(reviewers)
+            const smv = await this.getSmv()
+            await smv.validateProposalStart()
+            await this.wallet.run('startProposalForStopPaidMembership', {
+                Programindex: index,
+                comment: comment,
+                reviewers: _reviewers.map(({ wallet }) => wallet),
+                num_clients: await smv.getClientsCount(),
+            })
+        }
     }
 
     async createCodeCommentThread(
         params: TCodeCommentThreadCreateParams,
     ): Promise<TCodeCommentThreadCreateResult> {
-        throw new Error('Method is unavailable in current version')
+        const { name, content, object, metadata, commit, filename } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const thread = await this._getCodeCommentThread({ createParams: params })
+        if (await thread.isDeployed()) {
+            return thread
+        }
+
+        await this.wallet.run('deployComment', {
+            name,
+            content,
+            object,
+            metadata: JSON.stringify(metadata),
+            commit,
+            nameoffile: filename,
+        })
+        return thread
     }
 
     async resolveCodeCommentThread(
         params: TCodeCommentThreadResdolveParams,
     ): Promise<void> {
-        throw new Error('Method is unavailable in current version')
+        const { address, resolved } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        await this.wallet.run('setResolveTopic', {
+            topic: address,
+            status: resolved,
+        })
     }
 
-    async createCodeComment(params: TCodeCommentCreateParams): Promise<void> {
-        throw new Error('Method is unavailable in current version')
+    async createCodeComment(
+        params: TCodeCommentCreateParams,
+    ): Promise<TCodeCommentCreateResult> {
+        const { threadAddress, message, answerId } = params
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+        return await this.wallet.run('deployMessage', {
+            topic: threadAddress,
+            message,
+            answerId,
+        })
     }
 
     private async _isAuthMember(): Promise<boolean> {
@@ -1723,10 +2481,34 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 
     private async _isMintOn(): Promise<boolean> {
         const { _allowMint } = await this.dao.runLocal('_allowMint', {})
+        if (_allowMint) {
+            return await this._isMintOnPrev()
+        }
         return _allowMint
     }
 
-    private _getMembers(mapping: { [key: string]: { member: TAddress; count: string } }) {
+    private async _isMintOnPrev(): Promise<boolean> {
+        const { value0: prevAddr } = await this.dao.runLocal('getPreviousDaoAddr', {})
+        if (!prevAddr) {
+            return true
+        }
+
+        const prevDao = await this.gosh.getDao({ address: prevAddr, useAuth: false })
+        const { value1: prevVer } = await prevDao.dao.runLocal('getVersion', {})
+        if (prevVer !== '1.0.0') {
+            const { _allowMint } = await prevDao.dao.runLocal('_allowMint', {})
+            return _allowMint
+        }
+        return true
+    }
+
+    private async _isMintOnPrevDiff(): Promise<boolean> {
+        const { _allowMint: cur } = await this.dao.runLocal('_allowMint', {})
+        const prev = await this._isMintOnPrev()
+        return cur === true && prev === false
+    }
+
+    private _getMembers(mapping: any) {
         const members = []
         for (const key in mapping) {
             const profile = `0:${key.slice(2)}`
@@ -1734,6 +2516,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
                 profile,
                 wallet: mapping[key].member,
                 allowance: parseInt(mapping[key].count),
+                expired: parseInt(mapping[key].expired),
             })
         }
         return members
@@ -1791,6 +2574,29 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         return new GoshTask(this.client, value0)
     }
 
+    private async _getBigTask(options: {
+        address?: TAddress
+        repositoryName?: string
+        name?: string
+    }): Promise<IGoshBigTask> {
+        const { repositoryName, name, address } = options
+
+        if (address) {
+            return new GoshBigTask(this.client, address)
+        }
+        if (!repositoryName || !name) {
+            throw new GoshError(
+                'Either task address or repository and task name should be provided',
+            )
+        }
+        const { value0 } = await this.gosh.gosh.runLocal('getBigTaskAddr', {
+            dao: await this.getName(),
+            repoName: repositoryName,
+            nametask: name,
+        })
+        return new GoshTask(this.client, value0)
+    }
+
     private async _getTopic(params: { address?: TAddress }): Promise<IGoshTopic> {
         const { address } = params
         if (address) {
@@ -1799,26 +2605,69 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         throw new GoshError('Topic address should be provided')
     }
 
-    private async _getSystemRepository(): Promise<
-        IGoshRepositoryAdapter | null | undefined
-    > {
+    private async _getCodeCommentThread(params: {
+        address?: string
+        createParams?: TCodeCommentThreadCreateParams
+    }) {
+        const { address, createParams } = params
+        if (address) {
+            return new GoshTopic(this.client, address)
+        }
+
+        if (!createParams) {
+            throw new GoshError(
+                'Params error',
+                'Either `address` or create params should be provided',
+            )
+        }
+        const { value0 } = await this.gosh.gosh.runLocal('getCommentAddr', {
+            ...createParams,
+            dao: this.getAddress(),
+            metadata: JSON.stringify(createParams.metadata),
+            nameoffile: createParams.filename,
+        })
+        return new GoshTopic(this.client, value0)
+    }
+
+    private async _getSystemRepository(
+        version?: string,
+    ): Promise<IGoshRepositoryAdapter | null | undefined> {
+        version = version ?? this.getVersion()
+
+        if (this.systemRepository && this.systemRepository.getVersion() !== version) {
+            const daoName = await this.getName()
+            const adapter = await GoshAdapterFactory.create(version).getRepository({
+                path: `${daoName}/_index`,
+            })
+            if (await adapter.isDeployed()) {
+                this.systemRepository = adapter
+            }
+        }
+
         if (!this.systemRepository) {
-            const repo = await this.getRepository({ name: '_index' })
-            if (await repo.isDeployed()) {
-                this.systemRepository = repo
+            const adapter = await this.getRepository({ name: '_index' })
+            if (await adapter.isDeployed()) {
+                this.systemRepository = adapter
             }
         }
         return this.systemRepository
     }
 
     private async _getSystemBlob(filename: string): Promise<string | null> {
-        const repository = await this._getSystemRepository()
+        let repository = await this._getSystemRepository()
         if (!repository) {
             return null
         }
 
         const branch = await repository.getBranch('main')
-        const tree = await repository.getTree(branch.commit.name, '')
+        if (branch.commit.version !== repository.getVersion()) {
+            repository = await this._getSystemRepository(branch.commit.version)
+            if (!repository) {
+                return null
+            }
+        }
+
+        const tree = await repository.getTree(branch.commit, '')
         const item = tree.items.find((it) => {
             return it.type === 'blob' && it.name.toLowerCase() === filename
         })
@@ -1848,7 +2697,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
 
         await this.dao.run('deployWalletsOutMember', {
-            pubmem: [{ member: profile, count: 0 }],
+            pubmem: [{ member: profile, count: 0, expired: 0 }],
             index: 0,
         })
         const wait = await whileFinite(async () => {
@@ -1880,6 +2729,149 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
                 throw new GoshError('Regular tokens topup failed')
             }
         }
+    }
+
+    private async _createMultiProposalData(
+        proposals: TEventMultipleCreateProposalParams['proposals'],
+    ) {
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
+
+        // Prepare cells
+        const cells = await executeByChunk(proposals, 10, async ({ type, params }) => {
+            if (type === ESmvEventType.REPO_CREATE) {
+                return await this.createRepository({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.BRANCH_LOCK) {
+                const repository = await this.getRepository({ name: params.repository })
+                return await repository.lockBranch({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.BRANCH_UNLOCK) {
+                const repository = await this.getRepository({ name: params.repository })
+                return await repository.unlockBranch({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_MEMBER_ADD) {
+                return await this.createMember({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_MEMBER_DELETE) {
+                return await this.deleteMember({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_UPGRADE) {
+                return await this.upgrade({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.TASK_CREATE) {
+                return await this.createTask({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.TASK_DELETE) {
+                return await this.deleteTask({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_TOKEN_VOTING_ADD) {
+                return await this.addVotingTokens({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_TOKEN_REGULAR_ADD) {
+                return await this.addRegularTokens({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_TOKEN_MINT) {
+                return await this.mint({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_TOKEN_MINT_DISABLE) {
+                return await this.disableMint({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_TAG_ADD) {
+                return await this.createTag({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_TAG_REMOVE) {
+                return await this.deleteTag({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_ALLOWANCE_CHANGE) {
+                return await this.updateMemberAllowance({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.REPO_TAG_ADD) {
+                const repository = await this.getRepository({ name: params.repository })
+                return await repository.createTag({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.REPO_TAG_REMOVE) {
+                const repository = await this.getRepository({ name: params.repository })
+                return await repository.deleteTag({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.REPO_UPDATE_DESCRIPTION) {
+                const repository = await this.getRepository({ name: params.repository })
+                return await repository.updateDescription({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_EVENT_ALLOW_DISCUSSION) {
+                return await this.updateEventAllowDiscussion({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_EVENT_HIDE_PROGRESS) {
+                return await this.updateEventShowProgress({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE) {
+                return await this.updateAskMembershipAllowance({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DELAY) {
+                const { value0 } = await this.wallet!.runLocal('getCellDelay', {})
+                return value0
+            }
+            if (type === ESmvEventType.TASK_REDEPLOY) {
+                return await this.transferTask(params)
+            }
+            if (type === ESmvEventType.TASK_REDEPLOYED) {
+                return await this.upgradeTaskComplete({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_VOTE) {
+                return await this.voteDao({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_TOKEN_DAO_SEND) {
+                return await this.sendDaoToken({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_REVIEWER) {
+                return await this.reviewDao({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_RECEIVE_BOUNTY) {
+                return await this.receiveTaskBountyDao({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_TOKEN_DAO_LOCK) {
+                return await this.lockDaoToken({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.TASK_UPGRADE) {
+                return await this.upgradeTask({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_START_PAID_MEMBERSHIP) {
+                return await this.startPaidMembership({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.DAO_STOP_PAID_MEMBERSHIP) {
+                return await this.stopPaidMembership({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.BIGTASK_CREATE) {
+                return await this.createBigTask({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.BIGTASK_APPROVE) {
+                return await this.approveBigTask({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.BIGTASK_DELETE) {
+                return await this.deleteBigTask({ ...params, cell: true })
+            }
+            if (type === ESmvEventType.BIGTASK_UPGRADE) {
+                return await this.upgradeBigTask({ ...params, cell: true })
+            }
+            return null
+        })
+
+        // Compose cells
+        const clean = cells.filter((cell) => typeof cell === 'string')
+        const count = clean.length
+        for (let i = clean.length - 1; i > 0; i--) {
+            const cellA = clean[i - 1]
+            const cellB = clean[i]
+            const { value0 } = await this.wallet.runLocal('AddCell', {
+                data1: cellA,
+                data2: cellB,
+            })
+            clean.splice(i - 1, 2, value0)
+            await sleep(100)
+        }
+
+        return { cell: clean[0], count }
     }
 }
 
@@ -1975,7 +2967,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
             for (let i = 0; i < trees.length; i++) {
                 const subtree = trees[i]
-                const subtreeItems = await this._getTreeItems({ name: subtree.sha1 })
+                const subtreeItems = await this._getTreeItems({
+                    sha256: subtree.tvmshatree,
+                })
                 const subtreePath = `${path ? `${path}/` : ''}${subtree.name}`
 
                 subtreeItems.forEach((item) => (item.path = subtreePath))
@@ -1992,7 +2986,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         let items: TTreeItem[] = []
         if (commit.name !== ZERO_COMMIT) {
-            items = await this._getTreeItems({ name: commit.tree })
+            items = await this._getTreeItems({ address: commit.treeaddr })
         }
         if (search !== '') {
             await recursive('', items)
@@ -2017,30 +3011,44 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             onchain: { commit: string; content: string }
             content: string | Buffer
             ipfs: boolean
+            isReady: boolean
+            isPin: boolean
         } = {
             onchain: { commit: '', content: '' },
             content: '',
             ipfs: false,
+            isReady: false,
+            isPin: false,
         }
 
         const { commit, ...rest } = options
         const snapshot = await this._getSnapshot(rest)
         const data = await snapshot.runLocal('getSnapshot', {})
-        const { value0, value1, value2, value3, value4, value5, value6 } = data
+        const {
+            temporaryCommit,
+            temporarySnapData,
+            temporaryIpfs,
+            approvedCommit,
+            approvedSnapData,
+            approvedIpfs,
+            baseCommit,
+            isSnapReady,
+            isPin,
+        } = data
 
         const name = options.fullpath || (await snapshot.getName())
-        const branch = name.split('/')[0]
-        const commitName = commit || (await this.getBranch(branch)).commit.name
+        const commitName = commit || name.split('/')[0]
 
-        const patched = value0 === commitName ? value1 : value4
-        const ipfscid = value0 === commitName ? value2 : value5
+        const patched =
+            temporaryCommit === commitName ? temporarySnapData : approvedSnapData
+        const ipfscid = temporaryCommit === commitName ? temporaryIpfs : approvedIpfs
 
         // Read onchain snapshot content
         if (patched) {
             const compressed = Buffer.from(patched, 'hex').toString('base64')
             const content = await zstd.decompress(compressed, true)
             result.onchain = {
-                commit: value0 === commitName ? value0 : value3,
+                commit: temporaryCommit === commitName ? temporaryCommit : approvedCommit,
                 content: content,
             }
             result.content = content
@@ -2052,10 +3060,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             const compressed = (await goshipfs.read(ipfscid)).toString()
             const decompressed = await zstd.decompress(compressed, false)
             const buffer = Buffer.from(decompressed, 'base64')
-            result.onchain = { commit: value6, content: result.content as string }
+            result.onchain = { commit: baseCommit, content: result.content as string }
             result.content = isUtf8(buffer) ? buffer.toString() : buffer
             result.ipfs = true
         }
+
+        result.isReady = isSnapReady
+        result.isPin = isPin
 
         return { ...result, address: snapshot.address }
     }
@@ -2063,7 +3074,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     async getCommit(options: { name?: string; address?: TAddress }): Promise<TCommit> {
         const commit = await this._getCommit(options)
         const details = await commit.runLocal('getCommit', {})
-        const { branch, sha, parents, content, initupgrade } = details
+        const { value0: treeaddr } = await commit.runLocal('gettree', {})
+        const { time, branch, sha, parents, content, initupgrade } = details
 
         // Parse content
         const splitted = (content as string).split('\n')
@@ -2110,6 +3122,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             parents: _parents,
             version: commit.version,
             initupgrade,
+            time: time && parseInt(time),
+            treeaddr,
         }
     }
 
@@ -2135,37 +3149,96 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Get snapshot and read all incoming internal messages
         const snapshot = await this._getSnapshot({ address })
-        const { messages } = await snapshot.getMessages(
-            { msgType: ['IntIn'] },
-            true,
-            true,
-        )
+        const data: {
+            address: string
+            previous: string | Buffer
+            current: string | Buffer
+        } = { address, previous: '', current: '' }
 
-        // Collect approved diff messages
-        const approved = messages
-            .filter(({ decoded }) => {
-                if (!decoded) return false
-                return ['approve', 'constructor'].indexOf(decoded.name) >= 0
-            })
-            .map(({ decoded }) => {
-                const { name, value } = decoded
-                if (name === 'approve') return value.diff
-                return {
-                    commit: value.commit,
-                    patch: value.data || false,
-                    ipfs: value.ipfsdata,
+        // If snapshot is deleted, read all messages before constructor found.
+        // Patches should be applied in straight order (from constructor to commit)
+        if (!(await snapshot.isDeployed())) {
+            const patches: any[] = []
+            let cursor: string | undefined
+            let stop = false
+            while (true) {
+                const result = await getMessages(
+                    { address, msgType: ['IntIn'], cursor },
+                    (<any>ABI)[this.getVersion()]['snapshot'],
+                )
+
+                const approved = result.messages.filter(({ decoded }) => {
+                    if (!decoded) return false
+                    return ['approve', 'constructor'].indexOf(decoded.name) >= 0
+                })
+                for (const { decoded } of approved) {
+                    const { name, value } = decoded
+                    if (name === 'approve') {
+                        patches.push(value.diff)
+                    } else {
+                        patches.push({
+                            commit: value.commit,
+                            patch: value.data || false,
+                            ipfs: value.ipfsdata,
+                        })
+                        stop = true
+                        break
+                    }
                 }
-            })
 
-        // Restore blob at commit and parent commit
-        const { content } = await this.getBlob({ commit: commit.name, address })
-        const current = await this._getCommitBlob(commit, treepath, content, approved)
-        const previous =
-            parent.name === ZERO_COMMIT
-                ? ''
-                : await this._getCommitBlob(parent, treepath, content, approved)
+                cursor = result.cursor
+                if (!result.hasNext || stop) {
+                    break
+                }
+            }
 
-        return { address: snapshot.address, previous, current }
+            const args: [string, string | Buffer, any[], boolean] = [
+                treepath,
+                '',
+                patches.reverse(),
+                false,
+            ]
+            data.current = await this._getCommitBlob(commit, ...args)
+            data.previous =
+                parent.name === ZERO_COMMIT
+                    ? ''
+                    : await this._getCommitBlob(parent, ...args)
+        } else {
+            // If snapshot exists read all messages to snapshot
+            // TODO: Do not read all messages, should read by chunks
+            // Patches should be applied in backward order (from latest state to commit)
+            const { messages } = await snapshot.getMessages(
+                { msgType: ['IntIn'] },
+                true,
+                true,
+            )
+
+            // Collect approved diff messages
+            const approved = messages
+                .filter(({ decoded }) => {
+                    if (!decoded) return false
+                    return ['approve', 'constructor'].indexOf(decoded.name) >= 0
+                })
+                .map(({ decoded }) => {
+                    const { name, value } = decoded
+                    if (name === 'approve') return value.diff
+                    return {
+                        commit: value.commit,
+                        patch: value.data || false,
+                        ipfs: value.ipfsdata,
+                    }
+                })
+
+            // Restore blob at commit and parent commit
+            const { content } = await this.getBlob({ commit: commit.name, address })
+            data.current = await this._getCommitBlob(commit, treepath, content, approved)
+            data.previous =
+                parent.name === ZERO_COMMIT
+                    ? ''
+                    : await this._getCommitBlob(parent, treepath, content, approved)
+        }
+
+        return data
     }
 
     async getCommitBlobs(
@@ -2178,24 +3251,20 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             : await this._getCommit({ address: commit.address })
 
         const { messages } = await object.getMessages({ msgType: ['IntIn'] }, true, true)
-        const addresses = messages
+        return messages
             .filter(({ decoded }) => {
-                if (!decoded) return false
+                if (!decoded) {
+                    return false
+                }
 
                 const { name, value } = decoded
-                return name === 'getAcceptedDiff' && value.branch === branch
+                // return name === 'getAcceptedDiff' && value.branch === branch
+                return name === 'getAcceptedDiff'
             })
-            .map(({ decoded }) => decoded.value.value0.snap)
-
-        return await executeByChunk<TAddress, { address: string; treepath: string }>(
-            Array.from(new Set(addresses)),
-            MAX_PARALLEL_READ,
-            async (address) => {
-                const snapshot = await this._getSnapshot({ address })
-                const name = await snapshot.getName()
-                return { address, treepath: name.split('/').slice(1).join('/') }
-            },
-        )
+            .map(({ decoded }) => ({
+                address: decoded.value.value0.snap,
+                treepath: decoded.value.value0.nameSnap,
+            }))
     }
 
     async getPullRequestBlob(
@@ -2238,14 +3307,18 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     async getPullRequestBlobs(
         commit: string | TCommit,
     ): Promise<{ address: string; treepath: string; index: number }[]> {
-        if (typeof commit === 'string') commit = await this.getCommit({ name: commit })
+        if (typeof commit === 'string') {
+            commit = await this.getCommit({ name: commit })
+        }
 
         // Get IGoshDiff instance list for commit
         const diffs: IGoshDiff[] = []
         let index1 = 0
         while (true) {
             const diff = await this._getDiff(commit.name, index1, 0)
-            if (!(await diff.isDeployed())) break
+            if (!(await diff.isDeployed())) {
+                break
+            }
 
             diffs.push(diff)
             index1++
@@ -2268,8 +3341,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         >(diffs, MAX_PARALLEL_READ, async (diff, index) => {
             const subdiffs = await this._getDiffs(diff)
             const snapshot = await this._getSnapshot({ address: subdiffs[0].snap })
-            const name = await snapshot.getName()
-            const treepath = name.split('/').slice(1).join('/')
+            const treepath = await snapshot.getName()
             return { address: snapshot.address, treepath, index }
         })
     }
@@ -2369,7 +3441,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Get non-zero commit data
         const { tree, items } = await this.getTree(object)
-        const blobs = await this._getTreeBlobs(items, object.branch, commit)
+        const blobs = await this._getTreeBlobs(items, commit)
         return {
             commit: {
                 ...object,
@@ -2501,39 +3573,18 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         from: string,
         callback?: ITBranchOperateCallback,
     ): Promise<void> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
 
         const cb: ITBranchOperateCallback = (params) => callback && callback(params)
 
         // Get branch details and check name
         const fromBranch = await this.getBranch(from)
-        if (fromBranch.name === name) return
-
-        // Get `from` branch tree items and collect all blobs
-        const { items } = await this.getTree(fromBranch.commit)
-        const blobs = await this._getTreeBlobs(
-            items,
-            fromBranch.name,
-            fromBranch.commit.name,
-        )
-        cb({
-            snapshotsRead: true,
-            snapshotsWrite: { count: 0, total: blobs.length },
-        })
-
-        // Deploy snapshots
-        let counter = 0
-        await this._runMultiwallet(blobs, async (wallet, { treepath, content }) => {
-            await this._deploySnapshot(
-                name,
-                fromBranch.commit.name,
-                treepath,
-                content,
-                wallet,
-                true,
-            )
-            cb({ snapshotsWrite: { count: ++counter } })
-        })
+        if (fromBranch.name === name) {
+            return
+        }
+        cb({ snapshotsRead: true, snapshotsWrite: { count: 0, total: 0 } })
 
         // Deploy new branch
         await this.auth.wallet0.run('deployBranch', {
@@ -2550,7 +3601,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     async deleteBranch(name: string, callback?: ITBranchOperateCallback): Promise<void> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
 
         const cb: ITBranchOperateCallback = (params) => callback && callback(params)
 
@@ -2578,31 +3631,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             throw new GoshError('Delete branch timeout reached')
         }
 
-        // Get all snapshots from branch and delete
-        const snapCode = await this.repo.runLocal(
-            'getSnapCode',
-            { branch: name },
-            undefined,
-            { useCachedBoc: true },
-        )
-        const snapCodeHash = await this.client.boc.get_boc_hash({ boc: snapCode.value0 })
-        const accounts = await getAllAccounts({
-            filters: [`code_hash: {eq:"${snapCodeHash.hash}"}`],
-        })
         cb({
             snapshotsRead: true,
-            snapshotsWrite: { count: 0, total: accounts.length },
+            snapshotsWrite: { count: 0, total: 0 },
         })
-
-        let counter = 0
-        await this._runMultiwallet(
-            accounts.map((account) => account.id),
-            async (wallet, address) => {
-                await wallet.run('deleteSnapshot', { snap: address })
-                cb({ snapshotsWrite: { count: ++counter } })
-            },
-        )
-
         cb({ completed: true })
     }
 
@@ -2725,16 +3757,16 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         // Generate blobs push data array
         const blobsData = (
             await executeByChunk(blobs, MAX_PARALLEL_READ, async (blob) => {
-                return await this._getBlobPushData(items, branch, blob)
+                return await this._getBlobPushData(items, blob)
             })
         ).flat()
 
-        // Get updated tree
-        const updatedTree = await this._getTreePushData(items, blobsData)
+        // Get updated tree (part 1: calculate correct sha1 and icorrect sha256)
+        const updatedTree0 = await this._getTreePushData(items, blobsData)
         cb({
             isUpgrade: false,
             treesBuild: true,
-            treesDeploy: { count: 0, total: updatedTree.updated.length },
+            treesDeploy: { count: 0, total: updatedTree0.updated.length },
             snapsDeploy: { count: 0, total: blobsData.length },
             diffsDeploy: { count: 0, total: blobsData.length },
             tagsDeploy: { count: 0, total: taglist.length },
@@ -2745,17 +3777,77 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         // Generate commit data
         const { commitHash, commitContent, commitParents } = await this._generateCommit(
             branchTo,
-            updatedTree.hash,
+            updatedTree0.sha1,
             message,
             branchParent,
         )
 
-        // Deploy snapshots
-        let snapCounter = 0
-        await this._runMultiwallet(blobsData, async (wallet, { data }) => {
-            await this._deploySnapshot(branch, '', data.treepath, undefined, wallet)
-            cb({ snapsDeploy: { count: ++snapCounter } })
-        })
+        // Update tree items with commit, update blob items with address
+        for (const key of Object.keys(updatedTree0.tree)) {
+            for (const treeitem of updatedTree0.tree[key]) {
+                const isBlob = ['blob', 'blobExecutable'].indexOf(treeitem.type) >= 0
+                if (!isBlob) {
+                    treeitem.commit = ''
+                    continue
+                }
+
+                // Search for path in updated blobs (we need updated blobs in current commit)
+                const path = getTreeItemFullPath(treeitem)
+                const index = blobsData.findIndex((item) => item.data.treepath === path)
+                if (index < 0) {
+                    continue
+                }
+
+                const blob = blobsData[index].data
+                if (blob.treeitem) {
+                    console.debug('Blob exists')
+                    const snapshot = await this.getBlob({
+                        fullpath: `${blob.treeitem.commit}/${path}`,
+                    })
+                    const commit = await this.getCommit({ name: snapshot.onchain.commit })
+
+                    if ((commit.time ?? 0) > (branchTo.commit.time ?? 0)) {
+                        console.debug('Deploy new snapshot with content')
+                        treeitem.commit = commitHash
+                        blob.patch = ''
+                        blob.commitname = commitHash
+                    } else {
+                        console.debug('Update snapshot with patch')
+                        treeitem.commit = blob.treeitem.commit
+                        blob.content = undefined
+                        blob.commitname = blob.treeitem.commit
+                    }
+                } else {
+                    console.debug('Blob does not exist')
+                    treeitem.commit = commitHash
+                    blob.snapshot = await this._getSnapshotAddress(commitHash, path)
+                    blob.content = undefined
+                    blob.commitname = commitHash
+                }
+
+                blobsData[index].data = blob
+            }
+        }
+
+        // Get updated tree (part 2: calculate correct sha256)
+        const _tree = await this._updateSubtreesHash(updatedTree0.tree)
+        const updatedTree = {
+            tree: _tree,
+            updated: updatedTree0.updated,
+            sha1: updatedTree0.sha1,
+            sha256: await this._getTreeSha256({ items: _tree[''] }),
+        }
+
+        // Deploy commit
+        await this._deployCommit(
+            branch,
+            commitHash,
+            commitContent,
+            commitParents,
+            updatedTree.sha256,
+            false,
+        )
+        cb({ commitDeploy: true })
 
         // Deploy trees
         let treeCounter = 0
@@ -2764,10 +3856,24 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             cb({ treesDeploy: { count: ++treeCounter } })
         })
 
+        // Deploy snapshots
+        let snapCounter = 0
+        await this._runMultiwallet(blobsData, async (wallet, { data }) => {
+            await this._deploySnapshot(
+                data.commitname!,
+                data.treepath,
+                data.content,
+                wallet,
+            )
+            cb({ snapsDeploy: { count: ++snapCounter } })
+        })
+
         // Deploy diffs
         let diffCounter = 0
         await this._runMultiwallet(blobsData, async (wallet, { data }, index) => {
-            await this._deployDiff(branch, commitHash, data, index, wallet)
+            if (data.patch) {
+                await this._deployDiff(branch, commitHash, data, index, wallet)
+            }
             cb({ diffsDeploy: { count: ++diffCounter } })
         })
 
@@ -2783,20 +3889,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             cb({ tagsDeploy: { count: ++tagsCounter } })
         })
 
-        // Deploy commit
-        await this._deployCommit(
-            branch,
-            commitHash,
-            commitContent,
-            commitParents,
-            updatedTree.hash,
-            false,
-        )
-        cb({ commitDeploy: true })
-
         // Set commit or start PR proposal
+        const patched = blobsData.filter(({ data }) => !!data.patch)
         if (!isPullRequest) {
-            await this._setCommit(branch, commitHash, blobsData.length, false, task)
+            await this._setCommit(branch, commitHash, patched.length, false, task)
             const wait = await whileFinite(async () => {
                 const check = await this.getBranch(branch)
                 return check.commit.address !== branchTo.commit.address
@@ -2806,7 +3902,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             await this._startProposalForSetCommit(
                 branch,
                 commitHash,
-                blobsData.length,
+                patched.length,
                 message,
                 task,
             )
@@ -2833,12 +3929,21 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             completed: undefined,
         })
 
-        // Deploy trees
-        let treeCounter = 0
-        await this._runMultiwallet(Object.keys(tree), async (wallet, path) => {
-            await this._deployTree(tree[path], wallet)
-            cb({ treesDeploy: { count: ++treeCounter } })
-        })
+        // Update blobs tree items with commit
+        for (const key of Object.keys(tree)) {
+            for (const treeitem of tree[key]) {
+                const isBlob = ['blob', 'blobExecutable'].indexOf(treeitem.type) >= 0
+
+                treeitem.commit = ''
+                treeitem.gitsha = treeitem.sha1
+                if (isBlob) {
+                    treeitem.tvmshafile = treeitem.sha256
+                    treeitem.commit = commit.name
+                }
+            }
+        }
+        const _tree = await this._updateSubtreesHash(tree)
+        const _sha256 = await this._getTreeSha256({ items: _tree[''] || [] })
 
         // Deploy commit
         await this._deployCommit(
@@ -2846,21 +3951,22 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             commit.name,
             commit.content,
             commit.parents,
-            commit.tree,
+            _sha256,
             true,
         )
         cb({ commitDeploy: true })
 
+        // Deploy trees
+        let treeCounter = 0
+        await this._runMultiwallet(Object.keys(_tree), async (wallet, path) => {
+            await this._deployTree(_tree[path], wallet)
+            cb({ treesDeploy: { count: ++treeCounter } })
+        })
+
         // Deploy snapshots
         let snapCounter = 0
         await this._runMultiwallet(blobs, async (wallet, { treepath, content }) => {
-            await this._deploySnapshot(
-                commit.branch,
-                commit.name,
-                treepath,
-                content,
-                wallet,
-            )
+            await this._deploySnapshot(commit.name, treepath, content, wallet)
             cb({ snapsDeploy: { count: ++snapCounter } })
         })
 
@@ -3023,7 +4129,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
         const { value0 } = await this.auth.wallet0.runLocal('getTaskAddr', {
-            repoName: await this.getName(),
+            reponame: await this.getName(),
             nametask: name,
         })
         return new GoshTask(this.client, value0)
@@ -3051,14 +4157,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (!fullpath) {
             throw new GoshError('Blob name is undefined')
         }
-        const [branch, ...path] = fullpath.split('/')
-        const addr = await this._getSnapshotAddress(branch, path.join('/'))
+        const [commit, ...path] = fullpath.split('/')
+        const addr = await this._getSnapshotAddress(commit, path.join('/'))
         return new GoshSnapshot(this.client, addr)
     }
 
     private async _getBlobPushData(
         tree: TTreeItem[],
-        branch: string,
         blob: {
             treepath: string[]
             original: string | Buffer
@@ -3104,11 +4209,22 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             }
 
             const isGoingIpfs = (flagsModified & EBlobFlag.IPFS) === EBlobFlag.IPFS
-            const hashes: { sha1: string; sha256: string } = {
-                sha1: sha1(modified, treeitem?.type || 'blob', 'sha1'),
-                sha256: isGoingIpfs
-                    ? sha256(modified, true)
-                    : await this.gosh.getTvmHash(modified),
+            const _sha1 = sha1(modified, treeitem?.type || 'blob', 'sha1')
+            const _sha256 = isGoingIpfs
+                ? sha256(modified, true)
+                : await this.gosh.getTvmHash(modified)
+            const hashes: {
+                sha1: string
+                gitsha: string
+                sha256: string
+                tvmshafile: string
+                tvmshatree?: string
+            } = {
+                sha1: _sha1,
+                gitsha: _sha1,
+                sha256: _sha256,
+                tvmshafile: _sha256,
+                tvmshatree: undefined,
             }
 
             if (isGoingIpfs && !isOriginalIpfs) {
@@ -3116,16 +4232,22 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 patch = Buffer.from(patch, 'base64').toString('hex')
             }
 
+            let address = ''
+            if (treeitem) {
+                address = await this._getSnapshotAddress(treeitem.commit!, path)
+            }
             return {
-                snapshot: await this._getSnapshotAddress(branch, path),
+                snapshot: address,
                 treepath: path,
                 treeitem,
                 compressed,
+                content: modified,
                 patch,
                 flags: flagsModified,
                 hashes,
                 isGoingIpfs,
                 isGoingOnchain,
+                commitname: treeitem?.commit,
             }
         }
 
@@ -3141,7 +4263,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
 
         // Test cases (add, delete, update, rename)
-        if (!aPath && !bPath) throw new GoshError('Blob has no tree path')
+        if (!aPath && !bPath) {
+            throw new GoshError('Blob has no tree path')
+        }
         if (!aPath && bPath) {
             if (bItem) {
                 throw new GoshError(EGoshError.FILE_EXISTS, { path: bPath })
@@ -3192,7 +4316,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     private async _getTreePushData(
         treeitems: TTreeItem[],
         blobsData: TPushBlobData[],
-    ): Promise<{ tree: TTree; updated: string[]; hash: string }> {
+    ): Promise<{ tree: TTree; updated: string[]; sha1: string; sha256: string }> {
         const items = [...treeitems]
 
         // Add/update/delete tree items according to changed blobs data
@@ -3238,10 +4362,50 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         // Update tree items' hashes and calculate root tree hash
-        const updatedTree = this._updateSubtreesHash(cleanedTree)
-        const updatedTreeHash = sha1Tree(updatedTree[''], 'sha1')
+        const updatedTree = await this._updateSubtreesHash(cleanedTree)
+        const sha1 = sha1Tree(updatedTree[''], 'sha1')
+        const sha256 = await this._getTreeSha256({ items: updatedTree[''] })
 
-        return { tree: updatedTree, updated: updatedTrees, hash: updatedTreeHash }
+        return { tree: updatedTree, updated: updatedTrees, sha1, sha256 }
+    }
+
+    private async _getTreeItemsMapping(items: TTreeItem[]) {
+        const mapping: { [key: string]: any } = {}
+        await Promise.all(
+            items
+                // @ts-ignore
+                .sort((a, b) => (a.name > b.name) - (a.name < b.name))
+                .map(async (item) => {
+                    const key = await this.gosh.getTvmHash(`${item.type}:${item.name}`)
+                    mapping[key] = {
+                        flags: item.flags.toString(),
+                        mode: item.mode,
+                        typeObj: item.type,
+                        name: item.name,
+                        gitsha: item.gitsha,
+                        tvmshatree: item.tvmshatree || undefined,
+                        tvmshafile: item.tvmshafile || undefined,
+                        commit: item.commit,
+                    }
+                }),
+        )
+        return mapping
+    }
+
+    private async _getTreeSha256(params: { mapping?: any; items?: TTreeItem[] }) {
+        if (!this.auth?.wallet0) {
+            throw new GoshError('Wallet undefined')
+        }
+        if (!params.mapping && !params.items) {
+            throw new GoshError('Map or item should be provided')
+        }
+
+        // Generate and clean mapping
+        const mapping = params.mapping || (await this._getTreeItemsMapping(params.items!))
+        const { value0 } = await this.auth.wallet0.runLocal('calculateInnerTreeHash', {
+            _tree: mapping,
+        })
+        return value0
     }
 
     private async _getCommitBlob(
@@ -3249,6 +4413,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         treepath: string,
         content: string | Buffer,
         messages: any[],
+        reversePatch: boolean = true,
     ): Promise<string | Buffer> {
         // Get commit tree items filtered by blob tree path,
         // find resulting blob sha1 after commit was applied
@@ -3264,7 +4429,11 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             if (stop) break
             if (!diff.commit && !diff.patch && !diff.ipfs) {
                 restored = ''
-                break
+                if (reversePatch) {
+                    break
+                } else {
+                    continue
+                }
             }
             if (diff.ipfs && diff.sha1 !== sha1) continue
             if (diff.removeIpfs) {
@@ -3276,11 +4445,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 restored = await zstd.decompress(compressed, true)
             }
             if (diff.sha1 === sha1) {
-                if (!diff.ipfs && diff.patch) break
+                if (!diff.ipfs && diff.patch && reversePatch) {
+                    break
+                }
                 stop = true
             }
 
-            restored = await this._applyBlobDiffPatch(restored, diff, true)
+            restored = await this._applyBlobDiffPatch(restored, diff, reversePatch)
         }
         return restored
     }
@@ -3308,16 +4479,20 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     private async _getTree(options: {
-        name?: string
+        sha256?: string
         address?: TAddress
     }): Promise<IGoshTree> {
-        const { address, name } = options
-        if (address) return new GoshTree(this.client, address)
+        const { address, sha256 } = options
+        if (address) {
+            return new GoshTree(this.client, address)
+        }
 
-        if (!name) throw new GoshError('Tree name is undefined')
+        if (!sha256) {
+            throw new GoshError('Tree sha256 is undefined')
+        }
         const { value0 } = await this.repo.runLocal(
             'getTreeAddr',
-            { treeName: name },
+            { shainnertree: sha256 },
             undefined,
             { useCachedBoc: true },
         )
@@ -3325,7 +4500,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     private async _getTreeItems(options: {
-        name?: string
+        sha256?: string
         address?: TAddress
     }): Promise<TTreeItem[]> {
         const tree = await this._getTree(options)
@@ -3334,24 +4509,27 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             flags: +item.flags,
             mode: item.mode,
             type: item.typeObj,
-            sha1: item.sha1,
-            sha256: item.sha256,
+            sha1: item.gitsha,
+            sha256: item.tvmshatree || item.tvmshafile,
+            gitsha: item.gitsha,
+            tvmshatree: item.tvmshatree,
+            tvmshafile: item.tvmshafile,
             path: '',
             name: item.name,
+            commit: item.commit,
         }))
     }
 
     private async _getTreeBlobs(
         items: TTreeItem[],
-        branch: string,
-        commit?: string,
+        commit: string,
     ): Promise<{ address: string; treepath: string; content: string | Buffer }[]> {
         const filtered = items.filter(
             (item) => ['blob', 'blobExecutable'].indexOf(item.type) >= 0,
         )
         return await executeByChunk(filtered, MAX_PARALLEL_READ, async (item) => {
             const treepath = getTreeItemFullPath(item)
-            const fullpath = `${branch}/${treepath}`
+            const fullpath = `${commit}/${treepath}`
             const { address, content } = await this.getBlob({ commit, fullpath })
             return { address, treepath, content }
         })
@@ -3398,13 +4576,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     private async _getSnapshotAddress(
-        branch: string,
+        commit: string,
         treepath: string,
     ): Promise<TAddress> {
         const { value0 } = await this.repo.runLocal(
             'getSnapshotAddr',
             {
-                branch,
+                commitsha: commit,
                 name: treepath,
             },
             undefined,
@@ -3414,19 +4592,19 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     private async _deploySnapshot(
-        branch: string,
         commit: string,
         treepath: string,
         content?: string | Buffer,
         wallet?: IGoshWallet,
         forceDelete?: boolean,
+        isPin?: boolean,
     ): Promise<IGoshSnapshot> {
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
         wallet = wallet || this.auth.wallet0
-        const snapshot = await this._getSnapshot({ fullpath: `${branch}/${treepath}` })
+        const snapshot = await this._getSnapshot({ fullpath: `${commit}/${treepath}` })
         if (await snapshot.isDeployed()) {
             if (forceDelete) {
                 await wallet.run('deleteSnapshot', { snap: snapshot.address })
@@ -3452,19 +4630,19 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         await wallet.run('deployNewSnapshot', {
-            branch,
-            commit,
+            commitsha: commit,
             repo: this.repo.address,
             name: treepath,
             snapshotdata: data.snapshotData,
             snapshotipfs: data.snapshotIpfs,
+            isPin: !!isPin,
         })
         const wait = await whileFinite(async () => {
             return await snapshot.isDeployed()
         })
         if (!wait) {
             throw new GoshError('Deploy snapshot timeout reached', {
-                branch,
+                commit,
                 name: treepath,
                 address: snapshot.address,
             })
@@ -3497,42 +4675,72 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     private async _deployTree(items: TTreeItem[], wallet?: IGoshWallet): Promise<void> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
-
-        // Check if deployed
-        const hash = sha1Tree(items, 'sha1')
-        const tree = await this._getTree({ name: hash })
-        if (await tree.isDeployed()) return
-
-        // Deploy tree
-        const datatree: any = {}
-        for (const { flags, mode, type, name, sha1, sha256 } of items) {
-            const key = await this.gosh.getTvmHash(`${type}:${name}`)
-            datatree[key] = {
-                flags: flags.toString(),
-                mode,
-                typeObj: type,
-                name,
-                sha1,
-                sha256,
-            }
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
 
         wallet = wallet || this.auth.wallet0
-        await wallet.run('deployTree', {
-            repoName: await this.repo.getName(),
-            shaTree: hash,
-            datatree,
-            ipfs: null,
-        })
-        const wait = await whileFinite(async () => {
-            return await tree.isDeployed()
-        })
-        if (!wait) {
-            throw new GoshError('Deploy tree timeout reached', {
-                name: hash,
-                address: tree.address,
+        const repoName = await this.getName()
+
+        // Check if deployed
+        const mapping = await this._getTreeItemsMapping(items)
+        const sha1 = sha1Tree(items, 'sha1')
+        const sha256 = await this._getTreeSha256({ mapping })
+        const tree = await this._getTree({ sha256 })
+        let isDeployNeeded = true
+        if (await tree.isDeployed()) {
+            const { value0: isReady } = await tree.runLocal('getDetails', {})
+            if (isReady) {
+                return
+            }
+            isDeployNeeded = false
+        }
+
+        // Generate tree items and split by chunks
+        const treeItems: any[] = [{}]
+        for (const key of Object.keys(mapping)) {
+            const chunk = treeItems[treeItems.length - 1]
+            chunk[key] = mapping[key]
+            if (Buffer.from(JSON.stringify(chunk)).byteLength >= MAX_ONCHAIN_SIZE) {
+                treeItems.push({})
+            }
+        }
+
+        // Deploy main tree
+        if (isDeployNeeded) {
+            await wallet.run('deployTree', {
+                repoName,
+                shaTree: sha1,
+                shainnerTree: sha256,
+                datatree: treeItems[0],
+                number: items.length,
             })
+            const waitMain = await whileFinite(async () => {
+                return await tree.isDeployed()
+            })
+            if (!waitMain) {
+                throw new GoshError('Deploy first tree chunk timeout reached')
+            }
+        }
+
+        // Deploy rest tree chunks
+        const restTreeItems = isDeployNeeded ? treeItems.slice(1) : treeItems
+        await executeByChunk(restTreeItems, 10, async (datatree) => {
+            await wallet!.run('deployAddTree', {
+                repoName,
+                shaTree: sha1,
+                shainnerTree: sha256,
+                datatree,
+            })
+        })
+
+        // Wait for tree is ready
+        const waitReady = await whileFinite(async () => {
+            const { value0: isReady } = await tree.runLocal('getDetails', {})
+            return isReady
+        })
+        if (!waitReady) {
+            throw new GoshError('Deploy tree timeout reached')
         }
     }
 
@@ -3553,17 +4761,28 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         index1: number,
         wallet?: IGoshWallet,
     ): Promise<void> {
-        if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        if (!this.auth) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
 
         // Check if deployed
         const diffContract = await this._getDiff(commit, index1, 0)
         if (await diffContract.isDeployed()) return
 
         // Deploy diff
-        const { isGoingOnchain, isGoingIpfs, compressed, snapshot, patch, hashes } = data
+        const {
+            isGoingOnchain,
+            isGoingIpfs,
+            compressed,
+            snapshot,
+            patch,
+            hashes,
+            treepath,
+        } = data
         const ipfs = isGoingIpfs ? await goshipfs.write(compressed) : null
         const diff = {
             snap: snapshot,
+            nameSnap: treepath,
             commit,
             patch,
             ipfs,
@@ -3598,7 +4817,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         commit: string,
         content: string,
         parents: { address: TAddress; version: string }[],
-        treeHash: string,
+        treesha256: string,
         upgrade: boolean,
     ): Promise<void> {
         if (!this.auth) {
@@ -3612,7 +4831,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         // Deploy commit
-        const tree = await this._getTree({ name: treeHash })
+        const tree = await this._getTree({ sha256: treesha256 })
         await this.auth.wallet0.run('deployCommit', {
             repoName: await this.repo.getName(),
             branchName: branch,
@@ -3644,6 +4863,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             pubaddrassign: { [address: string]: boolean }
             pubaddrreview: { [address: string]: boolean }
             pubaddrmanager: { [address: string]: boolean }
+            daoMembers: { [address: string]: string }
         },
     ): Promise<void> {
         if (!this.auth) {
@@ -3702,16 +4922,26 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     }
 
     private async _getTaskCommitConfig(config?: TTaskCommitConfig) {
-        const _getMapping = async (usernames: string[]) => {
-            const clean = usernames.map((item) => item.trim()).filter((item) => !!item)
-            const unique = new Set([...clean])
-            const validated = await this.gosh.isValidProfile(Array.from(unique))
+        const _getMapping = async (users: TUserParam[]) => {
+            const list = users.map((user) => {
+                return `${user.name}.${user.type}`
+            })
+            const unique = users.filter((user, index) => {
+                return list.indexOf(`${user.name}.${user.type}`) === index
+            })
 
             const map: { [address: string]: boolean } = {}
             await Promise.all(
-                validated.map(async (item) => {
-                    await dao.getMemberWallet({ profile: item.address, create: true })
-                    map[item.address] = true
+                unique.map(async (item) => {
+                    const { user, address } = await this.gosh.isValidUser(item)
+                    await dao.getMemberWallet({ profile: address, create: true })
+                    map[address] = true
+                    if (
+                        user.type === 'dao' &&
+                        Object.keys(daoMembers).indexOf(address) < 0
+                    ) {
+                        daoMembers[address] = user.name
+                    }
                 }),
             )
             return map
@@ -3730,15 +4960,17 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             throw new GoshError('Task does not exist', { name: config.task })
         }
 
-        const assigners = await _getMapping(config.assigners as string[])
-        const reviewers = await _getMapping(config.reviewers as string[])
-        const managers = await _getMapping(config.managers as string[])
+        const daoMembers: { [address: string]: string } = {}
+        const assigners = await _getMapping(config.assigners as TUserParam[])
+        const reviewers = await _getMapping(config.reviewers as TUserParam[])
+        const managers = await _getMapping(config.managers as TUserParam[])
 
         return {
             task: task.address,
             pubaddrassign: assigners,
             pubaddrreview: reviewers,
             pubaddrmanager: managers,
+            daoMembers,
         }
     }
 
@@ -3774,12 +5006,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         // Split array for chunks for each wallet
         const walletChunkSize = Math.ceil(array.length / this.subwallets.length)
         const chunks = splitByChunk(array, walletChunkSize)
+        const chunkSize = Math.ceil(MAX_PARALLEL_WRITE / chunks.length)
 
         // Run chunk for each wallet
         const result: Output[] = []
         await Promise.all(
             chunks.map(async (chunk, index) => {
-                const chunkSize = Math.floor(MAX_PARALLEL_WRITE / chunks.length)
                 const subresult = await executeByChunk(
                     chunk,
                     chunkSize,
@@ -3899,9 +5131,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             mode: treeitem?.mode || '100644',
             type: treeitem?.type || 'blob',
             sha1: hashes.sha1,
+            gitsha: hashes.sha1,
             sha256: hashes.sha256,
+            tvmshafile: hashes.sha256,
+            tvmshatree: undefined,
             path,
             name,
+            commit: treeitem?.commit ?? '',
         })
 
         // Parse blob path and push subtrees to items
@@ -3913,9 +5149,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     mode: '040000',
                     type: 'tree',
                     sha1: '',
+                    gitsha: '',
                     sha256: '',
+                    tvmshafile: undefined,
+                    tvmshatree: '',
                     path: dirPath,
                     name: dirName,
+                    commit: '',
                 })
             }
             path = dirPath
@@ -3923,22 +5163,32 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return items
     }
 
-    private _updateSubtreesHash(tree: TTree): TTree {
-        Object.keys(tree)
+    private async _updateSubtreesHash(tree: TTree): Promise<TTree> {
+        if (!this.auth?.wallet0) {
+            throw new GoshError('Wallet undefined')
+        }
+
+        const _tree = { ...tree }
+        const _keys = Object.keys(_tree)
             .sort((a, b) => b.length - a.length)
             .filter((key) => key.length)
-            .forEach((key) => {
-                const [path, name] = splitByPath(key)
-                const found = tree[path].find(
-                    (item) => item.path === path && item.name === name,
-                )
-                if (found) {
-                    found.sha1 = sha1Tree(tree[key], 'sha1')
-                    found.sha256 = `0x${sha1Tree(tree[key], 'sha256')}`
-                }
-            })
+        for (const key of _keys) {
+            const [path, name] = splitByPath(key)
+            const found = _tree[path].find(
+                (item) => item.path === path && item.name === name,
+            )
+            if (found) {
+                const _sha1 = sha1Tree(_tree[key], 'sha1')
+                const _sha256 = await this._getTreeSha256({ items: _tree[key] })
+                found.sha1 = _sha1
+                found.gitsha = _sha1
+                found.sha256 = _sha256
+                found.tvmshafile = undefined
+                found.tvmshatree = _sha256
+            }
+        }
 
-        return tree
+        return _tree
     }
 
     private _generateBlobDiffPatch = (
@@ -4026,12 +5276,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
  * TODO: Move this adapter to DAO adapter
  */
 class GoshSmvAdapter implements IGoshSmvAdapter {
+    private gosh: IGoshAdapter
     private dao: IGoshDao
     private client: TonClient
     private wallet?: IGoshWallet
 
     constructor(gosh: IGoshAdapter, dao: IGoshDao, wallet?: IGoshWallet) {
         this.client = gosh.client
+        this.gosh = gosh
         this.dao = dao
         this.wallet = wallet
     }
@@ -4082,18 +5334,21 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         const details = await event.runLocal('getDetails', {})
 
         const kind = parseInt(details.value0)
+        const time = {
+            start: parseInt(details.value2) * 1000,
+            finish: parseInt(details.value3) * 1000,
+            finishReal: parseInt(details.value4) * 1000,
+        }
         const minimal = {
             address,
             type: { kind, name: SmvEventTypes[kind] },
             status: {
-                completed: details.value1 !== null,
+                completed:
+                    details.value1 !== null ||
+                    (time.finish > 0 && Date.now() > time.finish),
                 accepted: !!details.value1,
             },
-            time: {
-                start: parseInt(details.value2) * 1000,
-                finish: parseInt(details.value3) * 1000,
-                finishReal: parseInt(details.value4) * 1000,
-            },
+            time,
             votes: {
                 yes: parseInt(details.value5),
                 no: parseInt(details.value6),
@@ -4138,8 +5393,8 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
                     undefined,
                     { useCachedBoc: true },
                 )
-                const profile = new GoshProfile(this.client, value0)
-                return await profile.getName()
+                const profile = await this.gosh.getUserByAddress(value0)
+                return profile.name
             },
         )
         return usernames
@@ -4241,13 +5496,14 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
 
         const allowance = await this._getAuthAllowance()
         if (allowance < min) {
-            throw new GoshError('Allowance too low to start proposal', {
+            throw new GoshError(EGoshError.SMV_NO_ALLOWANCE, {
                 yours: allowance,
                 min,
             })
         }
 
         const regular = await this.getWalletBalance(this.wallet)
+        console.debug('total', total, 'locked', locked, 'regular', regular, 'min', min)
         if (regular >= min - total) {
             await this.transferToSmv(0)
             const check = await whileFinite(async () => {
@@ -4262,7 +5518,11 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             return
         }
 
-        throw new GoshError(EGoshError.SMV_NO_BALANCE)
+        throw new GoshError(EGoshError.SMV_NO_BALANCE, {
+            min,
+            message:
+                "You don't have enough tokens or didn't transfer your tokens from previous version",
+        })
     }
 
     async transferToSmv(amount: number): Promise<void> {
@@ -4446,32 +5706,65 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getChangeAllowDiscussionProposalParams'
         } else if (type === ESmvEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE) {
             fn = 'getAbilityInviteProposalParams'
+        } else if (type === ESmvEventType.DAO_VOTE) {
+            fn = 'getDaoVoteProposalParams'
+        } else if (type === ESmvEventType.DAO_TOKEN_DAO_SEND) {
+            fn = 'getDaoSendTokenProposalParams'
+        } else if (type === ESmvEventType.UPGRADE_VERSION_CONTROLLER) {
+            fn = 'getUpgradeCodeProposalParams'
+        } else if (type === ESmvEventType.DAO_REVIEWER) {
+            fn = 'getSendReviewProposalParams'
+        } else if (type === ESmvEventType.DAO_RECEIVE_BOUNTY) {
+            fn = 'getDaoAskGrantProposalParams'
+        } else if (type === ESmvEventType.DAO_TOKEN_DAO_LOCK) {
+            fn = 'getDaoLockVoteProposalParams'
+        } else if (type === ESmvEventType.TASK_REDEPLOY) {
+            return {}
+        } else if (type === ESmvEventType.TASK_REDEPLOYED) {
+            return {}
+        } else if (type === ESmvEventType.TASK_UPGRADE) {
+            fn = 'getUpgradeTaskProposalParams'
+        } else if (type === ESmvEventType.DAO_TOKEN_TRANSFER_FROM_PREV) {
+            fn = 'getDaoTransferTokenProposalParams'
+        } else if (type === ESmvEventType.DAO_START_PAID_MEMBERSHIP) {
+            fn = 'getStartMembershipProposalParams'
+        } else if (type === ESmvEventType.DAO_STOP_PAID_MEMBERSHIP) {
+            fn = 'getStopMembershipProposalParams'
+        } else if (type === ESmvEventType.BIGTASK_CREATE) {
+            fn = 'getBigTaskDeployProposalParams'
+        } else if (type === ESmvEventType.BIGTASK_APPROVE) {
+            fn = 'getBigTaskProposalParams'
+        } else if (type === ESmvEventType.BIGTASK_DELETE) {
+            fn = 'getGoshDestroyBigTaskProposalParams'
+        } else if (type === ESmvEventType.BIGTASK_UPGRADE) {
+            fn = 'getBigTaskUpgradeProposalParams'
+        } else if (type === ESmvEventType.INDEX_EVENT) {
+            fn = 'getIndexProposalParams'
         } else if (type === ESmvEventType.MULTI_PROPOSAL) {
             const { num, data0 } = await event.runLocal('getDataFirst', {}, undefined, {
                 useCachedBoc: true,
             })
-            const count = parseInt(num)
-            const items = []
-
-            let rest = data0
-            for (let i = 0; i < count; i++) {
-                const { data1: curr, data2: next } = await event.runLocal(
-                    'getHalfData',
-                    { Data: rest },
-                    undefined,
-                    { useCachedBoc: true },
-                )
-                items.push(await this._getMultiEventData(event, curr))
-
-                if (i === count - 2) {
-                    items.push(await this._getMultiEventData(event, next))
-                    break
-                }
-                rest = next
-                await sleep(300)
+            return {
+                details: null,
+                items: await this._parseMultiEventCell(event, parseInt(num), data0),
             }
-
-            return { details: null, items }
+        } else if (type === ESmvEventType.MULTI_PROPOSAL_AS_DAO) {
+            const { number, proposals, ...rest } = await event.runLocal(
+                'getDaoMultiProposalParams',
+                {},
+                undefined,
+                {
+                    useCachedBoc: true,
+                },
+            )
+            return {
+                details: { number, proposals, ...rest },
+                items: await this._parseMultiEventCell(
+                    event,
+                    parseInt(number),
+                    proposals,
+                ),
+            }
         } else {
             throw new GoshError(`Event type "${type}" is unknown`)
         }
@@ -4479,6 +5772,33 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         const decoded = await event.runLocal(fn, {}, undefined, { useCachedBoc: true })
         delete decoded.proposalKind
         return decoded
+    }
+
+    private async _parseMultiEventCell(
+        event: IGoshSmvProposal,
+        count: number,
+        cell: string,
+    ) {
+        const items = []
+
+        let rest = cell
+        for (let i = 0; i < count; i++) {
+            const { data1: curr, data2: next } = await event.runLocal(
+                'getHalfData',
+                { Data: rest },
+                undefined,
+                { useCachedBoc: true },
+            )
+            items.push(await this._getMultiEventData(event, curr))
+
+            if (i === count - 2) {
+                items.push(await this._getMultiEventData(event, next))
+                break
+            }
+            rest = next
+            await sleep(300)
+        }
+        return items
     }
 
     private async _getMultiEventData(event: IGoshSmvProposal, data: string) {
@@ -4536,6 +5856,45 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             fn = 'getTagUpgradeProposalParamsData'
         } else if (kind === ESmvEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE) {
             fn = 'getAbilityInviteProposalParamsData'
+        } else if (kind === ESmvEventType.DELAY) {
+            return { type }
+        } else if (kind === ESmvEventType.DAO_VOTE) {
+            fn = 'getDaoVoteProposalParamsData'
+        } else if (kind === ESmvEventType.DAO_TOKEN_DAO_SEND) {
+            fn = 'getDaoSendTokenProposalParamsData'
+        } else if (kind === ESmvEventType.DAO_REVIEWER) {
+            fn = 'getSendReviewProposalParamsData'
+        } else if (kind === ESmvEventType.DAO_RECEIVE_BOUNTY) {
+            fn = 'getDaoAskGrantProposalParamsData'
+        } else if (kind === ESmvEventType.DAO_TOKEN_DAO_LOCK) {
+            fn = 'getDaoLockVoteProposalParamsData'
+        } else if (kind === ESmvEventType.TASK_REDEPLOY) {
+            const decoded = await event.runLocal(
+                'getRedeployTaskProposalParamsData',
+                { Data: data },
+                undefined,
+                {
+                    useCachedBoc: true,
+                },
+            )
+            data = decoded.data
+            fn = 'getTaskData'
+        } else if (kind === ESmvEventType.TASK_REDEPLOYED) {
+            return { type }
+        } else if (kind === ESmvEventType.TASK_UPGRADE) {
+            fn = 'getUpgradeTaskProposalParamsData'
+        } else if (kind === ESmvEventType.DAO_START_PAID_MEMBERSHIP) {
+            fn = 'getStartMembershipProposalParamsData'
+        } else if (kind === ESmvEventType.DAO_STOP_PAID_MEMBERSHIP) {
+            fn = 'getStopMembershipProposalParamsData'
+        } else if (kind === ESmvEventType.BIGTASK_CREATE) {
+            fn = 'getBigTaskDeployParamsData'
+        } else if (kind === ESmvEventType.BIGTASK_APPROVE) {
+            fn = 'getBigTaskParamsData'
+        } else if (kind === ESmvEventType.BIGTASK_DELETE) {
+            fn = 'getGoshDestroyBigTaskProposalParamsData'
+        } else if (kind === ESmvEventType.BIGTASK_UPGRADE) {
+            fn = 'getBigTaskUpgradeProposalParamsData'
         } else {
             throw new GoshError(`Multi event type "${type}" is unknown`)
         }
@@ -4569,4 +5928,4 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     }
 }
 
-export { GoshAdapter_2_0_0 }
+export { GoshAdapter_6_0_0 }

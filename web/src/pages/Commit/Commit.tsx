@@ -1,13 +1,15 @@
-import { Link, useParams } from 'react-router-dom'
+import { Link, useOutletContext, useParams } from 'react-router-dom'
 import { getCommitTime, useCommit } from 'react-gosh'
 import CopyClipboard from '../../components/CopyClipboard'
 import { shortString } from 'react-gosh'
 import CommitBlobs from './CommitBlobs'
 import { Commiter } from '../../components/Commit'
 import Loader from '../../components/Loader'
+import { TRepoLayoutOutletContext } from '../RepoLayout'
 
 const CommitPage = () => {
     const { daoName, repoName, branchName, commitName } = useParams()
+    const { dao } = useOutletContext<TRepoLayoutOutletContext>()
     const { isFetching, commit, blobs } = useCommit(
         daoName!,
         repoName!,
@@ -51,7 +53,7 @@ const CommitPage = () => {
                         </div>
                     </div>
 
-                    {branchName !== commit.branch ? (
+                    {dao.details.version < '6.0.0' && branchName !== commit.branch ? (
                         <div className="mt-5 bg-blue-300 rounded-xl px-4 py-2.5">
                             <p>This commit is from another branch</p>
                             <p className="text-sm">
