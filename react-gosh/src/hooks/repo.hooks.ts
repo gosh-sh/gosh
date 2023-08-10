@@ -476,27 +476,42 @@ function useBlob(dao: string, repo: string, branch?: string, path?: string) {
             const gosh = GoshAdapterFactory.create(branchData.commit.version)
             const adapter = await gosh.getRepository({ path: `${dao}/${repo}` })
 
-            let snapshot: any = undefined
+            let snapshot: any
             if (adapter.getVersion() < '6.0.0') {
-                snapshot = await adapter.getBlob({
+                const _snapshot = await adapter.getBlob({
                     commit: branchData.commit.name,
                     fullpath: `${branchData.name}/${path}`,
                 })
+                snapshot = {
+                    address: _snapshot.address,
+                    commit: _snapshot.onchain.commit,
+                    content: _snapshot.content,
+                }
             } else {
                 const tree = await adapter.getTree(branchData.commit.name, path)
                 const item = tree.items.find((item) => getTreeItemFullPath(item) === path)
-                snapshot = await adapter.getBlob({
-                    commit: item?.commit,
-                    fullpath: `${item?.commit}/${path}`,
-                })
+                const { value0 } = await adapter.repo.runLocal(
+                    'getSnapshotAddr',
+                    { commitsha: item?.commit, name: path },
+                    undefined,
+                    { useCachedBoc: true },
+                )
+                const { current } = await adapter.getCommitBlob(
+                    value0,
+                    path,
+                    branchData.commit.name,
+                )
+                snapshot = {
+                    address: value0,
+                    commit: branchData.commit.name,
+                    content: current,
+                }
             }
 
             setBlob((state) => ({
                 ...state,
-                address: snapshot.address,
-                commit: snapshot.onchain.commit,
+                ...snapshot,
                 path,
-                content: snapshot.content,
                 isFetching: false,
             }))
         }
