@@ -126,6 +126,7 @@ contract Commit is Modifiers {
     function allCorrect(uint128 number, string branch) public senderIs(_rootRepo){
         tvm.accept();
         _isCorrect = true;
+        Tree(_tree).setCorrect{value: 0.1 ton, flag: 1}(_nameCommit);
         _timeaccept = block.timestamp;
         this.sendSetCorrect{value: 0.1 ton, flag: 1}(0);
         this._acceptCommitRepo{value: 0.2 ton, bounce: true, flag: 1}(0, number, branch);
@@ -147,6 +148,7 @@ contract Commit is Modifiers {
         getMoney();
         if (_isCorrect == true) { return; }
         _isCorrect = true;
+        Tree(_tree).setCorrect{value: 0.1 ton, flag: 1}(_nameCommit);
         _timeaccept = time;
         this.sendSetCorrect{value: 0.1 ton, flag: 1}(0);
     }
@@ -407,6 +409,8 @@ contract Commit is Modifiers {
 
     function acceptAll(string branch, address branchCommit) public senderIs(address(this)) {
         if ((_commitcheck != false) && (_diffcheck != false)) {
+//            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch, branchCommit, _nameCommit, _number, _numbercommits, _task); 
+//            _number = 0;
             Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, branch, _rootRepo, _nameCommit, 5, branchCommit);
         }
         else {

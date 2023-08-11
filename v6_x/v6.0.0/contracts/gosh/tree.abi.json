@@ -125,6 +125,23 @@
 			]
 		},
 		{
+			"name": "setCorrect",
+			"inputs": [
+				{"name":"namecommit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setCorrectTree",
+			"inputs": [
+				{"name":"shainnertree","type":"uint256"},
+				{"name":"path","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getShaInfoDiff",
 			"inputs": [
 				{"name":"commit","type":"string"},
