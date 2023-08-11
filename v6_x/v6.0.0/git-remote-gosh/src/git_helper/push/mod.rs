@@ -590,21 +590,19 @@ where
                 // of latest commit of the file will be not in this commit ancestors chain
                 // and we need to deploy a new snapshot with updated content
                 let file_path = update.1.filepath.to_string();
-                let snap_mons = snapshot_to_commit.get(&file_path);
 
                 let mut found = false;
-                if let Some(snap_mon_vec) = snap_mons {
+                if snapshot_to_commit.contains_key(&file_path) {
+                    let snap_mon_vec = snapshot_to_commit.get_mut(&file_path).unwrap();
                     for i in 0..snap_mon_vec.len() {
-                        let snap_mon = &snap_mon_vec[i];
-                        if ancestor_commits.contains(&snap_mon.latest_commit) {
+                        if ancestor_commits.contains(&snap_mon_vec[i].latest_commit) {
                             found = true;
                             tracing::trace!("push update diff to existing snapshot");
-                            let snap_mon = snapshot_to_commit.get_mut(&file_path).unwrap();
                             let repo_contract = self.blockchain.repo_contract().clone();
                             let snapshot_address = Snapshot::calculate_address(
                                 self.blockchain.client(),
                                 &repo_contract,
-                                &snap_mon[i].base_commit,
+                                &snap_mon_vec[i].base_commit,
                                 &file_path
                             ).await?;
                             self.push_blob_update(
@@ -619,7 +617,8 @@ where
                             )
                                 .await?;
                             tracing::trace!("Change latest commit for {}", file_path);
-                            snap_mon[i].latest_commit = object_id.to_string();
+                            snap_mon_vec[i].latest_commit = object_id.to_string();
+                            break;
                         }
                     }
                 }
@@ -648,29 +647,35 @@ where
 
             for deleted in tree_diff.deleted {
                 let file_path = deleted.filepath.to_string();
-                let snapshot_commit = snapshot_to_commit
-                    .get(&file_path)
-                    .ok_or(
-                        anyhow::format_err!("Failed to get commit for snapshot of file: {}", file_path)
-                    )?;
-                let repo_contract = self.blockchain.repo_contract().clone();
-                let snapshot_address = Snapshot::calculate_address(
-                    self.blockchain.client(),
-                    &repo_contract,
-                    &snapshot_commit[0].base_commit, // TODO change 0 index to smth meaningful
-                    &file_path
-                ).await?;
-                self.push_blob_remove(
-                    &file_path,
-                    &deleted.oid,
-                    &object_id,
-                    local_branch_name,
-                    statistics,
-                    parallel_diffs_upload_support,
-                    String::from(snapshot_address),
-                )
-                .await?;
-                snapshot_to_commit.remove(&file_path);
+
+                if snapshot_to_commit.contains_key(&file_path) {
+                    let snap_mon_vec = snapshot_to_commit.get_mut(&file_path).unwrap();
+                    for i in 0..snap_mon_vec.len() {
+                        if ancestor_commits.contains(&snap_mon_vec[i].latest_commit) {
+                            tracing::trace!("push update diff to existing snapshot");
+                            let repo_contract = self.blockchain.repo_contract().clone();
+                            let snapshot_address = Snapshot::calculate_address(
+                                self.blockchain.client(),
+                                &repo_contract,
+                                &snap_mon_vec[i].base_commit,
+                                &file_path
+                            ).await?;
+
+                            self.push_blob_remove(
+                                &file_path,
+                                &deleted.oid,
+                                &object_id,
+                                local_branch_name,
+                                statistics,
+                                parallel_diffs_upload_support,
+                                String::from(snapshot_address),
+                            )
+                                .await?;
+                            snap_mon_vec.remove(i);
+                            break;
+                        }
+                    }
+                }
             }
         }
 
