@@ -193,11 +193,11 @@ contract Tree is Modifiers {
                 _isCorrect = true; 
                 if (typer == 5) 
                 {
-                    Commit(msg.sender).treeAcceptAfterCommit{value: 0.1 ton, flag: 1}(_branch.get(), branchcommit.get()); 
+                    Commit(_checkaddr).treeAcceptAfterCommit{value: 0.1 ton, flag: 1}(_branch.get(), branchcommit.get()); 
                 }
                 else
                 {
-                    Commit(msg.sender).treeAccept{value: 0.1 ton, flag: 1}(_commitsha, _branch, branchcommit, typer); 
+                    Commit(_checkaddr).treeAccept{value: 0.1 ton, flag: 1}(_commitsha, _branch, branchcommit, typer); 
                 }
             }
             _check = false;
@@ -248,11 +248,11 @@ contract Tree is Modifiers {
             { 
                 if (typer == 5) 
                 {
-                    Commit(msg.sender).treeAcceptAfterCommit{value: 0.1 ton, flag: 1}(_branch.get(), branchcommit.get()); 
+                    Commit(_checkaddr).treeAcceptAfterCommit{value: 0.1 ton, flag: 1}(_branch.get(), branchcommit.get()); 
                 }
                 else
                 {
-                    Commit(msg.sender).treeAccept{value: 0.1 ton, flag: 1}(_commitsha, _branch, branchcommit, typer); 
+                    Commit(_checkaddr).treeAccept{value: 0.1 ton, flag: 1}(_commitsha, _branch, branchcommit, typer); 
                 } 
             }
         }
@@ -281,7 +281,17 @@ contract Tree is Modifiers {
         if (_needAnswer != 0) { return; }
         if (_saved.hasValue() == true) { return; }
         if (_root == false) { _isCorrect = true; Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaInnerTree, true, branchcommit, typer); }
-        else { _isCorrect = true; Commit(_checkaddr).treeAccept{value: 0.1 ton, flag: 1}(_commitsha, _branch, branchcommit, typer); }
+        else { 
+            _isCorrect = true; 
+            if (typer == 5) 
+            {
+                Commit(_checkaddr).treeAcceptAfterCommit{value: 0.1 ton, flag: 1}(_branch.get(), branchcommit.get()); 
+            }
+            else
+            {
+                Commit(_checkaddr).treeAccept{value: 0.1 ton, flag: 1}(_commitsha, _branch, branchcommit, typer); 
+            } 
+        }    
         _check = false;
         _needAnswer = 0;
     }
