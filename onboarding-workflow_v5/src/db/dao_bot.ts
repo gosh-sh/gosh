@@ -4,6 +4,7 @@ import { generateEverWallet } from '../eversdk/tasks.ts'
 
 export type DaoBot = Database['public']['Tables']['dao_bot']['Row']
 export const GOSH_VERSION = Deno.env.get('GOSH_VERSION') ?? ''
+
 export async function createDaoBot(dao_name: string): Promise<DaoBot> {
     const version = GOSH_VERSION
     const { data, error } = await getDb()
