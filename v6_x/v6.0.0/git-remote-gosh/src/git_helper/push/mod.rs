@@ -41,7 +41,7 @@ use crate::git_helper::supported_contract_version;
 use delete_tag::delete_tag;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 use push_tree::push_tree;
-use crate::blockchain::tree::load::construct_map_of_snapshots;
+use crate::blockchain::tree::load::{construct_map_of_snapshots, SnapshotMonitor};
 
 static PARALLEL_PUSH_LIMIT: usize = 1 << 6;
 static MAX_REDEPLOY_ATTEMPTS: i32 = 3;
@@ -504,7 +504,7 @@ where
         parallel_snapshot_uploads: &mut ParallelSnapshotUploadSupport,
         upgrade_commit: bool,
         parents_for_upgrade: Vec<AddrVersion>,
-        snapshot_to_commit: &mut HashMap<String, String>,
+        snapshot_to_commit: &mut HashMap<String, Vec<SnapshotMonitor>>,
         wallet_contract: &GoshContract,
         parallel_tree_upload_support: &mut ParallelTreeUploadSupport,
     ) -> anyhow::Result<()> {
@@ -554,8 +554,8 @@ where
         if upgrade_commit && !parents_for_upgrade.is_empty() {
             parents = parents_for_upgrade.clone();
         }
-        // let tree_addr = self.calculate_tree_address(tree_id).await?;
 
+        let ancestor_commits = self.get_commit_ancestors(&object_id)?;
 
         let tree_diff = utilities::build_tree_diff_from_commits(
             self.local_repository(),
@@ -575,53 +575,74 @@ where
                 parents_for_upgrade.clone(),
             )
             .await?;
-            snapshot_to_commit.insert(added.filepath.to_string(), object_id.to_string());
+            let snap_mon = SnapshotMonitor {
+                base_commit: object_id.to_string(),
+                latest_commit: object_id.to_string(),
+            };
+            let entry = snapshot_to_commit.entry(added.filepath.to_string() ).or_insert(vec![]);
+            entry.push(snap_mon);
         }
         if !upgrade_commit {
             for update in tree_diff.updated {
                 tracing::trace!("push update diff");
                 // Commit modifies file but snapshot can be updated in the other branch
                 // In this case it will be absent in the snapshot_to_commit map
+                // of latest commit of the file will be not in this commit ancestors chain
                 // and we need to deploy a new snapshot with updated content
                 let file_path = update.1.filepath.to_string();
-                match snapshot_to_commit.get(&file_path) {
-                    Some(snapshot_commit) => {
-                        tracing::trace!("push update diff to existing snapshot");
-                        let repo_contract = self.blockchain.repo_contract().clone();
-                        let snapshot_address = Snapshot::calculate_address(
-                            self.blockchain.client(),
-                            &repo_contract,
-                            snapshot_commit,
-                            &file_path
-                        ).await?;
-                        self.push_blob_update(
-                            &file_path,
-                            &update.0.oid,
-                            &update.1.oid,
-                            &object_id, // commit_id.as_ref().unwrap(),
-                            local_branch_name,
-                            statistics,
-                            parallel_diffs_upload_support,
-                            String::from(snapshot_address),
-                        )
-                            .await?;
-                    },
-                    None => {
-                        tracing::trace!("push update diff to new snapshot");
-                        self.push_new_blob(
-                            &file_path,
-                            &update.1.oid,
-                            &object_id,
-                            local_branch_name,
-                            statistics,
-                            parallel_diffs_upload_support,
-                            parallel_snapshot_uploads,
-                            upgrade_commit,
-                            parents_for_upgrade.clone(),
-                        )
-                            .await?;
-                        snapshot_to_commit.insert(file_path, object_id.to_string());
+                let snap_mons = snapshot_to_commit.get(&file_path);
+
+                let mut found = false;
+                if let Some(snap_mon_vec) = snap_mons {
+                    for i in 0..snap_mon_vec.len() {
+                        let snap_mon = &snap_mon_vec[i];
+                        if ancestor_commits.contains(&snap_mon.latest_commit) {
+                            found = true;
+                            tracing::trace!("push update diff to existing snapshot");
+                            let snap_mon = snapshot_to_commit.get_mut(&file_path).unwrap();
+                            let repo_contract = self.blockchain.repo_contract().clone();
+                            let snapshot_address = Snapshot::calculate_address(
+                                self.blockchain.client(),
+                                &repo_contract,
+                                &snap_mon[i].base_commit,
+                                &file_path
+                            ).await?;
+                            self.push_blob_update(
+                                &file_path,
+                                &update.0.oid,
+                                &update.1.oid,
+                                &object_id,
+                                local_branch_name,
+                                statistics,
+                                parallel_diffs_upload_support,
+                                String::from(snapshot_address),
+                            )
+                                .await?;
+                            tracing::trace!("Change latest commit for {}", file_path);
+                            snap_mon[i].latest_commit = object_id.to_string();
+                        }
                     }
+                }
+                if !found {
+                    tracing::trace!("push update diff to new snapshot");
+                    self.push_new_blob(
+                        &file_path,
+                        &update.1.oid,
+                        &object_id,
+                        local_branch_name,
+                        statistics,
+                        parallel_diffs_upload_support,
+                        parallel_snapshot_uploads,
+                        upgrade_commit,
+                        parents_for_upgrade.clone(),
+                    )
+                        .await?;
+                    let snap_mon = SnapshotMonitor {
+                        base_commit: object_id.to_string(),
+                        latest_commit: object_id.to_string(),
+                    };
+                    let mon_vec = snapshot_to_commit.entry(file_path).or_insert(vec![]);
+                    mon_vec.push(snap_mon);
                 }
             }
 
@@ -636,7 +657,7 @@ where
                 let snapshot_address = Snapshot::calculate_address(
                     self.blockchain.client(),
                     &repo_contract,
-                    snapshot_commit,
+                    &snapshot_commit[0].base_commit, // TODO change 0 index to smth meaningful
                     &file_path
                 ).await?;
                 self.push_blob_remove(
@@ -941,6 +962,7 @@ where
         Ok(())
     }
 
+    // TODO: investigate may be it should be changed to git function
     fn get_commit_ancestors(
         &self,
         start_commit: &ObjectId,
@@ -1201,16 +1223,7 @@ where
                 // Not supported yet
                 git_object::Kind::Tag => unimplemented!(),
                 git_object::Kind::Tree => {
-                    // push_tree(
-                    //     // self,
-                    //     // &object_id,
-                    //     // &current_commit,
-                    //     &snapshot_to_commit,
-                    //     &zero_wallet_contract,
-                    //     &mut parallel_tree_uploads,
-                    //     push_semaphore.clone(),
-                    // )
-                    // .await?;
+                    // Handled in push_commit_object
                 }
             }
         }

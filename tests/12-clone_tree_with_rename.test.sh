@@ -35,7 +35,7 @@ cd ../../../../../
 
 git add *
 git commit -m blabla
-git push -u origin main
+GOSH_TRACE=5 git push -u origin main &> ../trace_12.log
 
 for i in {1..5}
 do
@@ -54,7 +54,7 @@ cd ..
 
 sleep 60
 
-git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $CLONE_REPO_NAME
+GOSH_TRACE=5 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $CLONE_REPO_NAME &> trace_12_clone.log
 
 echo "***** comparing repositories *****"
 DIFF_STATUS=1

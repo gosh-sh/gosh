@@ -148,9 +148,10 @@ where
     Ok((res.is_ready, res.objects.len()))
 }
 
+#[derive(Debug)]
 pub struct SnapshotMonitor {
-    base_commit: String,
-    latest_commit: String,
+    pub base_commit: String,
+    pub latest_commit: String,
 }
 
 pub async fn construct_map_of_snapshots(
@@ -158,7 +159,7 @@ pub async fn construct_map_of_snapshots(
     repo_contract: &GoshContract,
     tree: Tree,
     prefix: &str,
-    snapshot_to_commit: &mut HashMap<String, String>,
+    snapshot_to_commit: &mut HashMap<String, Vec<SnapshotMonitor>>,
     queue: &mut VecDeque<(Tree, String)>,
     commit_ancestors: &Vec<String>,
 ) -> anyhow::Result<()> {
@@ -199,7 +200,12 @@ pub async fn construct_map_of_snapshots(
                 tracing::trace!("commits chain: {:?}", commit_ancestors);
                 if commit_ancestors.contains(&snapshot.current_commit) {
                     tracing::trace!("snapshot belongs to the commits chain");
-                    snapshot_to_commit.insert(full_path, entry.commit);
+                    let snap_mon = SnapshotMonitor {
+                        base_commit: entry.commit,
+                        latest_commit: snapshot.current_commit,
+                    };
+                    let entry = snapshot_to_commit.entry(full_path).or_insert(vec![]);
+                    entry.push(snap_mon);
                 } else {
                     tracing::trace!("snapshot does not belong to the commits chain");
                 }

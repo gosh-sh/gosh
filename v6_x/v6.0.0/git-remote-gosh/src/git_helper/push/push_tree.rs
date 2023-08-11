@@ -20,6 +20,7 @@ use crate::git_helper::push::parallel_snapshot_upload_support::{
 };
 use tokio::sync::Semaphore;
 use crate::blockchain::contract::GoshContract;
+use crate::blockchain::tree::load::SnapshotMonitor;
 
 
 fn flatten_tree(
@@ -27,6 +28,7 @@ fn flatten_tree(
     tree_id: &ObjectId,
     path_prefix: &str,
 ) -> anyhow::Result<HashMap<String, Entry>> {
+    tracing::trace!("flatten_tree: {path_prefix}");
     let mut map = HashMap::new();
     let mut buffer: Vec<u8> = Vec::new();
     let entry_ref_iter = context
@@ -39,7 +41,7 @@ fn flatten_tree(
         .entries()?;
     use git_object::tree::EntryMode::*;
     for entry in entry_ref_iter {
-        let path = match entry.mode {
+        match entry.mode {
             Tree | Link | Commit => {
                 let dir = format!("{}/", entry.filename);
                 let subtree = flatten_tree(context, &entry.oid.to_owned(), &dir)?;
@@ -49,14 +51,14 @@ fn flatten_tree(
                         v
                     );
                 }
-                entry.filename.to_string()
+                let path = format!("{}{}", path_prefix, entry.filename);
+                map.insert(path, Entry::from(entry));
             }
             Blob | BlobExecutable => {
-                format!("{}{}", path_prefix, entry.filename)
-
+                let path = format!("{}{}", path_prefix, entry.filename);
+                map.insert(path, Entry::from(entry));
             }
         };
-        map.insert(path, Entry::from(entry));
     }
     Ok(map)
 }
@@ -66,7 +68,7 @@ async fn construct_tree(
     context: &GitHelper<impl BlockchainService>,
     tree_id: &ObjectId,
     current_commit: &str,
-    snapshot_to_commit: &mut HashMap<String, String>,
+    snapshot_to_commit: &mut HashMap<String, Vec<SnapshotMonitor>>,
     wallet_contract: &GoshContract,
     to_deploy: &mut Vec<ParallelTree>,
 ) -> anyhow::Result<HashMap<String, TreeNode>> {
@@ -112,7 +114,7 @@ async fn construct_tree(
 
                 let commit = snapshot_to_commit
                     .get(&file_name)
-                    .map(|val| val.as_str())
+                    .map(|val| val[0].base_commit.as_str())// change 0 index to smth meaningful
                     .unwrap_or(current_commit)
                     .to_string();
 
@@ -226,7 +228,7 @@ pub async fn push_tree(
     context: &mut GitHelper<impl BlockchainService + 'static>,
     root_tree_id: &ObjectId,
     current_commit: &str,
-    snapshot_to_commit: &mut HashMap<String, String>,
+    snapshot_to_commit: &mut HashMap<String, Vec<SnapshotMonitor>>,
     wallet_contract: &GoshContract,
     handlers: &mut ParallelTreeUploadSupport,
     push_semaphore: Arc<Semaphore>,
