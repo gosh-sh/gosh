@@ -229,11 +229,11 @@ contract Tree is Modifiers {
             _isCorrect = true;  
             if (typer == 5) 
             {
-                Commit(msg.sender).treeAcceptAfterCommit{value: 0.1 ton, flag: 1}(_branch.get(), branchcommit.get()); 
+                Commit(_checkaddr).treeAcceptAfterCommit{value: 0.1 ton, flag: 1}(_branch.get(), branchcommit.get()); 
             }
             else
             {
-                Commit(msg.sender).treeAccept{value: 0.1 ton, flag: 1}(_commitsha, _branch, branchcommit, typer); 
+                Commit(_checkaddr).treeAccept{value: 0.1 ton, flag: 1}(_commitsha, _branch, branchcommit, typer); 
             } 
         }
         _check = false;
