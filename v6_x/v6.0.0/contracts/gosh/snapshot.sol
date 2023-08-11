@@ -105,7 +105,14 @@ contract Snapshot is Modifiers {
     }
     
     function isReady(uint256 sha1, optional(address) branchcommit, uint128 typer) public minValue(0.15 ton) {
-        
+        if (typer == 5) {
+            if ((sha1 == tvm.hash(gosh.unzip(_snapshot))) || (_ipfs.hasValue() == true)) {
+                Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(NameOfFile, _ready, branchcommit, typer, _baseCommit);
+            } else { 
+                Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(NameOfFile, false, branchcommit, typer, _baseCommit); 
+            }
+            return;
+        }
         if ((typer == 2) && (_applying == true)){
             if ((sha1 == tvm.hash(gosh.unzip(_snapshot))) || (_ipfs.hasValue() == true)) {
                 Tree(msg.sender).answerIs{value: 0.1 ton, flag: 1}(NameOfFile, _ready, branchcommit, typer, _baseCommit);

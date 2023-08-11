@@ -243,6 +243,7 @@
 		{"components":[{"name":"index","type":"uint256"},{"name":"path","type":"string"},{"name":"typer","type":"uint128"},{"name":"branch","type":"string"},{"name":"branchcommit","type":"optional(address)"}],"name":"_saved","type":"optional(tuple)"},
 		{"name":"_branch","type":"optional(string)"},
 		{"name":"_shaTree","type":"string"},
+		{"name":"_isCorrect","type":"bool"},
 		{"name":"_number","type":"uint128"},
 		{"name":"_neednumber","type":"uint128"},
 		{"name":"_isReady","type":"bool"},

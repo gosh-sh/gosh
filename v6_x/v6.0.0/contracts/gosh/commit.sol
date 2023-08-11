@@ -407,7 +407,7 @@ contract Commit is Modifiers {
 
     function acceptAll(string branch, address branchCommit) public senderIs(address(this)) {
         if ((_commitcheck != false) && (_diffcheck != false)) {
-            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch, branchCommit, _nameCommit, _number, _numbercommits, _task);
+            Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, branch, _rootRepo, _nameCommit, 5, branchCommit);
             _number = 0;
         }
         else {
@@ -415,6 +415,10 @@ contract Commit is Modifiers {
             this.cancelCommit{value: 0.2 ton, flag: 1}(_nameCommit, _number);
             _number = 0;
         }
+    }
+
+    function treeAcceptAfterCommit(string branch, address branchCommit) public view senderIs(_tree) accept {
+        Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch, branchCommit, _nameCommit, _number, _numbercommits, _task); 
     }
 
     function NotCorrectRepo(uint128 number) public senderIs(_rootRepo){
