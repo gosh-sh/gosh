@@ -140,7 +140,7 @@ contract Tree is Modifiers {
 
     function checkFull(string namecommit, optional(string) branch, address repo, string commitsha, uint128 typer, optional(address) branchcommit) public senderIs(GoshLib.calculateCommitAddress(_code[m_CommitCode], repo, namecommit)) {
         if (_isCorrect == true) {
-            if (typer == 5) 
+            if (typer == TYPE_SET_COMMIT) 
             {
                 Commit(msg.sender).treeAcceptAfterCommit{value: 0.1 ton, flag: 1}(branch.get(), branchcommit.get()); 
             }
@@ -152,7 +152,6 @@ contract Tree is Modifiers {
         require(_check == false, ERR_PROCCESS_IS_EXIST);
         require(_isReady == true, ERR_PROCCESS_END);
         _branch = branch;
-        if (typer == 2) { Commit(msg.sender).treeAccept{value: 0.1 ton, flag: 1}(commitsha, _branch, branchcommit, typer); return; }
         _check = true;
         _commitsha = commitsha;
         _root = true;
@@ -170,7 +169,7 @@ contract Tree is Modifiers {
         if (res.hasValue()) {
             TreeObject obj;
             (index, obj) = res.get();
-            if (typer == 6) {
+            if (typer == TYPE_SET_CORRECT) {
                 if (obj.mode == "040000") { _needAnswer += 1;
                     if (path != "" ) { Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], obj.tvmshatree.get(), _repo)).setCorrectTree{value: 0.2 ton, flag: 1}(_shaInnerTree, path + obj.name); }
                     else { Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], obj.tvmshatree.get(), _repo)).setCorrectTree{value: 0.2 ton, flag: 1}(_shaInnerTree, obj.name); }
@@ -183,7 +182,7 @@ contract Tree is Modifiers {
                 }
                 else if ((obj.mode == "100644") || (obj.mode == "100664") || (obj.mode == "100755") || (obj.mode == "120000")) {
                     _needAnswer += 1;
-                    if ((typer == 4) || (typer == 1) || (typer == 5)) {
+                    if ((typer == TYPE_INITUPGRADE) || (typer == TYPE_DESTROY_BRANCH) || (typer == TYPE_SET_COMMIT)) {
                         if (path != "" ) { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, obj.commit, path + obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.tvmshafile.get(), branchcommit, typer); }
                         else { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, obj.commit, obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.tvmshafile.get(), branchcommit, typer); }
                     }
@@ -199,7 +198,7 @@ contract Tree is Modifiers {
             if (_root == false) { _isCorrect = true; Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaInnerTree, true, branchcommit, typer); }
             else { 
                 _isCorrect = true; 
-                if (typer == 5) 
+                if (typer == TYPE_SET_COMMIT) 
                 {
                     Commit(_checkaddr).treeAcceptAfterCommit{value: 0.1 ton, flag: 1}(_branch.get(), branchcommit.get()); 
                 }
@@ -235,7 +234,7 @@ contract Tree is Modifiers {
         else 
         { 
             _isCorrect = true;  
-            if (typer == 5) 
+            if (typer == TYPE_SET_COMMIT) 
             {
                 Commit(_checkaddr).treeAcceptAfterCommit{value: 0.1 ton, flag: 1}(_branch.get(), branchcommit.get()); 
             }
@@ -254,7 +253,7 @@ contract Tree is Modifiers {
             if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaInnerTree, true, branchcommit, typer); }
             else 
             { 
-                if (typer == 5) 
+                if (typer == TYPE_SET_COMMIT) 
                 {
                     Commit(_checkaddr).treeAcceptAfterCommit{value: 0.1 ton, flag: 1}(_branch.get(), branchcommit.get()); 
                 }
@@ -291,7 +290,7 @@ contract Tree is Modifiers {
         if (_root == false) { _isCorrect = true; Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaInnerTree, true, branchcommit, typer); }
         else { 
             _isCorrect = true; 
-            if (typer == 5) 
+            if (typer == TYPE_SET_COMMIT) 
             {
                 Commit(_checkaddr).treeAcceptAfterCommit{value: 0.1 ton, flag: 1}(_branch.get(), branchcommit.get()); 
             }
@@ -306,12 +305,12 @@ contract Tree is Modifiers {
 
     function setCorrect(string namecommit) public senderIs(GoshLib.calculateCommitAddress(_code[m_CommitCode], _repo, namecommit)) accept {
         _isCorrect = true;
-        this.checkTree{value: 0.2 ton, flag: 1}(0, "", 6, "", null);
+        this.checkTree{value: 0.2 ton, flag: 1}(0, "", TYPE_SET_CORRECT, "", null);
     }
 
     function setCorrectTree(uint256 shainnertree, string path) public senderIs(GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnertree, _repo)) accept {
         _isCorrect = true;
-        this.checkTree{value: 0.2 ton, flag: 1}(0, path, 6, "", null);
+        this.checkTree{value: 0.2 ton, flag: 1}(0, path, TYPE_SET_CORRECT, "", null);
     }
 
     function getMoney() private {

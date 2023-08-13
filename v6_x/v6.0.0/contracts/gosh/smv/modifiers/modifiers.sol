@@ -82,6 +82,12 @@ abstract contract Modifiers is ReplayProtection {
     uint128 constant FEE_DEPLOY_TOPIC = 4.8 ton;
     uint128 constant FEE_DEPLOY_KEYBLOCK = 25.5 ton;
     uint128 constant FEE_DEPLOY_WRAPPER = 28 ton;
+
+    uint128 TYPE_DESTROY_BRANCH = 0;
+    uint128 TYPE_INITUPGRADE = 1;
+    uint128 TYPE_PIN_COMMIT = 2;
+    uint128 TYPE_SET_COMMIT = 3;
+    uint128 TYPE_SET_CORRECT = 4;
     
     //SMV configuration
     uint32 constant SETCOMMIT_PROPOSAL_START_AFTER = 0 seconds;
