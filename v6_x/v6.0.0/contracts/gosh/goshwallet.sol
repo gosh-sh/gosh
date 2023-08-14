@@ -184,7 +184,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_limited == false, ERR_WALLET_LIMITED);
         uint256 proposalKind =  INDEX_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, data, index, typetr, comment, block.timestamp);
-        _startProposalForOperation(c, INDEX_PROPOSAL_START_AFTER, INDEX_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
 
@@ -318,7 +318,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_limited == false, ERR_WALLET_LIMITED);
         uint256 proposalKind =  START_PAID_MEMBERSHIP_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, newProgram, Programindex, comment, block.timestamp);
-        _startProposalForOperation(c, START_PAID_MEMBERSHIP_PROPOSAL_START_AFTER, START_PAID_MEMBERSHIP_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
 
@@ -339,7 +339,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_limited == false, ERR_WALLET_LIMITED);
         uint256 proposalKind =  STOP_PAID_MEMBERSHIP_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, Programindex, comment, block.timestamp);
-        _startProposalForOperation(c, STOP_PAID_MEMBERSHIP_PROPOSAL_START_AFTER, STOP_PAID_MEMBERSHIP_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
 
@@ -370,7 +370,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = TRANSFER_TO_NEW_VERSION_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, wallet, newwallet, grant, oldversion, comment, block.timestamp);
 
-        _startProposalForOperation(c, TRANSFER_TO_NEW_VERSION_PROPOSAL_START_AFTER, TRANSFER_TO_NEW_VERSION_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -393,7 +393,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = DAO_VOTE_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, wallet, platform_id, choice, amount, num_clients_base, note, comment, block.timestamp);
 
-        _startProposalForOperation(c, DAO_VOTE_PROPOSAL_START_AFTER, DAO_VOTE_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -432,7 +432,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = SET_UPGRADE_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, newversion, description, comment, block.timestamp);
 
-        _startProposalForOperation(c, SET_UPGRADE_PROPOSAL_START_AFTER, SET_UPGRADE_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -463,7 +463,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = CHANGE_ALLOWANCE_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, pubaddr, increase, grant, comment, block.timestamp);
 
-        _startProposalForOperation(c, CHANGE_ALLOWANCE_PROPOSAL_START_AFTER, CHANGE_ALLOWANCE_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -490,7 +490,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = SET_TOMBSTONE_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, description, comment, block.timestamp);
 
-        _startProposalForOperation(c, SET_TOMBSTONE_PROPOSAL_START_AFTER, SET_TOMBSTONE_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -515,7 +515,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = REVIEW_CODE_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, wallet, propaddress, isAccept, comment, block.timestamp);
 
-        _startProposalForOperation(c, REVIEW_CODE_PROPOSAL_START_AFTER, REVIEW_CODE_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -553,7 +553,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = CHANGE_HIDE_VOTING_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, res, comment, block.timestamp);
 
-        _startProposalForOperation(c, CHANGE_HIDE_VOTING_RESULT_PROPOSAL_START_AFTER, CHANGE_HIDE_VOTING_RESULT_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -576,7 +576,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = CHANGE_ALLOW_DISCUSSION_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, res, comment, block.timestamp);
 
-        _startProposalForOperation(c, CHANGE_ALLOW_DISCUSSION_PROPOSAL_START_AFTER, CHANGE_ALLOW_DISCUSSION_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -602,7 +602,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = TAG_UPGRADE_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, repoName, nametag, newversion, comment, block.timestamp);
 
-        _startProposalForOperation(c, TAG_UPGRADE_PROPOSAL_START_AFTER, TAG_UPGRADE_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -663,7 +663,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = ABILITY_INVITE_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, res, comment, block.timestamp);
 
-        _startProposalForOperation(c, ABILITY_INVITE_PROPOSAL_START_AFTER, ABILITY_INVITE_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -759,7 +759,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = MINT_TOKEN_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, token, comment, block.timestamp);
 
-        _startProposalForOperation(c, MINT_TOKEN_PROPOSAL_START_AFTER, MINT_TOKEN_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -784,7 +784,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         TvmCell c = abi.encode(proposalKind, comment, block.timestamp);
 
-        _startProposalForOperation(c, ALLOW_MINT_PROPOSAL_START_AFTER, ALLOW_MINT_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -815,7 +815,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         TvmCell c = abi.encode(proposalKind, pubaddr, token, comment, block.timestamp);
 
-        _startProposalForOperation(c, ADD_VOTE_TOKEN_PROPOSAL_START_AFTER, ADD_VOTE_TOKEN_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -842,7 +842,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = ADD_REGULAR_TOKEN_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, pubaddr, token, comment, block.timestamp);
 
-        _startProposalForOperation(c, ADD_VOTE_TOKEN_PROPOSAL_START_AFTER, ADD_VOTE_TOKEN_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -878,7 +878,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public senderIs(_goshdao) accept saveMsg {
         uint256 proposalKind = DEPLOY_WALLET_DAO_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, pubaddr, dao, comment, block.timestamp);
-        _startProposalForOperation(c, DEPLOY_WALLET_DAO_PROPOSAL_START_AFTER, DEPLOY_WALLET_DAO_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
     
@@ -904,7 +904,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = DELETE_WALLET_DAO_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, pubaddr, comment, block.timestamp);
 
-        _startProposalForOperation(c, DELETE_WALLET_DAO_PROPOSAL_START_AFTER, DELETE_WALLET_DAO_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -1072,7 +1072,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = TASK_UPGRADE_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, nametask, reponame, oldversion, oldtask, hashtag, comment, block.timestamp);
 
-        _startProposalForOperation(c, TASK_UPGRADE_PROPOSAL_START_AFTER, TASK_UPGRADE_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -1102,7 +1102,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _saveMsg();
         uint256 proposalKind = BIGTASK_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, repoName, taskName, comment, block.timestamp);
-        _startProposalForOperation(c, TASK_PROPOSAL_START_AFTER, TASK_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
    
@@ -1142,7 +1142,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = BIGTASK_UPGRADE_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, nametask, reponame, oldversion, oldtask, hashtag, comment, block.timestamp);
 
-        _startProposalForOperation(c, TASK_UPGRADE_PROPOSAL_START_AFTER, TASK_UPGRADE_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -1173,7 +1173,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = SEND_TOKEN_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, wallet, pubaddr, grant, comment, block.timestamp);
 
-        _startProposalForOperation(c, SEND_TOKEN_PROPOSAL_START_AFTER, SEND_TOKEN_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -1212,7 +1212,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         uint256 proposalKind = UPGRADE_CODE_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, UpgradeCode, cell, comment, block.timestamp);
-        _startProposalForOperation(c, UPGRADE_CODE_PROPOSAL_START_AFTER, UPGRADE_CODE_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -1232,7 +1232,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = DEPLOY_REPO_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, nameRepo, descr, previous, comment, block.timestamp);
 
-        _startProposalForOperation(c, DEPLOY_REPO_PROPOSAL_START_AFTER, DEPLOY_REPO_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -1403,7 +1403,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = CHANGE_DESCRIPTION_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, repoName, descr, comment, block.timestamp);
 
-        _startProposalForOperation(c, CHANGE_DESCRIPTION_PROPOSAL_START_AFTER, CHANGE_DESCRIPTION_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -2362,7 +2362,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = SETCOMMIT_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, repoName, branchName, commit, numberChangedFiles, numberCommits, task, comment, block.timestamp);
 
-        _startProposalForOperation(c, SETCOMMIT_PROPOSAL_START_AFTER, SETCOMMIT_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -2396,7 +2396,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = ASK_TASK_GRANT_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, wallet, repoName, taskName, comment, block.timestamp);
 
-        _startProposalForOperation(c, ASK_TASK_GRANT_PROPOSAL_START_AFTER, ASK_TASK_GRANT_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -2429,7 +2429,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = DAO_LOCK_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, wallet, isLock, grant, comment, block.timestamp);
 
-        _startProposalForOperation(c, DAO_LOCK_PROPOSAL_START_AFTER, DAO_LOCK_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -2460,7 +2460,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = REPOTAG_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, tag, repo, comment, block.timestamp);
 
-        _startProposalForOperation(c, REPOTAG_PROPOSAL_START_AFTER, REPOTAG_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -2486,7 +2486,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = REPOTAG_DESTROY_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, tag, repo, comment, block.timestamp);
 
-        _startProposalForOperation(c, REPOTAG_PROPOSAL_START_AFTER, REPOTAG_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -2512,7 +2512,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = DAOTAG_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, tag, comment, block.timestamp);
 
-        _startProposalForOperation(c, DAOTAG_PROPOSAL_START_AFTER, DAOTAG_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -2537,7 +2537,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = DAOTAG_DESTROY_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, tag, comment, block.timestamp);
 
-        _startProposalForOperation(c, DAOTAG_DESTROY_PROPOSAL_START_AFTER, DAOTAG_DESTROY_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -2563,7 +2563,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = ADD_PROTECTED_BRANCH_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, repoName, branchName, comment, block.timestamp);
 
-        _startProposalForOperation(c, ADD_PROTECTED_BRANCH_PROPOSAL_START_AFTER, ADD_PROTECTED_BRANCH_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
@@ -2590,7 +2590,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         uint256 proposalKind = TASK_DESTROY_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, repoName, taskName, comment, block.timestamp);
-        _startProposalForOperation(c, TASK_DESTROY_PROPOSAL_START_AFTER, TASK_DESTROY_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
     
@@ -2619,7 +2619,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         uint256 proposalKind = MULTI_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, number, proposals, block.timestamp);
-        _startProposalForOperation(c, MULTI_PROPOSAL_START_AFTER, MULTI_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
     
@@ -2638,7 +2638,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         uint256 proposalKind = MULTI_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, number, proposals, block.timestamp);
-        _startProposalForOperation(c, MULTI_PROPOSAL_START_AFTER, MULTI_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
     
@@ -2672,7 +2672,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _saveMsg();
         uint256 proposalKind = MULTI_AS_DAO_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, wallet, number, proposals, num_clients_base, reviewers_base, block.timestamp);
-        _startProposalForOperation(c, MULTI_AS_DAO_PROPOSAL_START_AFTER, MULTI_AS_DAO_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
     
@@ -2702,7 +2702,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         uint256 proposalKind = BIGTASK_DESTROY_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, repoName, taskName, comment, block.timestamp);
-        _startProposalForOperation(c, BIGTASK_DESTROY_PROPOSAL_START_AFTER, BIGTASK_DESTROY_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
     
@@ -2738,7 +2738,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         uint256 proposalKind = BIGTASK_DEPLOY_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, repoName, taskName, tag, grant, assignersdata, freebalance, comment, block.timestamp);
-        _startProposalForOperation(c, BIGTASK_DEPLOY_PROPOSAL_START_AFTER, BIGTASK_DEPLOY_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
     
@@ -2776,7 +2776,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         uint256 proposalKind = TASK_DEPLOY_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, repoName, taskName, tag, grant, workers, comment, block.timestamp);
-        _startProposalForOperation(c, TASK_DEPLOY_PROPOSAL_START_AFTER, TASK_DEPLOY_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
     
@@ -2807,7 +2807,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = DELETE_PROTECTED_BRANCH_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, repoName, branchName, comment, block.timestamp);
 
-        _startProposalForOperation(c, DELETE_PROTECTED_BRANCH_PROPOSAL_START_AFTER, DELETE_PROTECTED_BRANCH_PROPOSAL_DURATION, num_clients, reviewers);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
     }
