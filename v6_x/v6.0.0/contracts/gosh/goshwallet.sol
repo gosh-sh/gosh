@@ -2208,6 +2208,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 if (value > 1000 ton) { value = 1000 ton; }
                 Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName)).SendDiffSmv{value: value + 1 ton, bounce: true, flag: 1}(_pubaddr, _index, branchName, addrC, numberChangedFiles, numberCommits, task);
             } else
+            if (kind == UPGRADE_CODE_PROPOSAL_KIND) {
+                (, TvmCell UpgradeCode, TvmCell cell,,) = abi.decode(propData, (uint256, TvmCell, TvmCell, string, uint32));
+                GoshDao(_goshdao).upgradeVersionCode{value: 0.1 ton, flag: 1}(_pubaddr, _index, UpgradeCode, cell);
+            } else
             if (kind == ADD_PROTECTED_BRANCH_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
                 (, string repoName, string branchName,) = abi.decode(propData,(uint256, string, string, uint32));
@@ -2407,187 +2411,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 this.isCompletedCallbackIn{value : 0.1 ton, flag: 1}(num, data1, data2);
                 return;                
             }
-            if (kind == SETCOMMIT_PROPOSAL_KIND) {
-                require(_tombstone == false, ERR_TOMBSTONE);
-                (, string repoName, string branchName, string commit, uint128 numberChangedFiles, uint128 numberCommits, optional(ConfigCommit) task, , ) =
-                    abi.decode(propData,(uint256, string, string, string, uint128, uint128, optional(ConfigCommit), string, uint32));
-                address addrC = GoshLib.calculateCommitAddress(_code[m_CommitCode], GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName), commit);
-                uint128 value = numberChangedFiles * 1 ton;
-                if (value > 1000 ton) { value = 1000 ton; }
-                Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName)).SendDiffSmv{value: value + 1 ton, bounce: true, flag: 1}(_pubaddr, _index, branchName, addrC, numberChangedFiles, numberCommits, task);
-            } else
-            if (kind == ADD_PROTECTED_BRANCH_PROPOSAL_KIND) {
-                require(_tombstone == false, ERR_TOMBSTONE);
-                (, string repoName, string branchName,) = abi.decode(propData,(uint256, string, string, uint32));
-                Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName)).addProtectedBranch{value:0.19 ton, flag: 1}(_pubaddr, branchName, _index);
-            } else
-            if (kind == DELETE_PROTECTED_BRANCH_PROPOSAL_KIND) {
-                require(_tombstone == false, ERR_TOMBSTONE);
-                (, string repoName, string branchName,) = abi.decode(propData,(uint256, string, string, uint32));
-                Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName)).deleteProtectedBranch{value:0.19 ton, flag: 1}(_pubaddr, branchName, _index);
-            } else
-            if (kind == SET_TOMBSTONE_PROPOSAL_KIND) {
-                require(_tombstone == false, ERR_TOMBSTONE);
-                (, string description,) = abi.decode(propData,(uint256, string, uint32));
-                _setTombstoneDao(description);
-            } else
-            if (kind == DEPLOY_WALLET_DAO_PROPOSAL_KIND) {
-                require(_tombstone == false, ERR_TOMBSTONE);
-                //_deployWalletDao(address[] pubaddr)
-                (, MemberToken[] pubaddr, optional(string)[] dao,,) = abi.decode(propData,(uint256, MemberToken[], optional(string)[], string, uint32));
-                _deployWalletDao(pubaddr, dao);
-            } else
-            if (kind == DELETE_WALLET_DAO_PROPOSAL_KIND) {
-                require(_tombstone == false, ERR_TOMBSTONE);
-                (, address[] pubaddr,) = abi.decode(propData,(uint256, address[], uint32));
-                _deleteWalletDao(pubaddr);
-            } else
-            if (kind == SET_UPGRADE_PROPOSAL_KIND) {
-                (, string newversion, string description,) = abi.decode(propData,(uint256, string, string, uint32));
-                _upgradeDao(newversion, description);
-            } else
-//            if (kind == TASK_PROPOSAL_KIND) {
-//                (, string taskName, string repoName, uint128 index,) = abi.decode(propData,(uint256, string, string, uint128, uint32));
-//                _confirmTask(taskName, repoName, index);
-//            }  else
-            if (kind == TASK_DESTROY_PROPOSAL_KIND) {
-                (, string taskName, string repoName,) = abi.decode(propData,(uint256, string, string, uint32));
-                _destroyTask(taskName, repoName);
-            }  else
-            if (kind == TASK_DEPLOY_PROPOSAL_KIND) {
-                (, string taskName, string repoName, string[] tag, ConfigGrant grant,optional(ConfigCommitBase) workers,,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, optional(ConfigCommitBase), string, uint32));
-                _deployTask(taskName, repoName, tag, grant, workers);
-            }  else
-            if (kind == DEPLOY_REPO_PROPOSAL_KIND) {
-                (, string repoName, string descr, optional(AddrVersion) previous, ) = abi.decode(propData,(uint256, string, string, optional(AddrVersion), uint32));
-                _deployRepository(repoName, descr, previous);
-            }  else
-            if (kind == ADD_VOTE_TOKEN_PROPOSAL_KIND) {
-                (, address pubaddr, uint128 grant,) = abi.decode(propData,(uint256, address, uint128, uint32));
-                _addToken(pubaddr, grant);
-            }  else
-            if (kind == ADD_REGULAR_TOKEN_PROPOSAL_KIND) {
-                (, address pubaddr, uint128 grant,) = abi.decode(propData,(uint256, address, uint128, uint32));
-                _addTokenRegular(pubaddr, grant);
-            }  else
-            if (kind == MINT_TOKEN_PROPOSAL_KIND) {
-                (, uint128 grant,) = abi.decode(propData,(uint256, uint128, uint32));
-                _mintToken(grant);
-            }  else
-            if (kind == DAOTAG_PROPOSAL_KIND) {
-                (, string[] tag,) = abi.decode(propData,(uint256, string[], uint32));
-                GoshDao(_goshdao).smvdeploytag{value: 0.13 ton, flag: 1}(_pubaddr, _index, tag);
-            }  else
-            if (kind == DAOTAG_DESTROY_PROPOSAL_KIND) {
-                (, string[] tag,) = abi.decode(propData,(uint256, string[], uint32));
-                GoshDao(_goshdao).smvdestroytag{value: 0.13 ton, flag: 1}(_pubaddr, _index, tag);
-            }  else
-            if (kind == ALLOW_MINT_PROPOSAL_KIND) {
-               GoshDao(_goshdao).smvnotallowmint{value: 0.13 ton, flag: 1}(_pubaddr, _index);
-            }  else
-            if (kind == CHANGE_ALLOWANCE_PROPOSAL_KIND) {
-               (, address[] pubaddr, bool[] increase, uint128[] grant, ,) = abi.decode(propData,(uint256, address[], bool[], uint128[], string, uint32));
-               GoshDao(_goshdao).changeAllowance{value: 0.13 ton, flag: 1}(_pubaddr, _index, pubaddr, increase, grant);
-            }  else
-            if (kind == REPOTAG_PROPOSAL_KIND) {
-                (, string[] tag, string repo, ) = abi.decode(propData,(uint256, string[], string, uint32));
-                Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repo)).smvdeployrepotag{value: 0.13 ton, flag: 1}(_pubaddr, _index, tag);
-            }  else
-            if (kind == REPOTAG_DESTROY_PROPOSAL_KIND) {
-                (, string[] tag, string repo, ) = abi.decode(propData,(uint256, string[], string, uint32));
-                Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repo)).smvdestroyrepotag{value: 0.13 ton, flag: 1}(_pubaddr, _index, tag);
-            }  else
-            if (kind == CHANGE_DESCRIPTION_PROPOSAL_KIND) {
-                (, string repo, string descr, ,) = abi.decode(propData,(uint256, string, string, string, uint32));
-                _changeDescription(repo, descr);
-            } else
-            if (kind == CHANGE_HIDE_VOTING_PROPOSAL_KIND) {
-                (, bool result, ,) = abi.decode(propData,(uint256, bool, string, uint32));               
-               GoshDao(_goshdao).changeHideVotingResult{value: 0.133 ton, flag: 1}(_pubaddr, _index, result);
-            } else
-            if (kind == CHANGE_ALLOW_DISCUSSION_PROPOSAL_KIND) {
-               (, bool result, ,) = abi.decode(propData,(uint256, bool, string, uint32));
-               GoshDao(_goshdao).changeAllowDiscussion{value: 0.133 ton, flag: 1}(_pubaddr, _index, result);
-            } else
-            if (kind == TAG_UPGRADE_PROPOSAL_KIND) {
-               (, string[] repoName, string[] nametag, string newversion, ,) = abi.decode(propData, (uint256, string[], string[], string, string, uint32));
-               _tagUpgrade (repoName, nametag, newversion);
-            } else
-            if (kind == ABILITY_INVITE_PROPOSAL_KIND) {
-                (, bool result, ,) = abi.decode(propData,(uint256, bool, string, uint32));               
-               _setAbilityInvite(result);
-            } else
-            if (kind == DAO_VOTE_PROPOSAL_KIND) {
-               (, address wallet, uint256 platform_id, bool choice, uint128 amount, uint128 num_clients_base, string note,,) = abi.decode(propData, (uint256, address, uint256, bool, uint128, uint128, string, string, uint32));
-               _daoVote(wallet, platform_id, choice, amount, num_clients_base, note);          
-            } else
-            if (kind == MULTI_AS_DAO_PROPOSAL_KIND) {
-               (, address wallet, uint128 number, TvmCell proposals, uint128 num_clients_base, address[] reviewers_base,) = abi.decode(propData, (uint256, address, uint128, TvmCell, uint128, address[], uint32));
-               _daoMulti(wallet, number, proposals, num_clients_base, reviewers_base);          
-            } else
-            if (kind == DELAY_PROPOSAL_KIND) {
-               (, uint32 _time) = abi.decode(propData, (uint256, uint32));
-               _time;
-               GoshDao(_goshdao).doNothing{value: 0.1 ton, flag: 1}(_pubaddr, _index);          
-            } else
-            if (kind == SEND_TOKEN_PROPOSAL_KIND) {
-                (, address wallet, optional(address) pubaddr, uint128 grant,,) = abi.decode(propData, (uint256, address, optional(address), uint128, string, uint32));
-                _daoSendToken(wallet, pubaddr, grant);
-            } else
-            if (kind == UPGRADE_CODE_PROPOSAL_KIND) {
-                (, TvmCell UpgradeCode, TvmCell cell,,) = abi.decode(propData, (uint256, TvmCell, TvmCell, string, uint32));
-                GoshDao(_goshdao).upgradeVersionCode{value: 0.1 ton, flag: 1}(_pubaddr, _index, UpgradeCode, cell);
-            } else
-            if (kind == REVIEW_CODE_PROPOSAL_KIND) {
-                (, address wallet, address propaddr, bool isAccept,,) = abi.decode(propData, (uint256, address, address, bool, string, uint32));
-                GoshDao(_goshdao).daoSendReview{value: 0.1 ton, flag: 1}(_pubaddr, _index, wallet, propaddr, isAccept);   
-            } else
-            if (kind == ASK_TASK_GRANT_PROPOSAL_KIND) {
-                (, address wallet, string repoName, string taskName,,) = abi.decode(propData, (uint256, address, string, string, string, uint32));
-                GoshDao(_goshdao).daoAskGrantFull{value: 0.1 ton, flag: 1}(_pubaddr, _index, wallet, repoName, taskName);   
-            } else
-            if (kind == DAO_LOCK_PROPOSAL_KIND) {
-                (, address wallet, bool isLock, uint128 grant,,) = abi.decode(propData, (uint256, address, bool, uint128, string, uint32));
-                GoshDao(_goshdao).daoAskLock{value: 0.1 ton, flag: 1}(_pubaddr, _index, wallet, isLock, grant);   
-            } else
-            if (kind == TASK_UPGRADE_PROPOSAL_KIND) {
-                (, string taskname, string reponame, string oldversion, address oldtask, string[] hashtag,,) = abi.decode(propData, (uint256, string, string, string, address, string[], string, uint32));
-                GoshDao(_goshdao).upgradeTask{value: 0.1 ton, flag: 1}(_pubaddr, _index, taskname, reponame, oldversion, oldtask, hashtag);   
-            }  else
-            if (kind == TRANSFER_TO_NEW_VERSION_PROPOSAL_KIND) {
-                (, address wallet, address newwallet, uint128 grant, string oldversion,,) = abi.decode(propData,(uint256, address, address, uint128, string, string, uint32));
-                SystemContract(_systemcontract).DaoTransferToken2{value: 0.2 ton, flag: 1}(_pubaddr, _index, _nameDao, wallet, newwallet, grant, oldversion, version);
-            } else 
-            if (kind == START_PAID_MEMBERSHIP_PROPOSAL_KIND) {
-                (, PaidMember newProgram, uint8 Programindex,,) = abi.decode(propData, (uint256, PaidMember, uint8, string, uint32));                
-                _startPaidMembership(newProgram, Programindex);
-            } else 
-            if (kind == STOP_PAID_MEMBERSHIP_PROPOSAL_KIND) {            
-                (, uint8 Programindex,,) = abi.decode(propData, (uint256, uint8, string, uint32));               
-                _stopPaidMembership(Programindex);
-            } else
-            if (kind == BIGTASK_UPGRADE_PROPOSAL_KIND) {
-                (, string taskname, string reponame, string oldversion, address oldtask, string[] hashtag,,) = abi.decode(propData, (uint256, string, string, string, address, string[], string, uint32));
-                GoshDao(_goshdao).upgradeBigTask{value: 0.1 ton, flag: 1}(_pubaddr, _index, taskname, reponame, oldversion, oldtask, hashtag);   
-            } else
-            if (kind == BIGTASK_PROPOSAL_KIND) {
-                (, string taskName, string repoName,) = abi.decode(propData,(uint256, string, string, uint32));
-                _confirmTask(taskName, repoName);
-            } else 
-            if (kind == BIGTASK_DEPLOY_PROPOSAL_KIND) {
-                (, string repoName, string taskName, string[] tag, ConfigGrant grant, ConfigCommit commit, uint128 freebalance, ,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, ConfigCommit, uint128, string, uint32));
-                _deployBigTask(repoName, taskName, tag, grant, commit, freebalance);
-            } else
-            if (kind == BIGTASK_DESTROY_PROPOSAL_KIND) {
-                (, string taskName, string repoName,) = abi.decode(propData,(uint256, string, string, uint32));
-                _destroyBigTask(taskName, repoName);
-            } else
-            if (kind == INDEX_PROPOSAL_KIND) {
-                (, TvmCell data, uint128 index, uint128 typetr,,) = abi.decode(propData,(uint256, TvmCell, uint128, uint128, string, uint32));
-                if (typetr == 0) { _deployIndex(data, index); }
-                if (typetr == 1) { _updateIndex(data, index); }
-                if (typetr == 2) { _destroyIndex(data, index); }
-            } 
+            TvmCell data3;
+            this.isCompletedCallbackIn{value : 0.1 ton, flag: 1}(1, propData, data3);
         }
     }
     
@@ -2712,18 +2537,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return _systemcontract;
     }
 
-    function getAddrDao() external view returns(address) {
-        return _goshdao;
-    }
-
-    function getRootAddress() external view returns(address) {
-        return _rootpubaddr;
-    }
-
-    function getWalletAddress() external view returns(address) {
-        return _pubaddr;
-    }
-
     function getTaskAddr(string nametask, string reponame) external view returns(address) {
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, reponame);
         return GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, repo, nametask);
@@ -2742,16 +2555,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return GoshLib.buildSnapshotCode(_code[m_SnapshotCode], repo, version);
     }
 
-    function getConfig() external view returns(uint128) {
-        return (_limit_wallets);
-    }
-
     function getWalletAddr(uint128 index) external view returns(address) {
         return GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, index);
-    }
-
-    function getWalletOwner() external view returns(address) {
-        return _pubaddr;
     }
 
     function getWalletsCount() external view returns(uint128) {
@@ -2768,14 +2573,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function getHash(bytes state) external pure returns(uint256) {
         return tvm.hash(state);
-    }
-
-    function getAccess() external view returns(optional(uint256)) {
-        return _access;
-    }
-
-    function getTombstone() external view returns(bool) {
-        return _tombstone;
     }
     
     function getDetails() external view  returns(uint128, uint128, uint128, address, address, uint128, address, uint128, optional(uint256), bool, optional(uint128)) {

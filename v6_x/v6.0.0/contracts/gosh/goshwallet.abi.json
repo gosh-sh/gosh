@@ -1681,30 +1681,6 @@
 			]
 		},
 		{
-			"name": "getAddrDao",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "getRootAddress",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "getWalletAddress",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
 			"name": "getTaskAddr",
 			"inputs": [
 				{"name":"nametask","type":"string"},
@@ -1745,25 +1721,9 @@
 			]
 		},
 		{
-			"name": "getConfig",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"uint128"}
-			]
-		},
-		{
 			"name": "getWalletAddr",
 			"inputs": [
 				{"name":"index","type":"uint128"}
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "getWalletOwner",
-			"inputs": [
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}
@@ -1803,22 +1763,6 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"uint256"}
-			]
-		},
-		{
-			"name": "getAccess",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"optional(uint256)"}
-			]
-		},
-		{
-			"name": "getTombstone",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"bool"}
 			]
 		},
 		{
