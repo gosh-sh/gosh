@@ -78,6 +78,8 @@ async fn construct_tree(
     tracing::trace!("construct tree: flat_tree={flat_tree:?}");
     let mut nodes = HashMap::new();
     let mut paths = Vec::new();
+    let commit_obj = ObjectId::from_hex(current_commit.as_bytes())?;
+    let commit_chain = context.get_commit_ancestors(&commit_obj)?;
     tracing::trace!("start processing single tree items");
     // prepare file entries
     use git_object::tree::EntryMode::*;
@@ -114,9 +116,15 @@ async fn construct_tree(
 
                 let commit = snapshot_to_commit
                     .get(&file_name)
-                    .map(|val| val[0].base_commit.as_str())// change 0 index to smth meaningful
-                    .unwrap_or(current_commit)
-                    .to_string();
+                    .and_then(|val| {
+                        for snap_mon in val {
+                            if commit_chain.contains(&snap_mon.latest_commit) {
+                                return Some(snap_mon.base_commit.clone());
+                            }
+                        }
+                        None
+                    })
+                    .unwrap_or(current_commit.to_string());
 
                 let tree_node = TreeNode::from((Some(format!("0x{file_hash}")), None, commit, entry));
                 let type_obj = &tree_node.type_obj;

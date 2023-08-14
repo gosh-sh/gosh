@@ -163,7 +163,7 @@ pub async fn construct_map_of_snapshots(
     queue: &mut VecDeque<(Tree, String)>,
     commit_ancestors: &Vec<String>,
 ) -> anyhow::Result<()> {
-    tracing::trace!("construct_map_of_snapshots: prefix:{}", prefix);
+    tracing::trace!("construct_map_of_snapshots: prefix:{}, tree:{:?}", prefix, tree);
     for (_, entry) in tree.objects {
         let mode: EntryMode = type_obj_to_entry_mod(entry.type_obj.as_str());
         match mode {

@@ -54,7 +54,7 @@ git push
 
 echo "**** Merge parent branch *****"
 git merge parent_branch -m merge
-git push
+GOSH_TRACE=5 git push &> ../trace_15.log
 
 #git log
 
