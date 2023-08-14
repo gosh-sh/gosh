@@ -216,7 +216,23 @@ impl BlockchainCommitPusher for Everscale {
             );
             if let Some(message) = found.0 {
                 match message.name.as_str() {
-                    "allCorrect" => break,
+                    "allCorrect" => {
+                        tracing::trace!("allCorrect params: {:?}", message.value);
+                        if let Some(value) = message.value {
+                            let accepted_branch = value
+                                .as_object()
+                                .unwrap()
+                                .get("branch")
+                                .unwrap()
+                                .as_str()
+                                .unwrap();
+                            tracing::trace!("allCorrect branch: {}", accepted_branch);
+                            if accepted_branch == branch {
+                                break;
+                            }
+                        }
+                        tracing::trace!("Wrong branch accepted, continue search");
+                    },
                     "treeAccept" => break,
                     "cancelCommit" => bail!("Push failed. Fix and retry"),
                     "NotCorrectRepo" => bail!("Push failed. Fetch first"),
