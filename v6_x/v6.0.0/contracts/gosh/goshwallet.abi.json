@@ -67,19 +67,6 @@
 			]
 		},
 		{
-			"name": "startProposalForIndex",
-			"inputs": [
-				{"name":"data","type":"cell"},
-				{"name":"index","type":"uint128"},
-				{"name":"typetr","type":"uint128"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"comment","type":"string"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getCellForIndex",
 			"inputs": [
 				{"name":"data","type":"cell"},
@@ -191,18 +178,6 @@
 			]
 		},
 		{
-			"name": "startProposalForStartPaidMembership",
-			"inputs": [
-				{"components":[{"name":"fiatValue","type":"uint128"},{"name":"decimals","type":"uint128"},{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"details","type":"string"},{"name":"accessKey","type":"uint256"}],"name":"newProgram","type":"tuple"},
-				{"name":"Programindex","type":"uint8"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getCellStartPaidMembership",
 			"inputs": [
 				{"components":[{"name":"fiatValue","type":"uint128"},{"name":"decimals","type":"uint128"},{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"details","type":"string"},{"name":"accessKey","type":"uint256"}],"name":"newProgram","type":"tuple"},
@@ -212,17 +187,6 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "startProposalForStopPaidMembership",
-			"inputs": [
-				{"name":"Programindex","type":"uint8"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
 			]
 		},
 		{
@@ -237,20 +201,6 @@
 			]
 		},
 		{
-			"name": "startProposalForDaoTransferTokens",
-			"inputs": [
-				{"name":"wallet","type":"address"},
-				{"name":"newwallet","type":"address"},
-				{"name":"grant","type":"uint128"},
-				{"name":"oldversion","type":"string"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getCellDaoTransferTokens",
 			"inputs": [
 				{"name":"wallet","type":"address"},
@@ -262,22 +212,6 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "startProposalForDaoVote",
-			"inputs": [
-				{"name":"wallet","type":"address"},
-				{"name":"platform_id","type":"uint256"},
-				{"name":"choice","type":"bool"},
-				{"name":"amount","type":"uint128"},
-				{"name":"num_clients_base","type":"uint128"},
-				{"name":"note","type":"string"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
 			]
 		},
 		{
@@ -306,18 +240,6 @@
 			]
 		},
 		{
-			"name": "startProposalForUpgradeDao",
-			"inputs": [
-				{"name":"newversion","type":"string"},
-				{"name":"description","type":"string"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getCellSetUpgrade",
 			"inputs": [
 				{"name":"newversion","type":"string"},
@@ -327,19 +249,6 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "startProposalForChangeAllowance",
-			"inputs": [
-				{"name":"pubaddr","type":"address[]"},
-				{"name":"increase","type":"bool[]"},
-				{"name":"grant","type":"uint128[]"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
 			]
 		},
 		{
@@ -356,17 +265,6 @@
 			]
 		},
 		{
-			"name": "startProposalForSetTombstoneDao",
-			"inputs": [
-				{"name":"description","type":"string"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getCellSetTombstoneDao",
 			"inputs": [
 				{"name":"description","type":"string"},
@@ -375,19 +273,6 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "startProposalForDaoReview",
-			"inputs": [
-				{"name":"wallet","type":"address"},
-				{"name":"propaddress","type":"address"},
-				{"name":"isAccept","type":"bool"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
 			]
 		},
 		{
@@ -413,17 +298,6 @@
 			]
 		},
 		{
-			"name": "startProposalForSetHideVotingResult",
-			"inputs": [
-				{"name":"res","type":"bool"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getCellSetHideVotingResult",
 			"inputs": [
 				{"name":"res","type":"bool"},
@@ -435,17 +309,6 @@
 			]
 		},
 		{
-			"name": "startProposalForSetAllowDiscussion",
-			"inputs": [
-				{"name":"res","type":"bool"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getCellSetAllowDiscussion",
 			"inputs": [
 				{"name":"res","type":"bool"},
@@ -454,19 +317,6 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "startProposalForTagUpgrade",
-			"inputs": [
-				{"name":"repoName","type":"string[]"},
-				{"name":"nametag","type":"string[]"},
-				{"name":"newversion","type":"string"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
 			]
 		},
 		{
@@ -497,17 +347,6 @@
 			"name": "setRepoUpgraded",
 			"inputs": [
 				{"name":"res","type":"bool"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "startProposalForSetAbilityInvite",
-			"inputs": [
-				{"name":"res","type":"bool"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -581,17 +420,6 @@
 			]
 		},
 		{
-			"name": "startProposalForMintDaoReserve",
-			"inputs": [
-				{"name":"token","type":"uint128"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getCellMintToken",
 			"inputs": [
 				{"name":"token","type":"uint128"},
@@ -600,16 +428,6 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "startProposalForNotAllowMint",
-			"inputs": [
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
 			]
 		},
 		{
@@ -623,18 +441,6 @@
 			]
 		},
 		{
-			"name": "startProposalForAddVoteToken",
-			"inputs": [
-				{"name":"pubaddr","type":"address"},
-				{"name":"token","type":"uint128"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getCellAddVoteToken",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
@@ -644,18 +450,6 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "startProposalForAddRegularToken",
-			"inputs": [
-				{"name":"pubaddr","type":"address"},
-				{"name":"token","type":"uint128"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
 			]
 		},
 		{
@@ -704,17 +498,6 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "startProposalForDeleteWalletDao",
-			"inputs": [
-				{"name":"pubaddr","type":"address[]"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
 			]
 		},
 		{
@@ -810,21 +593,6 @@
 			]
 		},
 		{
-			"name": "startProposalForTaskUpgrade",
-			"inputs": [
-				{"name":"nametask","type":"string"},
-				{"name":"reponame","type":"string"},
-				{"name":"oldversion","type":"string"},
-				{"name":"oldtask","type":"address"},
-				{"name":"hashtag","type":"string[]"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getCellForTaskUpgrade",
 			"inputs": [
 				{"name":"nametask","type":"string"},
@@ -840,18 +608,6 @@
 			]
 		},
 		{
-			"name": "startProposalForBigTaskConfirm",
-			"inputs": [
-				{"name":"taskName","type":"string"},
-				{"name":"repoName","type":"string"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getCellTaskConfirm",
 			"inputs": [
 				{"name":"taskName","type":"string"},
@@ -861,21 +617,6 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "startProposalForBigTaskUpgrade",
-			"inputs": [
-				{"name":"nametask","type":"string"},
-				{"name":"reponame","type":"string"},
-				{"name":"oldversion","type":"string"},
-				{"name":"oldtask","type":"address"},
-				{"name":"hashtag","type":"string[]"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
 			]
 		},
 		{
@@ -891,19 +632,6 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "startProposalForSendDaoToken",
-			"inputs": [
-				{"name":"wallet","type":"address"},
-				{"name":"pubaddr","type":"optional(address)"},
-				{"name":"grant","type":"uint128"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
 			]
 		},
 		{
@@ -924,19 +652,6 @@
 			"inputs": [
 				{"name":"UpgradeCode","type":"cell"},
 				{"name":"cell","type":"cell"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "startProposalForDeployRepository",
-			"inputs": [
-				{"name":"nameRepo","type":"string"},
-				{"name":"descr","type":"string"},
-				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"},
 				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"},
 				{"name":"reviewers","type":"address[]"}
@@ -1042,18 +757,6 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"Name","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "startProposalForChangeDescription",
-			"inputs": [
-				{"name":"repoName","type":"string"},
-				{"name":"descr","type":"string"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -1639,19 +1342,6 @@
 			]
 		},
 		{
-			"name": "startProposalForDaoAskGrant",
-			"inputs": [
-				{"name":"wallet","type":"address"},
-				{"name":"repoName","type":"string"},
-				{"name":"taskName","type":"string"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getCellForDaoAskGrant",
 			"inputs": [
 				{"name":"wallet","type":"address"},
@@ -1673,19 +1363,6 @@
 			]
 		},
 		{
-			"name": "startProposalForDaoLockVote",
-			"inputs": [
-				{"name":"wallet","type":"address"},
-				{"name":"isLock","type":"bool"},
-				{"name":"grant","type":"uint128"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getCellForDaoLockVote",
 			"inputs": [
 				{"name":"wallet","type":"address"},
@@ -1696,18 +1373,6 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "startProposalForAddRepoTag",
-			"inputs": [
-				{"name":"tag","type":"string[]"},
-				{"name":"repo","type":"string"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
 			]
 		},
 		{
@@ -1723,18 +1388,6 @@
 			]
 		},
 		{
-			"name": "startProposalForDestroyRepoTag",
-			"inputs": [
-				{"name":"tag","type":"string[]"},
-				{"name":"repo","type":"string"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getCellDestroyRepoTag",
 			"inputs": [
 				{"name":"tag","type":"string[]"},
@@ -1744,17 +1397,6 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "startProposalForAddDaoTag",
-			"inputs": [
-				{"name":"tag","type":"string[]"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
 			]
 		},
 		{
@@ -1769,17 +1411,6 @@
 			]
 		},
 		{
-			"name": "startProposalForDestroyDaoTag",
-			"inputs": [
-				{"name":"tag","type":"string[]"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getCellDestroyDaoTag",
 			"inputs": [
 				{"name":"tag","type":"string[]"},
@@ -1788,18 +1419,6 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "startProposalForAddProtectedBranch",
-			"inputs": [
-				{"name":"repoName","type":"string"},
-				{"name":"branchName","type":"string"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
 			]
 		},
 		{
@@ -1812,18 +1431,6 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "startProposalForTaskDestroy",
-			"inputs": [
-				{"name":"taskName","type":"string"},
-				{"name":"repoName","type":"string"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
 			]
 		},
 		{
@@ -1843,6 +1450,16 @@
 			"inputs": [
 				{"name":"number","type":"uint128"},
 				{"name":"proposals","type":"cell"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startOneProposal",
+			"inputs": [
+				{"name":"proposal","type":"cell"},
 				{"name":"num_clients","type":"uint128"},
 				{"name":"reviewers","type":"address[]"}
 			],
@@ -1889,18 +1506,6 @@
 			]
 		},
 		{
-			"name": "startProposalForBigTaskDestroy",
-			"inputs": [
-				{"name":"taskName","type":"string"},
-				{"name":"repoName","type":"string"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getCellBigTaskDestroy",
 			"inputs": [
 				{"name":"taskName","type":"string"},
@@ -1910,22 +1515,6 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "startProposalForBigTaskDeploy",
-			"inputs": [
-				{"name":"taskName","type":"string"},
-				{"name":"repoName","type":"string"},
-				{"name":"tag","type":"string[]"},
-				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
-				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"assignersdata","type":"tuple"},
-				{"name":"freebalance","type":"uint128"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
 			]
 		},
 		{
@@ -1945,21 +1534,6 @@
 			]
 		},
 		{
-			"name": "startProposalForTaskDeploy",
-			"inputs": [
-				{"name":"taskName","type":"string"},
-				{"name":"repoName","type":"string"},
-				{"name":"tag","type":"string[]"},
-				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
-				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getCellTaskDeploy",
 			"inputs": [
 				{"name":"taskName","type":"string"},
@@ -1972,18 +1546,6 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "startProposalForDeleteProtectedBranch",
-			"inputs": [
-				{"name":"repoName","type":"string"},
-				{"name":"branchName","type":"string"},
-				{"name":"comment","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
 			]
 		},
 		{

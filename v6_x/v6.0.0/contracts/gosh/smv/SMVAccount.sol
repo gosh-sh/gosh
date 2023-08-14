@@ -4,6 +4,7 @@ pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 
 import "./modifiers/modifiers.sol";
+import "./modifiers/SMVconfiguration.sol";
 
 import "./Libraries/SMVErrors.sol";
 import "./Libraries/SMVConstants.sol";
@@ -26,7 +27,7 @@ import "./TokenWalletOwner.sol";
 
 
 
-contract SMVAccount is Modifiers, ISMVAccount /* , TokenWalletOwner */ {
+contract SMVAccount is Modifiers, ISMVAccount, SMVConfiguration /* , TokenWalletOwner */ {
 
     address _pubaddr; //from goshwallet
     address static _goshdao;  //from goshwallet

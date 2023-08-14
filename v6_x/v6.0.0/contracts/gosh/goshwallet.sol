@@ -27,6 +27,7 @@ import "./libraries/GoshLib.sol";
 import "./smv/SMVAccount.sol";
 import "./smv/Libraries/SMVConstants.sol";
 import "./smv/LockerPlatform.sol";
+import "./smv/modifiers/SMVconfiguration.sol";
 
 abstract contract Object {
     function destroy(address pubaddr, uint128 index) external {}
@@ -172,22 +173,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return;
     }
 
-    function startProposalForIndex(
-        TvmCell data, 
-        uint128 index, 
-        uint128 typetr,
-        uint128 num_clients,
-        string comment, 
-        address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        uint256 proposalKind =  INDEX_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, data, index, typetr, comment, block.timestamp);
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-        getMoney();
-    }
-
     function getCellForIndex(
         TvmCell data, 
         uint128 index, 
@@ -309,38 +294,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshDao(_goshdao).startCheckPaidMembershipWallet{value: 0.2 ton, flag: 1}(_pubaddr, _index);
     }  
 
-    function startProposalForStartPaidMembership(
-        PaidMember newProgram, uint8 Programindex, 
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        uint256 proposalKind =  START_PAID_MEMBERSHIP_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, newProgram, Programindex, comment, block.timestamp);
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-        getMoney();
-    }
-
     function getCellStartPaidMembership(
         PaidMember newProgram, uint8 Programindex,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind =  START_PAID_MEMBERSHIP_PROPOSAL_KIND;        
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, newProgram, Programindex, comment, time.get());
-    }
-
-    function startProposalForStopPaidMembership( 
-        uint8 Programindex,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        uint256 proposalKind =  STOP_PAID_MEMBERSHIP_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, Programindex, comment, block.timestamp);
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-        getMoney();
     }
 
     function getCellStopPaidMembership(
@@ -359,43 +318,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshDao(_goshdao).stopPaidMembership{value: 0.2 ton, flag: 1}(_pubaddr, _index, Programindex);
     }
     
-    function startProposalForDaoTransferTokens(
-        address wallet, address newwallet, uint128 grant, string oldversion, 
-        string comment,
-        uint128 num_clients , address[] reviewers
-
-    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        uint256 proposalKind = TRANSFER_TO_NEW_VERSION_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, wallet, newwallet, grant, oldversion, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
-    }
-    
     function getCellDaoTransferTokens(
         address wallet, address newwallet, uint128 grant, string oldversion,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         if (time.hasValue() == false) { time = block.timestamp; }
         uint256 proposalKind = TRANSFER_TO_NEW_VERSION_PROPOSAL_KIND;
         return abi.encode(proposalKind, wallet, newwallet, grant, oldversion, comment, time.get());
-    }
-    
-    function startProposalForDaoVote(
-        address wallet, uint256 platform_id, bool choice, uint128 amount, uint128 num_clients_base, string note,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        uint256 proposalKind = DAO_VOTE_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, wallet, platform_id, choice, amount, num_clients_base, note, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
     }
     
     function getCellDaoVote(
@@ -420,22 +348,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshDao(_goshdao).daoVote{value: 0.1 ton, flag: 1}(_pubaddr, _index, wallet, platform_id, choice, amount, num_clients_base, note);
         getMoney();
     }
-
-    function startProposalForUpgradeDao(
-        string newversion,
-        string description,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        uint256 proposalKind = SET_UPGRADE_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, newversion, description, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
-    }
     
     function getCellSetUpgrade(
         string newversion,
@@ -445,27 +357,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = SET_UPGRADE_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, newversion, description, comment, time.get());
-    }
-
-    
-    function startProposalForChangeAllowance(
-        address[] pubaddr,
-        bool[] increase,
-        uint128[] grant,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        require(pubaddr.length == increase.length, ERR_DIFFERENT_COUNT);
-        require(pubaddr.length == grant.length, ERR_DIFFERENT_COUNT);
-        uint256 proposalKind = CHANGE_ALLOWANCE_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, pubaddr, increase, grant, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
     }
     
     function getCellChangeAllowance(
@@ -478,46 +369,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, pubaddr, increase, grant, comment, time.get());
     }
-
-    function startProposalForSetTombstoneDao(
-        string description,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        uint256 proposalKind = SET_TOMBSTONE_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, description, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
-    }
     
     function getCellSetTombstoneDao(string description,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = SET_TOMBSTONE_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, description, comment, time.get());
-    }
-    
-    function startProposalForDaoReview(
-        address wallet,
-        address propaddress,
-        bool isAccept,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        uint256 proposalKind = REVIEW_CODE_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, wallet, propaddress, isAccept, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
     }
         
     function getCellForDaoReview(address wallet,
@@ -542,22 +399,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     	else { ISMVProposal(propAddress).rejectReviewer{value: SMVConstants.ACTION_FEE + SMVConstants.EPSILON_FEE, flag: 1}(); }
     }
     
-    function startProposalForSetHideVotingResult(
-        bool res,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        uint256 proposalKind = CHANGE_HIDE_VOTING_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, res, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
-    }
-    
     function getCellSetHideVotingResult(bool res,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = CHANGE_HIDE_VOTING_PROPOSAL_KIND;
@@ -565,46 +406,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return abi.encode(proposalKind, res, comment, time.get());
     }
     
-    function startProposalForSetAllowDiscussion(
-        bool res,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        uint256 proposalKind = CHANGE_ALLOW_DISCUSSION_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, res, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
-    }
-    
     function getCellSetAllowDiscussion(bool res,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = CHANGE_ALLOW_DISCUSSION_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, res, comment, time.get());
-    }
-    
-    function startProposalForTagUpgrade(
-        string[] repoName,
-        string[] nametag,
-        string newversion,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        require(repoName.length == nametag.length, ERR_DIFFERENT_COUNT);
-        uint256 proposalKind = TAG_UPGRADE_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, repoName, nametag, newversion, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
     }
     
     function getCellTagUpgrade(string[] repoName,
@@ -650,22 +456,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_limited == false, ERR_WALLET_LIMITED);
         tvm.accept();
         GoshDao(_goshdao).setRepoUpgraded{value: 0.17 ton, flag: 1}(_pubaddr, _index, res);
-    }
-    
-    function startProposalForSetAbilityInvite(
-        bool res,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        uint256 proposalKind = ABILITY_INVITE_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, res, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
     }
     
     function getCellSetAbilityInvite(bool res,
@@ -746,47 +536,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshDao(_goshdao).isAloneDeploy{value: 0.13 ton, flag: 1}(nameRepo, descr, previous, _pubaddr, _index, ALONE_DEPLOY_REPO);
     }
     
-    function startProposalForMintDaoReserve(
-        uint128 token,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        tvm.accept();
-        _saveMsg();
-
-        uint256 proposalKind = MINT_TOKEN_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, token, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
-    }
-    
     function getCellMintToken(uint128 token,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = MINT_TOKEN_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, token, comment, time.get());       
-    }
-    
-    function startProposalForNotAllowMint(
-        string comment,
-        uint128 num_clients, address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        tvm.accept();
-        _saveMsg();
-
-        uint256 proposalKind = ALLOW_MINT_PROPOSAL_KIND;
-
-        TvmCell c = abi.encode(proposalKind, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
     }
     
     function getCellAllowMint(
@@ -800,51 +554,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshDao(_goshdao).mintReserve{value:0.1 ton, flag: 1}(grant, _pubaddr, _index);
     }
     
-    function startProposalForAddVoteToken(
-        address pubaddr,
-        uint128 token,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        tvm.accept();
-        _saveMsg();
-
-        uint256 proposalKind = ADD_VOTE_TOKEN_PROPOSAL_KIND;
-
-        TvmCell c = abi.encode(proposalKind, pubaddr, token, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
-    }
-    
     function getCellAddVoteToken(address pubaddr,
         uint128 token,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = ADD_VOTE_TOKEN_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, pubaddr, token, comment, time.get());       
-    }
-    
-    function startProposalForAddRegularToken(
-        address pubaddr,
-        uint128 token,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        tvm.accept();
-        _saveMsg();
-
-        uint256 proposalKind = ADD_REGULAR_TOKEN_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, pubaddr, token, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
     }
     
     function getCellAddRegularToken(address pubaddr,
@@ -888,25 +603,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = DEPLOY_WALLET_DAO_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, pubaddr, dao, comment, time.get());
-    }
-
-    function startProposalForDeleteWalletDao(
-        address[] pubaddr,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        tvm.accept();
-        _saveMsg();
-
-        uint256 proposalKind = DELETE_WALLET_DAO_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, pubaddr, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
     }
     
     function getCellDeleteWalletDao(
@@ -1056,26 +752,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             _pubaddr, nameRepo, _nameDao, _goshdao, _systemcontract, descr, _code[m_CommitCode], _code[m_WalletCode], _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _versions, _index, previous);
         getMoney();
     }
-    
-    function startProposalForTaskUpgrade(
-        string nametask,
-        string reponame,
-        string oldversion,
-        address oldtask,
-        string[] hashtag,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) accept {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        _saveMsg();
-
-        uint256 proposalKind = TASK_UPGRADE_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, nametask, reponame, oldversion, oldtask, hashtag, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
-    }
 
     function getCellForTaskUpgrade(string nametask,
         string reponame,
@@ -1087,23 +763,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = TASK_UPGRADE_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, nametask, reponame, oldversion, oldtask, hashtag, comment, time.get());      
-    }
-
-    function startProposalForBigTaskConfirm(
-        string taskName,
-        string repoName,
-        string comment,
-        uint128 num_clients, 
-        address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access)  {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        tvm.accept();
-        _saveMsg();
-        uint256 proposalKind = BIGTASK_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, repoName, taskName, comment, block.timestamp);
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-        getMoney();
     }
    
     function getCellTaskConfirm(
@@ -1125,26 +784,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address taskaddr = GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, repo, nametask);
         BigTask(taskaddr).approveReady{value:1 ton}(_pubaddr, _index);
         getMoney();
-    } 
-
-    function startProposalForBigTaskUpgrade(
-        string nametask,
-        string reponame,
-        string oldversion,
-        address oldtask,
-        string[] hashtag,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) accept {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        _saveMsg();
-
-        uint256 proposalKind = BIGTASK_UPGRADE_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, nametask, reponame, oldversion, oldtask, hashtag, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
     }
 
     function getCellForBigTaskUpgrade(string nametask,
@@ -1157,25 +796,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = BIGTASK_UPGRADE_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, nametask, reponame, oldversion, oldtask, hashtag, comment, time.get());      
-    }
-    
-    function startProposalForSendDaoToken(
-        address wallet,
-        optional(address) pubaddr,
-        uint128 grant,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) accept {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        _saveMsg();
-
-        uint256 proposalKind = SEND_TOKEN_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, wallet, pubaddr, grant, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
     }
 
     function getCellForSendDaoToken(address wallet,
@@ -1212,26 +832,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         uint256 proposalKind = UPGRADE_CODE_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, UpgradeCode, cell, comment, block.timestamp);
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
-    }
-    
-    function startProposalForDeployRepository(
-        string nameRepo, 
-        string descr,
-        optional(AddrVersion) previous,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) accept {
-        require(checkNameRepo(nameRepo), ERR_WRONG_NAME);
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        _saveMsg();
-
-        uint256 proposalKind = DEPLOY_REPO_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, nameRepo, descr, previous, comment, block.timestamp);
-
         _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
 
         getMoney();
@@ -1387,25 +987,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         Repository(repo).deleteBranch{
             value: FEE_DESTROY_BRANCH, bounce: true, flag: 1
         }(_pubaddr, Name, _index);
-    }
-    
-    function startProposalForChangeDescription(
-        string repoName,
-        string descr,
-        string comment,
-        uint128 num_clients,
-        address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access)  {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        tvm.accept();
-        _saveMsg();
-
-        uint256 proposalKind = CHANGE_DESCRIPTION_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, repoName, descr, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
     }
     
     function getCellChangeDescription(string repoName,
@@ -1998,7 +1579,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshDao(_goshdao).receiveTokentoReserve{value: 0.1 ton, flag: 1}(_pubaddr, _index, grant);
         getMoney();
     }
-
     function sendToken(
         address pubaddr,
         uint128 grant
@@ -2380,27 +1960,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return abi.encode(proposalKind, repoName, branchName, commit, numberChangedFiles, numberCommits, task, comment, time.get());
     }
     
-    function startProposalForDaoAskGrant(
-        address wallet,
-        string repoName,
-        string taskName,
-        string comment,
-        uint128 num_clients,
-        address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access)  {
-        require(_tombstone == false, ERR_TOMBSTONE);       
-        require(_limited == false, ERR_WALLET_LIMITED);
-        tvm.accept();
-        _saveMsg();
-
-        uint256 proposalKind = ASK_TASK_GRANT_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, wallet, repoName, taskName, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
-    }
-    
     function getCellForDaoAskGrant(address wallet, string repoName, string taskName,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = ASK_TASK_GRANT_PROPOSAL_KIND;
@@ -2411,27 +1970,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function daoAskUnlockAfterTombstone(address wallet) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(_limited == false, ERR_WALLET_LIMITED);
         GoshDao(_goshdao).daoAskLockTomb{value: 0.1 ton, flag: 1}(_pubaddr, _index, wallet);
-    }
-    
-    function startProposalForDaoLockVote(
-        address wallet,
-        bool isLock,
-        uint128 grant,
-        string comment,
-        uint128 num_clients,
-        address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access)  {
-        require(_tombstone == false, ERR_TOMBSTONE);       
-        require(_limited == false, ERR_WALLET_LIMITED);
-        tvm.accept();
-        _saveMsg();
-
-        uint256 proposalKind = DAO_LOCK_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, wallet, isLock, grant, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
     }
     
     function getCellForDaoLockVote(
@@ -2445,50 +1983,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return abi.encode(proposalKind, wallet, isLock, grant, comment, time.get());
     }
     
-    function startProposalForAddRepoTag(
-        string[] tag,
-        string repo,
-        string comment,
-        uint128 num_clients,
-        address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access)  {
-        require(_tombstone == false, ERR_TOMBSTONE);       
-        require(_limited == false, ERR_WALLET_LIMITED);
-        tvm.accept();
-        _saveMsg();
-
-        uint256 proposalKind = REPOTAG_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, tag, repo, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
-    }
-    
     function getCellAddRepoTag(string[] tag, string repo,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = REPOTAG_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, tag, repo, comment, time.get());      
-    }
-    
-    function startProposalForDestroyRepoTag(
-        string[] tag,
-        string repo,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access)  {
-        require(_tombstone == false, ERR_TOMBSTONE);       
-        require(_limited == false, ERR_WALLET_LIMITED);
-        tvm.accept();
-        _saveMsg();
-
-        uint256 proposalKind = REPOTAG_DESTROY_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, tag, repo, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
     }
     
     function getCellDestroyRepoTag(string[] tag, string repo,
@@ -2498,25 +1997,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return abi.encode(proposalKind, tag, repo, comment, time.get());      
     }
     
-    function startProposalForAddDaoTag(
-        string[] tag,
-        string comment,
-        uint128 num_clients,
-        address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access)  {
-        require(_tombstone == false, ERR_TOMBSTONE);       
-        require(_limited == false, ERR_WALLET_LIMITED);
-        tvm.accept();
-        _saveMsg();
-
-        uint256 proposalKind = DAOTAG_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, tag, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
-    }
-    
     function getCellAddDaoTag(string[] tag,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = DAOTAG_PROPOSAL_KIND;
@@ -2524,48 +2004,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return abi.encode(proposalKind, tag, comment, time.get());      
     }
     
-    function startProposalForDestroyDaoTag(
-        string[] tag,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access)  {
-        require(_tombstone == false, ERR_TOMBSTONE);       
-        require(_limited == false, ERR_WALLET_LIMITED);
-        tvm.accept();
-        _saveMsg();
-
-        uint256 proposalKind = DAOTAG_DESTROY_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, tag, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
-    }
-    
     function getCellDestroyDaoTag(string[] tag,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = DAOTAG_DESTROY_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, tag, comment, time.get());      
-    }
-
-    function startProposalForAddProtectedBranch(
-        string repoName,
-        string branchName,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access)  {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        tvm.accept();
-        _saveMsg();
-
-        uint256 proposalKind = ADD_PROTECTED_BRANCH_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, repoName, branchName, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
     }
         
     function getCellAddProtectedBranch(string repoName,
@@ -2575,23 +2018,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, repoName, branchName, comment, time.get());
         
-    }
-
-    function startProposalForTaskDestroy(
-        string taskName,
-        string repoName,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access)  {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        tvm.accept();
-        _saveMsg();
-
-        uint256 proposalKind = TASK_DESTROY_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, repoName, taskName, comment, block.timestamp);
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-        getMoney();
     }
     
     function getCellTaskDestroy(
@@ -2620,6 +2046,19 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = MULTI_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, number, proposals, block.timestamp);
         _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
+        getMoney();
+    }
+
+    function startOneProposal(
+        TvmCell proposal,
+        uint128 num_clients, 
+        address[] reviewers
+    ) public onlyOwnerPubkeyOptional(_access)  {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        tvm.accept();
+        _saveMsg();
+        _startProposalForOperation(proposal, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
         getMoney();
     }
     
@@ -2688,23 +2127,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, wallet, number, proposals, num_clients_base, reviewers_base, time.get());
     }
-
-    function startProposalForBigTaskDestroy(
-        string taskName,
-        string repoName,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access)  {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        tvm.accept();
-        _saveMsg();
-
-        uint256 proposalKind = BIGTASK_DESTROY_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, repoName, taskName, comment, block.timestamp);
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-        getMoney();
-    }
     
     function getCellBigTaskDestroy(
         string taskName,
@@ -2714,32 +2136,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = BIGTASK_DESTROY_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, repoName, taskName, comment, time.get());
-    }
-
-    function startProposalForBigTaskDeploy(
-        string taskName,
-        string repoName,
-        string[] tag,
-        ConfigGrant grant,
-        ConfigCommit assignersdata,
-        uint128 freebalance,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access)  {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        require(grant.assign.length == 0, ERR_TOO_MANY_VESTING_TIME);
-        require(grant.review.length == 0, ERR_TOO_MANY_VESTING_TIME);
-        require(grant.manager.length <= 150, ERR_TOO_MANY_VESTING_TIME);
-        require(grant.manager.length > 0, ERR_TOO_MANY_VESTING_TIME);
-        require(tag.length  <= _limittag, ERR_TOO_MANY_TAGS);
-        tvm.accept();
-        _saveMsg();
-
-        uint256 proposalKind = BIGTASK_DEPLOY_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, repoName, taskName, tag, grant, assignersdata, freebalance, comment, block.timestamp);
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-        getMoney();
     }
     
     function getCellBigTaskDeploy(
@@ -2755,30 +2151,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, repoName, taskName, tag, grant, assignersdata, freebalance, comment, time.get());
     }
-
-    function startProposalForTaskDeploy(
-        string taskName,
-        string repoName,
-        string[] tag,
-        ConfigGrant grant,
-        optional(ConfigCommitBase) workers,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access)  {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        require(grant.assign.length <= 150, ERR_TOO_MANY_VESTING_TIME);
-        require(grant.review.length <= 150, ERR_TOO_MANY_VESTING_TIME);
-        require(grant.manager.length <= 150, ERR_TOO_MANY_VESTING_TIME);
-        require(tag.length  <= _limittag, ERR_TOO_MANY_TAGS);
-        tvm.accept();
-        _saveMsg();
-
-        uint256 proposalKind = TASK_DEPLOY_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, repoName, taskName, tag, grant, workers, comment, block.timestamp);
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-        getMoney();
-    }
     
     function getCellTaskDeploy(
         string taskName,
@@ -2791,25 +2163,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = TASK_DEPLOY_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, repoName, taskName, tag, grant, workers, comment, time.get());
-    }
-
-    function startProposalForDeleteProtectedBranch(
-        string repoName,
-        string branchName,
-        string comment,
-        uint128 num_clients , address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access)  {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        tvm.accept();
-        _saveMsg();
-
-        uint256 proposalKind = DELETE_PROTECTED_BRANCH_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, repoName, branchName, comment, block.timestamp);
-
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-
-        getMoney();
     }
     
     function getCellDeleteProtectedBranch(string repoName,
