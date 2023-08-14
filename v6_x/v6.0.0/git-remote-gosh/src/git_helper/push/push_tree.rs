@@ -65,7 +65,7 @@ fn flatten_tree(
 
 #[instrument(level = "trace", skip_all)]
 async fn construct_tree(
-    context: &GitHelper<impl BlockchainService>,
+    context: &GitHelper<impl BlockchainService + 'static>,
     tree_id: &ObjectId,
     current_commit: &str,
     snapshot_to_commit: &mut HashMap<String, Vec<SnapshotMonitor>>,
