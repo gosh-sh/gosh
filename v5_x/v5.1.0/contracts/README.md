@@ -13,7 +13,7 @@
 
 2. Install a local node:
     ```
-    docker run -d --name local-node -e USER_AGREEMENT=yes -p80:80 -v ../../../.ci/blockchain.conf:/ton-node/blockchain.conf tonlabs/local-node:0.36.3
+    docker run -d --name local-node -e USER_AGREEMENT=yes -p80:80 -v "${PWD%/*/*/*}/.ci/blockchain.conf":/ton-node/blockchain.conf tonlabs/local-node:0.36.3
     ```
 
 3. Navigate to multisig directory:
@@ -31,12 +31,14 @@
     ```
 
     As a result, the GoshGiver address will be generated,
+
     for example:
     ```
     ========== GoshGiver address: 0:bdf777a7ff955e189b680801f4f338631a11f851b29cc2baaf8192dd4d549f98
     ```
 
 6. Top up system wallet.
+
     In `dest`, specify the GoshGiver address that you received in the previous step:
 
     ```
