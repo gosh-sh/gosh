@@ -13,7 +13,7 @@
 
 2. Install a local node:
     ```
-    docker run -d --name local-node -e USER_AGREEMENT=yes -p80:80 -v ../../../.ci/blockchain.conf.json:/ton-node/blockchain.conf.json tonlabs/local-node:0.36.3
+    docker run -d --name local-node -e USER_AGREEMENT=yes -p80:80 -v ../../../.ci/blockchain.conf:/ton-node/blockchain.conf tonlabs/local-node:0.36.3
     ```
 
 3. Navigate to multisig directory:
