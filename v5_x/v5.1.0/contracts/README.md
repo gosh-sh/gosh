@@ -6,24 +6,44 @@
 
 #### Deploy
 
-1. Place giver keys file named giver.keys.json inside contracts/gosh folder
-2. Navigate to gosh directory:
+1. Navigate to contracts directory:
     ```
-    cd contracts/gosh
+    cd contracts
     ```
-2. Build docker image with Everdev and other requirements:
+2. Install a local node:
+    ```
+    docker run -d --name local-node -e USER_AGREEMENT=yes -p80:80 -v gosh-blockchain.conf.json:/ton-node/gosh-blockchain.conf.json tonlabs/local-node:0.36.3
+    ```
+3. Navigate to multisig directory:
+    ```
+    cd multisig
+    ```
+4. Create build container:
     ```
     make prepare-docker
     ```
-3. Build smart-contracts:
+5. Build system wallet smart-contract:
     ```
     make build-contracts-docker
     ```
-4. Deploy smart-contracts:
+6. Derive system wallet address:
     ```
-    make deploy-docker KEYS_PATH=/home/gosh/keys/vps23_msig_giver.keys.json NETWORK=vps23.ton.dev GIVER_WALLET_ADDR=0:c6f86566776529edc1fcf3bc444c2deb9f3e077f35e49871eb4d775dd0b04391
+    make generate-docker NETWORK=localhost
     ```
-4. Upgrade GOSH smart-contracts:
+7. Top up system wallet:
     ```
-    make upgrade-docker KEYS_PATH=/home/gosh/keys/vps23_msig_giver.keys.json NETWORK=vps23.ton.dev GIVER_WALLET_ADDR=0:c6f86566776529edc1fcf3bc444c2deb9f3e077f35e49871eb4d775dd0b04391 VERSIONCONTROLLER_ADDR=0:78ca698f06804b318fc40acef8e65823f67ac24fb10e8c7ad8c8553b6eac6293
+    everdev contract topup -n se -v 50000000000000000 -a MSIG_ADDR
     ```
+8. Deploy system wallet:
+    ```
+    make deploy-docker
+    ````
+9. Navigate to GOSH-contracts directory:
+    ```
+    cd ../gosh
+    ```
+10. Deploy GOSH smart-contracts:
+    ```
+    make deploy-docker
+    ```
+    
