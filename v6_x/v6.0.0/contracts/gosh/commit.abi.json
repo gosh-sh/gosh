@@ -292,6 +292,15 @@
 			]
 		},
 		{
+			"name": "treeAcceptAfterCommit",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"branchCommit","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "NotCorrectRepo",
 			"inputs": [
 				{"name":"number","type":"uint128"}

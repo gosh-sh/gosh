@@ -3003,18 +3003,18 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         address?: TAddress
     }): Promise<{
         address: string
-        onchain: { commit: string; content: string }
+        onchain: { commit: string; content: string; tmpcommit: string }
         content: string | Buffer
         ipfs: boolean
     }> {
         const result: {
-            onchain: { commit: string; content: string }
+            onchain: { commit: string; content: string; tmpcommit: string }
             content: string | Buffer
             ipfs: boolean
             isReady: boolean
             isPin: boolean
         } = {
-            onchain: { commit: '', content: '' },
+            onchain: { commit: '', content: '', tmpcommit: '' },
             content: '',
             ipfs: false,
             isReady: false,
@@ -3050,6 +3050,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             result.onchain = {
                 commit: temporaryCommit === commitName ? temporaryCommit : approvedCommit,
                 content: content,
+                tmpcommit: temporaryCommit,
             }
             result.content = content
             result.ipfs = false
@@ -3060,7 +3061,11 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             const compressed = (await goshipfs.read(ipfscid)).toString()
             const decompressed = await zstd.decompress(compressed, false)
             const buffer = Buffer.from(decompressed, 'base64')
-            result.onchain = { commit: baseCommit, content: result.content as string }
+            result.onchain = {
+                commit: baseCommit,
+                content: result.content as string,
+                tmpcommit: temporaryCommit,
+            }
             result.content = isUtf8(buffer) ? buffer.toString() : buffer
             result.ipfs = true
         }
@@ -3804,7 +3809,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     const snapshot = await this.getBlob({
                         fullpath: `${blob.treeitem.commit}/${path}`,
                     })
-                    const commit = await this.getCommit({ name: snapshot.onchain.commit })
+                    const commit = await this.getCommit({
+                        name: snapshot.onchain.tmpcommit,
+                    })
 
                     if ((commit.time ?? 0) > (branchTo.commit.time ?? 0)) {
                         console.debug('Deploy new snapshot with content')
@@ -3836,6 +3843,15 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             updated: updatedTree0.updated,
             sha1: updatedTree0.sha1,
             sha256: await this._getTreeSha256({ items: _tree[''] }),
+        }
+
+        // Reset content and patch for blobs going to be deleted
+        for (const item of blobsData) {
+            if (item.status === 2) {
+                console.debug('Reset content/patch', item)
+                item.data.content = undefined
+                item.data.patch = null
+            }
         }
 
         // Deploy commit
@@ -4427,7 +4443,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             const prev = i > 0 && messages[i - 1]
 
             if (stop) break
-            if (!diff.commit && !diff.patch && !diff.ipfs) {
+            if (!diff.patch && !diff.ipfs) {
                 restored = ''
                 if (reversePatch) {
                     break
