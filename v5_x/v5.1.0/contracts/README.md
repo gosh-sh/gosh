@@ -1,8 +1,8 @@
 #### GOSH Smart-contracts deployment
 
 ##### Pre-requirements
-- Docker installed
-- Giver wallet keys 
+- [Docker installed](https://www.docker.com/get-started/)
+- [tonos-cli](https://github.com/tonlabs/tonos-cli#1-installation)
 
 #### Deploy
 
@@ -10,39 +10,48 @@
     ```
     cd contracts
     ```
+
 2. Install a local node:
     ```
-    docker run -d --name local-node -e USER_AGREEMENT=yes -p80:80 -v gosh-blockchain.conf.json:/ton-node/gosh-blockchain.conf.json tonlabs/local-node:0.36.3
+    docker run -d --name local-node -e USER_AGREEMENT=yes -p80:80 -v ../../../.ci/blockchain.conf.json:/ton-node/blockchain.conf.json tonlabs/local-node:0.36.3
     ```
+
 3. Navigate to multisig directory:
     ```
     cd multisig
     ```
+
 4. Create build container:
     ```
     make prepare-docker
     ```
-5. Build system wallet smart-contract:
-    ```
-    make build-contracts-docker
-    ```
-6. Derive system wallet address:
+5. Derive system wallet address:
     ```
     make generate-docker NETWORK=localhost
     ```
-7. Top up system wallet:
+
+    As a result, the GoshGiver address will be generated,
+    for example:
     ```
-    everdev contract topup -n se -v 50000000000000000 -a MSIG_ADDR
+    ========== GoshGiver address: 0:bdf777a7ff955e189b680801f4f338631a11f851b29cc2baaf8192dd4d549f98
     ```
-8. Deploy system wallet:
+
+6. Top up system wallet.
+    In `dest`, specify the GoshGiver address that you received in the previous step:
+
+    ```
+    tonos-cli -u localhost call 0:ece57bcc6c530283becbbd8a3b24d3c5987cdddc3c8b7b33be6e4a6312490415 sendTransaction '{"dest":"0:bdf777a7ff955e189b680801f4f338631a11f851b29cc2baaf8192dd4d549f98","value":50000000000000000,"bounce":false}' --abi GiverV2.abi.json --sign GiverV2.keys.json
+    ```
+
+7. Deploy system wallet:
     ```
     make deploy-docker
     ````
-9. Navigate to GOSH-contracts directory:
+8. Navigate to GOSH-contracts directory:
     ```
     cd ../gosh
     ```
-10. Deploy GOSH smart-contracts:
+9. Deploy GOSH smart-contracts:
     ```
     make deploy-docker
     ```

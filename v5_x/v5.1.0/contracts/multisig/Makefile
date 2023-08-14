@@ -30,7 +30,7 @@ build-contracts-docker:
 generate-docker:
 	docker run --rm \
 		${EXTRA_DOCKER_ARGS} \
-		-v ${CURDIR}/../:/opt/gosh/contracts \
+		-v "${CURDIR}/../":/opt/gosh/contracts \
 		-e GIVER_SEED_FILE_OUT="Giver.seed" \
 		-e GIVER_NETWORK_FILE_OUT="Giver.network" \
 		-e NETWORK=${NETWORK} \
@@ -40,9 +40,9 @@ generate-docker:
 deploy-docker:
 	docker run --rm \
 		${EXTRA_DOCKER_ARGS} \
-		-v ${CURDIR}/../:/opt/gosh/contracts \
-		-v ${CURDIR}/Giver.addr:/tmp/Giver.addr \
-		-v ${CURDIR}/Giver.seed:/tmp/Giver.seed \
-		-v ${CURDIR}/Giver.network:/tmp/Giver.network \
+		-v "${CURDIR}/../":/opt/gosh/contracts \
+		-v "${CURDIR}/Giver.addr":/tmp/Giver.addr \
+		-v "${CURDIR}/Giver.seed":/tmp/Giver.seed \
+		-v "${CURDIR}/Giver.network":/tmp/Giver.network \
 		everdev:latest \
 		/bin/bash -c 'cd /opt/gosh/contracts/multisig/scripts && ./deploy.sh'
