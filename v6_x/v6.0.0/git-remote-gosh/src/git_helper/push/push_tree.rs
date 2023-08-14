@@ -39,6 +39,7 @@ fn flatten_tree(
         .try_into_tree_iter()
         .unwrap()
         .entries()?;
+    tracing::trace!("Tree entries: {:?}", entry_ref_iter);
     use git_object::tree::EntryMode::*;
     for entry in entry_ref_iter {
         match entry.mode {
@@ -119,6 +120,9 @@ async fn construct_tree(
                     .and_then(|val| {
                         for snap_mon in val {
                             if commit_chain.contains(&snap_mon.latest_commit) {
+                                return Some(snap_mon.base_commit.clone());
+                            }
+                            if commit_chain.contains(&snap_mon.base_commit) {
                                 return Some(snap_mon.base_commit.clone());
                             }
                         }
@@ -214,7 +218,6 @@ async fn construct_tree(
         let entry = file_entry.oid.to_string();
         tracing::trace!("look for root entry: {entry:?}");
         tracing::trace!("nodes: {nodes:?}");
-        tracing::trace!("contains: {}", nodes.contains_key(&entry));
         let (key, tree_node) = nodes.remove(&entry).ok_or(anyhow::format_err!("Failed to get tree node"))?;
         tree_nodes.insert(key, tree_node);
     }
@@ -241,7 +244,7 @@ pub async fn push_tree(
     handlers: &mut ParallelTreeUploadSupport,
     push_semaphore: Arc<Semaphore>,
 ) -> anyhow::Result<BlockchainContractAddress> {
-    tracing::trace!("start push_tree: tree_id={root_tree_id}");
+    tracing::trace!("start push_tree: tree_id={root_tree_id}, current_commit={current_commit}");
     let mut to_deploy = Vec::new();
     let tree_nodes = construct_tree(context, root_tree_id, current_commit, snapshot_to_commit, wallet_contract, &mut to_deploy).await?;
     tracing::trace!("Trees to deploy after construct: {to_deploy:?}");

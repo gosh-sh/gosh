@@ -154,6 +154,7 @@ pub struct SnapshotMonitor {
     pub latest_commit: String,
 }
 
+#[instrument(level = "trace", skip_all)]
 pub async fn construct_map_of_snapshots(
     context: &EverClient,
     repo_contract: &GoshContract,
@@ -161,7 +162,6 @@ pub async fn construct_map_of_snapshots(
     prefix: &str,
     snapshot_to_commit: &mut HashMap<String, Vec<SnapshotMonitor>>,
     queue: &mut VecDeque<(Tree, String)>,
-    commit_ancestors: &Vec<String>,
 ) -> anyhow::Result<()> {
     tracing::trace!("construct_map_of_snapshots: prefix:{}, tree:{:?}", prefix, tree);
     for (_, entry) in tree.objects {
@@ -197,18 +197,12 @@ pub async fn construct_map_of_snapshots(
                     &snapshot_address,
                 ).await?;
                 tracing::trace!("snapshot data: {:?}", snapshot);
-                tracing::trace!("commits chain: {:?}", commit_ancestors);
-                if commit_ancestors.contains(&snapshot.current_commit) {
-                    tracing::trace!("snapshot belongs to the commits chain");
-                    let snap_mon = SnapshotMonitor {
-                        base_commit: entry.commit,
-                        latest_commit: snapshot.current_commit,
-                    };
-                    let entry = snapshot_to_commit.entry(full_path).or_insert(vec![]);
-                    entry.push(snap_mon);
-                } else {
-                    tracing::trace!("snapshot does not belong to the commits chain");
-                }
+                let snap_mon = SnapshotMonitor {
+                    base_commit: entry.commit,
+                    latest_commit: snapshot.current_commit,
+                };
+                let entry = snapshot_to_commit.entry(full_path).or_insert(vec![]);
+                entry.push(snap_mon);
             },
             _ => {}
         }

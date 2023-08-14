@@ -990,6 +990,8 @@ where
                 for parent in commit_iter.parent_ids() {
                     res.push(parent.to_string());
                     queue.push_back(parent);
+                    // add only zero parent
+                    break;
                 }
             } else {
                 break;
@@ -1153,7 +1155,6 @@ where
                 ).await?;
                 let mut queue = VecDeque::new();
                 queue.push_back((tree, "".to_string()));
-                let commit_ancestors = self.get_commit_ancestors(onchain_commit)?;
                 loop {
                     if let Some((tree, prefix)) = queue.pop_back() {
                         let repo_contract = self.blockchain.repo_contract().clone();
@@ -1164,7 +1165,6 @@ where
                             &prefix,
                             &mut snapshot_to_commit,
                             &mut queue,
-                            &commit_ancestors,
                         ).await?;
                     } else {
                         break;

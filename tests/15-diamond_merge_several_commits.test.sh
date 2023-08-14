@@ -50,11 +50,11 @@ echo "***** push to main *****"
 echo new_ver > 2.txt
 git add 2.txt
 git commit -m test2
-git push
+GOSH_TRACE=5 git push &> ../trace_15.log
 
 echo "**** Merge parent branch *****"
 git merge parent_branch -m merge
-GOSH_TRACE=5 git push &> ../trace_15.log
+GOSH_TRACE=5 git push &> ../trace_15_merge.log
 
 #git log
 
