@@ -119,6 +119,7 @@ import {
     TBigTaskUpgradeParams,
     TBigTaskUpgradeResult,
     TCodeCommentThreadResdolveParams,
+    TEventSignleCreateProposalParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -1555,6 +1556,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
                 num_clients: await smv.getClientsCount(),
             })
         }
+    }
+
+    async createSingleProposal(params: TEventSignleCreateProposalParams): Promise<void> {
+        throw new Error('Method is unavailable in current version')
     }
 
     async createMultiProposal(params: TEventMultipleCreateProposalParams): Promise<void> {

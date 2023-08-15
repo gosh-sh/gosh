@@ -121,6 +121,7 @@ import {
     TBigTaskUpgradeResult,
     TCodeCommentThreadResdolveParams,
     TBigTaskDetails,
+    TEventSignleCreateProposalParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -611,7 +612,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             await this._createLimitedWallet(this.profile.address)
         }
 
-        const { value0: pubkey } = await this.wallet.runLocal('getAccess', {})
+        const { value8: pubkey } = await this.wallet.runLocal('getDetails', {})
         if (!pubkey) {
             await this.profile.turnOn(this.wallet.address, keys.public, keys)
         }
@@ -1064,33 +1065,29 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
 
         // Deploy repo
+        const aloneParams = {
+            nameRepo: name.toLowerCase(),
+            descr: description,
+            previous: prev || null,
+        }
+        const cellParams = { ...aloneParams, comment }
+
         if (cell) {
-            const { value0 } = await this.wallet.runLocal('getCellDeployRepo', {
-                nameRepo: name.toLowerCase(),
-                descr: description,
-                previous: prev || null,
-                comment,
-            })
+            const { value0 } = await this.wallet.runLocal('getCellDeployRepo', cellParams)
             return value0
         } else if (alone) {
-            await this.wallet.run('AloneDeployRepository', {
-                nameRepo: name.toLowerCase(),
-                descr: description,
-                previous: prev || null,
-            })
+            await this.wallet.run('AloneDeployRepository', aloneParams)
             const wait = await whileFinite(async () => await repo.isDeployed())
-            if (!wait) throw new GoshError('Deploy repository timeout reached')
+            if (!wait) {
+                throw new GoshError('Deploy repository timeout reached')
+            }
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForDeployRepository', {
-                nameRepo: name.toLowerCase(),
-                descr: description,
-                previous: prev || null,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.REPO_CREATE,
+                    params: { name, description, prev, comment },
+                },
+                reviewers,
             })
         }
 
@@ -1176,14 +1173,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForDeleteWalletDao', {
-                pubaddr: profiles,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.DAO_MEMBER_DELETE,
+                    params: { user, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -1218,16 +1213,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForChangeAllowance', {
-                pubaddr: profiles,
-                increase,
-                grant: amount,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.DAO_ALLOWANCE_CHANGE,
+                    params: { members, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -1248,14 +1239,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForSetAbilityInvite', {
-                res: decision,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE,
+                    params: { decision, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -1275,15 +1264,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForUpgradeDao', {
-                newversion: version,
-                description: description ?? `Upgrade DAO to version ${version}`,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.DAO_UPGRADE,
+                    params: { version, description, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -1314,14 +1300,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         } else if (alone) {
             await this.wallet.run('AloneMintDaoReserve', { token: amount })
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForMintDaoReserve', {
-                token: amount,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.DAO_TOKEN_MINT,
+                    params: { amount, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -1341,14 +1325,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         } else if (alone) {
             await this.wallet.run('AloneNotAllowMint', {})
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-
-            await this.wallet.run('startProposalForNotAllowMint', {
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.DAO_TOKEN_MINT_DISABLE,
+                    params: { comment },
+                },
+                reviewers,
             })
         }
     }
@@ -1381,16 +1363,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         } else if (alone) {
             await this.wallet.run('AloneAddVoteTokenDao', { grant: amount })
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-
-            await this.wallet.run('startProposalForAddVoteToken', {
-                pubaddr: profile.address,
-                token: amount,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.DAO_TOKEN_VOTING_ADD,
+                    params: { user, amount, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -1423,16 +1401,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         } else if (alone) {
             await this.wallet.run('AloneAddTokenDao', { grant: amount })
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-
-            await this.wallet.run('startProposalForAddRegularToken', {
-                pubaddr: profile.address,
-                token: amount,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.DAO_TOKEN_REGULAR_ADD,
+                    params: { user, amount, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -1477,16 +1451,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForSendDaoToken', {
-                wallet,
-                pubaddr: profile,
-                grant: amount,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.DAO_TOKEN_DAO_SEND,
+                    params: { wallet, profile, amount, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -1518,19 +1488,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForDaoVote', {
-                wallet,
-                platform_id: platformId,
-                choice,
-                amount,
-                num_clients_base: 0,
-                note: '',
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.DAO_VOTE,
+                    params: { wallet, platformId, choice, amount, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -1558,16 +1521,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForDaoReview', {
-                wallet,
-                propaddress: eventAddress,
-                isAccept: choice,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.DAO_REVIEWER,
+                    params: { wallet, eventAddress, choice, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -1590,16 +1549,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForDaoAskGrant', {
-                wallet,
-                repoName,
-                taskName,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.DAO_RECEIVE_BOUNTY,
+                    params: { wallet, repoName, taskName, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -1620,16 +1575,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForDaoLockVote', {
-                wallet,
-                isLock,
-                grant: amount,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.DAO_TOKEN_DAO_LOCK,
+                    params: { wallet, isLock, amount, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -1659,17 +1610,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForDaoTransferTokens', {
-                wallet: walletPrev,
-                newwallet: walletCurr,
-                grant: amount,
-                oldversion: versionPrev,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.DAO_TOKEN_TRANSFER_FROM_PREV,
+                    params: { walletPrev, walletCurr, amount, versionPrev, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -1694,14 +1640,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         } else if (alone) {
             await this.wallet.run('AloneDeployDaoTag', { tag: clean })
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForAddDaoTag', {
-                tag: clean,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.DAO_TAG_ADD,
+                    params: { tags, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -1724,16 +1668,33 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForDestroyDaoTag', {
-                tag: clean,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.DAO_TAG_REMOVE,
+                    params: { tags, comment },
+                },
+                reviewers,
             })
         }
+    }
+
+    async createSingleProposal(params: TEventSignleCreateProposalParams): Promise<void> {
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
+
+        const { proposal, reviewers = [] } = params
+        const cell = await this._getProposalCell(proposal)
+
+        // Create proposal
+        const _reviewers = await this.getReviewers(reviewers)
+        const smv = await this.getSmv()
+        await smv.validateProposalStart()
+        await this.wallet.run('startOneProposal', {
+            proposal: cell,
+            reviewers: _reviewers.map(({ wallet }) => wallet),
+            num_clients: await smv.getClientsCount(),
+        })
     }
 
     async createMultiProposal(params: TEventMultipleCreateProposalParams): Promise<void> {
@@ -1779,7 +1740,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             proposals: cell,
             reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: await smv.getClientsCount(),
-            reviewers_base: _reviewersBase.map(({ wallet }) => wallet),
+            reviewers_base: [], // _reviewersBase.map(({ wallet }) => wallet), should be wallet in parent dao
             num_clients_base: 0,
         })
     }
@@ -1827,18 +1788,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForTaskDeploy', {
-                repoName: repository,
-                taskName: name,
-                grant: config,
-                tag: _tags,
-                workers: _candidates,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.TASK_CREATE,
+                    params: { repository, name, config, tags, candidates, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -1878,15 +1833,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForTaskDestroy', {
-                repoName: repository,
-                taskName: name,
-                comment: comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.TASK_DELETE,
+                    params: { repository, name, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -1971,18 +1923,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForTaskUpgrade', {
-                reponame: repoName,
-                nametask: taskName,
-                oldversion: taskPrev.version,
-                oldtask: taskPrev.address,
-                hashtag: tag,
-                comment: comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.TASK_UPGRADE,
+                    params: { repoName, taskName, taskPrev, tag, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -2041,19 +1987,20 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForBigTaskDeploy', {
-                repoName: repositoryName,
-                taskName: name,
-                grant: config,
-                assignersdata: assignersData,
-                freebalance: balance,
-                tag: _tags,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.BIGTASK_CREATE,
+                    params: {
+                        repositoryName,
+                        name,
+                        config,
+                        assigners,
+                        balance,
+                        tags,
+                        comment,
+                    },
+                },
+                reviewers,
             })
         }
     }
@@ -2072,15 +2019,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForBigTaskConfirm', {
-                repoName: repositoryName,
-                taskName: name,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.BIGTASK_APPROVE,
+                    params: { repositoryName, name, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -2099,15 +2043,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForBigTaskDestroy', {
-                repoName: repositoryName,
-                taskName: name,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.BIGTASK_DELETE,
+                    params: { repositoryName, name, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -2158,18 +2099,19 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForBigTaskUpgrade', {
-                reponame: repositoryName,
-                nametask: name,
-                oldversion: prevVersion,
-                oldtask: prevAddress,
-                hashtag: tags,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.BIGTASK_UPGRADE,
+                    params: {
+                        repositoryName,
+                        name,
+                        prevVersion,
+                        prevAddress,
+                        tags,
+                        comment,
+                    },
+                },
+                reviewers,
             })
         }
     }
@@ -2256,14 +2198,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForSetHideVotingResult', {
-                res: !decision,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.DAO_EVENT_HIDE_PROGRESS,
+                    params: { decision, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -2284,14 +2224,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForSetAllowDiscussion', {
-                res: allow,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.DAO_EVENT_ALLOW_DISCUSSION,
+                    params: { allow, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -2372,14 +2310,21 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForStartPaidMembership', {
-                ...programParams,
-                comment: comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.DAO_START_PAID_MEMBERSHIP,
+                    params: {
+                        index,
+                        cost,
+                        reserve,
+                        subscriptionAmount,
+                        subscriptionTime,
+                        accessKey,
+                        details,
+                        comment,
+                    },
+                },
+                reviewers,
             })
         }
     }
@@ -2400,14 +2345,12 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this.getReviewers(reviewers)
-            const smv = await this.getSmv()
-            await smv.validateProposalStart()
-            await this.wallet.run('startProposalForStopPaidMembership', {
-                Programindex: index,
-                comment: comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: await smv.getClientsCount(),
+            await this.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.DAO_STOP_PAID_MEMBERSHIP,
+                    params: { index, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -2731,6 +2674,140 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
+    private async _getProposalCell(
+        proposal: TEventSignleCreateProposalParams['proposal'],
+    ) {
+        const { type, params } = proposal
+
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.WALLET_UNDEFINED)
+        }
+
+        if (type === ESmvEventType.REPO_CREATE) {
+            return await this.createRepository({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.BRANCH_LOCK) {
+            const repository = await this.getRepository({ name: params.repository })
+            return await repository.lockBranch({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.BRANCH_UNLOCK) {
+            const repository = await this.getRepository({ name: params.repository })
+            return await repository.unlockBranch({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DAO_MEMBER_ADD) {
+            return await this.createMember({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DAO_MEMBER_DELETE) {
+            return await this.deleteMember({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DAO_UPGRADE) {
+            return await this.upgrade({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.TASK_CREATE) {
+            return await this.createTask({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.TASK_DELETE) {
+            return await this.deleteTask({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DAO_TOKEN_VOTING_ADD) {
+            return await this.addVotingTokens({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DAO_TOKEN_REGULAR_ADD) {
+            return await this.addRegularTokens({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DAO_TOKEN_MINT) {
+            return await this.mint({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DAO_TOKEN_MINT_DISABLE) {
+            return await this.disableMint({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DAO_TAG_ADD) {
+            return await this.createTag({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DAO_TAG_REMOVE) {
+            return await this.deleteTag({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DAO_ALLOWANCE_CHANGE) {
+            return await this.updateMemberAllowance({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.REPO_TAG_ADD) {
+            const repository = await this.getRepository({ name: params.repository })
+            return await repository.createTag({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.REPO_TAG_REMOVE) {
+            const repository = await this.getRepository({ name: params.repository })
+            return await repository.deleteTag({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.REPO_UPDATE_DESCRIPTION) {
+            const repository = await this.getRepository({ name: params.repository })
+            return await repository.updateDescription({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DAO_EVENT_ALLOW_DISCUSSION) {
+            return await this.updateEventAllowDiscussion({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DAO_EVENT_HIDE_PROGRESS) {
+            return await this.updateEventShowProgress({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE) {
+            return await this.updateAskMembershipAllowance({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DELAY) {
+            const { value0 } = await this.wallet.runLocal('getCellDelay', {})
+            return value0
+        }
+        if (type === ESmvEventType.TASK_REDEPLOY) {
+            return await this.transferTask(params)
+        }
+        if (type === ESmvEventType.TASK_REDEPLOYED) {
+            return await this.upgradeTaskComplete({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DAO_VOTE) {
+            return await this.voteDao({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DAO_TOKEN_DAO_SEND) {
+            return await this.sendDaoToken({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DAO_REVIEWER) {
+            return await this.reviewDao({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DAO_RECEIVE_BOUNTY) {
+            return await this.receiveTaskBountyDao({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DAO_TOKEN_DAO_LOCK) {
+            return await this.lockDaoToken({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DAO_TOKEN_TRANSFER_FROM_PREV) {
+            return await this.transferDaoToken({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.TASK_UPGRADE) {
+            return await this.upgradeTask({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DAO_START_PAID_MEMBERSHIP) {
+            return await this.startPaidMembership({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.DAO_STOP_PAID_MEMBERSHIP) {
+            return await this.stopPaidMembership({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.BIGTASK_CREATE) {
+            return await this.createBigTask({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.BIGTASK_APPROVE) {
+            return await this.approveBigTask({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.BIGTASK_DELETE) {
+            return await this.deleteBigTask({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.BIGTASK_UPGRADE) {
+            return await this.upgradeBigTask({ ...params, cell: true })
+        }
+        if (type === ESmvEventType.INDEX_EVENT) {
+            const { value0 } = await this.wallet.runLocal('getCellForIndex', params)
+            return value0
+        }
+
+        return null
+    }
+
     private async _createMultiProposalData(
         proposals: TEventMultipleCreateProposalParams['proposals'],
     ) {
@@ -2739,122 +2816,8 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
 
         // Prepare cells
-        const cells = await executeByChunk(proposals, 10, async ({ type, params }) => {
-            if (type === ESmvEventType.REPO_CREATE) {
-                return await this.createRepository({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.BRANCH_LOCK) {
-                const repository = await this.getRepository({ name: params.repository })
-                return await repository.lockBranch({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.BRANCH_UNLOCK) {
-                const repository = await this.getRepository({ name: params.repository })
-                return await repository.unlockBranch({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_MEMBER_ADD) {
-                return await this.createMember({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_MEMBER_DELETE) {
-                return await this.deleteMember({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_UPGRADE) {
-                return await this.upgrade({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.TASK_CREATE) {
-                return await this.createTask({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.TASK_DELETE) {
-                return await this.deleteTask({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_TOKEN_VOTING_ADD) {
-                return await this.addVotingTokens({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_TOKEN_REGULAR_ADD) {
-                return await this.addRegularTokens({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_TOKEN_MINT) {
-                return await this.mint({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_TOKEN_MINT_DISABLE) {
-                return await this.disableMint({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_TAG_ADD) {
-                return await this.createTag({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_TAG_REMOVE) {
-                return await this.deleteTag({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_ALLOWANCE_CHANGE) {
-                return await this.updateMemberAllowance({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.REPO_TAG_ADD) {
-                const repository = await this.getRepository({ name: params.repository })
-                return await repository.createTag({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.REPO_TAG_REMOVE) {
-                const repository = await this.getRepository({ name: params.repository })
-                return await repository.deleteTag({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.REPO_UPDATE_DESCRIPTION) {
-                const repository = await this.getRepository({ name: params.repository })
-                return await repository.updateDescription({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_EVENT_ALLOW_DISCUSSION) {
-                return await this.updateEventAllowDiscussion({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_EVENT_HIDE_PROGRESS) {
-                return await this.updateEventShowProgress({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE) {
-                return await this.updateAskMembershipAllowance({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DELAY) {
-                const { value0 } = await this.wallet!.runLocal('getCellDelay', {})
-                return value0
-            }
-            if (type === ESmvEventType.TASK_REDEPLOY) {
-                return await this.transferTask(params)
-            }
-            if (type === ESmvEventType.TASK_REDEPLOYED) {
-                return await this.upgradeTaskComplete({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_VOTE) {
-                return await this.voteDao({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_TOKEN_DAO_SEND) {
-                return await this.sendDaoToken({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_REVIEWER) {
-                return await this.reviewDao({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_RECEIVE_BOUNTY) {
-                return await this.receiveTaskBountyDao({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_TOKEN_DAO_LOCK) {
-                return await this.lockDaoToken({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.TASK_UPGRADE) {
-                return await this.upgradeTask({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_START_PAID_MEMBERSHIP) {
-                return await this.startPaidMembership({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.DAO_STOP_PAID_MEMBERSHIP) {
-                return await this.stopPaidMembership({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.BIGTASK_CREATE) {
-                return await this.createBigTask({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.BIGTASK_APPROVE) {
-                return await this.approveBigTask({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.BIGTASK_DELETE) {
-                return await this.deleteBigTask({ ...params, cell: true })
-            }
-            if (type === ESmvEventType.BIGTASK_UPGRADE) {
-                return await this.upgradeBigTask({ ...params, cell: true })
-            }
-            return null
+        const cells = await executeByChunk(proposals, 10, async (item) => {
+            return await this._getProposalCell(item)
         })
 
         // Compose cells
@@ -3666,14 +3629,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             )
             return value0
         } else {
-            const _reviewers = await this._getReviewers(reviewers)
-            const smvClientsCount = await this._validateProposalStart()
-            await this.auth.wallet0.run('startProposalForAddProtectedBranch', {
-                repoName: repository,
-                branchName: branch,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: smvClientsCount,
+            const dao = await this._getDao()
+            await dao.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.BRANCH_LOCK,
+                    params: { repository, branch, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -3701,14 +3663,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             )
             return value0
         } else {
-            const _reviewers = await this._getReviewers(reviewers)
-            const smvClientsCount = await this._validateProposalStart()
-            await this.auth.wallet0.run('startProposalForDeleteProtectedBranch', {
-                repoName: repository,
-                branchName: branch,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: smvClientsCount,
+            const dao = await this._getDao()
+            await dao.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.BRANCH_UNLOCK,
+                    params: { repository, branch, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -4049,14 +4010,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this._getReviewers(reviewers)
-            const smvClientsCount = await this._validateProposalStart()
-            await this.auth.wallet0.run('startProposalForAddRepoTag', {
-                tag: tags,
-                repo: repository,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: smvClientsCount,
+            const dao = await this._getDao()
+            await dao.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.REPO_TAG_ADD,
+                    params: { repository, tags, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -4078,14 +4038,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             })
             return value0
         } else {
-            const _reviewers = await this._getReviewers(reviewers)
-            const smvClientsCount = await this._validateProposalStart()
-            await this.auth.wallet0.run('startProposalForDestroyRepoTag', {
-                tag: tags,
-                repo: await this.getName(),
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: smvClientsCount,
+            const dao = await this._getDao()
+            await dao.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.REPO_TAG_REMOVE,
+                    params: { repository, tags, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -4110,14 +4069,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             )
             return value0
         } else {
-            const _reviewers = await this._getReviewers(reviewers)
-            const smvClientsCount = await this._validateProposalStart()
-            await this.auth.wallet0.run('startProposalForChangeDescription', {
-                repoName: repository,
-                descr: description,
-                comment,
-                reviewers: _reviewers.map(({ wallet }) => wallet),
-                num_clients: smvClientsCount,
+            const dao = await this._getDao()
+            await dao.createSingleProposal({
+                proposal: {
+                    type: ESmvEventType.REPO_UPDATE_DESCRIPTION,
+                    params: { repository, description, comment },
+                },
+                reviewers,
             })
         }
     }
@@ -5263,7 +5221,16 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const { _goshdao } = await this.repo.runLocal('_goshdao', {}, undefined, {
             useCachedBoc: true,
         })
-        return new GoshDaoAdapter(this.gosh, _goshdao)
+        const adapter = new GoshDaoAdapter(this.gosh, _goshdao)
+
+        if (this.auth && this.auth.wallet0.account.signer.type === 'Keys') {
+            await adapter.setAuth(
+                this.auth.username,
+                this.auth.wallet0.account.signer.keys,
+            )
+        }
+
+        return adapter
     }
 
     private async _getReviewers(user: TUserParam[]) {
@@ -5403,13 +5370,10 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
             wallets,
             MAX_PARALLEL_READ,
             async (wallet) => {
-                const { value0 } = await wallet.runLocal(
-                    'getWalletOwner',
-                    {},
-                    undefined,
-                    { useCachedBoc: true },
-                )
-                const profile = await this.gosh.getUserByAddress(value0)
+                const { value6 } = await wallet.runLocal('getDetails', {}, undefined, {
+                    useCachedBoc: true,
+                })
+                const profile = await this.gosh.getUserByAddress(value6)
                 return profile.name
             },
         )

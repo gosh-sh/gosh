@@ -118,6 +118,7 @@ import {
     TBigTaskUpgradeParams,
     TBigTaskUpgradeResult,
     TCodeCommentThreadResdolveParams,
+    TEventSignleCreateProposalParams,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
 import {
@@ -851,6 +852,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
     }
 
     async deleteTag(params: TDaoTagDeleteParams): Promise<TDaoTagDeleteResult> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createSingleProposal(params: TEventSignleCreateProposalParams): Promise<void> {
         throw new Error('Method is unavailable in current version')
     }
 

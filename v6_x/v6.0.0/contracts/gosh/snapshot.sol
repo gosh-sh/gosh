@@ -85,7 +85,7 @@ contract Snapshot is Modifiers {
             if (ipfsdata.hasValue() == true) { _ready = true; return; }
             
             Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits))
-                .getAcceptedContent{value : 0.2 ton, flag: 1}(_oldsnapshot, _ipfsold, NameOfFile);
+                .getAcceptedContent{value : 0.2 ton, flag: 1}(tvm.hash(gosh.unzip(_oldsnapshot)), NameOfFile);
         }
         getMoney();
     }
