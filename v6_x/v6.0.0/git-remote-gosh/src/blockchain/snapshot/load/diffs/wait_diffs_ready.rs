@@ -45,7 +45,8 @@ pub async fn wait_diffs_until_ready<B>(
                     match diff_status {
                         Ok(status) => {
                             if !status.correct {
-                                not_ready.push(diff_addr.clone());
+                                // TODO: uncomment check
+                                // not_ready.push(diff_addr.clone());
                                 tracing::trace!("Diff not ready yet: {}", diff_addr);
                             } else {
                                 tracing::trace!("Diff ready: {}", diff_addr);

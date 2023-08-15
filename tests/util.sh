@@ -178,8 +178,8 @@ function deploy_DAO {
 
   sleep 10
 
-  GRANTED_PUBKEY=$(tonos-cli -j run --abi $WALLET_ABI $WALLET_ADDR getAccess {} | jq -r .value0)
-  echo $GRANTED_PUBKEY
+  # GRANTED_PUBKEY=$(tonos-cli -j run --abi $WALLET_ABI $WALLET_ADDR getAccess {} | jq -r .value0)
+  # echo $GRANTED_PUBKEY
 }
 
 function deploy_DAO_and_repo {
@@ -201,8 +201,8 @@ function deploy_DAO_and_repo {
 
   sleep 10
 
-  GRANTED_PUBKEY=$(tonos-cli -j run --abi $WALLET_ABI $WALLET_ADDR getAccess {} | jq -r .value0)
-  echo $GRANTED_PUBKEY
+  # GRANTED_PUBKEY=$(tonos-cli -j run --abi $WALLET_ABI $WALLET_ADDR getAccess {} | jq -r .value0)
+  # echo $GRANTED_PUBKEY
 
   echo "***** repo deploy *****"
   deploy_repo
