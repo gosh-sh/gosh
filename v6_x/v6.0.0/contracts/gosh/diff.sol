@@ -79,7 +79,7 @@ contract DiffC is Modifiers {
         _diff = diffs;
         _last = last;
         Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit))
-                .getAcceptedContent{value : 0.2 ton, flag: 1}(_diff[0].sha256, _diff[0].nameSnap);
+                .getAcceptedContentDiff{value : 0.2 ton, flag: 1}(_diff[0].sha256, _diff[0].nameSnap, _index1, _index2);
         getMoney();
     }
 
