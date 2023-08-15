@@ -15,6 +15,7 @@
 				{"name":"WalletCode","type":"cell"},
 				{"name":"codeDiff","type":"cell"},
 				{"name":"CommitCode","type":"cell"},
+				{"name":"TreeCode","type":"cell"},
 				{"components":[{"name":"snap","type":"address"},{"name":"nameSnap","type":"string"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"removeIpfs","type":"bool"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"diffs","type":"tuple[]"},
 				{"name":"index","type":"uint128"},
 				{"name":"last","type":"bool"}
