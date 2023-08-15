@@ -538,6 +538,12 @@ type TCodeCommentCreateParams = {
 
 type TCodeCommentCreateResult = any
 
+type TCreateIndexParams = {
+    data: string
+    index: number
+    typetr: number
+}
+
 export {
     ETaskBounty,
     TDao,
@@ -633,4 +639,5 @@ export {
     TCodeCommentThreadGetResult,
     TCodeCommentCreateParams,
     TCodeCommentCreateResult,
+    TCreateIndexParams,
 }
