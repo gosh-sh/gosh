@@ -9,6 +9,7 @@ use std::collections::HashMap;
 use std::vec::Vec;
 use tokio::task::JoinSet;
 use tracing::Instrument;
+use crate::blockchain::snapshot::diffs::wait_diffs_ready::wait_diffs_until_ready;
 
 const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
 
@@ -184,7 +185,7 @@ impl ParallelDiffsUploadSupport {
                 Ok(Ok(_)) => {}
             }
         }
-        wait_contracts_deployed(&blockchain, &addresses).await
+        wait_diffs_until_ready(&blockchain, &addresses).await
     }
 
     #[instrument(level = "info", skip_all)]

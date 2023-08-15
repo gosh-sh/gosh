@@ -21,6 +21,7 @@ use tokio::time::sleep;
 use tokio::{sync::Semaphore, task::JoinSet};
 use tokio_retry::RetryIf;
 use tracing::Instrument;
+use crate::blockchain::snapshot::wait_snapshots_until_ready;
 
 const WAIT_TREE_READY_MAX_ATTEMPTS: i32 = 3;
 
@@ -125,22 +126,8 @@ impl ParallelSnapshotUploadSupport {
             .iter()
             .map(|addr| BlockchainContractAddress::new(addr))
             .collect::<Vec<BlockchainContractAddress>>();
-        tracing::debug!(
-            "Expecting the following snapshot contracts to be deployed: {:?}",
-            addresses
-        );
-        while let Some(finished_task) = self.pushed_blobs.join_next().await {
-            match finished_task {
-                Err(e) => {
-                    bail!("diffs join-handler: {}", e);
-                }
-                Ok(Err(e)) => {
-                    bail!("diffs inner: {}", e);
-                }
-                Ok(Ok(_)) => {}
-            }
-        }
-        wait_contracts_deployed(&blockchain, &addresses).await
+
+        wait_snapshots_until_ready(&blockchain, &addresses).await
     }
 }
 
