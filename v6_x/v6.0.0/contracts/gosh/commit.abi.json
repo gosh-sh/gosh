@@ -202,8 +202,7 @@
 		{
 			"name": "getAcceptedContent",
 			"inputs": [
-				{"name":"value0","type":"bytes"},
-				{"name":"value1","type":"optional(string)"},
+				{"name":"value0","type":"uint256"},
 				{"name":"path","type":"string"}
 			],
 			"outputs": [

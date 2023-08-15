@@ -301,16 +301,13 @@ contract Commit is Modifiers {
         getMoney();
     }
 
-    function getAcceptedContent(bytes value0, optional(string) value1, string path) public {
+    function getAcceptedContent(uint256 value0, string path) public {
         if (msg.sender != GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _rootRepo, _nameCommit, path)) {
             require(msg.sender == GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _rootRepo, "//PINTAG//" + _nameCommit, path), ERR_INVALID_SENDER);
         }
         getMoney();
         tvm.accept();
-        if (value1.hasValue()) {
-            Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, tvm.hash(value1.get()))); return;
-        }
-        Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, tvm.hash(gosh.unzip(value0))));
+        Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, value0));
     }
 
     function _checkChain(
