@@ -17,7 +17,7 @@ import yup from '../../../../yup-extended'
 import successImage from '../../../../../assets/images/success.png'
 import { AppConfig } from '../../../../../appconfig'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useCreateDaoMemeber } from '../../../../hooks/dao.hooks'
+import { useCreateDaoMember } from '../../../../hooks/dao.hooks'
 import { BaseField } from '../../../../../components/Formik'
 
 const getUsernameOptions = async (input: string) => {
@@ -118,7 +118,7 @@ type TFormValues = {
 }
 
 const MemberAddForm = () => {
-    const { status, createMember } = useCreateDaoMemeber()
+    const { status, createMember } = useCreateDaoMember()
     const [transition, setTransition] = useState<{ form: boolean; success: boolean }>({
         form: true,
         success: false,

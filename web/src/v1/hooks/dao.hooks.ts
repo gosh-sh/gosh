@@ -774,7 +774,7 @@ function useDaoHelpers() {
     }
 }
 
-export function useCreateDaoMemeber() {
+export function useCreateDaoMember() {
     const [status, setStatus] = useState<TToastStatus>()
     const { details: member } = useRecoilValue(daoMemberAtom)
     const { beforeCreateEvent } = useDaoHelpers()
@@ -823,7 +823,7 @@ export function useCreateDaoMemeber() {
     }
 }
 
-export function useDeleteDaoMemeber() {
+export function useDeleteDaoMember() {
     const [status, setStatus] = useState<TToastStatus>()
     const { details: member } = useRecoilValue(daoMemberAtom)
     const setMemberList = useSetRecoilState(daoMemberListAtom)

@@ -323,47 +323,47 @@ export function useOnboardingSignup(oauth: TOAuthSession) {
             setStatus((state) => ({ ...state, data: 'Create GOSH account' }))
             await _signup({ phrase: seed, username })
 
-            // Get or create DB user
-            setStatus((state) => ({ ...state, data: 'Update onboarding DB' }))
-            let dbUser = await getDbUser(username)
-            if (!dbUser) {
-                dbUser = await createDbUser(
-                    username,
-                    keypair.public,
-                    oauth.session.user.id,
-                    data.isEmailPublic ? oauth.session.user.email || null : null,
-                    data.emailOther || null,
-                )
-            }
+            // // Get or create DB user
+            // setStatus((state) => ({ ...state, data: 'Update onboarding DB' }))
+            // let dbUser = await getDbUser(username)
+            // if (!dbUser) {
+            //     dbUser = await createDbUser(
+            //         username,
+            //         keypair.public,
+            //         oauth.session.user.id,
+            //         data.isEmailPublic ? oauth.session.user.email || null : null,
+            //         data.emailOther || null,
+            //     )
+            // }
 
-            // Save auto clone repositories
-            const goshAddress = Object.values(AppConfig.versions).reverse()[0]
-            const goshProtocol = `gosh://${goshAddress}`
-            for (const item of repositories) {
-                const { daoname, name } = item
-                await createDbGithubRecord({
-                    user_id: dbUser.id,
-                    github_url: `/${daoname}/${name}`,
-                    gosh_url: `${goshProtocol}/${daoname.toLowerCase()}/${name.toLowerCase()}`,
-                })
-            }
+            // // Save auto clone repositories
+            // const goshAddress = Object.values(AppConfig.versions).reverse()[0]
+            // const goshProtocol = `gosh://${goshAddress}`
+            // for (const item of repositories) {
+            //     const { daoname, name } = item
+            //     await createDbGithubRecord({
+            //         user_id: dbUser.id,
+            //         github_url: `/${daoname}/${name}`,
+            //         gosh_url: `${goshProtocol}/${daoname.toLowerCase()}/${name.toLowerCase()}`,
+            //     })
+            // }
 
-            // Update DAO invites status
-            for (const invite of invites.items) {
-                const { error } = await supabase.client
-                    .from('dao_invite')
-                    .update({
-                        recipient_username: username,
-                        recipient_status: invite.accepted
-                            ? EDaoInviteStatus.ACCEPTED
-                            : EDaoInviteStatus.REJECTED,
-                        token_expired: true,
-                    })
-                    .eq('id', invite.id)
-                if (error) {
-                    throw new GoshError(error.message)
-                }
-            }
+            // // Update DAO invites status
+            // for (const invite of invites.items) {
+            //     const { error } = await supabase.client
+            //         .from('dao_invite')
+            //         .update({
+            //             recipient_username: username,
+            //             recipient_status: invite.accepted
+            //                 ? EDaoInviteStatus.ACCEPTED
+            //                 : EDaoInviteStatus.REJECTED,
+            //             token_expired: true,
+            //         })
+            //         .eq('id', invite.id)
+            //     if (error) {
+            //         throw new GoshError(error.message)
+            //     }
+            // }
 
             // Validate onboarding data
             const validationResult = await Promise.all(

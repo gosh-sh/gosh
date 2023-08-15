@@ -95,7 +95,7 @@ export const ToastOptionsShortcuts = {
 export const Select2ClassNames = {
     control: (props: any) => {
         return classNames(
-            '!rounded-lg !border-gray-e6edff !text-sm !bg-white',
+            '!rounded-lg !border-gray-e6edff !text-sm !bg-white !shadow-none',
             props.isDisabled ? '!text-gray-7c8db5' : null,
         )
     },

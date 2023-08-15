@@ -4,7 +4,7 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import { TDaoMemberListItem } from '../../../../types/dao.types'
 import { shortString } from '../../../../../utils'
 import Skeleton from '../../../../../components/Skeleton'
-import { useDao, useDeleteDaoMemeber, useDaoMember } from '../../../../hooks/dao.hooks'
+import { useDao, useDeleteDaoMember, useDaoMember } from '../../../../hooks/dao.hooks'
 import { useNavigate } from 'react-router-dom'
 import { ToastStatus } from '../../../../../components/Toast'
 import { ErrorMessage, Field } from 'formik'
@@ -72,7 +72,7 @@ const ListItem = (props: TListItemProps) => {
     const navigate = useNavigate()
     const dao = useDao()
     const member = useDaoMember()
-    const { status, deleteMember } = useDeleteDaoMemeber()
+    const { status, deleteMember } = useDeleteDaoMember()
 
     const onDelete = async (username: string) => {
         if (window.confirm('Delete member?')) {

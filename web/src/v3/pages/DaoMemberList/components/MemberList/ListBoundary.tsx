@@ -8,7 +8,7 @@ import { ListItem, ListItemHeader, ListItemSkeleton } from './ListItem'
 import { TDaoMemberListItem } from '../../../../types/dao.types'
 import { Field, Form, Formik } from 'formik'
 import yup from '../../../../yup-extended'
-import { useDao, useDaoMember, useUpdateDaoMemeber } from '../../../../hooks/dao.hooks'
+import { useDao, useDaoMember, useUpdateDaoMember } from '../../../../hooks/dao.hooks'
 import { FormikTextarea } from '../../../../../components/Formik'
 import { Button } from '../../../../../components/Form'
 import { ToastStatus } from '../../../../../components/Toast'
@@ -30,7 +30,7 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
     const dao = useDao()
     const memberList = useRecoilValue(daoMemberListSelector(search))
     const member = useDaoMember()
-    const { updateMember, status } = useUpdateDaoMemeber()
+    const { updateMember, status } = useUpdateDaoMember()
 
     const onUpdateMember = async (values: TUpdateFormValues) => {
         try {

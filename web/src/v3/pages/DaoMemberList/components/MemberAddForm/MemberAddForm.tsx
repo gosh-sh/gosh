@@ -21,7 +21,7 @@ import yup from '../../../../yup-extended'
 import successImage from '../../../../../assets/images/success.png'
 import { AppConfig } from '../../../../../appconfig'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useDao, useCreateDaoMemeber } from '../../../../hooks/dao.hooks'
+import { useDao, useCreateDaoMember } from '../../../../hooks/dao.hooks'
 import { BaseField, FormikInput, FormikTextarea } from '../../../../../components/Formik'
 import { validateEmail } from '../../../../../validators'
 import classNames from 'classnames'
@@ -220,7 +220,7 @@ type TFormValues = {
 
 const MemberAddForm = () => {
     const dao = useDao()
-    const { status, createMember, createInvitation } = useCreateDaoMemeber()
+    const { status, createMember, createInvitation } = useCreateDaoMember()
     const [transition, setTransition] = useState<{ form: boolean; success: boolean }>({
         form: true,
         success: false,

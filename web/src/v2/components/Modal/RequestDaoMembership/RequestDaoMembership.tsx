@@ -8,7 +8,7 @@ import yup from '../../../yup-extended'
 import { ModalCloseButton } from '../../../../components/Modal'
 import { FormikTextarea } from '../../../../components/Formik'
 import { Button } from '../../../../components/Form'
-import { useDao, useCreateDaoMemeber } from '../../../hooks/dao.hooks'
+import { useDao, useCreateDaoMember } from '../../../hooks/dao.hooks'
 import { ToastStatus } from '../../../../components/Toast'
 
 type TFormValues = {
@@ -20,7 +20,7 @@ const RequestDaoMembershipModal = () => {
     const setModal = useSetRecoilState(appModalStateAtom)
     const { user } = useUser()
     const dao = useDao()
-    const { createMember, status } = useCreateDaoMemeber()
+    const { createMember, status } = useCreateDaoMember()
 
     const onModalReset = () => {
         setModal((state) => ({ ...state, isOpen: false }))

@@ -998,7 +998,7 @@ export function useDaoHelpers() {
     }
 }
 
-export function useCreateDaoMemeber() {
+export function useCreateDaoMember() {
     const { user } = useUser()
     const { details: dao } = useRecoilValue(daoDetailsAtom)
     const { details: member } = useRecoilValue(daoMemberAtom)
@@ -1177,7 +1177,7 @@ export function useCreateDaoMemeber() {
     }
 }
 
-export function useDeleteDaoMemeber() {
+export function useDeleteDaoMember() {
     const [status, setStatus] = useState<TToastStatus>()
     const { details: member } = useRecoilValue(daoMemberAtom)
     const setMemberList = useSetRecoilState(daoMemberListAtom)
@@ -1238,7 +1238,7 @@ export function useDeleteDaoMemeber() {
     }
 }
 
-export function useUpdateDaoMemeber() {
+export function useUpdateDaoMember() {
     const { details: dao } = useRecoilValue(daoDetailsAtom)
     const { details: member } = useRecoilValue(daoMemberAtom)
     const { beforeCreateEvent } = useDaoHelpers()
@@ -2363,7 +2363,7 @@ export function useDaoInviteList(params: { loadOnInit?: boolean } = {}) {
     const { loadOnInit } = params
     const { details: dao } = useRecoilValue(daoDetailsAtom)
     const [data, setData] = useRecoilState(daoInviteListAtom)
-    const { createMember, status: createStatus } = useCreateDaoMemeber()
+    const { createMember, status: createStatus } = useCreateDaoMember()
     const [status, setStatus] = useState<TToastStatus | undefined>(createStatus)
 
     const revoke = async (id: string) => {

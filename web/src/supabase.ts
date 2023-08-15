@@ -39,7 +39,7 @@ export const supabase = {
         }
     },
     signoutOAuth: async () => {
-        const { error } = await AppConfig.supabase.auth.signOut()
+        const { error } = await AppConfig.supabase.auth.signOut({ scope: 'local' })
         if (error) {
             throw new GoshError(error.message)
         }
