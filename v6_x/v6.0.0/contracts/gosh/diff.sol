@@ -59,12 +59,14 @@ contract DiffC is Modifiers {
         TvmCell WalletCode,
         TvmCell codeDiff,
         TvmCell CommitCode,
+        TvmCell TreeCode,
         Diff[] diffs,
         uint128 index,
         bool last
         ) {
         require(_nameCommit != "", ERR_NO_DATA);
         tvm.accept();
+        _code[m_TreeCode] = TreeCode;
         _code[m_WalletCode] = WalletCode;         
         _systemcontract = rootGosh;
         _goshdao = goshdao;
