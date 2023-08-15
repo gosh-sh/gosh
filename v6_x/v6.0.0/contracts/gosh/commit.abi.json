@@ -134,7 +134,7 @@
 				{"name":"branch","type":"string"},
 				{"name":"branchcommit","type":"address"},
 				{"name":"number","type":"uint128"},
-				{"name":"numberCommits","type":"uint128"},
+				{"name":"numcommits","type":"uint128"},
 				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"task","type":"optional(tuple)"},
 				{"name":"isUpgrade","type":"bool"}
 			],
@@ -147,7 +147,7 @@
 				{"name":"branch","type":"string"},
 				{"name":"branchcommit","type":"address"},
 				{"name":"number","type":"uint128"},
-				{"name":"numberCommits","type":"uint128"},
+				{"name":"numcommits","type":"uint128"},
 				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"task","type":"optional(tuple)"},
 				{"name":"isUpgrade","type":"bool"}
 			],
@@ -160,7 +160,7 @@
 				{"name":"branch","type":"string"},
 				{"name":"branchcommit","type":"address"},
 				{"name":"number","type":"uint128"},
-				{"name":"numberCommits","type":"uint128"},
+				{"name":"numcommits","type":"uint128"},
 				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"task","type":"optional(tuple)"}
 			],
 			"outputs": [
@@ -202,8 +202,7 @@
 		{
 			"name": "getAcceptedContent",
 			"inputs": [
-				{"name":"value0","type":"bytes"},
-				{"name":"value1","type":"optional(string)"},
+				{"name":"value0","type":"uint256"},
 				{"name":"path","type":"string"}
 			],
 			"outputs": [
@@ -215,7 +214,7 @@
 				{"name":"branchName","type":"string"},
 				{"name":"branchCommit","type":"address"},
 				{"name":"newC","type":"address"},
-				{"name":"numberCommits","type":"uint128"},
+				{"name":"numcommits","type":"uint128"},
 				{"name":"save","type":"bool"}
 			],
 			"outputs": [
@@ -235,7 +234,7 @@
 				{"name":"branchName","type":"string"},
 				{"name":"branchCommit","type":"address"},
 				{"name":"newC","type":"address"},
-				{"name":"numberCommits","type":"uint128"},
+				{"name":"numcommits","type":"uint128"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -324,7 +323,7 @@
 				{"name":"branchName","type":"string"},
 				{"name":"branchCommit","type":"address"},
 				{"name":"newC","type":"address"},
-				{"name":"numberCommits","type":"uint128"},
+				{"name":"numcommits","type":"uint128"},
 				{"name":"save","type":"bool"}
 			],
 			"outputs": [
@@ -510,7 +509,6 @@
 		{"name":"_continueChain","type":"bool"},
 		{"name":"_continueDiff","type":"bool"},
 		{"name":"_number","type":"uint128"},
-		{"name":"_numbercommits","type":"uint128"},
 		{"name":"_approved","type":"uint128"},
 		{"name":"_flag","type":"bool"},
 		{"components":[{"name":"send","type":"bool"},{"name":"branch","type":"string"},{"name":"branchcommit","type":"address"},{"name":"index","type":"uint128"},{"name":"number","type":"uint128"}],"name":"_saved","type":"optional(tuple)"},

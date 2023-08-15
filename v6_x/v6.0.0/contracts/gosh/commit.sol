@@ -42,7 +42,6 @@ contract Commit is Modifiers {
     bool _continueChain = false;
     bool _continueDiff = false;
     uint128 _number;
-    uint128 _numbercommits;
     uint128 _approved;
     bool _flag = false;
     optional(PauseCommit) _saved;
@@ -202,26 +201,26 @@ contract Commit is Modifiers {
         this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(index + 1, number);
     }
 
-    function SendDiff(string branch, address branchcommit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task, bool isUpgrade) public senderIs(_rootRepo){
+    function SendDiff(string branch, address branchcommit, uint128 number, uint128 numcommits, optional(ConfigCommit) task, bool isUpgrade) public senderIs(_rootRepo){
         tvm.accept();
         getMoney();
-        if (_initupgrade == true) { SendDiffAll(branch, branchcommit, number, numberCommits, task, isUpgrade); return; }
-        Tree(_tree).SendDiff2{value: 0.2 ton, flag: 1}(_nameCommit, branch, branchcommit, number, numberCommits, task, isUpgrade);
+        if (_initupgrade == true) { SendDiffAll(branch, branchcommit, number, numcommits, task, isUpgrade); return; }
+        Tree(_tree).SendDiff2{value: 0.2 ton, flag: 1}(_nameCommit, branch, branchcommit, number, numcommits, task, isUpgrade);
     }
 
 
-    function SendDiff3(string branch, address branchcommit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task, bool isUpgrade) public senderIs(_tree){
-        SendDiffAll(branch, branchcommit, number, numberCommits, task, isUpgrade);
+    function SendDiff3(string branch, address branchcommit, uint128 number, uint128 numcommits, optional(ConfigCommit) task, bool isUpgrade) public senderIs(_tree){
+        SendDiffAll(branch, branchcommit, number, numcommits, task, isUpgrade);
         return;
     }
 
-    function SendDiffAll(string branch, address branchcommit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task, bool isUpgrade) private{
+    function SendDiffAll(string branch, address branchcommit, uint128 number, uint128 numcommits, optional(ConfigCommit) task, bool isUpgrade) private{
         tvm.accept();
         getMoney();
         require(isUpgrade == _initupgrade, ERR_WRONG_UPGRADE_STATUS);
         if (_initupgrade == true) {
             require(_parents[0].addr == branchcommit, ERR_BAD_PARENT);
-            require(numberCommits == 1, ERR_BAD_PARENT);
+            require(numcommits == 1, ERR_BAD_PARENT);
             if (_nameCommit == "0000000000000000000000000000000000000000") {  Repository(_rootRepo).initCommit{value: 0.14 ton, flag:1}(_nameCommit, branch, _parents[0]); }
             else {
                 if (_parents[0].version == "1.0.0") { Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, branch, _rootRepo, _nameCommit, TYPE_INITUPGRADE, null); }
@@ -235,17 +234,17 @@ contract Commit is Modifiers {
         require(_diffcheck == false, ERR_PROCCESS_IS_EXIST);
         require(_number == 0, ERR_PROCCESS_IS_EXIST);
         _number = number;
-        _numbercommits = numberCommits;
+        _numcommits = numcommits;
         _approved = 0;
         _numcommits = 1;
         _task = task;
         this._sendAllDiff{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, 0, _number);
-        this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, address(this), numberCommits, true);
+        this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, address(this), numcommits, true);
         _continueChain = true;
         _continueDiff = true;
     }
 
-    function SendDiffSmv(string branch, address branchcommit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task) public senderIs(_rootRepo){
+    function SendDiffSmv(string branch, address branchcommit, uint128 number, uint128 numcommits, optional(ConfigCommit) task) public senderIs(_rootRepo){
         tvm.accept();
         getMoney();
         require(_initupgrade == false, ERR_WRONG_UPGRADE_STATUS);
@@ -255,11 +254,11 @@ contract Commit is Modifiers {
         require(_diffcheck == false, ERR_PROCCESS_IS_EXIST);
         require(_number == 0, ERR_PROCCESS_IS_EXIST);
         _number = number;
-        _numbercommits = numberCommits;
+        _numcommits = numcommits;
         _approved = 0;
         _task = task;
         this._sendAllDiff{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, 0, _number);
-        this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, address(this), numberCommits, true);
+        this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, address(this), numcommits, true);
         _continueChain = true;
         _continueDiff = true;
     }
@@ -272,7 +271,7 @@ contract Commit is Modifiers {
             }
         }
         if (typer == TYPE_SET_COMMIT) {
-            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch.get(), branchcommit.get(), _nameCommit, _number, _numbercommits, _task);
+            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch.get(), branchcommit.get(), _nameCommit, _number, _numcommits, _task);
             _number = 0;
         }
         getMoney();
@@ -302,32 +301,29 @@ contract Commit is Modifiers {
         getMoney();
     }
 
-    function getAcceptedContent(bytes value0, optional(string) value1, string path) public {
+    function getAcceptedContent(uint256 value0, string path) public {
         if (msg.sender != GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _rootRepo, _nameCommit, path)) {
             require(msg.sender == GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _rootRepo, "//PINTAG//" + _nameCommit, path), ERR_INVALID_SENDER);
         }
         getMoney();
         tvm.accept();
-        if (value1.hasValue()) {
-            Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, tvm.hash(value1.get()))); return;
-        }
-        Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, tvm.hash(gosh.unzip(value0))));
+        Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, value0));
     }
 
     function _checkChain(
         string branchName,
         address branchCommit,
         address newC,
-        uint128 numberCommits,
+        uint128 numcommits,
         bool save) public senderIs(address(this)) accept {
         if (((save == true) && (branchCommit  == address(this))) || ((_isCorrect == true) && (save != true))){
-//                if (numberCommits != 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
+//                if (numcommits != 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
                 Commit(newC).ChainAccept{value: 0.3 ton, bounce: true , flag: 1}(_nameCommit, branchName, branchCommit, newC);
         }
         else {
             if (_parents.length == 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
-            if (numberCommits == 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
-            this._sendCheckChainLoop{value: 0.1 ton, flag: 1}(branchName, branchCommit, newC, numberCommits, 0);
+            if (numcommits == 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
+            this._sendCheckChainLoop{value: 0.1 ton, flag: 1}(branchName, branchCommit, newC, numcommits, 0);
         }
         getMoney();
     }
@@ -344,19 +340,19 @@ contract Commit is Modifiers {
         string branchName,
         address branchCommit,
         address newC,
-        uint128 numberCommits,
+        uint128 numcommits,
         uint128 index) public senderIs(address(this)) accept {
         if (index >= _parents.length) { return; }
         getMoney();
         if (index != 0) { Commit(newC).addCommitCheckNumber{value:0.1 ton , flag: 1}(_nameCommit); }
         if ((index != 0) || (_save[newC] != true)){
-            Commit(_parents[index].addr).CommitCheckCommit{value: 0.3 ton, bounce: true, flag: 1 }(_nameCommit, branchName, branchCommit , newC, numberCommits - 1, false);
+            Commit(_parents[index].addr).CommitCheckCommit{value: 0.3 ton, bounce: true, flag: 1 }(_nameCommit, branchName, branchCommit , newC, numcommits - 1, false);
         }
         else {
 
-            Commit(_parents[index].addr).CommitCheckCommit{value: 0.3 ton, bounce: true, flag: 1 }(_nameCommit, branchName, branchCommit , newC, numberCommits - 1, true);
+            Commit(_parents[index].addr).CommitCheckCommit{value: 0.3 ton, bounce: true, flag: 1 }(_nameCommit, branchName, branchCommit , newC, numcommits - 1, true);
         }
-        this._sendCheckChainLoop{value: 0.1 ton, flag: 1}(branchName, branchCommit, newC, numberCommits, index + 1);
+        this._sendCheckChainLoop{value: 0.1 ton, flag: 1}(branchName, branchCommit, newC, numcommits, index + 1);
     }
 
 
@@ -409,9 +405,8 @@ contract Commit is Modifiers {
 
     function acceptAll(string branch, address branchCommit) public senderIs(address(this)) {
         if ((_commitcheck != false) && (_diffcheck != false)) {
-//            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch, branchCommit, _nameCommit, _number, _numbercommits, _task); 
-//            _number = 0;
-            Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, branch, _rootRepo, _nameCommit, TYPE_SET_COMMIT, branchCommit);
+            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch, branchCommit, _nameCommit, _number, _numcommits, _task); 
+//            Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, branch, _rootRepo, _nameCommit, TYPE_SET_COMMIT, branchCommit);
         }
         else {
             _diffcheck = true;
@@ -421,7 +416,7 @@ contract Commit is Modifiers {
     }
 
     function treeAcceptAfterCommit(string branch, address branchCommit) public senderIs(_tree) accept {
-        Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch, branchCommit, _nameCommit, _number, _numbercommits, _task); 
+        Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch, branchCommit, _nameCommit, _number, _numcommits, _task); 
         _number = 0;
     }
 
@@ -448,13 +443,13 @@ contract Commit is Modifiers {
         string branchName,
         address branchCommit ,
         address newC,
-        uint128 numberCommits,
+        uint128 numcommits,
         bool save) public {
         require(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, nameCommit) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (branchCommit  != address(this)) { require(_initupgrade == false, ERR_WRONG_COMMIT_ADDR); }
         if (save == true) { _save[newC] = true; }
-        this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(branchName, branchCommit, newC, numberCommits, save);
+        this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(branchName, branchCommit, newC, numcommits, save);
         getMoney();
     }
 

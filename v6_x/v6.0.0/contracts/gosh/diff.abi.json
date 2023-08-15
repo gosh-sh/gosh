@@ -23,6 +23,16 @@
 			]
 		},
 		{
+			"name": "returnTreeAnswer",
+			"inputs": [
+				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"value1","type":"optional(tuple)"},
+				{"name":"shainnertree","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "allCorrect",
 			"inputs": [
 				{"name":"branch","type":"string"}
@@ -135,6 +145,14 @@
 			]
 		},
 		{
+			"name": "getStatus",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
+			]
+		},
+		{
 			"name": "getVersion",
 			"inputs": [
 			],
@@ -192,6 +210,7 @@
 		{"name":"_entry","type":"bool"},
 		{"name":"_flag","type":"bool"},
 		{"name":"_isCancel","type":"bool"},
+		{"name":"_isCorrect","type":"bool"},
 		{"name":"timeMoney","type":"uint128"},
 		{"components":[{"name":"send","type":"uint128"},{"name":"branchcommit","type":"address"},{"name":"index","type":"uint128"}],"name":"_saved","type":"optional(tuple)"}
 	]
