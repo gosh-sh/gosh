@@ -211,6 +211,7 @@
 		{
 			"name": "getAcceptedContentDiff",
 			"inputs": [
+				{"name":"nameCommit","type":"string"},
 				{"name":"value0","type":"uint256"},
 				{"name":"path","type":"string"},
 				{"name":"index1","type":"uint128"},
