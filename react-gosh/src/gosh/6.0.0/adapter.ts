@@ -4815,14 +4815,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         // Deploy commit
-        const tree = await this._getTree({ sha256: treesha256 })
         await this.auth.wallet0.run('deployCommit', {
             repoName: await this.repo.getName(),
             branchName: branch,
             commitName: commit,
             fullCommit: content,
             parents: parents.map(({ address, version }) => ({ addr: address, version })),
-            tree: tree.address,
+            tree: treesha256,
             upgrade,
         })
         const wait = await whileFinite(async () => {
