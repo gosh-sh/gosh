@@ -310,7 +310,7 @@ contract Commit is Modifiers {
         Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, value0));
     }
 
-    function getAcceptedContentDiff(uint256 value0, string path, uint128 index1, uint128 index2) public senderIs(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index1, index2)) accept {
+    function getAcceptedContentDiff(string nameCommit, uint256 value0, string path, uint128 index1, uint128 index2) public senderIs(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, nameCommit, index1, index2)) accept {
         getMoney();
         Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, value0));
     }
