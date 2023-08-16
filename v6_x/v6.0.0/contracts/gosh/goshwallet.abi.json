@@ -723,7 +723,7 @@
 				{"name":"commitName","type":"string"},
 				{"name":"fullCommit","type":"string"},
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"parents","type":"tuple[]"},
-				{"name":"tree","type":"address"},
+				{"name":"shainnertree","type":"uint256"},
 				{"name":"upgrade","type":"bool"}
 			],
 			"outputs": [
