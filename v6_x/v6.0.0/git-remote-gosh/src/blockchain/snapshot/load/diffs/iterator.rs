@@ -6,6 +6,7 @@ use crate::blockchain::{
 };
 use std::iter::Iterator;
 use std::sync::Arc;
+use git_hash::ObjectId;
 use ton_client::abi::{decode_message_body, Abi, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
 
@@ -29,6 +30,7 @@ pub struct DiffMessagesIterator {
     buffer_cursor: usize,
     next: Option<NextChunk>,
     branch: String,
+    from_end_to_start: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -80,6 +82,7 @@ impl DiffMessagesIterator {
         snapshot_address: impl Into<BlockchainContractAddress>,
         repo_contract: &mut GoshContract,
         branch: String,
+        from_end_to_start: bool,
     ) -> Self {
         tracing::trace!(
             "new_DiffMessagesIterator: repo_contract.address={}",
@@ -91,6 +94,7 @@ impl DiffMessagesIterator {
             buffer_cursor: 0,
             next: Some(NextChunk::MessagesPage(snapshot_address.into(), None)),
             branch,
+            from_end_to_start,
         }
     }
 
@@ -200,7 +204,7 @@ impl DiffMessagesIterator {
                 let mut next_page_info = None;
                 while index.is_none() {
                     tracing::info!("loading messages");
-                    let (buffer, page) = load_messages_to(client, &address, &cursor, None).await?;
+                    let (buffer, page) = load_messages_to(client, &address, &cursor, None, self.from_end_to_start).await?;
                     for (i, item) in buffer.iter().enumerate() {
                         if &item.created_at <= ignore_commits_created_after {
                             index = Some(i);
@@ -239,7 +243,7 @@ impl DiffMessagesIterator {
                 .await?
             }
             Some(NextChunk::MessagesPage(address, cursor)) => {
-                let (buffer, page) = load_messages_to(client, &address, cursor, None).await?;
+                let (buffer, page) = load_messages_to(client, &address, cursor, None, self.from_end_to_start).await?;
                 self.buffer = buffer;
                 self.buffer_cursor = 0;
                 DiffMessagesIterator::into_next_page(
@@ -278,10 +282,12 @@ pub async fn load_messages_to(
     address: &BlockchainContractAddress,
     cursor: &Option<String>,
     stop_on: Option<u64>,
+    from_end_to_start: bool,
 ) -> anyhow::Result<(Vec<DiffMessage>, PageIterator)> {
     tracing::trace!("load_messages_to: address={address}, cursor={cursor:?}, stop_on={stop_on:?}");
     let mut subsequent_page_info: Option<String> = None;
-    let query = r#"query($addr: String!, $before: String){
+    let query = if from_end_to_start {
+        r#"query($addr: String!, $before: String){
       blockchain {
         account(address: $addr) {
           messages(msg_type: [IntIn], before: $before, last: 50) {
@@ -293,9 +299,22 @@ pub async fn load_messages_to(
         }
       }
     }"#
-    .to_string();
+    } else {
+        r#"query($addr: String!, $after: String){
+      blockchain {
+        account(address: $addr) {
+          messages(msg_type: [IntIn], after: $after, first: 50) {
+            edges {
+              node { id body created_at created_lt status bounced }
+            }
+            pageInfo { hasPreviousPage startCursor }
+          }
+        }
+      }
+    }"#
+    }.to_string();
 
-    let before = match cursor.as_ref() {
+    let limit = match cursor.as_ref() {
         Some(page_info) => page_info,
         None => "",
     };
@@ -304,10 +323,17 @@ pub async fn load_messages_to(
         Arc::clone(context),
         ParamsOfQuery {
             query,
-            variables: Some(serde_json::json!({
-                "addr": address,
-                "before": before
-            })),
+            variables: if from_end_to_start {
+                Some(serde_json::json!({
+                    "addr": address,
+                    "before": limit
+                }))
+            } else {
+                Some(serde_json::json!({
+                    "addr": address,
+                    "after": limit
+                }))
+            },
             ..Default::default()
         },
     )
@@ -374,4 +400,85 @@ pub async fn load_messages_to(
         stop_on: oldest_timestamp,
     };
     Ok((messages, page))
+}
+
+#[instrument(level = "info", skip_all)]
+pub async fn load_constructor(
+    context: &EverClient,
+    address: &BlockchainContractAddress,
+) -> anyhow::Result<(String, Option<String>)> {
+    tracing::trace!("load_constructor of: address={address}");
+    let query = r#"query($addr: String!, $after: String){
+      blockchain {
+        account(address: $addr) {
+          messages(msg_type: [IntIn], after: $after, first: 50) {
+            edges {
+              node { id body created_at created_lt status bounced }
+            }
+            pageInfo { hasPreviousPage startCursor }
+          }
+        }
+      }
+    }"#
+        .to_string();
+
+    let after = "";
+
+    let result = ton_client::net::query(
+        Arc::clone(context),
+        ParamsOfQuery {
+            query,
+            variables: Some(serde_json::json!({
+                "addr": address,
+                "after": after
+            })),
+            ..Default::default()
+        },
+    )
+        .await
+        .map(|r| r.result)
+        .map_err(|e| anyhow::format_err!("query error: {e}"))?;
+
+    let nodes = &result["data"]["blockchain"]["account"]["messages"];
+    let edges: Messages = serde_json::from_value(nodes.clone())?;
+
+    tracing::trace!("Loaded {} message(s) to {}", edges.edges.len(), address);
+    for elem in edges.edges.iter().rev() {
+        let raw_msg = &elem.message;
+        if raw_msg.status != 5 || raw_msg.bounced || raw_msg.body.is_none() {
+            continue;
+        }
+
+        tracing::trace!("Decoding message {:?}", raw_msg.id);
+        let decoding_result = decode_message_body(
+            Arc::clone(context),
+            ParamsOfDecodeMessageBody {
+                abi: Abi::Json(gosh_abi::SNAPSHOT.1.to_string()),
+                body: raw_msg.body.clone().unwrap(),
+                is_internal: true,
+                ..Default::default()
+            },
+        )
+            .await;
+
+        if let Err(ref e) = decoding_result {
+            tracing::trace!("decode_message_body error: {:#?}", e);
+            tracing::trace!("undecoded message: {:#?}", raw_msg);
+            continue;
+        }
+
+        let decoded = decoding_result?;
+
+        if decoded.name == "constructor" {
+            tracing::trace!("constructor for address={address} was found");
+            let value = decoded.value.unwrap();
+
+            let data: String = serde_json::from_value(value["data"].clone()).unwrap();
+            let ipfs: Option<String> = serde_json::from_value(value["ipfsdata"].clone()).unwrap();
+
+            return Ok((data, ipfs));
+        }
+    }
+
+    Err(anyhow::format_err!("Failed to find constructor message for snapshot: {}", address))
 }
