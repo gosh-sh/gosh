@@ -744,8 +744,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         AddrVersion[] emptyArr;
+        uint256 emptySha;
         if (previous.hasValue() == false) {
-            _deployCommit(nameRepo, "0000000000000000000000000000000000000000", "", emptyArr, address.makeAddrNone(), false);
+            _deployCommit(nameRepo, "0000000000000000000000000000000000000000", "", emptyArr, emptySha, false);
         }
         TvmCell s1 = GoshLib.composeRepositoryStateInit(_code[m_RepositoryCode], _systemcontract, _goshdao, nameRepo);
         new Repository {stateInit: s1, value: FEE_DEPLOY_REPO, wid: 0, flag: 1}(
@@ -916,13 +917,13 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string commitName,
         string fullCommit,
         AddrVersion[] parents,
-        address tree,
+        uint256 shainnertree,
         bool upgrade
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(parents.length <= 7, ERR_TOO_MANY_PARENTS);
-        _deployCommit(repoName, commitName, fullCommit, parents, tree, upgrade);
+        _deployCommit(repoName, commitName, fullCommit, parents, shainnertree, upgrade);
     }
 
     function _deployCommit(
@@ -930,10 +931,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string commitName,
         string fullCommit,
         AddrVersion[] parents,
-        address tree,
+        uint256 shainnertree,
         bool upgrade
     ) internal {
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address tree = GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnertree, repo);
         TvmCell s1 = GoshLib.composeCommitStateInit(_code[m_CommitCode], commitName, repo);
         new Commit {stateInit: s1, value: FEE_DEPLOY_COMMIT, bounce: true, flag: 1, wid: 0}(
             _goshdao, _systemcontract, _pubaddr, repoName, fullCommit, parents, repo, _code[m_WalletCode], _code[m_CommitCode], _code[m_DiffCode], _code[m_SnapshotCode], tree, _index, upgrade);
