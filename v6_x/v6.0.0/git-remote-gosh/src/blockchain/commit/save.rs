@@ -36,7 +36,7 @@ pub struct DeployCommitParams {
     pub raw_commit: String,
     pub parents: Vec<AddrVersion>,
     #[serde(rename = "tree")]
-    pub tree_addr: BlockchainContractAddress,
+    pub tree_sha: String,
     pub upgrade: bool,
 }
 
@@ -119,7 +119,7 @@ impl BlockchainCommitPusher for Everscale {
             commit_id: commit.commit_id.clone(),
             raw_commit: commit.raw_commit,
             parents: commit.parents,
-            tree_addr: commit.tree_addr,
+            tree_sha: commit.tree_sha,
             upgrade: commit.upgrade_commit,
         };
         tracing::trace!("push_commit: dao_addr={dao_addr}");
