@@ -28,7 +28,7 @@ const WAIT_TREE_READY_MAX_ATTEMPTS: i32 = 3;
 // TODO: refactor this code and unite all this parallel pushes
 
 pub struct ParallelSnapshotUploadSupport {
-    expecting_deployed_contacts_addresses: Vec<String>,
+    expecting_deployed_contacts_addresses: Vec<(String, Option<BlockchainContractAddress>)>,
     pushed_blobs: JoinSet<anyhow::Result<()>>,
 }
 
@@ -67,12 +67,27 @@ impl ParallelSnapshotUploadSupport {
         }
     }
 
-    pub fn get_expected(&self) -> &Vec<String> {
-        &self.expecting_deployed_contacts_addresses
+    pub fn get_expected(&self) -> Vec<String> {
+        self.expecting_deployed_contacts_addresses.clone().iter().map(|val| val.0.clone()).collect()
     }
 
-    pub fn push_expected(&mut self, value: String) {
-        self.expecting_deployed_contacts_addresses.push(value);
+    pub fn push_expected(&mut self, value: String, prev_repo: Option<BlockchainContractAddress>) {
+        self.expecting_deployed_contacts_addresses.push((value, prev_repo));
+    }
+
+    pub async fn start_push(
+        &mut self,
+        context: &mut GitHelper<impl BlockchainService + 'static>,
+    ) -> anyhow::Result<()> {
+        let exp = self.expecting_deployed_contacts_addresses.clone();
+        for (addr, prev_repo) in exp {
+            self.add_to_push_list(
+                context,
+                addr,
+                prev_repo
+            ).await?;
+        }
+        Ok(())
     }
 
     #[instrument(level = "info", skip_all)]
@@ -89,8 +104,8 @@ impl ParallelSnapshotUploadSupport {
 
         tracing::trace!("Start push of snapshot: address: {snapshot_address:?}");
 
-        self.expecting_deployed_contacts_addresses
-            .push(snapshot_address.to_string());
+        // self.expecting_deployed_contacts_addresses
+        //     .push(snapshot_address.to_string());
 
         let database = context.get_db()?.clone();
         self.pushed_blobs.spawn(
@@ -124,7 +139,7 @@ impl ParallelSnapshotUploadSupport {
         let addresses = self
             .expecting_deployed_contacts_addresses
             .iter()
-            .map(|addr| BlockchainContractAddress::new(addr))
+            .map(|addr| BlockchainContractAddress::new(addr.0.clone()))
             .collect::<Vec<BlockchainContractAddress>>();
 
         wait_snapshots_until_ready(&blockchain, &addresses).await

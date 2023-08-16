@@ -406,7 +406,7 @@ pub async fn load_messages_to(
 pub async fn load_constructor(
     context: &EverClient,
     address: &BlockchainContractAddress,
-) -> anyhow::Result<(String, Option<String>)> {
+) -> anyhow::Result<(Vec<u8>, Option<String>)> {
     tracing::trace!("load_constructor of: address={address}");
     let query = r#"query($addr: String!, $after: String){
       blockchain {
@@ -476,7 +476,14 @@ pub async fn load_constructor(
             let data: String = serde_json::from_value(value["data"].clone()).unwrap();
             let ipfs: Option<String> = serde_json::from_value(value["ipfsdata"].clone()).unwrap();
 
-            return Ok((data, ipfs));
+            let data: Vec<u8> = (0..data.len())
+                .step_by(2)
+                .map(|i| u8::from_str_radix(&data[i..i + 2], 16).expect("must be hex string"))
+                .collect();
+            let decode_data: Vec<u8> =
+                ton_client::utils::decompress_zstd(&data).expect("Must be correct archive");
+
+            return Ok((decode_data, ipfs));
         }
     }
 

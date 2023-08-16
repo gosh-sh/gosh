@@ -85,6 +85,20 @@ impl ParallelDiffsUploadSupport {
         self.expecting_deployed_contacts_addresses.push(value);
     }
 
+    pub async fn start_push(
+        &mut self,
+        context: &mut GitHelper<impl BlockchainService + 'static>,
+    ) -> anyhow::Result<()> {
+        let exp = self.expecting_deployed_contacts_addresses.clone();
+        for address in exp {
+            self.add_to_push_list(
+                context,
+                address,
+            ).await?;
+        }
+        Ok(())
+    }
+
     pub async fn add_to_push_list(
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
@@ -100,8 +114,8 @@ impl ParallelDiffsUploadSupport {
 
         let database = context.get_db()?.clone();
 
-        self.expecting_deployed_contacts_addresses
-            .push(diff_address.clone());
+        // self.expecting_deployed_contacts_addresses
+        //     .push(diff_address.clone());
         self.pushed_blobs.spawn(
             async move {
                 push_diff(
@@ -145,11 +159,12 @@ impl ParallelDiffsUploadSupport {
                         diff_contract_address.clone(),
                     )?;
 
-                    self.add_to_push_list(context, diff_contract_address)
-                        .await?;
-                } else {
-                    self.push_expected(diff_contract_address);
+                    // self.add_to_push_list(context, diff_contract_address)
+                    //     .await?;
+                // } else {
+                //     self.push_expected(diff_contract_address);
                 }
+                self.push_expected(diff_contract_address);
             }
         }
         Ok(())
@@ -267,11 +282,12 @@ impl ParallelDiffsUploadSupport {
                         diff_contract_address.clone(),
                     )?;
 
-                    self.add_to_push_list(context, diff_contract_address)
-                        .await?;
-                } else {
-                    self.push_expected(diff_contract_address);
+                    // self.add_to_push_list(context, diff_contract_address)
+                    //     .await?;
+                // } else {
+                //     self.push_expected(diff_contract_address);
                 }
+                self.push_expected(diff_contract_address);
             }
         }
         Ok(())

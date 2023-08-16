@@ -556,7 +556,7 @@ impl BlobsRebuildingPlan {
         let blob_oid = write_git_object(repo, blob).await?;
         if new_loading {
             let mut visited = visited_ipfs.lock().await;
-            visited.insert(ipfs.clone().unwrap(), blob_oid);
+            visited.insert(ipfs_hash.clone().unwrap(), blob_oid);
         }
         Ok((blob_oid, blob_data))
     }
