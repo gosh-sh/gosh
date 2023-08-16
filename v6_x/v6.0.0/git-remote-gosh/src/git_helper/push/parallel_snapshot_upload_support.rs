@@ -154,7 +154,7 @@ pub struct ParallelCommitUploadSupport {
 #[derive(Clone, Debug)]
 pub struct ParallelCommit {
     pub commit_id: ObjectId,
-    pub tree_addr: BlockchainContractAddress,
+    pub tree_sha: String,
     pub raw_commit: String,
     pub parents: Vec<AddrVersion>,
     pub upgrade_commit: bool,
@@ -164,14 +164,14 @@ impl ParallelCommit {
     #[instrument(level = "info", skip_all, name = "new_ParallelDiff")]
     pub fn new(
         commit_id: ObjectId,
-        tree_addr: BlockchainContractAddress,
+        tree_sha: String,
         raw_commit: String,
         parents: Vec<AddrVersion>,
         upgrade_commit: bool,
     ) -> Self {
         Self {
             commit_id,
-            tree_addr,
+            tree_sha,
             raw_commit,
             parents,
             upgrade_commit,

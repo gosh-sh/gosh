@@ -243,7 +243,7 @@ pub async fn push_tree(
     wallet_contract: &GoshContract,
     handlers: &mut ParallelTreeUploadSupport,
     push_semaphore: Arc<Semaphore>,
-) -> anyhow::Result<BlockchainContractAddress> {
+) -> anyhow::Result<(BlockchainContractAddress, String)> {
     tracing::trace!("start push_tree: tree_id={root_tree_id}, current_commit={current_commit}");
     let mut to_deploy = Vec::new();
     let tree_nodes = construct_tree(context, root_tree_id, current_commit, snapshot_to_commit, wallet_contract, &mut to_deploy).await?;
@@ -266,7 +266,7 @@ pub async fn push_tree(
         let tree_address = String::from(tree_address);
 
         if &tree.tree_id == root_tree_id {
-            res_address = Some(BlockchainContractAddress::new(&tree_address));
+            res_address = Some((BlockchainContractAddress::new(&tree_address), tree.sha_inner_tree.clone()));
         }
         if !context.get_db()?.tree_exists(&tree_address)? {
             context.get_db()?.put_tree(tree, tree_address.clone())?;

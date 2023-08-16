@@ -679,7 +679,7 @@ where
             }
         }
 
-        let tree_addr = push_tree(
+        let (tree_addr, tree_sha) = push_tree(
             self,
             &tree_id,
             oid,
@@ -694,11 +694,11 @@ where
             let remote = self.remote.clone();
             let dao_addr = self.dao_addr.clone();
             let object_id = object_id.clone();
-            let tree_addr = tree_addr.clone();
+            let tree_sha = tree_sha.clone();
 
             let commit = ParallelCommit::new(
                 object_id,
-                tree_addr,
+                tree_sha,
                 raw_commit,
                 parents,
                 upgrade_commit,
