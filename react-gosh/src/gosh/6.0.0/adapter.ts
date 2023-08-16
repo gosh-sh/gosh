@@ -4741,7 +4741,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Check if deployed
         const diffContract = await this._getDiff(commit, index1, 0)
-        if (await diffContract.isDeployed()) return
+        if (await diffContract.isDeployed()) {
+            return
+        }
 
         // Deploy diff
         const {
@@ -4774,11 +4776,19 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             index2: 0,
             last: true,
         })
+
+        // Wait for ready (_isCorrect)
         const wait = await whileFinite(async () => {
-            return await diffContract.isDeployed()
+            let isCorrect = false
+            const isDeployed = await diffContract.isDeployed()
+            if (isDeployed) {
+                const { value0 } = await diffContract.runLocal('getStatus', {})
+                isCorrect = value0
+            }
+            return isDeployed && isCorrect
         })
         if (!wait) {
-            throw new GoshError('Deploy diff timeout reached', {
+            throw new GoshError('Diff check timeout reached', {
                 branch,
                 index1,
                 address: diffContract.address,

@@ -137,15 +137,14 @@ contract DiffC is Modifiers {
         else { _index2max = 0; }
         _entry = true;
         _branchcommit = branchcommit;
+        if (_isCorrect == false) {
+            Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(branch, branchcommit, _index1);
+            return; 
+        }
         if (_diff.length != 0) { 
             this.sendDiff{value: 0.1 ton, flag: 1}(0, branchcommit);
             getMoney();
             return;
-        }
-        if (_isCorrect == false) {
-            if (_index2 == 0) { Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(_nameBranch, _branchcommit, _index1); }
-            else { DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, 0)).approveDiffDiff{value: 0.1 ton, flag: 1}(false, _index2, _last); }
-            return; 
         }
         if (_index2 == 0) { Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(branch, _branchcommit, _index1);  } 
         else { DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, 0)).approveDiffDiff{value: 0.1 ton, flag: 1}(true, _index2, _last);  }
