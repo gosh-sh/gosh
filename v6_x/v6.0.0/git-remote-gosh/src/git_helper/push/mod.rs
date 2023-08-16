@@ -1320,6 +1320,7 @@ where
             let expected = parallel_diffs_upload_support.get_expected().to_owned();
             parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
             for address in expected_contracts.clone() {
+                parallel_diffs_upload_support.push_expected(String::from(&address));
                 parallel_diffs_upload_support
                     .add_to_push_list(self, String::from(address))
                     .await?;
@@ -1350,6 +1351,7 @@ where
             parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
             for address in expected_contracts.clone() {
                 tracing::trace!("Get params of undeployed snapshot: {}", address,);
+                parallel_snapshot_uploads.push_expected(String::from(&address), None);
                 parallel_snapshot_uploads
                     .add_to_push_list(self, String::from(address), None)
                     .await?;

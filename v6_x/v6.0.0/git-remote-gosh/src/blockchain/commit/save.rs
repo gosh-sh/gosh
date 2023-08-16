@@ -35,7 +35,7 @@ pub struct DeployCommitParams {
     #[serde(rename = "fullCommit")]
     pub raw_commit: String,
     pub parents: Vec<AddrVersion>,
-    #[serde(rename = "tree")]
+    #[serde(rename = "shainnertree")]
     pub tree_sha: String,
     pub upgrade: bool,
 }
