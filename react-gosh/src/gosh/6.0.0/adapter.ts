@@ -4777,24 +4777,17 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             last: true,
         })
 
-        // Wait for deploy
+        // Wait for ready (_isCorrect)
         const wait = await whileFinite(async () => {
-            return await diffContract.isDeployed()
+            let isCorrect = false
+            const isDeployed = await diffContract.isDeployed()
+            if (isDeployed) {
+                const { value0 } = await diffContract.runLocal('getStatus', {})
+                isCorrect = value0
+            }
+            return isDeployed && isCorrect
         })
         if (!wait) {
-            throw new GoshError('Deploy diff timeout reached', {
-                branch,
-                index1,
-                address: diffContract.address,
-            })
-        }
-
-        // Wait for ready (_isCorrect)
-        const wait2 = await whileFinite(async () => {
-            const { value0 } = await diffContract.runLocal('getStatus', {})
-            return value0 === true
-        })
-        if (!wait2) {
             throw new GoshError('Diff check timeout reached', {
                 branch,
                 index1,
