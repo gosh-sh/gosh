@@ -78,14 +78,14 @@ async fn construct_tree(
     let flat_tree = flatten_tree(context, tree_id, "")?;
     tracing::trace!("construct tree: flat_tree={flat_tree:?}");
     let mut nodes = HashMap::new();
-    let mut paths = Vec::new();
+    let mut paths: Vec<String> = Vec::new();
     let commit_obj = ObjectId::from_hex(current_commit.as_bytes())?;
     let commit_chain = context.get_commit_ancestors(&commit_obj)?;
     tracing::trace!("start processing single tree items");
     // prepare file entries
     use git_object::tree::EntryMode::*;
     for (path, entry) in &flat_tree {
-        match entry.mode {
+        let file_hash = match entry.mode {
             Link | Commit => {
                 tracing::trace!("Single link or item: {}", path);
                 let mut buffer = vec![];
@@ -93,32 +93,7 @@ async fn construct_tree(
                     .local_repository()
                     .objects
                     .try_find(entry.oid, &mut buffer)?;
-                let file_hash = sha256::digest(&*buffer);
-                let file_name = entry.filename.to_string();
-
-                let commit = snapshot_to_commit
-                    .get(&file_name)
-                    .and_then(|val| {
-                        for snap_mon in val {
-                            if commit_chain.contains(&snap_mon.latest_commit) {
-                                return Some(snap_mon.base_commit.clone());
-                            }
-                            if commit_chain.contains(&snap_mon.base_commit) {
-                                return Some(snap_mon.base_commit.clone());
-                            }
-                        }
-                        None
-                    })
-                    .unwrap_or(current_commit.to_string());
-
-                let tree_node = TreeNode::from((Some(format!("0x{file_hash}")), None, commit, entry));
-                let type_obj = &tree_node.type_obj;
-                let key = tvm_hash(
-                    &context.blockchain.client(),
-                    format!("{}:{}", type_obj, file_name).as_bytes(),
-                )
-                    .await?;
-                nodes.insert(format!("{}_{}", entry.filename, entry.oid.to_string()), (format!("0x{}", key), tree_node));
+                sha256::digest(&*buffer)
             }
             Blob | BlobExecutable => {
                 tracing::trace!("Single tree item: {}", path);
@@ -130,7 +105,7 @@ async fn construct_tree(
                     .find_blob(entry.oid, &mut buffer)?
                     .data;
 
-                let file_hash = if is_going_to_ipfs(content) {
+                if is_going_to_ipfs(content) {
                     // NOTE:
                     // Here is a problem: we calculate if this blob is going to ipfs
                     // one way (blockchain::snapshot::save::is_going_to_ipfs)
@@ -145,38 +120,37 @@ async fn construct_tree(
                 } else {
                     // tvm_hash(&blockchain.client(), content).await?
                     tvm_hash(&context.blockchain.client(), content).await?
-                };
-
-                let file_name = entry.filename.to_string();
-
-                let commit = snapshot_to_commit
-                    .get(&file_name)
-                    .and_then(|val| {
-                        for snap_mon in val {
-                            if commit_chain.contains(&snap_mon.latest_commit) {
-                                return Some(snap_mon.base_commit.clone());
-                            }
-                            if commit_chain.contains(&snap_mon.base_commit) {
-                                return Some(snap_mon.base_commit.clone());
-                            }
-                        }
-                        None
-                    })
-                    .unwrap_or(current_commit.to_string());
-
-                let tree_node = TreeNode::from((Some(format!("0x{file_hash}")), None, commit, entry));
-                let type_obj = &tree_node.type_obj;
-                let key = tvm_hash(
-                    &context.blockchain.client(),
-                    format!("{}:{}", type_obj, file_name).as_bytes(),
-                )
-                    .await?;
-                nodes.insert(format!("{}_{}", entry.filename, entry.oid.to_string()), (format!("0x{}", key), tree_node));
+                }
             }
             _ => {
-                paths.push(path.to_string());
+                continue;
             }
-        }
+        };
+        let file_name = entry.filename.to_string();
+
+        let commit = snapshot_to_commit
+            .get(&file_name)
+            .and_then(|val| {
+                for snap_mon in val {
+                    if commit_chain.contains(&snap_mon.latest_commit) {
+                        return Some(snap_mon.base_commit.clone());
+                    }
+                    if commit_chain.contains(&snap_mon.base_commit) {
+                        return Some(snap_mon.base_commit.clone());
+                    }
+                }
+                None
+            })
+            .unwrap_or(current_commit.to_string());
+
+        let tree_node = TreeNode::from((Some(format!("0x{file_hash}")), None, commit, entry));
+        let type_obj = &tree_node.type_obj;
+        let key = tvm_hash(
+            &context.blockchain.client(),
+            format!("{}:{}", type_obj, file_name).as_bytes(),
+        )
+            .await?;
+        nodes.insert(format!("{}_{}", entry.filename, entry.oid.to_string()), (format!("0x{}", key), tree_node));
     }
     tracing::trace!("end processing single tree items");
     tracing::trace!("single nodes: {nodes:?}");
