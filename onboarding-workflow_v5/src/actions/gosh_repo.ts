@@ -4,6 +4,7 @@ import { isAccountActive } from '../eversdk/account.ts'
 import { GOSH_ENDPOINTS, SYSTEM_CONTRACT_ADDR } from '../eversdk/client.ts'
 import { getAddrDao } from '../eversdk/dao.ts'
 import {
+    RepoStatus,
     deployRepository,
     getAddrRepository,
     getAddrWallet,
@@ -73,17 +74,30 @@ export async function initializeGoshRepo(github_id: string) {
     const wallet_addr = await getAddrWallet(dao_bot.profile_gosh_address, dao_addr)
     console.log('wallet_addr', wallet_addr)
 
+    let status
     if (!(await isAccountActive(repo_addr))) {
         try {
-            await runWithTimeout(
-                3 * 60 * 1000, // 2 minutes
-                deployRepository(repo_name, wallet_addr, dao_bot.seed),
+            status = await runWithTimeout(
+                3 * 60 * 1000, // 3 minutes
+                deployRepository(dao_addr, repo_name, wallet_addr, dao_bot.seed),
             )
+            console.log("Deploy repo status:", status)
         } catch (err) {
-            console.log('Error whlie deployRepository github_id', github_id)
+            console.log('Error while deployRepository github_id', github_id)
             throw err
         }
-        await waitForAccountActive(repo_addr)
+
+        if (status === RepoStatus.WaitingVoting) {
+            return
+        } else if (status === RepoStatus.RejectedByVoting) {
+            await updateGithub(github.id, {
+                ignore: true,
+                resolution: "Rejected as a result of voting"
+            })
+            return
+        } else if (status === RepoStatus.Deploying) {
+            await waitForAccountActive(repo_addr)
+        }
     }
 
     console.log(`Repo ${repo_addr} is ready to be pushed`)

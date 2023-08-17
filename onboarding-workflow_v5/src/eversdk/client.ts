@@ -1,4 +1,4 @@
-import { TonClient } from 'npm:@eversdk/core@1.41.1'
+import { TonClient } from 'npm:@eversdk/core'
 // @deno-types="../../node_modules/@eversdk/lib-web/index.d.ts"
 import { libWeb, libWebSetup } from '../../node_modules/@eversdk/lib-web/index.js'
 
@@ -22,7 +22,11 @@ export function getEverClient(): TonClient {
 
         // deno-lint-ignore no-explicit-any
         TonClient.useBinaryLibrary(libWeb as any)
-        everClient = new TonClient()
+        everClient = new TonClient({
+            network: {
+                endpoints: ['network.gosh.sh']
+            }
+        })
     }
     return everClient
 }
