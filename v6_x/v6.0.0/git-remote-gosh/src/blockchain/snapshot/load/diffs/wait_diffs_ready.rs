@@ -42,9 +42,11 @@ pub async fn wait_diffs_until_ready<B>(
                 for diff_addr in expected_diffs.clone() {
                     let diff_contract = GoshContract::new(&diff_addr, gosh_abi::DIFF);
                     let diff_status: anyhow::Result<GetStatusResult> = diff_contract.run_local(b.client(), "getStatus", None).await;
+                    tracing::trace!("get status of {}: {:?}", diff_addr, diff_status);
                     match diff_status {
                         Ok(status) => {
                             if !status.correct {
+                                // TODO: should wait and ask again
                                 not_ready.push(diff_addr.clone());
                                 tracing::trace!("Diff not ready yet: {}", diff_addr);
                             } else {
@@ -72,7 +74,7 @@ pub async fn wait_diffs_until_ready<B>(
             }
             Ok(vec![])
         }
-            .instrument(info_span!("ckeck if snapshots are ready").or_current()),
+            .instrument(info_span!("check_if_diffs_are_ready").or_current()),
     );
 
     let mut unready_diffs = HashSet::new();
