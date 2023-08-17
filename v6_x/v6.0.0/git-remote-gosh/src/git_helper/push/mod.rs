@@ -401,7 +401,8 @@ where
             .map_err(|e| anyhow::format_err!("query error: {e}"))?;
 
             let raw_data = result["data"]["accounts"].clone();
-            let existing_commits: Vec<AccountStatus> = serde_json::from_value(raw_data)?;
+            let mut existing_commits: Vec<AccountStatus> = serde_json::from_value(raw_data)?;
+            existing_commits.retain(|val| val.status == 1); // leave only active
             tracing::trace!("existing_commits={existing_commits:?}");
             if existing_commits.is_empty() {
                 // Extra case: there are no commits onchain, search for commit with no parents and return it

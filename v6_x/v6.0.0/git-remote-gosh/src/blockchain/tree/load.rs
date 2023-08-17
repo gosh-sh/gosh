@@ -192,17 +192,21 @@ pub async fn construct_map_of_snapshots(
                     &full_path
                 ).await?;
                 tracing::trace!("snapshot address {}", snapshot_address);
-                let snapshot = Snapshot::load(
+                match Snapshot::load(
                     context,
                     &snapshot_address,
-                ).await?;
-                tracing::trace!("snapshot data: {:?}", snapshot);
-                let snap_mon = SnapshotMonitor {
-                    base_commit: entry.commit,
-                    latest_commit: snapshot.current_commit,
-                };
-                let entry = snapshot_to_commit.entry(full_path).or_insert(vec![]);
-                entry.push(snap_mon);
+                ).await {
+                    Ok(snapshot) => {
+                        tracing::trace!("snapshot data: {:?}", snapshot);
+                        let snap_mon = SnapshotMonitor {
+                            base_commit: entry.commit,
+                            latest_commit: snapshot.current_commit,
+                        };
+                        let entry = snapshot_to_commit.entry(full_path).or_insert(vec![]);
+                        entry.push(snap_mon);
+                    }
+                    Err(_) => {}
+                }
             },
             _ => {}
         }
