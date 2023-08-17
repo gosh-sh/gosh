@@ -279,7 +279,7 @@ contract Tree is Modifiers {
         getMoney();
         if (_check == false) { return; }
         if (res == false) {
-            if (_root == false) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaInnerTree, false, branchcommit, typer); }
+            if (_root == false) { address zeroaddr; if (_checkaddr != zeroaddr) { Tree(_checkaddr).gotCheckTree{value: 0.1 ton, flag: 1}(_shaInnerTree, false, branchcommit, typer); } }
             _check = false;
             _needAnswer = 0;
             return;
