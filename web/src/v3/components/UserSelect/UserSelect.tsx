@@ -3,6 +3,7 @@ import { AppConfig } from '../../../appconfig'
 import { getSystemContract } from '../../blockchain/helpers'
 import { Select2ClassNames } from '../../../helpers'
 import { MemberIcon } from '../../../components/Dao'
+import { EDaoMemberType } from '../../types/dao.types'
 
 type TUserSelectProps = AsyncProps<any, any, any> & {
     searchUser?: boolean
@@ -22,7 +23,7 @@ const UserSelect = (props: TUserSelectProps) => {
             if (await query.isDeployed()) {
                 options.push({
                     label: input,
-                    value: { name: input, type: 'user' },
+                    value: { name: input, type: EDaoMemberType.User },
                 })
             }
         }
@@ -32,7 +33,7 @@ const UserSelect = (props: TUserSelectProps) => {
             if (await query.isDeployed()) {
                 options.push({
                     label: input,
-                    value: { name: input, type: 'dao' },
+                    value: { name: input, type: EDaoMemberType.Dao },
                 })
             }
         }

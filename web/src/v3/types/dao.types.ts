@@ -8,6 +8,11 @@ import { Task } from '../blockchain/task'
 import { TGoshCommit } from './repository.types'
 import { GoshRepository } from '../blockchain/repository'
 
+export enum EDaoMemberType {
+    Dao = 'dao',
+    User = 'user',
+}
+
 export type TDaoListItem = {
     account: Dao | null
     name: string
@@ -27,7 +32,8 @@ export type TUserDaoList = {
 }
 
 export type TDaoDetailsMemberItem = {
-    profile: UserProfile
+    usertype: EDaoMemberType
+    profile: UserProfile | Dao
     wallet: DaoWallet
     allowance: number
 }
@@ -54,6 +60,7 @@ export type TDaoDetails = {
         owner?: string
         tags?: string[]
         tasks?: number
+        isMemberOf?: TDaoDetailsMemberItem[]
         isMintOn?: boolean
         isAskMembershipOn?: boolean
         isEventDiscussionOn?: boolean
@@ -75,6 +82,7 @@ export type TDaoMember = {
             locked: number
             regular: number
         } | null
+        vesting: number | null
         isFetched: boolean
         isMember: boolean
         isLimited: boolean
@@ -96,7 +104,7 @@ export type TDaoMemberList = {
 
 export type TDaoEventReviewer = {
     username: string
-    usertype: 'user' | 'dao'
+    usertype: EDaoMemberType
     profile: string
 }
 
@@ -173,7 +181,7 @@ export type TTaskGrantTotal = {
 
 export type TTaskTeamMember = {
     username: string
-    usertype: 'user' | 'dao'
+    usertype: EDaoMemberType
     profile: string
 }
 

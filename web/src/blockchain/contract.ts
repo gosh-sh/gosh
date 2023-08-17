@@ -80,6 +80,13 @@ class BaseContract {
         return value1
     }
 
+    async getTypeVersion(): Promise<{ type: string; version: string }> {
+        const { value0, value1 } = await this.runLocal('getVersion', {}, undefined, {
+            useCachedBoc: true,
+        })
+        return { type: value0, version: value1 }
+    }
+
     async getMessages(
         variables: {
             msgType: string[]
@@ -207,10 +214,18 @@ class BaseContract {
         const { logging = true, retries = 2, useCachedBoc = false } = settings ?? {}
 
         const result = await retry(async () => {
-            if (useCachedBoc) {
-                return await this._runLocalCached(functionName, input)
-            } else {
-                return await this.account.runLocal(functionName, input, options)
+            try {
+                if (useCachedBoc) {
+                    return await this._runLocalCached(functionName, input)
+                } else {
+                    return await this.account.runLocal(functionName, input, options)
+                }
+            } catch (e: any) {
+                if (e.code === 414 && e.data?.exit_code === 60) {
+                    throw new GoshError(e.message)
+                } else {
+                    throw e
+                }
             }
         }, retries)
         if (logging) console.debug('[RunLocal]', { functionName, input, result })

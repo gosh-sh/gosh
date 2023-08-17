@@ -10,6 +10,7 @@ import { FormikTextarea } from '../../../../components/Formik'
 import { Button } from '../../../../components/Form'
 import { useDao, useCreateDaoMember } from '../../../hooks/dao.hooks'
 import { ToastStatus } from '../../../../components/Toast'
+import { EDaoMemberType } from '../../../types/dao.types'
 
 type TFormValues = {
     comment: string
@@ -29,9 +30,16 @@ const RequestDaoMembershipModal = () => {
     const onRequestMembership = async (values: TFormValues) => {
         try {
             const { comment } = values
-            await createMember([
-                { user: { name: user.username!, type: 'user' }, allowance: 0, comment },
-            ])
+            await createMember(
+                [
+                    {
+                        user: { name: user.username!, type: EDaoMemberType.User },
+                        allowance: 0,
+                        comment,
+                    },
+                ],
+                true,
+            )
             onModalReset()
             navigate(`/o/${dao.details.name}/events`)
         } catch (e: any) {

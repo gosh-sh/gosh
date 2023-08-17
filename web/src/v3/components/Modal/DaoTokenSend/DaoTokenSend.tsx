@@ -18,6 +18,7 @@ import { ModalCloseButton } from '../../../../components/Modal'
 
 type TFormValues = {
     username: string
+    usertype: string
     amount: string
     isVoting: boolean
     comment: string
@@ -35,9 +36,15 @@ const DaoTokenSendModal = () => {
 
     const onSubmit = async (values: TFormValues) => {
         try {
-            const { isVoting, comment, username } = values
+            const { isVoting, comment, username, usertype } = values
             const amount = parseInt(values.amount)
-            const { isEvent } = await send({ username, amount, isVoting, comment })
+            const { isEvent } = await send({
+                username,
+                usertype,
+                amount,
+                isVoting,
+                comment,
+            })
             onModalReset()
             if (isEvent) {
                 navigate(`/o/${dao.details.name}/events`)
@@ -52,12 +59,14 @@ const DaoTokenSendModal = () => {
             <Formik
                 initialValues={{
                     username: '',
+                    usertype: '',
                     amount: '',
                     isVoting: false,
                     comment: '',
                 }}
                 validationSchema={yup.object().shape({
                     username: yup.string().required(),
+                    usertype: yup.string().required(),
                     amount: yup
                         .number()
                         .integer()
@@ -79,11 +88,14 @@ const DaoTokenSendModal = () => {
                         <div>
                             <Field name="username" component={BaseField}>
                                 <UserSelect
-                                    placeholder="Username"
+                                    placeholder="Username or DAO name"
                                     isDisabled={isSubmitting}
+                                    searchDao
                                     onChange={(option) => {
-                                        const value = option?.value.name || ''
-                                        setFieldValue('username', value, true)
+                                        const name = option?.value.name || ''
+                                        const type = option?.value.type || ''
+                                        setFieldValue('username', name, true)
+                                        setFieldValue('usertype', type, true)
                                     }}
                                 />
                             </Field>

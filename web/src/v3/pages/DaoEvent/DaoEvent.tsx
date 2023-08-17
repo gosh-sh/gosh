@@ -21,6 +21,9 @@ import {
     MemberUpdateEvent,
     CreateTaskEvent,
     DeleteTaskEvent,
+    RepositoryDescriptionEvent,
+    RepositoryTagAddEvent,
+    RepositoryTagDeleteEvent,
 } from './components'
 import { Tooltip } from 'react-tooltip'
 import { useEffect } from 'react'
@@ -166,6 +169,15 @@ const DaoEventPageInner = (props: { address: string }) => {
                                     data={event.data}
                                     isCompleted={event.status.completed}
                                 />
+                            )}
+                            {event.type === EDaoEventType.REPO_UPDATE_DESCRIPTION && (
+                                <RepositoryDescriptionEvent data={event.data} />
+                            )}
+                            {event.type === EDaoEventType.REPO_TAG_ADD && (
+                                <RepositoryTagAddEvent data={event.data} />
+                            )}
+                            {event.type === EDaoEventType.REPO_TAG_REMOVE && (
+                                <RepositoryTagDeleteEvent data={event.data} />
                             )}
                             {event.type === EDaoEventType.DAO_TOKEN_MINT && (
                                 <MintTokensEvent data={event.data} />

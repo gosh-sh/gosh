@@ -9,6 +9,7 @@ import { executeByChunk, sleep } from '../../utils'
 import { AppConfig } from '../../appconfig'
 import _ from 'lodash'
 import { TDaoEventReviewer, TTaskGrantPair } from '../types/dao.types'
+import { getDaoOrProfile } from './helpers'
 
 export class DaoEvent extends BaseContract {
     constructor(client: TonClient, address: string) {
@@ -148,15 +149,13 @@ export class DaoEvent extends BaseContract {
     }
 
     async parseMemberAddEventParams(data: any) {
-        const members = await executeByChunk<string, any>(
+        const members = await executeByChunk<any, any>(
             data.pubaddr,
             MAX_PARALLEL_READ,
-            async (item: any) => {
-                const profile = await AppConfig.goshroot.getUserProfile({
-                    address: item.member,
-                })
+            async (item) => {
+                const { account } = await getDaoOrProfile(item.member)
                 return {
-                    username: await profile.getName(),
+                    username: await account.getName(),
                     profile: item.member,
                     allowance: parseInt(item.count),
                 }
@@ -170,9 +169,9 @@ export class DaoEvent extends BaseContract {
             data.pubaddr,
             MAX_PARALLEL_READ,
             async (address) => {
-                const profile = await AppConfig.goshroot.getUserProfile({ address })
+                const { account } = await getDaoOrProfile(address)
                 return {
-                    username: await profile.getName(),
+                    username: await account.getName(),
                     profile: address,
                 }
             },
@@ -185,9 +184,9 @@ export class DaoEvent extends BaseContract {
             data.pubaddr,
             MAX_PARALLEL_READ,
             async (address, index) => {
-                const profile = await AppConfig.goshroot.getUserProfile({ address })
+                const { account } = await getDaoOrProfile(address)
                 return {
-                    username: await profile.getName(),
+                    username: await account.getName(),
                     profile: address,
                     increase: data.increase[index],
                     grant: parseInt(data.grant[index]),
@@ -202,21 +201,19 @@ export class DaoEvent extends BaseContract {
     }
 
     async parseAddVotingTokensEventParams(data: any) {
-        const profile = await AppConfig.goshroot.getUserProfile({ address: data.pubaddr })
-        const username = await profile.getName()
+        const { account } = await getDaoOrProfile(data.pubaddr)
         return {
             ...data,
-            pubaddr: { username, profile: profile.address },
+            pubaddr: { username: await account.getName(), profile: account.address },
             grant: parseInt(data.grant),
         }
     }
 
     async parseAddRegularTokensEventParams(data: any) {
-        const profile = await AppConfig.goshroot.getUserProfile({ address: data.pubaddr })
-        const username = await profile.getName()
+        const { account } = await getDaoOrProfile(data.pubaddr)
         return {
             ...data,
-            pubaddr: { username, profile: profile.address },
+            pubaddr: { username: await account.getName(), profile: account.address },
             grant: parseInt(data.grant),
         }
     }

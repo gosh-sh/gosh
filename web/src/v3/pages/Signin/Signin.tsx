@@ -1,7 +1,7 @@
 import { useSetRecoilState } from 'recoil'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { appModalStateAtom } from '../../../store/app.state'
-import PinCodeModal from '../../../components/Modal/PinCode'
+import { PinCodeModal } from '../../../components/Modal'
 import { toast } from 'react-toastify'
 import { ToastError } from '../../../components/Toast'
 import { useEffect, useState } from 'react'

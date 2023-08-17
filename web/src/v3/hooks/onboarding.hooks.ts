@@ -24,6 +24,7 @@ import { useUser } from './user.hooks'
 import { validateOnboardingDao, validateOnboardingRepo } from '../validators'
 import { debounce } from 'lodash'
 import { useOauth } from './oauth.hooks'
+import { TToastStatus } from '../../types/common.types'
 
 export function useOnboardingData(oauth?: TOAuthSession) {
     const [data, setData] = useRecoilState(onboardingDataAtom)
@@ -227,20 +228,12 @@ export function useOnboardingRepositories(organization: TOnboardingOrganization)
     return { repositories, getRepositories, toggleRepository }
 }
 
-type TUseOnboardingSignupStatus = {
-    isSubmitting: boolean
-    data: string | null
-}
-
 export function useOnboardingSignup(oauth: TOAuthSession) {
     const data = useRecoilValue(onboardingDataAtom)
     const repositories = useRecoilValue(repositoriesCheckedSelector)
     const invites = useRecoilValue(daoInvitesSelector)
     const { signup: _signup } = useUser()
-    const [status, setStatus] = useState<TUseOnboardingSignupStatus>({
-        isSubmitting: false,
-        data: null,
-    })
+    const [status, setStatus] = useState<TToastStatus>()
 
     const getDbUser = async (username: string) => {
         const { data, error } = await supabase.client
@@ -305,14 +298,12 @@ export function useOnboardingSignup(oauth: TOAuthSession) {
 
     const signup = async (username: string) => {
         try {
-            setStatus((state) => ({ ...state, isSubmitting: true }))
-
             if (!oauth.session) {
                 throw new GoshError('OAuth session undefined')
             }
 
             // Prepare data
-            setStatus((state) => ({ ...state, data: 'Prepare data' }))
+            setStatus({ type: 'pending', data: 'Prepare data' })
             username = username.trim().toLowerCase()
             const seed = data.phrase.join(' ')
             const keypair = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
@@ -320,50 +311,50 @@ export function useOnboardingSignup(oauth: TOAuthSession) {
             })
 
             // Deploy GOSH account
-            setStatus((state) => ({ ...state, data: 'Create GOSH account' }))
+            setStatus({ type: 'pending', data: 'Create GOSH account' })
             await _signup({ phrase: seed, username })
 
-            // // Get or create DB user
-            // setStatus((state) => ({ ...state, data: 'Update onboarding DB' }))
-            // let dbUser = await getDbUser(username)
-            // if (!dbUser) {
-            //     dbUser = await createDbUser(
-            //         username,
-            //         keypair.public,
-            //         oauth.session.user.id,
-            //         data.isEmailPublic ? oauth.session.user.email || null : null,
-            //         data.emailOther || null,
-            //     )
-            // }
+            // Get or create DB user
+            setStatus({ type: 'pending', data: 'Update onboarding DB' })
+            let dbUser = await getDbUser(username)
+            if (!dbUser) {
+                dbUser = await createDbUser(
+                    username,
+                    keypair.public,
+                    oauth.session.user.id,
+                    data.isEmailPublic ? oauth.session.user.email || null : null,
+                    data.emailOther || null,
+                )
+            }
 
-            // // Save auto clone repositories
-            // const goshAddress = Object.values(AppConfig.versions).reverse()[0]
-            // const goshProtocol = `gosh://${goshAddress}`
-            // for (const item of repositories) {
-            //     const { daoname, name } = item
-            //     await createDbGithubRecord({
-            //         user_id: dbUser.id,
-            //         github_url: `/${daoname}/${name}`,
-            //         gosh_url: `${goshProtocol}/${daoname.toLowerCase()}/${name.toLowerCase()}`,
-            //     })
-            // }
+            // Save auto clone repositories
+            const goshAddress = Object.values(AppConfig.versions).reverse()[0]
+            const goshProtocol = `gosh://${goshAddress}`
+            for (const item of repositories) {
+                const { daoname, name } = item
+                await createDbGithubRecord({
+                    user_id: dbUser.id,
+                    github_url: `/${daoname}/${name}`,
+                    gosh_url: `${goshProtocol}/${daoname.toLowerCase()}/${name.toLowerCase()}`,
+                })
+            }
 
-            // // Update DAO invites status
-            // for (const invite of invites.items) {
-            //     const { error } = await supabase.client
-            //         .from('dao_invite')
-            //         .update({
-            //             recipient_username: username,
-            //             recipient_status: invite.accepted
-            //                 ? EDaoInviteStatus.ACCEPTED
-            //                 : EDaoInviteStatus.REJECTED,
-            //             token_expired: true,
-            //         })
-            //         .eq('id', invite.id)
-            //     if (error) {
-            //         throw new GoshError(error.message)
-            //     }
-            // }
+            // Update DAO invites status
+            for (const invite of invites.items) {
+                const { error } = await supabase.client
+                    .from('dao_invite')
+                    .update({
+                        recipient_username: username,
+                        recipient_status: invite.accepted
+                            ? EDaoInviteStatus.ACCEPTED
+                            : EDaoInviteStatus.REJECTED,
+                        token_expired: true,
+                    })
+                    .eq('id', invite.id)
+                if (error) {
+                    throw new GoshError(error.message)
+                }
+            }
 
             // Validate onboarding data
             const validationResult = await Promise.all(
@@ -384,11 +375,12 @@ export function useOnboardingSignup(oauth: TOAuthSession) {
                     return true
                 }),
             )
+
+            setStatus(undefined)
             return validationResult.every((r) => !!r)
         } catch (e: any) {
+            setStatus({ type: 'error', data: e })
             throw e
-        } finally {
-            setStatus((state) => ({ ...state, isSubmitting: false }))
         }
     }
 

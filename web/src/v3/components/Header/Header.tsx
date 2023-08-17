@@ -8,7 +8,7 @@ import { faPaperPlane, faQuestionCircle } from '@fortawesome/free-regular-svg-ic
 import { faDocker } from '@fortawesome/free-brands-svg-icons'
 import { faBlog } from '@fortawesome/free-solid-svg-icons'
 import { appModalStateAtom } from '../../../store/app.state'
-import MDDocumentModal from '../../../components/Modal/MDDocument/MDDocumentModal'
+import { MDDocumentModal } from '../../../components/Modal'
 import { onExternalLinkClick } from '../../../helpers'
 import { useUser } from '../../hooks/user.hooks'
 import { AppConfig } from '../../../appconfig'

@@ -29,6 +29,7 @@ import { toast } from 'react-toastify'
 import copyClipboard from 'copy-to-clipboard'
 import Alert from '../../../../../components/Alert/Alert'
 import { MemberIcon } from '../../../../../components/Dao'
+import { getSystemContract } from '../../../../blockchain/helpers'
 
 const getUsernameOptions = async (input: string) => {
     if (input.indexOf('@') >= 0) {
@@ -50,6 +51,14 @@ const getUsernameOptions = async (input: string) => {
         options.push({
             label: input.toLowerCase(),
             value: { name: input.toLowerCase(), type: 'user' },
+        })
+    }
+
+    const daoQuery = await getSystemContract().getDao({ name: input })
+    if (await daoQuery.isDeployed()) {
+        options.push({
+            label: input,
+            value: { name: input, type: 'dao' },
         })
     }
 
@@ -212,7 +221,7 @@ type TFormValues = {
     members: {
         _id: string
         username: string
-        type: 'user' | 'email'
+        type: 'user' | 'dao' | 'email'
         allowance: string
         comment: string
     }[]

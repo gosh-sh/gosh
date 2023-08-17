@@ -1,11 +1,12 @@
 import { KeyPair, TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
 import DaoABI from './abi/dao.abi.json'
-import { TDaoDetailsMemberItem } from '../types/dao.types'
+import { EDaoMemberType, TDaoDetailsMemberItem } from '../types/dao.types'
 import { UserProfile } from '../../blockchain/userprofile'
 import { DaoWallet } from './daowallet'
 import { DaoEvent } from './daoevent'
 import { GoshError } from 'react-gosh'
+import { getDaoOrProfile } from './helpers'
 
 export class Dao extends BaseContract {
     constructor(client: TonClient, address: string) {
@@ -42,19 +43,56 @@ export class Dao extends BaseContract {
         return value0
     }
 
-    async getMembers(parse?: any): Promise<TDaoDetailsMemberItem[]> {
+    async getMembers(options: {
+        parse?: { wallets: any; daomembers: object }
+        isDaoMemberOf?: boolean
+    }): Promise<TDaoDetailsMemberItem[]> {
+        const { parse, isDaoMemberOf } = options
+
+        const toparse = parse || { wallets: {}, daomembers: {} }
         if (!parse) {
-            const { value0 } = await this.runLocal('getWalletsFull', {}, undefined, {
+            const details = await this.runLocal('getDetails', {}, undefined, {
                 retries: 1,
             })
-            parse = value0
+            toparse.wallets = details.wallets
+            toparse.daomembers = details.daoMembers
         }
 
-        const members = Object.keys(parse).map((key) => ({
-            profile: new UserProfile(this.client, `0:${key.slice(2)}`),
-            wallet: new DaoWallet(this.client, parse[key].member),
-            allowance: parseInt(parse[key].count),
-        }))
+        const daoaddr = Object.keys(toparse.daomembers).map((key) => {
+            return `0:${key.slice(2)}`
+        })
+
+        const members = await Promise.all(
+            Object.keys(toparse.wallets).map(async (key) => {
+                const testaddr = `0:${key.slice(2)}`
+
+                const resolved: { type: EDaoMemberType; account: UserProfile | Dao } = {
+                    type: EDaoMemberType.User,
+                    account: new UserProfile(this.client, testaddr),
+                }
+                if (isDaoMemberOf) {
+                    const { type, account } = await getDaoOrProfile(testaddr)
+                    resolved.type = type
+                    resolved.account = account
+                } else {
+                    resolved.type =
+                        daoaddr.indexOf(testaddr) >= 0
+                            ? EDaoMemberType.Dao
+                            : EDaoMemberType.User
+                    resolved.account =
+                        resolved.type === EDaoMemberType.Dao
+                            ? new Dao(this.client, testaddr)
+                            : new UserProfile(this.client, testaddr)
+                }
+                return {
+                    usertype: resolved.type,
+                    profile: resolved.account,
+                    wallet: new DaoWallet(this.client, toparse.wallets[key].member),
+                    allowance: parseInt(toparse.wallets[key].count),
+                }
+            }),
+        )
+
         return members
     }
 

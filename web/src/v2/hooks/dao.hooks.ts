@@ -957,6 +957,7 @@ export function useDaoHelpers() {
             const regular = member.balance?.regular || 0
             if (needed > regular) {
                 const delta = needed - regular
+                await member.wallet.smvReleaseTokens()
                 await member.wallet.smvUnlockTokens(delta)
                 const check = await whileFinite(async () => {
                     const { regular } = await member.wallet!.getBalance()
@@ -1229,6 +1230,11 @@ export function useDeleteDaoMember() {
         } catch (e: any) {
             setStatus({ type: 'error', data: e })
             throw e
+        } finally {
+            setMemberList((state) => ({
+                ...state,
+                items: state.items.map((item) => ({ ...item, isFetching: false })),
+            }))
         }
     }
 

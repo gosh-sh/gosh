@@ -222,3 +222,135 @@ export function useDaoRepositoryList(params: { count?: number } = {}) {
         data,
     }
 }
+
+export function useCreateRepositoryTag() {
+    const { details: member } = useRecoilValue(daoMemberAtom)
+    const { beforeCreateEvent } = useDaoHelpers()
+    const [status, setStatus] = useState<TToastStatus>()
+
+    const create = useCallback(
+        async (reponame: string, tags: string[], comment?: string) => {
+            try {
+                if (!member.isReady || !member.wallet) {
+                    throw new GoshError(
+                        'Access error',
+                        'Wallet is missing or is not activated',
+                    )
+                }
+
+                // Create add repository tags event
+                // Prepare balance for create event (if not alone)
+                await beforeCreateEvent(20, { onPendingCallback: setStatus })
+
+                setStatus({ type: 'pending', data: 'Create event' })
+                await member.wallet.createRepositoryTag({
+                    reponame,
+                    tags,
+                    comment: comment || `Add tags for ${reponame} repository`,
+                })
+
+                setStatus({
+                    type: 'success',
+                    data: {
+                        title: 'Create event',
+                        content: 'Repository tags add event created',
+                    },
+                })
+            } catch (e: any) {
+                setStatus({ type: 'error', data: e })
+                throw e
+            }
+        },
+        [member.isMember, member.isReady],
+    )
+
+    return { create, status }
+}
+
+export function useDeleteRepositoryTag() {
+    const { details: member } = useRecoilValue(daoMemberAtom)
+    const { beforeCreateEvent } = useDaoHelpers()
+    const [status, setStatus] = useState<TToastStatus>()
+
+    const remove = useCallback(
+        async (reponame: string, tags: string[], comment?: string) => {
+            try {
+                if (!member.isReady || !member.wallet) {
+                    throw new GoshError(
+                        'Access error',
+                        'Wallet is missing or is not activated',
+                    )
+                }
+
+                // Create delete repository tags event
+                // Prepare balance for create event (if not alone)
+                await beforeCreateEvent(20, { onPendingCallback: setStatus })
+
+                setStatus({ type: 'pending', data: 'Create event' })
+                await member.wallet.deleteRepositoryTag({
+                    reponame,
+                    tags,
+                    comment: comment || `Delete tags for ${reponame} repository`,
+                })
+
+                setStatus({
+                    type: 'success',
+                    data: {
+                        title: 'Create event',
+                        content: 'Repository tags delete event created',
+                    },
+                })
+            } catch (e: any) {
+                setStatus({ type: 'error', data: e })
+                throw e
+            }
+        },
+        [member.isMember, member.isReady],
+    )
+
+    return { remove, status }
+}
+
+export function useUpdateRepositoryDescription() {
+    const { details: member } = useRecoilValue(daoMemberAtom)
+    const { beforeCreateEvent } = useDaoHelpers()
+    const [status, setStatus] = useState<TToastStatus>()
+
+    const update = useCallback(
+        async (reponame: string, description: string, comment?: string) => {
+            try {
+                if (!member.isReady || !member.wallet) {
+                    throw new GoshError(
+                        'Access error',
+                        'Wallet is missing or is not activated',
+                    )
+                }
+
+                // Create update repository repository event
+                // Prepare balance for create event (if not alone)
+                await beforeCreateEvent(20, { onPendingCallback: setStatus })
+
+                setStatus({ type: 'pending', data: 'Create event' })
+                await member.wallet.updateRepositoryDescription({
+                    reponame,
+                    description,
+                    comment: comment || `Update ${reponame} repository description`,
+                })
+
+                setStatus({
+                    type: 'success',
+                    data: {
+                        title: 'Create event',
+                        content: 'Repository tags delete event created',
+                    },
+                })
+            } catch (e: any) {
+                setStatus({ type: 'error', data: e })
+                throw e
+            }
+        },
+        [member.isMember, member.isReady],
+    )
+
+    return { update, status }
+}

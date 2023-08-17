@@ -36,9 +36,9 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
         try {
             const items = values.items.map((item) => ({
                 username: item.username,
-                balance: item.balance,
+                balance: parseInt(item.balance.toString()),
                 _balance: parseInt(item._balance),
-                allowance: item.allowance,
+                allowance: parseInt(item.allowance.toString()),
                 _allowance: parseInt(item._allowance),
             }))
             await updateMember(items, values.comment)

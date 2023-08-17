@@ -872,6 +872,11 @@ export function useDeleteDaoMember() {
         } catch (e: any) {
             setStatus({ type: 'error', data: e })
             throw e
+        } finally {
+            setMemberList((state) => ({
+                ...state,
+                items: state.items.map((item) => ({ ...item, isFetching: false })),
+            }))
         }
     }
 

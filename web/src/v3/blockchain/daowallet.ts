@@ -144,18 +144,27 @@ export class DaoWallet extends BaseContract {
             profile: string
             allowance: number
         }[]
+        daonames?: (string | null)[]
         comment?: string
         reviewers?: string[]
         cell?: boolean
         alone?: boolean
     }) {
-        const { members = [], comment = '', reviewers = [], cell, alone } = params
+        const {
+            members = [],
+            daonames = [],
+            comment = '',
+            reviewers = [],
+            cell,
+            alone,
+        } = params
 
         const aloneParams = {
             pubaddr: members.map(({ profile, allowance }) => ({
                 member: profile,
                 count: allowance,
             })),
+            dao: daonames,
         }
         const cellParams = { ...aloneParams, comment }
 
@@ -685,6 +694,75 @@ export class DaoWallet extends BaseContract {
         return value0
     }
 
+    async createRepositoryTag(params: {
+        reponame: string
+        tags: string[]
+        reviewers?: string[]
+        comment?: string
+        cell?: boolean
+    }) {
+        const { reponame, tags, comment = '', reviewers = [], cell } = params
+
+        const cellParams = { repo: reponame, tag: tags, comment }
+
+        if (cell) {
+            const { value0 } = await this.runLocal('getCellAddRepoTag', cellParams)
+            return value0
+        } else {
+            await this.run('startProposalForAddRepoTag', {
+                ...cellParams,
+                reviewers,
+                num_clients: await this.smvClientsCount(),
+            })
+        }
+    }
+
+    async deleteRepositoryTag(params: {
+        reponame: string
+        tags: string[]
+        reviewers?: string[]
+        comment?: string
+        cell?: boolean
+    }) {
+        const { reponame, tags, comment = '', reviewers = [], cell } = params
+
+        const cellParams = { repo: reponame, tag: tags, comment }
+
+        if (cell) {
+            const { value0 } = await this.runLocal('getCellDestroyRepoTag', cellParams)
+            return value0
+        } else {
+            await this.run('startProposalForDestroyRepoTag', {
+                ...cellParams,
+                reviewers,
+                num_clients: await this.smvClientsCount(),
+            })
+        }
+    }
+
+    async updateRepositoryDescription(params: {
+        reponame: string
+        description: string
+        reviewers?: string[]
+        comment?: string
+        cell?: boolean
+    }) {
+        const { reponame, description, comment = '', reviewers = [], cell } = params
+
+        const cellParams = { repoName: reponame, descr: description, comment }
+
+        if (cell) {
+            const { value0 } = await this.runLocal('getCellChangeDescription', cellParams)
+            return value0
+        } else {
+            await this.run('startProposalForChangeDescription', {
+                ...cellParams,
+                reviewers,
+                num_clients: await this.smvClientsCount(),
+            })
+        }
+    }
+
     async createMultiEvent(params: {
         proposals: { type: EDaoEventType; params: any }[]
         comment?: string
@@ -717,6 +795,18 @@ export class DaoWallet extends BaseContract {
                     return await this.createRepository({
                         ...params,
                         alone: false,
+                        cell: true,
+                    })
+                }
+                if (type === EDaoEventType.REPO_TAG_ADD) {
+                    return await this.createRepositoryTag({ ...params, cell: true })
+                }
+                if (type === EDaoEventType.REPO_TAG_REMOVE) {
+                    return await this.deleteRepositoryTag({ ...params, cell: true })
+                }
+                if (type === EDaoEventType.REPO_UPDATE_DESCRIPTION) {
+                    return await this.updateRepositoryDescription({
+                        ...params,
                         cell: true,
                     })
                 }

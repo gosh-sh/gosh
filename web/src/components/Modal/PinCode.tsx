@@ -141,4 +141,4 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
     )
 }
 
-export default PinCodeModal
+export { PinCodeModal }

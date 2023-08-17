@@ -33,6 +33,7 @@ import {
     userDaoListAtom,
 } from '../store/dao.state'
 import {
+    EDaoMemberType,
     ETaskReward,
     TDaoDetailsMemberItem,
     TDaoEventDetails,
@@ -266,7 +267,7 @@ export function useUserDaoList(params: { count?: number; loadOnInit?: boolean } 
                 const { goshdao, ver } = decoded.value
                 const systemContract = AppConfig.goshroot.getSystemContract(ver)
                 const account = (await systemContract.getDao({ address: goshdao })) as Dao
-                const members = await account.getMembers()
+                const members = await account.getMembers({})
                 return {
                     account,
                     name: await account.getName(),
@@ -453,7 +454,13 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
 
             const daoname = await dao.getName()
             const details = await dao.getDetails()
-            const members = await dao.getMembers(details.wallets)
+            const members = await dao.getMembers({
+                parse: { wallets: details.wallets, daomembers: details.daoMembers },
+            })
+            const isMemberOf = await dao.getMembers({
+                parse: { wallets: details.my_wallets, daomembers: {} },
+                isDaoMemberOf: true,
+            })
             const tasks = await getTaskCount(dao)
             const { summary, description } = await getDescription(daoname, repository)
 
@@ -472,6 +479,7 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
                     tasks,
                     summary,
                     description,
+                    isMemberOf,
                     isMintOn: details.allowMint,
                     isAskMembershipOn: details.abilityInvite,
                     isEventDiscussionOn: details.allow_discussion_on_proposals,
@@ -683,6 +691,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
                 profile,
                 wallet: walletDeployed ? wallet : null,
                 allowance: found?.allowance || 0,
+                vesting: null,
                 isMember: !!found,
                 isFetched: true,
             },
@@ -707,18 +716,15 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
             return { retry: false }
         }
 
-        const systemContract = getSystemContract()
+        const sc = getSystemContract()
         const tagname = `${DAO_TOKEN_TRANSFER_TAG}:${user.username}`
 
         // Check if stoptag exists
-        const repository = await systemContract.getRepository({
+        const repository = await sc.getRepository({
             path: `${dao.name}/${DAO_TOKEN_TRANSFER_TAG}`,
         })
-        const stoptag = await systemContract.getCommitTag({
-            data: {
-                repoaddr: repository.address,
-                tagname,
-            },
+        const stoptag = await sc.getCommitTag({
+            data: { repoaddr: repository.address, tagname },
         })
         if (stoptag) {
             return { retry: false }
@@ -732,7 +738,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
         const transfer: { wallet: DaoWallet; amount: number }[] = []
         let daoaddrPrev = await dao.account.getPrevious()
         while (daoaddrPrev) {
-            const daoPrev = await systemContract.getDao({ address: daoaddrPrev })
+            const daoPrev = await sc.getDao({ address: daoaddrPrev })
             const daoverPrev = await daoPrev.getVersion()
             if (daoverPrev === '1.0.0') {
                 break
@@ -761,7 +767,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
         )
 
         // Deploy stop transfer tag
-        if (transfer.length > 0) {
+        if (transfer.length === 0) {
             await data.details.wallet.createCommitTag({
                 reponame: DAO_TOKEN_TRANSFER_TAG,
                 name: tagname,
@@ -773,6 +779,82 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
         setData((state) => ({ ...state, status: undefined }))
         return { retry: transfer.length > 0 }
     }, [dao.name, dao.version, user.profile, user.keys, data.details.isReady])
+
+    const getVestingBalance = useCallback(async () => {
+        if (!dao.address || !user.profile || !user.username || !data.details.wallet) {
+            return
+        }
+
+        const sc = getSystemContract()
+        const tagname = `${VESTING_BALANCE_TAG}:${user.username}`
+
+        // Get current tag
+        const repository = await sc.getRepository({
+            path: `${dao.name}/${VESTING_BALANCE_TAG}`,
+        })
+        const vestingtag = await sc.getCommitTag({
+            data: { repoaddr: repository.address, tagname },
+        })
+        if (vestingtag) {
+            const data = await vestingtag.getDetails()
+            setData((state) => ({
+                ...state,
+                details: { ...state.details, vesting: parseInt(data.content) },
+            }))
+        }
+
+        // Get all DAO tasks
+        const code = await sc.getDaoTaskTagCodeHash(dao.address, SYSTEM_TAG)
+        const result = await getAllAccounts({
+            filters: [`code_hash: {eq:"${code}"}`],
+        })
+        const tasks = await executeByChunk(result, 30, async ({ id }) => {
+            const tag = await sc.getGoshTag({ address: id })
+            const data = await tag.getDetails()
+            const task = await sc.getTask({ address: data.task })
+            return await task.runLocal('getStatus', {})
+        })
+
+        // Calculate balance
+        let _balance = 0
+        for (const task of tasks) {
+            if (task.candidates.length === 0) {
+                continue
+            }
+
+            for (const key of ['assign', 'review', 'manager']) {
+                const profiles = Object.keys(task.candidates[0][`pubaddr${key}`])
+                if (profiles.indexOf(user.profile) >= 0) {
+                    for (const { grant } of task.grant[key]) {
+                        _balance += Math.floor(parseInt(grant) / profiles.length)
+                    }
+                }
+            }
+        }
+        setData((state) => ({
+            ...state,
+            details: { ...state.details, vesting: _balance },
+        }))
+
+        // Update tag
+        if (await vestingtag?.isDeployed()) {
+            await data.details.wallet.deleteCommitTag({
+                reponame: VESTING_BALANCE_TAG,
+                tagname,
+            })
+        }
+        if (!(await vestingtag?.isDeployed())) {
+            await data.details.wallet.createCommitTag({
+                reponame: VESTING_BALANCE_TAG,
+                name: tagname,
+                content: _balance.toString(),
+                commit: {
+                    address: user.profile,
+                    name: user.username,
+                },
+            })
+        }
+    }, [dao.address, dao.tasks, user.profile, user.username, data.details.isReady])
 
     useEffect(() => {
         if (loadOnInit) {
@@ -831,6 +913,14 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
             clearInterval(interval)
         }
     }, [transferTokensFromPrevDao, subscribe])
+
+    useEffect(() => {
+        if (!subscribe) {
+            return
+        }
+
+        getVestingBalance()
+    }, [getVestingBalance, subscribe])
 
     return data
 }
@@ -1081,6 +1171,7 @@ export function useDaoHelpers() {
             const regular = member.balance?.regular || 0
             if (needed > regular) {
                 const delta = needed - regular
+                await member.wallet.smvReleaseTokens()
                 await member.wallet.smvUnlockTokens(delta)
                 const check = await whileFinite(async () => {
                     const { regular } = await member.wallet!.getBalance()
@@ -1188,12 +1279,15 @@ export function useCreateDaoMember() {
     const createMember = useCallback(
         async (
             items: {
-                user: { name: string; type: 'user' | 'email' }
+                user: { name: string; type: 'user' | 'dao' | 'email' }
                 allowance: number
                 comment?: string
             }[],
+            requestMembership?: boolean,
         ) => {
             try {
+                const sc = getSystemContract()
+
                 // Check total allowance against reserve
                 const allowance = _.sum(items.map(({ allowance }) => allowance))
                 const reserve = dao.supply?.reserve || 0
@@ -1226,7 +1320,7 @@ export function useCreateDaoMember() {
                 )
 
                 // Add DAO members by username
-                const users = items.filter(({ user }) => user.type === 'user')
+                const users = items.filter(({ user }) => user.type !== 'email')
                 const usersList = users.map(({ user }) => {
                     return `${user.name}.${user.type}`
                 })
@@ -1240,16 +1334,27 @@ export function useCreateDaoMember() {
                     usersUnique,
                     MAX_PARALLEL_READ,
                     async ({ user, allowance }) => {
-                        const profile = await AppConfig.goshroot.getUserProfile({
-                            username: user.name.toLowerCase(),
-                        })
-                        if (!(await profile.isDeployed())) {
+                        const username = user.name.toLowerCase()
+
+                        let profile
+                        const daonames = []
+                        if (user.type === EDaoMemberType.User) {
+                            profile = await AppConfig.goshroot.getUserProfile({
+                                username,
+                            })
+                            daonames.push(null)
+                        } else if (user.type === EDaoMemberType.Dao) {
+                            profile = await sc.getDao({ name: username })
+                            daonames.push(username)
+                        }
+
+                        if (!profile || !(await profile.isDeployed())) {
                             throw new GoshError('Profile error', {
                                 message: 'Profile does not exist',
                                 username: user.name,
                             })
                         }
-                        return { profile: profile.address, allowance }
+                        return { profile: profile.address, allowance, daonames }
                     },
                 )
                 const comment = usersUnique
@@ -1258,25 +1363,43 @@ export function useCreateDaoMember() {
                     })
                     .join('\n\n')
 
-                // Prepare balance for create event (if not alone)
-                const alone = dao.members?.length === 1 && member.isMember
-                if (!alone) {
-                    await beforeCreateEvent(0, { onPendingCallback: setStatus })
-                }
-
-                // Create add DAO member event
+                // Create add DAO members multi event
                 // Skip `member.wallet` check, because `beforeCreate` checks it
-                await member.wallet!.createDaoMember({
-                    members: profiles,
-                    comment,
-                    alone,
-                })
+                // Prepare balance for create event
+                await beforeCreateEvent(0, { onPendingCallback: setStatus })
+
+                if (requestMembership) {
+                    const members = profiles.map(({ profile }) => {
+                        return { profile, allowance: 0 }
+                    })
+                    const daonames = _.flatten(profiles.map(({ daonames }) => daonames))
+                    await member.wallet!.createDaoMember({ members, daonames, comment })
+                } else {
+                    const memberAddCells = profiles.map(({ profile, daonames }) => ({
+                        type: EDaoEventType.DAO_MEMBER_ADD,
+                        params: { members: [{ profile, allowance: 0 }], daonames },
+                    }))
+                    const memberAddVotingCells = profiles.map(
+                        ({ profile, allowance }) => ({
+                            type: EDaoEventType.DAO_TOKEN_VOTING_ADD,
+                            params: { profile, amount: allowance },
+                        }),
+                    )
+                    await member.wallet!.createMultiEvent({
+                        proposals: [
+                            ...memberAddCells,
+                            { type: EDaoEventType.DELAY, params: {} },
+                            ...memberAddVotingCells,
+                        ],
+                        comment,
+                    })
+                }
 
                 setStatus({
                     type: 'success',
                     data: {
                         title: 'Add DAO members',
-                        content: alone ? 'Members added' : 'Members add event created',
+                        content: 'Members add event created',
                     },
                 })
             } catch (e: any) {
@@ -1303,47 +1426,87 @@ export function useCreateDaoMember() {
 
 export function useDeleteDaoMember() {
     const [status, setStatus] = useState<TToastStatus>()
+    const { details: dao } = useRecoilValue(daoDetailsAtom)
     const { details: member } = useRecoilValue(daoMemberAtom)
     const setMemberList = useSetRecoilState(daoMemberListAtom)
     const { beforeCreateEvent } = useDaoHelpers()
 
-    const deleteMember = async (username: string[], comment?: string) => {
+    const deleteMember = async (
+        users: { username: string; usertype: EDaoMemberType }[],
+        comment?: string,
+    ) => {
         try {
             setMemberList((state) => ({
                 ...state,
                 items: state.items.map((item) => ({
                     ...item,
-                    isFetching: username.indexOf(item.username) >= 0,
+                    isFetching:
+                        users.findIndex((u) => {
+                            return (
+                                u.username.toLowerCase() === item.username.toLowerCase()
+                            )
+                        }) >= 0,
                 })),
             }))
 
             // Resolve username -> profile
             setStatus({ type: 'pending', data: 'Resolve user profiles' })
+            const sc = getSystemContract()
             const profiles = await executeByChunk(
-                username,
+                users,
                 MAX_PARALLEL_READ,
-                async (name) => {
-                    const profile = await AppConfig.goshroot.getUserProfile({
-                        username: name.toLowerCase(),
-                    })
-                    if (!(await profile.isDeployed())) {
-                        throw new GoshError('Profile error', {
-                            message: 'Profile does not exist',
-                            username: name,
+                async (item) => {
+                    const { username, usertype } = item
+
+                    // Resolve profile by username and type
+                    let profile
+                    if (usertype === EDaoMemberType.Dao) {
+                        profile = await sc.getDao({ name: username.toLowerCase() })
+                    } else if (usertype === EDaoMemberType.User) {
+                        profile = await AppConfig.goshroot.getUserProfile({
+                            username: username.toLowerCase(),
                         })
                     }
-                    return profile.address
+
+                    if (!profile || !(await profile.isDeployed())) {
+                        throw new GoshError('Profile error', {
+                            message: 'Profile does not exist',
+                            username,
+                        })
+                    }
+
+                    // Find profile in DAO members for allowance data
+                    const address = profile.address
+                    const member = dao.members?.find((v) => v.profile.address === address)
+                    if (!member) {
+                        throw new GoshError('Profile error', {
+                            message: 'Member not found',
+                            username,
+                        })
+                    }
+
+                    return { profile: address, allowance: member.allowance }
                 },
             )
 
+            // Create delete DAO members multi event
+            // Skip `member.wallet` check, because `beforeCreate` checks it
             // Prepare balance for create event
             await beforeCreateEvent(20, { onPendingCallback: setStatus })
 
-            // Create add DAO member event
-            // Skip `member.wallet` check, because `beforeCreate` checks it
-            await member.wallet!.deleteDaoMember({
-                profile: profiles,
-                comment: comment || `Delete members ${username.join(', ')}`,
+            const memberDeleteAllowanceCells = profiles.map(({ profile, allowance }) => ({
+                type: EDaoEventType.DAO_ALLOWANCE_CHANGE,
+                params: { members: [{ profile, increase: false, amount: allowance }] },
+            }))
+            const memberDeleteCells = profiles.map(({ profile }) => ({
+                type: EDaoEventType.DAO_MEMBER_DELETE,
+                params: { profile: [profile] },
+            }))
+            await member.wallet!.createMultiEvent({
+                proposals: [...memberDeleteAllowanceCells, ...memberDeleteCells],
+                comment:
+                    comment ||
+                    `Delete members ${users.map(({ username }) => username).join(', ')}`,
             })
 
             setStatus({
@@ -1353,6 +1516,11 @@ export function useDeleteDaoMember() {
         } catch (e: any) {
             setStatus({ type: 'error', data: e })
             throw e
+        } finally {
+            setMemberList((state) => ({
+                ...state,
+                items: state.items.map((item) => ({ ...item, isFetching: false })),
+            }))
         }
     }
 
@@ -1372,6 +1540,7 @@ export function useUpdateDaoMember() {
         async (
             items: {
                 username: string
+                usertype: string
                 allowance: number
                 _allowance: number
                 balance: number
@@ -1379,6 +1548,8 @@ export function useUpdateDaoMember() {
             }[],
             comment?: string,
         ) => {
+            const sc = getSystemContract()
+
             try {
                 setStatus({ type: 'pending', data: 'Validating changes' })
                 // Check total allowance against DAO total supply
@@ -1423,13 +1594,20 @@ export function useUpdateDaoMember() {
                     items,
                     MAX_PARALLEL_READ,
                     async (item) => {
-                        const profile = await AppConfig.goshroot.getUserProfile({
-                            username: item.username.toLowerCase(),
-                        })
-                        if (!(await profile.isDeployed())) {
+                        const username = item.username.toLowerCase()
+
+                        let profile
+                        if (item.usertype === EDaoMemberType.Dao) {
+                            profile = await sc.getDao({ name: username })
+                        } else if (item.usertype === EDaoMemberType.User) {
+                            profile = await AppConfig.goshroot.getUserProfile({
+                                username,
+                            })
+                        }
+                        if (!profile || !(await profile.isDeployed())) {
                             throw new GoshError('Profile error', {
                                 message: 'Profile does not exist',
-                                username: item.username,
+                                username,
                             })
                         }
                         return { ...item, profile: profile.address }
@@ -2453,11 +2631,13 @@ export function useSendDaoTokens() {
     const send = useCallback(
         async (params: {
             username: string
+            usertype: string
             amount: number
             isVoting: boolean
             comment?: string
         }) => {
-            const { username, amount, isVoting, comment } = params
+            const { username, usertype, amount, isVoting, comment } = params
+            const sc = getSystemContract()
 
             try {
                 if (!member.isMember) {
@@ -2472,10 +2652,15 @@ export function useSendDaoTokens() {
 
                 // Resolve username -> profile
                 setStatus({ type: 'pending', data: 'Resolve username' })
-                const profile = await AppConfig.goshroot.getUserProfile({
-                    username: username.toLowerCase(),
-                })
-                if (!(await profile.isDeployed())) {
+                let profile
+                if (usertype === EDaoMemberType.Dao) {
+                    profile = await sc.getDao({ name: username.toLowerCase() })
+                } else if (usertype === EDaoMemberType.User) {
+                    profile = await AppConfig.goshroot.getUserProfile({
+                        username: username.toLowerCase(),
+                    })
+                }
+                if (!profile || !(await profile.isDeployed())) {
                     throw new GoshError('Profile error', {
                         message: 'Profile does not exist',
                         username,
@@ -2506,6 +2691,10 @@ export function useSendDaoTokens() {
                     if (isMember) {
                         await member.wallet.addDaoVotingTokens(kwargs)
                     } else {
+                        const daonames =
+                            usertype === EDaoMemberType.Dao
+                                ? [username.toLowerCase()]
+                                : [null]
                         await member.wallet.createMultiEvent({
                             proposals: [
                                 {
@@ -2514,6 +2703,7 @@ export function useSendDaoTokens() {
                                         members: [
                                             { profile: profile.address, allowance: 0 },
                                         ],
+                                        daonames,
                                         comment: `Add DAO member ${username}`,
                                     },
                                 },
@@ -2562,8 +2752,9 @@ export function useSendMemberTokens() {
     const { voting2regular, checkDaoWallet } = useDaoHelpers()
 
     const send = useCallback(
-        async (params: { username: string; amount: number }) => {
-            const { username, amount } = params
+        async (params: { username: string; usertype: string; amount: number }) => {
+            const { username, usertype, amount } = params
+            const sc = getSystemContract()
 
             try {
                 // Prepare balance
@@ -2571,16 +2762,23 @@ export function useSendMemberTokens() {
 
                 // Skip `member.wallet` check, because `voting2regular` checks it
                 // If DAO name - send to DAO reserve
-                if (username === dao.name) {
+                if (usertype === EDaoMemberType.Dao && username === dao.name) {
                     setStatus({ type: 'pending', data: 'Sending tokens to DAO reserve' })
                     await member.wallet!.sendTokensToDaoReserve(amount)
                 } else {
                     // Resolve username -> profile
                     setStatus({ type: 'pending', data: 'Resolve username' })
-                    const profile = await AppConfig.goshroot.getUserProfile({
-                        username: username.toLowerCase(),
-                    })
-                    if (!(await profile.isDeployed())) {
+
+                    let profile
+                    if (usertype === EDaoMemberType.Dao) {
+                        profile = await sc.getDao({ name: username })
+                    } else if (usertype === EDaoMemberType.User) {
+                        profile = await AppConfig.goshroot.getUserProfile({
+                            username: username.toLowerCase(),
+                        })
+                    }
+
+                    if (!profile || !(await profile.isDeployed())) {
                         throw new GoshError('Profile error', {
                             message: 'Profile does not exist',
                             username,

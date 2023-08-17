@@ -1,7 +1,7 @@
 import { Field, Form, Formik } from 'formik'
 import { useSetRecoilState } from 'recoil'
 import yup from '../../../yup-extended'
-import PinCodeModal from '../../../../components/Modal/PinCode'
+import { PinCodeModal } from '../../../../components/Modal'
 import { appModalStateAtom } from '../../../../store/app.state'
 import { toast } from 'react-toastify'
 import { ToastError, ToastSuccess } from '../../../../components/Toast'

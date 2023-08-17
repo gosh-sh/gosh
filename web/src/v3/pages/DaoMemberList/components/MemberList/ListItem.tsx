@@ -1,7 +1,7 @@
 import CopyClipboard from '../../../../../components/CopyClipboard'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
-import { TDaoMemberListItem } from '../../../../types/dao.types'
+import { EDaoMemberType, TDaoMemberListItem } from '../../../../types/dao.types'
 import { shortString } from '../../../../../utils'
 import Skeleton from '../../../../../components/Skeleton'
 import { useDao, useDeleteDaoMember, useDaoMember } from '../../../../hooks/dao.hooks'
@@ -74,10 +74,10 @@ const ListItem = (props: TListItemProps) => {
     const member = useDaoMember()
     const { status, deleteMember } = useDeleteDaoMember()
 
-    const onDelete = async (username: string) => {
+    const onDelete = async (user: { username: string; usertype: EDaoMemberType }) => {
         if (window.confirm('Delete member?')) {
             try {
-                await deleteMember([username])
+                await deleteMember([user])
                 navigate(`/o/${dao.details.name}/events`)
             } catch (e: any) {
                 console.error(e.message)
@@ -94,7 +94,12 @@ const ListItem = (props: TListItemProps) => {
                 )}
             >
                 <div className={basis.name}>
-                    <MemberIcon type="user" className="mr-2" size="sm" fixedWidth />
+                    <MemberIcon
+                        type={item.usertype}
+                        className="mr-2"
+                        size="sm"
+                        fixedWidth
+                    />
                     {item.username}
                 </div>
                 <div className={basis.profile}>
@@ -205,7 +210,12 @@ const ListItem = (props: TListItemProps) => {
                             className={classNames(
                                 'w-full md:w-auto md:!border-transparent md:disabled:!border-transparent',
                             )}
-                            onClick={() => onDelete(item.username)}
+                            onClick={() => {
+                                onDelete({
+                                    username: item.username,
+                                    usertype: item.usertype,
+                                })
+                            }}
                             disabled={
                                 item.isFetching ||
                                 item.profile.address === dao.details.owner
