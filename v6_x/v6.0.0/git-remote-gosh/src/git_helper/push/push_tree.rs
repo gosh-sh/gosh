@@ -43,7 +43,7 @@ fn flatten_tree(
     use git_object::tree::EntryMode::*;
     for entry in entry_ref_iter {
         match entry.mode {
-            Tree | Link | Commit => {
+            Tree=> {
                 let dir = format!("{}/", entry.filename);
                 let subtree = flatten_tree(context, &entry.oid.to_owned(), &dir)?;
                 for (k, v) in subtree {
@@ -55,7 +55,7 @@ fn flatten_tree(
                 let path = format!("{}{}", path_prefix, entry.filename);
                 map.insert(path, Entry::from(entry));
             }
-            Blob | BlobExecutable => {
+            Blob | BlobExecutable | Link | Commit  => {
                 let path = format!("{}{}", path_prefix, entry.filename);
                 map.insert(path, Entry::from(entry));
             }
@@ -86,6 +86,40 @@ async fn construct_tree(
     use git_object::tree::EntryMode::*;
     for (path, entry) in &flat_tree {
         match entry.mode {
+            Link | Commit => {
+                tracing::trace!("Single link or item: {}", path);
+                let mut buffer = vec![];
+                let _ = context
+                    .local_repository()
+                    .objects
+                    .try_find(entry.oid, &mut buffer)?;
+                let file_hash = sha256::digest(&*buffer);
+                let file_name = entry.filename.to_string();
+
+                let commit = snapshot_to_commit
+                    .get(&file_name)
+                    .and_then(|val| {
+                        for snap_mon in val {
+                            if commit_chain.contains(&snap_mon.latest_commit) {
+                                return Some(snap_mon.base_commit.clone());
+                            }
+                            if commit_chain.contains(&snap_mon.base_commit) {
+                                return Some(snap_mon.base_commit.clone());
+                            }
+                        }
+                        None
+                    })
+                    .unwrap_or(current_commit.to_string());
+
+                let tree_node = TreeNode::from((Some(format!("0x{file_hash}")), None, commit, entry));
+                let type_obj = &tree_node.type_obj;
+                let key = tvm_hash(
+                    &context.blockchain.client(),
+                    format!("{}:{}", type_obj, file_name).as_bytes(),
+                )
+                    .await?;
+                nodes.insert(format!("{}_{}", entry.filename, entry.oid.to_string()), (format!("0x{}", key), tree_node));
+            }
             Blob | BlobExecutable => {
                 tracing::trace!("Single tree item: {}", path);
                 // let content = repository
@@ -154,7 +188,7 @@ async fn construct_tree(
     for path in paths {
         let entry = flat_tree.get(&path).ok_or(anyhow::format_err!("Failed to get tree value"))?;
         match entry.mode {
-            Tree | Link | Commit => {
+            Tree => {
                 tracing::trace!("Subtree item: {}", path);
                 let mut subtree = HashMap::new();
 
