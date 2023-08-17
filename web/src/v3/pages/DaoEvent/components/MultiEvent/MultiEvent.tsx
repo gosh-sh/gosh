@@ -16,6 +16,9 @@ import { MintTokensEvent } from '../MintTokensEvent/MintTokensEvent'
 import { RedeployTaskCompleteEvent } from '../RedeployTaskCompleteEvent/RedeployTaskCompleteEvent'
 import { RedeployTaskEvent } from '../RedeployTaskEvent/RedeployTaskEvent'
 import { RepositoryCreateEvent } from '../RepositoryCreateEvent/RepositoryCreateEvent'
+import { RepositoryDescriptionEvent } from '../RepositoryDescriptionEvent/RepositoryDescriptionEvent'
+import { RepositoryTagAddEvent } from '../RepositoryTagAddEvent/RepositoryTagAddEvent'
+import { RepositoryTagDeleteEvent } from '../RepositoryTagDeleteEvent/RepositoryTagDeleteEvent'
 import { ShowDaoEventProgressEvent } from '../ShowDaoEventProgressEvent/ShowDaoEventProgressEvent'
 
 type TMultiEventProps = {
@@ -42,6 +45,15 @@ const MultiEvent = (props: TMultiEventProps) => {
                                 data={item.data}
                                 isCompleted={event.status.completed}
                             />
+                        )}
+                        {item.type === EDaoEventType.REPO_TAG_ADD && (
+                            <RepositoryTagAddEvent key={index} data={item.data} />
+                        )}
+                        {item.type === EDaoEventType.REPO_TAG_REMOVE && (
+                            <RepositoryTagDeleteEvent key={index} data={item.data} />
+                        )}
+                        {item.type === EDaoEventType.REPO_UPDATE_DESCRIPTION && (
+                            <RepositoryDescriptionEvent key={index} data={item.data} />
                         )}
                         {item.type === EDaoEventType.DAO_MEMBER_ADD && (
                             <MemberAddEvent key={index} data={item.data} />
