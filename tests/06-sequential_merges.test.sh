@@ -118,7 +118,8 @@ git checkout $BRANCH_NAME
 git merge $BRANCH_NAME"2"
 
 echo "***** awaiting push in dev *****"
-git push
+GOSH_TRACE=5 git push &> ../trace_06_push_merge.log
+
 delay 10
 
 # echo "***** awaiting set commit in dev *****"
