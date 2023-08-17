@@ -86,7 +86,14 @@ contract DiffC is Modifiers {
     }
 
     function returnTreeAnswer(Request value0, optional(TreeObject) value1, uint256 shainnertree) public senderIs(GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnertree, _rootRepo)) {
-        if (value1.hasValue() == false) { selfdestruct(_systemcontract); return; }
+        if (value1.hasValue() == false) { 
+            if (_diff[0].sha256 == 0) {
+                _isCorrect = true;
+                return;
+            }
+            selfdestruct(_systemcontract); 
+            return; 
+        }
         if (value1.get().tvmshafile.get() != value0.sha) { selfdestruct(_systemcontract); return; }
         _isCorrect = true;   
     }
