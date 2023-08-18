@@ -3,16 +3,13 @@ import { useSetRecoilState } from 'recoil'
 import yup from '../../../yup-extended'
 import { PinCodeModal } from '../../../../components/Modal'
 import { appModalStateAtom } from '../../../../store/app.state'
-import { toast } from 'react-toastify'
-import { ToastError, ToastSuccess } from '../../../../components/Toast'
+import { ToastStatus } from '../../../../components/Toast'
 import { TOAuthSession } from '../../../types/oauth.types'
 import PreviousStep from './PreviousStep'
 import { FormikInput } from '../../../../components/Formik'
 import { Button } from '../../../../components/Form'
 import Alert from '../../../../components/Alert'
 import { useOnboardingData, useOnboardingSignup } from '../../../hooks/onboarding.hooks'
-import { useEffect, useRef } from 'react'
-import { ToastOptionsShortcuts } from '../../../../helpers'
 
 type TGoshUsernameProps = {
     oauth: TOAuthSession
@@ -21,7 +18,6 @@ type TGoshUsernameProps = {
 
 const GoshUsername = (props: TGoshUsernameProps) => {
     const { oauth, signoutOAuth } = props
-    const toastId = useRef<string | number>('')
     const { data, updateData } = useOnboardingData(oauth)
     const { signup, status } = useOnboardingSignup(oauth)
     const setModal = useSetRecoilState(appModalStateAtom)
@@ -32,20 +28,10 @@ const GoshUsername = (props: TGoshUsernameProps) => {
 
     const onFormSubmit = async (values: { username: string }) => {
         try {
-            toastId.current = toast('Start create account', {
-                isLoading: true,
-                closeButton: false,
-            })
-
             // Signup with onboarding
             const username = values.username.trim().toLowerCase()
             const seed = data.phrase.join(' ')
             const isAllValid = await signup(username)
-            toast.update(toastId.current, {
-                ...ToastOptionsShortcuts.Default,
-                type: toast.TYPE.SUCCESS,
-                render: <ToastSuccess message={{ title: 'Account create success' }} />,
-            })
 
             // Create PIN-code
             setModal({
@@ -70,19 +56,8 @@ const GoshUsername = (props: TGoshUsernameProps) => {
             })
         } catch (e: any) {
             console.error(e.message)
-            toast.update(toastId.current, {
-                ...ToastOptionsShortcuts.Default,
-                type: toast.TYPE.ERROR,
-                render: <ToastError error={e} />,
-            })
         }
     }
-
-    useEffect(() => {
-        toast.update(toastId.current, {
-            render: status.data,
-        })
-    }, [status])
 
     return (
         <div className="flex flex-wrap items-start">
@@ -168,6 +143,8 @@ const GoshUsername = (props: TGoshUsernameProps) => {
                     </Formik>
                 </div>
             </div>
+
+            <ToastStatus status={status} />
         </div>
     )
 }
