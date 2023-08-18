@@ -4,7 +4,11 @@ set -o pipefail
 . ./util.sh
 set -x
 
-# TODO change test to remove file after it was changed in the other branch remove should not deploy diffs to changed snap
+if [[ "$VERSION" == *"v6_x"* ]]; then
+  echo "Test is ignored for v6 because in v6 we don't delete snapshots"
+  exit 0
+fi
+
 
 REPO_NAME="repo30_$(date +%s)"
 
