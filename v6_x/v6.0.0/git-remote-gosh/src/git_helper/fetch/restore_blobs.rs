@@ -83,6 +83,51 @@ async fn write_git_object(
     Ok(object_id)
 }
 
+async fn restore_a_set_of_blobs(
+    es_client: &EverClient,
+    ipfs_endpoint: &str,
+    repo: &mut git_repository::Repository,
+    repo_contract: &mut GoshContract,
+    snapshot_address: &blockchain::BlockchainContractAddress,
+    blobs: &mut HashSet<git_hash::ObjectId>,
+    visited: Arc<Mutex<HashSet<git_hash::ObjectId>>>,
+    visited_ipfs: Arc<Mutex<HashMap<String, git_hash::ObjectId>>>,
+    branch: &str,
+) -> anyhow::Result<HashSet<git_hash::ObjectId>> {
+    let snapshot_contract = GoshContract::new(snapshot_address, gosh_abi::SNAPSHOT);
+
+    match snapshot_contract.is_active(es_client).await {
+        Ok(true) => {
+            restore_a_set_of_blobs_from_a_known_snapshot(
+                es_client,
+                ipfs_endpoint,
+                repo,
+                repo_contract,
+                &snapshot_address,
+                blobs,
+                visited,
+                visited_ipfs,
+                branch,
+            )
+            .await
+        }
+        _ => {
+            restore_a_set_of_blobs_from_a_deleted_snapshot(
+                es_client,
+                ipfs_endpoint,
+                repo,
+                repo_contract,
+                &snapshot_address,
+                blobs,
+                visited,
+                visited_ipfs,
+                branch
+            )
+            .await
+        }
+    }
+}
+
 async fn restore_a_set_of_blobs_from_a_known_snapshot(
     es_client: &EverClient,
     ipfs_endpoint: &str,
@@ -270,7 +315,7 @@ async fn restore_a_set_of_blobs_from_a_deleted_snapshot(
         snapshot_address,
         visited_ipfs.clone(),
     )
-        .await?;
+    .await?;
 
     let mut last_restored_snapshots: LruCache<ObjectId, Vec<u8>> =
         LruCache::new(NonZeroUsize::new(2).unwrap());
@@ -605,7 +650,7 @@ impl BlobsRebuildingPlan {
                 async move {
                     let attempt = 0;
                     let result = loop {
-                        let result = restore_a_set_of_blobs_from_a_known_snapshot(
+                        let result = restore_a_set_of_blobs(
                             &es_client,
                             &ipfs_http_endpoint,
                             &mut repo,
@@ -621,7 +666,7 @@ impl BlobsRebuildingPlan {
                             break result;
                         } else {
                             tracing::trace!(
-                                "restore_a_set_of_blobs_from_a_known_snapshot <{:#?}> error {:?}",
+                                "restore_a_set_of_blobs <{:#?}> error {:?}",
                                 snapshot_address_clone,
                                 result.unwrap_err()
                             );
@@ -632,7 +677,7 @@ impl BlobsRebuildingPlan {
                     result.map_err(|e| anyhow::Error::from(e))
                 }
                 .instrument(
-                    info_span!("tokio::spawn::restore_a_set_of_blobs_from_a_known_snapshot")
+                    info_span!("tokio::spawn::restore_a_set_of_blobs")
                         .or_current(),
                 ),
             ));
@@ -644,12 +689,12 @@ impl BlobsRebuildingPlan {
             match finished_task {
                 Err(e) => {
                     panic!(
-                        "restore_a_set_of_blobs_from_a_known_snapshot joih-handler: {}",
+                        "restore_a_set_of_blobs joih-handler: {}",
                         e
                     );
                 }
                 Ok(Err(e)) => {
-                    panic!("restore_a_set_of_blobs_from_a_known_snapshot inner: {}", e);
+                    panic!("restore_a_set_of_blobs inner: {}", e);
                 }
                 Ok(Ok(blobs)) => {
                     tracing::trace!("Blobs after restore: {blobs:?}");

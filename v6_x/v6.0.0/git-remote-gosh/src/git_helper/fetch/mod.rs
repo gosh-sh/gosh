@@ -276,25 +276,14 @@ where
                                 &file_path,
                             )
                                 .await?;
-                            let snapshot_contract =
-                                GoshContract::new(&snapshot_address, gosh_abi::SNAPSHOT);
-                            match snapshot_contract.is_active(self.blockchain.client()).await {
-                                Ok(true) => {
-                                    tracing::debug!(
-                                        "branch={branch}: Adding a blob to search for. Path: {}, id: {}, snapshot: {}",
-                                        file_path,
-                                        oid,
-                                        snapshot_address
-                                    );
-                                    blobs_restore_plan
-                                        .mark_blob_to_restore(snapshot_address, oid);
-                                }
-                                _ => {
-                                    // TODO: need to look through messages
-                                    // take data from constructor and apply patches till necessary commit
-                                    continue;
-                                }
-                            }
+                            tracing::debug!(
+                                "branch={branch}: Adding a blob to search for. Path: {}, id: {}, snapshot: {}",
+                                file_path,
+                                oid,
+                                snapshot_address
+                            );
+                            blobs_restore_plan
+                                .mark_blob_to_restore(snapshot_address, oid);
                         },
                         git_object::tree::EntryMode::Commit => (),
                         _ => {
