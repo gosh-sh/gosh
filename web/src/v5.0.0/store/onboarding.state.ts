@@ -76,9 +76,7 @@ export const repositoriesSelector = selectorFamily<
         ({ get }) => {
             const { organizations } = get(onboardingDataAtom)
             const found = organizations.items.find((o) => o.id === organizationId)
-            return found
-                ? found.repositories
-                : { items: [], isFetching: false, page: 1, hasNext: false }
+            return found ? found.repositories : { items: [], isFetching: false }
         },
     set:
         (organizationId: string | number) =>
