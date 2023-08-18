@@ -1,7 +1,7 @@
 import { faHardDrive } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useEffect } from 'react'
-import { Checkbox } from '../../../../components/Form'
+import { Button, Checkbox } from '../../../../components/Form'
 import { TOnboardingOrganization } from '../../../types/onboarding.types'
 import ListEmpty from './ListEmpty'
 import { toast } from 'react-toastify'
@@ -17,7 +17,7 @@ type TGithubRepositoriesProps = {
 
 const GithubRepositories = (props: TGithubRepositoriesProps) => {
     const { isOpen, organization, signoutOAuth } = props
-    const { repositories, getRepositories, toggleRepository } =
+    const { repositories, getRepositories, getNext, toggleRepository } =
         useOnboardingRepositories(organization)
 
     useEffect(() => {
@@ -59,7 +59,7 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
                         </div>
                         <div className="absolute top-0 right-0 z-10">
                             <Checkbox
-                                checked={item.isSelected}
+                                checked={!!item.isSelected}
                                 onClick={(e) => {
                                     e.stopPropagation()
                                 }}
@@ -75,6 +75,19 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
                     </p>
                 </div>
             ))}
+
+            {repositories.hasNext && (
+                <Button
+                    type="button"
+                    variant="custom"
+                    className="w-full !rounded-none !text-gray-7c8db5 !bg-gray-fafafd disabled:opacity-70"
+                    disabled={repositories.isFetching}
+                    isLoading={repositories.isFetching}
+                    onClick={getNext}
+                >
+                    Load more
+                </Button>
+            )}
         </>
     )
 }

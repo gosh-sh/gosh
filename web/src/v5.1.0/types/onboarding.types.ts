@@ -41,6 +41,8 @@ export type TOnboardingOrganization = {
     repositories: {
         items: TOnboardingRepository[]
         isFetching: boolean
+        page: number
+        hasNext: boolean
     }
 }
 

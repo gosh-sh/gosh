@@ -1,4 +1,9 @@
-import { useRecoilState, useRecoilValue, useResetRecoilState } from 'recoil'
+import {
+    useRecoilState,
+    useRecoilValue,
+    useResetRecoilState,
+    useSetRecoilState,
+} from 'recoil'
 import {
     daoInvitesSelector,
     octokitSelector,
@@ -9,7 +14,7 @@ import {
     repositoriesSelector,
 } from '../store/onboarding.state'
 import { supabase } from '../../supabase'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { TOAuthSession } from '../types/oauth.types'
 import {
     EDaoInviteStatus,
@@ -25,6 +30,7 @@ import { validateOnboardingDao, validateOnboardingRepo } from '../validators'
 import { debounce } from 'lodash'
 import { useOauth } from './oauth.hooks'
 import { TToastStatus } from '../../types/common.types'
+import _ from 'lodash'
 
 export function useOnboardingData(oauth?: TOAuthSession) {
     const [data, setData] = useRecoilState(onboardingDataAtom)
@@ -168,50 +174,70 @@ export function useOnboardingData(oauth?: TOAuthSession) {
 
 export function useOnboardingRepositories(organization: TOnboardingOrganization) {
     const octokit = useRecoilValue(octokitSelector)
+    const setOnboardingData = useSetRecoilState(onboardingDataAtom)
     const [repositories, setRepositories] = useRecoilState(
         repositoriesSelector(organization.id),
     )
 
-    const getRepositories = async () => {
-        if (!octokit) {
-            return
-        }
+    const getRepositories = useCallback(
+        async (page: number = 1, per_page: number = 30) => {
+            if (!octokit) {
+                return
+            }
 
-        setRepositories((state) => ({ ...state, isFetching: true }))
-        const { data } = organization.isUser
-            ? await octokit.request(
-                  'GET /user/repos{?visibility,affiliation,type,sort,direction,per_page,page,since,before}',
-                  {
-                      visibility: 'public',
-                      affiliation: 'owner',
-                  },
-              )
-            : await octokit.request(
-                  'GET /orgs/{org}/repos{?type,sort,direction,per_page,page}',
-                  {
-                      org: organization.name,
-                      type: 'public',
-                  },
-              )
+            setRepositories((state) => ({ ...state, isFetching: true }))
+            const { data } = organization.isUser
+                ? await octokit.request(
+                      'GET /user/repos{?visibility,affiliation,type,sort,direction,per_page,page,since,before}',
+                      {
+                          visibility: 'public',
+                          affiliation: 'owner',
+                          page,
+                          per_page,
+                      },
+                  )
+                : await octokit.request(
+                      'GET /orgs/{org}/repos{?type,sort,direction,per_page,page}',
+                      {
+                          org: organization.name,
+                          type: 'public',
+                          page,
+                          per_page,
+                      },
+                  )
 
-        const items = data.map((item: any) => ({
-            daoname: organization.name,
-            id: item.id,
-            name: item.name,
-            description: item.description,
-            updatedAt: item.updated_at,
-        }))
-        setRepositories((state) => ({
-            ...state,
-            items: items.map((item: any) => {
-                const found = state.items.find((i) => i.id === item.id)
-                if (found) {
-                    return { ...found, ...item }
+            const items = data.map((item: any) => ({
+                daoname: organization.name,
+                id: item.id,
+                name: item.name,
+                description: item.description,
+                updatedAt: item.updated_at,
+            }))
+            setRepositories((state) => {
+                const different = _.differenceWith(
+                    items,
+                    state.items,
+                    (a: any, b: any) => a.id === b.id,
+                ).map((item) => ({ ...item, isSelected: false }))
+                const intersect = _.intersectionWith(
+                    items,
+                    state.items,
+                    (a: any, b: any) => a.id === b.id,
+                )
+
+                return {
+                    ...state,
+                    items: [...state.items, ...different].map((item: any) => {
+                        const found = intersect.find((i) => i.id === item.id)
+                        return found || item
+                    }),
+                    hasNext: items.length >= per_page,
+                    isFetching: false,
                 }
-                return { ...item, isSelected: false }
-            }),
-        }))
-    }
+            })
+        },
+        [octokit, organization.name, organization.isUser],
+    )
 
     const toggleRepository = (item: TOnboardingRepository) => {
         setRepositories((state) => ({
@@ -225,7 +251,28 @@ export function useOnboardingRepositories(organization: TOnboardingOrganization)
         }))
     }
 
-    return { repositories, getRepositories, toggleRepository }
+    const getNext = () => {
+        setOnboardingData((state) => ({
+            ...state,
+            organizations: {
+                ...state.organizations,
+                items: state.organizations.items.map((o) => {
+                    if (o.id !== organization.id) {
+                        return o
+                    }
+
+                    const page = o.repositories.page || 1
+                    return { ...o, repositories: { ...o.repositories, page: page + 1 } }
+                }),
+            },
+        }))
+    }
+
+    useEffect(() => {
+        getRepositories(repositories.page)
+    }, [repositories.page])
+
+    return { repositories, getRepositories, getNext, toggleRepository }
 }
 
 export function useOnboardingSignup(oauth: TOAuthSession) {

@@ -937,12 +937,13 @@ export function useDaoMemberList(params: { loadOnInit?: boolean } = {}) {
                 dao.members || [],
                 MAX_PARALLEL_READ,
                 async (item) => {
-                    const { profile } = item
-                    const username = await profile.getName()
+                    const { profile, daomembers } = item
+
+                    const name = daomembers[profile.address] || (await profile.getName())
                     const { voting, locked, regular } = await item.wallet.getBalance()
                     return {
                         ...item,
-                        username,
+                        username: name,
                         balance: Math.max(voting, locked) + regular,
                         isFetching: false,
                     }

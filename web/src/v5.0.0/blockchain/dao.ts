@@ -44,7 +44,10 @@ export class Dao extends BaseContract {
     }
 
     async getMembers(options: {
-        parse?: { wallets: any; daomembers: object }
+        parse?: {
+            wallets: { [pubaddr: string]: any }
+            daomembers: { [address: string]: string }
+        }
         isDaoMemberOf?: boolean
     }): Promise<TDaoDetailsMemberItem[]> {
         const { parse, isDaoMemberOf } = options
@@ -58,10 +61,14 @@ export class Dao extends BaseContract {
             toparse.daomembers = details.daoMembers
         }
 
-        const daoaddr = Object.keys(toparse.daomembers).map((key) => {
-            return `0:${key.slice(2)}`
-        })
+        // Update daomembers key
+        for (const key of Object.keys(toparse.daomembers)) {
+            const addr = `0:${key.slice(2)}`
+            toparse.daomembers[addr] = toparse.daomembers[key]
+            delete toparse.daomembers[key]
+        }
 
+        const daoaddr = Object.keys(toparse.daomembers).map((key) => key)
         const members = await Promise.all(
             Object.keys(toparse.wallets).map(async (key) => {
                 const testaddr = `0:${key.slice(2)}`
@@ -89,6 +96,7 @@ export class Dao extends BaseContract {
                     profile: resolved.account,
                     wallet: new DaoWallet(this.client, toparse.wallets[key].member),
                     allowance: parseInt(toparse.wallets[key].count),
+                    daomembers: toparse.daomembers,
                 }
             }),
         )
