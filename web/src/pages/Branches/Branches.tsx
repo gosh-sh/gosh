@@ -11,7 +11,7 @@ import { toast } from 'react-toastify'
 import { ToastError } from '../../components/Toast'
 import { TBranch } from 'react-gosh/dist/types/repo.types'
 import { BranchOperateProgress, BranchSelect } from '../../components/Branches'
-import yup from '../../v1/yup-extended'
+import yup from '../../v1.0.0/yup-extended'
 import { Button, Input } from '../../components/Form'
 import CommitProgress from '../../components/Commit/CommitProgress'
 

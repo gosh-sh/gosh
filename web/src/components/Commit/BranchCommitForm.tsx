@@ -3,7 +3,7 @@ import { classNames, TDao, TUserParam } from 'react-gosh'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { TPushProgress, TRepository } from 'react-gosh/dist/types/repo.types'
 import { CommitFields } from './CommitFields/CommitFields'
-import yup from '../../v1/yup-extended'
+import yup from '../../v1.0.0/yup-extended'
 
 export type TBranchCommitFormValues = {
     title: string

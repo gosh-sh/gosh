@@ -6,7 +6,7 @@ import BlobDiffPreview from '../Blob/DiffPreview'
 import { Button } from '../Form'
 import { CommitFields } from './CommitFields/CommitFields'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
-import yup from '../../v1/yup-extended'
+import yup from '../../v1.0.0/yup-extended'
 
 export type TBlobDeleteFormValues = {
     title: string
@@ -192,6 +192,7 @@ const BlobDeleteForm = (props: TBlobDeleteFormProps) => {
 
                         <div className="mt-5 relative overflow-hidden">
                             <BlobDiffPreview
+                                dao={dao.adapter}
                                 filename={treepath}
                                 original={content}
                                 modified=""

@@ -20,7 +20,7 @@ import BlobPreview from '../Blob/Preview'
 import { Button } from '../Form'
 import { CommitFields } from './CommitFields/CommitFields'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
-import yup from '../../v1/yup-extended'
+import yup from '../../v1.0.0/yup-extended'
 
 export type TBlobCommitFormValues = {
     name: string

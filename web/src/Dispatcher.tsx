@@ -7,10 +7,10 @@ import { useRecoilState } from 'recoil'
 import { appContextAtom } from './store/app.state'
 import { AppConfig } from './appconfig'
 
-const App_v1 = lazy(() => import('./v1/App'))
-const App_v2 = lazy(() => import('./v2/App'))
-const App_v3 = lazy(() => import('./v3/App'))
-const App_v4 = lazy(() => import('./v4/App'))
+const App_v1 = lazy(() => import('./v1.0.0/App'))
+const App_v2 = lazy(() => import('./v2.0.0/App'))
+const App_v3 = lazy(() => import('./v3.0.0/App'))
+const App_v4 = lazy(() => import('./v4.0.0/App'))
 
 const renderApp = (version: string) => {
     switch (version) {

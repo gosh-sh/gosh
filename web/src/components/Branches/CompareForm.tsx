@@ -5,7 +5,7 @@ import { classNames, useBranches } from 'react-gosh'
 import { TBranch } from 'react-gosh/dist/types/repo.types'
 import { Button } from '../Form'
 import { BranchSelect } from './Dropdown'
-import yup from '../../v1/yup-extended'
+import yup from '../../v1.0.0/yup-extended'
 
 type TBranchCompareFormProps = {
     className?: string

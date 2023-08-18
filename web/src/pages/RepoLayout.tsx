@@ -26,7 +26,7 @@ import {
 } from 'react-gosh/dist/gosh/interfaces'
 import { faFile } from '@fortawesome/free-regular-svg-icons'
 import Loader from '../components/Loader'
-import { withPin } from '../v1/hocs'
+import { withPin } from '../v1.0.0/hocs'
 
 export type TRepoLayoutOutletContext = {
     dao: {

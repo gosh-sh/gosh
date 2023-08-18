@@ -24,7 +24,7 @@ import {
 } from './../../interfaces'
 import { shortString } from 'react-gosh'
 import CopyClipboard from '../../../components/CopyClipboard'
-import { withPin } from '../../../v1/hocs'
+import { withPin } from '../../../v1.0.0/hocs'
 
 const StatusDot = ({ status }: { status: string }) => (
     <div className={cn('dd-status-dot', status)}></div>
