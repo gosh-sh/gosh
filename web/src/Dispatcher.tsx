@@ -12,6 +12,7 @@ const App_v2 = lazy(() => import('./v2.0.0/App'))
 const App_v3 = lazy(() => import('./v3.0.0/App'))
 const App_v4 = lazy(() => import('./v4.0.0/App'))
 const App_v5 = lazy(() => import('./v5.0.0/App'))
+const App_v5_1 = lazy(() => import('./v5.1.0/App'))
 
 const renderApp = (version: string) => {
     switch (version) {
@@ -25,6 +26,8 @@ const renderApp = (version: string) => {
             return <App_v4 />
         case '5.0.0':
             return <App_v5 />
+        case '5.1.0':
+            return <App_v5_1 />
         default:
             return <Alert variant="danger">Version {version} is not supported</Alert>
     }
