@@ -6,6 +6,7 @@ import VersionControllerABI from './abi/versioncontroller.abi.json'
 import { SystemContract as SystemContract1 } from '../v1/blockchain/systemcontract'
 import { SystemContract as SystemContract2 } from '../v2/blockchain/systemcontract'
 import { SystemContract as SystemContract3 } from '../v3/blockchain/systemcontract'
+import { SystemContract as SystemContract4 } from '../v4/blockchain/systemcontract'
 import { UserProfileIndex } from './userprofileindex'
 import { UserProfile } from './userprofile'
 import { DaoProfile } from './daoprofile'
@@ -29,6 +30,8 @@ export class VersionController extends BaseContract {
                 return new SystemContract2(this.client, address)
             case '3.0.0':
                 return new SystemContract3(this.client, address)
+            case '4.0.0':
+                return new SystemContract4(this.client, address)
             default:
                 throw new GoshError('Version not found', { version })
         }
