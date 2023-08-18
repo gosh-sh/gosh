@@ -39,7 +39,7 @@ pub struct RepoVersion {
     pub repo_address: BlockchainContractAddress,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct CommitVersion {
     pub version: String,
     pub commit_address: BlockchainContractAddress,

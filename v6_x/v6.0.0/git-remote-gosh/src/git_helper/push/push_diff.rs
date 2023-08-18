@@ -315,7 +315,6 @@ pub async fn push_new_branch_snapshot(
         .deploy_new_snapshot(
             &wallet,
             repo_addr.to_owned(),
-            branch_name.to_string(),
             commit_id.to_string(),
             file_path.to_string(),
             content,
@@ -335,75 +334,30 @@ pub async fn push_initial_snapshot<B>(
     remote_network: String,
     snapshot_address: String,
     database: Arc<GoshDB>,
-    prev_repo_address: Option<BlockchainContractAddress>,
 ) -> anyhow::Result<()>
 where
     B: BlockchainService + 'static,
 {
     let snapshot = database.get_snapshot(&snapshot_address)?;
 
-    let branch_name = snapshot.branch_name;
     let file_path = snapshot.file_path;
     let upgrade = snapshot.upgrade;
     let commit_id = snapshot.commit_id;
+    let content = snapshot.content;
+    let ipfs = snapshot.ipfs;
 
-    tracing::trace!("push_initial_snapshot: repo_addr={repo_addr}, dao_addr={dao_addr}, remote_network={remote_network}, branch_name={branch_name}, file_path={file_path}");
+    tracing::trace!("push_initial_snapshot: repo_addr={repo_addr}, dao_addr={dao_addr}, remote_network={remote_network}, file_path={file_path}");
     let wallet = blockchain.user_wallet(&dao_addr, &remote_network).await?;
 
     let condition = |e: &anyhow::Error| {
         if e.is::<WalletError>() {
             false
         } else {
-            tracing::debug!("inner_push_snapshot error <branch: {branch_name}, path: {file_path}>");
+            tracing::debug!("inner_push_snapshot error <path: {file_path}>");
             true
         }
     };
-    let (content, commit_id, ipfs) = if upgrade {
-        tracing::trace!("generate content for upgrade snapshot");
 
-        let mut repo_contract =
-            GoshContract::new(prev_repo_address.as_ref().unwrap(), gosh_abi::REPO);
-        let snapshot_addr = Snapshot::calculate_address(
-            blockchain.client(),
-            &mut repo_contract,
-            &commit_id,
-            &file_path,
-        )
-        .await?;
-        let snapshot = Snapshot::load(blockchain.client(), &snapshot_addr).await?;
-        if snapshot.current_ipfs.is_some() {
-            ("".to_string(), commit_id, snapshot.current_ipfs)
-        } else {
-            let content: Vec<u8> =
-                ton_client::utils::compress_zstd(&snapshot.current_content, None)?;
-            tracing::trace!("Previous snapshot content: {content:?}");
-            let mut content_string = "".to_string();
-            for byte in content {
-                content_string.push_str(&format!("{:02x}", byte));
-            }
-            tracing::trace!("content_string: {content_string:?}");
-
-            // If we deploy snapshot with content we have to wait for commit to be deployed first
-            // because snapshot with content will call commit for check
-
-            let mut repo_contract = blockchain.repo_contract().clone();
-            let new_commit =
-                get_commit_address(&blockchain.client(), &mut repo_contract, &commit_id).await?;
-            tracing::trace!("start waiting for commit to be ready, address: {new_commit}");
-            let undeployed = wait_contracts_deployed(&blockchain, &vec![new_commit]).await?;
-            if !undeployed.is_empty() {
-                anyhow::bail!(
-                    "Commit was not deployed in expected time: {}",
-                    undeployed[0]
-                );
-            }
-            tracing::trace!("commit is ready");
-
-            (content_string, commit_id, None)
-        }
-    } else {
-        ("".to_string(), commit_id, None)
-    };
     RetryIf::spawn(
         default_retry_strategy(),
         || async {
@@ -411,7 +365,6 @@ where
                 .deploy_new_snapshot(
                     &wallet,
                     repo_addr.clone(),
-                    branch_name.clone(),
                     commit_id.clone(),
                     file_path.clone(),
                     content.clone(),

@@ -159,7 +159,6 @@ pub trait DeployNewSnapshot {
         &self,
         wallet: &UserWallet,
         repo_address: BlockchainContractAddress,
-        branch_name: String,
         commit_id: String,
         file_path: String,
         content: String,
@@ -174,13 +173,12 @@ impl DeployNewSnapshot for Everscale {
         &self,
         wallet: &UserWallet,
         repo_address: BlockchainContractAddress,
-        branch_name: String,
         commit_id: String,
         file_path: String,
         content: String,
         ipfs: Option<String>,
     ) -> anyhow::Result<()> {
-        tracing::trace!("deploy_new_snapshot: repo_address={repo_address}, branch_name={branch_name}, commit_id={commit_id}, file_path={file_path}");
+        tracing::trace!("deploy_new_snapshot: repo_address={repo_address}, commit_id={commit_id}, file_path={file_path}");
         let args = DeploySnapshotParams {
             repo_address,
             commit_sha: commit_id,

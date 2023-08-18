@@ -48,7 +48,7 @@ cd ../../../../../
 
 git add *
 git commit -m blabla
-git push
+GOSH_TRACE=5 git push &> ../trace_12.log
 
 cd ..
 

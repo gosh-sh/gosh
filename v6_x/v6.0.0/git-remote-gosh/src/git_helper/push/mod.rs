@@ -41,6 +41,8 @@ use crate::git_helper::supported_contract_version;
 use delete_tag::delete_tag;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 use push_tree::push_tree;
+use crate::blockchain::snapshot::load::{GetSnapshotAddrResult, OldSnapshot};
+use crate::blockchain::snapshot::old_abi::{OLD_REPO_ABI, OLD_SNAP_ABI};
 use crate::blockchain::tree::load::{construct_map_of_snapshots, SnapshotMonitor};
 
 static PARALLEL_PUSH_LIMIT: usize = 1 << 6;
@@ -136,7 +138,7 @@ where
         parallel_diffs_upload_support: &mut ParallelDiffsUploadSupport,
         parallel_snapshot_uploads: &mut ParallelSnapshotUploadSupport,
         upgrade_commit: bool,
-        parents_for_upgrade: Vec<AddrVersion>,
+        snapshot_to_commit: &mut HashMap<String, Vec<SnapshotMonitor>>,
     ) -> anyhow::Result<()> {
         let snapshot_addr = {
             tracing::trace!("push_new_blob: file_path={file_path}, blob_id={blob_id}, commit_id={commit_id}, branch_name={branch_name}, upgrade_commit={upgrade_commit}");
@@ -147,23 +149,6 @@ where
             let branch_name = branch_name.to_string();
             let file_path = file_path.to_string();
             let commit_str = commit_id.to_string();
-            tracing::trace!(
-                "Search prev commit repo: {:?} {:?}",
-                self.repo_versions,
-                parents_for_upgrade
-            );
-            let prev_repo_address = if upgrade_commit {
-                Some(
-                    self.repo_versions
-                        .iter()
-                        .find(|repo| repo.version == parents_for_upgrade[0].version)
-                        .expect("Failed to find prev repo address")
-                        .repo_address
-                        .clone(),
-                )
-            } else {
-                None
-            };
 
             let mut repo_contract = self.blockchain.repo_contract().clone();
             let commit_sha = commit_id.to_string().clone();
@@ -177,8 +162,86 @@ where
             let snapshot_addr = String::from(snapshot_addr);
 
             if !self.get_db()?.snapshot_exists(&snapshot_addr)? {
+                let (content, ipfs) = if upgrade_commit {
+                    tracing::trace!("generate content for upgrade snapshot,");
+
+                    let (content, ipfs) = match snapshot_to_commit.get(
+                        &file_path,
+                    )
+                        .and_then(|vec| vec.get(0))
+                    {
+                        Some(prev_snap_commit) => {
+                            let snapshot_addr = Snapshot::calculate_address(
+                                blockchain.client(),
+                                &mut repo_contract,
+                                &prev_snap_commit.base_commit,
+                                &file_path,
+                            )
+                                .await?;
+                            let snapshot = Snapshot::load(blockchain.client(), &snapshot_addr).await?;
+                            (snapshot.current_content, snapshot.current_ipfs)
+                        },
+                        None => {
+                            tracing::trace!("Previous snapshot version has different abi, try to load before v6");
+                            let previous: GetPreviousResult = self
+                                .blockchain
+                                .repo_contract()
+                                .read_state(self.blockchain.client(), "getPrevious", None)
+                                .await?;
+                            tracing::trace!("prev repo addr: {previous:?}");
+
+                            let previous_repo_addr = previous
+                                .previous
+                                .clone()
+                                .ok_or(anyhow::format_err!(
+                                    "Failed to get previous version of the repo"
+                                ))?
+                                .address;
+
+                            let prev_repo_contract = GoshContract::new(&previous_repo_addr, ("old_repo", OLD_REPO_ABI));
+                            let prev_snap_addr: GetSnapshotAddrResult = prev_repo_contract.run_static(
+                                self.blockchain.client(),
+                                "getSnapshotAddr",
+                                Some(json!({
+                                    "branch": &branch_name,
+                                    "name": &file_path,
+                                }))
+                            ).await?;
+
+                            let snap_contract = GoshContract::new(&prev_snap_addr.address, ("old_snap", OLD_SNAP_ABI));
+                            let old_snap: OldSnapshot = snap_contract.run_local(
+                                self.blockchain.client(),
+                                "getSnapshot",
+                                None,
+                            ).await?;
+
+                            (old_snap.current_content, old_snap.current_ipfs)
+                        }
+                    };
+
+                    if ipfs.is_some() {
+                        ("".to_string(), ipfs)
+                    } else {
+                        let content: Vec<u8> =
+                            ton_client::utils::compress_zstd(&content, None)?;
+                        tracing::trace!("Previous snapshot content: {content:?}");
+                        let mut content_string = "".to_string();
+                        for byte in content {
+                            content_string.push_str(&format!("{:02x}", byte));
+                        }
+                        tracing::trace!("content_string: {content_string:?}");
+
+                        // If we deploy snapshot with content we have to wait for commit to be deployed first
+                        // because snapshot with content will call commit for check
+
+                        (content_string, None)
+                    }
+                } else {
+                    ("".to_string(), None)
+                };
+
                 let snapshot =
-                    ParallelSnapshot::new(branch_name, file_path, upgrade_commit, commit_str);
+                    ParallelSnapshot::new(file_path, upgrade_commit, commit_str, content, ipfs);
                 self.get_db()?
                     .put_snapshot(&snapshot, snapshot_addr.clone())?;
 
@@ -187,7 +250,7 @@ where
                 //     .await?;
             // } else {
             }
-            parallel_snapshot_uploads.push_expected(snapshot_addr.clone(), prev_repo_address);
+            parallel_snapshot_uploads.push_expected(snapshot_addr.clone());
             snapshot_addr
         };
         if !upgrade_commit {
@@ -465,17 +528,14 @@ where
                 if commit_contract.is_active(self.blockchain.client()).await? {
                     tracing::trace!("Found parent {id} in version {}", repo_version.version);
                     tracing::trace!("Start upgrade of the parent: {id}");
-                    let branch: GetNameCommitResult = commit_contract
-                        .run_local(self.blockchain.client(), "getNameBranch", None)
-                        .await?;
                     let parents_for_upgrade = vec![AddrVersion {
                         address: parent,
                         version: repo_version.version.clone(),
                     }];
                     self.check_and_upgrade_previous_commit(
                         id.to_string(),
-                        &branch.name,
-                        &branch.name,
+                        local_branch_name,
+                        remote_branch_name,
                         set_commit,
                         parents_for_upgrade,
                     )
@@ -573,7 +633,7 @@ where
                 parallel_diffs_upload_support,
                 parallel_snapshot_uploads,
                 upgrade_commit,
-                parents_for_upgrade.clone(),
+                snapshot_to_commit,
             )
             .await?;
             let snap_mon = SnapshotMonitor {
@@ -583,69 +643,69 @@ where
             let entry = snapshot_to_commit.entry(added.filepath.to_string() ).or_insert(vec![]);
             entry.push(snap_mon);
         }
-        if !upgrade_commit {
-            for update in tree_diff.updated {
-                tracing::trace!("push update diff");
-                // Commit modifies file but snapshot can be updated in the other branch
-                // In this case it will be absent in the snapshot_to_commit map
-                // of latest commit of the file will be not in this commit ancestors chain
-                // and we need to deploy a new snapshot with updated content
-                let file_path = update.1.filepath.to_string();
 
-                let mut found = false;
-                if snapshot_to_commit.contains_key(&file_path) {
-                    let snap_mon_vec = snapshot_to_commit.get_mut(&file_path).unwrap();
-                    for i in 0..snap_mon_vec.len() {
-                        if ancestor_commits.contains(&snap_mon_vec[i].latest_commit) {
-                            found = true;
-                            tracing::trace!("push update diff to existing snapshot");
-                            let repo_contract = self.blockchain.repo_contract().clone();
-                            let snapshot_address = Snapshot::calculate_address(
-                                self.blockchain.client(),
-                                &repo_contract,
-                                &snap_mon_vec[i].base_commit,
-                                &file_path
-                            ).await?;
-                            self.push_blob_update(
-                                &file_path,
-                                &update.0.oid,
-                                &update.1.oid,
-                                &object_id,
-                                local_branch_name,
-                                statistics,
-                                parallel_diffs_upload_support,
-                                String::from(snapshot_address),
-                            )
-                                .await?;
-                            tracing::trace!("Change latest commit for {}", file_path);
-                            snap_mon_vec[i].latest_commit = object_id.to_string();
-                            break;
-                        }
+        for update in tree_diff.updated {
+            tracing::trace!("push update diff");
+            // Commit modifies file but snapshot can be updated in the other branch
+            // In this case it will be absent in the snapshot_to_commit map
+            // of latest commit of the file will be not in this commit ancestors chain
+            // and we need to deploy a new snapshot with updated content
+            let file_path = update.1.filepath.to_string();
+
+            let mut found = false;
+            if !upgrade_commit && snapshot_to_commit.contains_key(&file_path) {
+                let snap_mon_vec = snapshot_to_commit.get_mut(&file_path).unwrap();
+                for i in 0..snap_mon_vec.len() {
+                    if ancestor_commits.contains(&snap_mon_vec[i].latest_commit) {
+                        found = true;
+                        tracing::trace!("push update diff to existing snapshot");
+                        let repo_contract = self.blockchain.repo_contract().clone();
+                        let snapshot_address = Snapshot::calculate_address(
+                            self.blockchain.client(),
+                            &repo_contract,
+                            &snap_mon_vec[i].base_commit,
+                            &file_path
+                        ).await?;
+                        self.push_blob_update(
+                            &file_path,
+                            &update.0.oid,
+                            &update.1.oid,
+                            &object_id,
+                            local_branch_name,
+                            statistics,
+                            parallel_diffs_upload_support,
+                            String::from(snapshot_address),
+                        )
+                            .await?;
+                        tracing::trace!("Change latest commit for {}", file_path);
+                        snap_mon_vec[i].latest_commit = object_id.to_string();
+                        break;
                     }
                 }
-                if !found {
-                    tracing::trace!("push update diff to new snapshot");
-                    self.push_new_blob(
-                        &file_path,
-                        &update.1.oid,
-                        &object_id,
-                        local_branch_name,
-                        statistics,
-                        parallel_diffs_upload_support,
-                        parallel_snapshot_uploads,
-                        upgrade_commit,
-                        parents_for_upgrade.clone(),
-                    )
-                        .await?;
-                    let snap_mon = SnapshotMonitor {
-                        base_commit: object_id.to_string(),
-                        latest_commit: object_id.to_string(),
-                    };
-                    let mon_vec = snapshot_to_commit.entry(file_path).or_insert(vec![]);
-                    mon_vec.push(snap_mon);
-                }
             }
-
+            if !found {
+                tracing::trace!("push update diff to new snapshot");
+                self.push_new_blob(
+                    &file_path,
+                    &update.1.oid,
+                    &object_id,
+                    local_branch_name,
+                    statistics,
+                    parallel_diffs_upload_support,
+                    parallel_snapshot_uploads,
+                    upgrade_commit,
+                    snapshot_to_commit,
+                )
+                    .await?;
+                let snap_mon = SnapshotMonitor {
+                    base_commit: object_id.to_string(),
+                    latest_commit: object_id.to_string(),
+                };
+                let mon_vec = snapshot_to_commit.entry(file_path).or_insert(vec![]);
+                mon_vec.push(snap_mon);
+            }
+        }
+        if !upgrade_commit {
             for deleted in tree_diff.deleted {
                 let file_path = deleted.filepath.to_string();
 
@@ -841,13 +901,56 @@ where
             .id;
         let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
 
-        let mut snapshot_to_commit = HashMap::new();
         let zero_wallet_contract = self
             .blockchain
             .user_wallet(&self.dao_addr, &self.remote.network)
             .await?
             .take_zero_wallet()
             .await?;
+
+        let mut snapshot_to_commit = HashMap::new();
+        let onchain_commit = &latest_commit_id;
+        let commit_str = onchain_commit.to_string();
+        if commit_str != ZERO_SHA {
+            tracing::trace!("Start load of previous commit tree. onchain_commit={}", onchain_commit);
+            let commit_version = self.find_commit(&commit_str).await?;
+            tracing::trace!("Version of the prev commit: {commit_version:?}");
+            // TODO: compare with version 6 or greater not current
+            if commit_version.version == supported_contract_version() {
+                tracing::trace!("Prev commit is equal to the current, preload the tree");
+                let commit_address = self.calculate_commit_address(onchain_commit).await?;
+                tracing::trace!("commit_address:{commit_address}");
+                let tree_address = Tree::get_address_from_commit(
+                    self.blockchain.client(),
+                    &commit_address,
+                ).await?;
+                tracing::trace!("tree_address:{tree_address}");
+                let tree = Tree::load(
+                    self.blockchain.client(),
+                    &tree_address,
+                ).await?;
+                let mut queue = VecDeque::new();
+                queue.push_back((tree, "".to_string()));
+                loop {
+                    if let Some((tree, prefix)) = queue.pop_back() {
+                        let repo_contract = self.blockchain.repo_contract().clone();
+                        construct_map_of_snapshots(
+                            self.blockchain.client(),
+                            &repo_contract,
+                            tree,
+                            &prefix,
+                            &mut snapshot_to_commit,
+                            &mut queue,
+                        ).await?;
+                    } else {
+                        break;
+                    }
+                }
+                tracing::trace!("Loaded map: {:?}", snapshot_to_commit);
+            } else {
+                tracing::trace!("Prev commit is not equal to current, skip preload of tree");
+            }
+        }
 
         // iterate through the git objects list and push them
         for oid in &commit_objects_list {
@@ -898,7 +1001,38 @@ where
             }
         }
 
+        tracing::trace!("Start of wait for contracts to be deployed");
         let mut expected_contracts = vec![];
+        let mut attempts = 0;
+        let mut last_rest_cnt = 0;
+        while attempts < MAX_REDEPLOY_ATTEMPTS {
+            attempts += 1;
+            expected_contracts = parallel_tree_uploads
+                .wait_all_trees(self.blockchain.clone())
+                .await?;
+            tracing::trace!("Wait all trees result: {expected_contracts:?}");
+            if expected_contracts.is_empty() {
+                break;
+            }
+            if expected_contracts.len() != last_rest_cnt {
+                attempts = 0;
+            }
+            last_rest_cnt = expected_contracts.len();
+            tracing::trace!("Restart deploy on undeployed trees");
+            let expected = parallel_tree_uploads.get_expected().to_owned();
+            parallel_tree_uploads = ParallelTreeUploadSupport::new();
+            for address in expected_contracts.clone() {
+                tracing::trace!("Get params of undeployed tree: {}", address,);
+                parallel_tree_uploads.push_expected(String::from(&address));
+                parallel_tree_uploads
+                    .add_to_push_list(self, String::from(&address), push_semaphore.clone())
+                    .await?;
+            }
+        }
+        if attempts == MAX_REDEPLOY_ATTEMPTS {
+            anyhow::bail!("Failed to deploy all trees. Undeployed trees: {expected_contracts:?}")
+        }
+
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
         while attempts < MAX_REDEPLOY_ATTEMPTS {
@@ -930,9 +1064,54 @@ where
             )
         }
 
-        let snapshot_addresses = parallel_snapshot_uploads.get_expected().clone();
+        parallel_snapshot_uploads.start_push(self).await?;
+
+        let stored_snapshot_addresses = parallel_snapshot_uploads.get_expected().clone();
+
+        let prev_repo_address =
+            Some(
+                self.repo_versions
+                    .iter()
+                    .find(|repo| repo.version == parents_for_upgrade[0].version)
+                    .expect("Failed to find prev repo address")
+                    .repo_address
+                    .clone(),
+            );
+
+        let mut attempts = 0;
+        let mut last_rest_cnt = 0;
+        while attempts < MAX_REDEPLOY_ATTEMPTS {
+            attempts += 1;
+            expected_contracts = parallel_snapshot_uploads
+                .wait_all_snapshots(self.blockchain.clone())
+                .await?;
+            tracing::trace!("Wait all snapshots result: {expected_contracts:?}");
+            if expected_contracts.is_empty() {
+                break;
+            }
+            if expected_contracts.len() != last_rest_cnt {
+                attempts = 0;
+            }
+            last_rest_cnt = expected_contracts.len();
+            tracing::trace!("Restart deploy on undeployed snapshots");
+            let expected = parallel_snapshot_uploads.get_expected().to_owned();
+            parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
+            for address in expected_contracts.clone() {
+                tracing::trace!("Get params of undeployed snapshot: {}", address,);
+                parallel_snapshot_uploads.push_expected(String::from(&address));
+                parallel_snapshot_uploads
+                    .add_to_push_list(self, String::from(address))
+                    .await?;
+            }
+        }
+        if attempts == MAX_REDEPLOY_ATTEMPTS {
+            anyhow::bail!(
+                "Failed to deploy all snapshots. Undeployed snapshots: {expected_contracts:?}"
+            )
+        }
+
         let db = self.get_db()?;
-        for address in snapshot_addresses {
+        for address in stored_snapshot_addresses {
             db.delete_snapshot(&address)?;
         }
 
@@ -1142,35 +1321,42 @@ where
             let commit_str = onchain_commit.to_string();
             if commit_str != ZERO_SHA {
                 tracing::trace!("Start load of previous commit tree. onchain_commit={}", onchain_commit);
-                let commit_address = self.calculate_commit_address(onchain_commit).await?;
-                tracing::trace!("commit_address:{commit_address}");
-                let tree_address = Tree::get_address_from_commit(
-                    self.blockchain.client(),
-                    &commit_address,
-                ).await?;
-                tracing::trace!("tree_address:{tree_address}");
-                let tree = Tree::load(
-                    self.blockchain.client(),
-                    &tree_address,
-                ).await?;
-                let mut queue = VecDeque::new();
-                queue.push_back((tree, "".to_string()));
-                loop {
-                    if let Some((tree, prefix)) = queue.pop_back() {
-                        let repo_contract = self.blockchain.repo_contract().clone();
-                        construct_map_of_snapshots(
-                            self.blockchain.client(),
-                            &repo_contract,
-                            tree,
-                            &prefix,
-                            &mut snapshot_to_commit,
-                            &mut queue,
-                        ).await?;
-                    } else {
-                        break;
+                let commit_version = self.find_commit(&commit_str).await?;
+                tracing::trace!("Version of the prev commit: {commit_version:?}");
+                if commit_version.version == supported_contract_version() {
+                    tracing::trace!("Prev commit is equal to the current, preload the tree");
+                    let commit_address = self.calculate_commit_address(onchain_commit).await?;
+                    tracing::trace!("commit_address:{commit_address}");
+                    let tree_address = Tree::get_address_from_commit(
+                        self.blockchain.client(),
+                        &commit_address,
+                    ).await?;
+                    tracing::trace!("tree_address:{tree_address}");
+                    let tree = Tree::load(
+                        self.blockchain.client(),
+                        &tree_address,
+                    ).await?;
+                    let mut queue = VecDeque::new();
+                    queue.push_back((tree, "".to_string()));
+                    loop {
+                        if let Some((tree, prefix)) = queue.pop_back() {
+                            let repo_contract = self.blockchain.repo_contract().clone();
+                            construct_map_of_snapshots(
+                                self.blockchain.client(),
+                                &repo_contract,
+                                tree,
+                                &prefix,
+                                &mut snapshot_to_commit,
+                                &mut queue,
+                            ).await?;
+                        } else {
+                            break;
+                        }
                     }
+                    tracing::trace!("Loaded map: {:?}", snapshot_to_commit);
+                } else {
+                    tracing::trace!("Prev commit is not equal to current, skip preload of tree");
                 }
-                tracing::trace!("Loaded map: {:?}", snapshot_to_commit);
             }
         }
 
@@ -1352,9 +1538,9 @@ where
             parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
             for address in expected_contracts.clone() {
                 tracing::trace!("Get params of undeployed snapshot: {}", address,);
-                parallel_snapshot_uploads.push_expected(String::from(&address), None);
+                parallel_snapshot_uploads.push_expected(String::from(&address));
                 parallel_snapshot_uploads
-                    .add_to_push_list(self, String::from(address), None)
+                    .add_to_push_list(self, String::from(address))
                     .await?;
             }
         }
