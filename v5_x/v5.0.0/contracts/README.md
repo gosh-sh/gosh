@@ -1,29 +1,62 @@
 #### GOSH Smart-contracts deployment
 
 ##### Pre-requirements
-- Docker installed
-- Giver wallet keys 
+- [Docker installed](https://www.docker.com/get-started/)
+- [tonos-cli](https://github.com/tonlabs/tonos-cli#1-installation)
 
 #### Deploy
 
-1. Place giver keys file named giver.keys.json inside contracts/gosh folder
-2. Navigate to gosh directory:
+1. Navigate to contracts directory:
     ```
-    cd contracts/gosh
+    cd contracts
     ```
-2. Build docker image with Everdev and other requirements:
+
+2. Install a local node:
+    ```
+    docker run -d --name local-node -e USER_AGREEMENT=yes -p80:80 -v "${PWD%/*/*/*}/.ci/blockchain.conf":/ton-node/blockchain.conf tonlabs/local-node:0.36.3
+    ```
+
+3. Navigate to multisig directory:
+    ```
+    cd multisig
+    ```
+
+4. Create build container:
     ```
     make prepare-docker
     ```
-3. Build smart-contracts:
+
+5. Derive system wallet address:
     ```
-    make build-contracts-docker
+    make generate-docker NETWORK=localhost
     ```
-4. Deploy smart-contracts:
+
+    As a result, the GoshGiver address will be generated,
+
+    for example:
     ```
-    make deploy-docker KEYS_PATH=/home/gosh/keys/vps23_msig_giver.keys.json NETWORK=vps23.ton.dev GIVER_WALLET_ADDR=0:c6f86566776529edc1fcf3bc444c2deb9f3e077f35e49871eb4d775dd0b04391
+    ========== GoshGiver address: 0:bdf777a7ff955e189b680801f4f338631a11f851b29cc2baaf8192dd4d549f98
     ```
-4. Upgrade GOSH smart-contracts:
+
+6. Top up system wallet.
+
+    In `dest`, specify the GoshGiver address that you received in the previous step:
+
     ```
-    make upgrade-docker KEYS_PATH=/home/gosh/keys/vps23_msig_giver.keys.json NETWORK=vps23.ton.dev GIVER_WALLET_ADDR=0:c6f86566776529edc1fcf3bc444c2deb9f3e077f35e49871eb4d775dd0b04391 VERSIONCONTROLLER_ADDR=0:78ca698f06804b318fc40acef8e65823f67ac24fb10e8c7ad8c8553b6eac6293
+    tonos-cli -u localhost call 0:ece57bcc6c530283becbbd8a3b24d3c5987cdddc3c8b7b33be6e4a6312490415 sendTransaction '{"dest":"0:bdf777a7ff955e189b680801f4f338631a11f851b29cc2baaf8192dd4d549f98","value":50000000000000000,"bounce":false}' --abi GiverV2.abi.json --sign GiverV2.keys.json
+    ```
+
+7. Deploy system wallet:
+    ```
+    make deploy-docker
+    ````
+
+8. Navigate to GOSH-contracts directory:
+    ```
+    cd ../gosh
+    ```
+
+9. Deploy GOSH smart-contracts:
+    ```
+    make deploy-docker
     ```

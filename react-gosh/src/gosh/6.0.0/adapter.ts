@@ -3765,7 +3765,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 }
 
                 const blob = blobsData[index].data
-                if (blob.treeitem) {
+                const snap = blob.treeitem
+                    ? await this._getSnapshot({ address: blob.snapshot })
+                    : null
+                if (blob.treeitem && (await snap?.isDeployed())) {
                     console.debug('Blob exists')
                     const snapshot = await this.getBlob({
                         fullpath: `${blob.treeitem.commit}/${path}`,
@@ -3789,7 +3792,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     console.debug('Blob does not exist')
                     treeitem.commit = commitHash
                     blob.snapshot = await this._getSnapshotAddress(commitHash, path)
-                    blob.content = undefined
+                    blob.patch = ''
                     blob.commitname = commitHash
                 }
 
@@ -3807,13 +3810,22 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         // Reset content and patch for blobs going to be deleted
-        for (const item of blobsData) {
+        await executeByChunk(blobsData, MAX_PARALLEL_READ, async (item) => {
             if (item.status === 2) {
-                console.debug('Reset content/patch', item)
-                item.data.content = undefined
-                item.data.patch = null
+                const snapshot = await this.getBlob({
+                    address: item.data.snapshot,
+                })
+                const commit = await this.getCommit({
+                    name: snapshot.onchain.tmpcommit,
+                })
+
+                if ((commit.time ?? 0) > (branchTo.commit.time ?? 0)) {
+                    console.debug('Reset content/patch', item)
+                    item.data.content = undefined
+                    item.data.patch = null
+                }
             }
-        }
+        })
 
         // Deploy commit
         await this._deployCommit(
@@ -4821,7 +4833,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             commitName: commit,
             fullCommit: content,
             parents: parents.map(({ address, version }) => ({ addr: address, version })),
-            tree: treesha256,
+            shainnertree: treesha256,
             upgrade,
         })
         const wait = await whileFinite(async () => {

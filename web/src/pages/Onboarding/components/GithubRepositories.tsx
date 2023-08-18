@@ -1,15 +1,20 @@
 import { faHardDrive } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useCallback, useEffect } from 'react'
-import { useRecoilState, useRecoilValue } from 'recoil'
-import { Checkbox } from '../../../components/Form'
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
+import { Button, Checkbox } from '../../../components/Form'
 import Spinner from '../../../components/Spinner'
-import { octokitSelector, repositoriesSelector } from '../../../store/onboarding.state'
+import {
+    octokitSelector,
+    onboardingDataAtom,
+    repositoriesSelector,
+} from '../../../store/onboarding.state'
 import {
     TOnboardingOrganization,
     TOnboardingRepository,
 } from '../../../store/onboarding.types'
 import ListEmpty from './ListEmpty'
+import _ from 'lodash'
 
 type TGithubRepositoriesProps = {
     organization: TOnboardingOrganization
@@ -20,6 +25,7 @@ type TGithubRepositoriesProps = {
 const GithubRepositories = (props: TGithubRepositoriesProps) => {
     const { isOpen, organization, signoutOAuth } = props
     const octokit = useRecoilValue(octokitSelector)
+    const setData = useSetRecoilState(onboardingDataAtom)
     const [repositories, setRepositories] = useRecoilState(
         repositoriesSelector(organization.id),
     )
@@ -36,61 +42,104 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
         }))
     }
 
-    const getRepositories = useCallback(async () => {
-        if (!octokit || !isOpen) return
-
-        setRepositories((state) => ({ ...state, isFetching: true }))
-        try {
-            const { data } = organization.isUser
-                ? await octokit.request(
-                      'GET /user/repos{?visibility,affiliation,type,sort,direction,per_page,page,since,before}',
-                      {
-                          visibility: 'public',
-                          affiliation: 'owner',
-                      },
-                  )
-                : await octokit.request(
-                      'GET /orgs/{org}/repos{?type,sort,direction,per_page,page}',
-                      {
-                          org: organization.name,
-                          type: 'public',
-                      },
-                  )
-
-            const items = data.map((item: any) => ({
-                daoName: organization.name,
-                id: item.id,
-                name: item.name,
-                description: item.description,
-                updatedAt: item.updated_at,
-            }))
-            setRepositories((state) => ({
-                ...state,
-                items: items.map((item: any) => {
-                    const found = state.items.find((i) => i.id === item.id)
-                    if (found) {
-                        return { ...found, ...item }
+    const onLoadMoreClick = () => {
+        setData((state) => ({
+            ...state,
+            organizations: {
+                ...state.organizations,
+                items: state.organizations.items.map((o) => {
+                    if (o.id !== organization.id) {
+                        return o
                     }
-                    return { ...item, isSelected: false }
+
+                    const page = o.repositories.page || 1
+                    return { ...o, repositories: { ...o.repositories, page: page + 1 } }
                 }),
-            }))
-        } catch (e: any) {
-            console.error(e.message)
-            await signoutOAuth()
-            return
-        }
-    }, [
-        octokit,
-        organization.name,
-        organization.isUser,
-        setRepositories,
-        isOpen,
-        signoutOAuth,
-    ])
+            },
+        }))
+    }
+
+    const getRepositories = useCallback(
+        async (page: number = 1, per_page: number = 30) => {
+            if (!octokit || !isOpen) {
+                return
+            }
+
+            setRepositories((state) => ({ ...state, isFetching: true }))
+            try {
+                const { data } = organization.isUser
+                    ? await octokit.request(
+                          'GET /user/repos{?visibility,affiliation,type,sort,direction,per_page,page,since,before}',
+                          {
+                              visibility: 'public',
+                              affiliation: 'owner',
+                              page,
+                              per_page,
+                          },
+                      )
+                    : await octokit.request(
+                          'GET /orgs/{org}/repos{?type,sort,direction,per_page,page}',
+                          {
+                              org: organization.name,
+                              type: 'public',
+                              page,
+                              per_page,
+                          },
+                      )
+
+                const items = data.map((item: any) => ({
+                    daoName: organization.name,
+                    id: item.id,
+                    name: item.name,
+                    description: item.description,
+                    updatedAt: item.updated_at,
+                }))
+                setRepositories((state) => {
+                    const different = _.differenceWith(
+                        items,
+                        state.items,
+                        (a: any, b: any) => a.id === b.id,
+                    ).map((item) => ({ ...item, isSelected: false }))
+                    const intersect = _.intersectionWith(
+                        items,
+                        state.items,
+                        (a: any, b: any) => a.id === b.id,
+                    )
+
+                    return {
+                        ...state,
+                        items: [...state.items, ...different].map((item: any) => {
+                            const found = intersect.find((i) => i.id === item.id)
+                            return found || item
+                        }),
+                        hasNext: items.length >= per_page,
+                    }
+                })
+            } catch (e: any) {
+                console.error(e.message)
+                await signoutOAuth()
+                return
+            } finally {
+                setRepositories((state) => ({ ...state, isFetching: false }))
+            }
+        },
+        [
+            octokit,
+            organization.name,
+            organization.isUser,
+            setRepositories,
+            isOpen,
+            signoutOAuth,
+        ],
+    )
 
     useEffect(() => {
-        getRepositories()
+        getRepositories(repositories.page)
     }, [])
+
+    useEffect(() => {
+        getRepositories(repositories.page)
+    }, [repositories.page])
 
     return (
         <>
@@ -102,7 +151,9 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
             )}
 
             {!repositories.isFetching && !repositories.items.length && (
-                <ListEmpty>You should have at least one repository on GitHub</ListEmpty>
+                <ListEmpty className="!my-12">
+                    You should have at least one repository on GitHub
+                </ListEmpty>
             )}
 
             {repositories.items.map((item, index) => (
@@ -116,7 +167,7 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
                         <div className="repoitem__title">{item.name}</div>
                         <div className="repoitem__check z-10">
                             <Checkbox
-                                checked={item.isSelected}
+                                checked={!!item.isSelected}
                                 onClick={(e) => {
                                     e.stopPropagation()
                                 }}
@@ -132,6 +183,19 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
                     </p>
                 </div>
             ))}
+
+            {repositories.hasNext && (
+                <Button
+                    type="button"
+                    variant="custom"
+                    className="w-full !rounded-none !text-gray-7c8db5 !bg-gray-fafafd disabled:opacity-70"
+                    disabled={repositories.isFetching}
+                    isLoading={repositories.isFetching}
+                    onClick={onLoadMoreClick}
+                >
+                    Load more
+                </Button>
+            )}
         </>
     )
 }
