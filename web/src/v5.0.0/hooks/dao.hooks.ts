@@ -735,12 +735,14 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
         const transfer: { wallet: DaoWallet; amount: number }[] = []
         let daoaddrPrev = await dao.account.getPrevious()
         while (daoaddrPrev) {
-            const daoPrev = await sc.getDao({ address: daoaddrPrev })
+            let daoPrev = await sc.getDao({ address: daoaddrPrev })
             const daoverPrev = await daoPrev.getVersion()
             if (daoverPrev === '1.0.0') {
                 break
             }
 
+            const scPrev = AppConfig.goshroot.getSystemContract(daoverPrev)
+            daoPrev = (await scPrev.getDao({ address: daoPrev.address })) as Dao
             const walletPrev = await daoPrev.getMemberWallet({
                 data: { profile: user.profile },
                 keys: user.keys,
@@ -2038,6 +2040,11 @@ export function useUpgradeDao() {
 
     const checkUpgrades = useCallback(async () => {
         const { version, name } = dao.details
+
+        if (dao.isFetchingData) {
+            return
+        }
+
         if (!version || !member.details.isMember) {
             setAlert(undefined)
             return
@@ -2083,7 +2090,7 @@ export function useUpgradeDao() {
 
         // Reset upgrades alert
         setAlert(undefined)
-    }, [dao.details, member.details.isMember])
+    }, [dao.details, dao.isFetchingData, member.details.isMember])
 
     const upgrade = async (version: string, comment: string) => {
         try {
