@@ -2,7 +2,7 @@
 
 [GOSH Documentation](https://docs.gosh.sh/)
 
-Smart-contracts deployment instructions - [contracts/README.md](contracts/README.md)
+Smart-contracts deployment instructions - [contracts/README.md](https://github.com/gosh-sh/gosh/blob/dev/v5_x/v5.1.0/contracts/README.md)
 
 ## Installation
 
