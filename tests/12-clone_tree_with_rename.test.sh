@@ -6,9 +6,6 @@ set -o pipefail
 REPO_NAME="repo12_$(date +%s)"
 CLONE_REPO_NAME=repo12_clone
 
-echo "Test ignored need to find alternative to command tree"
-exit 0
-
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
 [ -d $CLONE_REPO_NAME ] && rm -rf $CLONE_REPO_NAME
 
@@ -38,7 +35,7 @@ cd ../../../../../
 
 git add *
 git commit -m blabla
-git push -u origin main
+GOSH_TRACE=5 git push -u origin main &> ../trace_12.log
 
 for i in {1..5}
 do
@@ -53,24 +50,17 @@ git add *
 git commit -m blabla
 git push
 
-INIT_TREE=$(tree)
-echo $INIT_TREE
-
 cd ..
 
 sleep 60
 
-git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $CLONE_REPO_NAME
+GOSH_TRACE=5 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $CLONE_REPO_NAME &> trace_12_clone.log
 
-cd $CLONE_REPO_NAME
-
-CLONE_TREE=$(tree)
-echo $CLONE_TREE
-
-if [ "$INIT_TREE" != "$CLONE_TREE" ]; then
-  echo Fail
-  exit 1
+echo "***** comparing repositories *****"
+DIFF_STATUS=1
+if  diff --brief --recursive $REPO_NAME $CLONE_REPO_NAME --exclude ".git"; then
+    echo "Success"
+    DIFF_STATUS=0
 fi
 
-echo Success
-exit 0
+exit $DIFF_STATUS

@@ -15,7 +15,7 @@ set -o pipefail
 
 # $1 = VERSION (v1_x, v2_x, v3_x, v4_x)
 
-. set-vars.sh $1 $2
+# . set-vars.sh $1 $2
 ./01-clone_empty_repo.test.sh
 ./02-create_branch.test.sh
 ./03-push_multiple_updates_in_a_single_commit.test.sh

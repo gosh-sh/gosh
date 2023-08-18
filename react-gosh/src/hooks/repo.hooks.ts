@@ -475,16 +475,43 @@ function useBlob(dao: string, repo: string, branch?: string, path?: string) {
 
             const gosh = GoshAdapterFactory.create(branchData.commit.version)
             const adapter = await gosh.getRepository({ path: `${dao}/${repo}` })
-            const { address, content, onchain } = await adapter.getBlob({
-                commit: branchData.commit.name,
-                fullpath: `${branchData.name}/${path}`,
-            })
+
+            let snapshot: any
+            if (adapter.getVersion() < '6.0.0') {
+                const _snapshot = await adapter.getBlob({
+                    commit: branchData.commit.name,
+                    fullpath: `${branchData.name}/${path}`,
+                })
+                snapshot = {
+                    address: _snapshot.address,
+                    commit: _snapshot.onchain.commit,
+                    content: _snapshot.content,
+                }
+            } else {
+                const tree = await adapter.getTree(branchData.commit.name, path)
+                const item = tree.items.find((item) => getTreeItemFullPath(item) === path)
+                const { value0 } = await adapter.repo.runLocal(
+                    'getSnapshotAddr',
+                    { commitsha: item?.commit, name: path },
+                    undefined,
+                    { useCachedBoc: true },
+                )
+                const { current } = await adapter.getCommitBlob(
+                    value0,
+                    path,
+                    branchData.commit.name,
+                )
+                snapshot = {
+                    address: value0,
+                    commit: branchData.commit.name,
+                    content: current,
+                }
+            }
+
             setBlob((state) => ({
                 ...state,
-                address,
-                commit: onchain.commit,
+                ...snapshot,
                 path,
-                content,
                 isFetching: false,
             }))
         }
@@ -644,6 +671,7 @@ function useCommit(
     const [blobs, setBlobs] = useState<{
         isFetching: boolean
         items: {
+            address: string
             treepath: string
             commit: TCommit
             current: string | Buffer
@@ -663,8 +691,8 @@ function useCommit(
             }),
         }))
 
-        const { commit, treepath } = blobs.items[index]
-        const diff = await repository.getCommitBlob(treepath, branch, commit)
+        const { commit, treepath, address } = blobs.items[index]
+        const diff = await repository.getCommitBlob(address, treepath, commit)
 
         setBlobs((state) => ({
             ...state,
@@ -683,17 +711,18 @@ function useCommit(
             setBlobs({ isFetching: true, items: [] })
             const blobs = await repository.getCommitBlobs(branch, details.commit)
             const state = await Promise.all(
-                blobs.sort().map(async ({ treepath }, i) => {
+                blobs.sort().map(async ({ address, treepath }, i) => {
                     const diff =
                         i < showDiffNum
                             ? await repository.getCommitBlob(
+                                  address,
                                   treepath,
-                                  branch,
                                   details.commit!,
                               )
                             : { previous: '', current: '' }
                     return {
                         treepath,
+                        address,
                         commit: details.commit!,
                         ...diff,
                         showDiff: i < showDiffNum,
@@ -866,7 +895,10 @@ function _useMergeRequest(
         setProgress((state) => ({ ...state, details: { ...state.details, trees: true } }))
 
         // Compare trees and get added/updated treepath
-        const treeDiff: string[][] = []
+        const treeDiff: {
+            src: { treeitem: TTreeItem; path: string }
+            dst: { treeitem?: TTreeItem; path: string }
+        }[] = []
         srcTreeItems
             .filter((item) => ['blob', 'blobExecutable'].indexOf(item.type) >= 0)
             .map((srcItem) => {
@@ -878,8 +910,13 @@ function _useMergeRequest(
                         return srcPath === dstPath
                     })
 
-                if (dstItem && srcItem.sha1 === dstItem.sha1) return
-                treeDiff.push([srcPath, !!dstItem ? srcPath : ''])
+                if (dstItem && srcItem.sha1 === dstItem.sha1) {
+                    return
+                }
+                treeDiff.push({
+                    src: { treeitem: srcItem, path: srcPath },
+                    dst: { treeitem: dstItem, path: !!dstItem ? srcPath : '' },
+                })
             })
         setProgress((state) => {
             const { blobs = {} } = state.details
@@ -897,15 +934,15 @@ function _useMergeRequest(
             treeDiff,
             MAX_PARALLEL_READ,
             async (treepath, index) => {
-                const [aPath, bPath] = treepath
-                const srcFullPath = `${srcBranch.name}/${aPath}`
+                const { src, dst } = treepath
+                const srcFullPath = `${src.treeitem.commit}/${src.path}`
                 const srcBlob = await srcRepo.getBlob({
                     commit: srcBranch.commit.name,
                     fullpath: srcFullPath,
                 })
 
-                const dstFullPath = `${dstBranch.name}/${bPath}`
-                const dstBlob = bPath
+                const dstFullPath = `${dst.treeitem?.commit}/${dst.path}`
+                const dstBlob = dst.path
                     ? (
                           await dstRepo.getBlob({
                               commit: dstBranch.commit.name,
@@ -927,7 +964,7 @@ function _useMergeRequest(
                 })
 
                 return {
-                    treepath: [bPath, aPath],
+                    treepath: [dst.path, src.path],
                     original: dstBlob,
                     modified: srcBlob.content,
                     showDiff: index < showDiffNum,

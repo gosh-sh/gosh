@@ -35,6 +35,10 @@ type TTreeItem = {
     sha256: string
     path: string
     name: string
+    gitsha?: string
+    tvmshatree?: string
+    tvmshafile?: string
+    commit?: string
 }
 
 type TTree = {
@@ -54,6 +58,8 @@ type TCommit = {
     parents: { address: TAddress; version: string; name: string }[]
     version: string
     initupgrade: boolean
+    time?: number
+    treeaddr?: string
 }
 
 type TBranch = {
@@ -74,6 +80,7 @@ type TCommitTag = {
 
 type TDiff = {
     snap: string
+    snapname?: string
     patch: string | null
     ipfs: string | null
     commit: string
@@ -97,6 +104,7 @@ type TUpgradeData = {
     commit: TCommit
     tree: TTree
     blobs: {
+        address: string
         treepath: string
         content: string | Buffer
     }[]
@@ -104,10 +112,12 @@ type TUpgradeData = {
 
 type TPushBlobData = {
     data: {
+        commitname?: string
         snapshot: string
         treepath: string
         treeitem?: TTreeItem
         compressed: string
+        content?: string | Buffer
         patch: string | null
         flags: EBlobFlag
         hashes: {

@@ -23,7 +23,7 @@ build:
 	  node:18.8.0-alpine \
 	  sh -c "npm install -g pnpm && \
 	  chown -R 1000:1000 /root && cd /react-gosh && pnpm install && cd /workdir && pnpm run update-react-gosh && \
-	  pnpm install && pnpm run wasm && pnpm link run-if-modified && pnpm run build:$(ENV)"
+	  pnpm install && pnpm run wasm && pnpm run build:$(ENV)"
 	cp -r ./build/* $(TARGET_DIR)
 
 run:

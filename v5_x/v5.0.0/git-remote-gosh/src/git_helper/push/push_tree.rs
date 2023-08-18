@@ -152,15 +152,16 @@ pub async fn inner_deploy_tree(
     tree_address: &str,
     database: Arc<GoshDB>,
 ) -> anyhow::Result<()> {
-    let tree = database.get_tree(tree_address)?;
+    let mut tree = database.get_tree(tree_address)?;
     tracing::trace!("inner_deploy_tree: remote_network={remote_network}, dao_addr={dao_addr}, remote_repo={remote_repo}, tree_id={}", tree.tree_id);
     let wallet = blockchain.user_wallet(&dao_addr, &remote_network).await?;
     blockchain
         .deploy_tree(
             &wallet,
             &tree.tree_id.to_hex().to_string(),
+            tree_address,
             &remote_repo,
-            &tree.tree_nodes,
+            &mut tree.tree_nodes,
         )
         .await
 }

@@ -7,7 +7,7 @@ VERSION=$1
 export NETWORK="${NETWORK:-http://192.168.31.227}"
 #export NETWORK=http://172.16.0.62
 SE_GIVER_ADDRESS="0:ece57bcc6c530283becbbd8a3b24d3c5987cdddc3c8b7b33be6e4a6312490415"
-if [[ "$VERSION" =~ "v5_x" ]]; then
+if [[ "$VERSION" =~ "_x/v" ]]; then
   SE_GIVER_ABI="../../../../tests/node_se_scripts/local_giver.abi.json"
   SE_GIVER_KEYS="../../../../tests/node_se_scripts/local_giver.keys.json"
 else
@@ -57,10 +57,14 @@ elif [ "$VERSION" = "v3_x" ]; then
  echo "" > SystemContract-3.0.0.addr
 elif [ "$VERSION" = "v4_x" ]; then
   echo "" > SystemContract-4.0.0.addr
+elif [ "$VERSION" = "v5_x/v5.0.0" ]; then
+  echo "" > SystemContract-5.0.0.addr
 elif [ "$VERSION" = "v5_x/v5.1.0" ]; then
   echo "" > SystemContract-5.1.0.addr
+elif [ "$VERSION" = "v6_x/v6.0.0" ]; then
+  echo "" > SystemContract-6.0.0.addr
 else
- echo "" > SystemContract-5.0.0.addr
+ exit 1
 fi
 
 #make build

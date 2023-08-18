@@ -25,7 +25,7 @@ steps:
 ############################################################
 # Check version
 - bash: |
-    if [[ "$(versionNo)" == *"v5_x"* ]]; then
+    if [[ "$(versionNo)" == *"/"* ]]; then
       VERSION=$(echo "$(versionNo)" | cut -d '/' -f 2 | sed "s/\./_/g")
     else
       PREFIX=$(echo "$(versionNo)" | tr -d '_x')

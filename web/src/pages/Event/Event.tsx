@@ -46,6 +46,7 @@ import {
     BigTaskUpgradeEvent,
 } from './components'
 import { Tooltip } from 'react-tooltip'
+import { IndexEvent } from './components/IndexEvent/IndexEvent'
 
 const EventPage = () => {
     const { eventAddr } = useParams()
@@ -255,6 +256,9 @@ const EventPage = () => {
                         )}
                         {event.type.kind === ESmvEventType.BIGTASK_UPGRADE && (
                             <BigTaskUpgradeEvent data={event.data} />
+                        )}
+                        {event.type.kind === ESmvEventType.INDEX_EVENT && (
+                            <IndexEvent data={event.data} />
                         )}
                     </div>
                 </div>
