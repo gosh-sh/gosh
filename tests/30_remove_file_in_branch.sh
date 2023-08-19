@@ -4,10 +4,10 @@ set -o pipefail
 . ./util.sh
 set -x
 
-# if [[ "$VERSION" == *"v6_x"* ]]; then
-#   echo "Test is ignored for v6 because in v6 we don't delete snapshots"
-#   exit 0
-# fi
+if [[ "$VERSION" == *"v6_x"* ]]; then
+  echo "Test is ignored for v6 because in v6 we don't delete snapshots"
+  exit 0
+fi
 
 
 REPO_NAME="repo30_$(date +%s)"
@@ -42,7 +42,7 @@ git checkout -b dev
 rm 1.txt
 git rm 1.txt
 git commit -m dev
-git push -u origin dev
+GOSH_TRACE=5 git push -u origin dev &> ../trace_30_rm.log
 
 echo "***** Push to main branch *****"
 git checkout main
