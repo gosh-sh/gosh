@@ -123,6 +123,7 @@ async fn construct_tree(
                 }
             }
             _ => {
+                paths.push(path.to_string());
                 continue;
             }
         };

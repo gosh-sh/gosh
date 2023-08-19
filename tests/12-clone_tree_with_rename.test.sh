@@ -3,11 +3,10 @@ set -e
 set -o pipefail
 . ./util.sh
 
-if [[ "$VERSION" == *"v6_x"* ]]; then
-  echo "Test is ignored for v6 because in v6 we don't delete snapshots"
-  exit 0
-fi
-
+# if [[ "$VERSION" == *"v6_x"* ]]; then
+  # echo "Test is ignored for v6 because in v6 we don't delete snapshots"
+  # exit 0
+# fi
 
 REPO_NAME="repo12_$(date +%s)"
 CLONE_REPO_NAME=repo12_clone
