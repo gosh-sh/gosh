@@ -68,7 +68,7 @@ async fn main_internal() -> anyhow::Result<()> {
 
     match matches.subcommand() {
         Some(("supported_contract_version", _)) => {
-            println!("Supported contract version: {}", supported_contract_version);
+            println!("Supported contract version: \"{}\"", supported_contract_version);
         }
         _ => {
             if matches.get_flag("version") {

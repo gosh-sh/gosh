@@ -946,7 +946,7 @@ where
                         break;
                     }
                 }
-                tracing::trace!("Loaded map: {:?}", snapshot_to_commit);
+                tracing::trace!("Loaded snapshot_to_commit map: {:?}", snapshot_to_commit);
             } else {
                 tracing::trace!("Prev commit is not equal to current, skip preload of tree");
             }
@@ -1323,8 +1323,12 @@ where
                 tracing::trace!("Start load of previous commit tree. onchain_commit={}", onchain_commit);
                 let commit_version = self.find_commit(&commit_str).await?;
                 tracing::trace!("Version of the prev commit: {commit_version:?}");
-                if commit_version.version == supported_contract_version() {
-                    tracing::trace!("Prev commit is equal to the current, preload the tree");
+                let commit_ver = commit_version.version;
+                let current = supported_contract_version();
+                let equals = commit_ver == current;
+                tracing::trace!("{} == {} : {}", commit_ver, current, equals);
+                if commit_ver == supported_contract_version() {
+                    tracing::trace!("Prev commit version is equal to the current, preload the tree");
                     let commit_address = self.calculate_commit_address(onchain_commit).await?;
                     tracing::trace!("commit_address:{commit_address}");
                     let tree_address = Tree::get_address_from_commit(
@@ -1355,7 +1359,7 @@ where
                     }
                     tracing::trace!("Loaded map: {:?}", snapshot_to_commit);
                 } else {
-                    tracing::trace!("Prev commit is not equal to current, skip preload of tree");
+                    tracing::trace!("Prev commit version is not equal to current, skip preload of tree");
                 }
             }
         }

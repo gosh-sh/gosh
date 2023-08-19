@@ -86,7 +86,7 @@ mod list;
 mod fmt;
 
 pub fn supported_contract_version() -> String {
-    env!("BUILD_SUPPORTED_VERSION").to_string()
+    env!("BUILD_SUPPORTED_VERSION").to_string().replace('\"', "")
 }
 
 impl<Blockchain, FileProvider> GitHelper<Blockchain, FileProvider>
