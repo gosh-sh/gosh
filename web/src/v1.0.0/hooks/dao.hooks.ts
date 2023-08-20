@@ -449,11 +449,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
             return
         }
         if (await wallet.isTurnedOn()) {
-            setData((state) => ({
-                ...state,
-                status: undefined,
-                details: { ...state, isReady: true },
-            }))
+            setData((state) => ({ ...state, isReady: true }))
             return
         }
 
@@ -467,10 +463,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
             await profile.turnOn(wallet.address, user.keys!.public)
 
             setStatus0((state) => ({ ...state, type: 'dismiss' }))
-            setData((state) => ({
-                ...state,
-                details: { ...state, isReady: true },
-            }))
+            setData((state) => ({ ...state, isReady: true }))
         } catch (e: any) {
             setStatus0((state) => ({
                 ...state,
@@ -496,10 +489,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
             }
 
             const balance = await data.wallet.getBalance()
-            setData((state) => ({
-                ...state,
-                details: { ...state, balance },
-            }))
+            setData((state) => ({ ...state, balance }))
         } catch (e: any) {
             console.error(e.message)
         }
@@ -510,10 +500,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
             return
         }
         if (!user.profile) {
-            setData((state) => ({
-                ...state,
-                details: { ...state, isFetched: true },
-            }))
+            setData((state) => ({ ...state, isFetched: true }))
             return
         }
 
@@ -528,14 +515,11 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
         activate(profile, wallet)
         setData((state) => ({
             ...state,
-            details: {
-                ...state,
-                profile,
-                wallet: walletDeployed ? wallet : null,
-                allowance: found?.allowance || 0,
-                isMember: !!found,
-                isFetched: true,
-            },
+            profile,
+            wallet: walletDeployed ? wallet : null,
+            allowance: found?.allowance || 0,
+            isMember: !!found,
+            isFetched: true,
         }))
     }, [user.profile, dao.members?.length, dao.address])
 

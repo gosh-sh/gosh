@@ -651,10 +651,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
             }
 
             setStatus0((state) => ({ ...state, type: 'dismiss' }))
-            setData((state) => ({
-                ...state,
-                details: { ...state, wallet, isReady: true },
-            }))
+            setData((state) => ({ ...state, wallet, isReady: true }))
         } catch (e: any) {
             setStatus0((state) => ({
                 ...state,
@@ -678,12 +675,9 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
             const limited = await data.wallet.isLimited()
             setData((state) => ({
                 ...state,
-                details: {
-                    ...state,
-                    balance,
-                    allowance: balance.allowance,
-                    isLimited: limited,
-                },
+                balance,
+                allowance: balance.allowance,
+                isLimited: limited,
             }))
         } catch (e: any) {
             console.error(e.message)
@@ -695,10 +689,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
             return
         }
         if (!user.profile) {
-            setData((state) => ({
-                ...state,
-                details: { ...state, isFetched: true },
-            }))
+            setData((state) => ({ ...state, isFetched: true }))
             return
         }
 
@@ -713,15 +704,12 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
         activate(profile, wallet)
         setData((state) => ({
             ...state,
-            details: {
-                ...state,
-                profile,
-                wallet: walletDeployed ? wallet : null,
-                allowance: found?.allowance || 0,
-                vesting: null,
-                isMember: !!found,
-                isFetched: true,
-            },
+            profile,
+            wallet: walletDeployed ? wallet : null,
+            allowance: found?.allowance || 0,
+            vesting: null,
+            isMember: !!found,
+            isFetched: true,
         }))
     }, [user.profile, dao.members?.length, dao.address])
 
@@ -827,10 +815,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
         })
         if (vestingtag) {
             const data = await vestingtag.getDetails()
-            setData((state) => ({
-                ...state,
-                details: { ...state, vesting: parseInt(data.content) },
-            }))
+            setData((state) => ({ ...state, vesting: parseInt(data.content) }))
         }
 
         // Get all DAO tasks
@@ -861,10 +846,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
                 }
             }
         }
-        setData((state) => ({
-            ...state,
-            details: { ...state, vesting: _balance },
-        }))
+        setData((state) => ({ ...state, vesting: _balance }))
 
         // Update tag
         if (await vestingtag?.isDeployed()) {
