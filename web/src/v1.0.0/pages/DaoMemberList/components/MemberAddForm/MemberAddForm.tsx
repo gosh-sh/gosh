@@ -11,7 +11,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '../../../../../components/Form'
 import { Select2ClassNames } from '../../../../../helpers'
-import { ToastStatus } from '../../../../../components/Toast'
 import AsyncSelect from 'react-select/async'
 import yup from '../../../../yup-extended'
 import successImage from '../../../../../assets/images/success.png'
@@ -118,7 +117,7 @@ type TFormValues = {
 }
 
 const MemberAddForm = () => {
-    const { status, createMember } = useCreateDaoMember()
+    const { createMember } = useCreateDaoMember()
     const [transition, setTransition] = useState<{ form: boolean; success: boolean }>({
         form: true,
         success: false,
@@ -135,95 +134,83 @@ const MemberAddForm = () => {
     }
 
     return (
-        <>
-            <ToastStatus status={status} />
-            <AnimatePresence mode="wait" initial={false}>
-                {transition.form && (
-                    <motion.div
-                        key="form"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 1 }}
-                        exit={{ opacity: 0, transition: { duration: 0.5 } }}
+        <AnimatePresence mode="wait" initial={false}>
+            {transition.form && (
+                <motion.div
+                    key="form"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 1 }}
+                    exit={{ opacity: 0, transition: { duration: 0.5 } }}
+                >
+                    <h3 className="text-xl font-medium mb-4">Add user to DAO</h3>
+                    <Formik
+                        initialValues={{ members: [] }}
+                        onSubmit={onCreateMember}
+                        validationSchema={yup.object().shape({
+                            members: yup
+                                .array()
+                                .of(
+                                    yup.object({
+                                        _id: yup.string().required(),
+                                        username: yup
+                                            .string()
+                                            .required('Field is required'),
+                                    }),
+                                )
+                                .min(1)
+                                .max(10),
+                        })}
                     >
-                        <h3 className="text-xl font-medium mb-4">Add user to DAO</h3>
-                        <Formik
-                            initialValues={{ members: [] }}
-                            onSubmit={onCreateMember}
-                            validationSchema={yup.object().shape({
-                                members: yup
-                                    .array()
-                                    .of(
-                                        yup.object({
-                                            _id: yup.string().required(),
-                                            username: yup
-                                                .string()
-                                                .required('Field is required'),
-                                        }),
-                                    )
-                                    .min(1)
-                                    .max(10),
-                            })}
-                        >
-                            {({ values, isSubmitting }) => (
-                                <Form>
-                                    <FieldArray
-                                        name="members"
-                                        component={FieldArrayForm}
-                                    />
-                                    <div className="mt-8">
-                                        <Button
-                                            className="w-full"
-                                            type="submit"
-                                            disabled={
-                                                isSubmitting || !values.members.length
-                                            }
-                                            isLoading={isSubmitting}
-                                        >
-                                            Add users
-                                        </Button>
-                                    </div>
-                                </Form>
-                            )}
-                        </Formik>
-                    </motion.div>
-                )}
+                        {({ values, isSubmitting }) => (
+                            <Form>
+                                <FieldArray name="members" component={FieldArrayForm} />
+                                <div className="mt-8">
+                                    <Button
+                                        className="w-full"
+                                        type="submit"
+                                        disabled={isSubmitting || !values.members.length}
+                                        isLoading={isSubmitting}
+                                    >
+                                        Add users
+                                    </Button>
+                                </div>
+                            </Form>
+                        )}
+                    </Formik>
+                </motion.div>
+            )}
 
-                {transition.success && (
-                    <motion.div
-                        key="success"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 1 }}
-                        exit={{ opacity: 0, transition: { duration: 0.5 } }}
-                        onAnimationComplete={() => {
-                            setTimeout(() => {
-                                setTransition({ form: true, success: false })
-                            }, 7000)
-                        }}
-                    >
-                        <div className="bg-white">
-                            <div className="max-w-[9.75rem] mx-auto">
-                                <img
-                                    src={successImage}
-                                    alt="Success"
-                                    className="w-full"
-                                />
-                            </div>
-                            <div className="mt-6">
-                                <h3 className="text-xl font-medium text-center mb-4">
-                                    Success
-                                </h3>
-                                <p className="text-gray-7c8db5 text-sm">
-                                    Users invited by GOSH username are added to proposal
-                                    and waiting for voting
-                                </p>
-                            </div>
+            {transition.success && (
+                <motion.div
+                    key="success"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 1 }}
+                    exit={{ opacity: 0, transition: { duration: 0.5 } }}
+                    onAnimationComplete={() => {
+                        setTimeout(() => {
+                            setTransition({ form: true, success: false })
+                        }, 7000)
+                    }}
+                >
+                    <div className="bg-white">
+                        <div className="max-w-[9.75rem] mx-auto">
+                            <img src={successImage} alt="Success" className="w-full" />
                         </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </>
+                        <div className="mt-6">
+                            <h3 className="text-xl font-medium text-center mb-4">
+                                Success
+                            </h3>
+                            <p className="text-gray-7c8db5 text-sm">
+                                Users invited by GOSH username are added to proposal and
+                                waiting for voting
+                            </p>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
     )
 }
 

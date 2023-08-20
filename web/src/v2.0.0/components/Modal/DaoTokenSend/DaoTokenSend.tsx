@@ -1,5 +1,5 @@
 import { Dialog } from '@headlessui/react'
-import { ErrorMessage, Field, Form, Formik } from 'formik'
+import { Field, Form, Formik } from 'formik'
 import { useNavigate } from 'react-router-dom'
 import { useSetRecoilState } from 'recoil'
 import { appModalStateAtom } from '../../../../store/app.state'
@@ -13,7 +13,6 @@ import {
     FormikTextarea,
 } from '../../../../components/Formik'
 import { UserSelect } from '../../UserSelect'
-import { ToastStatus } from '../../../../components/Toast'
 import { ModalCloseButton } from '../../../../components/Modal'
 
 type TFormValues = {
@@ -27,7 +26,7 @@ const DaoTokenSendModal = () => {
     const navigate = useNavigate()
     const setModal = useSetRecoilState(appModalStateAtom)
     const dao = useDao()
-    const { send, status } = useSendDaoTokens()
+    const { send } = useSendDaoTokens()
 
     const onModalReset = () => {
         setModal((state) => ({ ...state, isOpen: false }))
@@ -133,8 +132,6 @@ const DaoTokenSendModal = () => {
                     </Form>
                 )}
             </Formik>
-
-            <ToastStatus status={status} />
         </Dialog.Panel>
     )
 }

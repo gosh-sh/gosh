@@ -4,12 +4,11 @@ import { Button } from '../../../../components/Form'
 import { useSetRecoilState } from 'recoil'
 import { appModalStateAtom } from '../../../../store/app.state'
 import { useUpgradeDaoComplete } from '../../../hooks/dao.hooks'
-import { ToastStatus } from '../../../../components/Toast'
 import { ModalCloseButton } from '../../../../components/Modal'
 
 const DaoUpgradeCompleteModal = () => {
     const setModal = useSetRecoilState(appModalStateAtom)
-    const { upgrade, status } = useUpgradeDaoComplete()
+    const { upgrade } = useUpgradeDaoComplete()
 
     const onModalReset = () => {
         setModal((state) => ({ ...state, isOpen: false }))
@@ -49,8 +48,6 @@ const DaoUpgradeCompleteModal = () => {
                     </Form>
                 )}
             </Formik>
-
-            <ToastStatus status={status} />
         </Dialog.Panel>
     )
 }

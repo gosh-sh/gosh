@@ -4,6 +4,8 @@ import { TToastStatus } from '../../types/common.types'
 import { ToastError } from './ToastError'
 import { ToastSuccess } from './ToastSuccess'
 import { useEffect, useRef } from 'react'
+import { useRecoilState } from 'recoil'
+import { appToastStatusAtom } from '../../store/app.state'
 
 const getToastOptions = (status: TToastStatus) => {
     const { type, data } = status
@@ -61,36 +63,45 @@ const getToastOptions = (status: TToastStatus) => {
     }
 }
 
-type TToastStatusProps = {
-    status?: TToastStatus
-}
+type TToastStatusProps = {}
 
 const ToastStatus = (props: TToastStatusProps) => {
-    const { status } = props
-    const toastRef = useRef<any>(null)
+    const [status, setStatus] = useRecoilState(appToastStatusAtom)
+    const toastRef = useRef<any>({})
 
     useEffect(() => {
         toast.onChange((payload) => {
             if (payload.status === 'removed') {
-                toastRef.current = null
+                toastRef.current[payload.id] = null
+                setStatus((state) => ({
+                    ...state,
+                    [payload.id]: { data: { type: null, data: null }, time: 0 },
+                }))
             }
         })
-
-        return () => {
-            toast.dismiss(toastRef.current)
-        }
     }, [])
 
     useEffect(() => {
-        if (status) {
-            const { content, create, update } = getToastOptions(status)
-            if (!toastRef.current) {
-                toastRef.current = toast(content, create)
-            } else {
-                toast.update(toastRef.current, update)
+        for (const key of Object.keys(status)) {
+            const { data, time } = status[key]
+            const refitem = toastRef.current[key]
+
+            if (data.type === null) {
+                continue
+            } else if (data.type !== 'dismiss') {
+                const { content, create, update } = getToastOptions(data)
+                if (!refitem) {
+                    toastRef.current[key] = {
+                        ref: toast(content, { ...create, toastId: key }),
+                        time,
+                    }
+                } else if (time > refitem.time) {
+                    toast.update(refitem.ref, update)
+                    toastRef.current[key].time = time
+                }
+            } else if (data.type === 'dismiss' && toastRef.current[key]) {
+                toast.dismiss(refitem.ref)
             }
-        } else {
-            toast.dismiss(toastRef.current)
         }
     }, [status])
 

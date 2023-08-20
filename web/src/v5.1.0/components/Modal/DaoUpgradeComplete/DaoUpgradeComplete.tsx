@@ -4,7 +4,6 @@ import { Button } from '../../../../components/Form'
 import { useSetRecoilState } from 'recoil'
 import { appModalStateAtom } from '../../../../store/app.state'
 import { useDao, useUpgradeDaoComplete } from '../../../hooks/dao.hooks'
-import { ToastStatus } from '../../../../components/Toast'
 import { ModalCloseButton } from '../../../../components/Modal'
 import { useNavigate } from 'react-router-dom'
 
@@ -12,7 +11,7 @@ const DaoUpgradeCompleteModal = () => {
     const setModal = useSetRecoilState(appModalStateAtom)
     const navigate = useNavigate()
     const dao = useDao()
-    const { upgrade, status } = useUpgradeDaoComplete()
+    const { upgrade } = useUpgradeDaoComplete()
 
     const onModalReset = () => {
         setModal((state) => ({ ...state, isOpen: false }))
@@ -53,8 +52,6 @@ const DaoUpgradeCompleteModal = () => {
                     </Form>
                 )}
             </Formik>
-
-            <ToastStatus status={status} />
         </Dialog.Panel>
     )
 }

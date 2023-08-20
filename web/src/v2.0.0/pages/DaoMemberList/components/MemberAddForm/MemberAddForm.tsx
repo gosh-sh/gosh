@@ -15,7 +15,7 @@ import {
     ToastOptionsShortcuts,
     getUsernameByEmail,
 } from '../../../../../helpers'
-import { ToastError, ToastStatus } from '../../../../../components/Toast'
+import { ToastError } from '../../../../../components/Toast'
 import AsyncCreatableSelect from 'react-select/async-creatable'
 import yup from '../../../../yup-extended'
 import successImage from '../../../../../assets/images/success.png'
@@ -220,7 +220,7 @@ type TFormValues = {
 
 const MemberAddForm = () => {
     const dao = useDao()
-    const { status, createMember, createInvitation } = useCreateDaoMember()
+    const { createMember, createInvitation } = useCreateDaoMember()
     const [transition, setTransition] = useState<{ form: boolean; success: boolean }>({
         form: true,
         success: false,
@@ -393,8 +393,6 @@ const MemberAddForm = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
-
-            <ToastStatus status={status} />
         </>
     )
 }

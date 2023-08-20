@@ -9,7 +9,6 @@ import { BaseField, FormikInput } from '../../../../components/Formik'
 import { UserSelect } from '../../UserSelect'
 import { useDaoMember, useSendMemberTokens } from '../../../hooks/dao.hooks'
 import { ModalCloseButton } from '../../../../components/Modal'
-import { ToastStatus } from '../../../../components/Toast'
 
 type TFormValues = {
     username: string
@@ -22,7 +21,7 @@ const MemberTokenSendModal = () => {
     const {
         details: { balance },
     } = useDaoMember()
-    const { send, status } = useSendMemberTokens()
+    const { send } = useSendMemberTokens()
 
     const getMaxAmount = useCallback(() => {
         if (!balance) {
@@ -115,8 +114,6 @@ const MemberTokenSendModal = () => {
                     </Form>
                 )}
             </Formik>
-
-            <ToastStatus status={status} />
         </Dialog.Panel>
     )
 }

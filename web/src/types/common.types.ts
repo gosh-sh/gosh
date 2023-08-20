@@ -1,5 +1,5 @@
 export type TToastStatus = {
-    type: 'pending' | 'error' | 'success'
+    type: 'pending' | 'error' | 'success' | 'dismiss' | null
     data: any
 }
 

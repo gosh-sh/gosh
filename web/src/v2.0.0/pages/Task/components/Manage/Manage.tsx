@@ -11,7 +11,7 @@ import { Button } from '../../../../../components/Form'
 import { useUser } from '../../../../hooks/user.hooks'
 import { useMemo } from 'react'
 import { toast } from 'react-toastify'
-import { ToastError, ToastStatus, ToastSuccess } from '../../../../../components/Toast'
+import { ToastError, ToastSuccess } from '../../../../../components/Toast'
 import { useNavigate } from 'react-router-dom'
 
 type TTaskManageProps = {
@@ -25,7 +25,7 @@ const TaskManage = (props: TTaskManageProps) => {
     const dao = useDao()
     const member = useDaoMember()
     const { receiveReward } = useReceiveTaskReward()
-    const { deleteTask, status } = useDeleteTask()
+    const { deleteTask } = useDeleteTask()
 
     const isTaskTeamMember = useMemo(() => {
         const isAssigner = task.team?.assigners.find(
@@ -139,8 +139,6 @@ const TaskManage = (props: TTaskManageProps) => {
                     )}
                 </div>
             </div>
-
-            <ToastStatus status={status} />
         </div>
     )
 }

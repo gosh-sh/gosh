@@ -3,7 +3,6 @@ import { useSetRecoilState } from 'recoil'
 import yup from '../../../yup-extended'
 import { PinCodeModal } from '../../../../components/Modal'
 import { appModalStateAtom } from '../../../../store/app.state'
-import { ToastStatus } from '../../../../components/Toast'
 import { TOAuthSession } from '../../../types/oauth.types'
 import PreviousStep from './PreviousStep'
 import { FormikInput } from '../../../../components/Formik'
@@ -19,7 +18,7 @@ type TGoshUsernameProps = {
 const GoshUsername = (props: TGoshUsernameProps) => {
     const { oauth, signoutOAuth } = props
     const { data, updateData } = useOnboardingData(oauth)
-    const { signup, status } = useOnboardingSignup(oauth)
+    const { signup } = useOnboardingSignup(oauth)
     const setModal = useSetRecoilState(appModalStateAtom)
 
     const onBackClick = () => {
@@ -143,8 +142,6 @@ const GoshUsername = (props: TGoshUsernameProps) => {
                     </Formik>
                 </div>
             </div>
-
-            <ToastStatus status={status} />
         </div>
     )
 }

@@ -6,8 +6,6 @@ import { Button } from '../../../../components/Form'
 import { useSetRecoilState } from 'recoil'
 import { appModalStateAtom } from '../../../../store/app.state'
 import { useCreateRepository } from '../../../hooks/repository.hooks'
-import { toast } from 'react-toastify'
-import { ToastError } from '../../../../components/Toast'
 import { ModalCloseButton } from '../../../../components/Modal'
 
 type TFormValues = {
@@ -28,7 +26,6 @@ const RepositoryCreateModal = () => {
             onModalReset()
         } catch (e: any) {
             console.error(e.message)
-            toast.error(<ToastError error={e} />)
         }
     }
 

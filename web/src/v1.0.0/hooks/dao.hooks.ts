@@ -37,18 +37,23 @@ import { getPaginatedAccounts } from '../../blockchain/utils'
 import { DaoEvent } from '../blockchain/daoevent'
 import { GoshAdapterFactory } from 'react-gosh'
 import { daoRepositoryListAtom } from '../store/repository.state'
+import { appToastStatusSelector } from '../../store/app.state'
 
 export function useCreateDao() {
     const profile = useProfile()
     const setUserDaoList = useSetRecoilState(userDaoListAtom)
-    const [status, setStatus] = useState<TToastStatus>()
+    const [status, setStatus] = useRecoilState(appToastStatusSelector('__createdao'))
 
     const createDao = async (name: string, members: string[]) => {
         try {
-            setStatus({ type: 'pending', data: 'Create DAO' })
+            setStatus((state) => ({ ...state, type: 'pending', data: 'Create DAO' }))
 
             // Validate member usernames
-            setStatus({ type: 'pending', data: 'Validate usernames' })
+            setStatus((state) => ({
+                ...state,
+                type: 'pending',
+                data: 'Validate usernames',
+            }))
             const membersClean = members
                 .map((item) => item.trim().toLowerCase())
                 .filter((item) => !!item)
@@ -63,7 +68,11 @@ export function useCreateDao() {
             })
 
             // Resolve member profiles
-            setStatus({ type: 'pending', data: 'Resolve profiles' })
+            setStatus((state) => ({
+                ...state,
+                type: 'pending',
+                data: 'Resolve profiles',
+            }))
             if (!profile) {
                 throw new GoshError(EGoshError.PROFILE_NOT_EXIST, {
                     message: 'You might not be authenticated',
@@ -82,16 +91,17 @@ export function useCreateDao() {
             )
 
             // Create DAO
-            setStatus({ type: 'pending', data: 'Deploy DAO' })
+            setStatus((state) => ({ ...state, type: 'pending', data: 'Deploy DAO' }))
             const account = await profile.createDao(getSystemContract(), name, [
                 profile.address,
                 ...membersProfileList,
             ])
             const version = await account.getVersion()
-            setStatus({
+            setStatus((state) => ({
+                ...state,
                 type: 'success',
                 data: { title: 'Create DAO', content: 'DAO created' },
-            })
+            }))
             setUserDaoList((state) => ({
                 ...state,
                 items: [
@@ -107,7 +117,7 @@ export function useCreateDao() {
                 ],
             }))
         } catch (e: any) {
-            setStatus({ type: 'error', data: e })
+            setStatus((state) => ({ ...state, type: 'error', data: e }))
             throw e
         }
     }
@@ -432,6 +442,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
     const { details: dao } = useRecoilValue(daoDetailsAtom)
     const [data, setData] = useRecoilState(daoMemberAtom)
     const resetData = useResetRecoilState(daoMemberAtom)
+    const setStatus0 = useSetRecoilState(appToastStatusSelector('__activatedaowallet'))
 
     const activate = async (profile: UserProfile, wallet: DaoWallet) => {
         if (!(await wallet.isDeployed())) {
@@ -447,28 +458,27 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
         }
 
         try {
-            setData((state) => ({
+            setStatus0((state) => ({
                 ...state,
-                status: { type: 'pending', data: 'Activating account' },
+                type: 'pending',
+                data: 'Activating DAO wallet',
             }))
 
             await profile.turnOn(wallet.address, user.keys!.public)
 
+            setStatus0((state) => ({ ...state, type: 'dismiss' }))
             setData((state) => ({
                 ...state,
-                status: undefined,
                 details: { ...state.details, isReady: true },
             }))
         } catch (e: any) {
-            setData((state) => ({
+            setStatus0((state) => ({
                 ...state,
-                status: {
-                    type: 'error',
-                    data: new GoshError('Activate account failed', {
-                        message: e.message,
-                        retry: 'Retring after 15s',
-                    }),
-                },
+                type: 'error',
+                data: new GoshError('Activate account failed', {
+                    message: e.message,
+                    retry: 'Retrying after 15s',
+                }),
             }))
             setTimeout(activate, 15000)
         }
@@ -775,14 +785,20 @@ function useDaoHelpers() {
 }
 
 export function useCreateDaoMember() {
-    const [status, setStatus] = useState<TToastStatus>()
     const { details: member } = useRecoilValue(daoMemberAtom)
     const { beforeCreateEvent } = useDaoHelpers()
+    const [status, setStatus] = useRecoilState(
+        appToastStatusSelector('__createdaomember'),
+    )
 
     const createMember = async (username: string[]) => {
         try {
             // Resolve username -> profile
-            setStatus({ type: 'pending', data: 'Resolve user profiles' })
+            setStatus((state) => ({
+                ...state,
+                type: 'pending',
+                data: 'Resolve user profiles',
+            }))
             const profiles = await executeByChunk(
                 username,
                 MAX_PARALLEL_READ,
@@ -807,27 +823,30 @@ export function useCreateDaoMember() {
             // Skip `member.wallet` check, because `beforeCreate` checks it
             await member.wallet!.createDaoMember(profiles)
 
-            setStatus({
+            setStatus((state) => ({
+                ...state,
                 type: 'success',
-                data: { title: 'Add DAO members', content: 'Event created' },
-            })
+                data: {
+                    title: 'Add DAO members',
+                    content: 'Members add event created',
+                },
+            }))
         } catch (e: any) {
-            setStatus({ type: 'error', data: e })
+            setStatus((state) => ({ ...state, type: 'error', data: e }))
             throw e
         }
     }
 
-    return {
-        status,
-        createMember,
-    }
+    return { status, createMember }
 }
 
 export function useDeleteDaoMember() {
-    const [status, setStatus] = useState<TToastStatus>()
     const { details: member } = useRecoilValue(daoMemberAtom)
     const setMemberList = useSetRecoilState(daoMemberListAtom)
     const { beforeCreateEvent } = useDaoHelpers()
+    const [status, setStatus] = useRecoilState(
+        appToastStatusSelector('__deletedaomember'),
+    )
 
     const deleteMember = async (username: string[]) => {
         try {
@@ -840,7 +859,11 @@ export function useDeleteDaoMember() {
             }))
 
             // Resolve username -> profile
-            setStatus({ type: 'pending', data: 'Resolve user profiles' })
+            setStatus((state) => ({
+                ...state,
+                type: 'pending',
+                data: 'Resolve user profiles',
+            }))
             const profiles = await executeByChunk(
                 username,
                 MAX_PARALLEL_READ,
@@ -865,12 +888,13 @@ export function useDeleteDaoMember() {
             // Skip `member.wallet` check, because `beforeCreate` checks it
             await member.wallet!.deleteDaoMember(profiles)
 
-            setStatus({
+            setStatus((state) => ({
+                ...state,
                 type: 'success',
                 data: { title: 'Remove DAO members', content: 'Event created' },
-            })
+            }))
         } catch (e: any) {
-            setStatus({ type: 'error', data: e })
+            setStatus((state) => ({ ...state, type: 'error', data: e }))
             throw e
         } finally {
             setMemberList((state) => ({
@@ -1153,7 +1177,7 @@ export function useDaoEvent(
 export function useVoteDaoEvent() {
     const { details: member } = useRecoilValue(daoMemberAtom)
     const { beforeVote } = useDaoHelpers()
-    const [status, setStatus] = useState<TToastStatus>()
+    const [status, setStatus] = useRecoilState(appToastStatusSelector('__voteforevent'))
 
     const vote = async (params: {
         platformId: string
@@ -1163,23 +1187,22 @@ export function useVoteDaoEvent() {
         const { platformId, choice, amount } = params
         try {
             // Prepare balance for create event
-            await beforeVote(amount, platformId, {
-                onPendingCallback: setStatus,
-            })
+            await beforeVote(amount, platformId, { onPendingCallback: setStatus })
 
             // Send vote
             // Skip `member.wallet` check, because `beforeVote` checks it
             await member.wallet!.smvVote({ platformId, choice, amount })
 
-            setStatus({
+            setStatus((state) => ({
+                ...state,
                 type: 'success',
                 data: {
                     title: 'Send vote',
                     content: 'Your vote was succesfully sent',
                 },
-            })
+            }))
         } catch (e: any) {
-            setStatus({ type: 'error', data: e })
+            setStatus((state) => ({ ...state, type: 'error', data: e }))
             throw e
         }
     }
@@ -1193,7 +1216,7 @@ export function useUpgradeDao() {
     const { beforeCreateEvent } = useDaoHelpers()
     const [versions, setVersions] = useState<string[]>()
     const [alert, setAlert] = useState<'isNotLatest' | 'isUpgradeAvailable'>()
-    const [status, setStatus] = useState<TToastStatus>()
+    const [status, setStatus] = useRecoilState(appToastStatusSelector('__upgradedao'))
 
     useEffect(() => {
         const _getAvailableVersions = () => {
@@ -1251,7 +1274,7 @@ export function useUpgradeDao() {
 
     const upgrade = async (version: string, comment: string) => {
         try {
-            setStatus({ type: 'pending', data: 'Creating event' })
+            setStatus((state) => ({ ...state, type: 'pending', data: 'Creating event' }))
             if (Object.keys(AppConfig.versions).indexOf(version) < 0) {
                 throw new GoshError(
                     'Upgrade error',
@@ -1266,12 +1289,13 @@ export function useUpgradeDao() {
             // Skip `member.wallet` check, because `beforeCreate` checks it
             await member.details.wallet!.upgradeDao(version, { description: comment })
 
-            setStatus({
+            setStatus((state) => ({
+                ...state,
                 type: 'success',
                 data: { title: 'Upgrade DAO', content: 'Event created' },
-            })
+            }))
         } catch (e: any) {
-            setStatus({ type: 'error', data: e })
+            setStatus((state) => ({ ...state, type: 'error', data: e }))
             throw e
         }
     }

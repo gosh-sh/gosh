@@ -6,7 +6,6 @@ import { shortString } from '../../../../../utils'
 import Skeleton from '../../../../../components/Skeleton'
 import { useDao, useDeleteDaoMember, useDaoMember } from '../../../../hooks/dao.hooks'
 import { useNavigate } from 'react-router-dom'
-import { ToastStatus } from '../../../../../components/Toast'
 import { ErrorMessage, Field } from 'formik'
 import { FormikInput } from '../../../../../components/Formik'
 import classNames from 'classnames'
@@ -72,7 +71,7 @@ const ListItem = (props: TListItemProps) => {
     const navigate = useNavigate()
     const dao = useDao()
     const member = useDaoMember()
-    const { status, deleteMember } = useDeleteDaoMember()
+    const { deleteMember } = useDeleteDaoMember()
 
     const onDelete = async (user: { username: string; usertype: EDaoMemberType }) => {
         if (window.confirm('Delete member?')) {
@@ -228,8 +227,6 @@ const ListItem = (props: TListItemProps) => {
                     )}
                 </div>
             </div>
-
-            <ToastStatus status={status} />
         </>
     )
 }

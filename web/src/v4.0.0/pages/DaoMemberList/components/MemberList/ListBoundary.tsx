@@ -11,7 +11,6 @@ import yup from '../../../../yup-extended'
 import { useDao, useDaoMember, useUpdateDaoMember } from '../../../../hooks/dao.hooks'
 import { FormikTextarea } from '../../../../../components/Formik'
 import { Button } from '../../../../../components/Form'
-import { ToastStatus } from '../../../../../components/Toast'
 import { useNavigate } from 'react-router-dom'
 
 type TUpdateFormValues = {
@@ -30,7 +29,7 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
     const dao = useDao()
     const memberList = useRecoilValue(daoMemberListSelector(search))
     const member = useDaoMember()
-    const { updateMember, status } = useUpdateDaoMember()
+    const { updateMember } = useUpdateDaoMember()
 
     const onUpdateMember = async (values: TUpdateFormValues) => {
         try {
@@ -133,8 +132,6 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
                     </Form>
                 )}
             </Formik>
-
-            <ToastStatus status={status} />
         </div>
     )
 }

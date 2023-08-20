@@ -1,7 +1,6 @@
 import { Field, Form, Formik } from 'formik'
 import { FormikInput, FormikTextarea } from '../../../components/Formik'
 import { useNavigate } from 'react-router-dom'
-import { ToastStatus } from '../../../components/Toast'
 import yup from '../../yup-extended'
 import { Button } from '../../../components/Form'
 import { useCreateDao } from '../../hooks/dao.hooks'
@@ -13,7 +12,7 @@ type TFormValues = {
 
 const DaoCreatePage = () => {
     const navigate = useNavigate()
-    const { createDao, status } = useCreateDao()
+    const { createDao } = useCreateDao()
 
     const onDaoCreate = async (values: TFormValues) => {
         const { name, members } = values
@@ -89,8 +88,6 @@ const DaoCreatePage = () => {
                     </Form>
                 )}
             </Formik>
-
-            <ToastStatus status={status} />
         </div>
     )
 }

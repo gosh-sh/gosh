@@ -7,7 +7,6 @@ import { appModalStateAtom } from '../../../../store/app.state'
 import { FormikInput, FormikTextarea } from '../../../../components/Formik'
 import { Button } from '../../../../components/Form'
 import { useDao, useMintDaoTokens } from '../../../hooks/dao.hooks'
-import { ToastStatus } from '../../../../components/Toast'
 import { ModalCloseButton } from '../../../../components/Modal'
 
 type TFormValues = {
@@ -19,7 +18,7 @@ const DaoTokenMintModal = () => {
     const navigate = useNavigate()
     const setModal = useSetRecoilState(appModalStateAtom)
     const dao = useDao()
-    const { mint, status } = useMintDaoTokens()
+    const { mint } = useMintDaoTokens()
 
     const onModalReset = () => {
         setModal((state) => ({ ...state, isOpen: false }))
@@ -89,8 +88,6 @@ const DaoTokenMintModal = () => {
                     </Form>
                 )}
             </Formik>
-
-            <ToastStatus status={status} />
         </Dialog.Panel>
     )
 }

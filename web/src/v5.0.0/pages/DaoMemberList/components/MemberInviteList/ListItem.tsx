@@ -3,7 +3,7 @@ import { TDaoInviteListItem } from '../../../../types/dao.types'
 import { shortString } from '../../../../../utils'
 import Skeleton from '../../../../../components/Skeleton'
 import { useDao, useDaoInviteList } from '../../../../hooks/dao.hooks'
-import { ToastError, ToastStatus } from '../../../../../components/Toast'
+import { ToastError } from '../../../../../components/Toast'
 import { Button } from '../../../../../components/Form'
 import { EDaoInviteStatus } from '../../../../types/onboarding.types'
 import classNames from 'classnames'
@@ -62,7 +62,7 @@ type TListItemProps = {
 const ListItem = (props: TListItemProps) => {
     const { item } = props
     const dao = useDao()
-    const { revoke, create, createStatus } = useDaoInviteList()
+    const { revoke, create } = useDaoInviteList()
 
     const onRevoke = async (id: string) => {
         if (window.confirm('Revoke token?')) {
@@ -153,8 +153,6 @@ const ListItem = (props: TListItemProps) => {
                     )}
                 </div>
             </div>
-
-            <ToastStatus status={createStatus} />
         </>
     )
 }

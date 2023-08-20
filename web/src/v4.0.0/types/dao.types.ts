@@ -73,7 +73,6 @@ export type TDaoDetails = {
 }
 
 export type TDaoMember = {
-    status?: TToastStatus
     details: {
         profile: UserProfile | null
         wallet: DaoWallet | null

@@ -1,4 +1,4 @@
-import { ErrorMessage, Field, Form, Formik } from 'formik'
+import { Field, Form, Formik } from 'formik'
 import { useNavigate } from 'react-router-dom'
 import { useDao, useUpdateDaoSettings } from '../../hooks/dao.hooks'
 import { BaseField, FormikCheckbox, FormikTextarea } from '../../../components/Formik'
@@ -9,7 +9,6 @@ import yup from '../../yup-extended'
 import _ from 'lodash'
 import { useCallback } from 'react'
 import Alert from '../../../components/Alert'
-import { ToastStatus } from '../../../components/Toast'
 
 type TFormValues = {
     tags: string[]
@@ -23,7 +22,7 @@ type TFormValues = {
 const DaoSetupPage = () => {
     const navigate = useNavigate()
     const dao = useDao()
-    const { update, status } = useUpdateDaoSettings()
+    const { update } = useUpdateDaoSettings()
 
     const isDirty = useCallback(
         (values: TFormValues) => {
@@ -197,8 +196,6 @@ const DaoSetupPage = () => {
                             </Button>
                         </div>
                     </div>
-
-                    <ToastStatus status={status} />
                 </Form>
             )}
         </Formik>

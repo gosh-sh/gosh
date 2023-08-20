@@ -9,22 +9,28 @@ import { EGoshError, GoshError } from '../../errors'
 import { executeByChunk, whileFinite } from '../../utils'
 import { MAX_PARALLEL_READ } from '../../constants'
 import _ from 'lodash'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import { GoshRepository } from '../blockchain/repository'
-import { TToastStatus } from '../../types/common.types'
 import { useDaoHelpers } from './dao.hooks'
+import { appToastStatusSelector } from '../../store/app.state'
 
 export function useCreateRepository() {
     const { details: dao } = useRecoilValue(daoDetailsAtom)
     const { details: member } = useRecoilValue(daoMemberAtom)
     const setRepositories = useSetRecoilState(daoRepositoryListAtom)
     const { beforeCreateEvent } = useDaoHelpers()
-    const [status, setStatus] = useState<TToastStatus>()
+    const [status, setStatus] = useRecoilState(
+        appToastStatusSelector('__createrepository'),
+    )
 
     const create = useCallback(
         async (name: string, description?: string) => {
             try {
-                setStatus({ type: 'pending', data: 'Creating repository' })
+                setStatus((state) => ({
+                    ...state,
+                    type: 'pending',
+                    data: 'Creating repository',
+                }))
 
                 name = name.toLowerCase()
                 const { valid, reason } = validateRepoName(name)
@@ -60,7 +66,11 @@ export function useCreateRepository() {
                 }
 
                 // Deploy repository
-                setStatus({ type: 'pending', data: 'Create repository' })
+                setStatus((state) => ({
+                    ...state,
+                    type: 'pending',
+                    data: 'Create repository',
+                }))
                 await member.wallet.createRepository({
                     name,
                     description,
@@ -85,26 +95,28 @@ export function useCreateRepository() {
                         ...state,
                         items: [{ account, version, ...details }, ...state.items],
                     }))
-                    setStatus({
+                    setStatus((state) => ({
+                        ...state,
                         type: 'success',
                         data: {
                             title: 'Create repository',
                             content: 'Repository created',
                         },
-                    })
+                    }))
                 } else {
-                    setStatus({
+                    setStatus((state) => ({
+                        ...state,
                         type: 'success',
                         data: {
                             title: 'Create repository',
                             content: 'Create repository event created',
                         },
-                    })
+                    }))
                 }
 
                 return { repository: account, isEvent: !alone }
             } catch (e: any) {
-                setStatus({ type: 'error', data: e })
+                setStatus((state) => ({ ...state, type: 'error', data: e }))
                 throw e
             }
         },

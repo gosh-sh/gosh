@@ -14,7 +14,7 @@ import {
     repositoriesSelector,
 } from '../store/onboarding.state'
 import { supabase } from '../../supabase'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import { TOAuthSession } from '../types/oauth.types'
 import {
     EDaoInviteStatus,
@@ -29,8 +29,8 @@ import { useUser } from './user.hooks'
 import { validateOnboardingDao, validateOnboardingRepo } from '../validators'
 import { debounce } from 'lodash'
 import { useOauth } from './oauth.hooks'
-import { TToastStatus } from '../../types/common.types'
 import _ from 'lodash'
+import { appToastStatusSelector } from '../../store/app.state'
 
 export function useOnboardingData(oauth?: TOAuthSession) {
     const [data, setData] = useRecoilState(onboardingDataAtom)
@@ -280,7 +280,9 @@ export function useOnboardingSignup(oauth: TOAuthSession) {
     const repositories = useRecoilValue(repositoriesCheckedSelector)
     const invites = useRecoilValue(daoInvitesSelector)
     const { signup: _signup } = useUser()
-    const [status, setStatus] = useState<TToastStatus>()
+    const [status, setStatus] = useRecoilState(
+        appToastStatusSelector('__onboardingsignup'),
+    )
 
     const getDbUser = async (username: string) => {
         const { data, error } = await supabase.client
@@ -350,7 +352,7 @@ export function useOnboardingSignup(oauth: TOAuthSession) {
             }
 
             // Prepare data
-            setStatus({ type: 'pending', data: 'Prepare data' })
+            setStatus((state) => ({ ...state, type: 'pending', data: 'Prepare data' }))
             username = username.trim().toLowerCase()
             const seed = data.phrase.join(' ')
             const keypair = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
@@ -358,11 +360,19 @@ export function useOnboardingSignup(oauth: TOAuthSession) {
             })
 
             // Deploy GOSH account
-            setStatus({ type: 'pending', data: 'Create GOSH account' })
+            setStatus((state) => ({
+                ...state,
+                type: 'pending',
+                data: 'Create GOSH account',
+            }))
             await _signup({ phrase: seed, username })
 
             // Get or create DB user
-            setStatus({ type: 'pending', data: 'Update onboarding DB' })
+            setStatus((state) => ({
+                ...state,
+                type: 'pending',
+                data: 'Update onboarding DB',
+            }))
             let dbUser = await getDbUser(username)
             if (!dbUser) {
                 dbUser = await createDbUser(
@@ -423,10 +433,10 @@ export function useOnboardingSignup(oauth: TOAuthSession) {
                 }),
             )
 
-            setStatus(undefined)
+            setStatus((state) => ({ ...state, type: 'dismiss', data: null }))
             return validationResult.every((r) => !!r)
         } catch (e: any) {
-            setStatus({ type: 'error', data: e })
+            setStatus((state) => ({ ...state, type: 'error', data: e }))
             throw e
         }
     }

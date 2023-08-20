@@ -4,7 +4,6 @@ import { useDao, useUpgradeDao } from '../../hooks/dao.hooks'
 import yup from '../../yup-extended'
 import { FormikSelect, FormikTextarea } from '../../../components/Formik'
 import { Button } from '../../../components/Form'
-import { ToastStatus } from '../../../components/Toast'
 import Alert from '../../../components/Alert'
 import { DISABLED_VERSIONS } from '../../../constants'
 
@@ -17,7 +16,7 @@ const DaoUpgradePage = () => {
     const { daoname } = useParams()
     const navigate = useNavigate()
     const dao = useDao()
-    const { versions, upgrade, status } = useUpgradeDao()
+    const { versions, upgrade } = useUpgradeDao()
 
     const onDaoUpgrade = async (values: TFormValues) => {
         try {
@@ -123,8 +122,6 @@ const DaoUpgradePage = () => {
                     </Form>
                 )}
             </Formik>
-
-            <ToastStatus status={status} />
         </div>
     )
 }

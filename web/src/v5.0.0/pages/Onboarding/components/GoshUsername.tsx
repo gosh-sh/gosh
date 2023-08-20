@@ -9,7 +9,6 @@ import { FormikInput } from '../../../../components/Formik'
 import { Button } from '../../../../components/Form'
 import Alert from '../../../../components/Alert'
 import { useOnboardingData, useOnboardingSignup } from '../../../hooks/onboarding.hooks'
-import { ToastStatus } from '../../../../components/Toast'
 
 type TGoshUsernameProps = {
     oauth: TOAuthSession
@@ -19,7 +18,7 @@ type TGoshUsernameProps = {
 const GoshUsername = (props: TGoshUsernameProps) => {
     const { oauth, signoutOAuth } = props
     const { data, updateData } = useOnboardingData(oauth)
-    const { signup, status } = useOnboardingSignup(oauth)
+    const { signup } = useOnboardingSignup(oauth)
     const setModal = useSetRecoilState(appModalStateAtom)
 
     const onBackClick = () => {
@@ -143,8 +142,6 @@ const GoshUsername = (props: TGoshUsernameProps) => {
                     </Formik>
                 </div>
             </div>
-
-            <ToastStatus status={status} />
         </div>
     )
 }

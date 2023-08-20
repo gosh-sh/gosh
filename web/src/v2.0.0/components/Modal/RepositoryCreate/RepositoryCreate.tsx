@@ -6,8 +6,6 @@ import { Button } from '../../../../components/Form'
 import { useSetRecoilState } from 'recoil'
 import { appModalStateAtom } from '../../../../store/app.state'
 import { useCreateRepository } from '../../../hooks/repository.hooks'
-import { toast } from 'react-toastify'
-import { ToastError, ToastStatus } from '../../../../components/Toast'
 import { useNavigate } from 'react-router-dom'
 import { useDao } from '../../../hooks/dao.hooks'
 import { ModalCloseButton } from '../../../../components/Modal'
@@ -21,7 +19,7 @@ const RepositoryCreateModal = () => {
     const navigate = useNavigate()
     const setModal = useSetRecoilState(appModalStateAtom)
     const dao = useDao()
-    const { create: createRepository, status } = useCreateRepository()
+    const { create: createRepository } = useCreateRepository()
 
     const onModalReset = () => {
         setModal((state) => ({ ...state, isOpen: false }))
@@ -37,7 +35,6 @@ const RepositoryCreateModal = () => {
             }
         } catch (e: any) {
             console.error(e.message)
-            toast.error(<ToastError error={e} />)
         }
     }
 
@@ -96,8 +93,6 @@ const RepositoryCreateModal = () => {
                     </Form>
                 )}
             </Formik>
-
-            <ToastStatus status={status} />
         </Dialog.Panel>
     )
 }

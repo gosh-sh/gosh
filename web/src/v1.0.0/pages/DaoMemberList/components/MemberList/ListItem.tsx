@@ -6,7 +6,6 @@ import { shortString } from '../../../../../utils'
 import Skeleton from '../../../../../components/Skeleton'
 import { useDao, useDeleteDaoMember, useDaoMember } from '../../../../hooks/dao.hooks'
 import { useNavigate } from 'react-router-dom'
-import { ToastStatus } from '../../../../../components/Toast'
 import classNames from 'classnames'
 import { MemberIcon } from '../../../../../components/Dao'
 import { Button } from '../../../../../components/Form'
@@ -63,7 +62,7 @@ const ListItem = (props: TListItemProps) => {
     const navigate = useNavigate()
     const dao = useDao()
     const member = useDaoMember()
-    const { status, deleteMember } = useDeleteDaoMember()
+    const { deleteMember } = useDeleteDaoMember()
 
     const onDelete = async (username: string) => {
         if (window.confirm('Delete member?')) {
@@ -77,57 +76,52 @@ const ListItem = (props: TListItemProps) => {
     }
 
     return (
-        <>
-            <div
-                className={classNames(
-                    'flex items-center px-3 py-2 gap-x-4 gap-y-2',
-                    basis.contaner,
-                )}
-            >
-                <div className={basis.name}>
-                    <MemberIcon type="user" className="mr-2" size="sm" fixedWidth />
-                    {item.username}
-                </div>
-                <div className={basis.profile}>
-                    <CopyClipboard
-                        className="font-light font-mono text-xs"
-                        componentProps={{ text: item.profile.address }}
-                        label={shortString(item.profile.address, 6, 6)}
-                    />
-                </div>
-                <div className={basis.wallet}>
-                    <CopyClipboard
-                        className="font-light font-mono text-xs"
-                        componentProps={{ text: item.wallet.address }}
-                        label={shortString(item.wallet.address, 6, 6)}
-                    />
-                </div>
-                <div className={basis.allowance}>{item.allowance.toLocaleString()}</div>
-                <div className={basis.buttons}>
-                    {member.details.isMember && (
-                        <Button
-                            type="button"
-                            variant="outline-danger"
-                            size="sm"
-                            className={classNames(
-                                'w-full md:w-auto md:!border-transparent md:disabled:!border-transparent',
-                            )}
-                            onClick={() => onDelete(item.username)}
-                            disabled={
-                                item.isFetching ||
-                                item.profile.address === dao.details.owner
-                            }
-                            isLoading={item.isFetching}
-                        >
-                            <FontAwesomeIcon icon={faTimes} size="lg" />
-                            <span className="ml-2 md:hidden">Delete member</span>
-                        </Button>
-                    )}
-                </div>
+        <div
+            className={classNames(
+                'flex items-center px-3 py-2 gap-x-4 gap-y-2',
+                basis.contaner,
+            )}
+        >
+            <div className={basis.name}>
+                <MemberIcon type="user" className="mr-2" size="sm" fixedWidth />
+                {item.username}
             </div>
-
-            <ToastStatus status={status} />
-        </>
+            <div className={basis.profile}>
+                <CopyClipboard
+                    className="font-light font-mono text-xs"
+                    componentProps={{ text: item.profile.address }}
+                    label={shortString(item.profile.address, 6, 6)}
+                />
+            </div>
+            <div className={basis.wallet}>
+                <CopyClipboard
+                    className="font-light font-mono text-xs"
+                    componentProps={{ text: item.wallet.address }}
+                    label={shortString(item.wallet.address, 6, 6)}
+                />
+            </div>
+            <div className={basis.allowance}>{item.allowance.toLocaleString()}</div>
+            <div className={basis.buttons}>
+                {member.details.isMember && (
+                    <Button
+                        type="button"
+                        variant="outline-danger"
+                        size="sm"
+                        className={classNames(
+                            'w-full md:w-auto md:!border-transparent md:disabled:!border-transparent',
+                        )}
+                        onClick={() => onDelete(item.username)}
+                        disabled={
+                            item.isFetching || item.profile.address === dao.details.owner
+                        }
+                        isLoading={item.isFetching}
+                    >
+                        <FontAwesomeIcon icon={faTimes} size="lg" />
+                        <span className="ml-2 md:hidden">Delete member</span>
+                    </Button>
+                )}
+            </div>
+        </div>
     )
 }
 

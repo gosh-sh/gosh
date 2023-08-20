@@ -13,7 +13,6 @@ import {
     FormikTextarea,
 } from '../../../../components/Formik'
 import { UserSelect } from '../../UserSelect'
-import { ToastStatus } from '../../../../components/Toast'
 import { ModalCloseButton } from '../../../../components/Modal'
 
 type TFormValues = {
@@ -28,7 +27,7 @@ const DaoTokenSendModal = () => {
     const navigate = useNavigate()
     const setModal = useSetRecoilState(appModalStateAtom)
     const dao = useDao()
-    const { send, status } = useSendDaoTokens()
+    const { send } = useSendDaoTokens()
 
     const onModalReset = () => {
         setModal((state) => ({ ...state, isOpen: false }))
@@ -145,8 +144,6 @@ const DaoTokenSendModal = () => {
                     </Form>
                 )}
             </Formik>
-
-            <ToastStatus status={status} />
         </Dialog.Panel>
     )
 }

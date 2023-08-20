@@ -5,7 +5,6 @@ import { FormikTextarea } from '../../../../components/Formik'
 import { Button } from '../../../../components/Form'
 import { useDao, useDaoInviteList, useDaoMember } from '../../../hooks/dao.hooks'
 import classNames from 'classnames'
-import { ToastStatus } from '../../../../components/Toast'
 import Alert from '../../../../components/Alert/Alert'
 
 type TDaoInvitationSubmitProps = {
@@ -18,7 +17,7 @@ const DaoInvitationSubmit = (props: TDaoInvitationSubmitProps) => {
     const navigate = useNavigate()
     const dao = useDao()
     const member = useDaoMember()
-    const { create, createStatus } = useDaoInviteList()
+    const { create } = useDaoInviteList()
 
     const onFormSubmit = async (values: { comment: string }) => {
         try {
@@ -92,8 +91,6 @@ const DaoInvitationSubmit = (props: TDaoInvitationSubmitProps) => {
                     )}
                 </Formik>
             </div>
-
-            <ToastStatus status={createStatus} />
         </>
     )
 }

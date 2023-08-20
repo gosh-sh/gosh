@@ -9,7 +9,6 @@ import { ModalCloseButton } from '../../../../components/Modal'
 import { FormikTextarea } from '../../../../components/Formik'
 import { Button } from '../../../../components/Form'
 import { useDao, useCreateDaoMember } from '../../../hooks/dao.hooks'
-import { ToastStatus } from '../../../../components/Toast'
 
 type TFormValues = {
     comment: string
@@ -20,7 +19,7 @@ const RequestDaoMembershipModal = () => {
     const setModal = useSetRecoilState(appModalStateAtom)
     const { user } = useUser()
     const dao = useDao()
-    const { createMember, status } = useCreateDaoMember()
+    const { createMember } = useCreateDaoMember()
 
     const onModalReset = () => {
         setModal((state) => ({ ...state, isOpen: false }))
@@ -78,8 +77,6 @@ const RequestDaoMembershipModal = () => {
                     </Form>
                 )}
             </Formik>
-
-            <ToastStatus status={status} />
         </Dialog.Panel>
     )
 }

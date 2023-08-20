@@ -15,7 +15,6 @@ import { Select2ClassNames } from '../../../helpers'
 import { getSystemContract } from '../../blockchain/helpers'
 import { useCallback } from 'react'
 import CreatableSelect from 'react-select/creatable'
-import { ToastStatus } from '../../../components/Toast'
 
 type TFormValues = {
     repository: string
@@ -34,7 +33,7 @@ const TaskCreatePage = () => {
     const navigate = useNavigate()
     const dao = useDao()
     const repositoryList = useDaoRepositoryList()
-    const { createTask, getTokenAmount, status } = useCreateTask()
+    const { createTask, getTokenAmount } = useCreateTask()
 
     const getRepositoryOptions = useCallback(
         async (input: string) => {
@@ -343,8 +342,6 @@ const TaskCreatePage = () => {
                     </Form>
                 )}
             </Formik>
-
-            <ToastStatus status={status} />
         </>
     )
 }

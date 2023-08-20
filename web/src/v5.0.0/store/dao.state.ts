@@ -38,6 +38,7 @@ export const daoMemberAtom = atom<TDaoMember>({
             wallet: null,
             allowance: null,
             balance: null,
+            vesting: null,
             isFetched: false,
             isMember: false,
             isLimited: false,

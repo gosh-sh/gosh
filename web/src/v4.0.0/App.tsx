@@ -39,6 +39,7 @@ import CommitPage from '../pages/Commit'
 import MergeCreatePage from '../pages/MergeCreate'
 import BuildPage from '../docker-extension/pages/Build'
 import GotoPage from '../pages/Goto'
+import { ToastStatus } from '../components/Toast'
 // TODO: /Update after full refactor
 
 const App = () => {
@@ -122,6 +123,7 @@ const App = () => {
             <footer className="footer"></footer>
 
             <ToastContainer {...ToastOptionsShortcuts.Default} />
+            <ToastStatus />
             <BaseModal />
         </div>
     )

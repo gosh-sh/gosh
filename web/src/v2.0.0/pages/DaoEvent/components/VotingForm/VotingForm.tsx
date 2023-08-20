@@ -1,5 +1,4 @@
 import { Field, Form, Formik } from 'formik'
-import { ToastStatus } from '../../../../../components/Toast'
 import { Button } from '../../../../../components/Form'
 import { FormikInput } from '../../../../../components/Formik'
 import yup from '../../../../yup-extended'
@@ -20,7 +19,7 @@ type TFormValues = {
 const DaoEventVotingForm = (props: TDaoEventVotingFormProps) => {
     const { event } = props
     const member = useDaoMember()
-    const { vote, status } = useVoteDaoEvent()
+    const { vote } = useVoteDaoEvent()
     const [start, setStart] = useState<number>(() =>
         Math.round((event.time.start - Date.now()) / 1000),
     )
@@ -80,7 +79,6 @@ const DaoEventVotingForm = (props: TDaoEventVotingFormProps) => {
         >
             {({ isSubmitting, values, setFieldValue }) => (
                 <Form>
-                    <ToastStatus status={status} />
                     <div>
                         <Field
                             name="amount"

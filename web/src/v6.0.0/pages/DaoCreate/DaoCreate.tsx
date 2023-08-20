@@ -1,4 +1,4 @@
-import { ErrorMessage, Field, Form, Formik } from 'formik'
+import { Field, Form, Formik } from 'formik'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../../../components/Form'
 import {
@@ -12,7 +12,6 @@ import { Select2ClassNames, getIdenticonAvatar } from '../../../helpers'
 import yup from '../../yup-extended'
 import CreatableSelect from 'react-select/creatable'
 import { useCreateDao } from '../../hooks/dao.hooks'
-import { ToastStatus } from '../../../components/Toast'
 
 type TFormValues = {
     name: string
@@ -26,7 +25,7 @@ const avatarInitialState = getIdenticonAvatar({ seed: '' }).toDataUriSync()
 
 const DaoCreatePage = () => {
     const navigate = useNavigate()
-    const { createDao, status } = useCreateDao()
+    const { createDao } = useCreateDao()
     const [avatar, setAvatar] = useState<string>(avatarInitialState)
 
     const onDaoCreate = async (values: TFormValues) => {
@@ -191,8 +190,6 @@ const DaoCreatePage = () => {
                     )}
                 </Formik>
             </div>
-
-            <ToastStatus status={status} />
         </div>
     )
 }

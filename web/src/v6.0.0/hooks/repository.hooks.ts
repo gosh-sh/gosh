@@ -9,22 +9,28 @@ import { EGoshError, GoshError } from '../../errors'
 import { executeByChunk, whileFinite } from '../../utils'
 import { MAX_PARALLEL_READ } from '../../constants'
 import _ from 'lodash'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import { GoshRepository } from '../blockchain/repository'
-import { TToastStatus } from '../../types/common.types'
 import { useDaoHelpers } from './dao.hooks'
+import { appToastStatusSelector } from '../../store/app.state'
 
 export function useCreateRepository() {
     const { details: dao } = useRecoilValue(daoDetailsAtom)
     const { details: member } = useRecoilValue(daoMemberAtom)
     const setRepositories = useSetRecoilState(daoRepositoryListAtom)
     const { beforeCreateEvent } = useDaoHelpers()
-    const [status, setStatus] = useState<TToastStatus>()
+    const [status, setStatus] = useRecoilState(
+        appToastStatusSelector('__createrepository'),
+    )
 
     const create = useCallback(
         async (name: string, description?: string) => {
             try {
-                setStatus({ type: 'pending', data: 'Creating repository' })
+                setStatus((state) => ({
+                    ...state,
+                    type: 'pending',
+                    data: 'Creating repository',
+                }))
 
                 name = name.toLowerCase()
                 const { valid, reason } = validateRepoName(name)
@@ -60,7 +66,11 @@ export function useCreateRepository() {
                 }
 
                 // Deploy repository
-                setStatus({ type: 'pending', data: 'Create repository' })
+                setStatus((state) => ({
+                    ...state,
+                    type: 'pending',
+                    data: 'Create repository',
+                }))
                 await member.wallet.createRepository({
                     name,
                     description,
@@ -85,26 +95,28 @@ export function useCreateRepository() {
                         ...state,
                         items: [{ account, version, ...details }, ...state.items],
                     }))
-                    setStatus({
+                    setStatus((state) => ({
+                        ...state,
                         type: 'success',
                         data: {
                             title: 'Create repository',
                             content: 'Repository created',
                         },
-                    })
+                    }))
                 } else {
-                    setStatus({
+                    setStatus((state) => ({
+                        ...state,
                         type: 'success',
                         data: {
                             title: 'Create repository',
                             content: 'Create repository event created',
                         },
-                    })
+                    }))
                 }
 
                 return { repository: account, isEvent: !alone }
             } catch (e: any) {
-                setStatus({ type: 'error', data: e })
+                setStatus((state) => ({ ...state, type: 'error', data: e }))
                 throw e
             }
         },
@@ -226,7 +238,9 @@ export function useDaoRepositoryList(params: { count?: number } = {}) {
 export function useCreateRepositoryTag() {
     const { details: member } = useRecoilValue(daoMemberAtom)
     const { beforeCreateEvent } = useDaoHelpers()
-    const [status, setStatus] = useState<TToastStatus>()
+    const [status, setStatus] = useRecoilState(
+        appToastStatusSelector('__createrepositorytag'),
+    )
 
     const create = useCallback(
         async (reponame: string, tags: string[], comment?: string) => {
@@ -242,22 +256,27 @@ export function useCreateRepositoryTag() {
                 // Prepare balance for create event (if not alone)
                 await beforeCreateEvent(20, { onPendingCallback: setStatus })
 
-                setStatus({ type: 'pending', data: 'Create event' })
+                setStatus((state) => ({
+                    ...state,
+                    type: 'pending',
+                    data: 'Create event',
+                }))
                 await member.wallet.createRepositoryTag({
                     reponame,
                     tags,
                     comment: comment || `Add tags for ${reponame} repository`,
                 })
 
-                setStatus({
+                setStatus((state) => ({
+                    ...state,
                     type: 'success',
                     data: {
                         title: 'Create event',
                         content: 'Repository tags add event created',
                     },
-                })
+                }))
             } catch (e: any) {
-                setStatus({ type: 'error', data: e })
+                setStatus((state) => ({ ...state, type: 'error', data: e }))
                 throw e
             }
         },
@@ -270,7 +289,9 @@ export function useCreateRepositoryTag() {
 export function useDeleteRepositoryTag() {
     const { details: member } = useRecoilValue(daoMemberAtom)
     const { beforeCreateEvent } = useDaoHelpers()
-    const [status, setStatus] = useState<TToastStatus>()
+    const [status, setStatus] = useRecoilState(
+        appToastStatusSelector('__deleterepositorytag'),
+    )
 
     const remove = useCallback(
         async (reponame: string, tags: string[], comment?: string) => {
@@ -286,22 +307,27 @@ export function useDeleteRepositoryTag() {
                 // Prepare balance for create event (if not alone)
                 await beforeCreateEvent(20, { onPendingCallback: setStatus })
 
-                setStatus({ type: 'pending', data: 'Create event' })
+                setStatus((state) => ({
+                    ...state,
+                    type: 'pending',
+                    data: 'Create event',
+                }))
                 await member.wallet.deleteRepositoryTag({
                     reponame,
                     tags,
                     comment: comment || `Delete tags for ${reponame} repository`,
                 })
 
-                setStatus({
+                setStatus((state) => ({
+                    ...state,
                     type: 'success',
                     data: {
                         title: 'Create event',
                         content: 'Repository tags delete event created',
                     },
-                })
+                }))
             } catch (e: any) {
-                setStatus({ type: 'error', data: e })
+                setStatus((state) => ({ ...state, type: 'error', data: e }))
                 throw e
             }
         },
@@ -314,7 +340,9 @@ export function useDeleteRepositoryTag() {
 export function useUpdateRepositoryDescription() {
     const { details: member } = useRecoilValue(daoMemberAtom)
     const { beforeCreateEvent } = useDaoHelpers()
-    const [status, setStatus] = useState<TToastStatus>()
+    const [status, setStatus] = useRecoilState(
+        appToastStatusSelector('__updaterepositorydescription'),
+    )
 
     const update = useCallback(
         async (reponame: string, description: string, comment?: string) => {
@@ -330,22 +358,27 @@ export function useUpdateRepositoryDescription() {
                 // Prepare balance for create event (if not alone)
                 await beforeCreateEvent(20, { onPendingCallback: setStatus })
 
-                setStatus({ type: 'pending', data: 'Create event' })
+                setStatus((state) => ({
+                    ...state,
+                    type: 'pending',
+                    data: 'Create event',
+                }))
                 await member.wallet.updateRepositoryDescription({
                     reponame,
                     description,
                     comment: comment || `Update ${reponame} repository description`,
                 })
 
-                setStatus({
+                setStatus((state) => ({
+                    ...state,
                     type: 'success',
                     data: {
                         title: 'Create event',
                         content: 'Repository tags delete event created',
                     },
-                })
+                }))
             } catch (e: any) {
-                setStatus({ type: 'error', data: e })
+                setStatus((state) => ({ ...state, type: 'error', data: e }))
                 throw e
             }
         },

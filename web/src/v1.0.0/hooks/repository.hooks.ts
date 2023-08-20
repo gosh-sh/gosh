@@ -11,62 +11,91 @@ import { MAX_PARALLEL_READ } from '../../constants'
 import _ from 'lodash'
 import { useCallback, useEffect } from 'react'
 import { GoshRepository } from '../blockchain/repository'
+import { appToastStatusSelector } from '../../store/app.state'
 
 export function useCreateRepository() {
     const { details: dao } = useRecoilValue(daoDetailsAtom)
     const { details: member } = useRecoilValue(daoMemberAtom)
     const setRepositories = useSetRecoilState(daoRepositoryListAtom)
+    const [status, setStatus] = useRecoilState(
+        appToastStatusSelector('__createrepository'),
+    )
 
     const create = async (name: string) => {
-        name = name.toLowerCase()
-        const { valid, reason } = validateRepoName(name)
-        if (!valid) {
-            throw new GoshError(EGoshError.REPO_NAME_INVALID, reason)
-        }
-        if (!dao.name) {
-            throw new GoshError('Value error', 'DAO name undefined')
-        }
-        if (!member.isMember) {
-            throw new GoshError('Access error', 'Not a DAO member')
-        }
-        if (!member.isReady || !member.wallet) {
-            throw new GoshError('Access error', 'Wallet is missing or is not activated')
-        }
+        try {
+            setStatus((state) => ({
+                ...state,
+                type: 'pending',
+                data: 'Creating repository',
+            }))
 
-        // Check if repository is already deployed
-        const repo = await getSystemContract().getRepository({
-            path: `${dao.name}/${name}`,
-        })
-        const account = repo as GoshRepository
-        if (await account.isDeployed()) {
-            throw new GoshError('Value error', 'Repository already exists')
-        }
+            name = name.toLowerCase()
+            const { valid, reason } = validateRepoName(name)
+            if (!valid) {
+                throw new GoshError(EGoshError.REPO_NAME_INVALID, reason)
+            }
+            if (!dao.name) {
+                throw new GoshError('Value error', 'DAO name undefined')
+            }
+            if (!member.isMember) {
+                throw new GoshError('Access error', 'Not a DAO member')
+            }
+            if (!member.isReady || !member.wallet) {
+                throw new GoshError(
+                    'Access error',
+                    'Wallet is missing or is not activated',
+                )
+            }
 
-        // Deploy repository
-        await member.wallet.createRepository({ name })
-        const wait = await whileFinite(async () => await account.isDeployed())
-        if (!wait) {
-            throw new GoshError('Timeout error', 'Create repository timeout reached')
-        }
+            // Check if repository is already deployed
+            const repo = await getSystemContract().getRepository({
+                path: `${dao.name}/${name}`,
+            })
+            const account = repo as GoshRepository
+            if (await account.isDeployed()) {
+                throw new GoshError('Value error', 'Repository already exists')
+            }
 
-        // Update state
-        const item = {
-            account,
-            name,
-            version: await account.getVersion(),
-            branches: await account.getBranches(),
-        }
-        setRepositories((state) => ({
-            ...state,
-            items: [item, ...state.items],
-        }))
+            // Deploy repository
+            setStatus((state) => ({
+                ...state,
+                type: 'pending',
+                data: 'Create repository',
+            }))
+            await member.wallet.createRepository({ name })
+            const wait = await whileFinite(async () => await account.isDeployed())
+            if (!wait) {
+                throw new GoshError('Timeout error', 'Create repository timeout reached')
+            }
 
-        return repo
+            // Update state
+            const item = {
+                account,
+                name,
+                version: await account.getVersion(),
+                branches: await account.getBranches(),
+            }
+            setRepositories((state) => ({
+                ...state,
+                items: [item, ...state.items],
+            }))
+            setStatus((state) => ({
+                ...state,
+                type: 'success',
+                data: {
+                    title: 'Create repository',
+                    content: 'Repository created',
+                },
+            }))
+
+            return repo
+        } catch (e: any) {
+            setStatus((state) => ({ ...state, type: 'error', data: e }))
+            throw e
+        }
     }
 
-    return {
-        create,
-    }
+    return { create, status }
 }
 
 export function useDaoRepositoryList(params: { count: number }) {
