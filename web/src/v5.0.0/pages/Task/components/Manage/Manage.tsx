@@ -104,7 +104,7 @@ const TaskManage = (props: TTaskManageProps) => {
             </div>
             <div className="border-t border-gray-e6edff">
                 <div className="p-5">
-                    {!task.isReady && member.details.isMember && (
+                    {!task.isReady && member.isMember && (
                         <Formik initialValues={{}} onSubmit={onTaskDelete}>
                             {({ isSubmitting }) => (
                                 <Form>

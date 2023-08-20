@@ -17,7 +17,7 @@ const DaoMemberListPage = () => {
         <>
             <MemberList scrollToInviteRef={scrollToInviteRef} />
 
-            {member.details.isMember && (
+            {member.isMember && (
                 <div
                     className="mt-6 flex flex-wrap items-start gap-y-6 gap-x-4"
                     ref={(ref) => {

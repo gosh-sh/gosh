@@ -25,7 +25,7 @@ const DaoEventVotingForm = (props: TDaoEventVotingFormProps) => {
     )
 
     const getMaxAmount = useCallback(() => {
-        const { balance, allowance } = member.details
+        const { balance, allowance } = member
         if (!balance || !allowance) {
             return 0
         }

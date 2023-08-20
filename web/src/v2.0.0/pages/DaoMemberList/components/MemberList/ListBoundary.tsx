@@ -102,7 +102,7 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
                             </div>
                         )}
 
-                        {member.details.isMember && (
+                        {member.isMember && (
                             <div className="mt-8 px-3 pb-5 lg:w-1/2">
                                 <h3 className="text-xl font-medium">Comment changes</h3>
 

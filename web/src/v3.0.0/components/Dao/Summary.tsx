@@ -22,7 +22,7 @@ const DaoSummary = (props: TDaoSummaryProps) => {
 
     return (
         <div className={classNames(className)}>
-            {!dao.details.summary && member.details.isMember && (
+            {!dao.details.summary && member.isMember && (
                 <div>
                     Place <span className="font-medium">description.txt</span> to main
                     branch of <span className="font-medium">_index</span> repo to add

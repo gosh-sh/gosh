@@ -34,7 +34,7 @@ const MemberList = (props: TMemberListProps) => {
                         />
                     }
                 />
-                {member.details.isMember && (
+                {member.isMember && (
                     <Button
                         variant="outline-secondary"
                         size="xl"

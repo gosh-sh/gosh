@@ -47,7 +47,7 @@ const DaoRepositoryListPage = (props: { count?: number }) => {
                     }
                     test-id="input-repo-search"
                 />
-                {member.details.isMember && (
+                {member.isMember && (
                     <Button
                         variant="outline-secondary"
                         size="xl"

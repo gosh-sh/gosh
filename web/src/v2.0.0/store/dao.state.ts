@@ -33,16 +33,14 @@ export const daoDetailsAtom = atom<TDaoDetails>({
 export const daoMemberAtom = atom<TDaoMember>({
     key: `DaoMemberAtom_${contextVersion}`,
     default: {
-        details: {
-            profile: null,
-            wallet: null,
-            allowance: null,
-            balance: null,
-            isFetched: false,
-            isMember: false,
-            isLimited: false,
-            isReady: false,
-        },
+        profile: null,
+        wallet: null,
+        allowance: null,
+        balance: null,
+        isFetched: false,
+        isMember: false,
+        isLimited: false,
+        isReady: false,
     },
     dangerouslyAllowMutability: true,
 })

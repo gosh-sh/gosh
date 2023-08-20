@@ -40,7 +40,7 @@ const DaoEventListPage = () => {
                 <div className="col !max-w-full md:!max-w-side-right-md xl:!max-w-side-right">
                     <div className="flex flex-col gap-y-5">
                         <DaoSupply />
-                        {member.details.isMember && <DaoMemberWallet />}
+                        {member.isMember && <DaoMemberWallet />}
                         <DaoMembers />
                     </div>
                 </div>

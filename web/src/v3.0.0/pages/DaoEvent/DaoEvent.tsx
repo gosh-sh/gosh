@@ -232,7 +232,7 @@ const DaoEventPageInner = (props: { address: string }) => {
                     </div>
 
                     {!event.status.completed &&
-                        member.details.isMember &&
+                        member.isMember &&
                         !event.reviewers.length && (
                             <div className="mt-5 border border-gray-e6edff rounded-xl p-5">
                                 <h3 className="mb-4 text-xl font-medium">Your vote</h3>

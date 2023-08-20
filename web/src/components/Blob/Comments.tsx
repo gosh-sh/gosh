@@ -62,7 +62,7 @@ type TCodeCommentsProps = {
 const CodeComments = (props: TCodeCommentsProps) => {
     const { filename, multiple } = props
     const { details: dao } = useDao()
-    const { details: member } = useDaoMember()
+    const member = useDaoMember()
     const {
         threads,
         toggleThread,

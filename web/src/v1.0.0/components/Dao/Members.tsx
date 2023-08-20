@@ -36,7 +36,7 @@ const DaoMembers = (props: TDaoMembersProps) => {
                     ))}
                 </div>
 
-                {member.details.isMember && (
+                {member.isMember && (
                     <div className="text-center">
                         <Link
                             to={`/o/${dao.details.name}/members`}

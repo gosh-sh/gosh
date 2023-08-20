@@ -26,7 +26,7 @@ const DaoLayout = () => {
             { to: `/o/${daoname}/members`, title: 'Members', order: 3 },
         ]
 
-        if (member.details.isMember) {
+        if (member.isMember) {
             tabs.push({ to: `/o/${daoname}/settings`, title: 'Settings', order: 4 })
         }
 

@@ -102,7 +102,7 @@ const ListItem = (props: TListItemProps) => {
             </div>
             <div className={basis.allowance}>{item.allowance.toLocaleString()}</div>
             <div className={basis.buttons}>
-                {member.details.isMember && (
+                {member.isMember && (
                     <Button
                         type="button"
                         variant="outline-danger"

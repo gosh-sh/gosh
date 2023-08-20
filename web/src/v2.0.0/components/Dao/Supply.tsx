@@ -46,7 +46,7 @@ const DaoSupply = (props: TDaoSupplyProps) => {
                     {dao.details.supply?.reserve.toLocaleString()}
                 </div>
             </div>
-            {member.details.isMember && (
+            {member.isMember && (
                 <div className="mt-3 flex flex-wrap gap-x-3">
                     <div className="grow">
                         <Button

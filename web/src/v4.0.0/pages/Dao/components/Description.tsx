@@ -11,7 +11,7 @@ const DaoDescription = (props: TDaoDescriptionProps) => {
     const dao = useDao()
     const member = useDaoMember()
 
-    if (!dao.details.description && !member.details.isMember) {
+    if (!dao.details.description && !member.isMember) {
         return null
     }
 

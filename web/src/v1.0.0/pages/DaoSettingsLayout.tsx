@@ -16,7 +16,7 @@ const DaoSettingsLayout = () => {
         return tabs
     }
 
-    if (!member.details.isMember) {
+    if (!member.isMember) {
         return <Navigate to={`/o/${daoname}`} />
     }
     return (

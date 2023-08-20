@@ -16,7 +16,7 @@ import { appToastStatusSelector } from '../../store/app.state'
 
 export function useCreateRepository() {
     const { details: dao } = useRecoilValue(daoDetailsAtom)
-    const { details: member } = useRecoilValue(daoMemberAtom)
+    const member = useRecoilValue(daoMemberAtom)
     const setRepositories = useSetRecoilState(daoRepositoryListAtom)
     const { beforeCreateEvent } = useDaoHelpers()
     const [status, setStatus] = useRecoilState(

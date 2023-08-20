@@ -49,19 +49,17 @@ export type TDaoDetails = {
 }
 
 export type TDaoMember = {
-    details: {
-        profile: UserProfile | null
-        wallet: DaoWallet | null
-        allowance: number | null
-        balance: {
-            total: number
-            locked: number
-            regular: number
-        } | null
-        isFetched: boolean
-        isMember: boolean
-        isReady: boolean
-    }
+    profile: UserProfile | null
+    wallet: DaoWallet | null
+    allowance: number | null
+    balance: {
+        total: number
+        locked: number
+        regular: number
+    } | null
+    isFetched: boolean
+    isMember: boolean
+    isReady: boolean
 }
 
 export type TDaoMemberListItem = TDaoDetailsMemberItem & {

@@ -144,7 +144,7 @@ const DaoEventPageInner = (props: { address: string }) => {
                         <DaoEventProgressBar event={event} />
                     </div>
 
-                    {!event.status.completed && member.details.isMember && (
+                    {!event.status.completed && member.isMember && (
                         <div className="mt-5 border border-gray-e6edff rounded-xl p-5">
                             <h3 className="mb-4 text-xl font-medium">Your vote</h3>
                             <DaoEventVotingForm event={event} />

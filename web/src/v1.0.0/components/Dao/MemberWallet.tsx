@@ -9,15 +9,12 @@ const DaoMemberWallet = (props: TDaoWalletSideProps) => {
     const member = useDaoMember()
 
     const getUserBalance = useCallback(() => {
-        if (!member.details.balance) {
+        if (!member.balance) {
             return 0
         }
-        const voting = Math.max(
-            member.details.balance.total,
-            member.details.balance.locked,
-        )
-        return voting + member.details.balance.regular
-    }, [member.details.balance])
+        const voting = Math.max(member.balance.total, member.balance.locked)
+        return voting + member.balance.regular
+    }, [member.balance])
 
     return (
         <div
@@ -30,13 +27,13 @@ const DaoMemberWallet = (props: TDaoWalletSideProps) => {
                 </div>
             </div>
 
-            {member.details.isMember && (
+            {member.isMember && (
                 <>
                     <hr className="my-4 bg-gray-e6edff" />
                     <div>
                         <div className="mb-1 text-gray-7c8db5 text-sm">Karma</div>
                         <div className="text-xl font-medium">
-                            {member.details.allowance?.toLocaleString()}
+                            {member.allowance?.toLocaleString()}
                         </div>
                     </div>
                 </>

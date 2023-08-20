@@ -72,7 +72,7 @@ const DaoInvitationSubmit = (props: TDaoInvitationSubmitProps) => {
                                     disabled={
                                         isSubmitting ||
                                         !dao.details.isAskMembershipOn ||
-                                        !member.details.isReady
+                                        !member.isReady
                                     }
                                     isLoading={isSubmitting}
                                 >

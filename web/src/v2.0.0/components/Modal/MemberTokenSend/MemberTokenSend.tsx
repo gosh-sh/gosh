@@ -17,9 +17,7 @@ type TFormValues = {
 
 const MemberTokenSendModal = () => {
     const setModal = useSetRecoilState(appModalStateAtom)
-    const {
-        details: { balance },
-    } = useDaoMember()
+    const { balance } = useDaoMember()
     const { send } = useSendMemberTokens()
 
     const getMaxAmount = useCallback(() => {

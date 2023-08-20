@@ -109,7 +109,7 @@ const ListItem = (props: TListItemProps) => {
                     />
                 </div>
                 <div className={classNames(basis.allowance, 'font-light')}>
-                    {member.details.isMember ? (
+                    {member.isMember ? (
                         <>
                             <Field
                                 type="hidden"
@@ -143,7 +143,7 @@ const ListItem = (props: TListItemProps) => {
                     )}
                 </div>
                 <div className={classNames(basis.balance, 'font-light')}>
-                    {member.details.isMember ? (
+                    {member.isMember ? (
                         <>
                             <Field
                                 type="hidden"
@@ -177,7 +177,7 @@ const ListItem = (props: TListItemProps) => {
                     )}
                 </div>
                 <div className={basis.buttons}>
-                    {member.details.isMember && (
+                    {member.isMember && (
                         <Button
                             type="button"
                             variant="outline-danger"

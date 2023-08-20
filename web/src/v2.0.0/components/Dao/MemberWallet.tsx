@@ -14,15 +14,12 @@ const DaoMemberWallet = (props: TDaoWalletSideProps) => {
     const member = useDaoMember()
 
     const getUserBalance = useCallback(() => {
-        if (!member.details.balance) {
+        if (!member.balance) {
             return 0
         }
-        const voting = Math.max(
-            member.details.balance.voting,
-            member.details.balance.locked,
-        )
-        return voting + member.details.balance.regular
-    }, [member.details.balance])
+        const voting = Math.max(member.balance.voting, member.balance.locked)
+        return voting + member.balance.regular
+    }, [member.balance])
 
     const onTokenSendClick = () => {
         setModal({
@@ -42,7 +39,7 @@ const DaoMemberWallet = (props: TDaoWalletSideProps) => {
                     {getUserBalance().toLocaleString()}
                 </div>
 
-                {(member.details.isMember || member.details.isLimited) && (
+                {(member.isMember || member.isLimited) && (
                     <div className="mt-3 flex flex-wrap gap-x-3">
                         <div className="grow">
                             <Button
@@ -57,13 +54,13 @@ const DaoMemberWallet = (props: TDaoWalletSideProps) => {
                 )}
             </div>
 
-            {member.details.isMember && (
+            {member.isMember && (
                 <>
                     <hr className="my-4 bg-gray-e6edff" />
                     <div>
                         <div className="mb-1 text-gray-7c8db5 text-sm">Karma</div>
                         <div className="text-xl font-medium">
-                            {member.details.allowance?.toLocaleString()}
+                            {member.allowance?.toLocaleString()}
                         </div>
                     </div>
                 </>

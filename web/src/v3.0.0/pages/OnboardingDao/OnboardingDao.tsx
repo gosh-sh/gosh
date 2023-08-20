@@ -86,7 +86,7 @@ const OnboardingDaoPage = () => {
         }
     }, [token.isFetching, token.isValid, user.profile])
 
-    if (member.details.isMember) {
+    if (member.isMember) {
         return <Navigate to={`/o/${dao.details.name}`} />
     }
     return (

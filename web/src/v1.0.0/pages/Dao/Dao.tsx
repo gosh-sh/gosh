@@ -15,7 +15,7 @@ const DaoPage = () => {
             <div className="col !max-w-full md:!max-w-side-right-md lg:!max-w-side-right">
                 <div className="flex flex-col gap-y-5">
                     <DaoSupply />
-                    {!!member.details.profile && <DaoMemberWallet />}
+                    {!!member.profile && <DaoMemberWallet />}
                     <DaoMembers />
                 </div>
             </div>
