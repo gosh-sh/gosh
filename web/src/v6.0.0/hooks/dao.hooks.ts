@@ -485,7 +485,7 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
                 isDaoMemberOf: true,
             })
             const tasks = await getTaskCount(dao)
-            // const { summary, description } = await getDescription(daoname, repository)
+            const { summary, description } = await getDescription(daoname, repository)
 
             setData((state) => ({
                 ...state,
@@ -500,8 +500,8 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
                     owner: details.pubaddr,
                     tags: Object.values(details.hashtag),
                     tasks,
-                    summary: '',
-                    description: '',
+                    summary,
+                    description,
                     isMemberOf,
                     isMintOn: details.allowMint,
                     isAskMembershipOn: details.abilityInvite,
@@ -534,17 +534,47 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
                 .getRepository({ path: `${daoname}/${reponame}` })) as GoshRepository
         }
 
+        // TODO: Remove/refactor this after git part refactored
+        const _commitacc = await repository.getCommit({ address: commit.address })
+        const _commit = await _commitacc.getDetails()
+        const _sc = GoshAdapterFactory.create(commit.version)
+        const _adapter = await _sc.getRepository({ address: repository.address })
+        const _tree = await _adapter.getTree(_commit.name, '')
+        // TODO: /Remove/refactor this after git part refactored
+
+        // TODO: Refactor this after git part refactored
         const [summary, description] = await Promise.all(
             ['description.txt', 'README.md'].map(async (filename) => {
-                const snapshot = await repository.getSnapshot({
-                    data: { branch: 'main', filename },
-                })
-                if (await snapshot.isDeployed()) {
-                    const result = await snapshot.getContent()
-                    if (!Buffer.isBuffer(result.content)) {
-                        return result.content
+                if (commit.version < '6.0.0') {
+                    const snapshot = await repository.getSnapshot({
+                        data: { branch: 'main', filename, commitname: '' },
+                    })
+
+                    if (await snapshot.isDeployed()) {
+                        const result = await snapshot.getContent()
+                        if (!Buffer.isBuffer(result.content)) {
+                            return result.content
+                        }
+                    }
+                } else {
+                    const treeitem = _tree.items.find(
+                        ({ path, name }) => `${path}/${name}` === `/${filename}`,
+                    )
+                    if (treeitem?.commit) {
+                        const snapshot = await repository.getSnapshot({
+                            data: { filename, commitname: treeitem.commit },
+                        })
+                        const { current } = await _adapter.getCommitBlob(
+                            snapshot.address,
+                            filename,
+                            _commit.name,
+                        )
+                        if (!Buffer.isBuffer(current)) {
+                            return current
+                        }
                     }
                 }
+
                 return ''
             }),
         )

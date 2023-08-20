@@ -30,6 +30,7 @@ export type TGoshCommit = {
     parents: string[]
     content: string
     initupgrade: boolean
+    treeaddr: string
 }
 
 export type TGoshCommitTag = {

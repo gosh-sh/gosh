@@ -12,6 +12,9 @@ export class GoshCommit extends BaseContract {
         const details = await this.runLocal('getCommit', {}, undefined, {
             useCachedBoc: true,
         })
+        const { value0: treeaddr } = await this.runLocal('gettree', {}, undefined, {
+            useCachedBoc: true,
+        })
         return {
             repository: details.repo,
             branch: details.branch,
@@ -19,6 +22,7 @@ export class GoshCommit extends BaseContract {
             parents: details.parents,
             content: details.content,
             initupgrade: details.initupgrade,
+            treeaddr,
         }
     }
 }

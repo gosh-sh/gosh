@@ -93,7 +93,7 @@ export class GoshRepository extends BaseContract {
 
     async getSnapshot(params: {
         address?: string
-        data?: { branch: string; filename: string }
+        data?: { commitname: string; filename: string; branch?: string }
     }) {
         const { address, data } = params
 
@@ -103,10 +103,10 @@ export class GoshRepository extends BaseContract {
 
         let _address = address
         if (!_address) {
-            const { branch, filename } = data!
+            const { commitname, filename } = data!
             const { value0 } = await this.runLocal(
                 'getSnapshotAddr',
-                { branch, name: filename },
+                { commitsha: commitname, name: filename },
                 undefined,
                 { useCachedBoc: true },
             )
