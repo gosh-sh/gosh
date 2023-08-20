@@ -53,15 +53,15 @@ SUBMODULE_DEST=from-github
 git submodule add https://github.com/gosh-sh/test-repo.git SUBMODULE_DEST
 git commit -m "Added github submodule"
 
-sleep 30
+sleep 10
 
 echo "***** awaiting push into $BRANCH_NAME *****"
-git push -u origin $BRANCH_NAME
+GOSH_TRACE=5 git push -u origin $BRANCH_NAME &> ../trace_11.log
 
 # echo "***** awaiting set commit into $BRANCH_NAME *****"
 # wait_set_commit $REPO_ADDR $BRANCH_NAME
 
-sleep 30
+sleep 10
 
 echo "***** cloning repo (2) *****"
 cd ..
@@ -75,6 +75,7 @@ echo "***** comparing repositories (2) *****"
 
 DIFF_STATUS=1
 if  diff --brief --recursive $REPO_NAME $REPO_NAME"-clone" --exclude ".git"; then
+    echo "Success"
     DIFF_STATUS=0
 fi
 

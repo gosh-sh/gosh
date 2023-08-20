@@ -271,7 +271,7 @@ function upgrade_DAO_2 {
   NEW_SYSTEM_CONTRACT_ADDR=$2
 
   echo "***** start proposal for upgrade *****"
-  tonos-cli -j callx --abi $WALLET_ABI_1 --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForUpgradeDao --newversion $TEST_VERSION --description "" --comment "" --num_clients 1 --reviewers []
+  tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForUpgradeDao --newversion $TEST_VERSION --description "" --comment "" --num_clients 1 --reviewers []
   NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
   echo "NOW_ARG=$NOW_ARG"
 

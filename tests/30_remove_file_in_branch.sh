@@ -9,7 +9,8 @@ if [[ "$VERSION" == *"v6_x"* ]]; then
   exit 0
 fi
 
-REPO_NAME="repo29_$(date +%s)"
+
+REPO_NAME="repo30_$(date +%s)"
 
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
 [ -d $REPO_NAME"-clone" ] && rm -rf $REPO_NAME"-clone"
@@ -34,41 +35,21 @@ echo "***** Pushing file to the repo *****"
 echo main > 1.txt
 git add 1.txt
 git commit -m main
-sleep 5
+git push
 
 echo "***** Create dev branch *****"
 git checkout -b dev
-echo dev > 1.txt
-git add 1.txt
+rm 1.txt
+git rm 1.txt
 git commit -m dev
-sleep 5
+GOSH_TRACE=5 git push -u origin dev &> ../trace_30_rm.log
 
 echo "***** Push to main branch *****"
 git checkout main
-echo main > 2.txt
-git add 2.txt
-git commit -m main2
-sleep 5
-
-echo "***** Push to dev branch *****"
-git checkout dev
-echo dev2 > 1.txt
+echo main2 > 1.txt
 git add 1.txt
-git commit -m dev2
-sleep 5
-
-
-echo "***** Switch back to main *****"
-git checkout main
-
-echo "**** Merge parent branch *****"
-git merge dev -m merge
-git branch -d dev
-
-git log --pretty=oneline --graph
-
-GOSH_TRACE=5 git push &> ../trace_29.log
-
+git commit -m main2
+GOSH_TRACE=5 git push &> ../trace_30.log
 
 echo "***** cloning repo *****"
 cd ..
@@ -81,18 +62,12 @@ echo "***** check repo *****"
 cd "$REPO_NAME-clone"
 
 cur_ver=$(cat 1.txt)
-if [ "$cur_ver" != "dev2" ]; then
+if [ "$cur_ver" != "main2" ]; then
   echo "WRONG CONTENT"
   exit 1
 fi
 echo "GOOD CONTENT"
 
-cur_ver=$(cat 2.txt)
-if [ "$cur_ver" != "main" ]; then
-  echo "WRONG CONTENT"
-  exit 1
-fi
-echo "GOOD CONTENT"
 
 echo "TEST SUCCEEDED"
 

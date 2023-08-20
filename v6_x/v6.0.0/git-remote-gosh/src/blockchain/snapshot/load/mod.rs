@@ -10,6 +10,7 @@ use serde::de;
 use std::{fmt, option::Option};
 
 pub mod diffs;
+pub mod old_abi;
 
 #[derive(Deserialize, DataContract)]
 #[abi = "snapshot.abi.json"]
@@ -82,7 +83,7 @@ impl fmt::Debug for Snapshot {
 }
 
 #[derive(Deserialize, Debug)]
-struct GetSnapshotAddrResult {
+pub struct GetSnapshotAddrResult {
     #[serde(rename = "value0")]
     pub address: BlockchainContractAddress,
 }
@@ -167,4 +168,33 @@ where
 
     // use our visitor to deserialize an `ActualValue`
     deserializer.deserialize_any(CompressedHexStringVisitor)
+}
+
+#[derive(Deserialize)]
+pub struct OldSnapshot {
+    #[serde(rename = "value0")]
+    pub next_commit: String,
+
+    #[serde(rename = "value1")]
+    #[serde(deserialize_with = "snapshot_content_custom_deserialization")]
+    pub next_content: Vec<u8>,
+
+    #[serde(rename = "value2")]
+    pub next_ipfs: Option<String>,
+
+    #[serde(rename = "value3")]
+    pub current_commit: String,
+
+    #[serde(rename = "value4")]
+    #[serde(deserialize_with = "snapshot_content_custom_deserialization")]
+    pub current_content: Vec<u8>,
+
+    #[serde(rename = "value5")]
+    pub current_ipfs: Option<String>,
+
+    #[serde(rename = "value6")]
+    pub original_commit: String,
+
+    #[serde(rename = "value7")]
+    pub ready_for_diffs: bool,
 }

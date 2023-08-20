@@ -97,6 +97,46 @@ export async function isDaoMember(
     return value0
 }
 
+export async function getDaoMembers(dao_addr: string): Promise<any> {
+    const { value0 } = await goshCli(
+        'run',
+        '--abi',
+        GOSH_DAO_ABI,
+        dao_addr,
+        'getWalletsFull',
+        JSON.stringify({}),
+    )
+    return value0
+}
+
+export async function countDaoMembers(dao_addr: string): Promise<number> {
+    const members_list = await getDaoMembers(dao_addr)
+
+    return Object.keys(members_list).length
+}
+
+export async function getMemberName(profile_addr: string) {
+    const { value0 } = await goshCli(
+        'run',
+        '--abi',
+        PROFILE_ABI,
+        profile_addr,
+        'getName',
+        JSON.stringify({}),
+    )
+
+    return value0
+}
+
+export async function getDaoMemberNames(dao_addr: string): Promise<string[]> {
+    const members_list = await getDaoMembers(dao_addr)
+    const promises = Object.keys(members_list).map(p => getMemberName(`0:${p.slice(2)}`))
+
+    return (await Promise.allSettled(promises))
+        .filter(v => v.status == 'fulfilled')
+        .map(({ value }) => value)
+}
+
 export async function setAloneDaoConfig(
     tokens: number,
     wallet_addr: string,

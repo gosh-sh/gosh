@@ -54,8 +54,8 @@ echo 17 $? >> res.txt
 echo 18 $? >> res.txt
 ./19-push_many_files.test.sh
 echo 19 $? >> res.txt
-./19_1-push_many_files_no_ipfs.test.sh
-echo 191 $? >> res.txt
+./09_1-push_many_files_no_ipfs.test.sh
+echo 091 $? >> res.txt
 ./20-delete-branch.test.sh
 echo 20 $? >> res.txt
 ./21-delete-snapshots.test.sh
@@ -76,6 +76,8 @@ echo 27 $? >> res.txt
 echo 28 $? >> res.txt
 ./29_push_merged_commits.test.sh
 echo 29 $? >> res.txt
+./30_remove_file_in_branch.sh 
+echo 30 $? >> res.txt
 
 ./clean.sh
 echo "All tests passed"

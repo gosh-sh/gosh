@@ -58,6 +58,7 @@ GOSH_TRACE=5 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_N
 echo "***** comparing repositories *****"
 DIFF_STATUS=1
 if  diff --brief --recursive $REPO_NAME $REPO_NAME"-clone" --exclude ".git"; then
+    echo Success
     DIFF_STATUS=0
 fi
 

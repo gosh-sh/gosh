@@ -54,7 +54,7 @@ while (true) {
         .filter(({ github }) => !!github )
         .filter(({ github }) => {
             const repos = Array.isArray(github) ? github : [github]
-            return repos.every(({ updated_at }) => !!updated_at)
+            return repos.length > 0 && repos.every(({ updated_at }) => !!updated_at)
         })
         .filter(({ github }) => {
             console.log(github)

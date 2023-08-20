@@ -15,7 +15,6 @@ fn get_version_from_solidity_source() -> String {
             return line
                 .trim_start_matches(|c: char| !c.is_digit(10) )
                 .trim_end_matches(|c: char| !c.is_digit(10) )
-                .replace(['\"'], "")
                 .to_string();
         }
     }

@@ -66,7 +66,7 @@ for i in {1..4}; do
   git commit -m "main$i"
 done
 git remote add gosh gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME
-git push --all gosh
+GOSH_TRACE=5 git push --all gosh &> ../trace_22.log
 
 echo "***** cloning repo *****"
 cd ..

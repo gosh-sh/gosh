@@ -73,7 +73,7 @@ git fetch
 echo new_ver > 1.txt
 git add 1.txt
 git commit -m test2
-git push -u origin main
+GOSH_TRACE=5 git push -u origin main &> ../trace_up_02.log
 
 wait_set_commit $REPO_ADDR main
 

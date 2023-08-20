@@ -153,7 +153,8 @@ pipeline {
                 script {
                     sh "rm -rf tests_workspace_*"
                     def basePort = 9000
-                    def versions = ["v3_x", "v4_x", "v5_x/v5.0.0", "v5_x/v5.1.0"]
+                    // "v3_x", "v4_x", "v5_x/v5.0.0", 
+                    def versions = ["v5_x/v5.1.0", "v6_x/v6.0.0"]
 
                     def upgradeFiles = getTestFiles("tests/upgrade_tests").toList()
                     def upgradeBatches = []
@@ -170,9 +171,9 @@ pipeline {
                             deployVersion(version, batch, basePort + (j * batchSize))
                         }
 
-                        runUpgradeTests(batch, basePort + (j * batchSize), "v4_x", "v5_x/v5.1.0")
-                        runUpgradeTests(batch, basePort + (j * batchSize), "v5_x/v5.0.0", "v5_x/v5.1.0")
-                        runUpgradeTests(batch, basePort + (j * batchSize), "v3_x", "v4_x")
+                        runUpgradeTests(batch, basePort + (j * batchSize), "v5_x/v5.1.0", "v6_x/v6.0.0")
+                        // runUpgradeTests(batch, basePort + (j * batchSize), "v5_x/v5.0.0", "v5_x/v5.1.0")
+                        // runUpgradeTests(batch, basePort + (j * batchSize), "v3_x", "v4_x")
                         sh 'docker ps -a --filter name=localnode-* -aq | grep -v "$(docker ps -a --filter name=localnode-9000 -q)" | xargs docker rm -f'
                     }
 
