@@ -4,11 +4,6 @@ set -o pipefail
 . ./util.sh
 set -x
 
-if [[ "$VERSION" == *"v6_x"* ]]; then
-  echo "Test is ignored for v6 because in v6 we don't delete snapshots"
-  exit 0
-fi
-
 REPO_NAME="repo29_$(date +%s)"
 
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
@@ -67,7 +62,7 @@ git branch -d dev
 
 git log --pretty=oneline --graph
 
-GOSH_TRACE=5 git push &> ../trace_29.log
+GOSH_TRACE=5 git push -u origin main &> ../trace_29.log
 
 
 echo "***** cloning repo *****"
