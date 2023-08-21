@@ -216,6 +216,7 @@ pub mod tests {
                 tree_address: &str,
                 repo_name: &str,
                 nodes: &mut HashMap<String, TreeNode>,
+                sha_inner_hash: &str,
             ) -> anyhow::Result<()>;
         }
 
@@ -240,7 +241,6 @@ pub mod tests {
                 &self,
                 wallet: &UserWallet,
                 repo_address: BlockchainContractAddress,
-                branch_name: String,
                 commit_id: String,
                 file_path: String,
                 content: String,

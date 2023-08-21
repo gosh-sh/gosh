@@ -605,7 +605,7 @@ pub mod tests {
             dao_addr,
             repo_addr,
             local_repository,
-            cache,
+            // cache,
             upgraded_commits: vec![],
             repo_versions: vec![],
             database: None,

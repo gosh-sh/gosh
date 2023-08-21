@@ -2,13 +2,6 @@
 set -e
 set -o pipefail
 . ./util.sh
-set -x
-
-if [[ "$VERSION" == *"v6_x"* ]]; then
-  echo "Test is ignored for v6 because in v6 we don't delete snapshots"
-  exit 0
-fi
-
 
 REPO_NAME="repo30_$(date +%s)"
 
@@ -35,7 +28,7 @@ echo "***** Pushing file to the repo *****"
 echo main > 1.txt
 git add 1.txt
 git commit -m main
-git push
+git push -u origin main
 
 echo "***** Create dev branch *****"
 git checkout -b dev

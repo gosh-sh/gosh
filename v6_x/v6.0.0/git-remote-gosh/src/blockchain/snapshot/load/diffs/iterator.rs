@@ -6,7 +6,6 @@ use crate::blockchain::{
 };
 use std::iter::Iterator;
 use std::sync::Arc;
-use git_hash::ObjectId;
 use ton_client::abi::{decode_message_body, Abi, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
 
@@ -36,7 +35,7 @@ pub struct DiffMessagesIterator {
 #[derive(Debug, Clone)]
 pub struct PageIterator {
     cursor: Option<String>,
-    stop_on: Option<u64>,
+    // stop_on: Option<u64>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -397,7 +396,7 @@ pub async fn load_messages_to(
     };
     let page = PageIterator {
         cursor: subsequent_page_info,
-        stop_on: oldest_timestamp,
+        // stop_on: oldest_timestamp,
     };
     Ok((messages, page))
 }
@@ -442,8 +441,9 @@ pub async fn load_constructor(
     let nodes = &result["data"]["blockchain"]["account"]["messages"];
     let edges: Messages = serde_json::from_value(nodes.clone())?;
 
+    let mut first_diff = false;
     tracing::trace!("Loaded {} message(s) to {}", edges.edges.len(), address);
-    for elem in edges.edges.iter().rev() {
+    for elem in edges.edges.iter() {
         let raw_msg = &elem.message;
         if raw_msg.status != 5 || raw_msg.bounced || raw_msg.body.is_none() {
             continue;
@@ -469,10 +469,29 @@ pub async fn load_constructor(
 
         let decoded = decoding_result?;
 
-        if decoded.name == "constructor" {
+        if first_diff && decoded.name == "approve" {
+            let value = decoded.value.unwrap();
+
+            let diff: Diff = serde_json::from_value(value["diff"].clone()).unwrap();
+            let blob_data: Vec<u8> = diff
+                .with_patch::<_, anyhow::Result<Vec<u8>>>(|e| match e {
+                    Some(patch) => {
+                        let blob_data =
+                            diffy::apply_bytes(&[].to_vec(), &patch.clone())?;
+                        Ok(blob_data)
+                    }
+                    None => panic!("Broken diff detected: neither ipfs nor patch exists"),
+                })?;
+
+            return Ok((blob_data, diff.ipfs));
+        } else if decoded.name == "constructor" {
             tracing::trace!("constructor for address={address} was found");
             let value = decoded.value.unwrap();
 
+            if value["data"] == "" && value["ipfsdata"] == serde_json::value::Value::Null {
+                first_diff = true;
+                continue;
+            }
             let data: String = serde_json::from_value(value["data"].clone()).unwrap();
             let ipfs: Option<String> = serde_json::from_value(value["ipfsdata"].clone()).unwrap();
 
@@ -480,10 +499,10 @@ pub async fn load_constructor(
                 .step_by(2)
                 .map(|i| u8::from_str_radix(&data[i..i + 2], 16).expect("must be hex string"))
                 .collect();
-            let decode_data: Vec<u8> =
+            let decoded_data: Vec<u8> =
                 ton_client::utils::decompress_zstd(&data).expect("Must be correct archive");
 
-            return Ok((decode_data, ipfs));
+            return Ok((decoded_data, ipfs));
         }
     }
 
