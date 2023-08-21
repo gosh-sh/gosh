@@ -215,7 +215,7 @@ pub async fn inner_push_diff(
 }
 
 #[instrument(level = "info", skip_all)]
-async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> anyhow::Result<String> {
+pub async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> anyhow::Result<String> {
     tracing::trace!("Uploading blob to IPFS");
     let content: Vec<u8> = ton_client::utils::compress_zstd(content, None)?;
     let content = base64::encode(&content);

@@ -10,7 +10,6 @@ use serde::de;
 use std::{fmt, option::Option};
 
 pub mod diffs;
-pub mod old_abi;
 
 #[derive(Deserialize, DataContract)]
 #[abi = "snapshot.abi.json"]
