@@ -349,6 +349,7 @@ contract Commit is Modifiers {
         uint128 index) public senderIs(address(this)) accept {
         if (index >= _parents.length) { return; }
         getMoney();
+        if (index != 0) { return; }
         if (index != 0) { Commit(newC).addCommitCheckNumber{value:0.1 ton , flag: 1}(_nameCommit); }
         if ((index != 0) || (_save[newC] != true)){
             Commit(_parents[index].addr).CommitCheckCommit{value: 0.3 ton, bounce: true, flag: 1 }(_nameCommit, branchName, branchCommit , newC, numcommits - 1, false);
