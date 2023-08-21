@@ -72,8 +72,9 @@ async fn construct_tree(
     snapshot_to_commit: &mut HashMap<String, Vec<SnapshotMonitor>>,
     wallet_contract: &GoshContract,
     to_deploy: &mut Vec<ParallelTree>,
+    is_upgrade: bool,
 ) -> anyhow::Result<HashMap<String, TreeNode>> {
-    tracing::trace!("construct tree: tree_id={tree_id}");
+    tracing::trace!("construct tree: tree_id={tree_id}, snapshot_to_commit:{snapshot_to_commit:?}, is_upgrade={is_upgrade}");
     // flatten tree map to get rid of recursive calls of async funcs
     let flat_tree = flatten_tree(context, tree_id, "")?;
     tracing::trace!("construct tree: flat_tree={flat_tree:?}");
@@ -129,20 +130,24 @@ async fn construct_tree(
         };
         let file_name = entry.filename.to_string();
 
-        let commit = snapshot_to_commit
-            .get(&file_name)
-            .and_then(|val| {
-                for snap_mon in val {
-                    if commit_chain.contains(&snap_mon.latest_commit) {
-                        return Some(snap_mon.base_commit.clone());
+        let commit = if !is_upgrade {
+            snapshot_to_commit
+                .get(&file_name)
+                .and_then(|val| {
+                    for snap_mon in val {
+                        if commit_chain.contains(&snap_mon.latest_commit) {
+                            return Some(snap_mon.base_commit.clone());
+                        }
+                        if commit_chain.contains(&snap_mon.base_commit) {
+                            return Some(snap_mon.base_commit.clone());
+                        }
                     }
-                    if commit_chain.contains(&snap_mon.base_commit) {
-                        return Some(snap_mon.base_commit.clone());
-                    }
-                }
-                None
-            })
-            .unwrap_or(current_commit.to_string());
+                    None
+                })
+                .unwrap_or(current_commit.to_string())
+        } else {
+            current_commit.to_string()
+        };
 
         let tree_node = TreeNode::from((Some(format!("0x{file_hash}")), None, commit, entry));
         let type_obj = &tree_node.type_obj;
@@ -252,10 +257,11 @@ pub async fn push_tree(
     wallet_contract: &GoshContract,
     handlers: &mut ParallelTreeUploadSupport,
     push_semaphore: Arc<Semaphore>,
+    is_upgrade: bool,
 ) -> anyhow::Result<(BlockchainContractAddress, String)> {
     tracing::trace!("start push_tree: tree_id={root_tree_id}, current_commit={current_commit}");
     let mut to_deploy = Vec::new();
-    let tree_nodes = construct_tree(context, root_tree_id, current_commit, snapshot_to_commit, wallet_contract, &mut to_deploy).await?;
+    let tree_nodes = construct_tree(context, root_tree_id, current_commit, snapshot_to_commit, wallet_contract, &mut to_deploy, is_upgrade).await?;
     tracing::trace!("Trees to deploy after construct: {to_deploy:?}");
     let mut res_address = None;
     for tree in to_deploy {

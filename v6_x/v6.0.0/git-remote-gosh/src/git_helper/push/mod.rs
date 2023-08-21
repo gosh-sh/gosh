@@ -443,7 +443,7 @@ where
         set_commit: bool,
         snapshot_to_commit: &mut HashMap<String, Vec<SnapshotMonitor>>,
     ) -> anyhow::Result<()> {
-        tracing::trace!("check_parents object_id: {object_id} remote_branch_name: {remote_branch_name}, local_branch_name: {local_branch_name}");
+        tracing::trace!("check_parents object_id: {object_id} remote_branch_name: {remote_branch_name}, local_branch_name: {local_branch_name}, set_commit={set_commit}");
         let mut buffer: Vec<u8> = Vec::new();
         let commit = self
             .local_repository()
@@ -592,6 +592,9 @@ where
                 latest_commit: object_id.to_string(),
             };
             let entry = snapshot_to_commit.entry(added.filepath.to_string() ).or_insert(vec![]);
+            if upgrade_commit {
+                entry.clear();
+            }
             entry.push(snap_mon);
         }
 
@@ -699,6 +702,7 @@ where
             wallet_contract,
             parallel_tree_upload_support,
             push_semaphore.clone(),
+            upgrade_commit,
         ).await?;
 
         {
@@ -752,7 +756,7 @@ where
         // parent for commit should be prev version of the same commit
         // snapshot should be deployed with content of the last snapshot and new addr of commit
 
-        tracing::trace!("check and upgrade previous commit: {ancestor_commit} {local_branch_name} {remote_branch_name}");
+        tracing::trace!("check and upgrade previous commit: {ancestor_commit} {local_branch_name} {remote_branch_name} {set_commit}");
 
         // 1) get ancestor commit address
         let mut repo_contract = self.blockchain.repo_contract().clone();
@@ -1016,6 +1020,7 @@ where
             )
         }
 
+        let files_cnt = parallel_snapshot_uploads.get_expected().len();
         parallel_snapshot_uploads.start_push(self).await?;
 
         let stored_snapshot_addresses = parallel_snapshot_uploads.get_expected().clone();
@@ -1070,7 +1075,7 @@ where
         if set_commit {
             let branches = branch_list(self.blockchain.client(), &self.repo_addr).await?;
             for branch_ref in branches.branch_ref {
-                if branch_ref.branch_name == local_branch_name {
+                // if branch_ref.branch_name == local_branch_name {
                     let commit_contract =
                         GoshContract::new(&branch_ref.commit_address, gosh_abi::COMMIT);
                     let sha: GetNameCommitResult = commit_contract
@@ -1082,8 +1087,8 @@ where
                         self.blockchain
                             .notify_commit(
                                 &latest_commit_id,
-                                local_branch_name,
-                                1,
+                                &branch_ref.branch_name,
+                                files_cnt as u32,
                                 1,
                                 &self.remote,
                                 &self.dao_addr,
@@ -1092,7 +1097,7 @@ where
                             )
                             .await?;
                     }
-                }
+                // }
             }
         }
 
