@@ -321,7 +321,7 @@ contract Commit is Modifiers {
         address newC,
         uint128 numcommits,
         bool save) public senderIs(address(this)) accept {
-        if (((save == true) && (branchCommit  == address(this))) || ((_isCorrect == true) && (save != true))){
+        if ((((save == true) && (branchCommit  == address(this))) || ((_isCorrect == true) && (save != true))) || ((save != true) && (_initupgrade == true))){
 //                if (numcommits != 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
                 Commit(newC).ChainAccept{value: 0.3 ton, bounce: true , flag: 1}(_nameCommit, branchName, branchCommit, newC);
         }
@@ -349,7 +349,6 @@ contract Commit is Modifiers {
         uint128 index) public senderIs(address(this)) accept {
         if (index >= _parents.length) { return; }
         getMoney();
-        if (index != 0) { return; }
         if (index != 0) { Commit(newC).addCommitCheckNumber{value:0.1 ton , flag: 1}(_nameCommit); }
         if ((index != 0) || (_save[newC] != true)){
             Commit(_parents[index].addr).CommitCheckCommit{value: 0.3 ton, bounce: true, flag: 1 }(_nameCommit, branchName, branchCommit , newC, numcommits - 1, false);
