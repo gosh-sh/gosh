@@ -453,7 +453,7 @@ contract Commit is Modifiers {
         bool save) public {
         require(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, nameCommit) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        if (branchCommit  != address(this)) { require(_initupgrade == false, ERR_WRONG_COMMIT_ADDR); }
+        if ((branchCommit  != address(this)) && (save == true)) { require(_initupgrade == false, ERR_WRONG_COMMIT_ADDR); }
         if (save == true) { _save[newC] = true; }
         this._checkChain{value: 0.2 ton, bounce: true, flag: 1}(branchName, branchCommit, newC, numcommits, save);
         getMoney();
