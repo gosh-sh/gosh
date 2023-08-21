@@ -321,7 +321,7 @@ contract Commit is Modifiers {
         address newC,
         uint128 numcommits,
         bool save) public senderIs(address(this)) accept {
-        if (((save == true) && (branchCommit  == address(this))) || ((_isCorrect == true) && (save != true))){
+        if ((((save == true) && (branchCommit  == address(this))) || ((_isCorrect == true) && (save != true))) || ((save != true) && (_initupgrade == true))){
 //                if (numcommits != 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
                 Commit(newC).ChainAccept{value: 0.3 ton, bounce: true , flag: 1}(_nameCommit, branchName, branchCommit, newC);
         }
