@@ -13,7 +13,7 @@ LABEL org.opencontainers.image.title="Gosh" \
     org.opencontainers.image.description="Build your decentralized and secure software supply chain with Docker and Git Open Source Hodler" \
     org.opencontainers.image.vendor="GOSH" \
     com.docker.desktop.extension.api.version=">=0.2.1" \
-    com.docker.desktop.extension.icon="http://icons.gosh.run/Gosh%20icon%20-%20black.svg" \
+    com.docker.desktop.extension.icon="https://gosh.sh/images/gosh-icon.svg" \
     com.docker.extension.detailed-description=${detailed_description} \
     com.docker.extension.publisher-url="https://gosh.sh" \
     com.docker.extension.changelog=${this_version_updates}
