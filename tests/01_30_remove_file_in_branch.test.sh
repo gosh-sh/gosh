@@ -37,7 +37,7 @@ git rm 1.txt
 git commit -m dev
 GOSH_TRACE=5 git push -u origin dev &> ../trace_30_rm.log
 
-sleep 10
+sleep 30
 
 echo "***** Push to main branch *****"
 git checkout main
