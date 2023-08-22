@@ -2,6 +2,7 @@ import { TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
 import TaskABI from './abi/task.abi.json'
 import {
+    EDaoMemberType,
     TTaskDetails,
     TTaskGrant,
     TTaskGrantPair,
@@ -40,16 +41,26 @@ export class Task extends BaseContract {
         let team: TTaskDetails['team'] = null
         if (candidate) {
             // Resolve team users
+            const daomembers = Object.keys(candidate.daoMembers)
             const users = await Promise.all(
                 ['pubaddrassign', 'pubaddrreview', 'pubaddrmanager'].map(async (key) => {
                     return await Promise.all(
                         Object.keys(candidate[key]).map(async (profile: string) => {
-                            const account = await AppConfig.goshroot.getUserProfile({
-                                address: profile,
-                            })
+                            const user = { name: '', type: EDaoMemberType.User }
+                            if (daomembers.indexOf(profile) >= 0) {
+                                user.name = candidate.daoMembers[profile]
+                                user.type = EDaoMemberType.Dao
+                            } else {
+                                const account = await AppConfig.goshroot.getUserProfile({
+                                    address: profile,
+                                })
+                                user.name = await account.getName()
+                                user.type = EDaoMemberType.User
+                            }
+
                             return {
-                                username: await account.getName(),
-                                usertype: 'user',
+                                username: user.name,
+                                usertype: user.type,
                                 profile,
                             } as TTaskTeamMember
                         }),
