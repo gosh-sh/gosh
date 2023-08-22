@@ -12,8 +12,8 @@
         "build:ci": "dotenv -e .env.ci node env.json.js && dotenv -e .env.ci vite build",
         "build:dev": "dotenv -e .env.development node env.json.js && dotenv -e .env.development vite build",
         "build:prod": "dotenv -e .env.production node env.json.js && dotenv -e .env.production vite build",
-        "build:dockerdev": "rim -m 'src/**/* | package.json | tsconfig.json | vite.config.ts | postcss.config.js | tailwind.config.json | .env.docker.development | ../react-gosh/src/**/*' -s 'rim.cache.json' dotenv -e .env.docker.development -- vite build --base=./",
-        "build:dockerprod": "rim -m 'src/**/* | package.json | tsconfig.json | vite.config.ts | postcss.config.js | tailwind.config.json | .env.docker.production | ../react-gosh/src/**/*' -s 'rim.cache.json' dotenv -e .env.docker.production -- vite build --base=./",
+        "build:dockerdev": "dotenv -e .env.docker.development -- vite build --base=./",
+        "build:dockerprod": "dotenv -e .env.docker.production -- vite build --base=./",
         "update-react-gosh": "cd ../react-gosh && rm -rf dist && pnpm run build && cd - && pnpm update react-gosh"
     },
     "eslintConfig": {

@@ -40,6 +40,6 @@ run:
 	  node:18.8.0-alpine \
 	  sh -c "npm install -g pnpm && \
 	  chown -R 1000:1000 /root && cd /react-gosh && pnpm install && cd /workdir && pnpm run update-react-gosh && \
-	  pnpm install && pnpm run wasm && pnpm link run-if-modified && pnpm run start:$(ENV)"
+	  pnpm install && pnpm run wasm && pnpm run start:$(ENV)"
 
 .PHONY: build
