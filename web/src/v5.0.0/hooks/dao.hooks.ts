@@ -3275,7 +3275,7 @@ export function useCreateTask() {
         const reviewTokens = getTokenAmount(cost, review)
         const managerTokens = getTokenAmount(cost, manager)
 
-        const struct: TTaskGrant = { assign: [], review: [], manager: [] }
+        const struct: TTaskGrant = { assign: [], review: [], manager: [], subtask: [] }
         if (!vesting) {
             struct.assign.push({ grant: assignTokens, lock: lockSec })
             struct.review.push({ grant: reviewTokens, lock: lockSec })
