@@ -10,13 +10,13 @@ use crate::{
 };
 use git_hash::{self, ObjectId};
 use git_odb::Find;
+use std::collections::VecDeque;
 use std::{
     collections::{HashMap, HashSet},
     str::FromStr,
     sync::Arc,
     vec::Vec,
 };
-use std::collections::VecDeque;
 use ton_client::net::ParamsOfQuery;
 
 use tokio::sync::Semaphore;
@@ -34,13 +34,16 @@ use push_tag::push_tag;
 mod delete_tag;
 pub(crate) mod parallel_snapshot_upload_support;
 
-use crate::blockchain::{branch_list, get_commit_by_addr, GetNameBranchResult, Snapshot, Tree};
-use crate::git_helper::push::parallel_snapshot_upload_support::{ParallelCommit, ParallelCommitUploadSupport, ParallelSnapshot, ParallelSnapshotUploadSupport, ParallelTree, ParallelTreeUploadSupport};
+use crate::blockchain::{branch_list, Snapshot, Tree};
+use crate::git_helper::push::parallel_snapshot_upload_support::{
+    ParallelCommit, ParallelCommitUploadSupport, ParallelSnapshot, ParallelSnapshotUploadSupport,
+    ParallelTreeUploadSupport,
+};
 use crate::git_helper::supported_contract_version;
 use delete_tag::delete_tag;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 use push_tree::push_tree;
-use crate::blockchain::snapshot::load::{GetSnapshotAddrResult, OldSnapshot};
+
 use crate::blockchain::tree::load::{construct_map_of_snapshots, SnapshotMonitor};
 use crate::git_helper::push::push_diff::save_data_to_ipfs;
 
@@ -118,7 +121,7 @@ where
             file_diff.original.clone(),
             file_diff.patch.clone(),
             file_diff.after_patch.clone(),
-            snapshot_address
+            snapshot_address,
         );
 
         parallel_diffs_upload_support.push(self, diff).await?;
@@ -139,12 +142,9 @@ where
         upgrade_commit: bool,
         snapshot_to_commit: &mut HashMap<String, Vec<SnapshotMonitor>>,
     ) -> anyhow::Result<()> {
-        let file_diff = utilities::generate_blob_diff(
-            &self.local_repository().objects,
-            None,
-            Some(blob_id),
-        )
-            .await?;
+        let file_diff =
+            utilities::generate_blob_diff(&self.local_repository().objects, None, Some(blob_id))
+                .await?;
         let snapshot_addr = {
             tracing::trace!("push_new_blob: file_path={file_path}, blob_id={blob_id}, commit_id={commit_id}, branch_name={branch_name}, upgrade_commit={upgrade_commit}");
             let blockchain = self.blockchain.clone();
@@ -195,7 +195,7 @@ where
                 // parallel_snapshot_uploads
                 //     .add_to_push_list(self, snapshot_addr.clone(), prev_repo_address)
                 //     .await?;
-            // } else {
+                // } else {
             }
 
             parallel_snapshot_uploads.push_expected(snapshot_addr.clone());
@@ -495,15 +495,22 @@ where
     }
 
     #[instrument(level = "info", skip_all)]
-    async fn push_zero_commit(&mut self, local_branch_name: &str, wallet_contract: &GoshContract,) -> anyhow::Result<()> {
+    async fn push_zero_commit(
+        &mut self,
+        local_branch_name: &str,
+        wallet_contract: &GoshContract,
+    ) -> anyhow::Result<()> {
         let zero_id = ObjectId::from_str(ZERO_SHA)?;
-        let zero_commit_addr = self.calculate_commit_address(
-            &zero_id
-        ).await?;
+        let zero_commit_addr = self.calculate_commit_address(&zero_id).await?;
 
         let zero_commit_contract = GoshContract::new(&zero_commit_addr, gosh_abi::COMMIT);
-        match zero_commit_contract.is_active(self.blockchain.client()).await {
-            Ok(true) => { return Ok(()); },
+        match zero_commit_contract
+            .is_active(self.blockchain.client())
+            .await
+        {
+            Ok(true) => {
+                return Ok(());
+            }
             _ => {}
         }
         tracing::trace!("Deploy zero commit of new version");
@@ -516,18 +523,18 @@ where
             .branch_ref
             .iter()
             .find(|_ref| _ref.branch_name == local_branch_name)
-            .ok_or(anyhow::format_err!("Failed to find zero commit of the previous repo version"))?;
+            .ok_or(anyhow::format_err!(
+                "Failed to find zero commit of the previous repo version"
+            ))?;
 
         let commit = ParallelCommit::new(
             zero_id,
             "0".to_string(),
             "".to_string(),
-            vec![
-                AddrVersion {
-                    address: prev_zero_commit.commit_address.clone(),
-                    version: prev_zero_commit.version.clone(),
-                }
-            ],
+            vec![AddrVersion {
+                address: prev_zero_commit.commit_address.clone(),
+                version: prev_zero_commit.version.clone(),
+            }],
             true,
         );
 
@@ -545,8 +552,9 @@ where
         let tree_hash = crate::blockchain::Tree::inner_tree_hash(
             self.blockchain.client(),
             wallet_contract,
-            &HashMap::new()
-        ).await?;
+            &HashMap::new(),
+        )
+        .await?;
 
         let mut expected_contracts = vec![];
 
@@ -577,8 +585,8 @@ where
         }
         if attempts == MAX_REDEPLOY_ATTEMPTS {
             anyhow::bail!(
-                            "Failed to deploy all commits. Undeployed commits: {expected_contracts:?}"
-                        )
+                "Failed to deploy all commits. Undeployed commits: {expected_contracts:?}"
+            )
         }
 
         self.blockchain
@@ -690,7 +698,9 @@ where
                 base_commit: object_id.to_string(),
                 latest_commit: object_id.to_string(),
             };
-            let entry = snapshot_to_commit.entry(added.filepath.to_string() ).or_insert(vec![]);
+            let entry = snapshot_to_commit
+                .entry(added.filepath.to_string())
+                .or_insert(vec![]);
             if upgrade_commit {
                 entry.clear();
             }
@@ -717,8 +727,9 @@ where
                             self.blockchain.client(),
                             &repo_contract,
                             &snap_mon_vec[i].base_commit,
-                            &file_path
-                        ).await?;
+                            &file_path,
+                        )
+                        .await?;
                         self.push_blob_update(
                             &file_path,
                             &update.0.oid,
@@ -729,7 +740,7 @@ where
                             parallel_diffs_upload_support,
                             String::from(snapshot_address),
                         )
-                            .await?;
+                        .await?;
                         tracing::trace!("Change latest commit for {}", file_path);
                         snap_mon_vec[i].latest_commit = object_id.to_string();
                         break;
@@ -749,7 +760,7 @@ where
                     upgrade_commit,
                     snapshot_to_commit,
                 )
-                    .await?;
+                .await?;
                 let snap_mon = SnapshotMonitor {
                     base_commit: object_id.to_string(),
                     latest_commit: object_id.to_string(),
@@ -772,8 +783,9 @@ where
                                 self.blockchain.client(),
                                 &repo_contract,
                                 &snap_mon_vec[i].base_commit,
-                                &file_path
-                            ).await?;
+                                &file_path,
+                            )
+                            .await?;
 
                             self.push_blob_remove(
                                 &file_path,
@@ -784,7 +796,7 @@ where
                                 parallel_diffs_upload_support,
                                 String::from(snapshot_address),
                             )
-                                .await?;
+                            .await?;
                             snap_mon_vec.remove(i);
                             break;
                         }
@@ -802,26 +814,22 @@ where
             parallel_tree_upload_support,
             push_semaphore.clone(),
             upgrade_commit,
-        ).await?;
+        )
+        .await?;
 
         {
             let object_id = object_id.clone();
             let tree_sha = tree_sha.clone();
 
-            let commit = ParallelCommit::new(
-                object_id,
-                tree_sha,
-                raw_commit,
-                parents,
-                upgrade_commit,
-            );
+            let commit =
+                ParallelCommit::new(object_id, tree_sha, raw_commit, parents, upgrade_commit);
             let mut repo_contract = self.blockchain.repo_contract().clone();
             let commit_address = get_commit_address(
                 self.blockchain.client(),
                 &mut repo_contract,
                 &object_id.to_string(),
             )
-                .await?;
+            .await?;
             let commit_address = String::from(commit_address);
             if !self.get_db()?.commit_exists(&commit_address)? {
                 self.get_db()?.put_commit(commit, commit_address.clone())?;
@@ -942,9 +950,9 @@ where
         let push_semaphore = Arc::new(Semaphore::new(PARALLEL_PUSH_LIMIT));
         let mut parallel_tree_uploads = ParallelTreeUploadSupport::new();
         let mut parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
-        let mut parents_of_commits: HashMap<String, Vec<String>> = 
-        HashMap::from([(ZERO_SHA.to_owned(), vec![]), ("".to_owned(), vec![])]);
-        let mut visited_trees: HashSet<ObjectId> = HashSet::new();
+        let mut parents_of_commits: HashMap<String, Vec<String>> =
+            HashMap::from([(ZERO_SHA.to_owned(), vec![]), ("".to_owned(), vec![])]);
+        let visited_trees: HashSet<ObjectId> = HashSet::new();
         let mut statistics = PushBlobStatistics::new();
 
         let latest_commit_id = self
@@ -964,7 +972,10 @@ where
         let onchain_commit = &latest_commit_id;
         let commit_str = onchain_commit.to_string();
         if commit_str != ZERO_SHA {
-            tracing::trace!("Start load of previous commit tree. onchain_commit={}", onchain_commit);
+            tracing::trace!(
+                "Start load of previous commit tree. onchain_commit={}",
+                onchain_commit
+            );
             let commit_version = self.find_commit(&commit_str).await?;
             tracing::trace!("Version of the prev commit: {commit_version:?}");
             // TODO: compare with version 6 or greater not current
@@ -972,15 +983,11 @@ where
                 tracing::trace!("Prev commit is equal to the current, preload the tree");
                 let commit_address = self.calculate_commit_address(onchain_commit).await?;
                 tracing::trace!("commit_address:{commit_address}");
-                let tree_address = Tree::get_address_from_commit(
-                    self.blockchain.client(),
-                    &commit_address,
-                ).await?;
+                let tree_address =
+                    Tree::get_address_from_commit(self.blockchain.client(), &commit_address)
+                        .await?;
                 tracing::trace!("tree_address:{tree_address}");
-                let tree = Tree::load(
-                    self.blockchain.client(),
-                    &tree_address,
-                ).await?;
+                let tree = Tree::load(self.blockchain.client(), &tree_address).await?;
                 let mut queue = VecDeque::new();
                 queue.push_back((tree, "".to_string()));
                 loop {
@@ -993,7 +1000,8 @@ where
                             &prefix,
                             &mut snapshot_to_commit,
                             &mut queue,
-                        ).await?;
+                        )
+                        .await?;
                     } else {
                         break;
                     }
@@ -1121,15 +1129,14 @@ where
 
         let stored_snapshot_addresses = parallel_snapshot_uploads.get_expected().clone();
 
-        let prev_repo_address =
-            Some(
-                self.repo_versions
-                    .iter()
-                    .find(|repo| repo.version == parents_for_upgrade[0].version)
-                    .expect("Failed to find prev repo address")
-                    .repo_address
-                    .clone(),
-            );
+        let prev_repo_address = Some(
+            self.repo_versions
+                .iter()
+                .find(|repo| repo.version == parents_for_upgrade[0].version)
+                .expect("Failed to find prev repo address")
+                .repo_address
+                .clone(),
+        );
 
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
@@ -1172,27 +1179,27 @@ where
             let branches = branch_list(self.blockchain.client(), &self.repo_addr).await?;
             for branch_ref in branches.branch_ref {
                 // if branch_ref.branch_name == local_branch_name {
-                    let commit_contract =
-                        GoshContract::new(&branch_ref.commit_address, gosh_abi::COMMIT);
-                    let sha: GetNameCommitResult = commit_contract
-                        .run_local(self.blockchain.client(), "getNameCommit", None)
+                let commit_contract =
+                    GoshContract::new(&branch_ref.commit_address, gosh_abi::COMMIT);
+                let sha: GetNameCommitResult = commit_contract
+                    .run_local(self.blockchain.client(), "getNameCommit", None)
+                    .await?;
+                tracing::trace!("Commit sha: {sha:?}");
+                if sha.name == latest_commit_id.to_string() {
+                    // 10) call set commit to the new version of the ancestor commit
+                    self.blockchain
+                        .notify_commit(
+                            &latest_commit_id,
+                            &branch_ref.branch_name,
+                            files_cnt as u32,
+                            1,
+                            &self.remote,
+                            &self.dao_addr,
+                            true,
+                            &self.config,
+                        )
                         .await?;
-                    tracing::trace!("Commit sha: {sha:?}");
-                    if sha.name == latest_commit_id.to_string() {
-                        // 10) call set commit to the new version of the ancestor commit
-                        self.blockchain
-                            .notify_commit(
-                                &latest_commit_id,
-                                &branch_ref.branch_name,
-                                files_cnt as u32,
-                                1,
-                                &self.remote,
-                                &self.dao_addr,
-                                true,
-                                &self.config,
-                            )
-                            .await?;
-                    }
+                }
                 // }
             }
         }
@@ -1201,10 +1208,7 @@ where
     }
 
     // TODO: investigate may be it should be changed to git function
-    fn get_commit_ancestors(
-        &self,
-        start_commit: &ObjectId,
-    ) -> anyhow::Result<Vec<String>> {
+    fn get_commit_ancestors(&self, start_commit: &ObjectId) -> anyhow::Result<Vec<String>> {
         let mut res = vec![];
         res.push(start_commit.to_string());
         let mut queue = VecDeque::new();
@@ -1232,7 +1236,6 @@ where
         }
         Ok(res)
     }
-
 
     #[instrument(level = "trace", skip_all)]
     async fn push_ref(&mut self, local_ref: &str, remote_ref: &str) -> anyhow::Result<String> {
@@ -1351,7 +1354,8 @@ where
         let zero_id = ObjectId::from_str(ZERO_SHA)?;
         if prev_commit_id.is_none() || prev_commit_id == Some(zero_id) {
             tracing::trace!("Check zero commit");
-            self.push_zero_commit(local_branch_name, &zero_wallet_contract).await?;
+            self.push_zero_commit(local_branch_name, &zero_wallet_contract)
+                .await?;
         }
 
         let latest_commit = self
@@ -1383,7 +1387,10 @@ where
         if let Some(onchain_commit) = &prev_commit_id {
             let commit_str = onchain_commit.to_string();
             if commit_str != ZERO_SHA {
-                tracing::trace!("Start load of previous commit tree. onchain_commit={}", onchain_commit);
+                tracing::trace!(
+                    "Start load of previous commit tree. onchain_commit={}",
+                    onchain_commit
+                );
                 let commit_version = self.find_commit(&commit_str).await?;
                 tracing::trace!("Version of the prev commit: {commit_version:?}");
                 let commit_ver = commit_version.version;
@@ -1391,18 +1398,16 @@ where
                 let equals = commit_ver == current;
                 tracing::trace!("{} == {} : {}", commit_ver, current, equals);
                 if commit_ver == supported_contract_version() {
-                    tracing::trace!("Prev commit version is equal to the current, preload the tree");
+                    tracing::trace!(
+                        "Prev commit version is equal to the current, preload the tree"
+                    );
                     let commit_address = self.calculate_commit_address(onchain_commit).await?;
                     tracing::trace!("commit_address:{commit_address}");
-                    let tree_address = Tree::get_address_from_commit(
-                        self.blockchain.client(),
-                        &commit_address,
-                    ).await?;
+                    let tree_address =
+                        Tree::get_address_from_commit(self.blockchain.client(), &commit_address)
+                            .await?;
                     tracing::trace!("tree_address:{tree_address}");
-                    let tree = Tree::load(
-                        self.blockchain.client(),
-                        &tree_address,
-                    ).await?;
+                    let tree = Tree::load(self.blockchain.client(), &tree_address).await?;
                     let mut queue = VecDeque::new();
                     queue.push_back((tree, "".to_string()));
                     loop {
@@ -1415,14 +1420,17 @@ where
                                 &prefix,
                                 &mut snapshot_to_commit,
                                 &mut queue,
-                            ).await?;
+                            )
+                            .await?;
                         } else {
                             break;
                         }
                     }
                     tracing::trace!("Loaded map: {:?}", snapshot_to_commit);
                 } else {
-                    tracing::trace!("Prev commit version is not equal to current, skip preload of tree");
+                    tracing::trace!(
+                        "Prev commit version is not equal to current, skip preload of tree"
+                    );
                 }
             }
         }
@@ -1442,7 +1450,7 @@ where
                     let commit_address = self.calculate_commit_address(&object_id).await?;
                     let commit_contract = GoshContract::new(&commit_address, gosh_abi::COMMIT);
                     match commit_contract.is_active(self.blockchain.client()).await {
-                        Ok(true) => { continue },
+                        Ok(true) => continue,
                         _ => {}
                     }
 
@@ -1453,9 +1461,9 @@ where
                         remote_branch_name,
                         local_branch_name,
                         true,
-                            &mut snapshot_to_commit,
+                        &mut snapshot_to_commit,
                     )
-                        .await?;
+                    .await?;
                     self.push_commit_object(
                         oid,
                         object_id,
@@ -1845,11 +1853,8 @@ fn get_list_of_commit_objects(
         commit_objects.push(commit);
     }
 
-    commit_objects.sort_by_key(|commit| {
-        commit.time().unwrap()
-    });
+    commit_objects.sort_by_key(|commit| commit.time().unwrap());
     commit_objects.reverse();
-
 
     let mut res = Vec::new();
     // observation from `git rev-list --reverse`

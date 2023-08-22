@@ -3,13 +3,12 @@ use crate::blockchain::{snapshot::PushDiffCoordinate, BlockchainContractAddress}
 use crate::git_helper::push::push_diff::{diff_address, is_diff_deployed, push_diff};
 use crate::git_helper::GitHelper;
 
-use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
+use crate::blockchain::snapshot::diffs::wait_diffs_ready::wait_diffs_until_ready;
 use anyhow::bail;
 use std::collections::HashMap;
 use std::vec::Vec;
 use tokio::task::JoinSet;
 use tracing::Instrument;
-use crate::blockchain::snapshot::diffs::wait_diffs_ready::wait_diffs_until_ready;
 
 const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
 
@@ -91,10 +90,7 @@ impl ParallelDiffsUploadSupport {
     ) -> anyhow::Result<()> {
         let exp = self.expecting_deployed_contacts_addresses.clone();
         for address in exp {
-            self.add_to_push_list(
-                context,
-                address,
-            ).await?;
+            self.add_to_push_list(context, address).await?;
         }
         Ok(())
     }
@@ -161,8 +157,8 @@ impl ParallelDiffsUploadSupport {
 
                     // self.add_to_push_list(context, diff_contract_address)
                     //     .await?;
-                // } else {
-                //     self.push_expected(diff_contract_address);
+                    // } else {
+                    //     self.push_expected(diff_contract_address);
                 }
                 self.push_expected(diff_contract_address);
             }
@@ -284,8 +280,8 @@ impl ParallelDiffsUploadSupport {
 
                     // self.add_to_push_list(context, diff_contract_address)
                     //     .await?;
-                // } else {
-                //     self.push_expected(diff_contract_address);
+                    // } else {
+                    //     self.push_expected(diff_contract_address);
                 }
                 self.push_expected(diff_contract_address);
             }

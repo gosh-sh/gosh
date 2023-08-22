@@ -1,5 +1,6 @@
 use super::GitHelper;
 
+use crate::blockchain::gosh_abi;
 use crate::ipfs::build_ipfs;
 use crate::{
     blockchain::{
@@ -22,7 +23,6 @@ use std::{
 };
 use tokio::sync::Mutex;
 use tracing::Instrument;
-use crate::blockchain::gosh_abi;
 
 const FETCH_MAX_TRIES: i32 = 3;
 
@@ -121,7 +121,7 @@ async fn restore_a_set_of_blobs(
                 blobs,
                 visited,
                 visited_ipfs,
-                branch
+                branch,
             )
             .await
         }
@@ -161,7 +161,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
         snapshot_address,
         visited_ipfs.clone(),
     )
-        .await?;
+    .await?;
     // tracing::trace!("restored_snapshots: {:#?}", current_snapshot_state);
     let mut last_restored_snapshots: LruCache<ObjectId, Vec<u8>> =
         LruCache::new(NonZeroUsize::new(2).unwrap());
@@ -182,7 +182,6 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
         blobs.remove(&blob_id);
     }
 
-
     tracing::info!(
         "Expecting to restore blobs: {:?} from {}",
         blobs,
@@ -191,8 +190,12 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
 
     // TODO: convert to async iterator
     // This should download next messages seemless
-    let mut messages =
-        blockchain::snapshot::diffs::DiffMessagesIterator::new(snapshot_address, repo_contract, branch.to_string(), true);
+    let mut messages = blockchain::snapshot::diffs::DiffMessagesIterator::new(
+        snapshot_address,
+        repo_contract,
+        branch.to_string(),
+        true,
+    );
     let mut preserved_message: Option<DiffMessage> = None;
     let mut transition_content: Option<Vec<u8>> = None;
     let mut parsed = vec![];
@@ -334,8 +337,12 @@ async fn restore_a_set_of_blobs_from_a_deleted_snapshot(
 
     // TODO: convert to async iterator
     // This should download next messages seemless
-    let mut messages =
-        blockchain::snapshot::diffs::DiffMessagesIterator::new(snapshot_address, repo_contract, branch.to_string(), false);
+    let mut messages = blockchain::snapshot::diffs::DiffMessagesIterator::new(
+        snapshot_address,
+        repo_contract,
+        branch.to_string(),
+        false,
+    );
     let mut preserved_message: Option<DiffMessage> = None;
     let mut transition_content: Option<Vec<u8>> = None;
     let mut parsed = vec![];
@@ -576,7 +583,8 @@ impl BlobsRebuildingPlan {
         );
         let ipfs_client = build_ipfs(ipfs_endpoint)?;
 
-        let (data, ipfs) = blockchain::snapshot::diffs::load_constructor(&es_client, snapshot_address).await?;
+        let (data, ipfs) =
+            blockchain::snapshot::diffs::load_constructor(&es_client, snapshot_address).await?;
 
         let mut new_loading = false;
         let (content, ipfs_hash) = if let Some(ipfs_hash) = ipfs.clone() {
@@ -676,10 +684,7 @@ impl BlobsRebuildingPlan {
                     };
                     result.map_err(|e| anyhow::Error::from(e))
                 }
-                .instrument(
-                    info_span!("tokio::spawn::restore_a_set_of_blobs")
-                        .or_current(),
-                ),
+                .instrument(info_span!("tokio::spawn::restore_a_set_of_blobs").or_current()),
             ));
             blobs.clear();
         }
@@ -688,10 +693,7 @@ impl BlobsRebuildingPlan {
         while let Some(finished_task) = fetched_blobs.next().await {
             match finished_task {
                 Err(e) => {
-                    panic!(
-                        "restore_a_set_of_blobs joih-handler: {}",
-                        e
-                    );
+                    panic!("restore_a_set_of_blobs joih-handler: {}", e);
                 }
                 Ok(Err(e)) => {
                     panic!("restore_a_set_of_blobs inner: {}", e);

@@ -11,7 +11,6 @@ use std::sync::Arc;
 
 const MAX_RETRIES_FOR_CHUNKS_TO_APPEAR: i32 = 20;
 
-
 // TODO: the same as TreeComponent leave only one
 #[derive(Serialize, Debug, Clone, Deserialize)]
 pub struct TreeNode {
@@ -84,13 +83,18 @@ impl DeployTree for Everscale {
         let result = {
             tracing::trace!("Start tree upload by chunks");
             let mut repo_contract = self.repo_contract().clone();
-            let tree_address =
-                Tree::calculate_address(&Arc::clone(self.client()), &mut repo_contract, sha_inner_hash)
-                    .await?;
+            let tree_address = Tree::calculate_address(
+                &Arc::clone(self.client()),
+                &mut repo_contract,
+                sha_inner_hash,
+            )
+            .await?;
             let mut nodes = nodes.to_owned();
             let chunk: HashMap<String, TreeNode> = HashMap::new();
-            let tree_contract =
-                GoshContract::new(BlockchainContractAddress::new(&tree_address), gosh_abi::TREE);
+            let tree_contract = GoshContract::new(
+                BlockchainContractAddress::new(&tree_address),
+                gosh_abi::TREE,
+            );
 
             if tree_contract.is_active(self.client()).await? {
                 // check existing tree nodes
@@ -148,7 +152,14 @@ impl DeployTree for Everscale {
 }
 
 impl<'a> From<(Option<String>, Option<String>, String, &'a tree::Entry)> for TreeNode {
-    fn from((file_hash, tree_hash, commit, entry): (Option<String>, Option<String>, String, &tree::Entry)) -> Self {
+    fn from(
+        (file_hash, tree_hash, commit, entry): (
+            Option<String>,
+            Option<String>,
+            String,
+            &tree::Entry,
+        ),
+    ) -> Self {
         Self {
             flags: (GoshBlobBitFlags::Compressed as u8).to_string(),
             mode: std::str::from_utf8(entry.mode.as_bytes())

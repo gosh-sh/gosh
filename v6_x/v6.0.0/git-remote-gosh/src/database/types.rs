@@ -1,6 +1,6 @@
 use crate::blockchain::snapshot::PushDiffCoordinate;
 use crate::blockchain::tree::TreeNode;
-use crate::blockchain::{AddrVersion, BlockchainContractAddress};
+use crate::blockchain::AddrVersion;
 use crate::git_helper::push::parallel_diffs_upload_support::ParallelDiff;
 use crate::git_helper::push::parallel_snapshot_upload_support::{ParallelCommit, ParallelTree};
 use git_hash::ObjectId;

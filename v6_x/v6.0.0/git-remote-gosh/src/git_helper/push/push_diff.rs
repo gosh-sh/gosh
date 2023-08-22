@@ -4,9 +4,6 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::sleep;
 
-use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
-use crate::blockchain::get_commit_address;
-
 use crate::database::GoshDB;
 use crate::{
     blockchain::{
@@ -16,8 +13,8 @@ use crate::{
             save::{Diff, GetDiffAddrResult, GetVersionResult},
             PushDiffCoordinate,
         },
-        tvm_hash, BlockchainContractAddress, BlockchainService, EverClient, Snapshot,
-        EMPTY_BLOB_SHA1, EMPTY_BLOB_SHA256,
+        tvm_hash, BlockchainContractAddress, BlockchainService, EverClient, EMPTY_BLOB_SHA1,
+        EMPTY_BLOB_SHA256,
     },
     ipfs::{service::FileSave, IpfsService},
 };
@@ -106,7 +103,8 @@ pub async fn inner_push_diff(
     let original_snapshot_content = &parallel_diff.original_snapshot_content;
     let diff = &parallel_diff.diff;
     let new_snapshot_content = &parallel_diff.new_snapshot_content;
-    let snapshot_addr: BlockchainContractAddress = BlockchainContractAddress::new(&parallel_diff.snapshot_address);
+    let snapshot_addr: BlockchainContractAddress =
+        BlockchainContractAddress::new(&parallel_diff.snapshot_address);
 
     tracing::trace!("inner_push_diff: snapshot_addr={snapshot_addr}, commit_id={commit_id}, branch_name={branch_name}, blob_id={blob_id}, file_path={file_path}, diff_coordinate={diff_coordinate:?}, last_commit_id={last_commit_id}, is_last={is_last}");
     let diff = compress_zstd(diff, None)?;
@@ -215,7 +213,10 @@ pub async fn inner_push_diff(
 }
 
 #[instrument(level = "info", skip_all)]
-pub async fn save_data_to_ipfs(ipfs_client: &IpfsService, content: &[u8]) -> anyhow::Result<String> {
+pub async fn save_data_to_ipfs(
+    ipfs_client: &IpfsService,
+    content: &[u8],
+) -> anyhow::Result<String> {
     tracing::trace!("Uploading blob to IPFS");
     let content: Vec<u8> = ton_client::utils::compress_zstd(content, None)?;
     let content = base64::encode(&content);

@@ -1,9 +1,10 @@
+use crate::blockchain::snapshot::wait_snapshots_until_ready;
 use crate::{
     blockchain::{
         contract::wait_contracts_deployed::wait_contracts_deployed,
         tree::{load::check_if_tree_is_ready, TreeNode},
-        user_wallet::WalletError, AddrVersion, BlockchainContractAddress,
-        BlockchainService,
+        user_wallet::WalletError,
+        AddrVersion, BlockchainContractAddress, BlockchainService,
     },
     git_helper::{
         push::{
@@ -21,7 +22,6 @@ use tokio::time::sleep;
 use tokio::{sync::Semaphore, task::JoinSet};
 use tokio_retry::RetryIf;
 use tracing::Instrument;
-use crate::blockchain::snapshot::wait_snapshots_until_ready;
 
 const WAIT_TREE_READY_MAX_ATTEMPTS: i32 = 3;
 
@@ -43,7 +43,13 @@ pub struct ParallelSnapshot {
 
 impl ParallelSnapshot {
     #[instrument(level = "info", skip_all, name = "new_ParallelDiff")]
-    pub fn new( file_path: String, upgrade: bool, commit_id: String, content: String, ipfs: Option<String>) -> Self {
+    pub fn new(
+        file_path: String,
+        upgrade: bool,
+        commit_id: String,
+        content: String,
+        ipfs: Option<String>,
+    ) -> Self {
         tracing::trace!(
             "new_ParallelSnapshot file_path:{}, upgrade:{}, commit_id:{}, content: {}, ipfs: {:?}",
             file_path,
@@ -57,7 +63,7 @@ impl ParallelSnapshot {
             upgrade,
             commit_id,
             content,
-            ipfs
+            ipfs,
         }
     }
 }
@@ -84,10 +90,7 @@ impl ParallelSnapshotUploadSupport {
     ) -> anyhow::Result<()> {
         let exp = self.expecting_deployed_contacts_addresses.clone();
         for addr in exp {
-            self.add_to_push_list(
-                context,
-                addr,
-            ).await?;
+            self.add_to_push_list(context, addr).await?;
         }
         sleep(Duration::from_secs(5)).await;
         Ok(())
@@ -293,7 +296,11 @@ pub struct ParallelTree {
 
 impl ParallelTree {
     #[instrument(level = "info", skip_all, name = "new_ParallelDiff")]
-    pub fn new(tree_id: ObjectId, tree_nodes: HashMap<String, TreeNode>, sha_inner_tree: String) -> Self {
+    pub fn new(
+        tree_id: ObjectId,
+        tree_nodes: HashMap<String, TreeNode>,
+        sha_inner_tree: String,
+    ) -> Self {
         tracing::trace!("new_ParallelTree tree_id:{tree_id:?}, tree_nodes:{tree_nodes:?}, sha_inner_tree:{sha_inner_tree}");
         Self {
             tree_id,

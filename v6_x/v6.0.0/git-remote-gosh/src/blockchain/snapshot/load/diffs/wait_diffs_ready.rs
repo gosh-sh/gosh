@@ -1,9 +1,9 @@
 use crate::blockchain::blockchain_contract_address::FormatShort;
-use crate::blockchain::{BlockchainContractAddress, BlockchainService, gosh_abi, Snapshot};
+use crate::blockchain::contract::GoshContract;
+use crate::blockchain::{gosh_abi, BlockchainContractAddress, BlockchainService};
 use std::collections::HashSet;
 use tokio::task::JoinSet;
 use tracing::Instrument;
-use crate::blockchain::contract::GoshContract;
 
 const MAX_RETRIES_FOR_DIFF_READINESS: i32 = 20;
 
@@ -18,8 +18,8 @@ pub async fn wait_diffs_until_ready<B>(
     blockchain: &B,
     addresses: &[BlockchainContractAddress],
 ) -> anyhow::Result<Vec<BlockchainContractAddress>>
-    where
-        B: BlockchainService + 'static,
+where
+    B: BlockchainService + 'static,
 {
     tracing::trace!("wait_diffs_until_ready: diffs={addresses:?}");
     let mut current_status = JoinSet::<anyhow::Result<Vec<BlockchainContractAddress>>>::new();
@@ -41,7 +41,8 @@ pub async fn wait_diffs_until_ready<B>(
                 let mut not_ready = Vec::<BlockchainContractAddress>::new();
                 for diff_addr in expected_diffs.clone() {
                     let diff_contract = GoshContract::new(&diff_addr, gosh_abi::DIFF);
-                    let diff_status: anyhow::Result<GetStatusResult> = diff_contract.run_local(b.client(), "getStatus", None).await;
+                    let diff_status: anyhow::Result<GetStatusResult> =
+                        diff_contract.run_local(b.client(), "getStatus", None).await;
                     tracing::trace!("get status of {}: {:?}", diff_addr, diff_status);
                     match diff_status {
                         Ok(status) => {
@@ -74,7 +75,7 @@ pub async fn wait_diffs_until_ready<B>(
             }
             Ok(vec![])
         }
-            .instrument(info_span!("check_if_diffs_are_ready").or_current()),
+        .instrument(info_span!("check_if_diffs_are_ready").or_current()),
     );
 
     let mut unready_diffs = HashSet::new();

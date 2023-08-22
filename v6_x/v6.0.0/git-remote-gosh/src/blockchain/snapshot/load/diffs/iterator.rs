@@ -135,13 +135,9 @@ impl DiffMessagesIterator {
                 // TODO: ensure that it is right SHA otherwise change to smth meaningful
                 let commit_sha = commit_data.sha;
                 // find what is it pointing to
-                let original_snapshot = Snapshot::calculate_address(
-                    client,
-                    repo_contract,
-                    &commit_sha,
-                    &file_path,
-                )
-                .await?;
+                let original_snapshot =
+                    Snapshot::calculate_address(client, repo_contract, &commit_sha, &file_path)
+                        .await?;
                 let snapshot_contract =
                     GoshContract::new(original_snapshot.clone(), crate::abi::SNAPSHOT);
                 let snapshot_is_active = snapshot_contract.is_active(client).await?;
@@ -203,7 +199,9 @@ impl DiffMessagesIterator {
                 let mut next_page_info = None;
                 while index.is_none() {
                     tracing::info!("loading messages");
-                    let (buffer, page) = load_messages_to(client, &address, &cursor, None, self.from_end_to_start).await?;
+                    let (buffer, page) =
+                        load_messages_to(client, &address, &cursor, None, self.from_end_to_start)
+                            .await?;
                     for (i, item) in buffer.iter().enumerate() {
                         if &item.created_at <= ignore_commits_created_after {
                             index = Some(i);
@@ -242,7 +240,9 @@ impl DiffMessagesIterator {
                 .await?
             }
             Some(NextChunk::MessagesPage(address, cursor)) => {
-                let (buffer, page) = load_messages_to(client, &address, cursor, None, self.from_end_to_start).await?;
+                let (buffer, page) =
+                    load_messages_to(client, &address, cursor, None, self.from_end_to_start)
+                        .await?;
                 self.buffer = buffer;
                 self.buffer_cursor = 0;
                 DiffMessagesIterator::into_next_page(
@@ -311,7 +311,8 @@ pub async fn load_messages_to(
         }
       }
     }"#
-    }.to_string();
+    }
+    .to_string();
 
     let limit = match cursor.as_ref() {
         Some(page_info) => page_info,
@@ -419,7 +420,7 @@ pub async fn load_constructor(
         }
       }
     }"#
-        .to_string();
+    .to_string();
 
     let after = "";
 
@@ -434,9 +435,9 @@ pub async fn load_constructor(
             ..Default::default()
         },
     )
-        .await
-        .map(|r| r.result)
-        .map_err(|e| anyhow::format_err!("query error: {e}"))?;
+    .await
+    .map(|r| r.result)
+    .map_err(|e| anyhow::format_err!("query error: {e}"))?;
 
     let nodes = &result["data"]["blockchain"]["account"]["messages"];
     let edges: Messages = serde_json::from_value(nodes.clone())?;
@@ -459,7 +460,7 @@ pub async fn load_constructor(
                 ..Default::default()
             },
         )
-            .await;
+        .await;
 
         if let Err(ref e) = decoding_result {
             tracing::trace!("decode_message_body error: {:#?}", e);
@@ -473,11 +474,10 @@ pub async fn load_constructor(
             let value = decoded.value.unwrap();
 
             let diff: Diff = serde_json::from_value(value["diff"].clone()).unwrap();
-            let blob_data: Vec<u8> = diff
-                .with_patch::<_, anyhow::Result<Vec<u8>>>(|e| match e {
+            let blob_data: Vec<u8> =
+                diff.with_patch::<_, anyhow::Result<Vec<u8>>>(|e| match e {
                     Some(patch) => {
-                        let blob_data =
-                            diffy::apply_bytes(&[].to_vec(), &patch.clone())?;
+                        let blob_data = diffy::apply_bytes(&[].to_vec(), &patch.clone())?;
                         Ok(blob_data)
                     }
                     None => panic!("Broken diff detected: neither ipfs nor patch exists"),
@@ -506,5 +506,8 @@ pub async fn load_constructor(
         }
     }
 
-    Err(anyhow::format_err!("Failed to find constructor message for snapshot: {}", address))
+    Err(anyhow::format_err!(
+        "Failed to find constructor message for snapshot: {}",
+        address
+    ))
 }

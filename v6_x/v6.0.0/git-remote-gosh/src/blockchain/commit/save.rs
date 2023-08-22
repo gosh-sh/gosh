@@ -232,7 +232,7 @@ impl BlockchainCommitPusher for Everscale {
                             }
                         }
                         tracing::trace!("Wrong branch accepted, continue search");
-                    },
+                    }
                     "treeAccept" => break,
                     "cancelCommit" => bail!("Push failed. Fix and retry"),
                     "NotCorrectRepo" => bail!("Push failed. Fetch first"),
