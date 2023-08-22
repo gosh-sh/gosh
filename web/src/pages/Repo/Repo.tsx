@@ -135,7 +135,10 @@ const RepoPage = () => {
                                 leaveFrom="transform opacity-100 scale-100"
                                 leaveTo="transform opacity-0 scale-95"
                             >
-                                <Menu.Items className="dropdown-menu !bg-white !py-4 max-w-264px sm:max-w-none">
+                                <Menu.Items
+                                    className="dropdown-menu !bg-white px-6 !py-4 max-w-264px sm:max-w-none
+                                    absolute top-full right-0 border border-gray-e6edff rounded-lg"
+                                >
                                     <div>
                                         <h3 className="text-sm font-semibold mb-2">
                                             <FontAwesomeIcon
