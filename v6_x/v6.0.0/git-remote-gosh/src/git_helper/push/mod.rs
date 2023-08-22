@@ -35,10 +35,7 @@ mod delete_tag;
 pub(crate) mod parallel_snapshot_upload_support;
 
 use crate::blockchain::{branch_list, get_commit_by_addr, GetNameBranchResult, Snapshot, Tree};
-use crate::git_helper::push::parallel_snapshot_upload_support::{
-    ParallelCommit, ParallelCommitUploadSupport, ParallelSnapshot, ParallelSnapshotUploadSupport,
-    ParallelTreeUploadSupport,
-};
+use crate::git_helper::push::parallel_snapshot_upload_support::{ParallelCommit, ParallelCommitUploadSupport, ParallelSnapshot, ParallelSnapshotUploadSupport, ParallelTree, ParallelTreeUploadSupport};
 use crate::git_helper::supported_contract_version;
 use delete_tag::delete_tag;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
@@ -498,6 +495,108 @@ where
     }
 
     #[instrument(level = "info", skip_all)]
+    async fn push_zero_commit(&mut self, local_branch_name: &str, wallet_contract: &GoshContract,) -> anyhow::Result<()> {
+        let zero_id = ObjectId::from_str(ZERO_SHA)?;
+        let zero_commit_addr = self.calculate_commit_address(
+            &zero_id
+        ).await?;
+
+        let zero_commit_contract = GoshContract::new(&zero_commit_addr, gosh_abi::COMMIT);
+        match zero_commit_contract.is_active(self.blockchain.client()).await {
+            Ok(true) => { return Ok(()); },
+            _ => {}
+        }
+        tracing::trace!("Deploy zero commit of new version");
+        let mut push_commits = ParallelCommitUploadSupport::new();
+        let push_semaphore = Arc::new(Semaphore::new(PARALLEL_PUSH_LIMIT));
+        // let mut parallel_tree_uploads = ParallelTreeUploadSupport::new();
+
+        let branches = branch_list(self.blockchain.client(), &self.repo_addr).await?;
+        let prev_zero_commit = branches
+            .branch_ref
+            .iter()
+            .find(|_ref| _ref.branch_name == local_branch_name)
+            .ok_or(anyhow::format_err!("Failed to find zero commit of the previous repo version"))?;
+
+        let commit = ParallelCommit::new(
+            zero_id,
+            "0".to_string(),
+            "".to_string(),
+            vec![
+                AddrVersion {
+                    address: prev_zero_commit.commit_address.clone(),
+                    version: prev_zero_commit.version.clone(),
+                }
+            ],
+            true,
+        );
+
+        let commit_address = String::from(zero_commit_addr);
+        if !self.get_db()?.commit_exists(&commit_address)? {
+            self.get_db()?.put_commit(commit, commit_address.clone())?;
+
+            push_commits
+                .add_to_push_list(self, commit_address, push_semaphore.clone())
+                .await?;
+        } else {
+            push_commits.push_expected(commit_address);
+        }
+
+        let tree_hash = crate::blockchain::Tree::inner_tree_hash(
+            self.blockchain.client(),
+            wallet_contract,
+            &HashMap::new()
+        ).await?;
+
+        let mut expected_contracts = vec![];
+
+        let mut attempts = 0;
+        let mut last_rest_cnt = 0;
+        while attempts < MAX_REDEPLOY_ATTEMPTS {
+            attempts += 1;
+            expected_contracts = push_commits
+                .wait_all_commits(self.blockchain.clone())
+                .await?;
+            tracing::trace!("Wait all commits result: {expected_contracts:?}");
+            if expected_contracts.is_empty() {
+                break;
+            }
+            if expected_contracts.len() != last_rest_cnt {
+                attempts = 0;
+            }
+            last_rest_cnt = expected_contracts.len();
+            tracing::trace!("Restart deploy on undeployed commits");
+            let expected = push_commits.get_expected().to_owned();
+            push_commits = ParallelCommitUploadSupport::new();
+            for address in expected_contracts.clone() {
+                tracing::trace!("Get params of undeployed tree: {}", address,);
+                push_commits
+                    .add_to_push_list(self, String::from(address), push_semaphore.clone())
+                    .await?;
+            }
+        }
+        if attempts == MAX_REDEPLOY_ATTEMPTS {
+            anyhow::bail!(
+                            "Failed to deploy all commits. Undeployed commits: {expected_contracts:?}"
+                        )
+        }
+
+        self.blockchain
+            .notify_commit(
+                &zero_id,
+                local_branch_name,
+                0,
+                1,
+                &self.remote,
+                &self.dao_addr,
+                true,
+                &self.config,
+            )
+            .await?;
+        Ok(())
+    }
+
+    #[instrument(level = "info", skip_all)]
     async fn push_commit_object<'a>(
         &mut self,
         oid: &'a str,
@@ -557,7 +656,7 @@ where
             let version = parent_contract
                 .get_version(self.blockchain.client())
                 .await
-                .unwrap_or(env!("BUILD_SUPPORTED_VERSION").to_string());
+                .unwrap_or(supported_contract_version());
             parents.push(AddrVersion {
                 address: parent,
                 version,
@@ -706,9 +805,6 @@ where
         ).await?;
 
         {
-            let blockchain = self.blockchain.clone();
-            let remote = self.remote.clone();
-            let dao_addr = self.dao_addr.clone();
             let object_id = object_id.clone();
             let tree_sha = tree_sha.clone();
 
@@ -1238,13 +1334,33 @@ where
             tracing::trace!("prev_commit_id={prev_commit_id:?}");
         }
 
+        // create collections for spawned tasks and statistics
+        let mut push_commits = ParallelCommitUploadSupport::new();
+        let push_semaphore = Arc::new(Semaphore::new(PARALLEL_PUSH_LIMIT));
+        let mut parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
+        let mut parallel_tree_uploads = ParallelTreeUploadSupport::new();
+        let mut statistics = PushBlobStatistics::new();
+
+        let zero_wallet_contract = self
+            .blockchain
+            .user_wallet(&self.dao_addr, &self.remote.network)
+            .await?
+            .take_zero_wallet()
+            .await?;
+
+        let zero_id = ObjectId::from_str(ZERO_SHA)?;
+        if prev_commit_id.is_none() || prev_commit_id == Some(zero_id) {
+            tracing::trace!("Check zero commit");
+            self.push_zero_commit(local_branch_name, &zero_wallet_contract).await?;
+        }
+
         let latest_commit = self
             .local_repository()
             .find_reference(local_ref)?
             .into_fully_peeled_id()?;
         tracing::trace!("latest_commit={latest_commit:?}");
 
-        // TODO: change to loist of commits without extra objects
+        // TODO: change to list of commits without extra objects
         // get list of git objects in local repo, excluding ancestor ones
         let commit_and_tree_list =
             get_list_of_commit_objects(latest_commit, ancestor_commit_object)?;
@@ -1255,25 +1371,11 @@ where
         // 7. Deploy diff contracts
         // 8. Deploy all commit objects
 
-        // create collections for spawned tasks and statistics
-        let mut push_commits = ParallelCommitUploadSupport::new();
-        let push_semaphore = Arc::new(Semaphore::new(PARALLEL_PUSH_LIMIT));
-        let mut parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
-        let mut parallel_tree_uploads = ParallelTreeUploadSupport::new();
-        let mut statistics = PushBlobStatistics::new();
-
         let latest_commit_id = latest_commit.object()?.id;
         tracing::trace!("latest commit id {latest_commit_id}");
         let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
 
         tracing::trace!("List of objects: {commit_and_tree_list:?}");
-
-        let zero_wallet_contract = self
-            .blockchain
-            .user_wallet(&self.dao_addr, &self.remote.network)
-            .await?
-            .take_zero_wallet()
-            .await?;
 
         // read last onchain commit and init map from its tree
         // map (path -> commit_where_it_was_created)

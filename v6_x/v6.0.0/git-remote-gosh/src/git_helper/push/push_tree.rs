@@ -266,10 +266,6 @@ pub async fn push_tree(
     let mut res_address = None;
     for tree in to_deploy {
         tracing::trace!("push_tree: tree_id={}", tree.tree_id);
-        let blockchain = context.blockchain.clone();
-        let network = context.remote.network.clone();
-        let dao_addr = context.dao_addr.clone();
-        let repo = context.remote.repo.clone();
 
         let mut repo_contract = context.blockchain.repo_contract().clone();
         let tree_address = Tree::calculate_address(
