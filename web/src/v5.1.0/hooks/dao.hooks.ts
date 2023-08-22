@@ -51,7 +51,7 @@ import { DaoWallet } from '../blockchain/daowallet'
 import { EDaoEventType, TToastStatus } from '../../types/common.types'
 import { getAllAccounts, getPaginatedAccounts } from '../../blockchain/utils'
 import { DaoEvent } from '../blockchain/daoevent'
-import { GoshAdapterFactory } from 'react-gosh'
+import { GoshAdapterFactory, sleep } from 'react-gosh'
 import { daoRepositoryListAtom } from '../store/repository.state'
 import { TSystemContract } from '../../types/blockchain.types'
 import { TGoshCommitTag } from '../types/repository.types'
@@ -2119,33 +2119,78 @@ export function useUpgradeDao() {
         setAlert(undefined)
     }, [dao.details, dao.isFetchingData, member.isMember])
 
-    const upgrade = async (version: string, comment: string) => {
-        try {
-            setStatus((state) => ({ ...state, type: 'pending', data: 'Creating event' }))
-            if (Object.keys(AppConfig.versions).indexOf(version) < 0) {
-                throw new GoshError(
-                    'Upgrade error',
-                    `Gosh version ${version} is not supported`,
-                )
+    const upgrade = useCallback(
+        async (version: string, comment: string) => {
+            try {
+                if (Object.keys(AppConfig.versions).indexOf(version) < 0) {
+                    throw new GoshError(
+                        'Upgrade error',
+                        `Gosh version ${version} is not supported`,
+                    )
+                }
+                if (!dao.details.account || !dao.details.name) {
+                    throw new GoshError('Upgrade error', 'DAO account undefined')
+                }
+
+                // Check if there are no opened events
+                setStatus((state) => ({
+                    ...state,
+                    type: 'pending',
+                    data: 'Check upgrade possibility',
+                }))
+
+                let cursor
+                const code = await dao.details.account.getEventCodeHash()
+                while (true) {
+                    const { results, lastId, completed } = await getPaginatedAccounts({
+                        filters: [`code_hash: {eq:"${code}"}`],
+                        lastId: cursor,
+                    })
+                    const items = await executeByChunk<{ id: string }, boolean>(
+                        results,
+                        MAX_PARALLEL_READ,
+                        async ({ id }) => {
+                            const account = await dao.details.account!.getEvent({
+                                address: id,
+                            })
+                            const details = await account.getDetails({})
+                            return details.status.completed
+                        },
+                    )
+
+                    if (items.some((v) => v === false)) {
+                        throw new GoshError(
+                            'Upgrade error',
+                            'DAO has opened events, you should complete all events before upgrade',
+                        )
+                    }
+                    if (completed) {
+                        break
+                    }
+
+                    await sleep(100)
+                    cursor = lastId
+                }
+
+                // Prepare balance for create event
+                await beforeCreateEvent(20, { onPendingCallback: setStatus })
+
+                // Create upgrade DAO event
+                // Skip `member.wallet` check, because `beforeCreate` checks it
+                await member.wallet!.upgradeDao({ version, description: comment })
+
+                setStatus((state) => ({
+                    ...state,
+                    type: 'success',
+                    data: { title: 'Upgrade DAO', content: 'Event created' },
+                }))
+            } catch (e: any) {
+                setStatus((state) => ({ ...state, type: 'error', data: e }))
+                throw e
             }
-
-            // Prepare balance for create event
-            await beforeCreateEvent(20, { onPendingCallback: setStatus })
-
-            // Create upgrade DAO event
-            // Skip `member.wallet` check, because `beforeCreate` checks it
-            await member.wallet!.upgradeDao({ version, description: comment })
-
-            setStatus((state) => ({
-                ...state,
-                type: 'success',
-                data: { title: 'Upgrade DAO', content: 'Event created' },
-            }))
-        } catch (e: any) {
-            setStatus((state) => ({ ...state, type: 'error', data: e }))
-            throw e
-        }
-    }
+        },
+        [dao.details.address, dao.details.name],
+    )
 
     useEffect(() => {
         getAvailableVersions()
