@@ -158,7 +158,7 @@ contract VersionController is Modifiers {
     }
 
     function onCodeUpgrade(TvmCell cell) private {
-//        (_SystemContractCode, _code) = abi.decode(cell, (mapping(uint256 => SystemContractV), mapping(uint8 => TvmCell)));
+        (_SystemContractCode, _code) = abi.decode(cell, (mapping(uint256 => SystemContractV), mapping(uint8 => TvmCell)));
     }
     
     function _getSystemContractAddr(TvmCell code) private view returns(address) {
