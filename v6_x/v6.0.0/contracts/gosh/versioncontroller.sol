@@ -164,24 +164,18 @@ contract VersionController is Modifiers {
     function updateCodeDao(TvmCell newcode, TvmCell cell, string version) public accept saveMsg {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
         require(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey()) == msg.sender, ERR_SENDER_NO_ALLOWED);
-        cell;
         tvm.setcode(newcode);
         tvm.setCurrentCode(newcode);
-        TvmCell data = abi.encode(_SystemContractCode, _code);
-        onCodeUpgrade(data);
+        onCodeUpgrade(cell);
     }
     
     function updateCode(TvmCell newcode, TvmCell cell) public onlyOwner accept saveMsg {
-        cell;
         tvm.setcode(newcode);
         tvm.setCurrentCode(newcode);
-        TvmCell data = abi.encode(_SystemContractCode, _code);
-        onCodeUpgrade(data);
+        onCodeUpgrade(cell);
     }
 
-    function onCodeUpgrade(TvmCell cell) private {
-        tvm.resetStorage();
-        (_SystemContractCode, _code) = abi.decode(cell, (mapping(uint256 => SystemContractV), mapping(uint8 => TvmCell)));
+    function onCodeUpgrade(TvmCell cell) private pure {
     }
     
     function _getSystemContractAddr(TvmCell code) private view returns(address) {
