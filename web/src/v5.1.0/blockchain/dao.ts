@@ -168,7 +168,7 @@ export class Dao extends BaseContract {
 
     async createLimitedWallet(profile: string) {
         await this.run('deployWalletsOutMember', {
-            pubmem: [{ member: profile, count: 0 }],
+            pubmem: [{ member: profile, count: 0, expired: 0 }],
             index: 0,
         })
     }
