@@ -150,10 +150,10 @@ contract VersionController is Modifiers {
     
     function updateCode(TvmCell newcode, TvmCell cell) public onlyOwner accept saveMsg {
         cell;
-        tvm.setcode(newcode);
-        tvm.setCurrentCode(newcode);
         TvmCell data = abi.encode(_SystemContractCode, _code);
         tvm.resetStorage();
+        tvm.setcode(newcode);
+        tvm.setCurrentCode(newcode);
         onCodeUpgrade(data);
     }
 
