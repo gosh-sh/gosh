@@ -767,6 +767,48 @@ export class DaoWallet extends BaseContract {
         }
     }
 
+    async receiveTaskRewardAsDao(params: {
+        wallet: string
+        reponame: string
+        taskname: string
+        comment?: string
+        reviewers?: string[]
+        cell?: boolean
+    }) {
+        const { wallet, reponame, taskname, comment = '', reviewers = [], cell } = params
+
+        const cellParams = {
+            wallet,
+            repoName: reponame,
+            taskName: taskname,
+            comment,
+        }
+
+        if (cell) {
+            const { value0 } = await this.runLocal('getCellForDaoAskGrant', cellParams)
+            return value0
+        } else {
+            const cell = await this.receiveTaskRewardAsDao({ ...params, cell: true })
+            await this.createSingleEvent({ cell, reviewers })
+        }
+    }
+
+    async upgradeVersionController(params: {
+        code: string
+        data: string
+        comment?: string
+        reviewers?: string[]
+    }) {
+        const { code, data, comment = '', reviewers = [] } = params
+
+        const cellParams = { UpgradeCode: code, cell: data, comment }
+        await this.run('startProposalForUpgradeVersionController', {
+            ...cellParams,
+            reviewers,
+            num_clients: await this.smvClientsCount(),
+        })
+    }
+
     async createSingleEvent(params: { cell: string; reviewers?: string[] }) {
         const { cell, reviewers = [] } = params
 
