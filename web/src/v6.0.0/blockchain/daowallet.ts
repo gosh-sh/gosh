@@ -156,6 +156,7 @@ export class DaoWallet extends BaseContract {
         members: {
             profile: string
             allowance: number
+            expired: number
         }[]
         daonames?: (string | null)[]
         comment?: string
@@ -173,9 +174,10 @@ export class DaoWallet extends BaseContract {
         } = params
 
         const aloneParams = {
-            pubaddr: members.map(({ profile, allowance }) => ({
+            pubaddr: members.map(({ profile, allowance, expired }) => ({
                 member: profile,
                 count: allowance,
+                expired,
             })),
             dao: daonames,
         }

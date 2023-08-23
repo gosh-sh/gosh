@@ -1420,14 +1420,17 @@ export function useCreateDaoMember() {
 
                 if (requestMembership) {
                     const members = profiles.map(({ profile }) => {
-                        return { profile, allowance: 0 }
+                        return { profile, allowance: 0, expired: 0 }
                     })
                     const daonames = _.flatten(profiles.map(({ daonames }) => daonames))
                     await member.wallet!.createDaoMember({ members, daonames, comment })
                 } else {
                     const memberAddCells = profiles.map(({ profile, daonames }) => ({
                         type: EDaoEventType.DAO_MEMBER_ADD,
-                        params: { members: [{ profile, allowance: 0 }], daonames },
+                        params: {
+                            members: [{ profile, allowance: 0, expired: 0 }],
+                            daonames,
+                        },
                     }))
                     const memberAddVotingCells = profiles.map(
                         ({ profile, allowance }) => ({
