@@ -1,9 +1,10 @@
+use crate::blockchain::snapshot::wait_snapshots_until_ready;
 use crate::{
     blockchain::{
         contract::wait_contracts_deployed::wait_contracts_deployed,
         tree::{load::check_if_tree_is_ready, TreeNode},
-        user_wallet::WalletError, AddrVersion, BlockchainContractAddress,
-        BlockchainService,
+        user_wallet::WalletError,
+        AddrVersion, BlockchainContractAddress, BlockchainService,
     },
     git_helper::{
         push::{
@@ -33,27 +34,36 @@ pub struct ParallelSnapshotUploadSupport {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ParallelSnapshot {
-    pub branch_name: String,
     pub file_path: String,
     pub upgrade: bool,
     pub commit_id: String,
+    pub content: String,
+    pub ipfs: Option<String>,
 }
 
 impl ParallelSnapshot {
     #[instrument(level = "info", skip_all, name = "new_ParallelDiff")]
-    pub fn new(branch_name: String, file_path: String, upgrade: bool, commit_id: String) -> Self {
+    pub fn new(
+        file_path: String,
+        upgrade: bool,
+        commit_id: String,
+        content: String,
+        ipfs: Option<String>,
+    ) -> Self {
         tracing::trace!(
-            "new_ParallelSnapshot branch_name:{}, file_path:{}, upgrade:{}, commit_id:{}",
-            branch_name,
-            file_path,
-            upgrade,
-            commit_id
-        );
-        Self {
-            branch_name,
+            "new_ParallelSnapshot file_path:{}, upgrade:{}, commit_id:{}, content: {}, ipfs: {:?}",
             file_path,
             upgrade,
             commit_id,
+            content,
+            ipfs
+        );
+        Self {
+            file_path,
+            upgrade,
+            commit_id,
+            content,
+            ipfs,
         }
     }
 }
@@ -74,12 +84,23 @@ impl ParallelSnapshotUploadSupport {
         self.expecting_deployed_contacts_addresses.push(value);
     }
 
+    pub async fn start_push(
+        &mut self,
+        context: &mut GitHelper<impl BlockchainService + 'static>,
+    ) -> anyhow::Result<()> {
+        let exp = self.expecting_deployed_contacts_addresses.clone();
+        for addr in exp {
+            self.add_to_push_list(context, addr).await?;
+        }
+        sleep(Duration::from_secs(5)).await;
+        Ok(())
+    }
+
     #[instrument(level = "info", skip_all)]
     pub async fn add_to_push_list(
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
         snapshot_address: String,
-        prev_repo_address: Option<BlockchainContractAddress>,
     ) -> anyhow::Result<()> {
         let blockchain = context.blockchain.clone();
         let dao_address: BlockchainContractAddress = context.dao_addr.clone();
@@ -88,8 +109,8 @@ impl ParallelSnapshotUploadSupport {
 
         tracing::trace!("Start push of snapshot: address: {snapshot_address:?}");
 
-        self.expecting_deployed_contacts_addresses
-            .push(snapshot_address.to_string());
+        // self.expecting_deployed_contacts_addresses
+        //     .push(snapshot_address.to_string());
 
         let database = context.get_db()?.clone();
         self.pushed_blobs.spawn(
@@ -101,7 +122,6 @@ impl ParallelSnapshotUploadSupport {
                     remote_network,
                     snapshot_address,
                     database,
-                    prev_repo_address,
                 )
                 .await
             }
@@ -123,24 +143,10 @@ impl ParallelSnapshotUploadSupport {
         let addresses = self
             .expecting_deployed_contacts_addresses
             .iter()
-            .map(|addr| BlockchainContractAddress::new(addr))
+            .map(|addr| BlockchainContractAddress::new(addr.clone()))
             .collect::<Vec<BlockchainContractAddress>>();
-        tracing::debug!(
-            "Expecting the following snapshot contracts to be deployed: {:?}",
-            addresses
-        );
-        while let Some(finished_task) = self.pushed_blobs.join_next().await {
-            match finished_task {
-                Err(e) => {
-                    bail!("diffs join-handler: {}", e);
-                }
-                Ok(Err(e)) => {
-                    bail!("diffs inner: {}", e);
-                }
-                Ok(Ok(_)) => {}
-            }
-        }
-        wait_contracts_deployed(&blockchain, &addresses).await
+
+        wait_snapshots_until_ready(&blockchain, &addresses).await
     }
 }
 
@@ -152,7 +158,7 @@ pub struct ParallelCommitUploadSupport {
 #[derive(Clone, Debug)]
 pub struct ParallelCommit {
     pub commit_id: ObjectId,
-    pub tree_addr: BlockchainContractAddress,
+    pub tree_sha: String,
     pub raw_commit: String,
     pub parents: Vec<AddrVersion>,
     pub upgrade_commit: bool,
@@ -162,14 +168,14 @@ impl ParallelCommit {
     #[instrument(level = "info", skip_all, name = "new_ParallelDiff")]
     pub fn new(
         commit_id: ObjectId,
-        tree_addr: BlockchainContractAddress,
+        tree_sha: String,
         raw_commit: String,
         parents: Vec<AddrVersion>,
         upgrade_commit: bool,
     ) -> Self {
         Self {
             commit_id,
-            tree_addr,
+            tree_sha,
             raw_commit,
             parents,
             upgrade_commit,
@@ -290,7 +296,11 @@ pub struct ParallelTree {
 
 impl ParallelTree {
     #[instrument(level = "info", skip_all, name = "new_ParallelDiff")]
-    pub fn new(tree_id: ObjectId, tree_nodes: HashMap<String, TreeNode>, sha_inner_tree: String) -> Self {
+    pub fn new(
+        tree_id: ObjectId,
+        tree_nodes: HashMap<String, TreeNode>,
+        sha_inner_tree: String,
+    ) -> Self {
         tracing::trace!("new_ParallelTree tree_id:{tree_id:?}, tree_nodes:{tree_nodes:?}, sha_inner_tree:{sha_inner_tree}");
         Self {
             tree_id,

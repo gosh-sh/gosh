@@ -13,9 +13,8 @@ fn get_version_from_solidity_source() -> String {
         let line = line.expect(&format!("Failed to read line from {}", &contracts_path));
         if line.contains("string constant version = ") {
             return line
-                .trim_start_matches(|c: char| !c.is_digit(10) )
-                .trim_end_matches(|c: char| !c.is_digit(10) )
-                .replace(['\"'], "")
+                .trim_start_matches(|c: char| !c.is_digit(10))
+                .trim_end_matches(|c: char| !c.is_digit(10))
                 .to_string();
         }
     }

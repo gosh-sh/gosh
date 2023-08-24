@@ -4,9 +4,9 @@ set -o pipefail
 set -x
 
 
-FIRST_VERSION=v4_x
-./node_se_scripts/deploy.sh $FIRST_VERSION
-. set-vars.sh $FIRST_VERSION
+FIRST_VERSION=$VERSION
+# ./node_se_scripts/deploy.sh $FIRST_VERSION
+# . set-vars.sh $FIRST_VERSION
 
 . ./util.sh
 
@@ -26,7 +26,7 @@ echo "CODE_HASH=$CODE_HASH"
 
 echo "***** start proposal *****"
 
-code=$(tonos-cli -j decode stateinit --tvc ../v1_x/contracts/gosh/versioncontroller.tvc | jq .code | cut -d '"' -f 2)
+code=$(tonos-cli -j decode stateinit --tvc ../v7_x/v7.0.0/contracts/gosh/versioncontroller.tvc | jq .code | cut -d '"' -f 2)
 
 tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForUpgradeVersionController \
   "{\"UpgradeCode\":\"$code\",\"cell\":\"\",\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"

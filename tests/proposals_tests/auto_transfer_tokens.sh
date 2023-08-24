@@ -28,7 +28,7 @@ PARENT_DAO_NAME=$DAO_NAME
 PARENT_DAO_ADDR=$DAO_ADDR
 PARENT_WALLET_ADDR=$WALLET_ADDR
 
-mint_tokens_3
+mint_tokens
 
 add_dao_to_dao
 

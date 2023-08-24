@@ -3,7 +3,7 @@ use crate::blockchain::{snapshot::PushDiffCoordinate, BlockchainContractAddress}
 use crate::git_helper::push::push_diff::{diff_address, is_diff_deployed, push_diff};
 use crate::git_helper::GitHelper;
 
-use crate::blockchain::contract::wait_contracts_deployed::wait_contracts_deployed;
+use crate::blockchain::snapshot::diffs::wait_diffs_ready::wait_diffs_until_ready;
 use anyhow::bail;
 use std::collections::HashMap;
 use std::vec::Vec;
@@ -84,6 +84,17 @@ impl ParallelDiffsUploadSupport {
         self.expecting_deployed_contacts_addresses.push(value);
     }
 
+    pub async fn start_push(
+        &mut self,
+        context: &mut GitHelper<impl BlockchainService + 'static>,
+    ) -> anyhow::Result<()> {
+        let exp = self.expecting_deployed_contacts_addresses.clone();
+        for address in exp {
+            self.add_to_push_list(context, address).await?;
+        }
+        Ok(())
+    }
+
     pub async fn add_to_push_list(
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
@@ -99,8 +110,8 @@ impl ParallelDiffsUploadSupport {
 
         let database = context.get_db()?.clone();
 
-        self.expecting_deployed_contacts_addresses
-            .push(diff_address.clone());
+        // self.expecting_deployed_contacts_addresses
+        //     .push(diff_address.clone());
         self.pushed_blobs.spawn(
             async move {
                 push_diff(
@@ -144,11 +155,12 @@ impl ParallelDiffsUploadSupport {
                         diff_contract_address.clone(),
                     )?;
 
-                    self.add_to_push_list(context, diff_contract_address)
-                        .await?;
-                } else {
-                    self.push_expected(diff_contract_address);
+                    // self.add_to_push_list(context, diff_contract_address)
+                    //     .await?;
+                    // } else {
+                    //     self.push_expected(diff_contract_address);
                 }
+                self.push_expected(diff_contract_address);
             }
         }
         Ok(())
@@ -184,7 +196,7 @@ impl ParallelDiffsUploadSupport {
                 Ok(Ok(_)) => {}
             }
         }
-        wait_contracts_deployed(&blockchain, &addresses).await
+        wait_diffs_until_ready(&blockchain, &addresses).await
     }
 
     #[instrument(level = "info", skip_all)]
@@ -266,11 +278,12 @@ impl ParallelDiffsUploadSupport {
                         diff_contract_address.clone(),
                     )?;
 
-                    self.add_to_push_list(context, diff_contract_address)
-                        .await?;
-                } else {
-                    self.push_expected(diff_contract_address);
+                    // self.add_to_push_list(context, diff_contract_address)
+                    //     .await?;
+                    // } else {
+                    //     self.push_expected(diff_contract_address);
                 }
+                self.push_expected(diff_contract_address);
             }
         }
         Ok(())

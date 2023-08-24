@@ -63,7 +63,7 @@ where
             }
             Ok(vec![])
         }
-        .instrument(info_span!("ckeck if snapshots are ready").or_current()),
+        .instrument(info_span!("check_if_snapshots_are_ready").or_current()),
     );
 
     let mut unready_snapshots = HashSet::new();

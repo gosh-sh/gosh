@@ -1,9 +1,12 @@
-use crate::blockchain::{gosh_abi, run_local, BlockchainContractAddress, BlockchainService, EverClient, GoshContract, Number, Snapshot};
+use crate::blockchain::tree::TreeNode;
+use crate::blockchain::{
+    gosh_abi, run_local, BlockchainContractAddress, BlockchainService, EverClient, GoshContract,
+    Number, Snapshot,
+};
 use ::git_object;
 use data_contract_macro_derive::DataContract;
-use std::collections::{HashMap, VecDeque};
 use git_object::tree::EntryMode;
-use crate::blockchain::tree::TreeNode;
+use std::collections::{HashMap, VecDeque};
 
 // TODO: the same as TreeNode leave only one
 #[derive(Deserialize, Debug)]
@@ -74,9 +77,7 @@ impl Tree {
         commit_address: &BlockchainContractAddress,
     ) -> anyhow::Result<BlockchainContractAddress> {
         let commit_contract = GoshContract::new(commit_address, gosh_abi::COMMIT);
-        let result: GetTreeResult = commit_contract
-            .run_local(context, "gettree", None)
-            .await?;
+        let result: GetTreeResult = commit_contract.run_local(context, "gettree", None).await?;
         Ok(result.address)
     }
 
@@ -108,7 +109,8 @@ impl Into<git_object::tree::Entry> for TreeComponent {
     fn into(self) -> git_object::tree::Entry {
         let mode = type_obj_to_entry_mod(self.type_obj.as_str());
         let filename = self.name.into();
-        let oid = git_hash::ObjectId::from_hex(self.git_sha.as_bytes()).expect("SHA1 must be correct");
+        let oid =
+            git_hash::ObjectId::from_hex(self.git_sha.as_bytes()).expect("SHA1 must be correct");
         git_object::tree::Entry {
             mode,
             filename,
@@ -163,47 +165,44 @@ pub async fn construct_map_of_snapshots(
     snapshot_to_commit: &mut HashMap<String, Vec<SnapshotMonitor>>,
     queue: &mut VecDeque<(Tree, String)>,
 ) -> anyhow::Result<()> {
-    tracing::trace!("construct_map_of_snapshots: prefix:{}, tree:{:?}", prefix, tree);
+    tracing::trace!(
+        "construct_map_of_snapshots: prefix:{}, tree:{:?}",
+        prefix,
+        tree
+    );
     for (_, entry) in tree.objects {
         let mode: EntryMode = type_obj_to_entry_mod(entry.type_obj.as_str());
         match mode {
             git_object::tree::EntryMode::Tree => {
-                let subtree_address = Tree::calculate_address(
-                    context,
-                    repo_contract,
-                    &entry.tvm_sha_tree.unwrap(),
-                ).await?;
-                let subtree = Tree::load(
-                    context,
-                    &subtree_address,
-                ).await?;
+                let subtree_address =
+                    Tree::calculate_address(context, repo_contract, &entry.tvm_sha_tree.unwrap())
+                        .await?;
+                let subtree = Tree::load(context, &subtree_address).await?;
                 let full_path = format!("{}{}/", prefix, entry.name);
                 queue.push_back((subtree, full_path));
-            },
+            }
             git_object::tree::EntryMode::Blob
             | git_object::tree::EntryMode::BlobExecutable
             | git_object::tree::EntryMode::Link => {
                 let full_path = format!("{}{}", prefix, entry.name);
                 tracing::trace!("Check snapshot {}", full_path);
-                let snapshot_address = Snapshot::calculate_address(
-                    context,
-                    repo_contract,
-                    &entry.commit,
-                    &full_path
-                ).await?;
+                let snapshot_address =
+                    Snapshot::calculate_address(context, repo_contract, &entry.commit, &full_path)
+                        .await?;
                 tracing::trace!("snapshot address {}", snapshot_address);
-                let snapshot = Snapshot::load(
-                    context,
-                    &snapshot_address,
-                ).await?;
-                tracing::trace!("snapshot data: {:?}", snapshot);
-                let snap_mon = SnapshotMonitor {
-                    base_commit: entry.commit,
-                    latest_commit: snapshot.current_commit,
-                };
-                let entry = snapshot_to_commit.entry(full_path).or_insert(vec![]);
-                entry.push(snap_mon);
-            },
+                match Snapshot::load(context, &snapshot_address).await {
+                    Ok(snapshot) => {
+                        tracing::trace!("snapshot data: {:?}", snapshot);
+                        let snap_mon = SnapshotMonitor {
+                            base_commit: entry.commit,
+                            latest_commit: snapshot.current_commit,
+                        };
+                        let entry = snapshot_to_commit.entry(full_path).or_insert(vec![]);
+                        entry.push(snap_mon);
+                    }
+                    Err(_) => {}
+                }
+            }
             _ => {}
         }
     }

@@ -12,7 +12,7 @@ NOW=$(date +%s)
 REPO_NAME="bt_repo01-${NOW}"
 
 TOKEN=100
-mint_tokens_3
+mint_tokens
 delay 20
 
 TOKEN_RESERVE_AT_START=$TOKEN

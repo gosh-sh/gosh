@@ -20,7 +20,7 @@ echo "REPO_NAME=${REPO_NAME}"
 echo "REPO_ADDR=${REPO_ADDR}"
 
 TOKEN=100
-mint_tokens_3
+mint_tokens
 delay 10
 
 TOKEN_RESERVE_AT_START=$TOKEN

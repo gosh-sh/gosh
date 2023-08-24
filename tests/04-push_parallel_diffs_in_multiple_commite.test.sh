@@ -54,6 +54,20 @@ echo "Now Bar! its $CHANGE now" > dir/bar-$CHANGE.txt
 git add .
 git commit -m "test-push-now-$CHANGE"
 
+# rewrite files
+echo "Now b! its $CHANGE now1" > b.txt
+echo "Now Bar! its $CHANGE now1" > dir/bar-$CHANGE.txt
+
+git add .
+git commit -m "test-push-now-$CHANGE"
+
+# rewrite files
+echo "Now b! its $CHANGE now111" > b.txt
+echo "Now Bar! its $CHANGE now111" > dir/bar-$CHANGE.txt
+
+git add .
+git commit -m "test-push-now-$CHANGE"
+
 echo "***** awaiting push into $BRANCH_NAME *****"
 GOSH_TRACE=5 git push -u origin $BRANCH_NAME &> ../trace_04.log
 delay 10
