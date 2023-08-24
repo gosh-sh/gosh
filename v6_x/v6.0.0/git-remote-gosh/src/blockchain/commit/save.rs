@@ -35,8 +35,8 @@ pub struct DeployCommitParams {
     #[serde(rename = "fullCommit")]
     pub raw_commit: String,
     pub parents: Vec<AddrVersion>,
-    #[serde(rename = "tree")]
-    pub tree_addr: BlockchainContractAddress,
+    #[serde(rename = "shainnertree")]
+    pub tree_sha: String,
     pub upgrade: bool,
 }
 
@@ -119,7 +119,7 @@ impl BlockchainCommitPusher for Everscale {
             commit_id: commit.commit_id.clone(),
             raw_commit: commit.raw_commit,
             parents: commit.parents,
-            tree_addr: commit.tree_addr,
+            tree_sha: commit.tree_sha,
             upgrade: commit.upgrade_commit,
         };
         tracing::trace!("push_commit: dao_addr={dao_addr}");
@@ -216,7 +216,23 @@ impl BlockchainCommitPusher for Everscale {
             );
             if let Some(message) = found.0 {
                 match message.name.as_str() {
-                    "allCorrect" => break,
+                    "allCorrect" => {
+                        tracing::trace!("allCorrect params: {:?}", message.value);
+                        if let Some(value) = message.value {
+                            let accepted_branch = value
+                                .as_object()
+                                .unwrap()
+                                .get("branch")
+                                .unwrap()
+                                .as_str()
+                                .unwrap();
+                            tracing::trace!("allCorrect branch: {}", accepted_branch);
+                            if accepted_branch == branch {
+                                break;
+                            }
+                        }
+                        tracing::trace!("Wrong branch accepted, continue search");
+                    }
                     "treeAccept" => break,
                     "cancelCommit" => bail!("Push failed. Fix and retry"),
                     "NotCorrectRepo" => bail!("Push failed. Fetch first"),

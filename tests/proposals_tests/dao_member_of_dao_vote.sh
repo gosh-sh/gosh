@@ -50,7 +50,7 @@ PARENT_DAO_ADDR=$DAO_ADDR
 PARENT_WALLET_ADDR=$WALLET_ADDR
 
 TOKEN=100
-mint_tokens_3
+mint_tokens
 
 CHILD_TOKEN=100
 add_dao_to_dao
@@ -68,16 +68,24 @@ fi
 CHILD_DAO_WALLET_ADDR=$(tonos-cli -j runx --abi $DAO_ABI --addr $PARENT_DAO_ADDR -m getWalletsFull | jq '.value0."'$CHILD_ADDR'".member' | cut -d'"' -f 2)
 echo "CHILD_DAO_WALLET_ADDR=$CHILD_DAO_WALLET_ADDR"
 
-
-
 tonos-cli runx --abi $DAO_ABI --addr $PARENT_DAO_ADDR -m getTokenBalance
-echo "***** start proposal for mint tokens deploy *****"
+
 TOKEN=5
-tonos-cli -j callx --abi $WALLET_ABI --addr $PARENT_WALLET_ADDR --keys $WALLET_KEYS -m startProposalForMintDaoReserve \
-  --token $TOKEN --comment "" --num_clients 1 --reviewers []
-NOW_ARG=$(tonos-cli -j account $PARENT_WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
-echo "NOW_ARG=$NOW_ARG"
-TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $PARENT_WALLET_ADDR -m getCellMintToken --token $TOKEN --comment "" --time $NOW_ARG | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+convert_version
+if [[ $CUT_VERSION -ge 6 ]]; then
+  echo "***** get cell for mint tokens *****"
+  TVMCELL=$(gosh-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellMintToken --token $TOKEN --comment "" --time null | sed -n '/value0/ p' | cut -d'"' -f 4)
+  echo "*** start one proposal ***"
+  tonos-cli -j callx --abi $WALLET_ABI --addr $PARENT_WALLET_ADDR --keys $WALLET_KEYS -m startOneProposal --proposal $TVMCELL --num_clients 1 --reviewers []
+else
+  echo "***** start proposal for mint tokens deploy *****"
+  tonos-cli -j callx --abi $WALLET_ABI --addr $PARENT_WALLET_ADDR --keys $WALLET_KEYS -m startProposalForMintDaoReserve \
+    --token $TOKEN --comment "" --num_clients 1 --reviewers []
+  NOW_ARG=$(tonos-cli -j account $PARENT_WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
+  echo "NOW_ARG=$NOW_ARG"
+  TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $PARENT_WALLET_ADDR -m getCellMintToken --token $TOKEN --comment "" --time $NOW_ARG | sed -n '/value0/ p' | cut -d'"' -f 4)
+fi
 
 echo "TVMCELL=$TVMCELL"
 
@@ -99,26 +107,35 @@ echo "platform_id=$platform_id"
 
 # vote with dao in dao
 
-tonos-cli -j callx --abi $WALLET_ABI --addr $CHILD_WALLET_ADDR --keys $WALLET_KEYS -m startProposalForDaoVote \
-  --wallet $CHILD_DAO_WALLET_ADDR --platform_id $platform_id --choice true --amount 100 --num_clients_base 1 --note "" --comment "" --num_clients 1 --reviewers []
-NOW_ARG=$(tonos-cli -j account $CHILD_WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
-echo "NOW_ARG=$NOW_ARG"
-TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $CHILD_WALLET_ADDR -m getCellDaoVote \
- --wallet $CHILD_DAO_WALLET_ADDR --platform_id $platform_id --choice true --amount 100 --num_clients_base 1 --note "" --comment "" --time $NOW_ARG | sed -n '/value0/ p' | cut -d'"' -f 4)
+if [[ $CUT_VERSION -ge 6 ]]; then
+  echo "***** get cell for mint tokens *****"
+  TVMCELL=$(gosh-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellDaoVote --wallet $CHILD_DAO_WALLET_ADDR --platform_id $platform_id --choice true --amount 100 --num_clients_base 1 --note "" --comment "" --time null | sed -n '/value0/ p' | cut -d'"' -f 4)
+  WALLET_ADDR=$CHILD_WALLET_ADDR
+  start_prop_and_vote
+else
 
-echo "TVMCELL=$TVMCELL"
+  tonos-cli -j callx --abi $WALLET_ABI --addr $CHILD_WALLET_ADDR --keys $WALLET_KEYS -m startProposalForDaoVote \
+    --wallet $CHILD_DAO_WALLET_ADDR --platform_id $platform_id --choice true --amount 100 --num_clients_base 1 --note "" --comment "" --num_clients 1 --reviewers []
+  NOW_ARG=$(tonos-cli -j account $CHILD_WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
+  echo "NOW_ARG=$NOW_ARG"
+  TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $CHILD_WALLET_ADDR -m getCellDaoVote \
+  --wallet $CHILD_DAO_WALLET_ADDR --platform_id $platform_id --choice true --amount 100 --num_clients_base 1 --note "" --comment "" --time $NOW_ARG | sed -n '/value0/ p' | cut -d'"' -f 4)
 
-sleep 10
+  echo "TVMCELL=$TVMCELL"
 
-PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
-  --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
-  "{\"data\":\"$TVMCELL\"}" \
-   --decode-c6 | grep value0 \
-  | sed -n '/value0/ p' | cut -d'"' -f 4)
+  sleep 10
 
-WALLET_ADDR=$CHILD_WALLET_ADDR
+  PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
+    --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
+    "{\"data\":\"$TVMCELL\"}" \
+    --decode-c6 | grep value0 \
+    | sed -n '/value0/ p' | cut -d'"' -f 4)
 
-vote_for_proposal
+  WALLET_ADDR=$CHILD_WALLET_ADDR
+
+  vote_for_proposal
+
+fi
 
 sleep 60
 

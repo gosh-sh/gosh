@@ -32,7 +32,7 @@ deploy_DAO_and_repo
 # REPO_ADDR=$(get_repo_addr)
 
 TOKEN=100
-mint_tokens_3
+mint_tokens
 delay 10
 
 TOKEN_RESERVE_AT_START=$TOKEN

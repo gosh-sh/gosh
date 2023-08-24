@@ -14,7 +14,7 @@ DAO_NAME="dao-prop_$(date +%s)"
 deploy_DAO
 
 TOKEN=100
-mint_tokens_3
+mint_tokens
 
 RESERVE=$(tonos-cli -j runx --addr $DAO_ADDR --abi $DAO_ABI -m getDetails | jq .reserve | cut -d '"' -f 2)
 if [ "$RESERVE" != "100" ]; then

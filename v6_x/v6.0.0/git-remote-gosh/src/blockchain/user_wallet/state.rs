@@ -209,7 +209,9 @@ impl UserWalletMirrors {
                                 .map(|num| usize::from_str_radix(&num, 10).ok())
                                 .flatten()
                                 .unwrap_or(WALLET_CONTRACTS_PARALLELISM);
-                            tracing::trace!("Add permits to wallet semaphore: {wallet_parallelism}");
+                            tracing::trace!(
+                                "Add permits to wallet semaphore: {wallet_parallelism}"
+                            );
                             self.semaphore.add_permits(wallet_parallelism);
                         }
                     }

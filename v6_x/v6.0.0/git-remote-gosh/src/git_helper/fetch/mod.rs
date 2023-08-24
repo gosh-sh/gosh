@@ -9,8 +9,7 @@ use crate::{
 use git_odb::{Find, Write};
 use tokio::sync::Mutex;
 
-use crate::blockchain::contract::GoshContract;
-use crate::blockchain::{gosh_abi, GetNameBranchResult, Tree};
+use crate::blockchain::Tree;
 
 use bstr::ByteSlice;
 use std::{
@@ -20,8 +19,8 @@ use std::{
     sync::Arc,
 };
 
-use git_object::tree::EntryMode;
 use crate::blockchain::tree::load::type_obj_to_entry_mod;
+use git_object::tree::EntryMode;
 
 mod restore_blobs;
 
@@ -186,10 +185,8 @@ where
                     );
                     next_commit_of_prev_version.push((prev_version, id.to_string()));
                 } else {
-                    let tree_address = Tree::get_address_from_commit(
-                        self.blockchain.client(),
-                        &address,
-                    ).await?;
+                    let tree_address =
+                        Tree::get_address_from_commit(self.blockchain.client(), &address).await?;
 
                     let to_load = TreeObjectsQueueItem {
                         path: "".to_owned(),
@@ -244,24 +241,33 @@ where
 
                 for (_, tree_component) in &onchain_tree_object.objects {
                     let mode: EntryMode = type_obj_to_entry_mod(tree_component.type_obj.as_str());
-                    let oid = git_hash::ObjectId::from_hex(tree_component.git_sha.as_bytes()).expect("SHA1 must be correct");
+                    let oid = git_hash::ObjectId::from_hex(tree_component.git_sha.as_bytes())
+                        .expect("SHA1 must be correct");
                     match mode {
                         git_object::tree::EntryMode::Tree => {
                             tracing::debug!("branch={branch}: Tree entry: tree {}->{}", id, oid);
                             let repo_contract = self.blockchain.repo_contract().clone();
-                            let sha_inner_tree = tree_component.tvm_sha_tree.clone().ok_or(anyhow::format_err!("Failed to get sha of inner tree: {}", tree_component.git_sha))?;
+                            let sha_inner_tree =
+                                tree_component
+                                    .tvm_sha_tree
+                                    .clone()
+                                    .ok_or(anyhow::format_err!(
+                                        "Failed to get sha of inner tree: {}",
+                                        tree_component.git_sha
+                                    ))?;
                             let sub_tree_address = Tree::calculate_address(
                                 self.blockchain.client(),
                                 &repo_contract,
                                 &sha_inner_tree,
-                            ).await?;
+                            )
+                            .await?;
                             let to_load = TreeObjectsQueueItem {
                                 path: format!("{}{}/", path_to_node, tree_component.name),
                                 oid,
-                                address: sub_tree_address
+                                address: sub_tree_address,
                             };
                             tree_obj_queue.push_back(to_load);
-                        },
+                        }
                         git_object::tree::EntryMode::Blob
                         | git_object::tree::EntryMode::BlobExecutable
                         | git_object::tree::EntryMode::Link => {
@@ -275,27 +281,15 @@ where
                                 &tree_component.commit,
                                 &file_path,
                             )
-                                .await?;
-                            let snapshot_contract =
-                                GoshContract::new(&snapshot_address, gosh_abi::SNAPSHOT);
-                            match snapshot_contract.is_active(self.blockchain.client()).await {
-                                Ok(true) => {
-                                    tracing::debug!(
-                                        "branch={branch}: Adding a blob to search for. Path: {}, id: {}, snapshot: {}",
-                                        file_path,
-                                        oid,
-                                        snapshot_address
-                                    );
-                                    blobs_restore_plan
-                                        .mark_blob_to_restore(snapshot_address, oid);
-                                }
-                                _ => {
-                                    // TODO: need to look through messages
-                                    // take data from constructor and apply patches till necessary commit
-                                    continue;
-                                }
-                            }
-                        },
+                            .await?;
+                            tracing::debug!(
+                                "branch={branch}: Adding a blob to search for. Path: {}, id: {}, snapshot: {}",
+                                file_path,
+                                oid,
+                                snapshot_address
+                            );
+                            blobs_restore_plan.mark_blob_to_restore(snapshot_address, oid);
+                        }
                         git_object::tree::EntryMode::Commit => (),
                         _ => {
                             unreachable!()

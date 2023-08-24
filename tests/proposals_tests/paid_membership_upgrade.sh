@@ -16,7 +16,7 @@ DAO_NAME="dao-prop_$(date +%s)"
 deploy_DAO
 
 TOKEN=100
-mint_tokens_3
+mint_tokens
 
 RESERVE=$(tonos-cli -j runx --addr $DAO_ADDR --abi $DAO_ABI -m getDetails | jq .reserve | cut -d '"' -f 2)
 if [ "$RESERVE" != "100" ]; then
@@ -121,6 +121,8 @@ if [ "$MEMBERS_LEN" != "1" ]; then
   exit 1
 fi
 
+WALLET_ABI=$WALLET_ABI_1
+VERSION=v6_x
 stop_paid_membership
 
 ACCESS_KEY=$(tonos-cli -j runx --addr $DAO_ADDR --abi $DAO_ABI_1 -m getDetails | jq '.paidMembership."1".accessKey' )
