@@ -1,6 +1,6 @@
 variables:
 - name: RUSTUP_TOOLCHAIN
-  value: 1.68.0
+  value: 1.70.0
 
 trigger: none
 pr: none
