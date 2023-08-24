@@ -766,10 +766,13 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
                 data: { profile: user.profile },
                 keys: user.keys,
             })
-            const { voting, locked, regular } = await walletPrev.getBalance()
-            const untransferred = Math.max(voting, locked) + regular
-            if (untransferred > 0) {
-                transfer.push({ wallet: walletPrev, amount: untransferred })
+
+            if (await walletPrev.isDeployed()) {
+                const { voting, locked, regular } = await walletPrev.getBalance()
+                const untransferred = Math.max(voting, locked) + regular
+                if (untransferred > 0) {
+                    transfer.push({ wallet: walletPrev, amount: untransferred })
+                }
             }
 
             daoaddrPrev = await daoPrev.getPrevious()
