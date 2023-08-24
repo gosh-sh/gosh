@@ -42,7 +42,7 @@ if [ "$MEMBERS_LEN" != "1" ]; then
   exit 1
 fi
 
-MEMBERS_CNT=39
+MEMBERS_CNT=19
 TOTAL_CNT=$((MEMBERS_CNT + 1))
 add_members_to_dao
 
@@ -61,6 +61,8 @@ do
     exit 1
   fi
 done
+
+sleep 200
 
 echo "Upgrade DAO"
 upgrade_DAO

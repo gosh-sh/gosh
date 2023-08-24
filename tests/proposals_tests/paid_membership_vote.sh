@@ -16,7 +16,7 @@ deploy_DAO
 OLD_WALLET_ADDR=$WALLET_ADDR
 
 TOKEN=100
-mint_tokens_3
+mint_tokens
 
 RESERVE=$(tonos-cli -j runx --addr $DAO_ADDR --abi $DAO_ABI -m getDetails | jq .reserve | cut -d '"' -f 2)
 if [ "$RESERVE" != "100" ]; then
@@ -80,7 +80,7 @@ fi
 WALLET_ADDR=$NEW_WALLET_ADDR
 VOTE_TOKENS=50
 TOKEN=10
-mint_tokens_3
+mint_tokens
 
 sleep 30
 
@@ -103,7 +103,7 @@ fi
 WALLET_ADDR=$OLD_WALLET_ADDR
 VOTE_TOKENS=20
 TOKEN=10
-mint_tokens_3
+mint_tokens
 
 sleep 30
 

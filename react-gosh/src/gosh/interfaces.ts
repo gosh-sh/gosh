@@ -125,6 +125,7 @@ import {
     TCodeCommentThreadResdolveParams,
     TCodeCommentThreadResolveResult,
     TBigTaskDetails,
+    TEventSignleCreateProposalParams,
 } from '../types'
 
 interface IGoshAdapter {
@@ -280,6 +281,7 @@ interface IGoshDaoAdapter {
     createTag(params: TDaoTagCreateParams): Promise<TDaoTagCreateResult>
     deleteTag(params: TDaoTagDeleteParams): Promise<TDaoTagDeleteResult>
 
+    createSingleProposal(params: TEventSignleCreateProposalParams): Promise<void>
     createMultiProposal(params: TEventMultipleCreateProposalParams): Promise<void>
     createMultiProposalAsDao(
         params: TEventMultipleCreateProposalAsDaoParams,
@@ -535,6 +537,7 @@ interface IGoshProfile extends IContract {
     getDaos(): Promise<IGoshDaoAdapter[]>
     getOwners(): Promise<string[]>
     getGoshAddress(): Promise<TAddress>
+    getVersion(): Promise<string>
 
     deployDao(
         gosh: IGoshAdapter,

@@ -86,7 +86,7 @@ tonos-cli call --abi $USER_PROFILE_ABI $USER_PROFILE_ADDR --sign $WALLET_KEYS tu
 
 sleep 10
 
-GRANTED_PUBKEY=$(tonos-cli -j run --abi $WALLET_ABI $WALLET_ADDR getAccess {} | jq -r .value0)
+# GRANTED_PUBKEY=$(tonos-cli -j run --abi $WALLET_ABI $WALLET_ADDR getAccess {} | jq -r .value0)
 
 USER_CONFIG=$(pwd)/config.json
 echo "export GOSH_CONFIG_PATH=$USER_CONFIG" >> env.env

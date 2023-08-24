@@ -75,6 +75,7 @@ echo "***** comparing repositories (2) *****"
 
 DIFF_STATUS=1
 if  diff --brief --recursive $REPO_NAME $REPO_NAME"-clone" --exclude ".git"; then
+    echo "Success"
     DIFF_STATUS=0
 fi
 

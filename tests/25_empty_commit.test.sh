@@ -12,7 +12,8 @@ set -x
 # 4. Clone the repo and check the dev branch to have the correct content
 
 # ignore to wait for fixes
-if [ "$VERSION" != "v5_x" ]; then
+convert_version
+if [ $CUT_VERSION -le 4 ]; then
   echo "Test is ignored"
   exit 0
 fi

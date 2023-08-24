@@ -13,6 +13,11 @@ if [[ "$VERSION" == *"v1_x"* ]]; then
   exit 0
 fi
 
+if [[ "$VERSION" == *"v6_x"* ]]; then
+  echo "Test is ignored for v6 because in v6 we don't deploy snapshots for a new branch"
+  exit 0
+fi
+
 REPO_NAME="repo27_$(date +%s)"
 
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME

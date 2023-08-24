@@ -17,6 +17,9 @@ def runFunctionSet(function_name) {
         },
         "v5_x/v5.1.0": {
             "${function_name}"('v5_x/v5.1.0')
+        },
+        "v6_x/v6.0.0": {
+            "${function_name}"('v6_x/v6.0.0')
         }
     ]
     parallel(running_set)
@@ -73,8 +76,8 @@ pipeline {
                 }
             }
             steps {
-                buildDispatcher()
-                //buildDispatcherDebug()
+                //buildDispatcher()
+                buildDispatcherDebug()
             }
         }
         stage('Build: Git Helper') {
@@ -113,7 +116,8 @@ pipeline {
                     sh "rm -rf tests_workspace_*"
                     def basePort = 9000
                     def files = getTestFiles("tests").toList()
-                    def versions = ["v4_x", "v5_x/v5.0.0", "v5_x/v5.1.0"]
+                    // def versions = ["v4_x", "v5_x/v5.0.0", "v5_x/v5.1.0", "v6_x/v6.0.0"]
+                    def versions = ["v6_x/v6.0.0"]
                     def batches = []
                     for (int i = 0; i < files.size(); i += batchSize) {
                         def end = Math.min(i + batchSize, files.size())
@@ -127,9 +131,10 @@ pipeline {
                             deployVersion(version, batch, basePort + (j * batchSize))
                         }
 
-                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v4", "v4_x")
-                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v5.0", "v5_x/v5.0.0")
-                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v5.1", "v5_x/v5.1.0")
+                        // runFunctionalTests(batch, basePort + (j * batchSize), "Func v4", "v4_x")
+                        // runFunctionalTests(batch, basePort + (j * batchSize), "Func v5.0", "v5_x/v5.0.0")
+                        // runFunctionalTests(batch, basePort + (j * batchSize), "Func v5.1", "v5_x/v5.1.0")
+                        runFunctionalTests(batch, basePort + (j * batchSize), "Func v6.0", "v6_x/v6.0.0")
                         sh 'docker ps -a --filter name=localnode-* -aq | grep -v "$(docker ps -a --filter name=localnode-9000 -q)" | xargs docker rm -f'
                     }
                 }
@@ -303,7 +308,7 @@ def buildDispatcherDebug() {
                 rm -rf darwin-*
                 rm -rf windows-*
 
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1178 --path linux-amd64 && sleep 2
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1348 --path linux-amd64 && sleep 2
             ''', returnStatus: true
             
             if (shExitStatus != 0) {

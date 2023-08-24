@@ -29,6 +29,8 @@ import {
     TBigTaskApproveParams,
     TBigTaskDeleteParams,
     TBigTaskUpgradeParams,
+    TDaoTokenDaoTransferParams,
+    TCreateIndexParams,
 } from './dao.types'
 import {
     TRepositoryChangeBranchProtectionParams,
@@ -57,8 +59,8 @@ type TEventCreateParams = {
     reviewers?: TUserParam[]
 }
 
-type TEventMultipleCreateProposalParams = TEventCreateParams & {
-    proposals: (
+type TEventSignleCreateProposalParams = TEventCreateParams & {
+    proposal:
         | {
               type: ESmvEventType.REPO_CREATE
               params: TRepositoryCreateParams
@@ -203,7 +205,18 @@ type TEventMultipleCreateProposalParams = TEventCreateParams & {
               type: ESmvEventType.BIGTASK_UPGRADE
               params: TBigTaskUpgradeParams
           }
-    )[]
+        | {
+              type: ESmvEventType.DAO_TOKEN_TRANSFER_FROM_PREV
+              params: TDaoTokenDaoTransferParams
+          }
+        | {
+              type: ESmvEventType.INDEX_EVENT
+              params: TCreateIndexParams
+          }
+}
+
+type TEventMultipleCreateProposalParams = TEventCreateParams & {
+    proposals: TEventSignleCreateProposalParams['proposal'][]
 }
 
 type TEventMultipleCreateProposalAsDaoParams = TEventMultipleCreateProposalParams & {
@@ -213,6 +226,7 @@ type TEventMultipleCreateProposalAsDaoParams = TEventMultipleCreateProposalParam
 
 export {
     TAddress,
+    TEventSignleCreateProposalParams,
     TEventMultipleCreateProposalParams,
     TEventMultipleCreateProposalAsDaoParams,
     TPaginatedAccountsResult,

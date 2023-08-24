@@ -44,10 +44,10 @@ TASK_ABI="../v2_x/contracts/gosh/task.abi.json"
 # deploy new DAO that will be upgraded
 deploy_DAO_and_repo
 
-mint_tokens
+mint_tokens_v2
 
 TASK_NAME="task1"
-deploy_task_with_proposal
+deploy_task_with_proposal_v2
 
 TASK_ADDR=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTaskAddr --abi $WALLET_ABI --nametask $TASK_NAME --repoName $REPO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
 wait_account_active $TASK_ADDR
@@ -110,7 +110,7 @@ wait_account_active $COMMIT_ADDR
 tonos-cli -j runx --abi $COMMIT_ABI --addr $COMMIT_ADDR -m getCommit
 tonos-cli -j runx --abi $SNAPSHOT_ABI --addr $SNAPSHOT_ADDR -m getSnapshot
 
-set_commit_proposal
+set_commit_proposal_v2
 
 sleep 20
 

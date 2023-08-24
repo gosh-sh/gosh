@@ -178,8 +178,8 @@ function deploy_DAO {
 
   sleep 10
 
-  GRANTED_PUBKEY=$(tonos-cli -j run --abi $WALLET_ABI $WALLET_ADDR getAccess {} | jq -r .value0)
-  echo $GRANTED_PUBKEY
+  # GRANTED_PUBKEY=$(tonos-cli -j run --abi $WALLET_ABI $WALLET_ADDR getAccess {} | jq -r .value0)
+  # echo $GRANTED_PUBKEY
 }
 
 function deploy_DAO_and_repo {
@@ -201,8 +201,8 @@ function deploy_DAO_and_repo {
 
   sleep 10
 
-  GRANTED_PUBKEY=$(tonos-cli -j run --abi $WALLET_ABI $WALLET_ADDR getAccess {} | jq -r .value0)
-  echo $GRANTED_PUBKEY
+  # GRANTED_PUBKEY=$(tonos-cli -j run --abi $WALLET_ABI $WALLET_ADDR getAccess {} | jq -r .value0)
+  # echo $GRANTED_PUBKEY
 
   echo "***** repo deploy *****"
   deploy_repo
@@ -222,9 +222,12 @@ function upgrade_DAO {
     TEST_VERSION=$1
     NEW_SYSTEM_CONTRACT_ADDR=$2
   fi
-  if [[ $VERSION =~ "v1_x" ]]; then
+  convert_version
+  if [[ $CUT_VERSION -ge 6 ]]; then
+    upgrade_DAO_6 $TEST_VERSION $NEW_SYSTEM_CONTRACT_ADDR
+  elif [[ $CUT_VERSION -eq 1 ]]; then
     upgrade_DAO_1 $TEST_VERSION $NEW_SYSTEM_CONTRACT_ADDR
-  else
+  else 
     upgrade_DAO_2 $TEST_VERSION $NEW_SYSTEM_CONTRACT_ADDR
   fi
 }
@@ -271,7 +274,7 @@ function upgrade_DAO_2 {
   NEW_SYSTEM_CONTRACT_ADDR=$2
 
   echo "***** start proposal for upgrade *****"
-  tonos-cli -j callx --abi $WALLET_ABI_1 --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForUpgradeDao --newversion $TEST_VERSION --description "" --comment "" --num_clients 1 --reviewers []
+  tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForUpgradeDao --newversion $TEST_VERSION --description "" --comment "" --num_clients 1 --reviewers []
   NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
   echo "NOW_ARG=$NOW_ARG"
 
@@ -293,7 +296,7 @@ function upgrade_DAO_2 {
 
   tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m voteFor --platform_id $platform_id --choice true --amount 20 --num_clients 1 --note ""
 
-  sleep 10
+  sleep 20
 
   wallet_tombstone=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTombstone --abi $WALLET_ABI | sed -n '/value0/ p' | cut -d':' -f 2)
   echo "WALLET tombstone: $wallet_tombstone"
@@ -317,31 +320,86 @@ function upgrade_DAO_2 {
     "{\"pubkey\":\"$WALLET_PUBKEY\",\"wallet\":\"$WALLET_ADDR\"}"
 }
 
+function start_prop_and_vote {
+  echo "*** start one proposal ***"
+  tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startOneProposal --proposal $TVMCELL --num_clients 1 --reviewers []
+  
+  sleep 10
+
+  PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
+        --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
+        "{\"data\":\"$TVMCELL\"}" \
+         --decode-c6 | grep value0 \
+        | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+  vote_for_proposal
+}
+
+function upgrade_DAO_6 {
+  TEST_VERSION=$1
+  NEW_SYSTEM_CONTRACT_ADDR=$2
+
+  echo "***** get cell for upgrade *****"
+  TVMCELL=$(gosh-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellSetUpgrade --newversion $TEST_VERSION --description "" --comment "" --time null  | sed -n '/value0/ p' | cut -d'"' -f 4)
+  
+  start_prop_and_vote
+  sleep 10
+
+  # wallet_tombstone=$(tonos-cli -j runx --addr $WALLET_ADDR -m getTombstone --abi $WALLET_ABI | sed -n '/value0/ p' | cut -d':' -f 2)
+  # echo "WALLET tombstone: $wallet_tombstone"
+
+  # if [ "$wallet_tombstone" = " false" ]; then
+  #   echo "Tombstone was not set"
+  #   exit 1
+  # fi
+
+  echo "tonos-cli -j runx --addr $NEW_SYSTEM_CONTRACT_ADDR -m getAddrDao --abi $SYSTEM_CONTRACT_ABI_1 --name $DAO_NAME"
+  DAO_ADDR=$(tonos-cli -j runx --addr $NEW_SYSTEM_CONTRACT_ADDR -m getAddrDao --abi $SYSTEM_CONTRACT_ABI_1 --name $DAO_NAME | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+  echo "New DAO address: $DAO_ADDR"
+
+  WALLET_ADDR=$(tonos-cli -j run $DAO_ADDR getAddrWallet "{\"pubaddr\":\"$USER_PROFILE_ADDR\",\"index\":0}" --abi $DAO_ABI_1 | sed -n '/value0/ p' | cut -d'"' -f 4)
+  echo "NEW_WALLET_ADDR=$WALLET_ADDR"
+
+  sleep 5
+
+  tonos-cli call --abi $USER_PROFILE_ABI $USER_PROFILE_ADDR --sign $WALLET_KEYS turnOn \
+    "{\"pubkey\":\"$WALLET_PUBKEY\",\"wallet\":\"$WALLET_ADDR\"}"
+}
+
 function add_protected_branch {
-  echo "***** start proposal for add protected branch *****"
-  tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForAddProtectedBranch --repoName $REPO_NAME --branchName $BRANCH_NAME --num_clients 1
-  NOW_ARG=$(tonos-cli account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
-  echo "NOW_ARG=$NOW_ARG"
+  convert_version
+  if [[ $CUT_VERSION -ge 6 ]]; then
+    echo "***** get cell for add protected branch *****"
+    TVMCELL=$(gosh-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellAddProtectedBranch --repoName $REPO_NAME --branchName $BRANCH_NAME --time null | sed -n '/value0/ p' | cut -d'"' -f 4)
+    
+    start_prop_and_vote
+  else
+    echo "***** start proposal for add protected branch *****"
+    tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForAddProtectedBranch --repoName $REPO_NAME --branchName $BRANCH_NAME --num_clients 1
+    NOW_ARG=$(tonos-cli account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
+    echo "NOW_ARG=$NOW_ARG"
 
-  sleep 60
+    sleep 60
 
-  echo "***** get data for proposal *****"
-  tip3VotingLocker=$(tonos-cli -j run $WALLET_ADDR  --abi $WALLET_ABI tip3VotingLocker "{}" | sed -n '/tip3VotingLocker/ p' | cut -d'"' -f 4)
-  echo "tip3VotingLocker=$tip3VotingLocker"
+    echo "***** get data for proposal *****"
+    tip3VotingLocker=$(tonos-cli -j run $WALLET_ADDR  --abi $WALLET_ABI tip3VotingLocker "{}" | sed -n '/tip3VotingLocker/ p' | cut -d'"' -f 4)
+    echo "tip3VotingLocker=$tip3VotingLocker"
 
-  PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 1000000 \
-  --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method get_add_protected_prop_id --abi-params \
-  "{\"repoName\":\"$REPO_NAME\",\"branchName\":\"$BRANCH_NAME\",\"_now\":\"$NOW_ARG\"}"  --decode-c6 | grep value0 \
-  | sed -n '/value0/ p' | cut -d'"' -f 4)
+    PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 1000000 \
+    --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method get_add_protected_prop_id --abi-params \
+    "{\"repoName\":\"$REPO_NAME\",\"branchName\":\"$BRANCH_NAME\",\"_now\":\"$NOW_ARG\"}"  --decode-c6 | grep value0 \
+    | sed -n '/value0/ p' | cut -d'"' -f 4)
 
-  echo "PROP_ID=$PROP_ID"
+    echo "PROP_ID=$PROP_ID"
 
-  platform_id=$(tonos-cli -j runx --addr $WALLET_ADDR -m getPlatfotmId --abi $WALLET_ABI --propId $PROP_ID --platformType 1 --_tip3VotingLocker $tip3VotingLocker | sed -n '/value0/ p' | cut -d'"' -f 4)
-  echo "platform_id=$platform_id"
+    platform_id=$(tonos-cli -j runx --addr $WALLET_ADDR -m getPlatfotmId --abi $WALLET_ABI --propId $PROP_ID --platformType 1 --_tip3VotingLocker $tip3VotingLocker | sed -n '/value0/ p' | cut -d'"' -f 4)
+    echo "platform_id=$platform_id"
 
-  sleep 3
+    sleep 3
 
-  tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m voteFor --platform_id $platform_id --choice true --amount 20 --num_clients 1
+    tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m voteFor --platform_id $platform_id --choice true --amount 20 --num_clients 1
+  fi
 }
 
 function wait_wallet_tombstone {
@@ -397,7 +455,7 @@ function deploy_repo {
   # echo $ADDR
 }
 
-function deploy_task_with_proposal {
+function deploy_task_with_proposal_v2 {
   echo "***** start proposal for task deploy *****"
   LOCK=100
   TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellTaskDeploy \
@@ -411,32 +469,44 @@ function deploy_task_with_proposal {
   PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
         --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
         "{\"data\":\"$TVMCELL\"}" \
-         --decode-c6 | grep value0 \
+        --decode-c6 | grep value0 \
         | sed -n '/value0/ p' | cut -d'"' -f 4)
 
   vote_for_proposal
 }
 
-function deploy_task_with_proposal_3 {
-  echo "***** start proposal for task deploy *****"
-  LOCK=100
-  tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForTaskDeploy \
-    "{\"taskName\":\"$TASK_NAME\",\"repoName\":\"$REPO_NAME\",\"tag\":[],\"comment\":\"\",\"grant\":{\"assign\":[{\"grant\":1,\"lock\":1},{\"grant\":1,\"lock\":$LOCK}],\"review\":[],\"manager\":[],\"subtask\":[]},\"num_clients\":1,\"reviewers\":[],\"workers\":null}"
-  NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
-  echo "NOW_ARG=$NOW_ARG"
-  TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellTaskDeploy \
-    "{\"taskName\":\"$TASK_NAME\",\"repoName\":\"$REPO_NAME\",\"tag\":[],\"workers\":null,\"comment\":\"\",\"grant\":{\"assign\":[{\"grant\":1,\"lock\":1},{\"grant\":1,\"lock\":$LOCK}],\"review\":[],\"manager\":[],\"subtask\":[]},\"time\":$NOW_ARG}" | sed -n '/value0/ p' | cut -d'"' -f 4)
+function deploy_task_with_proposal {
+  convert_version
+  if [[ $CUT_VERSION -ge 6 ]]; then
+    echo "***** start proposal for task deploy *****"
+    LOCK=100
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellTaskDeploy \
+      "{\"taskName\":\"$TASK_NAME\",\"repoName\":\"$REPO_NAME\",\"tag\":[],\"workers\":null,\"comment\":\"\",\"grant\":{\"assign\":[{\"grant\":1,\"lock\":1},{\"grant\":1,\"lock\":$LOCK}],\"review\":[],\"manager\":[],\"subtask\":[]},\"time\":null}" | sed -n '/value0/ p' | cut -d'"' -f 4)
 
-  echo "TVMCELL=$TVMCELL"
-  sleep 10
+    echo "TVMCELL=$TVMCELL"
+    
+    start_prop_and_vote
+  else
+    echo "***** start proposal for task deploy *****"
+    LOCK=100
+    tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForTaskDeploy \
+      "{\"taskName\":\"$TASK_NAME\",\"repoName\":\"$REPO_NAME\",\"tag\":[],\"comment\":\"\",\"grant\":{\"assign\":[{\"grant\":1,\"lock\":1},{\"grant\":1,\"lock\":$LOCK}],\"review\":[],\"manager\":[],\"subtask\":[]},\"num_clients\":1,\"reviewers\":[],\"workers\":null}"
+    NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
+    echo "NOW_ARG=$NOW_ARG"
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellTaskDeploy \
+      "{\"taskName\":\"$TASK_NAME\",\"repoName\":\"$REPO_NAME\",\"tag\":[],\"workers\":null,\"comment\":\"\",\"grant\":{\"assign\":[{\"grant\":1,\"lock\":1},{\"grant\":1,\"lock\":$LOCK}],\"review\":[],\"manager\":[],\"subtask\":[]},\"time\":$NOW_ARG}" | sed -n '/value0/ p' | cut -d'"' -f 4)
 
-  PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
-        --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
-        "{\"data\":\"$TVMCELL\"}" \
-         --decode-c6 | grep value0 \
-        | sed -n '/value0/ p' | cut -d'"' -f 4)
+    echo "TVMCELL=$TVMCELL"
+    sleep 10
 
-  vote_for_proposal
+    PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
+          --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
+          "{\"data\":\"$TVMCELL\"}" \
+          --decode-c6 | grep value0 \
+          | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+    vote_for_proposal
+  fi
 }
 
 # Needs $PROP_ID
@@ -445,6 +515,20 @@ function vote_for_proposal {
     echo "***** get data for proposal *****"
     tip3VotingLocker=$(tonos-cli -j run $WALLET_ADDR  --abi $WALLET_ABI tip3VotingLocker "{}" | sed -n '/tip3VotingLocker/ p' | cut -d'"' -f 4)
     echo "tip3VotingLocker=$tip3VotingLocker"
+
+    for i in {1..20}
+    do
+      lockerBusy=$(tonos-cli -j runx --addr $tip3VotingLocker --abi ../v6_x/v6.0.0/contracts/gosh/smv/SMVTokenLocker.abi.json -m lockerBusy | jq .lockerBusy)
+      echo "lockerBusy=$lockerBusy"
+      if [[ $lockerBusy =~ "false" ]]; then
+        break
+      fi
+      if [[ $i -eq 19 ]]; then
+        echo "Locker is busy"
+        exit 3
+      fi
+      sleep 20
+    done
 
     platform_id=$(tonos-cli -j runx --addr $WALLET_ADDR -m getPlatfotmId --abi $WALLET_ABI --propId $PROP_ID --platformType 1 --_tip3VotingLocker $tip3VotingLocker | sed -n '/value0/ p' | cut -d'"' -f 4)
     echo "platform_id=$platform_id"
@@ -455,7 +539,7 @@ function vote_for_proposal {
     tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m voteFor --platform_id $platform_id --choice true --amount $VOTE_TOKENS --num_clients 1 --note ""
 }
 
-function mint_tokens {
+function mint_tokens_v2 {
     tonos-cli runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
     echo "***** start proposal for mint tokens *****"
     TOKEN=5
@@ -479,10 +563,17 @@ function mint_tokens {
     tonos-cli runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
 }
 
-function mint_tokens_3 {
+function mint_tokens {
+  TOKEN="${TOKEN:-5}"
+  convert_version
+  if [[ $CUT_VERSION -ge 6 ]]; then
+    echo "***** get cell for mint token *****"
+    TVMCELL=$(gosh-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellMintToken --token $TOKEN --comment "" --time null | sed -n '/value0/ p' | cut -d'"' -f 4)
+    
+    start_prop_and_vote
+  else
     tonos-cli runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
     echo "***** start proposal for mint tokens *****"
-    TOKEN="${TOKEN:-5}"
     tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForMintDaoReserve \
       --token $TOKEN --comment "" --num_clients 1 --reviewers []
     NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
@@ -500,18 +591,20 @@ function mint_tokens_3 {
       | sed -n '/value0/ p' | cut -d'"' -f 4)
 
     vote_for_proposal
+  fi
 
-    sleep 3
+  sleep 3
 
-    tonos-cli runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
+  tonos-cli runx --abi $DAO_ABI --addr $DAO_ADDR -m getTokenBalance
 }
 
-function set_commit_proposal {
+function set_commit_proposal_v2 {
   tonos-cli runx --abi $REPO_ABI --addr $REPO_ADDR -m getAllAddress
 
   echo "***** start proposal for set commit *****"
   TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellSetCommit \
     "{\"repoName\":\"$REPO_NAME\",\"branchName\":\"$BRANCH_NAME\",\"commit\":\"$COMMIT_ID\",\"numberChangedFiles\":1,\"numberCommits\":1,\"comment\":\"\",\"task\":{\"task\":\"$TASK_ADDR\",\"pubaddrassign\":{\"$USER_PROFILE_ADDR\":true},\"pubaddrreview\":{},\"pubaddrmanager\":{}}}" | sed -n '/value0/ p' | cut -d'"' -f 4)
+
   tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForSetCommit \
     "{\"repoName\":\"$REPO_NAME\",\"branchName\":\"$BRANCH_NAME\",\"commit\":\"$COMMIT_ID\",\"numberChangedFiles\":1,\"numberCommits\":1,\"comment\":\"\",\"task\":{\"task\":\"$TASK_ADDR\",\"pubaddrassign\":{\"$USER_PROFILE_ADDR\":true},\"pubaddrreview\":{},\"pubaddrmanager\":{}},\"num_clients\":1,\"reviewers\":[]}"
   echo "TVMCELL=$TVMCELL"
@@ -521,7 +614,7 @@ function set_commit_proposal {
   PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
         --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
         "{\"data\":\"$TVMCELL\"}" \
-         --decode-c6 | grep value0 \
+        --decode-c6 | grep value0 \
         | sed -n '/value0/ p' | cut -d'"' -f 4)
 
   vote_for_proposal
@@ -531,7 +624,7 @@ function set_commit_proposal {
   tonos-cli runx --abi $REPO_ABI --addr $REPO_ADDR -m getAllAddress
 }
 
-function set_commit_proposal_3 {
+function set_commit_proposal_v2 {
   tonos-cli runx --abi $REPO_ABI --addr $REPO_ADDR -m getAllAddress
 
   echo "***** start proposal for set commit *****"
@@ -548,7 +641,7 @@ function set_commit_proposal_3 {
   PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
         --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
         "{\"data\":\"$TVMCELL\"}" \
-         --decode-c6 | grep value0 \
+        --decode-c6 | grep value0 \
         | sed -n '/value0/ p' | cut -d'"' -f 4)
 
   vote_for_proposal
@@ -558,17 +651,26 @@ function set_commit_proposal_3 {
   tonos-cli runx --abi $REPO_ABI --addr $REPO_ADDR -m getAllAddress
 }
 
-function set_commit_proposal_3_dao {
+function set_commit_proposal {
   tonos-cli runx --abi $REPO_ABI --addr $REPO_ADDR -m getAllAddress
-
-  echo "***** start proposal for set commit *****"
-  tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForSetCommit \
-    "{\"repoName\":\"$REPO_NAME\",\"branchName\":\"$BRANCH_NAME\",\"commit\":\"$COMMIT_ID\",\"numberChangedFiles\":1,\"numberCommits\":1,\"comment\":\"\",\"task\":{\"task\":\"$TASK_ADDR\",\"pubaddrassign\":{\"$TASK_OWNER\":true},\"pubaddrreview\":{},\"pubaddrmanager\":{},\"daoMembers\":{\"$TASK_OWNER\":\"$CHILD_DAO_NAME\"}},\"num_clients\":1,\"reviewers\":[]}"
-  NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
-  echo "NOW_ARG=$NOW_ARG"
-  TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellSetCommit \
-    "{\"repoName\":\"$REPO_NAME\",\"branchName\":\"$BRANCH_NAME\",\"commit\":\"$COMMIT_ID\",\"numberChangedFiles\":1,\"numberCommits\":1,\"comment\":\"\",\"task\":{\"task\":\"$TASK_ADDR\",\"pubaddrassign\":{\"$TASK_OWNER\":true},\"pubaddrreview\":{},\"pubaddrmanager\":{},\"daoMembers\":{\"$TASK_OWNER\":\"$CHILD_DAO_NAME\"}},\"time\":$NOW_ARG}" | sed -n '/value0/ p' | cut -d'"' -f 4)
-  echo "TVMCELL=$TVMCELL"
+    echo "***** start proposal for set commit *****"
+  if [ -z $DAO_ASSIGNER ]; then
+    tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForSetCommit \
+      "{\"repoName\":\"$REPO_NAME\",\"branchName\":\"$BRANCH_NAME\",\"commit\":\"$COMMIT_ID\",\"numberChangedFiles\":0,\"numberCommits\":1,\"comment\":\"\",\"task\":{\"task\":\"$TASK_ADDR\",\"pubaddrassign\":{\"$TASK_OWNER\":true},\"pubaddrreview\":{},\"pubaddrmanager\":{},\"daoMembers\":{}},\"num_clients\":1,\"reviewers\":[]}"
+    NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
+    echo "NOW_ARG=$NOW_ARG"
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellSetCommit \
+      "{\"repoName\":\"$REPO_NAME\",\"branchName\":\"$BRANCH_NAME\",\"commit\":\"$COMMIT_ID\",\"numberChangedFiles\":0,\"numberCommits\":1,\"comment\":\"\",\"task\":{\"task\":\"$TASK_ADDR\",\"pubaddrassign\":{\"$TASK_OWNER\":true},\"pubaddrreview\":{},\"pubaddrmanager\":{},\"daoMembers\":{}},\"time\":$NOW_ARG}" | sed -n '/value0/ p' | cut -d'"' -f 4)
+    echo "TVMCELL=$TVMCELL"
+  else
+    tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForSetCommit \
+      "{\"repoName\":\"$REPO_NAME\",\"branchName\":\"$BRANCH_NAME\",\"commit\":\"$COMMIT_ID\",\"numberChangedFiles\":0,\"numberCommits\":1,\"comment\":\"\",\"task\":{\"task\":\"$TASK_ADDR\",\"pubaddrassign\":{\"$TASK_OWNER\":true},\"pubaddrreview\":{},\"pubaddrmanager\":{},\"daoMembers\":{\"$TASK_OWNER\":\"$CHILD_DAO_NAME\"}},\"num_clients\":1,\"reviewers\":[]}"
+    NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
+    echo "NOW_ARG=$NOW_ARG"
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellSetCommit \
+      "{\"repoName\":\"$REPO_NAME\",\"branchName\":\"$BRANCH_NAME\",\"commit\":\"$COMMIT_ID\",\"numberChangedFiles\":0,\"numberCommits\":1,\"comment\":\"\",\"task\":{\"task\":\"$TASK_ADDR\",\"pubaddrassign\":{\"$TASK_OWNER\":true},\"pubaddrreview\":{},\"pubaddrmanager\":{},\"daoMembers\":{\"$TASK_OWNER\":\"$CHILD_DAO_NAME\"}},\"time\":$NOW_ARG}" | sed -n '/value0/ p' | cut -d'"' -f 4)
+    echo "TVMCELL=$TVMCELL"
+  fi
 
   sleep 10
 
@@ -587,51 +689,65 @@ function set_commit_proposal_3_dao {
 
 
 function upgrade_task_proposal {
-  echo "***** start proposal for set commit *****"
-  tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForTaskUpgrade \
-    "{\"nametask\":\"$TASK_NAME\",\"reponame\":\"$REPO_NAME\",\"oldversion\":\"$OLD_VERSION\",\"oldtask\":\"$TASK_ADDR\",\"hashtag\":[],\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
-  NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
-  echo "NOW_ARG=$NOW_ARG"
-  TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellForTaskUpgrade \
-    "{\"nametask\":\"$TASK_NAME\",\"reponame\":\"$REPO_NAME\",\"oldversion\":\"$OLD_VERSION\",\"oldtask\":\"$TASK_ADDR\",\"hashtag\":[],\"comment\":\"\",\"time\":$NOW_ARG}"  | sed -n '/value0/ p' | cut -d'"' -f 4)
-  sleep 10
+  CUT_VERSION=$(echo $TEST_VERSION1 | cut -d '.' -f 1)
+  if [[ $CUT_VERSION -ge 6 ]]; then
+    echo "***** get cell for upgrade task *****"
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellForTaskUpgrade \
+      "{\"nametask\":\"$TASK_NAME\",\"reponame\":\"$REPO_NAME\",\"oldversion\":\"$OLD_VERSION\",\"oldtask\":\"$TASK_ADDR\",\"hashtag\":[],\"comment\":\"\",\"time\":null}"  | sed -n '/value0/ p' | cut -d'"' -f 4)
+    
+    start_prop_and_vote
+  else
+    echo "***** start proposal for set commit *****"
+    tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForTaskUpgrade \
+      "{\"nametask\":\"$TASK_NAME\",\"reponame\":\"$REPO_NAME\",\"oldversion\":\"$OLD_VERSION\",\"oldtask\":\"$TASK_ADDR\",\"hashtag\":[],\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
+    NOW_ARG=$(tonos-cli -j account $WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
+    echo "NOW_ARG=$NOW_ARG"
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellForTaskUpgrade \
+      "{\"nametask\":\"$TASK_NAME\",\"reponame\":\"$REPO_NAME\",\"oldversion\":\"$OLD_VERSION\",\"oldtask\":\"$TASK_ADDR\",\"hashtag\":[],\"comment\":\"\",\"time\":$NOW_ARG}"  | sed -n '/value0/ p' | cut -d'"' -f 4)
+    sleep 10
 
-  PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
-        --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
-        "{\"data\":\"$TVMCELL\"}" \
-         --decode-c6 | grep value0 \
-        | sed -n '/value0/ p' | cut -d'"' -f 4)
+    PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
+          --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
+          "{\"data\":\"$TVMCELL\"}" \
+          --decode-c6 | grep value0 \
+          | sed -n '/value0/ p' | cut -d'"' -f 4)
 
-  vote_for_proposal
-
-  sleep 10
-
-  tonos-cli runx --abi $REPO_ABI --addr $REPO_ADDR -m getAllAddress
+    vote_for_proposal
+  fi
 }
 
 function add_dao_to_dao {
-  echo "***** start proposal for add dao to dao *****"
-#  struct MemberToken {
-#      address member;
-#      uint128 count;
-#      uint128 expired;    // for v5 +
-#  }
   CHILD_TOKEN="${CHILD_TOKEN:-1}"
-  tonos-cli -j callx --abi $WALLET_ABI --addr $PARENT_WALLET_ADDR --keys $WALLET_KEYS -m startProposalForDeployWalletDao \
-    "{\"pubaddr\":[{\"member\":\"$CHILD_DAO_ADDR\",\"count\":$CHILD_TOKEN,\"expired\":0}],\"dao\":[\"$CHILD_DAO_NAME\"],\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
-  NOW_ARG=$(tonos-cli -j account $PARENT_WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
-  echo "NOW_ARG=$NOW_ARG"
-  TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $PARENT_WALLET_ADDR -m getCellDeployWalletDao \
-    "{\"pubaddr\":[{\"member\":\"$CHILD_DAO_ADDR\",\"count\":$CHILD_TOKEN,\"expired\":0}],\"dao\":[\"$CHILD_DAO_NAME\"],\"comment\":\"\",\"time\":$NOW_ARG}"  | sed -n '/value0/ p' | cut -d'"' -f 4)
-  sleep 10
+  convert_version
+  if [[ $CUT_VERSION -ge 6 ]]; then
+    echo "***** get cell for add dao to dao *****"
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $PARENT_WALLET_ADDR -m getCellDeployWalletDao \
+      "{\"pubaddr\":[{\"member\":\"$CHILD_DAO_ADDR\",\"count\":$CHILD_TOKEN,\"expired\":0}],\"dao\":[\"$CHILD_DAO_NAME\"],\"comment\":\"\",\"time\":null}"  | sed -n '/value0/ p' | cut -d'"' -f 4)
+    
+    start_prop_and_vote
+  else
+    echo "***** start proposal for add dao to dao *****"
+  #  struct MemberToken {
+  #      address member;
+  #      uint128 count;
+  #      uint128 expired;    // for v5 +
+  #  }
+    tonos-cli -j callx --abi $WALLET_ABI --addr $PARENT_WALLET_ADDR --keys $WALLET_KEYS -m startProposalForDeployWalletDao \
+      "{\"pubaddr\":[{\"member\":\"$CHILD_DAO_ADDR\",\"count\":$CHILD_TOKEN,\"expired\":0}],\"dao\":[\"$CHILD_DAO_NAME\"],\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
+    NOW_ARG=$(tonos-cli -j account $PARENT_WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
+    echo "NOW_ARG=$NOW_ARG"
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $PARENT_WALLET_ADDR -m getCellDeployWalletDao \
+      "{\"pubaddr\":[{\"member\":\"$CHILD_DAO_ADDR\",\"count\":$CHILD_TOKEN,\"expired\":0}],\"dao\":[\"$CHILD_DAO_NAME\"],\"comment\":\"\",\"time\":$NOW_ARG}"  | sed -n '/value0/ p' | cut -d'"' -f 4)
+    sleep 10
 
-  PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
-        --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
-        "{\"data\":\"$TVMCELL\"}" \
-         --decode-c6 | grep value0 \
-        | sed -n '/value0/ p' | cut -d'"' -f 4)
+    PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
+          --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
+          "{\"data\":\"$TVMCELL\"}" \
+          --decode-c6 | grep value0 \
+          | sed -n '/value0/ p' | cut -d'"' -f 4)
 
-  vote_for_proposal
+    vote_for_proposal
+  fi
 
   sleep 10
 
@@ -681,77 +797,102 @@ function add_members_to_dao {
 }
 
 function child_dao_ask_granted {
-  echo "***** start proposal for ask dao reward *****"
+  convert_version
+  if [[ $CUT_VERSION -ge 6 ]]; then
+    echo "***** get cell for ask dao reward *****"
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $CHILD_WALLET_ADDR -m getCellForDaoAskGrant \
+      "{\"wallet\":\"$CHILD_DAO_WALLET_ADDR\",\"repoName\":\"$REPO_NAME\",\"taskName\":\"$TASK_NAME\",\"comment\":\"\",\"time\":null}"  | sed -n '/value0/ p' | cut -d'"' -f 4)
+    
+    start_prop_and_vote
+  else
+    echo "***** start proposal for ask dao reward *****"
 
-  tonos-cli -j callx --abi $WALLET_ABI --addr $CHILD_WALLET_ADDR --keys $WALLET_KEYS -m startProposalForDaoAskGrant \
-    "{\"wallet\":\"$CHILD_DAO_WALLET_ADDR\",\"repoName\":\"$REPO_NAME\",\"taskName\":\"$TASK_NAME\",\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
-  NOW_ARG=$(tonos-cli -j account $CHILD_WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
-  echo "NOW_ARG=$NOW_ARG"
-  TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $CHILD_WALLET_ADDR -m getCellForDaoAskGrant \
-    "{\"wallet\":\"$CHILD_DAO_WALLET_ADDR\",\"repoName\":\"$REPO_NAME\",\"taskName\":\"$TASK_NAME\",\"comment\":\"\",\"time\":$NOW_ARG}"  | sed -n '/value0/ p' | cut -d'"' -f 4)
-  sleep 10
+    tonos-cli -j callx --abi $WALLET_ABI --addr $CHILD_WALLET_ADDR --keys $WALLET_KEYS -m startProposalForDaoAskGrant \
+      "{\"wallet\":\"$CHILD_DAO_WALLET_ADDR\",\"repoName\":\"$REPO_NAME\",\"taskName\":\"$TASK_NAME\",\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
+    NOW_ARG=$(tonos-cli -j account $CHILD_WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
+    echo "NOW_ARG=$NOW_ARG"
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $CHILD_WALLET_ADDR -m getCellForDaoAskGrant \
+      "{\"wallet\":\"$CHILD_DAO_WALLET_ADDR\",\"repoName\":\"$REPO_NAME\",\"taskName\":\"$TASK_NAME\",\"comment\":\"\",\"time\":$NOW_ARG}"  | sed -n '/value0/ p' | cut -d'"' -f 4)
+    sleep 10
 
-  PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
-        --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
-        "{\"data\":\"$TVMCELL\"}" \
-         --decode-c6 | grep value0 \
-        | sed -n '/value0/ p' | cut -d'"' -f 4)
+    PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
+          --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
+          "{\"data\":\"$TVMCELL\"}" \
+          --decode-c6 | grep value0 \
+          | sed -n '/value0/ p' | cut -d'"' -f 4)
 
-  WALLET_ADDR=$CHILD_WALLET_ADDR
+    WALLET_ADDR=$CHILD_WALLET_ADDR
 
-  vote_for_proposal
+    vote_for_proposal
+  fi
 
   sleep 10
 
 }
 
 function child_dao_lock_vote {
-  echo "***** start proposal *****"
   IS_LOCK=true
   GRANT=0
-  tonos-cli -j callx --abi $WALLET_ABI --addr $NEW_CHILD_WALLET_ADDR --keys $WALLET_KEYS -m startProposalForDaoLockVote \
-    "{\"wallet\":\"$NEW_CHILD_DAO_WALLET_ADDR\",\"isLock\":$IS_LOCK,\"grant\":$GRANT,\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
-  NOW_ARG=$(tonos-cli -j account $NEW_CHILD_WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
-  echo "NOW_ARG=$NOW_ARG"
-  TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_CHILD_WALLET_ADDR -m getCellForDaoLockVote \
-    "{\"wallet\":\"$NEW_CHILD_DAO_WALLET_ADDR\",\"isLock\":$IS_LOCK,\"grant\":$GRANT,\"comment\":\"\",\"time\":$NOW_ARG}"  | sed -n '/value0/ p' | cut -d'"' -f 4)
-  sleep 10
+  CUT_VERSION=$(echo $TEST_VERSION1 | cut -d '.' -f 1)
+  if [[ $CUT_VERSION -ge 6 ]]; then
+    echo "***** get cell for dao lock vote *****"
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_CHILD_WALLET_ADDR -m getCellForDaoLockVote \
+      "{\"wallet\":\"$NEW_CHILD_DAO_WALLET_ADDR\",\"isLock\":$IS_LOCK,\"grant\":$GRANT,\"comment\":\"\",\"time\":null}"  | sed -n '/value0/ p' | cut -d'"' -f 4)
+    
+    start_prop_and_vote
+  else
+    echo "***** start proposal *****"
+    tonos-cli -j callx --abi $WALLET_ABI --addr $NEW_CHILD_WALLET_ADDR --keys $WALLET_KEYS -m startProposalForDaoLockVote \
+      "{\"wallet\":\"$NEW_CHILD_DAO_WALLET_ADDR\",\"isLock\":$IS_LOCK,\"grant\":$GRANT,\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
+    NOW_ARG=$(tonos-cli -j account $NEW_CHILD_WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
+    echo "NOW_ARG=$NOW_ARG"
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_CHILD_WALLET_ADDR -m getCellForDaoLockVote \
+      "{\"wallet\":\"$NEW_CHILD_DAO_WALLET_ADDR\",\"isLock\":$IS_LOCK,\"grant\":$GRANT,\"comment\":\"\",\"time\":$NOW_ARG}"  | sed -n '/value0/ p' | cut -d'"' -f 4)
+    sleep 10
 
-  PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
-        --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
-        "{\"data\":\"$TVMCELL\"}" \
-         --decode-c6 | grep value0 \
-        | sed -n '/value0/ p' | cut -d'"' -f 4)
+    PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
+          --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
+          "{\"data\":\"$TVMCELL\"}" \
+          --decode-c6 | grep value0 \
+          | sed -n '/value0/ p' | cut -d'"' -f 4)
 
-  WALLET_ADDR=$NEW_CHILD_WALLET_ADDR
+    WALLET_ADDR=$NEW_CHILD_WALLET_ADDR
 
-  vote_for_proposal
-
+    vote_for_proposal
+  fi
   sleep 10
 }
 
 function dao_transfer_tokens {
-  echo "***** start proposal *****"
   GRANT=2
   OLD_VERSION=$CUR_VERSION
-  tonos-cli -j callx --abi $WALLET_ABI --addr $NEW_CHILD_WALLET_ADDR --keys $WALLET_KEYS -m startProposalForDaoTransferTokens \
-    "{\"wallet\":\"$CHILD_DAO_WALLET_ADDR\",\"newwallet\":\"$NEW_CHILD_DAO_WALLET_ADDR\",\"grant\":$GRANT,\"oldversion\":\"$OLD_VERSION\",\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
-  NOW_ARG=$(tonos-cli -j account $NEW_CHILD_WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
-  echo "NOW_ARG=$NOW_ARG"
-  TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_CHILD_WALLET_ADDR -m getCellDaoTransferTokens \
-    "{\"wallet\":\"$CHILD_DAO_WALLET_ADDR\",\"newwallet\":\"$NEW_CHILD_DAO_WALLET_ADDR\",\"grant\":$GRANT,\"oldversion\":\"$OLD_VERSION\",\"comment\":\"\",\"time\":$NOW_ARG}"  | sed -n '/value0/ p' | cut -d'"' -f 4)
-  sleep 10
+  CUT_VERSION=$(echo $TEST_VERSION1 | cut -d '.' -f 1)
+  if [[ $CUT_VERSION -ge 6 ]]; then
+    echo "***** get cell for dao transfer tokens *****"
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_CHILD_WALLET_ADDR -m getCellDaoTransferTokens \
+      "{\"wallet\":\"$CHILD_DAO_WALLET_ADDR\",\"newwallet\":\"$NEW_CHILD_DAO_WALLET_ADDR\",\"grant\":$GRANT,\"oldversion\":\"$OLD_VERSION\",\"comment\":\"\",\"time\":null}"  | sed -n '/value0/ p' | cut -d'"' -f 4)
+    
+    start_prop_and_vote
+  else
+    echo "***** start proposal *****"
+    tonos-cli -j callx --abi $WALLET_ABI --addr $NEW_CHILD_WALLET_ADDR --keys $WALLET_KEYS -m startProposalForDaoTransferTokens \
+      "{\"wallet\":\"$CHILD_DAO_WALLET_ADDR\",\"newwallet\":\"$NEW_CHILD_DAO_WALLET_ADDR\",\"grant\":$GRANT,\"oldversion\":\"$OLD_VERSION\",\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
+    NOW_ARG=$(tonos-cli -j account $NEW_CHILD_WALLET_ADDR | grep last_paid | cut -d '"' -f 4)
+    echo "NOW_ARG=$NOW_ARG"
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $NEW_CHILD_WALLET_ADDR -m getCellDaoTransferTokens \
+      "{\"wallet\":\"$CHILD_DAO_WALLET_ADDR\",\"newwallet\":\"$NEW_CHILD_DAO_WALLET_ADDR\",\"grant\":$GRANT,\"oldversion\":\"$OLD_VERSION\",\"comment\":\"\",\"time\":$NOW_ARG}"  | sed -n '/value0/ p' | cut -d'"' -f 4)
+    sleep 10
 
-  PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
-        --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
-        "{\"data\":\"$TVMCELL\"}" \
-         --decode-c6 | grep value0 \
-        | sed -n '/value0/ p' | cut -d'"' -f 4)
+    PROP_ID=$($TVM_LINKER test node_se_scripts/prop_id_gen --gas-limit 100000000 \
+          --abi-json node_se_scripts/prop_id_gen.abi.json --abi-method getHash --abi-params \
+          "{\"data\":\"$TVMCELL\"}" \
+          --decode-c6 | grep value0 \
+          | sed -n '/value0/ p' | cut -d'"' -f 4)
 
-  WALLET_ADDR=$NEW_CHILD_WALLET_ADDR
+    WALLET_ADDR=$NEW_CHILD_WALLET_ADDR
 
-  vote_for_proposal
-
+    vote_for_proposal
+  fi
   sleep 10
 }
 
@@ -760,11 +901,19 @@ function get_number_of_members {
 }
 
 function start_paid_membership {
+  VALUE="${VALUE:-25}"
+  VALUE_PER_SUB="${VALUE_PER_SUB:-10}"
+  TIME_FOR_SUB="${TIME_FOR_SUB:-60}"
+  KEY_FOR_SERVICE="0x"$(cat $WALLET_KEYS | jq .public | cut -d '"' -f 2)
+
+  convert_version
+  if [[ $CUT_VERSION -ge 6 ]]; then
+    echo "***** get cell for paid membership *****"
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellStartPaidMembership "{\"newProgram\":{\"fiatValue\":0,\"decimals\":0,\"paidMembershipValue\":$VALUE,\"valuePerSubs\":$VALUE_PER_SUB,\"timeForSubs\":$TIME_FOR_SUB,\"details\":\"\",\"accessKey\":\"$KEY_FOR_SERVICE\"},\"Programindex\":1,\"comment\":\"\",\"time\":null}" | sed -n '/value0/ p' | cut -d'"' -f 4)
+    
+    start_prop_and_vote
+  else
     echo "***** start proposal for paid membership *****"
-    VALUE="${VALUE:-25}"
-    VALUE_PER_SUB="${VALUE_PER_SUB:-10}"
-    TIME_FOR_SUB="${TIME_FOR_SUB:-60}"
-    KEY_FOR_SERVICE="0x"$(cat $WALLET_KEYS | jq .public | cut -d '"' -f 2)
 
     tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForStartPaidMembership \
       "{\"newProgram\":{\"fiatValue\":0,\"decimals\":0,\"paidMembershipValue\":$VALUE,\"valuePerSubs\":$VALUE_PER_SUB,\"timeForSubs\":$TIME_FOR_SUB,\"details\":\"\",\"accessKey\":\"$KEY_FOR_SERVICE\"},\"Programindex\":1,\"comment\":\"\",\"num_clients\":1,\"reviewers\":[]}"
@@ -783,10 +932,17 @@ function start_paid_membership {
       | sed -n '/value0/ p' | cut -d'"' -f 4)
 
     vote_for_proposal
-
+  fi
 }
 
 function stop_paid_membership {
+  convert_version
+  if [[ $CUT_VERSION -ge 6 ]]; then
+    echo "***** get cell for paid membership *****"
+    TVMCELL=$(gosh-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellStopPaidMembership --Programindex 1 --comment "" --time null | sed -n '/value0/ p' | cut -d'"' -f 4)
+    
+    start_prop_and_vote
+  else
     echo "***** start proposal for stop paid membership *****"
     tonos-cli -j callx --abi $WALLET_ABI --addr $WALLET_ADDR --keys $WALLET_KEYS -m startProposalForStopPaidMembership \
       --Programindex 1 --comment "" --num_clients 1 --reviewers []
@@ -805,5 +961,14 @@ function stop_paid_membership {
       | sed -n '/value0/ p' | cut -d'"' -f 4)
 
     vote_for_proposal
+  fi
+}
 
+function convert_version {
+  CUT_VERSION=$(echo $VERSION | cut -d '_' -f 1 | cut -c 2-)
+}
+
+function version_is_ge_than_six {
+  convert_version
+  [[ $CUT_VERSION -gt 6 ]]
 }

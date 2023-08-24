@@ -5,6 +5,7 @@ import { AppConfig } from './appconfig'
 import { GoshError } from './errors'
 import { TAddress, TTreeItem, TPaginatedAccountsResult } from './types'
 import { GoshAdapterFactory } from './gosh'
+import { Abi, DecodedMessageBody, abiJson } from '@eversdk/core'
 
 export const retry = async (fn: Function, maxAttempts: number) => {
     const delay = (fn: Function, ms: number) => {
@@ -317,4 +318,123 @@ export const getRepositoryAccounts = async (
         )
     }
     return items
+}
+
+export const getMessages = async (
+    variables: {
+        address: string
+        msgType: string[]
+        node?: string[]
+        cursor?: string | undefined
+        limit?: number | undefined
+        allow_latest_inconsistent_data?: boolean
+    },
+    abi?: Abi,
+    all?: boolean,
+    messages?: any[],
+): Promise<{ cursor?: string; messages: any[]; hasNext?: boolean }> => {
+    const {
+        address,
+        msgType,
+        node = [],
+        cursor,
+        limit = 50,
+        allow_latest_inconsistent_data = false,
+    } = variables
+
+    const result = ['id', 'msg_type', 'created_lt', 'body', ...node]
+    messages = messages ?? []
+    all = all ?? false
+
+    const query = `query MessagesQuery(
+        $address: String!,
+        $msgType: [BlockchainMessageTypeFilterEnum!],
+        $cursor: String,
+        $limit: Int
+        $allow_latest_inconsistent_data: Boolean
+    ) {
+        blockchain {
+            account(address: $address) {
+                messages(
+                    msg_type: $msgType,
+                    last: $limit,
+                    before: $cursor,
+                    allow_latest_inconsistent_data: $allow_latest_inconsistent_data
+                ) {
+                    edges {
+                        node {${result.join(' ')}}
+                    }
+                    pageInfo {
+                        startCursor
+                        hasPreviousPage
+                    }
+                }
+            }
+        }
+    }`
+    const response = await AppConfig.goshclient.net.query({
+        query,
+        variables: {
+            address,
+            msgType,
+            limit,
+            cursor: cursor || null,
+            allow_latest_inconsistent_data,
+        },
+    })
+    const { edges, pageInfo } = response.result.data.blockchain.account.messages
+
+    const page = edges
+        .map((edge: any) => ({ message: edge.node, decoded: null }))
+        .sort((a: any, b: any) => {
+            const a_lt = parseInt(a.message.created_lt, 16)
+            const b_lt = parseInt(b.message.created_lt, 16)
+            return b_lt - a_lt
+        })
+    if (abi) {
+        await Promise.all(
+            page.map(async (item: any) => {
+                const { body, msg_type } = item.message
+                item.decoded = await decodeMessageBody(
+                    abiJson(JSON.stringify(abi)),
+                    body,
+                    msg_type,
+                )
+            }),
+        )
+    }
+    messages.push(...page)
+
+    if (!all || !pageInfo.hasPreviousPage) {
+        return {
+            cursor: pageInfo.startCursor,
+            messages,
+            hasNext: pageInfo.hasPreviousPage,
+        }
+    }
+
+    await sleep(300)
+    return await getMessages(
+        { ...variables, cursor: pageInfo.startCursor },
+        abi,
+        all,
+        messages,
+    )
+}
+
+export const decodeMessageBody = async (
+    abi: Abi,
+    body: string,
+    type: number,
+): Promise<DecodedMessageBody | null> => {
+    try {
+        return await AppConfig.goshclient.abi.decode_message_body({
+            abi,
+            body,
+            is_internal: type === 0,
+            allow_partial: true,
+        })
+    } catch {
+        return null
+    }
 }
