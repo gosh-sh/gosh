@@ -184,7 +184,6 @@ async fn construct_tree(
                     tracing::trace!("looking for file: {:?}", file_entry);
                     let key = format!("{}_{}", file_entry.filename, file_entry.oid.to_string());
                     tracing::trace!("key: {}", key);
-                    // let (key, tree_node) = nodes.remove(&key).ok_or(anyhow::format_err!(
                     let (key, tree_node) = nodes.get(&key).ok_or(anyhow::format_err!(
                         "Failed to get tree node: {}",
                         file_entry.oid
