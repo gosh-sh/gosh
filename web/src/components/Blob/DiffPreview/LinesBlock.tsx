@@ -5,8 +5,6 @@ import { getIdenticonAvatar } from '../../../helpers'
 import { Field, Form, Formik, FormikHelpers } from 'formik'
 import { FormikTextarea } from '../../Formik'
 import { Button } from '../../Form'
-import { useOutletContext } from 'react-router-dom'
-import { TDaoLayoutOutletContext } from '../../../pages/DaoLayout'
 import { toast } from 'react-toastify'
 import { ToastError } from '../../Toast'
 import commentBtn from '../../../assets/images/comment-add.png'
@@ -14,8 +12,11 @@ import { GoshError, TCommit } from 'react-gosh'
 import { useEffect, useMemo, useRef } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowUp } from '@fortawesome/free-solid-svg-icons'
+import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 
 type TLinesBlockProps = {
+    dao: IGoshDaoAdapter
+    isAuthMember?: boolean
     filename: string
     block: DiffBlock
     commit?: TCommit
@@ -43,6 +44,8 @@ const getThreadAvatar = (seed: string) => {
 
 const LinesBlock = (props: TLinesBlockProps) => {
     const {
+        dao,
+        isAuthMember,
         commentsOn,
         filename,
         block,
@@ -52,7 +55,6 @@ const LinesBlock = (props: TLinesBlockProps) => {
         mouseDown,
         setMouseDown,
     } = props
-    const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const {
         threads,
         selectedLines,
@@ -64,7 +66,7 @@ const LinesBlock = (props: TLinesBlockProps) => {
         toggleLineForm,
         submitComment,
     } = useBlobComments({
-        dao: dao.adapter,
+        dao,
         objectAddress: commentsObject,
         filename,
         commits:
@@ -271,7 +273,7 @@ const LinesBlock = (props: TLinesBlockProps) => {
                             className="relative group pl-4"
                             onMouseEnter={() => setMouseDown(false)}
                         >
-                            {dao.details.isAuthMember && commentsOn && (
+                            {isAuthMember && commentsOn && (
                                 <div
                                     className={classNames(
                                         'absolute hidden left-0 rounded-full w-5 h-5 mx-2 cursor-pointer',

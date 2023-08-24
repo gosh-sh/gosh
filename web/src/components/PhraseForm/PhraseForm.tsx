@@ -2,14 +2,13 @@ import { PropsWithChildren, useEffect, useRef, useState } from 'react'
 import { getClipboardData } from '../../helpers'
 import { toast } from 'react-toastify'
 import { ToastError } from '../Toast'
-
 import { Form, Formik, FormikHelpers } from 'formik'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPaste, faTrashAlt } from '@fortawesome/free-regular-svg-icons'
 import { Button, TButtonProps, Textarea } from '../Form'
 import { faRotateRight } from '@fortawesome/free-solid-svg-icons'
 import classNames from 'classnames'
-import { AppConfig } from 'react-gosh'
+import { AppConfig } from '../../appconfig'
 
 type TPhraseFormProps = PropsWithChildren & {
     initialValues?: any

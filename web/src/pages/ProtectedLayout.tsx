@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 import { useSetRecoilState } from 'recoil'
-import PinCodeModal from '../components/Modal/PinCode'
+import { PinCodeModal } from '../components/Modal'
 import { appModalStateAtom } from '../store/app.state'
 import { useUser } from 'react-gosh'
 

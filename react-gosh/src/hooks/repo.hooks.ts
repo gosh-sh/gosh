@@ -936,20 +936,31 @@ function _useMergeRequest(
             async (treepath, index) => {
                 const { src, dst } = treepath
                 const srcFullPath = `${src.treeitem.commit}/${src.path}`
-                const srcBlob = await srcRepo.getBlob({
+                const _srcBlob = await srcRepo.getBlob({
                     commit: srcBranch.commit.name,
                     fullpath: srcFullPath,
                 })
+                const srcBlob = await srcRepo.getCommitBlob(
+                    _srcBlob.address,
+                    src.path,
+                    srcBranch.commit.name,
+                )
+                const srcContent = srcBlob.current
 
                 const dstFullPath = `${dst.treeitem?.commit}/${dst.path}`
-                const dstBlob = dst.path
-                    ? (
-                          await dstRepo.getBlob({
-                              commit: dstBranch.commit.name,
-                              fullpath: dstFullPath,
-                          })
-                      ).content
-                    : ''
+                let dstContent: string | Buffer = ''
+                if (dst.path) {
+                    const _dstBlob = await dstRepo.getBlob({
+                        commit: dstBranch.commit.name,
+                        fullpath: dstFullPath,
+                    })
+                    const dstBlob = await dstRepo.getCommitBlob(
+                        _dstBlob.address,
+                        dst.path,
+                        dstBranch.commit.name,
+                    )
+                    dstContent = dstBlob.current
+                }
 
                 setProgress((state) => {
                     const { blobs = {} } = state.details
@@ -965,8 +976,8 @@ function _useMergeRequest(
 
                 return {
                     treepath: [dst.path, src.path],
-                    original: dstBlob,
-                    modified: srcBlob.content,
+                    original: dstContent,
+                    modified: srcContent,
                     showDiff: index < showDiffNum,
                 }
             },

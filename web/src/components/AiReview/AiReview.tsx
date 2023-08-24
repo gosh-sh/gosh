@@ -5,7 +5,7 @@ import { Button } from '../Form'
 import { useCallback } from 'react'
 import { toast } from 'react-toastify'
 import { ToastError } from '../Toast'
-import { supabase } from '../../helpers'
+import { supabase } from '../../supabase'
 import { Form, Formik } from 'formik'
 import classNames from 'classnames'
 
@@ -29,7 +29,7 @@ const AiReview = (props: TAiReviewProps) => {
 
     const onSubmitReview = async () => {
         try {
-            const { error } = await supabase.from('gosh_ai_comments').insert({
+            const { error } = await supabase.client.from('gosh_ai_comments').insert({
                 data: JSON.stringify(comments),
             })
             if (error) {

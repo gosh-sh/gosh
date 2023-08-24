@@ -1,7 +1,7 @@
 import { atom } from 'recoil'
 
 const messageAtom = atom<{ key: string; message: any }[]>({
-    key: 'MessageAtom',
+    key: 'MessageAtom1',
     default: [],
 })
 

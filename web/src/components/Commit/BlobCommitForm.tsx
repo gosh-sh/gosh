@@ -18,9 +18,9 @@ import { faCode, faEye } from '@fortawesome/free-solid-svg-icons'
 import BlobEditor from '../Blob/Editor'
 import BlobPreview from '../Blob/Preview'
 import { Button } from '../Form'
-import yup from '../../yup-extended'
 import { CommitFields } from './CommitFields/CommitFields'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
+import yup from '../../v1.0.0/yup-extended'
 
 export type TBlobCommitFormValues = {
     name: string

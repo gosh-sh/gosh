@@ -1,4 +1,4 @@
-import { classNames } from 'react-gosh'
+import classNames from 'classnames'
 
 type TCheckboxProps = React.InputHTMLAttributes<HTMLInputElement> & {
     label?: React.ReactNode

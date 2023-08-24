@@ -1,5 +1,5 @@
 import { Checkbox } from '../Form'
-import BaseField, { IBaseFieldProps } from './BaseField'
+import { IBaseFieldProps, BaseField } from './BaseField'
 
 interface IFormikCheckboxProps extends IBaseFieldProps {
     inputProps: React.InputHTMLAttributes<HTMLInputElement> & {
@@ -8,7 +8,7 @@ interface IFormikCheckboxProps extends IBaseFieldProps {
 }
 
 const FormikCheckbox = (props: IFormikCheckboxProps) => {
-    const { inputProps = {}, field, form, ...rest } = props
+    const { inputProps = {}, helpClassName, field, form, ...rest } = props
 
     return (
         <BaseField {...props}>

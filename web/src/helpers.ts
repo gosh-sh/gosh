@@ -1,19 +1,11 @@
-import { createClient, Provider } from '@supabase/supabase-js'
-import { AppConfig } from 'react-gosh'
-import { GoshError } from 'react-gosh'
+import { AppConfig } from './appconfig'
 import { toast } from 'react-toastify'
 import { createAvatar } from '@dicebear/core'
 import { identicon } from '@dicebear/collection'
-import yup from './yup-extended'
+import { supabase } from './supabase'
+import classNames from 'classnames'
 
-export const DISABLED_VERSIONS = ['5.0.0']
-
-const supabase = createClient(
-    'https://auth.gosh.sh',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkaHNrdnN6dGVwYnlpc2Jxc2pqIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzA0MTMwNTEsImV4cCI6MTk4NTk4OTA1MX0._6KcFBYmSUfJqTJsKkWcMoIQBv3tuInic9hvEHuFpJg',
-)
-
-const getClipboardData = async (event?: any): Promise<string | null> => {
+export const getClipboardData = async (event?: any): Promise<string | null> => {
     if (event?.clipboardData && event.clipboardData.getData) {
         return event.clipboardData.getData('text/plain')
     }
@@ -30,7 +22,7 @@ const getClipboardData = async (event?: any): Promise<string | null> => {
     return null
 }
 
-const onExternalLinkClick = (e: any, url: string) => {
+export const onExternalLinkClick = (e: any, url: string) => {
     if (!AppConfig.dockerclient) {
         return
     }
@@ -38,49 +30,7 @@ const onExternalLinkClick = (e: any, url: string) => {
     AppConfig.dockerclient.host.openExternal(url)
 }
 
-const singinOAuthSupabase = async (provider: Provider) => {
-    const scopes = 'read:user read:org'
-
-    if (AppConfig.dockerclient) {
-        const nounce = Date.now()
-
-        const { data, error } = await supabase.auth.signInWithOAuth({
-            provider,
-            options: {
-                redirectTo: `https://open.docker.com/dashboard/extension-tab?extensionId=teamgosh/docker-extension&nounce=${nounce}`,
-                scopes,
-                skipBrowserRedirect: true,
-            },
-        })
-        if (error) {
-            throw new GoshError(error.message)
-        }
-
-        console.log('data url', data.url)
-
-        AppConfig.dockerclient.host.openExternal(data.url!)
-    } else {
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider,
-            options: {
-                redirectTo: document.location.href,
-                scopes,
-            },
-        })
-        if (error) {
-            throw new GoshError(error.message)
-        }
-    }
-}
-
-const signoutOAuthSupabase = async () => {
-    const { error } = await supabase.auth.signOut({ scope: 'local' })
-    if (error) {
-        throw new GoshError(error.message)
-    }
-}
-
-const getIdenticonAvatar = (options: any) => {
+export const getIdenticonAvatar = (options: any) => {
     return createAvatar(identicon, {
         radius: 8,
         scale: 60,
@@ -89,15 +39,23 @@ const getIdenticonAvatar = (options: any) => {
     })
 }
 
-const isValidEmail = (email: string) => {
-    const schema = yup.string().email()
-    return schema.isValidSync(email)
+export const getUsernameByEmail = async (email: string): Promise<string[] | null> => {
+    const { data, error } = await supabase.client
+        .from('users')
+        .select('gosh_username')
+        .eq('email', email)
+        .order('created_at', { ascending: true })
+    if (error) {
+        console.warn('Error query user by email', error)
+        return null
+    }
+    return data.length ? data.map(({ gosh_username }) => gosh_username) : null
 }
 
 /**
  * Toast shortcuts
  */
-const ToastOptionsShortcuts = {
+export const ToastOptionsShortcuts = {
     Default: {
         position: toast.POSITION.TOP_RIGHT,
         autoClose: 5000,
@@ -108,6 +66,8 @@ const ToastOptionsShortcuts = {
         draggable: true,
         closeButton: true,
         progress: undefined,
+        isLoading: false,
+        delay: 100,
     },
     Message: {
         position: toast.POSITION.TOP_CENTER,
@@ -129,13 +89,19 @@ const ToastOptionsShortcuts = {
     },
 }
 
-export {
-    supabase,
-    singinOAuthSupabase,
-    signoutOAuthSupabase,
-    getClipboardData,
-    onExternalLinkClick,
-    ToastOptionsShortcuts,
-    getIdenticonAvatar,
-    isValidEmail,
+/**
+ * Select2 (react-select)
+ */
+export const Select2ClassNames = {
+    control: (props: any) => {
+        return classNames(
+            '!rounded-lg !border-gray-e6edff !text-sm !bg-white !shadow-none',
+            props.isDisabled ? '!text-gray-7c8db5' : null,
+        )
+    },
+    valueContainer: () => '!px-4 !py-1',
+    placeholder: () => '!text-black/40',
+    menuList: () => '!py-0',
+    noOptionsMessage: () => '!text-sm',
+    option: () => '!text-sm',
 }

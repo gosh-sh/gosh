@@ -1,5 +1,5 @@
 import { Input } from '../Form'
-import BaseField, { IBaseFieldProps } from './BaseField'
+import { BaseField, IBaseFieldProps } from './BaseField'
 
 interface IFormikInputProps extends IBaseFieldProps {
     inputProps: React.InputHTMLAttributes<HTMLInputElement>

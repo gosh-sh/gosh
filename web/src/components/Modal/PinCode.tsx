@@ -3,17 +3,14 @@ import { Dialog } from '@headlessui/react'
 import { useResetRecoilState, useSetRecoilState } from 'recoil'
 import { SHA256 } from 'crypto-js'
 import { Buffer } from 'buffer'
-import {
-    chacha20,
-    generateRandomBytes,
-    AppConfig,
-    TUserPersist,
-    useUser,
-} from 'react-gosh'
 import { appModalStateAtom } from '../../store/app.state'
 import { toast } from 'react-toastify'
 import { Button } from '../Form'
 import PinInput from 'react-pin-input'
+import { useUser } from '../../v1.0.0/hooks/user.hooks'
+import { TUserPersist } from '../../types/user.types'
+import { chacha20, generateRandomBytes } from '../../blockchain/utils'
+import { AppConfig } from '../../appconfig'
 
 type TPinCodeModalProps = {
     unlock?: boolean
@@ -65,7 +62,7 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
                     phrase: decrypted,
                 })
 
-                user.setup(tmp, { phrase: decrypted, keys })
+                user.unlock(tmp, { phrase: decrypted, keys })
                 setModal({ isOpen: false, element: null })
                 onUnlock && onUnlock()
             }
@@ -83,14 +80,15 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
             </Dialog.Description>
 
             <div className="mt-4 w-full mx-auto">
-                <form>
+                <form autoComplete="off">
                     <PinInput
                         ref={(el) => (pinRef.current = el)}
                         length={4}
                         initialValue=""
                         type="numeric"
                         inputMode="number"
-                        secretDelay={10}
+                        secret
+                        // secretDelay={5}
                         focus
                         autoSelect={false}
                         style={{
@@ -143,4 +141,4 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
     )
 }
 
-export default PinCodeModal
+export { PinCodeModal }

@@ -6,11 +6,12 @@ import { Button } from '../../Form'
 import { CodeComments } from '../Comments'
 import LinesBlock from './LinesBlock'
 import { TCommit } from 'react-gosh'
-import { useOutletContext } from 'react-router-dom'
-import { TDaoLayoutOutletContext } from '../../../pages/DaoLayout'
 import { useBlobComments } from '../../../hooks/codecomment.hooks'
+import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 
 type TBlobDiffPreviewProps = {
+    dao: IGoshDaoAdapter
+    isAuthMember?: boolean
     className?: string
     filename?: string
     original?: string | Buffer
@@ -27,6 +28,8 @@ type TBlobDiffPreviewProps = {
 
 const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
     const {
+        dao,
+        isAuthMember,
         filename = 'unknown',
         original = '',
         modified = '',
@@ -38,9 +41,8 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
         commit,
         getDiff,
     } = props
-    const { dao } = useOutletContext<TDaoLayoutOutletContext>()
     const { getThreads } = useBlobComments({
-        dao: dao.adapter,
+        dao,
         objectAddress: commentsObject,
         filename,
         commits:
@@ -129,6 +131,8 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
                             {diff.map((block, i) => (
                                 <LinesBlock
                                     key={i}
+                                    dao={dao}
+                                    isAuthMember={isAuthMember}
                                     filename={filename}
                                     commit={commit}
                                     block={block}

@@ -11,7 +11,6 @@ export default {
             },
             colors: {
                 'gray-050a15': '#050a15',
-                'gray-53596d': '#53596d',
                 'gray-0a1124': '#0a1124',
                 'gray-606060': '#606060',
                 'gray-505050': '#505050',
@@ -30,12 +29,14 @@ export default {
                 'gray-53596d': '#53596d',
                 'gray-e6edff': '#e6edff',
                 'gray-d6e4ee': '#d6e4ee',
+                'blue-2b89ff': '#2b89ff',
                 'blue-348eff': '#348eff',
                 'blue-1e7aec': '#1e7aec',
-                'blue-2b89ff': '#2b89ff',
                 'green-34c759': '#34c759',
                 'green-deecdc': '#deecdc',
+                'green-2fbf5340': '#2fbf5340',
                 'red-ff3b30': '#ff3b30',
+                'red-ff624d40': '#ff624d40',
                 'yellow-faedcc': '#faedcc',
             },
             backgroundImage: {

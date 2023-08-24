@@ -1,6 +1,6 @@
 import { TextareaAutosizeProps } from 'react-textarea-autosize'
 import { Textarea } from '../Form'
-import BaseField, { IBaseFieldProps } from './BaseField'
+import { BaseField, IBaseFieldProps } from './BaseField'
 
 interface IFormikTextareaProps extends IBaseFieldProps {
     inputProps: React.TextareaHTMLAttributes<HTMLTextAreaElement> &

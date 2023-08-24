@@ -36,4 +36,4 @@ const MDDocumentModal = (props: TMDDocumentModalProps) => {
     )
 }
 
-export default MDDocumentModal
+export { MDDocumentModal }

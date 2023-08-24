@@ -1,4 +1,4 @@
-import { GoshError } from 'react-gosh'
+import { GoshError } from '../../errors'
 import CopyClipboard from '../CopyClipboard'
 
 type TToastErrorProps = {

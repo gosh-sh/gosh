@@ -8,7 +8,7 @@ const repositoryAtom = atom<{
     adapter?: IGoshRepositoryAdapter
     details?: TRepository
 }>({
-    key: 'GoshRepositoryAtom',
+    key: 'GoshRepositoryAtom1',
     default: {
         isFetching: false,
     },
@@ -16,12 +16,12 @@ const repositoryAtom = atom<{
 })
 
 const branchesAtom = atom<TBranch[]>({
-    key: 'GoshBranchesAtom',
+    key: 'GoshBranchesAtom1',
     default: [],
 })
 
 const branchSelector = selectorFamily({
-    key: 'GoshCurrBranchSelector',
+    key: 'GoshCurrBranchSelector1',
     get:
         (name: string) =>
         ({ get }) => {
@@ -31,12 +31,12 @@ const branchSelector = selectorFamily({
 })
 
 const treeAtom = atom<{ tree: TTree; items: TTreeItem[] } | undefined>({
-    key: 'GoshRepoTreeAtom',
+    key: 'GoshRepoTreeAtom1',
     default: undefined,
 })
 
 const treeSelector = selectorFamily({
-    key: 'GoshRepoTreeSelector',
+    key: 'GoshRepoTreeSelector1',
     get:
         (params: { type: 'tree' | 'blobs'; path?: string }) =>
         ({ get }) => {

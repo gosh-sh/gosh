@@ -1,6 +1,6 @@
 import { FontAwesomeIcon, FontAwesomeIconProps } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
-import { classNames } from 'react-gosh'
+import classNames from 'classnames'
 
 type TSpinnerProps = Omit<FontAwesomeIconProps, 'icon'>
 
