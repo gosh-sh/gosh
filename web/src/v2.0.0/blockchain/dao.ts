@@ -112,6 +112,13 @@ export class Dao extends BaseContract {
         return hash
     }
 
+    async getPrevious() {
+        const { value0 } = await this.runLocal('getPreviousDaoAddr', {}, undefined, {
+            useCachedBoc: true,
+        })
+        return (value0 as string) || null
+    }
+
     async createLimitedWallet(profile: string) {
         await this.run('deployWalletsOutMember', {
             pubmem: [{ member: profile, count: 0 }],
