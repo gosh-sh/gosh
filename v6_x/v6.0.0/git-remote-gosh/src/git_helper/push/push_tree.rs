@@ -184,11 +184,11 @@ async fn construct_tree(
                     tracing::trace!("looking for file: {:?}", file_entry);
                     let key = format!("{}_{}", file_entry.filename, file_entry.oid.to_string());
                     tracing::trace!("key: {}", key);
-                    let (key, tree_node) = nodes.remove(&key).ok_or(anyhow::format_err!(
+                    let (key, tree_node) = nodes.get(&key).ok_or(anyhow::format_err!(
                         "Failed to get tree node: {}",
                         file_entry.oid
                     ))?;
-                    subtree.insert(key, tree_node);
+                    subtree.insert(key.to_owned(), tree_node.to_owned());
                 }
 
                 let tree_hash = crate::blockchain::Tree::inner_tree_hash(
