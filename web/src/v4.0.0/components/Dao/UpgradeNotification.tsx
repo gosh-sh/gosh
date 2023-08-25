@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useDao, useUpgradeDao } from '../../hooks/dao.hooks'
+import { useDao, useDaoMember, useUpgradeDao } from '../../hooks/dao.hooks'
 import Alert from '../../../components/Alert'
 import { AnimatePresence, motion } from 'framer-motion'
 import classNames from 'classnames'
@@ -15,6 +15,7 @@ const DaoUpgradeNotification = (props: TDaoNotificationProps) => {
     const { className } = props
     const setModal = useSetRecoilState(appModalStateAtom)
     const dao = useDao()
+    const member = useDaoMember()
     const { alert } = useUpgradeDao()
     const [show, setShow] = useState<boolean>(true)
 
@@ -27,6 +28,15 @@ const DaoUpgradeNotification = (props: TDaoNotificationProps) => {
             element: <DaoUpgradeCompleteModal />,
         })
     }
+
+    const balance = useMemo(() => {
+        if (!member.balance) {
+            return 0
+        }
+
+        const { voting, locked, regular } = member.balance
+        return Math.max(voting, locked) + regular
+    }, [member.balance?.voting, member.balance?.locked, member.balance?.regular])
 
     useEffect(() => {
         if (alert) {
@@ -92,9 +102,15 @@ const DaoUpgradeNotification = (props: TDaoNotificationProps) => {
                                     size="sm"
                                     variant="outline-danger"
                                     className="block mt-2"
+                                    disabled={!member.isReady || !balance}
+                                    isLoading={!member.isReady}
                                     onClick={onCompleteUpgrade}
                                 >
-                                    Complete upgrade
+                                    {!member.isReady
+                                        ? 'Wait for member wallet'
+                                        : !balance
+                                        ? 'Not enough tokens or not transferred yet'
+                                        : 'Complete upgrade'}
                                 </Button>
                             </div>
                         </Alert>
