@@ -87,8 +87,8 @@ const PinCodeModal = (props: TPinCodeModalProps) => {
                         initialValue=""
                         type="numeric"
                         inputMode="number"
-                        secret
-                        // secretDelay={5}
+                        // secret
+                        secretDelay={1}
                         focus
                         autoSelect={false}
                         style={{
