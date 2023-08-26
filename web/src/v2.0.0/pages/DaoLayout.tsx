@@ -52,8 +52,8 @@ const DaoLayout = () => {
                         />
                     </div>
                 </div>
-                <div className="col">
-                    <h1 className="mb-2">
+                <div className="col overflow-hidden">
+                    <h1>
                         <Link
                             to={`/o/${daoname}`}
                             className="font-medium text-2xl capitalize"
@@ -66,20 +66,25 @@ const DaoLayout = () => {
                         >
                             {dao.details.version}
                         </span>
-                        {dao.details.tags?.map((tag, index) => (
-                            <span
-                                key={index}
-                                className={classNames(
-                                    'mx-1 border border-gray-e6edff rounded px-2',
-                                    'text-xs text-gray-7c8db5',
-                                )}
-                            >
-                                #{tag}
-                            </span>
-                        ))}
                     </h1>
 
-                    <DaoSummary className="mb-2 text-sm" />
+                    {!!dao.details.tags?.length && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                            {dao.details.tags.map((tag, index) => (
+                                <span
+                                    key={index}
+                                    className={classNames(
+                                        'border border-gray-e6edff rounded px-2',
+                                        'text-xs text-gray-7c8db5',
+                                    )}
+                                >
+                                    #{tag}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+
+                    <DaoSummary className="my-2 text-sm" />
 
                     <CopyClipboard
                         className="text-xs text-gray-7c8db5"
