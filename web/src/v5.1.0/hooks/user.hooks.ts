@@ -1,5 +1,8 @@
 import { KeyPair } from '@eversdk/core'
 import {
+    snapshot_UNSTABLE,
+    useGotoRecoilSnapshot,
+    useRecoilCallback,
     useRecoilState,
     useRecoilValue,
     useResetRecoilState,
@@ -13,19 +16,26 @@ import { EGoshError, GoshError } from '../../errors'
 import { validateUsername } from '../validators'
 import { getSystemContract } from '../blockchain/helpers'
 import { userPersistAtom as _userPersistAtom, userAtom as _userAtom } from 'react-gosh'
+import { appContextAtom } from '../../store/app.state'
 
 export function useUser() {
     const [userPersist, setUserPersist] = useRecoilState(userPersistAtom)
     const [user, setUser] = useRecoilState(userAtom)
     const resetUserPersist = useResetRecoilState(userPersistAtom)
-    const resetUser = useResetRecoilState(userAtom)
+    const gotoSnapshot = useGotoRecoilSnapshot()
 
     // TODO: for react-gosh; REMOVE after refactor
     const _setUserPersist = useSetRecoilState(_userPersistAtom)
     const _setUser = useSetRecoilState(_userAtom)
     const _resetUserPersist = useResetRecoilState(_userPersistAtom)
-    const _resetUser = useResetRecoilState(_userAtom)
     // /TODO: for react-gosh; REMOVE after refactor
+
+    const resetState = useRecoilCallback(() => () => {
+        const snapshot = snapshot_UNSTABLE(({ set }) => {
+            set(appContextAtom, { version: Object.keys(AppConfig.versions).reverse()[0] })
+        })
+        gotoSnapshot(snapshot)
+    })
 
     const getProfiles = async (phrase: string) => {
         const { valid, reason } = await validatePhrase(phrase)
@@ -108,13 +118,7 @@ export function useUser() {
     }
 
     const signout = () => {
-        resetUser()
-        resetUserPersist()
-
-        // TODO: for react-gosh; REMOVE after refactor
-        _resetUser()
-        _resetUserPersist()
-        // /TODO: for react-gosh; REMOVE after refactor
+        resetState()
     }
 
     const _validateCredentials = async (params: any) => {

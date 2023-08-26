@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useUser } from '../hooks/user.hooks'
 import { useSetRecoilState } from 'recoil'
 import { appModalStateAtom } from '../../store/app.state'
-import { PinCodeModal } from '../../components/Modal'
+import { PinCodeModal } from '../components/Modal'
 import { Navigate } from 'react-router-dom'
 
 export const withPin = (Component: any, options: { redirect?: boolean }) => {

@@ -24,7 +24,7 @@ const Input = forwardRef<HTMLInputElement, TInputProps>((props, ref) => {
             {before}
             <input
                 className={classNames(
-                    'block grow outline-none bg-transparent px-4 py-2',
+                    'block w-full grow outline-none bg-transparent px-4 py-2',
                     'disabled:text-gray-7c8db5 text-sm',
                     inputClassName,
                 )}

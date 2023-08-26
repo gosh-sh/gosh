@@ -15,13 +15,13 @@ import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons'
 import { Tooltip } from 'react-tooltip'
 
 const basis = {
-    contaner: 'flex-wrap lg:flex-nowrap',
-    name: 'basis-full lg:basis-3/12 grow-0',
-    profile: 'basis-0 grow lg:basis-2/12 lg:grow-0',
-    wallet: 'basis-0 grow lg:basis-2/12 lg:grow-0',
-    allowance: 'basis-0 grow lg:basis-2/12 lg:grow-0',
-    balance: 'basis-0 grow lg:basis-2/12 lg:grow-0',
-    buttons: 'basis-full md:basis-0 md:grow-0',
+    contaner: 'flex items-center flex-wrap xl:flex-nowrap px-3 py-2 gap-x-6 gap-y-2',
+    name: 'basis-full lg:!basis-3/12',
+    profile: 'basis-5/12 md:basis-4/12 lg:!basis-[11.7%]',
+    wallet: 'basis-5/12 md:basis-4/12 lg:!basis-[11.7%]',
+    allowance: 'basis-full md:basis-4/12 lg:!basis-2/12',
+    balance: 'basis-full md:basis-4/12 lg:!basis-2/12',
+    buttons: 'basis-full md:basis-0 grow',
 }
 
 const ListItemSkeleton = () => {
@@ -43,17 +43,15 @@ const ListItemHeader = (props: React.HTMLAttributes<HTMLDivElement>) => {
 
     return (
         <div
-            className={classNames(
-                'flex items-center px-3 py-3 gap-x-4',
-                'text-xs text-gray-7c8db5',
-                className,
-            )}
+            className={classNames(basis.contaner, 'text-xs text-gray-7c8db5', className)}
         >
-            <div className="basis-auto md:grow lg:basis-3/12 lg:grow-0">name</div>
-            <div className={basis.profile}>profile</div>
-            <div className={basis.wallet}>wallet</div>
-            <div className={basis.allowance}>karma</div>
-            <div className={classNames(basis.balance, 'whitespace-nowrap')}>
+            <div className={classNames('!basis-auto', basis.name)}>name</div>
+            <div className={classNames('!basis-auto', basis.profile)}>profile</div>
+            <div className={classNames('!basis-auto', basis.wallet)}>wallet</div>
+            <div className={classNames('!basis-auto', basis.allowance)}>karma</div>
+            <div
+                className={classNames('!basis-auto', basis.balance, 'whitespace-nowrap')}
+            >
                 token balance
             </div>
             <div className={basis.buttons}></div>
@@ -85,149 +83,140 @@ const ListItem = (props: TListItemProps) => {
     }
 
     return (
-        <>
+        <div className={classNames(basis.contaner)}>
             <div
                 className={classNames(
-                    'flex items-center px-3 py-2 gap-x-4 gap-y-2',
-                    basis.contaner,
+                    basis.name,
+                    'overflow-hidden whitespace-nowrap text-ellipsis',
                 )}
             >
-                <div className={basis.name}>
-                    <MemberIcon
-                        type={item.usertype}
-                        className="mr-2"
-                        size="sm"
-                        fixedWidth
-                    />
-                    {item.username}
-                </div>
-                <div className={basis.profile}>
-                    <CopyClipboard
-                        className="font-light font-mono text-xs"
-                        componentProps={{ text: item.profile.address }}
-                        label={shortString(item.profile.address, 6, 6)}
-                    />
-                </div>
-                <div className={basis.wallet}>
-                    <CopyClipboard
-                        className="font-light font-mono text-xs"
-                        componentProps={{ text: item.wallet.address }}
-                        label={shortString(item.wallet.address, 6, 6)}
-                    />
-                </div>
-                <div className={classNames(basis.allowance, 'font-light')}>
-                    {member.isMember ? (
-                        <>
-                            <Field
-                                type="hidden"
-                                name={`items.${index}._allowance`}
-                                component="input"
-                                autoComplete="off"
-                            />
-                            <Field
-                                name={`items.${index}.allowance`}
-                                component={FormikInput}
-                                autoComplete="off"
-                                placeholder="New karma value"
-                                inputProps={{
-                                    after: (
+                <MemberIcon type={item.usertype} className="mr-2" size="sm" fixedWidth />
+                {item.username}
+            </div>
+            <div className={basis.profile}>
+                <CopyClipboard
+                    className="font-light font-mono text-xs"
+                    componentProps={{ text: item.profile.address }}
+                    label={shortString(item.profile.address, 5, 4)}
+                />
+            </div>
+            <div className={basis.wallet}>
+                <CopyClipboard
+                    className="font-light font-mono text-xs"
+                    componentProps={{ text: item.wallet.address }}
+                    label={shortString(item.wallet.address, 5, 4)}
+                />
+            </div>
+            <div className={classNames(basis.allowance, 'font-light')}>
+                {member.isMember ? (
+                    <>
+                        <Field
+                            type="hidden"
+                            name={`items.${index}._allowance`}
+                            component="input"
+                            autoComplete="off"
+                        />
+                        <Field
+                            name={`items.${index}.allowance`}
+                            component={FormikInput}
+                            autoComplete="off"
+                            placeholder="New karma value"
+                            inputProps={{
+                                after: (
+                                    <div className="text-xs text-gray-7c8db5 pr-3 md:hidden">
+                                        <div className="whitespace-nowrap leading-5 py-2">
+                                            Karma
+                                        </div>
+                                    </div>
+                                ),
+                            }}
+                        />
+                        <ErrorMessage
+                            className="text-xs text-red-ff3b30 mt-0.5"
+                            component="div"
+                            name={`items.${index}.allowance`}
+                        />
+                    </>
+                ) : (
+                    item.allowance.toLocaleString()
+                )}
+            </div>
+            <div className={classNames(basis.balance, 'font-light')}>
+                {member.isMember ? (
+                    <>
+                        <Field
+                            type="hidden"
+                            name={`items.${index}._balance`}
+                            component="input"
+                            autoComplete="off"
+                        />
+                        <Field
+                            name={`items.${index}.balance`}
+                            component={FormikInput}
+                            autoComplete="off"
+                            placeholder="New balance value"
+                            inputProps={{
+                                after:
+                                    item.allowance > item.balance ? (
+                                        <div
+                                            className="text-xs text-red-dd3a3a py-2.5 pr-3"
+                                            data-tooltip-id={`member-balance-tip-${item.profile}`}
+                                        >
+                                            <FontAwesomeIcon
+                                                icon={faQuestionCircle}
+                                                className="ml-1"
+                                            />
+                                        </div>
+                                    ) : (
                                         <div className="text-xs text-gray-7c8db5 pr-3 md:hidden">
                                             <div className="whitespace-nowrap leading-5 py-2">
-                                                Karma
+                                                Balance
                                             </div>
                                         </div>
                                     ),
-                                }}
-                            />
-                            <ErrorMessage
-                                className="text-xs text-red-ff3b30 mt-0.5"
-                                component="div"
-                                name={`items.${index}.allowance`}
-                            />
-                        </>
-                    ) : (
-                        item.allowance.toLocaleString()
-                    )}
-                </div>
-                <div className={classNames(basis.balance, 'font-light')}>
-                    {member.isMember ? (
-                        <>
-                            <Field
-                                type="hidden"
-                                name={`items.${index}._balance`}
-                                component="input"
-                                autoComplete="off"
-                            />
-                            <Field
-                                name={`items.${index}.balance`}
-                                component={FormikInput}
-                                autoComplete="off"
-                                placeholder="New balance value"
-                                inputProps={{
-                                    after:
-                                        item.allowance > item.balance ? (
-                                            <div
-                                                className="text-xs text-red-dd3a3a py-2.5 pr-3"
-                                                data-tooltip-id={`member-balance-tip-${item.profile}`}
-                                            >
-                                                <FontAwesomeIcon
-                                                    icon={faQuestionCircle}
-                                                    className="ml-1"
-                                                />
-                                            </div>
-                                        ) : (
-                                            <div className="text-xs text-gray-7c8db5 pr-3 md:hidden">
-                                                <div className="whitespace-nowrap leading-5 py-2">
-                                                    Balance
-                                                </div>
-                                            </div>
-                                        ),
-                                }}
-                            />
-                            <ErrorMessage
-                                className="text-xs text-red-ff3b30 mt-0.5"
-                                component="div"
-                                name={`items.${index}.balance`}
-                            />
-                            <Tooltip id={`member-balance-tip-${item.profile}`} clickable>
-                                <div>
-                                    Member might have untransferred tokens from previous
-                                    DAO versions
-                                </div>
-                            </Tooltip>
-                        </>
-                    ) : (
-                        item.balance.toLocaleString()
-                    )}
-                </div>
-                <div className={basis.buttons}>
-                    {member.isMember && (
-                        <Button
-                            type="button"
-                            variant="outline-danger"
-                            size="sm"
-                            className={classNames(
-                                'w-full md:w-auto md:!border-transparent md:disabled:!border-transparent',
-                            )}
-                            onClick={() => {
-                                onDelete({
-                                    username: item.username,
-                                    usertype: item.usertype,
-                                })
                             }}
-                            disabled={
-                                item.isFetching ||
-                                item.profile.address === dao.details.owner
-                            }
-                            isLoading={item.isFetching}
-                        >
-                            <FontAwesomeIcon icon={faTimes} size="lg" />
-                            <span className="ml-2 md:hidden">Delete member</span>
-                        </Button>
-                    )}
-                </div>
+                        />
+                        <ErrorMessage
+                            className="text-xs text-red-ff3b30 mt-0.5"
+                            component="div"
+                            name={`items.${index}.balance`}
+                        />
+                        <Tooltip id={`member-balance-tip-${item.profile}`} clickable>
+                            <div>
+                                Member might have untransferred tokens from previous DAO
+                                versions
+                            </div>
+                        </Tooltip>
+                    </>
+                ) : (
+                    item.balance.toLocaleString()
+                )}
             </div>
-        </>
+            <div className={classNames(basis.buttons, 'text-end')}>
+                {member.isMember && (
+                    <Button
+                        type="button"
+                        variant="outline-danger"
+                        className={classNames(
+                            'w-full md:w-auto lg:!border-transparent lg:disabled:!border-transparent',
+                        )}
+                        onClick={() => {
+                            onDelete({
+                                username: item.username,
+                                usertype: item.usertype,
+                            })
+                        }}
+                        disabled={
+                            item.isFetching || item.profile.address === dao.details.owner
+                        }
+                        isLoading={item.isFetching}
+                    >
+                        <FontAwesomeIcon icon={faTimes} size="lg" />
+                        <span className="ml-2 lg:hidden">Delete member</span>
+                    </Button>
+                )}
+            </div>
+        </div>
     )
 }
 

@@ -51,7 +51,7 @@ const DaoLayout = () => {
                         />
                     </div>
                 </div>
-                <div className="col">
+                <div className="col overflow-hidden">
                     <h1 className="mb-2">
                         <Link
                             to={`/o/${daoname}`}
