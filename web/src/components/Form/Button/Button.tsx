@@ -5,6 +5,7 @@ export type TButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
     isLoading?: boolean
     variant?: 'default' | 'custom' | 'outline-danger' | 'outline-secondary'
     size?: 'default' | 'sm' | 'lg' | 'xl'
+    testId?: string
 }
 
 const styles: { [key: string]: string[] } = {
@@ -47,6 +48,7 @@ const Button = (props: TButtonProps) => {
         disabled,
         variant = 'default',
         size = 'default',
+        testId,
         ...rest
     } = props
 
@@ -60,6 +62,7 @@ const Button = (props: TButtonProps) => {
             )}
             {...rest}
             disabled={disabled || isLoading}
+            test-id={testId}
         >
             {isLoading && <Spinner className={classNames(children ? 'mr-2' : null)} />}
             {children}

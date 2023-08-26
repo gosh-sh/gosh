@@ -12,7 +12,16 @@ const SigninPhraseForm = (props: TSigninPhraseFormProps) => {
             <div className="mt-4 mb-10 text-center text-gray-53596d text-lg">
                 Please, write your seed phrase
             </div>
-            <PhraseForm btnPaste btnClear onSubmit={onSubmit} />
+            <PhraseForm
+                btnPaste
+                btnClear
+                btnSubmitContent="Sign in"
+                btnSubmitProps={{
+                    size: 'lg',
+                    testId: 'btn-signin',
+                }}
+                onSubmit={onSubmit}
+            />
         </>
     )
 }
