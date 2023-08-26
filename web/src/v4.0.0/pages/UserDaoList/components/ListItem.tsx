@@ -48,14 +48,13 @@ const ListItem = (props: TListItemProps) => {
                 !item.onboarding ? 'cursor-pointer' : null,
                 className,
             )}
+            test-id={`daoitem-${item.name}`}
             onClick={onItemClick}
         >
             <div className="row !flex-nowrap">
                 <div className="col overflow-hidden">
                     <div className="mb-4 truncate">
-                        <h1 className="text-xl font-medium leading-5 capitalize">
-                            {item.name}
-                        </h1>
+                        <h1 className="text-xl font-medium capitalize">{item.name}</h1>
                     </div>
                     {item.onboarding && (
                         <div className="my-3 text-gray-53596d text-xs">
