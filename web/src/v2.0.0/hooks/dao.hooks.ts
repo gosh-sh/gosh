@@ -723,18 +723,21 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
     return data
 }
 
-export function useDaoMemberList(params: { loadOnInit?: boolean } = {}) {
-    const { loadOnInit } = params
+export function useDaoMemberList(params: { count?: number; loadOnInit?: boolean } = {}) {
+    const { count = 10, loadOnInit } = params
     const { details: dao } = useRecoilValue(daoDetailsAtom)
     const [data, setData] = useRecoilState(daoMemberListAtom)
 
-    const getMemberList = useCallback(async () => {
-        try {
-            setData((state) => ({ ...state, isFetching: true }))
-            const items = await executeByChunk<TDaoDetailsMemberItem, TDaoMemberListItem>(
-                dao.members || [],
-                MAX_PARALLEL_READ,
-                async (item) => {
+    const getMemberList = useCallback(
+        async (from: number, to?: number) => {
+            try {
+                setData((state) => ({ ...state, isFetching: true }))
+
+                to = to || from + count
+                const items = await executeByChunk<
+                    TDaoDetailsMemberItem,
+                    TDaoMemberListItem
+                >(dao.members?.slice(from, to) || [], MAX_PARALLEL_READ, async (item) => {
                     const { profile } = item
                     const username = await profile.getName()
                     const { voting, locked, regular } = await item.wallet.getBalance()
@@ -744,25 +747,53 @@ export function useDaoMemberList(params: { loadOnInit?: boolean } = {}) {
                         balance: Math.max(voting, locked) + regular,
                         isFetching: false,
                     }
-                },
-            )
-            setData((state) => ({ ...state, items }))
-        } catch (e: any) {
-            setData((state) => ({ ...state, error: e }))
-        } finally {
-            setData((state) => ({ ...state, isFetching: false }))
-        }
-    }, [dao.address, dao.members?.length])
+                })
+
+                setData((state) => {
+                    const different = _.differenceWith(
+                        items,
+                        state.items,
+                        (a, b) => a.profile.address === b.profile.address,
+                    )
+                    const intersect = _.intersectionWith(
+                        items,
+                        state.items,
+                        (a, b) => a.profile.address === b.profile.address,
+                    )
+
+                    return {
+                        ...state,
+                        items: [...different, ...state.items].map((item) => {
+                            const found = intersect.find(
+                                (_item) => _item.profile.address === item.profile.address,
+                            )
+                            return { ...item, ...found } || item
+                        }),
+                    }
+                })
+            } catch (e: any) {
+                setData((state) => ({ ...state, error: e }))
+            } finally {
+                setData((state) => ({ ...state, isFetching: false }))
+            }
+        },
+        [dao.address, dao.members?.length],
+    )
+
+    const getNext = useCallback(async () => {
+        await getMemberList(data.items.length)
+    }, [data.items.length])
 
     useEffect(() => {
         if (loadOnInit) {
-            getMemberList()
+            getMemberList(0, data.items.length)
         }
     }, [getMemberList, loadOnInit])
 
     return {
         ...data,
-        items: [...data.items].sort((a, b) => (a.username > b.username ? -1 : 1)),
+        hasNext: data.items.length < (dao.members?.length || 1),
+        getNext,
     }
 }
 
