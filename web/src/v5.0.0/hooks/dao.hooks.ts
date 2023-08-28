@@ -1782,18 +1782,20 @@ export function useDaoEventList(params: { count?: number; loadOnInit?: boolean }
         const codeHash = await dao.getEventCodeHash()
         const { results, lastId, completed } = await getPaginatedAccounts({
             filters: [`code_hash: {eq:"${codeHash}"}`],
+            result: ['last_paid'],
             limit,
             lastId: cursor,
         })
-        const items = await executeByChunk<{ id: string }, TDaoEventDetails>(
+        const items = await executeByChunk<any, TDaoEventDetails>(
             results,
             MAX_PARALLEL_READ,
-            async ({ id }) => {
+            async ({ id, last_paid }) => {
                 const account = await dao.getEvent({ address: id })
                 const details = await account.getDetails({ wallet })
                 return {
                     account,
                     address: id,
+                    updatedAt: last_paid,
                     ...details,
                 }
             },
@@ -1907,7 +1909,7 @@ export function useDaoEventList(params: { count?: number; loadOnInit?: boolean }
         closeItems,
         getNext,
         ...data,
-        items: [...data.items].sort((a, b) => (a.address > b.address ? 1 : -1)),
+        items: [...data.items].sort((a, b) => (a.updatedAt > b.updatedAt ? -1 : 1)),
         isEmpty: !data.isFetching && !data.items.length,
     }
 }
@@ -1938,7 +1940,15 @@ export function useDaoEvent(
                     ? found.account
                     : await dao.account.getEvent({ address })
                 const details = await account.getDetails({ wallet: member.wallet })
-                found = { account, address, ...found, ...details }
+                const accdata = await account.account.getAccount()
+                found = {
+                    ...found,
+                    ...details,
+                    account,
+                    address,
+                    updatedAt: accdata.last_paid,
+                }
+
                 setEvents((state) => {
                     const updated = [...state.items]
                     if (!updated.find(({ address }) => address === found?.address)) {

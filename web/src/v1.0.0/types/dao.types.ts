@@ -76,6 +76,7 @@ export type TDaoMemberList = {
 export type TDaoEventDetails = {
     account: DaoEvent
     address: string
+    updatedAt: number
     platformId: string
     type: number
     label: string
