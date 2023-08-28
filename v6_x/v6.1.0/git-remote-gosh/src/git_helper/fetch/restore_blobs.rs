@@ -656,8 +656,9 @@ impl BlobsRebuildingPlan {
             let branch_ref = branch.to_string();
             fetched_blobs.push(tokio::spawn(
                 async move {
-                    let attempt = 0;
+                    let mut attempt = 0;
                     let result = loop {
+                        attempt += 1;
                         let result = restore_a_set_of_blobs(
                             &es_client,
                             &ipfs_http_endpoint,
