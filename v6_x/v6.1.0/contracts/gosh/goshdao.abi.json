@@ -1281,7 +1281,7 @@
 				{"name":"daoMembers","type":"map(uint256,string)"},
 				{"name":"isCheck","type":"bool"},
 				{"components":[{"name":"fiatValue","type":"uint128"},{"name":"decimals","type":"uint128"},{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"details","type":"string"},{"name":"accessKey","type":"uint256"}],"name":"paidMembership","type":"map(uint8,tuple)"},
-				{"name":"value16","type":"bool"}
+				{"name":"isUpgraded","type":"bool"}
 			]
 		},
 		{

@@ -1429,7 +1429,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function getDetails() external view returns(address pubaddr, bool allowMint, bool hide_voting_results, bool allow_discussion_on_proposals, bool abilityInvite, bool isRepoUpgraded, string nameDao,
-    mapping(uint256 => MemberToken) wallets, uint128 reserve, uint128 allbalance, uint128 totalsupply, mapping(uint256 => string) hashtag, mapping(uint256 => address) my_wallets, mapping(uint256 => string) daoMembers, bool isCheck, mapping(uint8 => PaidMember) paidMembership, bool) {
+    mapping(uint256 => MemberToken) wallets, uint128 reserve, uint128 allbalance, uint128 totalsupply, mapping(uint256 => string) hashtag, mapping(uint256 => address) my_wallets, mapping(uint256 => string) daoMembers, bool isCheck, mapping(uint8 => PaidMember) paidMembership, bool isUpgraded) {
     return (_pubaddr, _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _isRepoUpgraded, _nameDao, _wallets, _reserve, _allbalance, _totalsupply, _hashtag, _my_wallets, _daoMembers, _isCheck, _paidMembership, _isUpgraded);
     }
     
