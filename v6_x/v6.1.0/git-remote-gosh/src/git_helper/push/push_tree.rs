@@ -66,7 +66,7 @@ async fn construct_tree(
     to_deploy: &mut Vec<ParallelTree>,
     is_upgrade: bool,
 ) -> anyhow::Result<HashMap<String, TreeNode>> {
-    tracing::trace!("construct tree: tree_id={tree_id}, snapshot_to_commit:{snapshot_to_commit:?}, is_upgrade={is_upgrade}");
+    tracing::trace!("construct tree: tree_id={tree_id}, current_commit={current_commit}, snapshot_to_commit:{snapshot_to_commit:?}, is_upgrade={is_upgrade}");
     // flatten tree map to get rid of recursive calls of async funcs
     let flat_tree = flatten_tree(context, tree_id, "")?;
     tracing::trace!("construct tree: flat_tree={flat_tree:?}");
@@ -74,6 +74,7 @@ async fn construct_tree(
     let mut paths: Vec<String> = Vec::new();
     let commit_obj = ObjectId::from_hex(current_commit.as_bytes())?;
     let commit_chain = context.get_commit_ancestors(&commit_obj)?;
+    tracing::trace!("construct tree: commit_chain={commit_chain:?}");
     tracing::trace!("start processing single tree items");
     // prepare file entries
     use git_object::tree::EntryMode::*;
@@ -130,9 +131,9 @@ async fn construct_tree(
                         if commit_chain.contains(&snap_mon.latest_commit) {
                             return Some(snap_mon.base_commit.clone());
                         }
-                        if commit_chain.contains(&snap_mon.base_commit) {
-                            return Some(snap_mon.base_commit.clone());
-                        }
+                        // if commit_chain.contains(&snap_mon.base_commit) {
+                        //     return Some(snap_mon.base_commit.clone());
+                        // }
                     }
                     None
                 })

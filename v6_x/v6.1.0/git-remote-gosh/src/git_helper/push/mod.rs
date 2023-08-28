@@ -716,6 +716,9 @@ where
             let file_path = update.1.filepath.to_string();
 
             let mut found = false;
+            tracing::trace!("Searching for snapshot: {file_path}");
+            tracing::trace!("snap_to_commit: {snapshot_to_commit:?}");
+            tracing::trace!("ancestors: {ancestor_commits:?}");
             if !upgrade_commit && snapshot_to_commit.contains_key(&file_path) {
                 let snap_mon_vec = snapshot_to_commit.get_mut(&file_path).unwrap();
                 for i in 0..snap_mon_vec.len() {
