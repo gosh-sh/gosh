@@ -3,25 +3,20 @@ use crate::{
     git_helper::GitHelper,
 };
 use git_hash::ObjectId;
-use git_object::tree::{Entry, EntryMode, EntryRef};
+use git_object::tree::Entry;
 use git_odb::{Find, FindExt};
 use std::iter::Iterator;
-use std::{
-    collections::HashMap,
-    sync::Arc,
-    str::FromStr,
-};
+use std::{collections::HashMap, str::FromStr, sync::Arc};
 
 use super::is_going_to_ipfs;
+use crate::blockchain::contract::GoshContract;
+use crate::blockchain::tree::load::SnapshotMonitor;
 use crate::blockchain::Tree;
 use crate::database::GoshDB;
 use crate::git_helper::push::parallel_snapshot_upload_support::{
     ParallelTree, ParallelTreeUploadSupport,
 };
 use tokio::sync::Semaphore;
-use crate::blockchain::contract::GoshContract;
-use crate::blockchain::tree::load::SnapshotMonitor;
-
 
 fn flatten_tree(
     context: &GitHelper<impl BlockchainService>,
@@ -43,19 +38,16 @@ fn flatten_tree(
     use git_object::tree::EntryMode::*;
     for entry in entry_ref_iter {
         match entry.mode {
-            Tree | Link | Commit => {
+            Tree => {
                 let dir = format!("{}/", entry.filename);
                 let subtree = flatten_tree(context, &entry.oid.to_owned(), &dir)?;
                 for (k, v) in subtree {
-                    map.insert(
-                        format!("{}{}", path_prefix, k),
-                        v
-                    );
+                    map.insert(format!("{}{}", path_prefix, k), v);
                 }
                 let path = format!("{}{}", path_prefix, entry.filename);
                 map.insert(path, Entry::from(entry));
             }
-            Blob | BlobExecutable => {
+            Blob | BlobExecutable | Link | Commit => {
                 let path = format!("{}{}", path_prefix, entry.filename);
                 map.insert(path, Entry::from(entry));
             }
@@ -72,20 +64,30 @@ async fn construct_tree(
     snapshot_to_commit: &mut HashMap<String, Vec<SnapshotMonitor>>,
     wallet_contract: &GoshContract,
     to_deploy: &mut Vec<ParallelTree>,
+    is_upgrade: bool,
 ) -> anyhow::Result<HashMap<String, TreeNode>> {
-    tracing::trace!("construct tree: tree_id={tree_id}");
+    tracing::trace!("construct tree: tree_id={tree_id}, snapshot_to_commit:{snapshot_to_commit:?}, is_upgrade={is_upgrade}");
     // flatten tree map to get rid of recursive calls of async funcs
     let flat_tree = flatten_tree(context, tree_id, "")?;
     tracing::trace!("construct tree: flat_tree={flat_tree:?}");
     let mut nodes = HashMap::new();
-    let mut paths = Vec::new();
+    let mut paths: Vec<String> = Vec::new();
     let commit_obj = ObjectId::from_hex(current_commit.as_bytes())?;
     let commit_chain = context.get_commit_ancestors(&commit_obj)?;
     tracing::trace!("start processing single tree items");
     // prepare file entries
     use git_object::tree::EntryMode::*;
     for (path, entry) in &flat_tree {
-        match entry.mode {
+        let file_hash = match entry.mode {
+            Link | Commit => {
+                tracing::trace!("Single link or item: {}", path);
+                let mut buffer = vec![];
+                let _ = context
+                    .local_repository()
+                    .objects
+                    .try_find(entry.oid, &mut buffer)?;
+                sha256::digest(&*buffer)
+            }
             Blob | BlobExecutable => {
                 tracing::trace!("Single tree item: {}", path);
                 // let content = repository
@@ -96,7 +98,7 @@ async fn construct_tree(
                     .find_blob(entry.oid, &mut buffer)?
                     .data;
 
-                let file_hash = if is_going_to_ipfs(content) {
+                if is_going_to_ipfs(content) {
                     // NOTE:
                     // Here is a problem: we calculate if this blob is going to ipfs
                     // one way (blockchain::snapshot::save::is_going_to_ipfs)
@@ -111,38 +113,45 @@ async fn construct_tree(
                 } else {
                     // tvm_hash(&blockchain.client(), content).await?
                     tvm_hash(&context.blockchain.client(), content).await?
-                };
-
-                let file_name = entry.filename.to_string();
-
-                let commit = snapshot_to_commit
-                    .get(&file_name)
-                    .and_then(|val| {
-                        for snap_mon in val {
-                            if commit_chain.contains(&snap_mon.latest_commit) {
-                                return Some(snap_mon.base_commit.clone());
-                            }
-                            if commit_chain.contains(&snap_mon.base_commit) {
-                                return Some(snap_mon.base_commit.clone());
-                            }
-                        }
-                        None
-                    })
-                    .unwrap_or(current_commit.to_string());
-
-                let tree_node = TreeNode::from((Some(format!("0x{file_hash}")), None, commit, entry));
-                let type_obj = &tree_node.type_obj;
-                let key = tvm_hash(
-                    &context.blockchain.client(),
-                    format!("{}:{}", type_obj, file_name).as_bytes(),
-                )
-                    .await?;
-                nodes.insert(format!("{}_{}", entry.filename, entry.oid.to_string()), (format!("0x{}", key), tree_node));
+                }
             }
             _ => {
                 paths.push(path.to_string());
+                continue;
             }
-        }
+        };
+        let file_name = entry.filename.to_string();
+
+        let commit = if !is_upgrade {
+            snapshot_to_commit
+                .get(&file_name)
+                .and_then(|val| {
+                    for snap_mon in val {
+                        if commit_chain.contains(&snap_mon.latest_commit) {
+                            return Some(snap_mon.base_commit.clone());
+                        }
+                        if commit_chain.contains(&snap_mon.base_commit) {
+                            return Some(snap_mon.base_commit.clone());
+                        }
+                    }
+                    None
+                })
+                .unwrap_or(current_commit.to_string())
+        } else {
+            current_commit.to_string()
+        };
+
+        let tree_node = TreeNode::from((Some(format!("0x{file_hash}")), None, commit, entry));
+        let type_obj = &tree_node.type_obj;
+        let key = tvm_hash(
+            &context.blockchain.client(),
+            format!("{}:{}", type_obj, file_name).as_bytes(),
+        )
+        .await?;
+        nodes.insert(
+            format!("{}_{}", entry.filename, entry.oid.to_string()),
+            (format!("0x{}", key), tree_node),
+        );
     }
     tracing::trace!("end processing single tree items");
     tracing::trace!("single nodes: {nodes:?}");
@@ -152,9 +161,11 @@ async fn construct_tree(
     paths.reverse();
     tracing::trace!("start processing subtrees. Paths: {paths:?}");
     for path in paths {
-        let entry = flat_tree.get(&path).ok_or(anyhow::format_err!("Failed to get tree value"))?;
+        let entry = flat_tree
+            .get(&path)
+            .ok_or(anyhow::format_err!("Failed to get tree value"))?;
         match entry.mode {
-            Tree | Link | Commit => {
+            Tree => {
                 tracing::trace!("Subtree item: {}", path);
                 let mut subtree = HashMap::new();
 
@@ -170,18 +181,22 @@ async fn construct_tree(
                     .entries()?;
 
                 for file_entry in entry_ref_iter {
-                    tracing::trace!("looking for file: {:?}",file_entry);
+                    tracing::trace!("looking for file: {:?}", file_entry);
                     let key = format!("{}_{}", file_entry.filename, file_entry.oid.to_string());
                     tracing::trace!("key: {}", key);
-                    let (key, tree_node) = nodes.remove(&key).ok_or(anyhow::format_err!("Failed to get tree node: {}", file_entry.oid))?;
-                    subtree.insert(key, tree_node);
+                    let (key, tree_node) = nodes.get(&key).ok_or(anyhow::format_err!(
+                        "Failed to get tree node: {}",
+                        file_entry.oid
+                    ))?;
+                    subtree.insert(key.to_owned(), tree_node.to_owned());
                 }
 
                 let tree_hash = crate::blockchain::Tree::inner_tree_hash(
                     context.blockchain.client(),
                     wallet_contract,
-                    &subtree
-                ).await?;
+                    &subtree,
+                )
+                .await?;
 
                 // For trees commit is set to empty string
                 let commit = "".to_string();
@@ -193,8 +208,11 @@ async fn construct_tree(
                     &context.blockchain.client(),
                     format!("{}:{}", type_obj, file_name).as_bytes(),
                 )
-                    .await?;
-                nodes.insert(format!("{}_{}", entry.filename, entry.oid.to_string()), (format!("0x{}", key), tree_node));
+                .await?;
+                nodes.insert(
+                    format!("{}_{}", entry.filename, entry.oid.to_string()),
+                    (format!("0x{}", key), tree_node),
+                );
                 let parallel_tree = ParallelTree::new(tree_id, subtree, tree_hash);
                 to_deploy.push(parallel_tree);
             }
@@ -218,15 +236,18 @@ async fn construct_tree(
         let key = format!("{}_{}", file_entry.filename, file_entry.oid.to_string());
         tracing::trace!("look for root entry: {key:?}");
         tracing::trace!("nodes: {nodes:?}");
-        let (key, tree_node) = nodes.remove(&key).ok_or(anyhow::format_err!("Failed to get tree node"))?;
+        let (key, tree_node) = nodes
+            .remove(&key)
+            .ok_or(anyhow::format_err!("Failed to get tree node"))?;
         tree_nodes.insert(key, tree_node);
     }
 
     let tree_hash = crate::blockchain::Tree::inner_tree_hash(
         context.blockchain.client(),
         wallet_contract,
-        &tree_nodes
-    ).await?;
+        &tree_nodes,
+    )
+    .await?;
 
     let parallel_tree = ParallelTree::new(tree_id.to_owned(), tree_nodes.clone(), tree_hash);
     to_deploy.push(parallel_tree);
@@ -243,18 +264,24 @@ pub async fn push_tree(
     wallet_contract: &GoshContract,
     handlers: &mut ParallelTreeUploadSupport,
     push_semaphore: Arc<Semaphore>,
-) -> anyhow::Result<BlockchainContractAddress> {
+    is_upgrade: bool,
+) -> anyhow::Result<(BlockchainContractAddress, String)> {
     tracing::trace!("start push_tree: tree_id={root_tree_id}, current_commit={current_commit}");
     let mut to_deploy = Vec::new();
-    let tree_nodes = construct_tree(context, root_tree_id, current_commit, snapshot_to_commit, wallet_contract, &mut to_deploy).await?;
+    let tree_nodes = construct_tree(
+        context,
+        root_tree_id,
+        current_commit,
+        snapshot_to_commit,
+        wallet_contract,
+        &mut to_deploy,
+        is_upgrade,
+    )
+    .await?;
     tracing::trace!("Trees to deploy after construct: {to_deploy:?}");
     let mut res_address = None;
     for tree in to_deploy {
         tracing::trace!("push_tree: tree_id={}", tree.tree_id);
-        let blockchain = context.blockchain.clone();
-        let network = context.remote.network.clone();
-        let dao_addr = context.dao_addr.clone();
-        let repo = context.remote.repo.clone();
 
         let mut repo_contract = context.blockchain.repo_contract().clone();
         let tree_address = Tree::calculate_address(
@@ -266,7 +293,10 @@ pub async fn push_tree(
         let tree_address = String::from(tree_address);
 
         if &tree.tree_id == root_tree_id {
-            res_address = Some(BlockchainContractAddress::new(&tree_address));
+            res_address = Some((
+                BlockchainContractAddress::new(&tree_address),
+                tree.sha_inner_tree.clone(),
+            ));
         }
         if !context.get_db()?.tree_exists(&tree_address)? {
             context.get_db()?.put_tree(tree, tree_address.clone())?;

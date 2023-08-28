@@ -1,5 +1,6 @@
 use super::GitHelper;
 
+use crate::blockchain::gosh_abi;
 use crate::ipfs::build_ipfs;
 use crate::{
     blockchain::{
@@ -82,6 +83,51 @@ async fn write_git_object(
     Ok(object_id)
 }
 
+async fn restore_a_set_of_blobs(
+    es_client: &EverClient,
+    ipfs_endpoint: &str,
+    repo: &mut git_repository::Repository,
+    repo_contract: &mut GoshContract,
+    snapshot_address: &blockchain::BlockchainContractAddress,
+    blobs: &mut HashSet<git_hash::ObjectId>,
+    visited: Arc<Mutex<HashSet<git_hash::ObjectId>>>,
+    visited_ipfs: Arc<Mutex<HashMap<String, git_hash::ObjectId>>>,
+    branch: &str,
+) -> anyhow::Result<HashSet<git_hash::ObjectId>> {
+    let snapshot_contract = GoshContract::new(snapshot_address, gosh_abi::SNAPSHOT);
+
+    match snapshot_contract.is_active(es_client).await {
+        Ok(true) => {
+            restore_a_set_of_blobs_from_a_known_snapshot(
+                es_client,
+                ipfs_endpoint,
+                repo,
+                repo_contract,
+                &snapshot_address,
+                blobs,
+                visited,
+                visited_ipfs,
+                branch,
+            )
+            .await
+        }
+        _ => {
+            restore_a_set_of_blobs_from_a_deleted_snapshot(
+                es_client,
+                ipfs_endpoint,
+                repo,
+                repo_contract,
+                &snapshot_address,
+                blobs,
+                visited,
+                visited_ipfs,
+                branch,
+            )
+            .await
+        }
+    }
+}
+
 async fn restore_a_set_of_blobs_from_a_known_snapshot(
     es_client: &EverClient,
     ipfs_endpoint: &str,
@@ -144,8 +190,159 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
 
     // TODO: convert to async iterator
     // This should download next messages seemless
-    let mut messages =
-        blockchain::snapshot::diffs::DiffMessagesIterator::new(snapshot_address, repo_contract, branch.to_string());
+    let mut messages = blockchain::snapshot::diffs::DiffMessagesIterator::new(
+        snapshot_address,
+        repo_contract,
+        branch.to_string(),
+        true,
+    );
+    let mut preserved_message: Option<DiffMessage> = None;
+    let mut transition_content: Option<Vec<u8>> = None;
+    let mut parsed = vec![];
+    let mut visited_ipfs_hash: Option<String> = None;
+    while !blobs.is_empty() {
+        tracing::info!("Still expecting to restore blobs: {:?}", blobs);
+
+        // take next a chunk of messages and reverse it on a snapshot
+        // remove matching blob ids
+        //
+        let message = if let Some(unused_message) = preserved_message.clone() {
+            preserved_message = None;
+            unused_message
+        } else {
+            match messages.next(&es_client).await? {
+                None => break,
+                Some(message) => {
+                    if parsed.contains(&message) {
+                        break;
+                    }
+                    message
+                }
+            }
+        };
+        tracing::trace!("got message: {:?}", message);
+        parsed.push(message.clone());
+        let blob_data: Vec<u8> = if message.diff.remove_ipfs {
+            let data = match message.diff.get_patch_data() {
+                Some(content) => content,
+                None => panic!("Broken diff detected: content doesn't exist"),
+            };
+            data
+        } else if let Some(ipfs) = &message.diff.ipfs {
+            transition_content = message.diff.get_patch_data();
+
+            let visited = visited_ipfs.lock().await;
+            let blob_id: Option<ObjectId> = visited.get(ipfs).copied();
+
+            match blob_id {
+                Some(blob_id) => load_data_from_local(&repo.objects, &blob_id)?,
+                None => {
+                    visited_ipfs_hash = Some(ipfs.to_owned());
+                    load_data_from_ipfs(&build_ipfs(&ipfs_endpoint)?, ipfs).await?
+                }
+            }
+        } else if let Some(content) = transition_content.clone() {
+            // we won't use the message, so we'll store it for the next iteration
+            preserved_message = Some(message);
+            transition_content = None;
+            content
+        } else {
+            let patched_blob_sha = &message
+                .diff
+                .modified_blob_sha1
+                .as_ref()
+                .expect("Option on this should be reverted. It must always be there");
+            let patched_blob_sha = git_hash::ObjectId::from_str(patched_blob_sha)?;
+            let content = last_restored_snapshots
+                .get(&patched_blob_sha)
+                .expect("It is a sequence of changes. Sha must be correct. Fail otherwise");
+            let patched_blob = content.to_vec();
+
+            message
+                .diff
+                .with_patch::<_, anyhow::Result<Vec<u8>>>(|e| match e {
+                    Some(patch) => {
+                        let blob_data =
+                            diffy::apply_bytes(&patched_blob, &patch.clone().reverse())?;
+                        Ok(blob_data)
+                    }
+                    None => panic!("Broken diff detected: neither ipfs nor patch exists"),
+                })?
+        };
+
+        let blob = git_object::Data::new(git_object::Kind::Blob, &blob_data);
+        let blob_id = write_git_data(repo, blob).await?;
+        tracing::info!("Restored blob {}", blob_id);
+        last_restored_snapshots.put(blob_id, blob_data);
+        {
+            let mut visited = visited.lock().await;
+            visited.insert(blob_id);
+        }
+        if let Some(ipfs) = visited_ipfs_hash {
+            visited_ipfs_hash = None;
+            {
+                let mut visited_ipfs = visited_ipfs.lock().await;
+                visited_ipfs.insert(ipfs, blob_id);
+            }
+        }
+        blobs.remove(&blob_id);
+    }
+    Ok(blobs.to_owned())
+}
+
+async fn restore_a_set_of_blobs_from_a_deleted_snapshot(
+    es_client: &EverClient,
+    ipfs_endpoint: &str,
+    repo: &mut git_repository::Repository,
+    repo_contract: &mut GoshContract,
+    snapshot_address: &blockchain::BlockchainContractAddress,
+    blobs: &mut HashSet<git_hash::ObjectId>,
+    visited: Arc<Mutex<HashSet<git_hash::ObjectId>>>,
+    visited_ipfs: Arc<Mutex<HashMap<String, git_hash::ObjectId>>>,
+    branch: &str,
+) -> anyhow::Result<HashSet<git_hash::ObjectId>> {
+    tracing::info!("Iteration in restore: {} -> {:?}", snapshot_address, blobs);
+    {
+        let visited = visited.lock().await;
+        blobs.retain(|e| !visited.contains(e));
+    }
+    tracing::info!("remaining: {:?}", blobs);
+    if blobs.is_empty() {
+        return Ok(blobs.to_owned());
+    }
+
+    let (blob_id, blob) = BlobsRebuildingPlan::restore_snapshot_from_constructor(
+        es_client,
+        ipfs_endpoint,
+        repo,
+        snapshot_address,
+        visited_ipfs.clone(),
+    )
+    .await?;
+
+    let mut last_restored_snapshots: LruCache<ObjectId, Vec<u8>> =
+        LruCache::new(NonZeroUsize::new(2).unwrap());
+    {
+        let mut visited = visited.lock().await;
+        visited.insert(blob_id);
+    }
+    last_restored_snapshots.put(blob_id, blob);
+    blobs.remove(&blob_id);
+
+    tracing::info!(
+        "Expecting to restore blobs: {:?} from {}",
+        blobs,
+        snapshot_address
+    );
+
+    // TODO: convert to async iterator
+    // This should download next messages seemless
+    let mut messages = blockchain::snapshot::diffs::DiffMessagesIterator::new(
+        snapshot_address,
+        repo_contract,
+        branch.to_string(),
+        false,
+    );
     let mut preserved_message: Option<DiffMessage> = None;
     let mut transition_content: Option<Vec<u8>> = None;
     let mut parsed = vec![];
@@ -371,6 +568,52 @@ impl BlobsRebuildingPlan {
         Ok(restored_snapshots)
     }
 
+    #[instrument(level = "info", skip_all)]
+    async fn restore_snapshot_from_constructor(
+        es_client: &EverClient,
+        ipfs_endpoint: &str,
+        repo: &mut git_repository::Repository,
+        snapshot_address: &BlockchainContractAddress,
+        visited_ipfs: Arc<Mutex<HashMap<String, git_hash::ObjectId>>>,
+    ) -> anyhow::Result<(ObjectId, Vec<u8>)> {
+        tracing::trace!(
+            "restore_snapshot_from_constructor: repo={:?}, snapshot_address={}",
+            repo,
+            snapshot_address,
+        );
+        let ipfs_client = build_ipfs(ipfs_endpoint)?;
+
+        let (data, ipfs) =
+            blockchain::snapshot::diffs::load_constructor(&es_client, snapshot_address).await?;
+
+        let mut new_loading = false;
+        let (content, ipfs_hash) = if let Some(ipfs_hash) = ipfs.clone() {
+            let visited = visited_ipfs.lock().await;
+            let blob_id: Option<ObjectId> = visited.get(&ipfs_hash).copied();
+
+            let data = match blob_id {
+                Some(blob_id) => load_data_from_local(&repo.objects, &blob_id)?,
+                None => {
+                    new_loading = true;
+                    load_data_from_ipfs(&build_ipfs(&ipfs_endpoint)?, &ipfs_hash).await?
+                }
+            };
+            (data, None)
+        } else {
+            (data, ipfs)
+        };
+
+        let (blob, blob_data) = convert_snapshot_into_blob(&ipfs_client, &content, &ipfs_hash)
+            .instrument(info_span!("convert_next_snapshot_into_blob").or_current())
+            .await?;
+        let blob_oid = write_git_object(repo, blob).await?;
+        if new_loading {
+            let mut visited = visited_ipfs.lock().await;
+            visited.insert(ipfs_hash.clone().unwrap(), blob_oid);
+        }
+        Ok((blob_oid, blob_data))
+    }
+
     pub async fn restore<'a, 'b>(
         &'b mut self,
         git_helper: &mut GitHelper<impl BlockchainService>,
@@ -415,7 +658,7 @@ impl BlobsRebuildingPlan {
                 async move {
                     let attempt = 0;
                     let result = loop {
-                        let result = restore_a_set_of_blobs_from_a_known_snapshot(
+                        let result = restore_a_set_of_blobs(
                             &es_client,
                             &ipfs_http_endpoint,
                             &mut repo,
@@ -431,7 +674,7 @@ impl BlobsRebuildingPlan {
                             break result;
                         } else {
                             tracing::trace!(
-                                "restore_a_set_of_blobs_from_a_known_snapshot <{:#?}> error {:?}",
+                                "restore_a_set_of_blobs <{:#?}> error {:?}",
                                 snapshot_address_clone,
                                 result.unwrap_err()
                             );
@@ -441,10 +684,7 @@ impl BlobsRebuildingPlan {
                     };
                     result.map_err(|e| anyhow::Error::from(e))
                 }
-                .instrument(
-                    info_span!("tokio::spawn::restore_a_set_of_blobs_from_a_known_snapshot")
-                        .or_current(),
-                ),
+                .instrument(info_span!("tokio::spawn::restore_a_set_of_blobs").or_current()),
             ));
             blobs.clear();
         }
@@ -453,13 +693,10 @@ impl BlobsRebuildingPlan {
         while let Some(finished_task) = fetched_blobs.next().await {
             match finished_task {
                 Err(e) => {
-                    panic!(
-                        "restore_a_set_of_blobs_from_a_known_snapshot joih-handler: {}",
-                        e
-                    );
+                    panic!("restore_a_set_of_blobs joih-handler: {}", e);
                 }
                 Ok(Err(e)) => {
-                    panic!("restore_a_set_of_blobs_from_a_known_snapshot inner: {}", e);
+                    panic!("restore_a_set_of_blobs inner: {}", e);
                 }
                 Ok(Ok(blobs)) => {
                     tracing::trace!("Blobs after restore: {blobs:?}");
