@@ -1,0 +1,8 @@
+{
+    "localNode": true,
+    "url": ["http://localhost"],
+    "urlWeb": [
+        "https://vps23.ton.dev"
+    ],
+    "verbose": true
+}
