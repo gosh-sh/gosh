@@ -5,6 +5,8 @@ import { useEffect } from 'react'
 import { useRecoilValue } from 'recoil'
 import { daoMemberListSelector } from '../../../../store/dao.state'
 import { ListItem, ListItemHeader, ListItemSkeleton } from './ListItem'
+import { useDaoMemberList } from '../../../../hooks/dao.hooks'
+import { Button } from '../../../../../components/Form'
 
 type TListBoundaryInnerProps = React.HTMLAttributes<HTMLDivElement> & {
     search: string
@@ -12,14 +14,15 @@ type TListBoundaryInnerProps = React.HTMLAttributes<HTMLDivElement> & {
 
 const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
     const { className, search } = props
-    const memberList = useRecoilValue(daoMemberListSelector(search))
+    const members = useDaoMemberList()
+    const filtered = useRecoilValue(daoMemberListSelector(search))
     const { showBoundary } = useErrorBoundary()
 
     useEffect(() => {
-        if (memberList.error) {
-            showBoundary(memberList.error)
+        if (members.error) {
+            showBoundary(members.error)
         }
-    }, [memberList.error])
+    }, [members.error])
 
     return (
         <div
@@ -28,14 +31,29 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
                 className,
             )}
         >
-            {memberList.isFetching && !memberList.items.length && <ListItemSkeleton />}
+            {members.isFetching && !members.items.length && <ListItemSkeleton />}
 
-            {!!memberList.items.length && (
+            {!!filtered.items.length && (
                 <div className="divide-y divide-gray-e6edff">
                     <ListItemHeader />
-                    {memberList.items.map((item, index) => (
+                    {filtered.items.map((item, index) => (
                         <ListItem key={index} item={item} />
                     ))}
+                </div>
+            )}
+
+            {members.hasNext && (
+                <div className="text-center mt-8">
+                    <Button
+                        type="button"
+                        className="w-full md:w-auto"
+                        disabled={members.isFetching}
+                        isLoading={members.isFetching}
+                        onClick={members.getNext}
+                        test-id="btn-daomembers-more"
+                    >
+                        Load more
+                    </Button>
                 </div>
             )}
         </div>

@@ -63,36 +63,30 @@ const ListItem = (props: TListItemProps) => {
                         </div>
                     )}
                     <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                        {item.version && (
-                            <div
-                                className="text-gray-53596d text-xs"
-                                data-tooltip-id="common-tip"
-                                data-tooltip-content="Version"
-                            >
-                                <FontAwesomeIcon icon={faTag} className="mr-2" />
-                                {item.version}
-                            </div>
-                        )}
-                        {item.supply && (
-                            <div
-                                className="text-gray-53596d text-xs"
-                                data-tooltip-id="common-tip"
-                                data-tooltip-content="Total supply"
-                            >
-                                <FontAwesomeIcon icon={faPiggyBank} className="mr-2" />
-                                {item.supply.toLocaleString()}
-                            </div>
-                        )}
-                        {item.members && (
-                            <div
-                                className="text-gray-53596d text-xs"
-                                data-tooltip-id="common-tip"
-                                data-tooltip-content="Members"
-                            >
-                                <FontAwesomeIcon icon={faUsers} className="mr-2" />
-                                {item.members.toLocaleString()}
-                            </div>
-                        )}
+                        <div
+                            className="text-gray-53596d text-xs"
+                            data-tooltip-id="common-tip"
+                            data-tooltip-content="Version"
+                        >
+                            <FontAwesomeIcon icon={faTag} className="mr-2" />
+                            {item.version}
+                        </div>
+                        <div
+                            className="text-gray-53596d text-xs"
+                            data-tooltip-id="common-tip"
+                            data-tooltip-content="Total supply"
+                        >
+                            <FontAwesomeIcon icon={faPiggyBank} className="mr-2" />
+                            {item.supply.toLocaleString()}
+                        </div>
+                        <div
+                            className="text-gray-53596d text-xs"
+                            data-tooltip-id="common-tip"
+                            data-tooltip-content="Members"
+                        >
+                            <FontAwesomeIcon icon={faUsers} className="mr-2" />
+                            {item.members.toLocaleString()}
+                        </div>
                     </div>
                 </div>
                 <div className="col !grow-0">

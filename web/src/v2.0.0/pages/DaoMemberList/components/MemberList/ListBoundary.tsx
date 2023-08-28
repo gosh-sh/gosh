@@ -8,7 +8,12 @@ import { ListItem, ListItemHeader, ListItemSkeleton } from './ListItem'
 import { TDaoMemberListItem } from '../../../../types/dao.types'
 import { Field, Form, Formik } from 'formik'
 import yup from '../../../../yup-extended'
-import { useDao, useDaoMember, useUpdateDaoMember } from '../../../../hooks/dao.hooks'
+import {
+    useDao,
+    useDaoMember,
+    useDaoMemberList,
+    useUpdateDaoMember,
+} from '../../../../hooks/dao.hooks'
 import { FormikTextarea } from '../../../../../components/Formik'
 import { Button } from '../../../../../components/Form'
 import { useNavigate } from 'react-router-dom'
@@ -27,7 +32,8 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
     const { showBoundary } = useErrorBoundary()
     const navigate = useNavigate()
     const dao = useDao()
-    const memberList = useRecoilValue(daoMemberListSelector(search))
+    const members = useDaoMemberList()
+    const filtered = useRecoilValue(daoMemberListSelector(search))
     const member = useDaoMember()
     const { updateMember } = useUpdateDaoMember()
 
@@ -48,10 +54,10 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
     }
 
     useEffect(() => {
-        if (memberList.error) {
-            showBoundary(memberList.error)
+        if (members.error) {
+            showBoundary(members.error)
         }
-    }, [memberList.error])
+    }, [members.error])
 
     return (
         <div
@@ -60,11 +66,11 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
                 className,
             )}
         >
-            {memberList.isFetching && !memberList.items.length && <ListItemSkeleton />}
+            {members.isFetching && !members.items.length && <ListItemSkeleton />}
 
             <Formik
                 initialValues={{
-                    items: memberList.items.map((item) => ({
+                    items: filtered.items.map((item) => ({
                         ...item,
                         _allowance: item.allowance.toString(),
                         _balance: item.balance.toString(),
@@ -99,6 +105,21 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
                                 {values.items.map((item, index) => (
                                     <ListItem key={index} item={item} index={index} />
                                 ))}
+                            </div>
+                        )}
+
+                        {members.hasNext && (
+                            <div className="text-center mt-8">
+                                <Button
+                                    type="button"
+                                    className="w-full md:w-auto"
+                                    disabled={members.isFetching}
+                                    isLoading={members.isFetching}
+                                    onClick={members.getNext}
+                                    test-id="btn-daomembers-more"
+                                >
+                                    Load more
+                                </Button>
                             </div>
                         )}
 
