@@ -327,15 +327,17 @@ contract Commit is Modifiers {
         if (_setCommit[newC] == timecommit) { 
             Commit(newC).ChainAccept{value: 0.3 ton, bounce: true , flag: 1}(_nameCommit, branchName, branchCommit, newC);
         }
-        else { _setCommit[newC] = timecommit; }
-        if ((((save == true) && (branchCommit  == address(this))) || ((_isCorrect == true) && (save != true))) || ((save != true) && (_initupgrade == true))){
+        else { 
+            _setCommit[newC] = timecommit; 
+            if ((((save == true) && (branchCommit  == address(this))) || ((_isCorrect == true) && (save != true))) || ((save != true) && (_initupgrade == true))){
 //                if (numcommits != 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
                 Commit(newC).ChainAccept{value: 0.3 ton, bounce: true , flag: 1}(_nameCommit, branchName, branchCommit, newC);
-        }
-        else {
-            if (_parents.length == 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
-            if (numcommits == 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
-            this._sendCheckChainLoop{value: 0.1 ton, flag: 1}(branchName, branchCommit, newC, numcommits, 0, timecommit);
+            }
+            else {
+                if (_parents.length == 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
+                if (numcommits == 0) { Commit(newC).NotCorrect{value: 0.2 ton, flag: 1}(branchName, branchCommit, _nameCommit); return; }
+                this._sendCheckChainLoop{value: 0.1 ton, flag: 1}(branchName, branchCommit, newC, numcommits, 0, timecommit);
+            }
         }
         getMoney();
     }
