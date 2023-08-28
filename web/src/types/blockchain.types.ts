@@ -5,6 +5,7 @@ import { SystemContract as SystemContract4 } from '../v4.0.0/blockchain/systemco
 import { SystemContract as SystemContract5 } from '../v5.0.0/blockchain/systemcontract'
 import { SystemContract as SystemContract5_1 } from '../v5.1.0/blockchain/systemcontract'
 import { SystemContract as SystemContract6 } from '../v6.0.0/blockchain/systemcontract'
+import { SystemContract as SystemContract6_1 } from '../v6.1.0/blockchain/systemcontract'
 
 export type TSystemContract =
     | SystemContract1
@@ -14,6 +15,7 @@ export type TSystemContract =
     | SystemContract5
     | SystemContract5_1
     | SystemContract6
+    | SystemContract6_1
 
 export type TPaginatedAccountsResult = {
     results: any[]
