@@ -922,7 +922,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        require(parents.length <= 7, ERR_TOO_MANY_PARENTS);
+        require(parents.length <= 60, ERR_TOO_MANY_PARENTS);
         _deployCommit(repoName, commitName, fullCommit, parents, shainnertree, upgrade);
     }
 
