@@ -37,7 +37,7 @@ pipeline {
                 }
             }
         }*/
-        stage('Publish: update release') {
+        /*stage('Publish: update release') {
             agent {
                 docker {
                     image 'jenkins-docker-agent:1'
@@ -55,7 +55,7 @@ pipeline {
                     currentBuild.displayName = "#${BUILD_NUMBER}_release_${VERSION}"
                 }
             }
-        }
+        }*/
         /*stage('Publish: push Git Helper Docker image') {
             agent {
                 docker {
