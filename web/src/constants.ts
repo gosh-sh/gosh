@@ -6,7 +6,7 @@ export const MAX_PARALLEL_WRITE = 200
 export const SYSTEM_TAG = '___!system!___'
 export const DAO_TOKEN_TRANSFER_TAG = '___!daotokentransfer!___'
 export const VESTING_BALANCE_TAG = '___!vestingbalance!___'
-export const DISABLED_VERSIONS = ['5.0.0']
+export const DISABLED_VERSIONS = ['5.0.0', '6.0.0']
 
 export const DaoEventType: { [key: number]: string } = {
     1: 'Pull request',
