@@ -92,6 +92,7 @@ pipeline {
             }
             steps {
                 script {
+                    env.VERSION = TAG.trim()
                     dir('docker-extension') {
                         withCredentials([[
                             $class: 'UsernamePasswordMultiBinding',
