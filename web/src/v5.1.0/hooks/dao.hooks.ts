@@ -474,7 +474,7 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
         try {
             setData((state) => ({ ...state, isFetchingData: true }))
 
-            const daoname = await dao.getName()
+            const name = await dao.getName()
             const details = await dao.getDetails()
             const members = await dao.getMembers({
                 parse: { wallets: details.wallets, daomembers: details.daoMembers },
@@ -484,7 +484,7 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
                 isDaoMemberOf: true,
             })
             const tasks = await getTaskCount(dao)
-            const { summary, description } = await getDescription(daoname, repository)
+            const { summary, description } = await getDescription(name, repository)
 
             setData((state) => ({
                 ...state,
