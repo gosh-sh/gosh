@@ -1,17 +1,14 @@
-use crate::blockchain::tree::TreeNode;
-use crate::blockchain::{
-    gosh_abi, run_local, BlockchainContractAddress, BlockchainService, EverClient, GoshContract,
-    Number, Snapshot,
-};
+use crate::blockchain::{gosh_abi, run_local, BlockchainContractAddress, BlockchainService, EverClient, GoshContract, Snapshot, GoshBlobBitFlags};
 use ::git_object;
 use data_contract_macro_derive::DataContract;
 use git_object::tree::EntryMode;
 use std::collections::{HashMap, VecDeque};
+use git_object::tree;
 
 // TODO: the same as TreeNode leave only one
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Debug, Clone, Deserialize)]
 pub struct TreeComponent {
-    pub flags: Number,
+    pub flags: String,
     pub mode: String,
     #[serde(rename = "typeObj")]
     pub type_obj: String,
@@ -84,7 +81,7 @@ impl Tree {
     pub async fn inner_tree_hash(
         context: &EverClient,
         wallet_contract: &GoshContract,
-        tree: &HashMap<String, TreeNode>,
+        tree: &HashMap<String, TreeComponent>,
     ) -> anyhow::Result<String> {
         let params = serde_json::json!({ "_tree": tree });
         let result: CalculateHashResult = wallet_contract
@@ -207,4 +204,40 @@ pub async fn construct_map_of_snapshots(
         }
     }
     Ok(())
+}
+
+impl<'a> From<(Option<String>, Option<String>, String, &'a tree::Entry)> for TreeComponent {
+    fn from(
+        (file_hash, tree_hash, commit, entry): (
+            Option<String>,
+            Option<String>,
+            String,
+            &tree::Entry,
+        ),
+    ) -> Self {
+        Self {
+            flags: (GoshBlobBitFlags::Compressed as u8).to_string(),
+            mode: std::str::from_utf8(entry.mode.as_bytes())
+                .unwrap()
+                .to_owned(),
+            type_obj: convert_to_type_obj(entry.mode),
+            name: entry.filename.to_string(),
+            git_sha: entry.oid.to_hex().to_string(),
+            tvm_sha_file: file_hash,
+            tvm_sha_tree: tree_hash,
+            commit,
+        }
+    }
+}
+
+fn convert_to_type_obj(entry_mode: tree::EntryMode) -> String {
+    use git_object::tree::EntryMode::*;
+    match entry_mode {
+        Tree => "tree",
+        Blob => "blob",
+        BlobExecutable => "blobExecutable",
+        Link => "link",
+        Commit => "commit",
+    }
+        .to_owned()
 }

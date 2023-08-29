@@ -1,5 +1,5 @@
 use crate::{
-    blockchain::{tree::TreeNode, tvm_hash, BlockchainContractAddress, BlockchainService},
+    blockchain::{tvm_hash, BlockchainContractAddress, BlockchainService},
     git_helper::GitHelper,
 };
 use git_hash::ObjectId;
@@ -10,7 +10,7 @@ use std::{collections::HashMap, str::FromStr, sync::Arc};
 
 use super::is_going_to_ipfs;
 use crate::blockchain::contract::GoshContract;
-use crate::blockchain::tree::load::SnapshotMonitor;
+use crate::blockchain::tree::load::{SnapshotMonitor, TreeComponent};
 use crate::blockchain::Tree;
 use crate::database::GoshDB;
 use crate::git_helper::push::parallel_snapshot_upload_support::{
@@ -66,7 +66,7 @@ async fn construct_tree(
     to_deploy: &mut Vec<ParallelTree>,
     is_upgrade: bool,
     handlers: &mut ParallelTreeUploadSupport,
-) -> anyhow::Result<HashMap<String, TreeNode>> {
+) -> anyhow::Result<HashMap<String, TreeComponent>> {
     tracing::trace!("construct tree: tree_id={tree_id}, current_commit={current_commit}, snapshot_to_commit:{snapshot_to_commit:?}, is_upgrade={is_upgrade}");
     // flatten tree map to get rid of recursive calls of async funcs
     let flat_tree = flatten_tree(context, tree_id, "")?;
@@ -156,7 +156,7 @@ async fn construct_tree(
             current_commit.to_string()
         };
 
-        let tree_node = TreeNode::from((Some(format!("0x{file_hash}")), None, commit, entry));
+        let tree_node = TreeComponent::from((Some(format!("0x{file_hash}")), None, commit, entry));
         let type_obj = &tree_node.type_obj;
         let key = tvm_hash(
             &context.blockchain.client(),
@@ -217,7 +217,7 @@ async fn construct_tree(
                 let commit = "".to_string();
 
                 let file_name = entry.filename.to_string();
-                let tree_node = TreeNode::from((None, Some(tree_hash.clone()), commit, entry));
+                let tree_node = TreeComponent::from((None, Some(tree_hash.clone()), commit, entry));
                 let type_obj = &tree_node.type_obj;
                 let key = tvm_hash(
                     &context.blockchain.client(),
