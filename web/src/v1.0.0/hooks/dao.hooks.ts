@@ -28,7 +28,6 @@ import {
     TDaoListItem,
     TDaoMemberListItem,
 } from '../types/dao.types'
-import { useParams } from 'react-router-dom'
 import { Dao } from '../blockchain/dao'
 import { UserProfile } from '../../blockchain/userprofile'
 import { DaoWallet } from '../blockchain/daowallet'
@@ -37,7 +36,7 @@ import { getPaginatedAccounts } from '../../blockchain/utils'
 import { DaoEvent } from '../blockchain/daoevent'
 import { GoshAdapterFactory } from 'react-gosh'
 import { daoRepositoryListAtom } from '../store/repository.state'
-import { appToastStatusSelector } from '../../store/app.state'
+import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
 
 export function useCreateDao() {
     const profile = useProfile()
@@ -326,7 +325,7 @@ export function useUserDaoList(params: { count?: number; loadOnInit?: boolean } 
 
 export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {}) {
     const { loadOnInit, subscribe } = params
-    const { daoname } = useParams()
+    const { daoname } = useRecoilValue(appContextAtom)
     const [data, setData] = useRecoilState(daoDetailsAtom)
     const resetDao = useResetRecoilState(daoDetailsAtom)
     const resetDaoRepositories = useResetRecoilState(daoRepositoryListAtom)
@@ -360,7 +359,7 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
     const getDao = useCallback(async () => {
         try {
             if (!daoname) {
-                throw new GoshError('DAO name undefined')
+                return
             }
 
             setData((state) => ({ ...state, isFetching: true }))

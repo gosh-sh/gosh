@@ -88,7 +88,11 @@ const Dispatcher = () => {
                 }
             }
 
-            setAppContext((state) => ({ ...state, version }))
+            setAppContext((state) => ({
+                ...state,
+                version,
+                daoname: routeMatch?.params.daoname,
+            }))
         }
 
         if (isInitialized) {
