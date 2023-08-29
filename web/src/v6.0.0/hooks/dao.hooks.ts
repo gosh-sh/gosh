@@ -840,6 +840,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
 
         const sc = getSystemContract()
         const tagname = `${VESTING_BALANCE_TAG}:${user.username}`
+        let tagbalance = 0
 
         // Get current tag
         const vestingtag = await sc.getCommitTag({
@@ -848,7 +849,8 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
         const isDeployed = await vestingtag.isDeployed()
         if (isDeployed) {
             const data = await vestingtag.getDetails()
-            setData((state) => ({ ...state, vesting: parseInt(data.content) }))
+            tagbalance = parseInt(data.content)
+            setData((state) => ({ ...state, vesting: tagbalance }))
         }
 
         // Get all DAO tasks
@@ -864,7 +866,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
         })
 
         // Calculate balance
-        let _balance = 0
+        let calcbalance = 0
         for (const task of tasks) {
             if (task.candidates.length === 0) {
                 continue
@@ -874,15 +876,15 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
                 const profiles = Object.keys(task.candidates[0][`pubaddr${key}`])
                 if (profiles.indexOf(user.profile) >= 0) {
                     for (const { grant } of task.grant[key]) {
-                        _balance += Math.floor(parseInt(grant) / profiles.length)
+                        calcbalance += Math.floor(parseInt(grant) / profiles.length)
                     }
                 }
             }
         }
-        setData((state) => ({ ...state, vesting: _balance }))
+        setData((state) => ({ ...state, vesting: calcbalance }))
 
         // Update tag
-        if (isDeployed) {
+        if (isDeployed && tagbalance !== calcbalance) {
             await data.wallet.deleteCommitTag({
                 reponame: VESTING_BALANCE_TAG,
                 tagname,
@@ -892,7 +894,7 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
             await data.wallet.createCommitTag({
                 reponame: VESTING_BALANCE_TAG,
                 name: tagname,
-                content: _balance.toString(),
+                content: calcbalance.toString(),
                 commit: {
                     address: user.profile,
                     name: user.username,
