@@ -15,9 +15,9 @@ def runFunctionSet(function_name) {
         // "v5_x/v5.0.0": {
         //     "${function_name}"('v5_x/v5.0.0')
         // },
-        // "v5_x/v5.1.0": {
-        //     "${function_name}"('v5_x/v5.1.0')
-        // },
+        "v5_x/v5.1.0": {
+            "${function_name}"('v5_x/v5.1.0')
+        },
         "v6_x/v6.0.0": {
             "${function_name}"('v6_x/v6.0.0')
         },
