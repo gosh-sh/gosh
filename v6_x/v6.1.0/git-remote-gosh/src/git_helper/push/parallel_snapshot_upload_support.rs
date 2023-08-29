@@ -285,6 +285,7 @@ impl ParallelCommitUploadSupport {
 pub struct ParallelTreeUploadSupport {
     expecting_deployed_contacts_addresses: Vec<String>,
     pushed_blobs: JoinSet<anyhow::Result<()>>,
+    pub tree_item_to_base_commit_cache: HashMap<ObjectId, String>,
 }
 
 #[derive(Clone, Debug)]
@@ -315,6 +316,7 @@ impl ParallelTreeUploadSupport {
         Self {
             expecting_deployed_contacts_addresses: vec![],
             pushed_blobs: JoinSet::new(),
+            tree_item_to_base_commit_cache: HashMap::new(),
         }
     }
 

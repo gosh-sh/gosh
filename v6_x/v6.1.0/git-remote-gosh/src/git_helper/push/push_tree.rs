@@ -65,6 +65,7 @@ async fn construct_tree(
     wallet_contract: &GoshContract,
     to_deploy: &mut Vec<ParallelTree>,
     is_upgrade: bool,
+    handlers: &mut ParallelTreeUploadSupport,
 ) -> anyhow::Result<HashMap<String, TreeNode>> {
     tracing::trace!("construct tree: tree_id={tree_id}, current_commit={current_commit}, snapshot_to_commit:{snapshot_to_commit:?}, is_upgrade={is_upgrade}");
     // flatten tree map to get rid of recursive calls of async funcs
@@ -124,20 +125,26 @@ async fn construct_tree(
         let file_name = entry.filename.to_string();
 
         let commit = if !is_upgrade {
-            snapshot_to_commit
-                .get(&file_name)
-                .and_then(|val| {
-                    for snap_mon in val {
-                        if commit_chain.contains(&snap_mon.latest_commit) {
-                            return Some(snap_mon.base_commit.clone());
-                        }
-                        // if commit_chain.contains(&snap_mon.base_commit) {
-                        //     return Some(snap_mon.base_commit.clone());
-                        // }
-                    }
-                    None
-                })
-                .unwrap_or(current_commit.to_string())
+            match handlers.tree_item_to_base_commit_cache.get(&entry.oid) {
+                Some(commit) => commit.to_owned(),
+                None => {
+                    let commit = snapshot_to_commit
+                        .get(path)
+                        .and_then(|val| {
+                            for snap_mon in val {
+                                if commit_chain.contains(&snap_mon.latest_commit) {
+                                    return Some(snap_mon.base_commit.clone());
+                                }
+                            }
+                            None
+                        })
+                        .ok_or(
+                            anyhow::format_err!("Failed to get base commit for snapshot: {}", &file_name)
+                        )?;
+                    handlers.tree_item_to_base_commit_cache.insert(entry.oid.clone(), commit.clone());
+                    commit
+                }
+            }
         } else {
             current_commit.to_string()
         };
@@ -277,6 +284,7 @@ pub async fn push_tree(
         wallet_contract,
         &mut to_deploy,
         is_upgrade,
+        handlers,
     )
     .await?;
     tracing::trace!("Trees to deploy after construct: {to_deploy:?}");

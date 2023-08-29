@@ -653,7 +653,7 @@ where
         let mut parents: Vec<AddrVersion> = vec![];
         let mut repo_contract = self.blockchain.repo_contract().clone();
 
-        for id in parent_ids {
+        for id in &parent_ids {
             let parent = get_commit_address(
                 &self.blockchain.client(),
                 &mut repo_contract,
@@ -842,6 +842,28 @@ where
                     .await?;
             } else {
                 push_commits.push_expected(commit_address);
+            }
+        }
+
+        tracing::trace!("parents: {parent_ids:?}");
+        tracing::trace!("snapshot_to_commit: {snapshot_to_commit:?}");
+
+        if !parent_ids.is_empty() {
+            parent_ids.remove(0);
+            for parent in parent_ids {
+                for (_, snap_mon) in &mut *snapshot_to_commit {
+                    let mut index = 0;
+                    loop {
+                        if index >= snap_mon.len() {
+                            break;
+                        }
+                        if snap_mon.get(index).unwrap().latest_commit == parent {
+                            snap_mon.remove(index);
+                        } else {
+                            index += 1;
+                        }
+                    }
+                }
             }
         }
 
