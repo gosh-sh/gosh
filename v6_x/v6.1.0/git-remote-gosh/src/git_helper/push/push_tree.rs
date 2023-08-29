@@ -125,24 +125,31 @@ async fn construct_tree(
         let file_name = entry.filename.to_string();
 
         let commit = if !is_upgrade {
-            match handlers.tree_item_to_base_commit_cache.get(&entry.oid) {
-                Some(commit) => commit.to_owned(),
-                None => {
-                    let commit = snapshot_to_commit
-                        .get(path)
-                        .and_then(|val| {
-                            for snap_mon in val {
-                                if commit_chain.contains(&snap_mon.latest_commit) {
-                                    return Some(snap_mon.base_commit.clone());
-                                }
-                            }
-                            None
-                        })
-                        .ok_or(
-                            anyhow::format_err!("Failed to get base commit for snapshot: {}", &file_name)
-                        )?;
-                    handlers.tree_item_to_base_commit_cache.insert(entry.oid.clone(), commit.clone());
-                    commit
+            match entry.mode {
+                Commit => {
+                    "".to_string()
+                },
+                _ => {
+                    match handlers.tree_item_to_base_commit_cache.get(&entry.oid) {
+                        Some(commit) => commit.to_owned(),
+                        None => {
+                            let commit = snapshot_to_commit
+                                .get(path)
+                                .and_then(|val| {
+                                    for snap_mon in val {
+                                        if commit_chain.contains(&snap_mon.latest_commit) {
+                                            return Some(snap_mon.base_commit.clone());
+                                        }
+                                    }
+                                    None
+                                })
+                                .ok_or(
+                                    anyhow::format_err!("Failed to get base commit for snapshot: {}", &file_name)
+                                )?;
+                            handlers.tree_item_to_base_commit_cache.insert(entry.oid.clone(), commit.clone());
+                            commit
+                        }
+                    }
                 }
             }
         } else {
