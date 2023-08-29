@@ -508,10 +508,13 @@ where
                 } else {
                     let result: GetTreeResult = commit_contract.run_local(self.blockchain.client(), "gettree", None).await?;
                     let tree_address = result.address;
-                    Some(Tree::load(
+                    match Tree::load(
                         self.blockchain.client(),
                         &tree_address,
-                    ).await?)
+                    ).await {
+                        Ok(tree) => Some(tree),
+                        Err(_) => None
+                    }
                 }
             },
             None => { None }
@@ -875,24 +878,24 @@ where
         tracing::trace!("parents: {parent_ids:?}");
         tracing::trace!("snapshot_to_commit: {snapshot_to_commit:?}");
 
-        if !parent_ids.is_empty() {
-            parent_ids.remove(0);
-            for parent in parent_ids {
-                for (_, snap_mon) in &mut *snapshot_to_commit {
-                    let mut index = 0;
-                    loop {
-                        if index >= snap_mon.len() {
-                            break;
-                        }
-                        if snap_mon.get(index).unwrap().latest_commit == parent {
-                            snap_mon.remove(index);
-                        } else {
-                            index += 1;
-                        }
-                    }
-                }
-            }
-        }
+        // if !parent_ids.is_empty() {
+        //     parent_ids.remove(0);
+        //     for parent in parent_ids {
+        //         for (_, snap_mon) in &mut *snapshot_to_commit {
+        //             let mut index = 0;
+        //             loop {
+        //                 if index >= snap_mon.len() {
+        //                     break;
+        //                 }
+        //                 if snap_mon.get(index).unwrap().latest_commit == parent {
+        //                     snap_mon.remove(index);
+        //                 } else {
+        //                     index += 1;
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
         Ok(())
     }
@@ -1489,7 +1492,7 @@ where
         }
 
         let mut number_of_commits = 0;
-
+        eprintln!("commit_and_tree_list:{commit_and_tree_list:?}");
         // iterate through the git objects list and push them
         for oid in &commit_and_tree_list {
             let object_id = git_hash::ObjectId::from_str(oid)?;
@@ -1886,6 +1889,7 @@ fn get_list_of_commit_objects(
     start: git_repository::Id,
     till: Option<ObjectId>,
 ) -> anyhow::Result<Vec<String>> {
+    eprintln!("get_list_of_commit_objects: start:{start:?} till:{till:?}");
     let walk = start
         .ancestors()
         .all()?
@@ -1906,19 +1910,33 @@ fn get_list_of_commit_objects(
         commit_objects.push(commit);
     }
 
-    commit_objects.sort_by_key(|commit| commit.time().unwrap());
-    commit_objects.reverse();
+    let mut res: Vec<String> = vec![];
+    let mut walk_deque = VecDeque::new();
+    walk_deque.push_back(start);
 
-    let mut res = Vec::new();
+    while let Some(id) = walk_deque.pop_front() {
+        if res.contains(&id.to_string()) {
+            continue;
+        }
+        let commit = commit_objects.iter().find(|c| c.id.to_string() == id.to_string()).ok_or(anyhow::format_err!("Failed to construct initial commit chain"))?;
+        res.push(id.to_string());
+        for parent in commit.parent_ids() {
+            walk_deque.push_back(parent);
+        }
+    }
+
+    // commit_objects.sort_by_key(|commit| commit.time().unwrap());
+    // commit_objects.reverse();
+
     // observation from `git rev-list --reverse`
     // 1) commits are going in reverse order (from old to new)
     // 2) but for each commit tree elements are going in BFS order
     //
     // so if we just rev() commits we'll have topological order for free
-    for commit in commit_objects.iter().rev() {
-        res.push(commit.id.to_string());
-        let tree = commit.tree()?;
-        res.push(tree.id.to_string());
+    // for commit in commit_objects.iter().rev() {
+    //     res.push(commit.id.to_string());
+        // let tree = commit.tree()?;
+        // res.push(tree.id.to_string());
         // res.extend(
         //     tree.traverse()
         //         .breadthfirst
@@ -1930,7 +1948,8 @@ fn get_list_of_commit_objects(
         //         .into_iter()
         //         .map(|e| e.oid.to_string()),
         // );
-    }
+    // }
+    res.reverse();
     Ok(res)
 }
 
