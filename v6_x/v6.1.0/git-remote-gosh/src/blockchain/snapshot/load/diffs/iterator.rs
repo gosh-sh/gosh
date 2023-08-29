@@ -157,17 +157,17 @@ impl DiffMessagesIterator {
                     original_snapshot
                 );
                 // generate filter
-                let created_at: u64 = if snapshot_is_active {
+                let created_at: u64 = // if snapshot_is_active {
                     crate::blockchain::commit::get_set_commit_created_at_time(
                         client,
                         repo_contract,
                         &original_commit,
                         branch,
                     )
-                    .await?
-                } else {
-                    0u64
-                };
+                    .await?;
+                // } else {
+                //     0u64
+                // };
                 Some(NextChunk::JumpToAnotherBranchSnapshot(
                     original_snapshot,
                     created_at,
@@ -391,10 +391,10 @@ pub async fn load_messages_to(
     }
 
     tracing::trace!("Passed {} message(s)", messages.len());
-    let oldest_timestamp = match messages.len() {
-        0 => None,
-        n => Some(messages[n - 1].created_at),
-    };
+    // let oldest_timestamp = match messages.len() {
+    //     0 => None,
+    //     n => Some(messages[n - 1].created_at),
+    // };
     let page = PageIterator {
         cursor: subsequent_page_info,
         // stop_on: oldest_timestamp,
