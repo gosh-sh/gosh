@@ -34,7 +34,7 @@ use push_tag::push_tag;
 mod delete_tag;
 pub(crate) mod parallel_snapshot_upload_support;
 
-use crate::blockchain::{branch_list, Snapshot, Tree};
+use crate::blockchain::{branch_list, Snapshot, Tree, tree};
 use crate::git_helper::push::parallel_snapshot_upload_support::{
     ParallelCommit, ParallelCommitUploadSupport, ParallelSnapshot, ParallelSnapshotUploadSupport,
     ParallelTreeUploadSupport,
@@ -44,7 +44,7 @@ use delete_tag::delete_tag;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 use push_tree::push_tree;
 
-use crate::blockchain::tree::load::{construct_map_of_snapshots, SnapshotMonitor};
+use crate::blockchain::tree::load::{construct_map_of_snapshots, GetTreeResult, SnapshotMonitor};
 use crate::git_helper::push::push_diff::save_data_to_ipfs;
 
 static PARALLEL_PUSH_LIMIT: usize = 1 << 6;
@@ -439,7 +439,7 @@ where
         local_branch_name: &str,
         set_commit: bool,
         snapshot_to_commit: &mut HashMap<String, Vec<SnapshotMonitor>>,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<Option<Tree>> {
         tracing::trace!("check_parents object_id: {object_id} remote_branch_name: {remote_branch_name}, local_branch_name: {local_branch_name}, set_commit={set_commit}");
         let mut buffer: Vec<u8> = Vec::new();
         let commit = self
@@ -453,7 +453,7 @@ where
         let commit_iter = commit.try_into_commit_iter().unwrap();
         let parent_ids: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
 
-        for id in parent_ids {
+        for id in &parent_ids {
             tracing::trace!("check parent: {id}");
             for repo_version in &self.repo_versions {
                 if repo_version.version == supported_contract_version().trim_matches(|c| c == '"') {
@@ -491,7 +491,32 @@ where
                 }
             }
         }
-        Ok(())
+
+        // If parent exists load tree of the zero parent
+        let parent_tree = match parent_ids.first() {
+            Some(id) => {
+                let mut repo = self.blockchain.repo_contract().clone();
+                let parent = get_commit_address(
+                    self.blockchain.client(),
+                    &mut repo,
+                    &id.to_string(),
+                )
+                    .await?;
+                let commit_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
+                if !commit_contract.is_active(self.blockchain.client()).await? {
+                    None
+                } else {
+                    let result: GetTreeResult = commit_contract.run_local(self.blockchain.client(), "gettree", None).await?;
+                    let tree_address = result.address;
+                    Some(Tree::load(
+                        self.blockchain.client(),
+                        &tree_address,
+                    ).await?)
+                }
+            },
+            None => { None }
+        };
+        Ok(parent_tree)
     }
 
     #[instrument(level = "info", skip_all)]
@@ -622,6 +647,7 @@ where
         snapshot_to_commit: &mut HashMap<String, Vec<SnapshotMonitor>>,
         wallet_contract: &GoshContract,
         parallel_tree_upload_support: &mut ParallelTreeUploadSupport,
+        previous_tree: Option<Tree>,
     ) -> anyhow::Result<()> {
         tracing::trace!("push_commit_object: object_id={object_id}, remote_branch_name={remote_branch_name}, local_branch_name={local_branch_name}");
         let mut buffer: Vec<u8> = Vec::new();
@@ -817,6 +843,7 @@ where
             parallel_tree_upload_support,
             push_semaphore.clone(),
             upgrade_commit,
+            previous_tree,
         )
         .await?;
 
@@ -1061,6 +1088,7 @@ where
                         snapshot_to_commit,
                         &zero_wallet_contract,
                         &mut parallel_tree_uploads,
+                        None,
                     )
                     .await?;
                 }
@@ -1480,8 +1508,7 @@ where
                     }
 
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)
-                    // TODO: check only the first commit
-                    self.check_parents(
+                    let parent_tree = self.check_parents(
                         object_id,
                         remote_branch_name,
                         local_branch_name,
@@ -1505,6 +1532,7 @@ where
                         &mut snapshot_to_commit,
                         &zero_wallet_contract,
                         &mut parallel_tree_uploads,
+                        parent_tree,
                     )
                     .await?;
                 }

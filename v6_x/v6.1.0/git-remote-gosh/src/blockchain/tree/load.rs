@@ -45,9 +45,9 @@ pub struct Tree {
 }
 
 #[derive(Deserialize, Debug)]
-struct GetTreeResult {
+pub struct GetTreeResult {
     #[serde(rename = "value0")]
-    address: BlockchainContractAddress,
+    pub address: BlockchainContractAddress,
 }
 
 #[derive(Deserialize)]
