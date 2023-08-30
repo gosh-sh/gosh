@@ -1492,7 +1492,7 @@ where
         }
 
         let mut number_of_commits = 0;
-        eprintln!("commit_and_tree_list:{commit_and_tree_list:?}");
+        tracing::trace!("commit_and_tree_list:{commit_and_tree_list:?}");
         // iterate through the git objects list and push them
         for oid in &commit_and_tree_list {
             let object_id = git_hash::ObjectId::from_str(oid)?;
@@ -1889,7 +1889,7 @@ fn get_list_of_commit_objects(
     start: git_repository::Id,
     till: Option<ObjectId>,
 ) -> anyhow::Result<Vec<String>> {
-    eprintln!("get_list_of_commit_objects: start:{start:?} till:{till:?}");
+    tracing::trace!("get_list_of_commit_objects: start:{start:?} till:{till:?}");
     let walk = start
         .ancestors()
         .all()?
@@ -1918,7 +1918,10 @@ fn get_list_of_commit_objects(
         if res.contains(&id.to_string()) {
             continue;
         }
-        let commit = commit_objects.iter().find(|c| c.id.to_string() == id.to_string()).ok_or(anyhow::format_err!("Failed to construct initial commit chain"))?;
+        let commit = match commit_objects.iter().find(|c| c.id.to_string() == id.to_string()) {
+            Some(commit) => commit,
+            None => continue,
+        };
         res.push(id.to_string());
         for parent in commit.parent_ids() {
             walk_deque.push_back(parent);
