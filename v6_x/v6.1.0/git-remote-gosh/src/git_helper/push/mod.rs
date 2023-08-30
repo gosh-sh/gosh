@@ -455,10 +455,10 @@ where
 
         for id in &parent_ids {
             tracing::trace!("check parent: {id}");
+            if self.pushed_commits.contains(id) {
+                continue;
+            }
             for repo_version in &self.repo_versions {
-                if repo_version.version == supported_contract_version().trim_matches(|c| c == '"') {
-                    continue;
-                }
                 let mut repo_contract =
                     GoshContract::new(&repo_version.repo_address, gosh_abi::REPO);
                 let parent = get_commit_address(
@@ -469,6 +469,9 @@ where
                 .await?;
                 let commit_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
                 if commit_contract.is_active(self.blockchain.client()).await? {
+                    if repo_version.version == supported_contract_version().trim_matches(|c| c == '"') {
+                        break;
+                    }
                     tracing::trace!("Found parent {id} in version {}", repo_version.version);
                     tracing::trace!("Start upgrade of the parent: {id}");
                     let parents_for_upgrade = vec![AddrVersion {
@@ -994,7 +997,7 @@ where
         // 8) Get list of objects to push with the ancestor commit
         tracing::trace!("Find objects till: {till_id:?}");
         let commit_objects_list = get_list_of_commit_objects(ancestor_id, till_id)?;
-        if self.upgraded_commits.contains(&commit_objects_list[0]) {
+        if self.pushed_commits.contains(&commit_objects_list[0]) {
             return Ok(());
         }
 
@@ -1073,7 +1076,7 @@ where
             let object_kind = self.local_repository().find_object(object_id)?.kind;
             match object_kind {
                 git_object::Kind::Commit => {
-                    self.upgraded_commits.push(oid.to_string());
+                    self.pushed_commits.push(oid.to_string());
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)
                     self.push_commit_object(
                         oid,
@@ -1500,6 +1503,7 @@ where
             tracing::trace!("Push object: {object_id:?} {object_kind:?}");
             match object_kind {
                 git_object::Kind::Commit => {
+                    self.pushed_commits.push(oid.to_string());
                     number_of_commits += 1;
                     // in case of fast forward commits can be already deployed for another branch
                     // Do not deploy them again
@@ -1912,8 +1916,6 @@ fn get_list_of_commit_objects(
         commit_objects.push(commit);
     }
 
-    // tracing::trace!("commit_objects:{commit_objects:?}");
-
     // Hashmap commits -> number of children
     // TODO: change to heap to increase speed
     let mut child_map: HashMap<String, Vec<String>> = HashMap::from_iter(
@@ -1931,14 +1933,11 @@ fn get_list_of_commit_objects(
         }
     }
 
-    // tracing::trace!("child_map:{child_map:?}");
-
     let mut res: Vec<String> = vec![];
 
     while !child_map.is_empty() {
         {
             let commit = child_map.iter().find(|(k, v)| v.is_empty()).ok_or(anyhow::format_err!("Failed to get commit with no children"))?.0.to_owned();
-            // tracing::trace!("push to res: {commit}");
             child_map.remove(&commit);
             res.push(commit);
 
@@ -1951,50 +1950,6 @@ fn get_list_of_commit_objects(
         }
     }
     res.reverse();
-    tracing::trace!("result: {res:?}");
-
-    // let mut walk_deque = VecDeque::new();
-    // walk_deque.push_back(start);
-    //
-    // while let Some(id) = walk_deque.pop_front() {
-    //     if res.contains(&id.to_string()) {
-    //         continue;
-    //     }
-    //     let commit = match commit_objects.iter().find(|c| c.id.to_string() == id.to_string()) {
-    //         Some(commit) => commit,
-    //         None => continue,
-    //     };
-    //     res.push(id.to_string());
-    //     for parent in commit.parent_ids() {
-    //         walk_deque.push_back(parent);
-    //     }
-    // }
-
-    // commit_objects.sort_by_key(|commit| commit.time().unwrap());
-    // commit_objects.reverse();
-
-    // observation from `git rev-list --reverse`
-    // 1) commits are going in reverse order (from old to new)
-    // 2) but for each commit tree elements are going in BFS order
-    //
-    // so if we just rev() commits we'll have topological order for free
-    // for commit in commit_objects.iter().rev() {
-    //     res.push(commit.id.to_string());
-        // let tree = commit.tree()?;
-        // res.push(tree.id.to_string());
-        // res.extend(
-        //     tree.traverse()
-        //         .breadthfirst
-        //         .files()?
-        //         .iter()
-        //         // IMPORTANT: ignore blobs because later logic skips blobs too
-        //         // but might change in the future refactorings
-        //         .filter(|e| !e.mode.is_blob())
-        //         .into_iter()
-        //         .map(|e| e.oid.to_string()),
-        // );
-    // }
-    // res.reverse();
     Ok(res)
 }
 

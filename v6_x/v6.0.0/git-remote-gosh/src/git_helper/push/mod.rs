@@ -455,10 +455,10 @@ where
 
         for id in &parent_ids {
             tracing::trace!("check parent: {id}");
+            if self.pushed_commits.contains(id) {
+                continue;
+            }
             for repo_version in &self.repo_versions {
-                if repo_version.version == supported_contract_version().trim_matches(|c| c == '"') {
-                    continue;
-                }
                 let mut repo_contract =
                     GoshContract::new(&repo_version.repo_address, gosh_abi::REPO);
                 let parent = get_commit_address(
@@ -469,6 +469,9 @@ where
                 .await?;
                 let commit_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
                 if commit_contract.is_active(self.blockchain.client()).await? {
+                    if repo_version.version == supported_contract_version().trim_matches(|c| c == '"') {
+                        break;
+                    }
                     tracing::trace!("Found parent {id} in version {}", repo_version.version);
                     tracing::trace!("Start upgrade of the parent: {id}");
                     let parents_for_upgrade = vec![AddrVersion {
@@ -994,7 +997,7 @@ where
         // 8) Get list of objects to push with the ancestor commit
         tracing::trace!("Find objects till: {till_id:?}");
         let commit_objects_list = get_list_of_commit_objects(ancestor_id, till_id)?;
-        if self.upgraded_commits.contains(&commit_objects_list[0]) {
+        if self.pushed_commits.contains(&commit_objects_list[0]) {
             return Ok(());
         }
 
@@ -1073,7 +1076,7 @@ where
             let object_kind = self.local_repository().find_object(object_id)?.kind;
             match object_kind {
                 git_object::Kind::Commit => {
-                    self.upgraded_commits.push(oid.to_string());
+                    self.pushed_commits.push(oid.to_string());
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)
                     self.push_commit_object(
                         oid,
@@ -1500,6 +1503,7 @@ where
             tracing::trace!("Push object: {object_id:?} {object_kind:?}");
             match object_kind {
                 git_object::Kind::Commit => {
+                    self.pushed_commits.push(oid.to_string());
                     number_of_commits += 1;
                     // in case of fast forward commits can be already deployed for another branch
                     // Do not deploy them again
