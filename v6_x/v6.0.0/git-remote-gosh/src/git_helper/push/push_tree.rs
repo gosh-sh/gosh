@@ -1,16 +1,17 @@
 use crate::{
-    blockchain::{tree::TreeNode, tvm_hash, BlockchainContractAddress, BlockchainService},
+    blockchain::{tvm_hash, BlockchainContractAddress, BlockchainService},
     git_helper::GitHelper,
 };
 use git_hash::ObjectId;
-use git_object::tree::Entry;
+use git_object::tree::{Entry, EntryMode};
 use git_odb::{Find, FindExt};
 use std::iter::Iterator;
 use std::{collections::HashMap, str::FromStr, sync::Arc};
+use std::collections::VecDeque;
 
 use super::is_going_to_ipfs;
 use crate::blockchain::contract::GoshContract;
-use crate::blockchain::tree::load::SnapshotMonitor;
+use crate::blockchain::tree::load::{SnapshotMonitor, TreeComponent, type_obj_to_entry_mod};
 use crate::blockchain::Tree;
 use crate::database::GoshDB;
 use crate::git_helper::push::parallel_snapshot_upload_support::{
@@ -56,6 +57,50 @@ fn flatten_tree(
     Ok(map)
 }
 
+async fn convert_previous_tree(
+    context: &GitHelper<impl BlockchainService + 'static>,
+    previous_tree: Option<Tree>,
+) -> anyhow::Result<HashMap<String, TreeComponent>> {
+    tracing::trace!("convert_previous_tree: previous_tree={previous_tree:?}");
+    let mut res_map = HashMap::new();
+    let root_tree = match previous_tree {
+        Some(tree) => tree,
+        None => {
+            return Ok(res_map);
+        }
+    };
+    let mut queue = VecDeque::new();
+    queue.push_back((root_tree, "".to_string()));
+
+    while let Some((tree, prefix)) = queue.pop_front() {
+        for (_, item) in tree.objects {
+            tracing::trace!("convert tree item: {item:?}");
+            match type_obj_to_entry_mod(&item.type_obj) {
+                EntryMode::Tree => {
+                    let tree_address = context.calculate_tree_address(
+                        &item.tvm_sha_tree.unwrap(),
+                    ).await?;
+                    let subtree = Tree::load(
+                        context.blockchain.client(),
+                        &tree_address,
+                    ).await?;
+                    queue.push_back(
+                        (subtree, format!("{}{}/", prefix, item.name))
+                    )
+                },
+                _ => {
+                    res_map.insert(
+                        format!("{}{}", prefix, item.name),
+                        item
+                    );
+                }
+            }
+        }
+    }
+    tracing::trace!("Converted prev tree: {res_map:?}");
+    Ok(res_map)
+}
+
 #[instrument(level = "trace", skip_all)]
 async fn construct_tree(
     context: &GitHelper<impl BlockchainService + 'static>,
@@ -65,15 +110,22 @@ async fn construct_tree(
     wallet_contract: &GoshContract,
     to_deploy: &mut Vec<ParallelTree>,
     is_upgrade: bool,
-) -> anyhow::Result<HashMap<String, TreeNode>> {
-    tracing::trace!("construct tree: tree_id={tree_id}, snapshot_to_commit:{snapshot_to_commit:?}, is_upgrade={is_upgrade}");
+    handlers: &mut ParallelTreeUploadSupport,
+    previous_tree: Option<Tree>,
+) -> anyhow::Result<HashMap<String, TreeComponent>> {
+    tracing::trace!("construct tree: tree_id={tree_id}, current_commit={current_commit}, snapshot_to_commit:{snapshot_to_commit:?}, is_upgrade={is_upgrade}");
     // flatten tree map to get rid of recursive calls of async funcs
     let flat_tree = flatten_tree(context, tree_id, "")?;
     tracing::trace!("construct tree: flat_tree={flat_tree:?}");
+    let previous_tree = convert_previous_tree(
+        context,
+        previous_tree,
+    ).await?;
     let mut nodes = HashMap::new();
     let mut paths: Vec<String> = Vec::new();
     let commit_obj = ObjectId::from_hex(current_commit.as_bytes())?;
     let commit_chain = context.get_commit_ancestors(&commit_obj)?;
+    tracing::trace!("construct tree: commit_chain={commit_chain:?}");
     tracing::trace!("start processing single tree items");
     // prepare file entries
     use git_object::tree::EntryMode::*;
@@ -123,25 +175,45 @@ async fn construct_tree(
         let file_name = entry.filename.to_string();
 
         let commit = if !is_upgrade {
-            snapshot_to_commit
-                .get(&file_name)
-                .and_then(|val| {
-                    for snap_mon in val {
-                        if commit_chain.contains(&snap_mon.latest_commit) {
-                            return Some(snap_mon.base_commit.clone());
-                        }
-                        if commit_chain.contains(&snap_mon.base_commit) {
-                            return Some(snap_mon.base_commit.clone());
+            match entry.mode {
+                Commit => {
+                    "".to_string()
+                },
+                _ => {
+                    match handlers.tree_item_to_base_commit_cache.get(&entry.oid) {
+                        Some(commit) => commit.to_owned(),
+                        None => {
+                            let commit = match snapshot_to_commit
+                                .get(path)
+                                .and_then(|val| {
+                                    for snap_mon in val {
+                                        if commit_chain.contains(&snap_mon.latest_commit) {
+                                            return Some(snap_mon.base_commit.clone());
+                                        }
+                                    }
+                                    None
+                                }) {
+                                Some(commit) => commit,
+                                None => {
+                                    previous_tree
+                                        .get(path)
+                                        .and_then(|node| Some(node.commit.clone()))
+                                        .ok_or(
+                                            anyhow::format_err!("Failed to get base commit for snapshot: {}", &file_name)
+                                        )?
+                                },
+                            };
+                            handlers.tree_item_to_base_commit_cache.insert(entry.oid.clone(), commit.clone());
+                            commit
                         }
                     }
-                    None
-                })
-                .unwrap_or(current_commit.to_string())
+                }
+            }
         } else {
             current_commit.to_string()
         };
 
-        let tree_node = TreeNode::from((Some(format!("0x{file_hash}")), None, commit, entry));
+        let tree_node = TreeComponent::from((Some(format!("0x{file_hash}")), None, commit, entry));
         let type_obj = &tree_node.type_obj;
         let key = tvm_hash(
             &context.blockchain.client(),
@@ -202,7 +274,7 @@ async fn construct_tree(
                 let commit = "".to_string();
 
                 let file_name = entry.filename.to_string();
-                let tree_node = TreeNode::from((None, Some(tree_hash.clone()), commit, entry));
+                let tree_node = TreeComponent::from((None, Some(tree_hash.clone()), commit, entry));
                 let type_obj = &tree_node.type_obj;
                 let key = tvm_hash(
                     &context.blockchain.client(),
@@ -265,6 +337,7 @@ pub async fn push_tree(
     handlers: &mut ParallelTreeUploadSupport,
     push_semaphore: Arc<Semaphore>,
     is_upgrade: bool,
+    previous_tree: Option<Tree>,
 ) -> anyhow::Result<(BlockchainContractAddress, String)> {
     tracing::trace!("start push_tree: tree_id={root_tree_id}, current_commit={current_commit}");
     let mut to_deploy = Vec::new();
@@ -276,6 +349,8 @@ pub async fn push_tree(
         wallet_contract,
         &mut to_deploy,
         is_upgrade,
+        handlers,
+        previous_tree,
     )
     .await?;
     tracing::trace!("Trees to deploy after construct: {to_deploy:?}");

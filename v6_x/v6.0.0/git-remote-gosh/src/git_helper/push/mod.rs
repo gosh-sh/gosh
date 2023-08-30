@@ -34,7 +34,7 @@ use push_tag::push_tag;
 mod delete_tag;
 pub(crate) mod parallel_snapshot_upload_support;
 
-use crate::blockchain::{branch_list, Snapshot, Tree};
+use crate::blockchain::{branch_list, Snapshot, Tree, tree};
 use crate::git_helper::push::parallel_snapshot_upload_support::{
     ParallelCommit, ParallelCommitUploadSupport, ParallelSnapshot, ParallelSnapshotUploadSupport,
     ParallelTreeUploadSupport,
@@ -44,7 +44,7 @@ use delete_tag::delete_tag;
 use parallel_diffs_upload_support::{ParallelDiff, ParallelDiffsUploadSupport};
 use push_tree::push_tree;
 
-use crate::blockchain::tree::load::{construct_map_of_snapshots, SnapshotMonitor};
+use crate::blockchain::tree::load::{construct_map_of_snapshots, GetTreeResult, SnapshotMonitor};
 use crate::git_helper::push::push_diff::save_data_to_ipfs;
 
 static PARALLEL_PUSH_LIMIT: usize = 1 << 6;
@@ -439,7 +439,7 @@ where
         local_branch_name: &str,
         set_commit: bool,
         snapshot_to_commit: &mut HashMap<String, Vec<SnapshotMonitor>>,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<Option<Tree>> {
         tracing::trace!("check_parents object_id: {object_id} remote_branch_name: {remote_branch_name}, local_branch_name: {local_branch_name}, set_commit={set_commit}");
         let mut buffer: Vec<u8> = Vec::new();
         let commit = self
@@ -453,7 +453,7 @@ where
         let commit_iter = commit.try_into_commit_iter().unwrap();
         let parent_ids: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
 
-        for id in parent_ids {
+        for id in &parent_ids {
             tracing::trace!("check parent: {id}");
             for repo_version in &self.repo_versions {
                 if repo_version.version == supported_contract_version().trim_matches(|c| c == '"') {
@@ -491,7 +491,35 @@ where
                 }
             }
         }
-        Ok(())
+
+        // If parent exists load tree of the zero parent
+        let parent_tree = match parent_ids.first() {
+            Some(id) => {
+                let mut repo = self.blockchain.repo_contract().clone();
+                let parent = get_commit_address(
+                    self.blockchain.client(),
+                    &mut repo,
+                    &id.to_string(),
+                )
+                    .await?;
+                let commit_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
+                if !commit_contract.is_active(self.blockchain.client()).await? {
+                    None
+                } else {
+                    let result: GetTreeResult = commit_contract.run_local(self.blockchain.client(), "gettree", None).await?;
+                    let tree_address = result.address;
+                    match Tree::load(
+                        self.blockchain.client(),
+                        &tree_address,
+                    ).await {
+                        Ok(tree) => Some(tree),
+                        Err(_) => None
+                    }
+                }
+            },
+            None => { None }
+        };
+        Ok(parent_tree)
     }
 
     #[instrument(level = "info", skip_all)]
@@ -622,6 +650,7 @@ where
         snapshot_to_commit: &mut HashMap<String, Vec<SnapshotMonitor>>,
         wallet_contract: &GoshContract,
         parallel_tree_upload_support: &mut ParallelTreeUploadSupport,
+        previous_tree: Option<Tree>,
     ) -> anyhow::Result<()> {
         tracing::trace!("push_commit_object: object_id={object_id}, remote_branch_name={remote_branch_name}, local_branch_name={local_branch_name}");
         let mut buffer: Vec<u8> = Vec::new();
@@ -653,7 +682,7 @@ where
         let mut parents: Vec<AddrVersion> = vec![];
         let mut repo_contract = self.blockchain.repo_contract().clone();
 
-        for id in parent_ids {
+        for id in &parent_ids {
             let parent = get_commit_address(
                 &self.blockchain.client(),
                 &mut repo_contract,
@@ -716,6 +745,9 @@ where
             let file_path = update.1.filepath.to_string();
 
             let mut found = false;
+            tracing::trace!("Searching for snapshot: {file_path}");
+            tracing::trace!("snap_to_commit: {snapshot_to_commit:?}");
+            tracing::trace!("ancestors: {ancestor_commits:?}");
             if !upgrade_commit && snapshot_to_commit.contains_key(&file_path) {
                 let snap_mon_vec = snapshot_to_commit.get_mut(&file_path).unwrap();
                 for i in 0..snap_mon_vec.len() {
@@ -814,6 +846,7 @@ where
             parallel_tree_upload_support,
             push_semaphore.clone(),
             upgrade_commit,
+            previous_tree,
         )
         .await?;
 
@@ -841,6 +874,28 @@ where
                 push_commits.push_expected(commit_address);
             }
         }
+
+        tracing::trace!("parents: {parent_ids:?}");
+        tracing::trace!("snapshot_to_commit: {snapshot_to_commit:?}");
+
+        // if !parent_ids.is_empty() {
+        //     parent_ids.remove(0);
+        //     for parent in parent_ids {
+        //         for (_, snap_mon) in &mut *snapshot_to_commit {
+        //             let mut index = 0;
+        //             loop {
+        //                 if index >= snap_mon.len() {
+        //                     break;
+        //                 }
+        //                 if snap_mon.get(index).unwrap().latest_commit == parent {
+        //                     snap_mon.remove(index);
+        //                 } else {
+        //                     index += 1;
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
         Ok(())
     }
@@ -1036,6 +1091,7 @@ where
                         snapshot_to_commit,
                         &zero_wallet_contract,
                         &mut parallel_tree_uploads,
+                        None,
                     )
                     .await?;
                 }
@@ -1436,7 +1492,7 @@ where
         }
 
         let mut number_of_commits = 0;
-
+        tracing::trace!("commit_and_tree_list:{commit_and_tree_list:?}");
         // iterate through the git objects list and push them
         for oid in &commit_and_tree_list {
             let object_id = git_hash::ObjectId::from_str(oid)?;
@@ -1455,8 +1511,7 @@ where
                     }
 
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)
-                    // TODO: check only the first commit
-                    self.check_parents(
+                    let parent_tree = self.check_parents(
                         object_id,
                         remote_branch_name,
                         local_branch_name,
@@ -1480,6 +1535,7 @@ where
                         &mut snapshot_to_commit,
                         &zero_wallet_contract,
                         &mut parallel_tree_uploads,
+                        parent_tree,
                     )
                     .await?;
                 }
@@ -1833,6 +1889,7 @@ fn get_list_of_commit_objects(
     start: git_repository::Id,
     till: Option<ObjectId>,
 ) -> anyhow::Result<Vec<String>> {
+    tracing::trace!("get_list_of_commit_objects: start:{start:?} till:{till:?}");
     let walk = start
         .ancestors()
         .all()?
@@ -1847,37 +1904,48 @@ fn get_list_of_commit_objects(
             .collect(),
     };
 
+    tracing::trace!("commits:{commits:?}");
+
     let mut commit_objects: Vec<git_repository::Commit> = Vec::new();
     for commit in commits.iter().rev() {
         let commit = commit.object()?.into_commit();
         commit_objects.push(commit);
     }
 
-    commit_objects.sort_by_key(|commit| commit.time().unwrap());
-    commit_objects.reverse();
+    // Hashmap commits -> number of children
+    // TODO: change to heap to increase speed
+    let mut child_map: HashMap<String, Vec<String>> = HashMap::from_iter(
+        commits.into_iter().map(|el| (el.to_string(), vec![]))
+    );
 
-    let mut res = Vec::new();
-    // observation from `git rev-list --reverse`
-    // 1) commits are going in reverse order (from old to new)
-    // 2) but for each commit tree elements are going in BFS order
-    //
-    // so if we just rev() commits we'll have topological order for free
-    for commit in commit_objects.iter().rev() {
-        res.push(commit.id.to_string());
-        let tree = commit.tree()?;
-        res.push(tree.id.to_string());
-        // res.extend(
-        //     tree.traverse()
-        //         .breadthfirst
-        //         .files()?
-        //         .iter()
-        //         // IMPORTANT: ignore blobs because later logic skips blobs too
-        //         // but might change in the future refactorings
-        //         .filter(|e| !e.mode.is_blob())
-        //         .into_iter()
-        //         .map(|e| e.oid.to_string()),
-        // );
+    for commit in commit_objects {
+        for parent in commit.parent_ids() {
+            match child_map.get_mut(&parent.to_string()) {
+                Some(val) => {
+                    val.push(commit.id.to_string());
+                },
+                None => {},
+            }
+        }
     }
+
+    let mut res: Vec<String> = vec![];
+
+    while !child_map.is_empty() {
+        {
+            let commit = child_map.iter().find(|(k, v)| v.is_empty()).ok_or(anyhow::format_err!("Failed to get commit with no children"))?.0.to_owned();
+            child_map.remove(&commit);
+            res.push(commit);
+
+        }
+        let commit = res.last().unwrap();
+        for (_, children) in &mut child_map {
+            if children.contains(commit) {
+                children.retain(|c| c != commit);
+            }
+        }
+    }
+    res.reverse();
     Ok(res)
 }
 

@@ -128,6 +128,7 @@ async fn restore_a_set_of_blobs(
     }
 }
 
+#[instrument(level = "trace", skip_all)]
 async fn restore_a_set_of_blobs_from_a_known_snapshot(
     es_client: &EverClient,
     ipfs_endpoint: &str,
@@ -290,6 +291,7 @@ async fn restore_a_set_of_blobs_from_a_known_snapshot(
     Ok(blobs.to_owned())
 }
 
+#[instrument(level = "trace", skip_all)]
 async fn restore_a_set_of_blobs_from_a_deleted_snapshot(
     es_client: &EverClient,
     ipfs_endpoint: &str,
@@ -656,8 +658,9 @@ impl BlobsRebuildingPlan {
             let branch_ref = branch.to_string();
             fetched_blobs.push(tokio::spawn(
                 async move {
-                    let attempt = 0;
+                    let mut attempt = 0;
                     let result = loop {
+                        attempt += 1;
                         let result = restore_a_set_of_blobs(
                             &es_client,
                             &ipfs_http_endpoint,
