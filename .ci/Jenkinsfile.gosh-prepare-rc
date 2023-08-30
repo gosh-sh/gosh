@@ -173,8 +173,8 @@ pipeline {
                             deployVersion(version, batch, basePort + (j * batchSize))
                         }
 
-                        runUpgradeTests(batch, basePort + (j * batchSize), "v6_x/v6.0.0", "v6_x/v6.1.0")
                         runUpgradeTests(batch, basePort + (j * batchSize), "v5_x/v5.1.0", "v6_x/v6.1.0")
+                        runUpgradeTests(batch, basePort + (j * batchSize), "v6_x/v6.0.0", "v6_x/v6.1.0")
                         // runUpgradeTests(batch, basePort + (j * batchSize), "v4_x", "v5_x/v5.1.0")
                         // runUpgradeTests(batch, basePort + (j * batchSize), "v5_x/v5.0.0", "v5_x/v5.1.0")
                         // runUpgradeTests(batch, basePort + (j * batchSize), "v3_x", "v4_x")
@@ -500,7 +500,7 @@ def runSingleFunctionalTest(script, index, port, version) {
     dir("${WORKSPACE}/tests_workspace_${index}") {
         sh """
             export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
-            export GOSH_REMOTE_WAIT_TIMEOUT=300
+            export GOSH_REMOTE_WAIT_TIMEOUT=500
             ./set-vars.sh ${version}_workspace_${index} http://localnode:${port}
             ./${script}
         """
@@ -529,7 +529,7 @@ def runSingleUpgradeTest(script, index, port, from, to) {
     dir("${WORKSPACE}/tests_workspace_${index}") {
         sh """
             export PATH=/home/jenkins/.everdev/tonos-cli/:/home/jenkins/bin:$PATH
-            export GOSH_REMOTE_WAIT_TIMEOUT=300
+            export GOSH_REMOTE_WAIT_TIMEOUT=500
             ./set-vars.sh ${from}_workspace_${index} http://localnode:${port}
             ./upgrade_tests/set_up.sh ${from}_workspace_${index} ${to}_workspace_${index}
             ./upgrade_tests/${script}
