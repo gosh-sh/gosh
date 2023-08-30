@@ -165,7 +165,7 @@ pipeline {
                         upgradeBatches.add(new ArrayList(upgradeFiles.subList(i, end)))  // <-- Modified
                     }
 
-                    for (int j = 1; j < upgradeBatches.size(); j++) {
+                    for (int j = 0; j < upgradeBatches.size(); j++) {
                         def batch = upgradeBatches[j]
 
                         for (version in versions) {
