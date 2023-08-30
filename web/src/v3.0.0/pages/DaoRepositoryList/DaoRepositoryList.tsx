@@ -1,17 +1,17 @@
 import { Button, Input } from '../../../components/Form'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
-import { useRecoilValue, useSetRecoilState } from 'recoil'
+import { useSetRecoilState } from 'recoil'
 import { appModalStateAtom } from '../../../store/app.state'
 import { RepositoryCreateModal } from '../../components/Modal'
 import Loader from '../../../components/Loader'
 import { ListBoundary } from './components'
-import { daoRepositoryListSelector } from '../../store/repository.state'
 import { useDaoMember } from '../../hooks/dao.hooks'
+import { useDaoRepositoryList } from '../../hooks/repository.hooks'
 
 const DaoRepositoryListPage = (props: { count?: number }) => {
     const { count = 10 } = props
-    const repositoryList = useRecoilValue(daoRepositoryListSelector)
+    const repositories = useDaoRepositoryList({ count })
     const member = useDaoMember()
     const setModal = useSetRecoilState(appModalStateAtom)
 
@@ -27,7 +27,7 @@ const DaoRepositoryListPage = (props: { count?: number }) => {
         <>
             <div className="flex items-center justify-between pb-2 mb-4 gap-4">
                 <h3 className="text-xl font-medium">Repositories</h3>
-                {repositoryList.isFetching && (
+                {repositories.isFetching && (
                     <Loader className="text-xs">Updating...</Loader>
                 )}
             </div>

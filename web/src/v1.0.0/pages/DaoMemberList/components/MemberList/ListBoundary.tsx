@@ -2,8 +2,6 @@ import Alert from '../../../../../components/Alert'
 import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
 import classNames from 'classnames'
 import { useEffect } from 'react'
-import { useRecoilValue } from 'recoil'
-import { daoMemberListSelector } from '../../../../store/dao.state'
 import { ListItem, ListItemHeader, ListItemSkeleton } from './ListItem'
 import { useDaoMemberList } from '../../../../hooks/dao.hooks'
 import { Button } from '../../../../../components/Form'
@@ -14,8 +12,7 @@ type TListBoundaryInnerProps = React.HTMLAttributes<HTMLDivElement> & {
 
 const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
     const { className, search } = props
-    const members = useDaoMemberList()
-    const filtered = useRecoilValue(daoMemberListSelector(search))
+    const members = useDaoMemberList({ search })
     const { showBoundary } = useErrorBoundary()
 
     useEffect(() => {
@@ -33,10 +30,10 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
         >
             {members.isFetching && !members.items.length && <ListItemSkeleton />}
 
-            {!!filtered.items.length && (
+            {!!members.items.length && (
                 <div className="divide-y divide-gray-e6edff">
                     <ListItemHeader />
-                    {filtered.items.map((item, index) => (
+                    {members.items.map((item, index) => (
                         <ListItem key={index} item={item} />
                     ))}
                 </div>

@@ -2,8 +2,6 @@ import Alert from '../../../../../components/Alert'
 import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
 import classNames from 'classnames'
 import { useEffect } from 'react'
-import { useRecoilValue } from 'recoil'
-import { daoMemberListSelector } from '../../../../store/dao.state'
 import { ListItem, ListItemHeader, ListItemSkeleton } from './ListItem'
 import { TDaoMemberListItem } from '../../../../types/dao.types'
 import { Field, Form, Formik } from 'formik'
@@ -32,8 +30,7 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
     const { showBoundary } = useErrorBoundary()
     const navigate = useNavigate()
     const dao = useDao()
-    const members = useDaoMemberList()
-    const filtered = useRecoilValue(daoMemberListSelector(search))
+    const members = useDaoMemberList({ search })
     const member = useDaoMember()
     const { updateMember } = useUpdateDaoMember()
 
@@ -71,7 +68,7 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
 
             <Formik
                 initialValues={{
-                    items: filtered.items.map((item) => ({
+                    items: members.items.map((item) => ({
                         ...item,
                         _allowance: item.allowance.toString(),
                         _balance: item.balance.toString(),

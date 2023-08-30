@@ -1,6 +1,4 @@
-import { useRecoilValue } from 'recoil'
 import { useDaoRepositoryList } from '../../../hooks/repository.hooks'
-import { daoRepositoryListSelector } from '../../../store/repository.state'
 import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
 import { ListItem, ListItemSkeleton } from './ListItem'
 import { toast } from 'react-toastify'
@@ -14,13 +12,12 @@ import { useDao } from '../../../hooks/dao.hooks'
 const ListBoundaryInner = (props: { count: number }) => {
     const { count } = props
     const dao = useDao()
-    const { getNext } = useDaoRepositoryList({ count })
-    const repositoryList = useRecoilValue(daoRepositoryListSelector)
+    const repositories = useDaoRepositoryList({ count })
     const { showBoundary } = useErrorBoundary()
 
     const onGetNext = async () => {
         try {
-            await getNext()
+            await repositories.getNext()
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)
@@ -28,18 +25,18 @@ const ListBoundaryInner = (props: { count: number }) => {
     }
 
     useEffect(() => {
-        if (repositoryList.error) {
-            showBoundary(repositoryList.error)
+        if (repositories.error) {
+            showBoundary(repositories.error)
         }
-    }, [repositoryList.error])
+    }, [repositories.error])
 
     return (
         <div className="border border-gray-e6edff rounded-xl overflow-hidden">
-            {repositoryList.isFetching && !repositoryList.items.length && (
+            {repositories.isFetching && !repositories.items.length && (
                 <ListItemSkeleton />
             )}
 
-            {repositoryList.isEmpty && (
+            {repositories.isEmpty && (
                 <div className="text-sm text-gray-7c8db5 text-center p-4">
                     <p>There are no repositories</p>
                     <p className="text-xs">
@@ -50,12 +47,12 @@ const ListBoundaryInner = (props: { count: number }) => {
             )}
 
             <div className="divide-y divide-gray-e6edff">
-                {repositoryList.items.map((item, index) => (
+                {repositories.items.map((item, index) => (
                     <ListItem key={index} daoName={dao.details.name!} item={item} />
                 ))}
             </div>
 
-            {repositoryList.hasNext && (
+            {repositories.hasNext && (
                 <Button
                     type="button"
                     className={classNames(
@@ -64,8 +61,8 @@ const ListBoundaryInner = (props: { count: number }) => {
                         '!text-gray-7c8db5 !bg-gray-fafafd',
                         'disabled:opacity-70',
                     )}
-                    disabled={repositoryList.isFetching}
-                    isLoading={repositoryList.isFetching}
+                    disabled={repositories.isFetching}
+                    isLoading={repositories.isFetching}
                     onClick={onGetNext}
                 >
                     Show more
