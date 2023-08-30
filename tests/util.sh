@@ -340,7 +340,8 @@ function upgrade_DAO_6 {
   NEW_SYSTEM_CONTRACT_ADDR=$2
 
   echo "***** get cell for upgrade *****"
-  TVMCELL=$(gosh-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellSetUpgrade --newversion $TEST_VERSION --description "" --comment "" --time null  | sed -n '/value0/ p' | cut -d'"' -f 4)
+  
+  TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellSetUpgrade "{\"newversion\":\"$TEST_VERSION\",\"description\":\"\",\"comment\":\"\",\"time\":null}" | sed -n '/value0/ p' | cut -d'"' -f 4)
   
   start_prop_and_vote
   sleep 10
@@ -371,7 +372,8 @@ function add_protected_branch {
   convert_version
   if [[ $CUT_VERSION -ge 6 ]]; then
     echo "***** get cell for add protected branch *****"
-    TVMCELL=$(gosh-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellAddProtectedBranch --repoName $REPO_NAME --branchName $BRANCH_NAME --time null | sed -n '/value0/ p' | cut -d'"' -f 4)
+
+    TVMCELL=$(tonos-cli -j runx --abi $WALLET_ABI --addr $WALLET_ADDR -m getCellAddProtectedBranch "{\"repoName\":\"$REPO_NAME\",\"branchName\":\"$BRANCH_NAME\",\"time\":null}" | sed -n '/value0/ p' | cut -d'"' -f 4)
     
     start_prop_and_vote
   else
