@@ -158,6 +158,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             GoshDao(_previous.get()).getPreviousInfo{value: 0.1 ton, flag: 1}(_nameDao); 
         }
         else { 
+            _isUpgraded = true;
             _isTaskRedeployed = true;
             this.deployWalletsConst{value: 0.1 ton, flag: 1}(pubmem, 0); 
         }
