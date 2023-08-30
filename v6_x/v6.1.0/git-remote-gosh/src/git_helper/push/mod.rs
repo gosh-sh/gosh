@@ -1904,29 +1904,71 @@ fn get_list_of_commit_objects(
             .collect(),
     };
 
+    tracing::trace!("commits:{commits:?}");
+
     let mut commit_objects: Vec<git_repository::Commit> = Vec::new();
     for commit in commits.iter().rev() {
         let commit = commit.object()?.into_commit();
         commit_objects.push(commit);
     }
 
-    let mut res: Vec<String> = vec![];
-    let mut walk_deque = VecDeque::new();
-    walk_deque.push_back(start);
+    // tracing::trace!("commit_objects:{commit_objects:?}");
 
-    while let Some(id) = walk_deque.pop_front() {
-        if res.contains(&id.to_string()) {
-            continue;
-        }
-        let commit = match commit_objects.iter().find(|c| c.id.to_string() == id.to_string()) {
-            Some(commit) => commit,
-            None => continue,
-        };
-        res.push(id.to_string());
+    // Hashmap commits -> number of children
+    // TODO: change to heap to increase speed
+    let mut child_map: HashMap<String, Vec<String>> = HashMap::from_iter(
+        commits.into_iter().map(|el| (el.to_string(), vec![]))
+    );
+
+    for commit in commit_objects {
         for parent in commit.parent_ids() {
-            walk_deque.push_back(parent);
+            match child_map.get_mut(&parent.to_string()) {
+                Some(val) => {
+                    val.push(commit.id.to_string());
+                },
+                None => {},
+            }
         }
     }
+
+    // tracing::trace!("child_map:{child_map:?}");
+
+    let mut res: Vec<String> = vec![];
+
+    while !child_map.is_empty() {
+        {
+            let commit = child_map.iter().find(|(k, v)| v.is_empty()).ok_or(anyhow::format_err!("Failed to get commit with no children"))?.0.to_owned();
+            // tracing::trace!("push to res: {commit}");
+            child_map.remove(&commit);
+            res.push(commit);
+
+        }
+        let commit = res.last().unwrap();
+        for (_, children) in &mut child_map {
+            if children.contains(commit) {
+                children.retain(|c| c != commit);
+            }
+        }
+    }
+    res.reverse();
+    tracing::trace!("result: {res:?}");
+
+    // let mut walk_deque = VecDeque::new();
+    // walk_deque.push_back(start);
+    //
+    // while let Some(id) = walk_deque.pop_front() {
+    //     if res.contains(&id.to_string()) {
+    //         continue;
+    //     }
+    //     let commit = match commit_objects.iter().find(|c| c.id.to_string() == id.to_string()) {
+    //         Some(commit) => commit,
+    //         None => continue,
+    //     };
+    //     res.push(id.to_string());
+    //     for parent in commit.parent_ids() {
+    //         walk_deque.push_back(parent);
+    //     }
+    // }
 
     // commit_objects.sort_by_key(|commit| commit.time().unwrap());
     // commit_objects.reverse();
@@ -1952,7 +1994,7 @@ fn get_list_of_commit_objects(
         //         .map(|e| e.oid.to_string()),
         // );
     // }
-    res.reverse();
+    // res.reverse();
     Ok(res)
 }
 
