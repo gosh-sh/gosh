@@ -63,6 +63,8 @@ elif [ "$VERSION" = "v5_x/v5.1.0" ]; then
   echo "" > SystemContract-5.1.0.addr
 elif [ "$VERSION" = "v6_x/v6.0.0" ]; then
   echo "" > SystemContract-6.0.0.addr
+elif [ "$VERSION" = "v6_x/v6.1.0" ]; then
+  echo "" > SystemContract-6.1.0.addr
 else
  exit 1
 fi
