@@ -15,7 +15,6 @@ pub async fn wait_snapshots_until_ready<B>(
 where
     B: BlockchainService + 'static,
 {
-    tracing::trace!("wait_snapshots_until_ready: snapshots={addresses:?}");
     let mut current_status = JoinSet::<anyhow::Result<Vec<BlockchainContractAddress>>>::new();
 
     let mut expected_snapshots = Vec::from(addresses);
