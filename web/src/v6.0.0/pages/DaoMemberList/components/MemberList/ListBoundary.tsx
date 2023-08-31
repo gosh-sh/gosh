@@ -32,8 +32,7 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
     const { showBoundary } = useErrorBoundary()
     const navigate = useNavigate()
     const dao = useDao()
-    const members = useDaoMemberList()
-    const filtered = useRecoilValue(daoMemberListSelector(search))
+    const members = useDaoMemberList({ search })
     const member = useDaoMember()
     const { updateMember } = useUpdateDaoMember()
 
@@ -71,7 +70,7 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
 
             <Formik
                 initialValues={{
-                    items: filtered.items.map((item) => ({
+                    items: members.items.map((item) => ({
                         ...item,
                         _allowance: item.allowance.toString(),
                         _balance: item.balance.toString(),

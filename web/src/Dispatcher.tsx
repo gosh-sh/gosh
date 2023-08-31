@@ -14,6 +14,7 @@ const App_v4 = lazy(() => import('./v4.0.0/App'))
 const App_v5 = lazy(() => import('./v5.0.0/App'))
 const App_v5_1 = lazy(() => import('./v5.1.0/App'))
 const App_v6 = lazy(() => import('./v6.0.0/App'))
+const App_v6_1 = lazy(() => import('./v6.1.0/App'))
 
 const renderApp = (version: string) => {
     switch (version) {
@@ -31,6 +32,8 @@ const renderApp = (version: string) => {
             return <App_v5_1 />
         case '6.0.0':
             return <App_v6 />
+        case '6.1.0':
+            return <App_v6_1 />
         default:
             return <Alert variant="danger">Version {version} is not supported</Alert>
     }
@@ -85,7 +88,11 @@ const Dispatcher = () => {
                 }
             }
 
-            setAppContext((state) => ({ ...state, version }))
+            setAppContext((state) => ({
+                ...state,
+                version,
+                daoname: routeMatch?.params.daoname,
+            }))
         }
 
         if (isInitialized) {

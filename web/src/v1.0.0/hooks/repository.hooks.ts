@@ -1,6 +1,5 @@
-import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
-import { daoRepositoryListAtom } from '../store/repository.state'
-import { daoDetailsAtom, daoMemberAtom } from '../store/dao.state'
+import { useRecoilState, useSetRecoilState } from 'recoil'
+import { daoRepositoryListSelector } from '../store/repository.state'
 import { TGoshRepositoryListItem } from '../types/repository.types'
 import { getPaginatedAccounts } from '../../blockchain/utils'
 import { getSystemContract } from '../blockchain/helpers'
@@ -12,11 +11,12 @@ import _ from 'lodash'
 import { useCallback, useEffect } from 'react'
 import { GoshRepository } from '../blockchain/repository'
 import { appToastStatusSelector } from '../../store/app.state'
+import { useDao, useDaoMember } from './dao.hooks'
 
 export function useCreateRepository() {
-    const { details: dao } = useRecoilValue(daoDetailsAtom)
-    const member = useRecoilValue(daoMemberAtom)
-    const setRepositories = useSetRecoilState(daoRepositoryListAtom)
+    const { details: dao } = useDao()
+    const member = useDaoMember()
+    const setRepositories = useSetRecoilState(daoRepositoryListSelector(dao.name))
     const [status, setStatus] = useRecoilState(
         appToastStatusSelector('__createrepository'),
     )
@@ -98,10 +98,10 @@ export function useCreateRepository() {
     return { create, status }
 }
 
-export function useDaoRepositoryList(params: { count: number }) {
-    const { count } = params
-    const { details: dao } = useRecoilValue(daoDetailsAtom)
-    const [data, setData] = useRecoilState(daoRepositoryListAtom)
+export function useDaoRepositoryList(params: { count?: number } = {}) {
+    const { count = 5 } = params
+    const { details: dao } = useDao()
+    const [data, setData] = useRecoilState(daoRepositoryListSelector(dao.name))
 
     const getBlockchainItems = async (params: {
         daoaddr: string
@@ -202,7 +202,8 @@ export function useDaoRepositoryList(params: { count: number }) {
     }, [getRepositoryList])
 
     return {
+        ...data,
         getNext,
-        data,
+        isEmpty: !data.isFetching && !data.items.length,
     }
 }

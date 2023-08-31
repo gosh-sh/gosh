@@ -15,11 +15,11 @@ import {
     useSetRecoilState,
 } from 'recoil'
 import {
-    daoDetailsAtom,
-    daoEventListAtom,
+    daoDetailsSelector,
+    daoEventListSelector,
     daoEventSelector,
-    daoMemberAtom,
-    daoMemberListAtom,
+    daoMemberListSelector,
+    daoMemberSelector,
     userDaoListAtom,
 } from '../store/dao.state'
 import {
@@ -28,7 +28,6 @@ import {
     TDaoListItem,
     TDaoMemberListItem,
 } from '../types/dao.types'
-import { useParams } from 'react-router-dom'
 import { Dao } from '../blockchain/dao'
 import { UserProfile } from '../../blockchain/userprofile'
 import { DaoWallet } from '../blockchain/daowallet'
@@ -36,8 +35,7 @@ import { TToastStatus } from '../../types/common.types'
 import { getPaginatedAccounts } from '../../blockchain/utils'
 import { DaoEvent } from '../blockchain/daoevent'
 import { GoshAdapterFactory } from 'react-gosh'
-import { daoRepositoryListAtom } from '../store/repository.state'
-import { appToastStatusSelector } from '../../store/app.state'
+import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
 
 export function useCreateDao() {
     const profile = useProfile()
@@ -326,13 +324,8 @@ export function useUserDaoList(params: { count?: number; loadOnInit?: boolean } 
 
 export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {}) {
     const { loadOnInit, subscribe } = params
-    const { daoname } = useParams()
-    const [data, setData] = useRecoilState(daoDetailsAtom)
-    const resetDao = useResetRecoilState(daoDetailsAtom)
-    const resetDaoRepositories = useResetRecoilState(daoRepositoryListAtom)
-    const resetDaoEvents = useResetRecoilState(daoEventListAtom)
-    const resetDaoMembers = useResetRecoilState(daoMemberListAtom)
-    const resetDaoMember = useResetRecoilState(daoMemberAtom)
+    const { daoname } = useRecoilValue(appContextAtom)
+    const [data, setData] = useRecoilState(daoDetailsSelector(daoname))
 
     const getDetails = async (account?: Dao) => {
         if (!account) {
@@ -360,7 +353,7 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
     const getDao = useCallback(async () => {
         try {
             if (!daoname) {
-                throw new GoshError('DAO name undefined')
+                return
             }
 
             setData((state) => ({ ...state, isFetching: true }))
@@ -400,16 +393,6 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
         if (loadOnInit) {
             getDao()
         }
-
-        return () => {
-            if (loadOnInit) {
-                resetDao()
-                resetDaoRepositories()
-                resetDaoEvents()
-                resetDaoMembers()
-                resetDaoMember()
-            }
-        }
     }, [getDao, loadOnInit])
 
     useEffect(() => {
@@ -439,9 +422,9 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
 export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean } = {}) {
     const { loadOnInit, subscribe } = params
     const { user } = useUser()
-    const { details: dao } = useRecoilValue(daoDetailsAtom)
-    const [data, setData] = useRecoilState(daoMemberAtom)
-    const resetData = useResetRecoilState(daoMemberAtom)
+    const { details: dao } = useDao()
+    const [data, setData] = useRecoilState(daoMemberSelector(dao.name))
+    const resetData = useResetRecoilState(daoMemberSelector(dao.name))
     const setStatus0 = useSetRecoilState(appToastStatusSelector('__activatedaowallet'))
 
     const activate = async (profile: UserProfile, wallet: DaoWallet) => {
@@ -559,10 +542,14 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
     return data
 }
 
-export function useDaoMemberList(params: { count?: number; loadOnInit?: boolean } = {}) {
-    const { count = 10, loadOnInit } = params
-    const { details: dao } = useRecoilValue(daoDetailsAtom)
-    const [data, setData] = useRecoilState(daoMemberListAtom)
+export function useDaoMemberList(
+    params: { count?: number; search?: string; loadOnInit?: boolean } = {},
+) {
+    const { count = 10, search, loadOnInit } = params
+    const { details: dao } = useDao()
+    const [data, setData] = useRecoilState(
+        daoMemberListSelector({ daoname: dao.name, search }),
+    )
 
     const getMemberList = useCallback(
         async (from: number, to?: number) => {
@@ -628,7 +615,7 @@ export function useDaoMemberList(params: { count?: number; loadOnInit?: boolean 
 }
 
 function useDaoHelpers() {
-    const member = useRecoilValue(daoMemberAtom)
+    const member = useDaoMember()
 
     const nocallback = () => {}
 
@@ -800,7 +787,7 @@ function useDaoHelpers() {
 }
 
 export function useCreateDaoMember() {
-    const member = useRecoilValue(daoMemberAtom)
+    const member = useDaoMember()
     const { beforeCreateEvent } = useDaoHelpers()
     const [status, setStatus] = useRecoilState(
         appToastStatusSelector('__createdaomember'),
@@ -856,8 +843,9 @@ export function useCreateDaoMember() {
 }
 
 export function useDeleteDaoMember() {
-    const member = useRecoilValue(daoMemberAtom)
-    const setMemberList = useSetRecoilState(daoMemberListAtom)
+    const { details: dao } = useDao()
+    const member = useDaoMember()
+    const setMemberList = useSetRecoilState(daoMemberListSelector({ daoname: dao.name }))
     const { beforeCreateEvent } = useDaoHelpers()
     const [status, setStatus] = useRecoilState(
         appToastStatusSelector('__deletedaomember'),
@@ -927,9 +915,9 @@ export function useDeleteDaoMember() {
 
 export function useDaoEventList(params: { count?: number; loadOnInit?: boolean } = {}) {
     const { count = 10, loadOnInit } = params
-    const { details: dao } = useRecoilValue(daoDetailsAtom)
-    const member = useRecoilValue(daoMemberAtom)
-    const [data, setData] = useRecoilState(daoEventListAtom)
+    const { details: dao } = useDao()
+    const member = useDaoMember()
+    const [data, setData] = useRecoilState(daoEventListSelector(dao.name))
 
     const getBlockchainItems = async (params: {
         daoAccount: Dao
@@ -941,18 +929,20 @@ export function useDaoEventList(params: { count?: number; loadOnInit?: boolean }
         const codeHash = await daoAccount.getEventCodeHash()
         const { results, lastId, completed } = await getPaginatedAccounts({
             filters: [`code_hash: {eq:"${codeHash}"}`],
+            result: ['last_paid'],
             limit,
             lastId: cursor,
         })
-        const items = await executeByChunk<{ id: string }, TDaoEventDetails>(
+        const items = await executeByChunk<any, TDaoEventDetails>(
             results,
             MAX_PARALLEL_READ,
-            async ({ id }) => {
+            async ({ id, last_paid }) => {
                 const account = await daoAccount.getEvent({ address: id })
                 const details = await account.getDetails({ wallet: daoWallet })
                 return {
                     account,
                     address: id,
+                    updatedAt: last_paid,
                     ...details,
                 }
             },
@@ -1062,11 +1052,10 @@ export function useDaoEventList(params: { count?: number; loadOnInit?: boolean }
     }, [getEventList, loadOnInit])
 
     return {
+        ...data,
         openItem,
         closeItems,
         getNext,
-        ...data,
-        items: [...data.items].sort((a, b) => (a.address > b.address ? 1 : -1)),
         isEmpty: !data.isFetching && !data.items.length,
     }
 }
@@ -1076,9 +1065,9 @@ export function useDaoEvent(
     options: { loadOnInit?: boolean; subscribe?: boolean } = {},
 ) {
     const { loadOnInit, subscribe } = options
-    const { details: dao } = useRecoilValue(daoDetailsAtom)
-    const member = useRecoilValue(daoMemberAtom)
-    const [events, setEvents] = useRecoilState(daoEventListAtom)
+    const { details: dao } = useDao()
+    const member = useDaoMember()
+    const [events, setEvents] = useRecoilState(daoEventListSelector(dao.name))
     const event = useRecoilValue(daoEventSelector(address))
     const [error, setError] = useState<any>()
 
@@ -1097,7 +1086,15 @@ export function useDaoEvent(
                     ? found.account
                     : await dao.account.getEvent({ address })
                 const details = await account.getDetails({ wallet: member.wallet })
-                found = { account, address, ...found, ...details }
+                const accdata = await account.account.getAccount()
+                found = {
+                    ...found,
+                    ...details,
+                    account,
+                    address,
+                    updatedAt: accdata.last_paid,
+                }
+
                 setEvents((state) => {
                     const updated = [...state.items]
                     if (!updated.find(({ address }) => address === found?.address)) {
@@ -1190,7 +1187,7 @@ export function useDaoEvent(
 }
 
 export function useVoteDaoEvent() {
-    const member = useRecoilValue(daoMemberAtom)
+    const member = useDaoMember()
     const { beforeVote } = useDaoHelpers()
     const [status, setStatus] = useRecoilState(appToastStatusSelector('__voteforevent'))
 
@@ -1226,8 +1223,8 @@ export function useVoteDaoEvent() {
 }
 
 export function useUpgradeDao() {
-    const dao = useRecoilValue(daoDetailsAtom)
-    const member = useRecoilValue(daoMemberAtom)
+    const dao = useDao()
+    const member = useDaoMember()
     const { beforeCreateEvent } = useDaoHelpers()
     const [versions, setVersions] = useState<string[]>()
     const [alert, setAlert] = useState<'isNotLatest' | 'isUpgradeAvailable'>()

@@ -1,6 +1,5 @@
-import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
-import { daoRepositoryListAtom } from '../store/repository.state'
-import { daoDetailsAtom, daoMemberAtom } from '../store/dao.state'
+import { useRecoilState, useSetRecoilState } from 'recoil'
+import { daoRepositoryListSelector } from '../store/repository.state'
 import { TGoshRepositoryListItem } from '../types/repository.types'
 import { getPaginatedAccounts } from '../../blockchain/utils'
 import { getSystemContract } from '../blockchain/helpers'
@@ -11,13 +10,13 @@ import { MAX_PARALLEL_READ } from '../../constants'
 import _ from 'lodash'
 import { useCallback, useEffect } from 'react'
 import { GoshRepository } from '../blockchain/repository'
-import { useDaoHelpers } from './dao.hooks'
+import { useDao, useDaoHelpers, useDaoMember } from './dao.hooks'
 import { appToastStatusSelector } from '../../store/app.state'
 
 export function useCreateRepository() {
-    const { details: dao } = useRecoilValue(daoDetailsAtom)
-    const member = useRecoilValue(daoMemberAtom)
-    const setRepositories = useSetRecoilState(daoRepositoryListAtom)
+    const { details: dao } = useDao()
+    const member = useDaoMember()
+    const setRepositories = useSetRecoilState(daoRepositoryListSelector(dao.name))
     const { beforeCreateEvent } = useDaoHelpers()
     const [status, setStatus] = useRecoilState(
         appToastStatusSelector('__createrepository'),
@@ -128,8 +127,8 @@ export function useCreateRepository() {
 
 export function useDaoRepositoryList(params: { count?: number } = {}) {
     const { count = 5 } = params
-    const { details: dao } = useRecoilValue(daoDetailsAtom)
-    const [data, setData] = useRecoilState(daoRepositoryListAtom)
+    const { details: dao } = useDao()
+    const [data, setData] = useRecoilState(daoRepositoryListSelector(dao.name))
 
     const getBlockchainItems = async (params: {
         daoaddr: string
@@ -230,13 +229,14 @@ export function useDaoRepositoryList(params: { count?: number } = {}) {
     }, [getRepositoryList])
 
     return {
+        ...data,
         getNext,
-        data,
+        isEmpty: !data.isFetching && !data.items.length,
     }
 }
 
 export function useCreateRepositoryTag() {
-    const member = useRecoilValue(daoMemberAtom)
+    const member = useDaoMember()
     const { beforeCreateEvent } = useDaoHelpers()
     const [status, setStatus] = useRecoilState(
         appToastStatusSelector('__createrepositorytag'),
@@ -287,7 +287,7 @@ export function useCreateRepositoryTag() {
 }
 
 export function useDeleteRepositoryTag() {
-    const member = useRecoilValue(daoMemberAtom)
+    const member = useDaoMember()
     const { beforeCreateEvent } = useDaoHelpers()
     const [status, setStatus] = useRecoilState(
         appToastStatusSelector('__deleterepositorytag'),
@@ -338,7 +338,7 @@ export function useDeleteRepositoryTag() {
 }
 
 export function useUpdateRepositoryDescription() {
-    const member = useRecoilValue(daoMemberAtom)
+    const member = useDaoMember()
     const { beforeCreateEvent } = useDaoHelpers()
     const [status, setStatus] = useRecoilState(
         appToastStatusSelector('__updaterepositorydescription'),

@@ -2,7 +2,7 @@ import React from 'react'
 import { atom, selectorFamily } from 'recoil'
 import { TToastStatus } from '../types/common.types'
 
-export const appContextAtom = atom<{ version: string | null }>({
+export const appContextAtom = atom<{ version: string | null; daoname?: string }>({
     key: 'AppContextAtom',
     default: { version: null },
 })

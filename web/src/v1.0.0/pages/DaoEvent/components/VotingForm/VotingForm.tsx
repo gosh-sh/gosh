@@ -95,6 +95,7 @@ const DaoEventVotingForm = (props: TDaoEventVotingFormProps) => {
                                 ),
                             }}
                             help={`Available ${getMaxAmount()}`}
+                            disabled={isSubmitting}
                         />
                     </div>
                     <div className="mt-6 flex flex-nowrap">
