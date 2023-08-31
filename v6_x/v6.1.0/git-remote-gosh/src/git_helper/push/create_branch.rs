@@ -108,7 +108,6 @@ where
             let file_path = entry.filepath.to_string();
             let mut repo_contract = blockchain.repo_contract().clone();
 
-
             let expected_snapshot_addr = Snapshot::calculate_address(
                 self.context.blockchain.client(),
                 &mut repo_contract,

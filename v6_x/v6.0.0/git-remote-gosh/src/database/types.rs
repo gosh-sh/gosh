@@ -1,11 +1,11 @@
 use crate::blockchain::snapshot::PushDiffCoordinate;
-use crate::blockchain::tree::TreeNode;
 use crate::blockchain::AddrVersion;
 use crate::git_helper::push::parallel_diffs_upload_support::ParallelDiff;
 use crate::git_helper::push::parallel_snapshot_upload_support::{ParallelCommit, ParallelTree};
 use git_hash::ObjectId;
 use std::collections::HashMap;
 use std::str::FromStr;
+use crate::blockchain::tree::load::TreeComponent;
 
 // change to DeployCommitParams?
 #[derive(Serialize, Deserialize)]
@@ -32,7 +32,7 @@ impl From<ParallelCommit> for DBCommit {
 #[derive(Serialize, Deserialize)]
 pub struct DBTree {
     tree_id: String,
-    tree_nodes: HashMap<String, TreeNode>,
+    tree_nodes: HashMap<String, TreeComponent>,
     sha_inner_tree: String,
 }
 

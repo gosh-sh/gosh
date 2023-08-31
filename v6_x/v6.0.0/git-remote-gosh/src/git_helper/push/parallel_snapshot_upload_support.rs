@@ -2,7 +2,7 @@ use crate::blockchain::snapshot::wait_snapshots_until_ready;
 use crate::{
     blockchain::{
         contract::wait_contracts_deployed::wait_contracts_deployed,
-        tree::{load::check_if_tree_is_ready, TreeNode},
+        tree::{load::check_if_tree_is_ready},
         user_wallet::WalletError,
         AddrVersion, BlockchainContractAddress, BlockchainService,
     },
@@ -22,6 +22,7 @@ use tokio::time::sleep;
 use tokio::{sync::Semaphore, task::JoinSet};
 use tokio_retry::RetryIf;
 use tracing::Instrument;
+use crate::blockchain::tree::load::TreeComponent;
 
 const WAIT_TREE_READY_MAX_ATTEMPTS: i32 = 3;
 
@@ -285,12 +286,13 @@ impl ParallelCommitUploadSupport {
 pub struct ParallelTreeUploadSupport {
     expecting_deployed_contacts_addresses: Vec<String>,
     pushed_blobs: JoinSet<anyhow::Result<()>>,
+    pub tree_item_to_base_commit_cache: HashMap<ObjectId, String>,
 }
 
 #[derive(Clone, Debug)]
 pub struct ParallelTree {
     pub tree_id: ObjectId,
-    pub tree_nodes: HashMap<String, TreeNode>,
+    pub tree_nodes: HashMap<String, TreeComponent>,
     pub sha_inner_tree: String,
 }
 
@@ -298,7 +300,7 @@ impl ParallelTree {
     #[instrument(level = "info", skip_all, name = "new_ParallelDiff")]
     pub fn new(
         tree_id: ObjectId,
-        tree_nodes: HashMap<String, TreeNode>,
+        tree_nodes: HashMap<String, TreeComponent>,
         sha_inner_tree: String,
     ) -> Self {
         tracing::trace!("new_ParallelTree tree_id:{tree_id:?}, tree_nodes:{tree_nodes:?}, sha_inner_tree:{sha_inner_tree}");
@@ -315,6 +317,7 @@ impl ParallelTreeUploadSupport {
         Self {
             expecting_deployed_contacts_addresses: vec![],
             pushed_blobs: JoinSet::new(),
+            tree_item_to_base_commit_cache: HashMap::new(),
         }
     }
 

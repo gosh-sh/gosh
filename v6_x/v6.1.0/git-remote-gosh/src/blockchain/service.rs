@@ -165,7 +165,7 @@ pub mod tests {
     use super::*;
     use crate::database::GoshDB;
     use crate::{
-        blockchain::{snapshot::save::Diff, tree::TreeNode, user_wallet::UserWallet},
+        blockchain::{snapshot::save::Diff, user_wallet::UserWallet},
         config::Config,
         config::UserWalletConfig,
         utilities::Remote,
@@ -173,6 +173,7 @@ pub mod tests {
     use git_hash::ObjectId;
     use std::collections::HashMap;
     use std::sync::Arc;
+    use crate::blockchain::tree::load::TreeComponent;
 
     // see details: https://docs.rs/mockall/latest/mockall/#multiple-and-inherited-traits
     mockall::mock! {
@@ -215,7 +216,8 @@ pub mod tests {
                 sha: &str,
                 tree_address: &str,
                 repo_name: &str,
-                nodes: &mut HashMap<String, TreeNode>,
+                nodes: &mut HashMap<String, TreeComponent>,
+                sha_inner_hash: &str,
             ) -> anyhow::Result<()>;
         }
 
@@ -240,7 +242,6 @@ pub mod tests {
                 &self,
                 wallet: &UserWallet,
                 repo_address: BlockchainContractAddress,
-                branch_name: String,
                 commit_id: String,
                 file_path: String,
                 content: String,

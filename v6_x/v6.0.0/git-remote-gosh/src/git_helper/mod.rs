@@ -57,7 +57,7 @@ pub struct GitHelper<
     pub dao_addr: BlockchainContractAddress,
     pub repo_addr: BlockchainContractAddress,
     local_repository: Arc<git_repository::Repository>,
-    upgraded_commits: Vec<String>,
+    pushed_commits: Vec<String>,
     repo_versions: Vec<RepoVersion>,
     database: Option<Arc<GoshDB>>,
 }
@@ -100,14 +100,14 @@ where
     }
 
     pub async fn calculate_tree_address(
-        &mut self,
-        tree_id: git_hash::ObjectId,
+        &self,
+        sha_inner_tree: &str,
     ) -> anyhow::Result<BlockchainContractAddress> {
         let mut repo_contract = self.blockchain.repo_contract().clone();
         Tree::calculate_address(
             &Arc::clone(self.blockchain.client()),
             &mut repo_contract,
-            &tree_id.to_string(),
+            sha_inner_tree,
         )
         .await
     }
@@ -164,7 +164,7 @@ where
             dao_addr: dao.address,
             repo_addr,
             local_repository,
-            upgraded_commits: vec![],
+            pushed_commits: vec![],
             repo_versions: vec![],
             database: None,
         })
@@ -619,7 +619,7 @@ pub mod tests {
             repo_addr,
             local_repository,
             // cache,
-            upgraded_commits: vec![],
+            pushed_commits: vec![],
             repo_versions: vec![],
             database: None,
         }

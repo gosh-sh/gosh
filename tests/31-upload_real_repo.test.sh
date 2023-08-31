@@ -28,7 +28,7 @@ git config user.name "My name"
 git remote add gosh gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME
 git remote -v
 
-timeout 2s GOSH_TRACE=5 git push --all gosh &> ../trace_31.log
+timeout -k 1 20m git push --all gosh
 
 echo "***** cloning repo *****"
 cd ..

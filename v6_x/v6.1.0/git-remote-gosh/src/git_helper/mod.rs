@@ -7,9 +7,11 @@ use serde_json::Value;
 use std::sync::Arc;
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
+use crate::blockchain::contract::ContractRead;
 use crate::blockchain::get_commit_address;
 use crate::cache::proxy::CacheProxy;
 use crate::database::GoshDB;
+use crate::git_helper::push::GetPreviousResult;
 use crate::{
     abi as gosh_abi,
     blockchain::{
@@ -22,8 +24,6 @@ use crate::{
     logger::set_log_verbosity,
     utilities::Remote,
 };
-use crate::blockchain::contract::ContractRead;
-use crate::git_helper::push::GetPreviousResult;
 
 pub mod ever_client;
 #[cfg(test)]
@@ -39,7 +39,7 @@ pub struct RepoVersion {
     pub repo_address: BlockchainContractAddress,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct CommitVersion {
     pub version: String,
     pub commit_address: BlockchainContractAddress,
@@ -57,11 +57,10 @@ pub struct GitHelper<
     pub dao_addr: BlockchainContractAddress,
     pub repo_addr: BlockchainContractAddress,
     local_repository: Arc<git_repository::Repository>,
-    upgraded_commits: Vec<String>,
+    pushed_commits: Vec<String>,
     repo_versions: Vec<RepoVersion>,
     database: Option<Arc<GoshDB>>,
 }
-
 
 #[derive(Deserialize, Debug)]
 struct GetAddrDaoResult {
@@ -86,7 +85,9 @@ mod list;
 mod fmt;
 
 pub fn supported_contract_version() -> String {
-    env!("BUILD_SUPPORTED_VERSION").to_string()
+    env!("BUILD_SUPPORTED_VERSION")
+        .to_string()
+        .replace('\"', "")
 }
 
 impl<Blockchain, FileProvider> GitHelper<Blockchain, FileProvider>
@@ -99,14 +100,14 @@ where
     }
 
     pub async fn calculate_tree_address(
-        &mut self,
-        tree_id: git_hash::ObjectId,
+        &self,
+        sha_inner_tree: &str,
     ) -> anyhow::Result<BlockchainContractAddress> {
         let mut repo_contract = self.blockchain.repo_contract().clone();
         Tree::calculate_address(
             &Arc::clone(self.blockchain.client()),
             &mut repo_contract,
-            &tree_id.to_string(),
+            sha_inner_tree,
         )
         .await
     }
@@ -163,7 +164,7 @@ where
             dao_addr: dao.address,
             repo_addr,
             local_repository,
-            upgraded_commits: vec![],
+            pushed_commits: vec![],
             repo_versions: vec![],
             database: None,
         })
@@ -276,11 +277,21 @@ where
     async fn load_repo_versions(&mut self) -> anyhow::Result<()> {
         let versions = self.get_all_system_contracts().await?;
 
-        if self.blockchain.repo_contract().is_active(self.blockchain.client()).await? {
+        if self
+            .blockchain
+            .repo_contract()
+            .is_active(self.blockchain.client())
+            .await?
+        {
             let supported_contract_version = supported_contract_version();
             let version_stripped = supported_contract_version.replace("\"", "");
-            let system_contract = versions.iter().find(|v| v.0 == version_stripped)
-                .ok_or(anyhow::format_err!("Failed to get cur version system contract"))?;
+            let system_contract =
+                versions
+                    .iter()
+                    .find(|v| v.0 == version_stripped)
+                    .ok_or(anyhow::format_err!(
+                        "Failed to get cur version system contract"
+                    ))?;
             self.repo_versions.push(RepoVersion {
                 version: version_stripped,
                 repo_address: self.repo_addr.clone(),
@@ -293,8 +304,9 @@ where
                 .await?;
 
             while let Some(prev_repo) = &previous.previous {
-                let system_contract = versions.iter().find(|v| v.0 == prev_repo.version)
-                    .ok_or(anyhow::format_err!("Failed to get prev version system contract"))?;
+                let system_contract = versions.iter().find(|v| v.0 == prev_repo.version).ok_or(
+                    anyhow::format_err!("Failed to get prev version system contract"),
+                )?;
 
                 self.repo_versions.push(RepoVersion {
                     version: prev_repo.version.clone(),
@@ -302,7 +314,8 @@ where
                     system_address: BlockchainContractAddress::new(system_contract.1.clone()),
                 });
                 let prev_repo_contract = GoshContract::new(&prev_repo.address, gosh_abi::REPO);
-                previous = prev_repo_contract.read_state(self.blockchain.client(), "getPrevious", None)
+                previous = prev_repo_contract
+                    .read_state(self.blockchain.client(), "getPrevious", None)
                     .await?;
             }
         }
@@ -605,8 +618,8 @@ pub mod tests {
             dao_addr,
             repo_addr,
             local_repository,
-            cache,
-            upgraded_commits: vec![],
+            // cache,
+            pushed_commits: vec![],
             repo_versions: vec![],
             database: None,
         }

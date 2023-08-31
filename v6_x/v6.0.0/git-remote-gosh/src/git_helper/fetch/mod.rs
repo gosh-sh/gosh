@@ -282,6 +282,7 @@ where
                                 &file_path,
                             )
                             .await?;
+                            // TODO can we exclude blob here if it already has visited?
                             tracing::debug!(
                                 "branch={branch}: Adding a blob to search for. Path: {}, id: {}, snapshot: {}",
                                 file_path,

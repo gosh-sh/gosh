@@ -87,7 +87,7 @@ abstract contract Modifiers is ReplayProtection {
     uint128 constant TYPE_INITUPGRADE = 1;
     uint128 constant TYPE_PIN_COMMIT = 2;
     uint128 constant TYPE_SET_COMMIT = 3;
-    uint128 constant TYPE_SET_CORRECT = 3;
+    uint128 constant TYPE_SET_CORRECT = 4;
     
     uint128 constant ALONE_DEPLOY_WALLET = 1;
     uint128 constant ALONE_SET_CONFIG = 2;

@@ -62,7 +62,7 @@ git branch -d dev
 
 git log --pretty=oneline --graph
 
-GOSH_TRACE=5 git push &> ../trace_29.log
+GOSH_TRACE=5 git push -u origin main &> ../trace_29.log
 
 
 echo "***** cloning repo *****"

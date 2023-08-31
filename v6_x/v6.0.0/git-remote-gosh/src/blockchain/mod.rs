@@ -728,7 +728,7 @@ pub async fn tag_list(
 #[instrument(level = "info", skip_all)]
 pub async fn get_commit_address(
     context: &EverClient,
-    repo_contract: &mut impl ContractStatic,
+    repo_contract: &mut GoshContract,
     sha: &str,
 ) -> anyhow::Result<BlockchainContractAddress> {
     tracing::trace!("get_commit_address: repo_contract={repo_contract:?}, sha={sha}");

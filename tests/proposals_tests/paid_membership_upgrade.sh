@@ -105,6 +105,7 @@ if [ "$VALUE" != "23" ]; then
   exit 1
 fi
 
+DAO_ABI=$DAO_ABI_1
 get_number_of_members
 
 if [ "$MEMBERS_LEN" != "3" ]; then

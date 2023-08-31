@@ -54,7 +54,7 @@ install_offline: copy_abi clear_screen
 	cargo install --path . --offline
 
 .PHONY: check
-check: clear_screen
+check: copy_abi clear_screen
 	cargo check --release
 
 

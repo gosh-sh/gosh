@@ -1,17 +1,17 @@
 use crate::blockchain::snapshot::PushDiffCoordinate;
-use crate::blockchain::tree::TreeNode;
-use crate::blockchain::{AddrVersion, BlockchainContractAddress};
+use crate::blockchain::AddrVersion;
 use crate::git_helper::push::parallel_diffs_upload_support::ParallelDiff;
 use crate::git_helper::push::parallel_snapshot_upload_support::{ParallelCommit, ParallelTree};
 use git_hash::ObjectId;
 use std::collections::HashMap;
 use std::str::FromStr;
+use crate::blockchain::tree::load::TreeComponent;
 
 // change to DeployCommitParams?
 #[derive(Serialize, Deserialize)]
 pub struct DBCommit {
     pub commit_id: String,
-    pub tree_addr: BlockchainContractAddress,
+    pub tree_sha: String,
     pub raw_commit: String,
     pub parents: Vec<AddrVersion>,
     pub upgrade_commit: bool,
@@ -21,7 +21,7 @@ impl From<ParallelCommit> for DBCommit {
     fn from(value: ParallelCommit) -> Self {
         Self {
             commit_id: value.commit_id.to_string(),
-            tree_addr: value.tree_addr,
+            tree_sha: value.tree_sha,
             raw_commit: value.raw_commit,
             parents: value.parents,
             upgrade_commit: value.upgrade_commit,
@@ -32,7 +32,7 @@ impl From<ParallelCommit> for DBCommit {
 #[derive(Serialize, Deserialize)]
 pub struct DBTree {
     tree_id: String,
-    tree_nodes: HashMap<String, TreeNode>,
+    tree_nodes: HashMap<String, TreeComponent>,
     sha_inner_tree: String,
 }
 

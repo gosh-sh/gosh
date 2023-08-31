@@ -8,26 +8,9 @@ use git_object::tree;
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::Arc;
+use crate::blockchain::tree::load::TreeComponent;
 
 const MAX_RETRIES_FOR_CHUNKS_TO_APPEAR: i32 = 20;
-
-
-// TODO: the same as TreeComponent leave only one
-#[derive(Serialize, Debug, Clone, Deserialize)]
-pub struct TreeNode {
-    flags: String,
-    mode: String,
-    #[serde(rename = "typeObj")]
-    pub type_obj: String,
-    name: String,
-    #[serde(rename = "gitsha")]
-    git_sha: String,
-    #[serde(rename = "tvmshatree")]
-    tvm_sha_tree: Option<String>,
-    #[serde(rename = "tvmshafile")]
-    tvm_sha_file: Option<String>,
-    commit: String,
-}
 
 #[derive(Serialize, Debug, Clone)]
 pub struct DeployTreeArgs {
@@ -38,7 +21,7 @@ pub struct DeployTreeArgs {
     #[serde(rename = "shainnerTree")]
     pub sha_inner_tree: String,
     #[serde(rename = "datatree")]
-    nodes: HashMap<String, TreeNode>,
+    nodes: HashMap<String, TreeComponent>,
     number: u128,
 }
 
@@ -49,7 +32,7 @@ pub struct DeployAddTreeArgs {
     #[serde(rename = "shainnerTree")]
     pub sha_inner_tree: String,
     #[serde(rename = "datatree")]
-    nodes: HashMap<String, TreeNode>,
+    nodes: HashMap<String, TreeComponent>,
 }
 
 #[async_trait]
@@ -60,7 +43,7 @@ pub trait DeployTree {
         sha: &str,
         tree_address: &str,
         repo_name: &str,
-        nodes: &mut HashMap<String, TreeNode>,
+        nodes: &mut HashMap<String, TreeComponent>,
         sha_inner_hash: &str,
     ) -> anyhow::Result<()>;
 }
@@ -75,7 +58,7 @@ impl DeployTree for Everscale {
         sha: &str,
         tree_address: &str,
         repo_name: &str,
-        nodes: &mut HashMap<String, TreeNode>, // change to moved hashmap
+        nodes: &mut HashMap<String, TreeComponent>, // change to moved hashmap
         sha_inner_hash: &str,
     ) -> anyhow::Result<()> {
         let wallet_contract = wallet.take_one().await?;
@@ -84,13 +67,18 @@ impl DeployTree for Everscale {
         let result = {
             tracing::trace!("Start tree upload by chunks");
             let mut repo_contract = self.repo_contract().clone();
-            let tree_address =
-                Tree::calculate_address(&Arc::clone(self.client()), &mut repo_contract, sha_inner_hash)
-                    .await?;
+            let tree_address = Tree::calculate_address(
+                &Arc::clone(self.client()),
+                &mut repo_contract,
+                sha_inner_hash,
+            )
+            .await?;
             let mut nodes = nodes.to_owned();
-            let chunk: HashMap<String, TreeNode> = HashMap::new();
-            let tree_contract =
-                GoshContract::new(BlockchainContractAddress::new(&tree_address), gosh_abi::TREE);
+            let chunk: HashMap<String, TreeComponent> = HashMap::new();
+            let tree_contract = GoshContract::new(
+                BlockchainContractAddress::new(&tree_address),
+                gosh_abi::TREE,
+            );
 
             if tree_contract.is_active(self.client()).await? {
                 // check existing tree nodes
@@ -145,35 +133,6 @@ impl DeployTree for Everscale {
         }
         result
     }
-}
-
-impl<'a> From<(Option<String>, Option<String>, String, &'a tree::Entry)> for TreeNode {
-    fn from((file_hash, tree_hash, commit, entry): (Option<String>, Option<String>, String, &tree::Entry)) -> Self {
-        Self {
-            flags: (GoshBlobBitFlags::Compressed as u8).to_string(),
-            mode: std::str::from_utf8(entry.mode.as_bytes())
-                .unwrap()
-                .to_owned(),
-            type_obj: convert_to_type_obj(entry.mode),
-            name: entry.filename.to_string(),
-            git_sha: entry.oid.to_hex().to_string(),
-            tvm_sha_file: file_hash,
-            tvm_sha_tree: tree_hash,
-            commit,
-        }
-    }
-}
-
-fn convert_to_type_obj(entry_mode: tree::EntryMode) -> String {
-    use git_object::tree::EntryMode::*;
-    match entry_mode {
-        Tree => "tree",
-        Blob => "blob",
-        BlobExecutable => "blobExecutable",
-        Link => "link",
-        Commit => "commit",
-    }
-    .to_owned()
 }
 
 #[instrument(level = "info", skip_all)]
