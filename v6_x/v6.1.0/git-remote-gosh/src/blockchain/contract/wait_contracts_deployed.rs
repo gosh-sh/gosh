@@ -16,7 +16,6 @@ pub async fn wait_contracts_deployed<B>(
 where
     B: BlockchainService + 'static,
 {
-    tracing::trace!("wait_contracts_deployed: addresses={addresses:?}");
     let mut deployment_results: JoinSet<anyhow::Result<Vec<BlockchainContractAddress>>> =
         JoinSet::new();
     for chunk in addresses.chunks(MAX_ACCOUNTS_ADDRESSES_PER_QUERY) {

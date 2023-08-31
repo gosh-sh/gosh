@@ -347,7 +347,7 @@ where
     let content = snapshot.content;
     let ipfs = snapshot.ipfs;
 
-    tracing::trace!("push_initial_snapshot: repo_addr={repo_addr}, dao_addr={dao_addr}, remote_network={remote_network}, file_path={file_path}");
+    tracing::trace!("push_initial_snapshot: snapshot_address={snapshot_address}, repo_addr={repo_addr}, dao_addr={dao_addr}, remote_network={remote_network}, file_path={file_path}");
     let wallet = blockchain.user_wallet(&dao_addr, &remote_network).await?;
 
     let condition = |e: &anyhow::Error| {
