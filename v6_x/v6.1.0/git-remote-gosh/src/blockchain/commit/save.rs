@@ -113,6 +113,13 @@ impl BlockchainCommitPusher for Everscale {
         dao_addr: &BlockchainContractAddress,
         database: Arc<GoshDB>,
     ) -> anyhow::Result<()> {
+        let bc_commit_address = BlockchainContractAddress::new(commit_address);
+        let commit_contract = GoshContract::new(&bc_commit_address, gosh_abi::COMMIT);
+        match commit_contract.is_active(&self.ever_client).await {
+            Ok(true) => { return Ok(()) },
+            _ => {}
+        }
+
         let commit = database.get_commit(commit_address)?;
         let args = DeployCommitParams {
             repo_name: remote.repo.clone(),

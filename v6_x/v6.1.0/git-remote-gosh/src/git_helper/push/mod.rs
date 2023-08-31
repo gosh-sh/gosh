@@ -48,7 +48,8 @@ use crate::blockchain::tree::load::{construct_map_of_snapshots, GetTreeResult, S
 use crate::git_helper::push::push_diff::save_data_to_ipfs;
 
 static PARALLEL_PUSH_LIMIT: usize = 1 << 6;
-static MAX_REDEPLOY_ATTEMPTS: i32 = 3;
+static MAX_REDEPLOY_ATTEMPTS: i32 = 4;
+const GOSH_DEPLOY_RETRIES: &str = "GOSH_DEPLOY_RETRIES";
 
 #[derive(Default)]
 struct PushBlobStatistics {
@@ -453,11 +454,13 @@ where
         let commit_iter = commit.try_into_commit_iter().unwrap();
         let parent_ids: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
 
+        let mut was_upgraded = false;
         for id in &parent_ids {
             tracing::trace!("check parent: {id}");
             if self.pushed_commits.contains(id) {
                 continue;
             }
+            was_upgraded = true;
             for repo_version in &self.repo_versions {
                 let mut repo_contract =
                     GoshContract::new(&repo_version.repo_address, gosh_abi::REPO);
@@ -498,26 +501,30 @@ where
         // If parent exists load tree of the zero parent
         let parent_tree = match parent_ids.first() {
             Some(id) => {
-                let mut repo = self.blockchain.repo_contract().clone();
-                let parent = get_commit_address(
-                    self.blockchain.client(),
-                    &mut repo,
-                    &id.to_string(),
-                )
-                    .await?;
-                let commit_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
-                if !commit_contract.is_active(self.blockchain.client()).await? {
-                    None
-                } else {
-                    let result: GetTreeResult = commit_contract.run_local(self.blockchain.client(), "gettree", None).await?;
-                    let tree_address = result.address;
-                    match Tree::load(
+                if was_upgraded || !self.pushed_commits.contains(id) {
+                    let mut repo = self.blockchain.repo_contract().clone();
+                    let parent = get_commit_address(
                         self.blockchain.client(),
-                        &tree_address,
-                    ).await {
-                        Ok(tree) => Some(tree),
-                        Err(_) => None
+                        &mut repo,
+                        &id.to_string(),
+                    )
+                        .await?;
+                    let commit_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
+                    if !commit_contract.is_active(self.blockchain.client()).await? {
+                        None
+                    } else {
+                        let result: GetTreeResult = commit_contract.run_local(self.blockchain.client(), "gettree", None).await?;
+                        let tree_address = result.address;
+                        match Tree::load(
+                            self.blockchain.client(),
+                            &tree_address,
+                        ).await {
+                            Ok(tree) => Some(tree),
+                            Err(_) => None
+                        }
                     }
+                } else {
+                    None
                 }
             },
             None => { None }
@@ -591,8 +598,15 @@ where
 
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
-        while attempts < MAX_REDEPLOY_ATTEMPTS {
+        let redeploy_attempts = get_redeploy_attempts();
+
+        while attempts < redeploy_attempts {
             attempts += 1;
+            if attempts == redeploy_attempts {
+                anyhow::bail!(
+                "Failed to deploy all commits. Undeployed commits: {expected_contracts:?}"
+            )
+            }
             expected_contracts = push_commits
                 .wait_all_commits(self.blockchain.clone())
                 .await?;
@@ -613,11 +627,6 @@ where
                     .add_to_push_list(self, String::from(address), push_semaphore.clone())
                     .await?;
             }
-        }
-        if attempts == MAX_REDEPLOY_ATTEMPTS {
-            anyhow::bail!(
-                "Failed to deploy all commits. Undeployed commits: {expected_contracts:?}"
-            )
         }
 
         self.blockchain
@@ -1124,8 +1133,12 @@ where
         let mut expected_contracts = vec![];
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
-        while attempts < MAX_REDEPLOY_ATTEMPTS {
+        let redeploy_attempts = get_redeploy_attempts();
+        while attempts < redeploy_attempts {
             attempts += 1;
+            if attempts == redeploy_attempts {
+                anyhow::bail!("Failed to deploy all trees. Undeployed trees: {expected_contracts:?}")
+            }
             expected_contracts = parallel_tree_uploads
                 .wait_all_trees(self.blockchain.clone())
                 .await?;
@@ -1148,14 +1161,16 @@ where
                     .await?;
             }
         }
-        if attempts == MAX_REDEPLOY_ATTEMPTS {
-            anyhow::bail!("Failed to deploy all trees. Undeployed trees: {expected_contracts:?}")
-        }
 
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
-        while attempts < MAX_REDEPLOY_ATTEMPTS {
+        while attempts < redeploy_attempts {
             attempts += 1;
+            if attempts == redeploy_attempts {
+                anyhow::bail!(
+                "Failed to deploy all commits. Undeployed commits: {expected_contracts:?}"
+            )
+            }
             expected_contracts = push_commits
                 .wait_all_commits(self.blockchain.clone())
                 .await?;
@@ -1177,11 +1192,6 @@ where
                     .await?;
             }
         }
-        if attempts == MAX_REDEPLOY_ATTEMPTS {
-            anyhow::bail!(
-                "Failed to deploy all commits. Undeployed commits: {expected_contracts:?}"
-            )
-        }
 
         let files_cnt = parallel_snapshot_uploads.get_expected().len();
         parallel_snapshot_uploads.start_push(self).await?;
@@ -1199,8 +1209,13 @@ where
 
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
-        while attempts < MAX_REDEPLOY_ATTEMPTS {
+        while attempts < redeploy_attempts {
             attempts += 1;
+            if attempts == redeploy_attempts {
+                anyhow::bail!(
+                "Failed to deploy all snapshots. Undeployed snapshots: {expected_contracts:?}"
+            )
+            }
             expected_contracts = parallel_snapshot_uploads
                 .wait_all_snapshots(self.blockchain.clone())
                 .await?;
@@ -1222,11 +1237,6 @@ where
                     .add_to_push_list(self, String::from(address))
                     .await?;
             }
-        }
-        if attempts == MAX_REDEPLOY_ATTEMPTS {
-            anyhow::bail!(
-                "Failed to deploy all snapshots. Undeployed snapshots: {expected_contracts:?}"
-            )
         }
 
         let db = self.get_db()?;
@@ -1507,12 +1517,12 @@ where
                     number_of_commits += 1;
                     // in case of fast forward commits can be already deployed for another branch
                     // Do not deploy them again
-                    let commit_address = self.calculate_commit_address(&object_id).await?;
-                    let commit_contract = GoshContract::new(&commit_address, gosh_abi::COMMIT);
-                    match commit_contract.is_active(self.blockchain.client()).await {
-                        Ok(true) => continue,
-                        _ => {}
-                    }
+                    // let commit_address = self.calculate_commit_address(&object_id).await?;
+                    // let commit_contract = GoshContract::new(&commit_address, gosh_abi::COMMIT);
+                    // match commit_contract.is_active(self.blockchain.client()).await {
+                    //     Ok(true) => continue,
+                    //     _ => {}
+                    // }
 
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)
                     let parent_tree = self.check_parents(
@@ -1565,8 +1575,12 @@ where
         let mut expected_contracts = vec![];
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
-        while attempts < MAX_REDEPLOY_ATTEMPTS {
+        let redeploy_attempts = get_redeploy_attempts();
+        while attempts < redeploy_attempts {
             attempts += 1;
+            if attempts == redeploy_attempts {
+                anyhow::bail!("Failed to deploy all trees. Undeployed trees: {expected_contracts:?}")
+            }
             expected_contracts = parallel_tree_uploads
                 .wait_all_trees(self.blockchain.clone())
                 .await?;
@@ -1589,14 +1603,16 @@ where
                     .await?;
             }
         }
-        if attempts == MAX_REDEPLOY_ATTEMPTS {
-            anyhow::bail!("Failed to deploy all trees. Undeployed trees: {expected_contracts:?}")
-        }
 
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
-        while attempts < MAX_REDEPLOY_ATTEMPTS {
+        while attempts < redeploy_attempts {
             attempts += 1;
+            if attempts == redeploy_attempts {
+                anyhow::bail!(
+                "Failed to deploy all commits. Undeployed commits: {expected_contracts:?}"
+            )
+            }
             expected_contracts = push_commits
                 .wait_all_commits(self.blockchain.clone())
                 .await?;
@@ -1618,11 +1634,6 @@ where
                     .await?;
             }
         }
-        if attempts == MAX_REDEPLOY_ATTEMPTS {
-            anyhow::bail!(
-                "Failed to deploy all commits. Undeployed commits: {expected_contracts:?}"
-            )
-        }
 
         // After we have all commits and trees deployed, start push of diffs
         parallel_diffs_upload_support.start_push(self).await?;
@@ -1631,8 +1642,11 @@ where
         // wait for all spawned collections to finish
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
-        while attempts < MAX_REDEPLOY_ATTEMPTS {
+        while attempts < redeploy_attempts {
             attempts += 1;
+            if attempts == redeploy_attempts {
+                anyhow::bail!("Failed to deploy all diffs. Undeployed diffs: {expected_contracts:?}")
+            }
             expected_contracts = parallel_diffs_upload_support
                 .wait_all_diffs(self.blockchain.clone())
                 .await?;
@@ -1655,14 +1669,16 @@ where
             }
             parallel_diffs_upload_support.push_dangling(self).await?;
         }
-        if attempts == MAX_REDEPLOY_ATTEMPTS {
-            anyhow::bail!("Failed to deploy all diffs. Undeployed diffs: {expected_contracts:?}")
-        }
 
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
-        while attempts < MAX_REDEPLOY_ATTEMPTS {
+        while attempts < redeploy_attempts {
             attempts += 1;
+            if attempts == redeploy_attempts {
+                anyhow::bail!(
+                "Failed to deploy all snapshots. Undeployed snapshots: {expected_contracts:?}"
+            )
+            }
             expected_contracts = parallel_snapshot_uploads
                 .wait_all_snapshots(self.blockchain.clone())
                 .await?;
@@ -1684,11 +1700,6 @@ where
                     .add_to_push_list(self, String::from(address))
                     .await?;
             }
-        }
-        if attempts == MAX_REDEPLOY_ATTEMPTS {
-            anyhow::bail!(
-                "Failed to deploy all snapshots. Undeployed snapshots: {expected_contracts:?}"
-            )
         }
 
         // clear database after all objects were deployed
@@ -2149,4 +2160,12 @@ mod tests {
         }
         shutdown_logger().await;
     }
+}
+
+fn get_redeploy_attempts() -> i32 {
+    std::env::var(GOSH_DEPLOY_RETRIES)
+        .ok()
+        .and_then(|num| i32::from_str_radix(&num, 10).ok())
+        .map(|val| val + 1) // increase to 1 due to internal logic
+        .unwrap_or(MAX_REDEPLOY_ATTEMPTS)
 }
