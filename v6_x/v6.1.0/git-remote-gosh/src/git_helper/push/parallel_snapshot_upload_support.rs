@@ -182,25 +182,6 @@ impl ParallelSnapshotUploadSupport {
         );
         Ok(())
     }
-
-    // pub async fn wait_all_snapshots<B>(
-    //     &mut self,
-    //     blockchain: B,
-    // ) -> anyhow::Result<Vec<BlockchainContractAddress>>
-    // where
-    //     B: BlockchainService + 'static,
-    // {
-    //     // TODO:
-    //     // - Let user know if we reached it
-    //     // - Make it configurable
-    //     let addresses = self
-    //         .expecting_deployed_contacts_addresses
-    //         .iter()
-    //         .map(|addr| BlockchainContractAddress::new(addr.clone()))
-    //         .collect::<Vec<BlockchainContractAddress>>();
-    //
-    //     wait_snapshots_until_ready(&blockchain, &addresses).await
-    // }
 }
 
 pub struct ParallelCommitUploadSupport {

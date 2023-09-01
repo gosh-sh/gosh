@@ -1197,48 +1197,6 @@ where
         parallel_snapshot_uploads.start_push(self).await?;
 
         let stored_snapshot_addresses = parallel_snapshot_uploads.get_expected().clone();
-        //
-        // let prev_repo_address = Some(
-        //     self.repo_versions
-        //         .iter()
-        //         .find(|repo| repo.version == parents_for_upgrade[0].version)
-        //         .expect("Failed to find prev repo address")
-        //         .repo_address
-        //         .clone(),
-        // );
-        //
-        // let mut attempts = 0;
-        // let mut last_rest_cnt = 0;
-        // while attempts < redeploy_attempts {
-        //     if attempts == redeploy_attempts {
-        //         anyhow::bail!(
-        //         "Failed to deploy all snapshots. Undeployed snapshots: {expected_contracts:?}"
-        //     )
-        //     }
-        //     expected_contracts = parallel_snapshot_uploads
-        //         .wait_all_snapshots(self.blockchain.clone())
-        //         .await?;
-        //     tracing::trace!("Wait all snapshots result: {expected_contracts:?}");
-        //     if expected_contracts.is_empty() {
-        //         break;
-        //     }
-        //     if expected_contracts.len() != last_rest_cnt {
-        //         attempts = 0;
-        //     }
-        //     last_rest_cnt = expected_contracts.len();
-        //     tracing::trace!("Restart deploy on undeployed snapshots");
-        //     let expected = parallel_snapshot_uploads.get_expected().to_owned();
-        //     parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
-        //     for address in expected_contracts.clone() {
-        //         tracing::trace!("Get params of undeployed snapshot: {}", address,);
-        //         parallel_snapshot_uploads.push_expected(String::from(&address));
-        //         parallel_snapshot_uploads
-        //             .add_to_push_list(self, String::from(address))
-        //             .await?;
-        //     }
-        //     attempts += 1;
-        // }
-
         let db = self.get_db()?;
         for address in stored_snapshot_addresses {
             db.delete_snapshot(&address)?;
@@ -1638,69 +1596,6 @@ where
         // After we have all commits and trees deployed, start push of diffs
         parallel_diffs_upload_support.start_push(self).await?;
         parallel_snapshot_uploads.start_push(self).await?;
-        //
-        // // wait for all spawned collections to finish
-        // let mut attempts = 0;
-        // let mut last_rest_cnt = 0;
-        // while attempts < redeploy_attempts {
-        //     if attempts == redeploy_attempts {
-        //         anyhow::bail!("Failed to deploy all diffs. Undeployed diffs: {expected_contracts:?}")
-        //     }
-        //     expected_contracts = parallel_diffs_upload_support
-        //         .wait_all_diffs(self.blockchain.clone())
-        //         .await?;
-        //     tracing::trace!("Wait all diffs result: {expected_contracts:?}");
-        //     if expected_contracts.is_empty() {
-        //         break;
-        //     }
-        //     if expected_contracts.len() != last_rest_cnt {
-        //         attempts = 0;
-        //     }
-        //     last_rest_cnt = expected_contracts.len();
-        //     tracing::trace!("Restart deploy on undeployed diffs");
-        //     let expected = parallel_diffs_upload_support.get_expected().to_owned();
-        //     parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
-        //     for address in expected_contracts.clone() {
-        //         parallel_diffs_upload_support.push_expected(String::from(&address));
-        //         parallel_diffs_upload_support
-        //             .add_to_push_list(self, String::from(address))
-        //             .await?;
-        //     }
-        //     parallel_diffs_upload_support.push_dangling(self).await?;
-        //     attempts += 1;
-        // }
-        //
-        // let mut attempts = 0;
-        // let mut last_rest_cnt = 0;
-        // while attempts < redeploy_attempts {
-        //     if attempts == redeploy_attempts {
-        //         anyhow::bail!(
-        //         "Failed to deploy all snapshots. Undeployed snapshots: {expected_contracts:?}"
-        //     )
-        //     }
-        //     expected_contracts = parallel_snapshot_uploads
-        //         .wait_all_snapshots(self.blockchain.clone())
-        //         .await?;
-        //     tracing::trace!("Wait all snapshots result: {expected_contracts:?}");
-        //     if expected_contracts.is_empty() {
-        //         break;
-        //     }
-        //     if expected_contracts.len() != last_rest_cnt {
-        //         attempts = 0;
-        //     }
-        //     last_rest_cnt = expected_contracts.len();
-        //     tracing::trace!("Restart deploy on undeployed snapshots");
-        //     let expected = parallel_snapshot_uploads.get_expected().to_owned();
-        //     parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
-        //     for address in expected_contracts.clone() {
-        //         tracing::trace!("Get params of undeployed snapshot: {}", address,);
-        //         parallel_snapshot_uploads.push_expected(String::from(&address));
-        //         parallel_snapshot_uploads
-        //             .add_to_push_list(self, String::from(address))
-        //             .await?;
-        //     }
-        //     attempts += 1;
-        // }
 
         // clear database after all objects were deployed
         self.delete_db()?;
