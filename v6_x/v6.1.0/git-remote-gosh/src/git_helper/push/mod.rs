@@ -1816,10 +1816,10 @@ fn get_list_of_commit_objects(
 
     tracing::trace!("commits:{commits:?}");
 
-    let mut commit_objects: Vec<git_repository::Commit> = Vec::new();
+    let mut commit_objects: HashMap<String, git_repository::Commit> = HashMap::new();
     for commit in commits.iter().rev() {
         let commit = commit.object()?.into_commit();
-        commit_objects.push(commit);
+        commit_objects.insert(commit.id.to_string(), commit);
     }
 
     // Hashmap commits -> number of children
@@ -1828,7 +1828,7 @@ fn get_list_of_commit_objects(
         commits.into_iter().map(|el| (el.to_string(), vec![]))
     );
 
-    for commit in commit_objects {
+    for (_, commit) in &commit_objects {
         for parent in commit.parent_ids() {
             match child_map.get_mut(&parent.to_string()) {
                 Some(val) => {
@@ -1842,16 +1842,16 @@ fn get_list_of_commit_objects(
     let mut res: Vec<String> = vec![];
 
     while !child_map.is_empty() {
-        {
-            let commit = child_map.iter().find(|(k, v)| v.is_empty()).ok_or(anyhow::format_err!("Failed to get commit with no children"))?.0.to_owned();
-            child_map.remove(&commit);
-            res.push(commit);
-
-        }
-        let commit = res.last().unwrap();
-        for (_, children) in &mut child_map {
-            if children.contains(commit) {
-                children.retain(|c| c != commit);
+        let mut zero_child_commits: Vec<String> = child_map.iter().filter(|(k, v)| v.is_empty()).map(|val| val.0.to_owned()).collect();
+        zero_child_commits.sort_by_key(|commit| commit_objects.get(commit).unwrap().time().unwrap());
+        zero_child_commits.reverse();
+        for commit in &zero_child_commits {
+            child_map.remove(commit);
+            res.push(commit.to_string());
+            for (_, children) in &mut child_map {
+                if children.contains(commit) {
+                    children.retain(|c| c != commit);
+                }
             }
         }
     }
