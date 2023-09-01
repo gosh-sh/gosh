@@ -586,6 +586,10 @@ contract SystemContract is Modifiers {
         return _code[m_CommitCode];
     }
 
+    function getWrapperCode() external view returns(TvmCell) {
+        return _code[m_WrapperCode];
+    }
+
     function getSnapshotCode() external view returns(TvmCell) {
         return _code[m_SnapshotCode];
     }
