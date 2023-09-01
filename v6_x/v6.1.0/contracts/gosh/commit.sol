@@ -371,7 +371,7 @@ contract Commit is Modifiers {
     }
 
 
-    function abortDiff(string branch, address branchCommit, uint128 index) public senderIs(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0)) {
+    function abortDiff(string branch, address branchCommit, uint128 index, uint128 index2) public senderIs(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, index2)) {
         tvm.accept();
         _continueDiff = false;
         _diffcheck = false;
