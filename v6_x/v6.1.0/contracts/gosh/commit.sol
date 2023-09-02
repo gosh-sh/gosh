@@ -176,6 +176,9 @@ contract Commit is Modifiers {
             if (index >= number) {
                 _commitcheck = false;
                 _diffcheck = false;
+                if (address(this).balance > 100 ton) {
+                    _systemcontract.transfer(address(this).balance - 100 ton);
+                }
                 return;
             }
             DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0)).allCorrect{value : 0.2 ton, flag: 1}(branch);

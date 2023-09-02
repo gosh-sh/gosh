@@ -238,7 +238,7 @@ contract DiffC is Modifiers {
         }
         Snapshot(_diff[index].snap).approve{value : 0.2 ton, flag: 1}(_index1, _index2, _diff[index]); 
         Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _diff[index].commit)).getAcceptedDiff{value : 0.2 ton, flag: 1}(_diff[index], _index1, index, _nameBranch);
-        this.applyDiff{value: 0.1 ton, flag: 1}(index + 1, _timebranch);
+        this.applyDiff{value: 0.2 ton, flag: 1}(index + 1, _timebranch);
     }
     
     function cancelDiff(uint128 index) public senderIs(address(this)) {
@@ -252,7 +252,7 @@ contract DiffC is Modifiers {
             selfdestruct(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit)); return;
         }
         Snapshot(_diff[index].snap).cancelDiff{value : 0.2 ton, flag: 1}(_index1, _index2, _diff[index].commit);
-        this.cancelDiff{value: 0.1 ton, flag: 1}(index + 1);
+        this.cancelDiff{value: 0.2 ton, flag: 1}(index + 1);
     }
     
     function checkSender(uint128 index, address sender) public view senderIs(address(this)) {
