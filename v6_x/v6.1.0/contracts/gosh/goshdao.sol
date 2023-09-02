@@ -398,6 +398,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function volunteersnap() public senderIs(address(this)) accept {
+        if (_volunteersnap.length == 0) { return; }
         _volunteersnap[0].transfer(1003 ton);
         delete _volunteersnap[0];
         this.volunteersnap();
@@ -405,6 +406,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function volunteerdiff() public senderIs(address(this)) accept {
+        if (_volunteerdiff.length == 0) { return; }
         _volunteerdiff[0].transfer(13 ton);
         delete _volunteerdiff[0];
         this.volunteerdiff();
@@ -412,6 +414,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
         
     function volunteertree() public senderIs(address(this)) accept {
+        if (_volunteertree.length == 0) { return; }
         _volunteertree[0].transfer(300 ton);
         delete _volunteertree[0];
         this.volunteertree();
@@ -419,6 +422,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
         
     function volunteercommit() public senderIs(address(this)) accept {
+        if (_volunteercommit.length == 0) { return; }
         _volunteercommit[0].transfer(1400 ton);
         delete _volunteercommit[0];
         this.volunteercommit();
