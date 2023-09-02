@@ -313,12 +313,13 @@ contract SystemContract is Modifiers {
     }
 
     function updateCode(TvmCell newcode, TvmCell cell) public onlyOwner accept saveMsg {
+        cell;
         tvm.setcode(newcode);
         tvm.setCurrentCode(newcode);
-        onCodeUpgrade(cell);
+        onCodeUpgrade();
     }
 
-    function onCodeUpgrade(TvmCell cell) private pure {
+    function onCodeUpgrade() private pure {
     }
 
     //Setters

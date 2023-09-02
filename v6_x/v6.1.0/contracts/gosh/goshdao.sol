@@ -397,35 +397,43 @@ contract GoshDao is Modifiers, TokenRootOwner {
         SMVProposalBase(msg.sender).onContinueAction{value: 0.1 ton, flag: 1}(math.min(_allbalance, _totalsupply - _reserve));
     }
     
-    function volunteersnap() public senderIs(address(this)) accept {
-        if (_volunteersnap.length == 0) { return; }
-        _volunteersnap[0].transfer(103 ton);
-        delete _volunteersnap[0];
-        this.volunteersnap();
+    function volunteersnap(address[] volunteer, uint128 index) public senderIs(address(this)) accept {
+        address zero;
+        if (address(this).balance < 2000 ton) { _volunteersnap.push(volunteer[index]); getMoney(); return; }
+        else {
+            if (volunteer[index] != zero) { volunteer[index].transfer(103 ton); }
+        }
+        this.volunteersnap(volunteer, index + 1);
         getMoney();       
     }
     
-    function volunteerdiff() public senderIs(address(this)) accept {
-        if (_volunteerdiff.length == 0) { return; }
-        _volunteerdiff[0].transfer(13 ton);
-        delete _volunteerdiff[0];
-        this.volunteerdiff();
+    function volunteerdiff(address[] volunteer, uint128 index) public senderIs(address(this)) accept {
+        address zero;
+        if (address(this).balance < 2000 ton) { _volunteerdiff.push(volunteer[index]); getMoney(); return; }
+        else {
+            if (volunteer[index] != zero) { volunteer[index].transfer(13 ton); }
+        }
+        this.volunteerdiff(volunteer, index + 1);
         getMoney();
     }
         
-    function volunteertree() public senderIs(address(this)) accept {
-        if (_volunteertree.length == 0) { return; }
-        _volunteertree[0].transfer(300 ton);
-        delete _volunteertree[0];
-        this.volunteertree();
+    function volunteertree(address[] volunteer, uint128 index) public senderIs(address(this)) accept {
+        address zero;
+        if (address(this).balance < 2000 ton) { _volunteertree.push(volunteer[index]); getMoney(); return; }
+        else {
+            if (volunteer[index] != zero) { volunteer[index].transfer(300 ton); }
+        }
+        this.volunteertree(volunteer, index + 1);
         getMoney();
     }
         
-    function volunteercommit() public senderIs(address(this)) accept {
-        if (_volunteercommit.length == 0) { return; }
-        _volunteercommit[0].transfer(1400 ton);
-        delete _volunteercommit[0];
-        this.volunteercommit();
+    function volunteercommit(address[] volunteer, uint128 index) public senderIs(address(this)) accept {
+        address zero;
+        if (address(this).balance < 2000 ton) { _volunteercommit.push(volunteer[index]); getMoney(); return; }
+        else {
+            if (volunteer[index] != zero) { volunteer[index].transfer(1400 ton); }
+        }
+        this.volunteercommit(volunteer, index + 1);
         getMoney();
     }
     
@@ -1312,10 +1320,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
     receive() external {
         if (msg.sender == _systemcontract) {
             _flag = false;
-            if (_volunteersnap.length > 0) { this.volunteersnap{value: 0.1 ton, flag: 1}();}
-            if (_volunteerdiff.length > 0) { this.volunteerdiff{value: 0.1 ton, flag: 1}(); }
-            if (_volunteertree.length > 0) { this.volunteertree{value: 0.1 ton, flag: 1}(); }
-            if (_volunteercommit.length > 0) { this.volunteercommit{value: 0.1 ton, flag: 1}(); }
+            if (_volunteersnap.length > 0) { this.volunteersnap{value: 0.1 ton, flag: 1}(_volunteersnap, 0); delete _volunteersnap; }
+            if (_volunteerdiff.length > 0) { this.volunteerdiff{value: 0.1 ton, flag: 1}(_volunteerdiff, 0); delete _volunteerdiff; }
+            if (_volunteertree.length > 0) { this.volunteertree{value: 0.1 ton, flag: 1}(_volunteertree, 0); delete _volunteertree; }
+            if (_volunteercommit.length > 0) { this.volunteercommit{value: 0.1 ton, flag: 1}(_volunteercommit, 0); delete _volunteercommit; }
             if ((saveaddr.hasValue() == true) && (saveind.hasValue() == true) && (savedao.hasValue() == true)) {
                 this.deployWallets{value: 0.1 ton, flag: 1}(saveaddr.get(), savedao.get(), saveind.get());
                 saveaddr = null;
