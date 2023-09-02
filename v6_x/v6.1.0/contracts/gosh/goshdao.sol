@@ -381,14 +381,14 @@ contract GoshDao is Modifiers, TokenRootOwner {
         address addr = GoshLib.calculateDiffAddress(_code[m_DiffCode], repo, commit, index1, index2);
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        if (address(this).balance < 20) { _volunteerdiff.push(msg.sender); getMoney(); return; }
-        addr.transfer(10 ton);
+        if (address(this).balance < 20 ton) { _volunteerdiff.push(msg.sender); getMoney(); return; }
+        addr.transfer(50 ton);
         getMoney();
     }
     
     function sendMoneySnap(string commitSha, address repo, string name) public senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], repo, commitSha, name)) {
         tvm.accept();
-        if (address(this).balance < 2000) { _volunteersnap.push(msg.sender); getMoney(); return; }
+        if (address(this).balance < 2000 ton) { _volunteersnap.push(msg.sender); getMoney(); return; }
         msg.sender.transfer(1000 ton);
         getMoney();
     }
@@ -405,7 +405,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function volunteerdiff() public senderIs(address(this)) accept {
-        _volunteerdiff[0].transfer(10 ton);
+        _volunteerdiff[0].transfer(50 ton);
         delete _volunteerdiff[0];
         this.volunteerdiff();
         getMoney();
@@ -419,7 +419,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
         
     function volunteercommit() public senderIs(address(this)) accept {
-        _volunteercommit[0].transfer(10 ton);
+        _volunteercommit[0].transfer(1400 ton);
         delete _volunteercommit[0];
         this.volunteercommit();
         getMoney();
@@ -429,7 +429,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         address addr = GoshLib.calculateCommitAddress(_code[m_CommitCode], repo, commit);
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        if (address(this).balance < 2000) { _volunteercommit.push(msg.sender); getMoney(); return; }
+        if (address(this).balance < 2000 ton) { _volunteercommit.push(msg.sender); getMoney(); return; }
         addr.transfer(1400 ton);
         getMoney();
     }
@@ -438,7 +438,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         address addr = GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnertree, repo);
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        if (address(this).balance < 2000) { _volunteertree.push(msg.sender); getMoney(); return; }
+        if (address(this).balance < 2000 ton) { _volunteertree.push(msg.sender); getMoney(); return; }
         addr.transfer(300 ton);
         getMoney();
     }
