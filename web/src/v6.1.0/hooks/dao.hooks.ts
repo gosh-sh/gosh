@@ -896,6 +896,12 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
     }, [getDetails, loadOnInit])
 
     useEffect(() => {
+        // Wait for DAO details to be fetched
+        if (!Object.keys(dao).length) {
+            setStatus2((state) => ({ ...state, type: 'dismiss' }))
+            return
+        }
+
         if (!dao.isReady) {
             setStatus2((state) => ({ ...state, type: 'pending', data: 'Wait for DAO' }))
         } else {
