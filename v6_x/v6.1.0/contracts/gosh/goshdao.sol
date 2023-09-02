@@ -389,7 +389,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function sendMoneySnap(string commitSha, address repo, string name) public senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], repo, commitSha, name)) {
         tvm.accept();
         if (address(this).balance < 2000 ton) { _volunteersnap.push(msg.sender); getMoney(); return; }
-        msg.sender.transfer(1003 ton);
+        msg.sender.transfer(103 ton);
         getMoney();
     }
     
@@ -399,7 +399,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     function volunteersnap() public senderIs(address(this)) accept {
         if (_volunteersnap.length == 0) { return; }
-        _volunteersnap[0].transfer(1003 ton);
+        _volunteersnap[0].transfer(103 ton);
         delete _volunteersnap[0];
         this.volunteersnap();
         getMoney();       
