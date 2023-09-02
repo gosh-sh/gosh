@@ -97,13 +97,13 @@ contract Tree is Modifiers {
                 TreeObject obj;
                 (index, obj) = res.get();
                 if (_tree.exists(index) == false) { 
+                    _tree[index] = obj;
                     _number += 1; 
                     if (_neednumber == _number) {
                         this.calculateInnerTreeHash{value: 0.1 ton, flag: 1}(0, 0);
                         return;
                     }
                 }
-                _tree[index] = obj;
                 if (i + 1 == BATCH_SIZE_TREE_DIFF) { 
                     this.addTreeself{value: 0.2 ton, flag: 1}(index, tree1);
                 }
