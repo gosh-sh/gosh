@@ -255,6 +255,14 @@
 			]
 		},
 		{
+			"name": "returnMoneyGiver",
+			"inputs": [
+				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setProfileIndex",
 			"inputs": [
 				{"name":"code","type":"cell"}
