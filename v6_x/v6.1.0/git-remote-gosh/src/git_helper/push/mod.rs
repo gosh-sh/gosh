@@ -34,7 +34,7 @@ use push_tag::push_tag;
 mod delete_tag;
 pub(crate) mod parallel_snapshot_upload_support;
 
-use crate::blockchain::{branch_list, Snapshot, Tree, tree};
+use crate::blockchain::{branch_list, get_commit_by_addr, Snapshot, Tree, tree};
 use crate::git_helper::push::parallel_snapshot_upload_support::{
     ParallelCommit, ParallelCommitUploadSupport, ParallelSnapshot, ParallelSnapshotUploadSupport,
     ParallelTreeUploadSupport,
@@ -1475,7 +1475,19 @@ where
                     number_of_commits += 1;
                     // in case of fast forward commits can be already deployed for another branch
                     // Do not deploy them again
-                    // let commit_address = self.calculate_commit_address(&object_id).await?;
+                    let commit_address = self.calculate_commit_address(&object_id).await?;
+                    match get_commit_by_addr(
+                        self.blockchain.client(),
+                        &commit_address
+                    ).await {
+                        Ok(Some(commit)) => {
+                            if commit.is_correct_commit {
+                                continue;
+                            }
+                        }
+                        _ => {}
+                    }
+
                     // let commit_contract = GoshContract::new(&commit_address, gosh_abi::COMMIT);
                     // match commit_contract.is_active(self.blockchain.client()).await {
                     //     Ok(true) => continue,
