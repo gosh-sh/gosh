@@ -172,13 +172,16 @@ contract Commit is Modifiers {
     function _acceptCommitRepo(uint128 index, uint128 number, string branch) public senderIs(address(this)) {
         tvm.accept();
         getMoney();
-        if (index >= number) {
-            _commitcheck = false;
-            _diffcheck = false;
-            return;
+        for (uint128 i = 0; i < BATCH_SIZE_COMMIT; i++){
+            if (index >= number) {
+                _commitcheck = false;
+                _diffcheck = false;
+                return;
+            }
+            DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0)).allCorrect{value : 0.2 ton, flag: 1}(branch);
+            index += 1;
         }
-        DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0)).allCorrect{value : 0.2 ton, flag: 1}(branch);
-        this._acceptCommitRepo{value: 0.2 ton, bounce: true, flag: 1}(index + 1, number, branch);
+        this._acceptCommitRepo{value: 0.2 ton, bounce: true, flag: 1}(index, number, branch);
     }
 
     function cancelCommit(string namecommit, uint128 number) public {
@@ -193,14 +196,17 @@ contract Commit is Modifiers {
     function _cancelAllDiff(uint128 index, uint128 number) public senderIs(address(this)) {
         tvm.accept();
         getMoney();
-        if (index >= number) {
-            _diffcheck = false;
-            _commitcheck = false;
-            return;
+        for (uint128 i = 0; i < BATCH_SIZE_COMMIT; i++){
+            if (index >= number) {
+                _diffcheck = false;
+                _commitcheck = false;
+                return;
+            }
+            if (address(this).balance < 5 ton) { _saved = PauseCommit(false, "", address.makeAddrNone(), index, number); return; }
+            DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0)).cancelCommit{value : 0.2 ton, flag: 1}();
+            index += 1;
         }
-        if (address(this).balance < 5 ton) { _saved = PauseCommit(false, "", address.makeAddrNone(), index, number); return; }
-        DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0)).cancelCommit{value : 0.2 ton, flag: 1}();
-        this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(index + 1, number);
+        this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(index, number);
     }
 
     function SendDiff(string branch, address branchcommit, uint128 number, uint128 numcommits, optional(ConfigCommit) task, bool isUpgrade) public senderIs(_rootRepo){
@@ -292,9 +298,12 @@ contract Commit is Modifiers {
             this.acceptAll{value: 0.15 ton, bounce: true, flag: 1}(branch, branchcommit);
             return;
         }
-        if (index >= number) { return; }
-        DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0)).sendDiffAll{value: 0.5 ton, bounce: true, flag: 1}(branch, branchcommit);
-        this._sendAllDiff{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, index + 1, number);
+        for (uint128 i = 0; i < BATCH_SIZE_COMMIT; i++){
+            if (index >= number) { return; }
+            DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0)).sendDiffAll{value: 0.5 ton, bounce: true, flag: 1}(branch, branchcommit);
+            index += 1;
+        }
+        this._sendAllDiff{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, index, number);
     }
 
     function getAcceptedDiff(Diff value0, uint128 index1, uint128 index2, string branch) public senderIs(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index1, index2)){
@@ -357,17 +366,19 @@ contract Commit is Modifiers {
         uint128 numcommits,
         uint128 index,
         uint32 timecommit) public senderIs(address(this)) accept {
-        if (index >= _parents.length) { return; }
         getMoney();
-        if (index != 0) { Commit(newC).addCommitCheckNumber{value:0.1 ton , flag: 1}(_nameCommit); }
-        if ((index != 0) || (_save[newC] != true)){
-            Commit(_parents[index].addr).CommitCheckCommit{value: 0.3 ton, bounce: true, flag: 1 }(_nameCommit, branchName, branchCommit , newC, numcommits - 1, false, timecommit);
+        for (uint128 i = 0; i < BATCH_SIZE_COMMIT; i++){
+            if (index >= _parents.length) { return; }
+            if (index != 0) { Commit(newC).addCommitCheckNumber{value:0.1 ton , flag: 1}(_nameCommit); }
+            if ((index != 0) || (_save[newC] != true)){
+                Commit(_parents[index].addr).CommitCheckCommit{value: 0.3 ton, bounce: true, flag: 1 }(_nameCommit, branchName, branchCommit , newC, numcommits - 1, false, timecommit);
+            }
+            else {
+                Commit(_parents[index].addr).CommitCheckCommit{value: 0.3 ton, bounce: true, flag: 1 }(_nameCommit, branchName, branchCommit , newC, numcommits - 1, true, timecommit);
+            }
+            index += 1;
         }
-        else {
-
-            Commit(_parents[index].addr).CommitCheckCommit{value: 0.3 ton, bounce: true, flag: 1 }(_nameCommit, branchName, branchCommit , newC, numcommits - 1, true, timecommit);
-        }
-        this._sendCheckChainLoop{value: 0.1 ton, flag: 1}(branchName, branchCommit, newC, numcommits, index + 1, timecommit);
+        this._sendCheckChainLoop{value: 0.1 ton, flag: 1}(branchName, branchCommit, newC, numcommits, index, timecommit);
     }
 
 
@@ -445,13 +456,16 @@ contract Commit is Modifiers {
     function _cancelCommitRepo(uint128 index, uint128 number) public senderIs(address(this)) {
         tvm.accept();
         getMoney();
-        if (index >= number) {
-            _commitcheck = false;
-            _diffcheck = false;
-            return;
+        for (uint128 i = 0; i < BATCH_SIZE_COMMIT; i++){
+            if (index >= number) {
+                _commitcheck = false;
+                _diffcheck = false;
+                return;
+            }
+            DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0)).cancelCommit{value : 0.2 ton, flag: 1}();
+            index += 1;
         }
-        DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0)).cancelCommit{value : 0.2 ton, flag: 1}();
-        this._cancelCommitRepo{value: 0.2 ton, bounce: true, flag: 1}(index + 1, number);
+        this._cancelCommitRepo{value: 0.2 ton, bounce: true, flag: 1}(index, number);
     }
 
     function CommitCheckCommit(
@@ -483,15 +497,18 @@ contract Commit is Modifiers {
     function checkFallbackDiff (uint128 index, address sender) public senderIs(address(this)){
         tvm.accept();
         getMoney();
-        if (index >= _number) { return; }
-        if (sender == GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0)) {
-            _continueDiff = false;
-            _diffcheck = false;
-            _approved = 0;
-            if (_continueChain == true) { return; }
-            this.acceptAll{value: 0.15 ton, bounce: true, flag: 1}("", sender);
+        for (uint128 i = 0; i < BATCH_SIZE_COMMIT; i++){
+            if (index >= _number) { return; }
+            if (sender == GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0)) {
+                _continueDiff = false;
+                _diffcheck = false;
+                _approved = 0;
+                if (_continueChain == true) { return; }
+                this.acceptAll{value: 0.15 ton, bounce: true, flag: 1}("", sender);
+            }
+            index += 1;
         }
-        this.checkFallbackDiff{value: 0.2 ton, bounce: true, flag: 1}(index + 1, sender);
+        this.checkFallbackDiff{value: 0.2 ton, bounce: true, flag: 1}(index, sender);
     }
 
     //Fallback/Receive

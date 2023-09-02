@@ -91,22 +91,28 @@ contract Tree is Modifiers {
         getMoney();
         if (_isReady == true) { return; }
         if (_neednumber == _number) { return; }
-        optional(uint256, TreeObject) res = tree1.next(index);
-        if (res.hasValue()) {
-            TreeObject obj;
-            (index, obj) = res.get();
-            if (_tree.exists(index) == false) { 
-                _number += 1; 
-                if (_neednumber == _number) {
-                    this.calculateInnerTreeHash{value: 0.1 ton, flag: 1}(0, 0);
+        for (uint128 i = 0; i < BATCH_SIZE_TREE; i++) {
+            optional(uint256, TreeObject) res = tree1.next(index);
+            if (res.hasValue()) {
+                TreeObject obj;
+                (index, obj) = res.get();
+                if (_tree.exists(index) == false) { 
+                    _number += 1; 
+                    if (_neednumber == _number) {
+                        this.calculateInnerTreeHash{value: 0.1 ton, flag: 1}(0, 0);
+                        return;
+                    }
+                }
+                _tree[index] = obj;
+                if (i + 1 == BATCH_SIZE_TREE_DIFF) { 
+                    this.addTreeself{value: 0.2 ton, flag: 1}(index, tree1);
                 }
             }
-            _tree[index] = obj;
-            this.addTreeself{value: 0.2 ton, flag: 1}(index, tree1);
-        }
-        else {
-            if (_neednumber == _number) {
-                this.calculateInnerTreeHash{value: 0.1 ton, flag: 1}(0, 0);
+            else {
+                if (_neednumber == _number) {
+                    this.calculateInnerTreeHash{value: 0.1 ton, flag: 1}(0, 0);
+                    return;
+                }
             }
         }
     }

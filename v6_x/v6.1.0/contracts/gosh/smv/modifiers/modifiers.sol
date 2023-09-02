@@ -101,6 +101,10 @@ abstract contract Modifiers is ReplayProtection {
     
     address constant giver = address.makeAddrStd(-1, 0x94fb06c32a69c30bc419a368d1cf567e6358c9c5f07e4326f0c48db506b6f44c);
     
+    uint128 constant BATCH_SIZE_COMMIT = 5;
+    uint128 constant BATCH_SIZE_TREE_DIFF = 5;
+    uint128 constant BATCH_SIZE_TREE = 5;
+    
     modifier onlyOwnerPubkeyOptional(optional(uint256) rootpubkey) {
         require(rootpubkey.hasValue() == true, ERR_NOT_OWNER);
         require(msg.pubkey() == rootpubkey.get(), ERR_NOT_OWNER);

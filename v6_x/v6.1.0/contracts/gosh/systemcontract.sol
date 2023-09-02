@@ -70,7 +70,7 @@ contract SystemContract is Modifiers {
     }
 
     function returnMoney(uint128 value) public view senderIs(_versionController) accept {
-        msg.sender.transfer(value);
+        giver.transfer(value);
     }
 
     function upgradeTag1(string namedao, string namerepo, string nametag, string namecommit, address commit, string content, string newversion) public view senderIs(getTagAddr(namedao, namerepo, nametag)) accept {
