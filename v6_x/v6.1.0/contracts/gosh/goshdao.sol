@@ -382,14 +382,14 @@ contract GoshDao is Modifiers, TokenRootOwner {
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (address(this).balance < 20 ton) { _volunteerdiff.push(msg.sender); getMoney(); return; }
-        addr.transfer(50 ton);
+        addr.transfer(13 ton);
         getMoney();
     }
     
     function sendMoneySnap(string commitSha, address repo, string name) public senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], repo, commitSha, name)) {
         tvm.accept();
         if (address(this).balance < 2000 ton) { _volunteersnap.push(msg.sender); getMoney(); return; }
-        msg.sender.transfer(1000 ton);
+        msg.sender.transfer(1003 ton);
         getMoney();
     }
     
@@ -398,14 +398,14 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function volunteersnap() public senderIs(address(this)) accept {
-        _volunteersnap[0].transfer(1000 ton);
+        _volunteersnap[0].transfer(1003 ton);
         delete _volunteersnap[0];
         this.volunteersnap();
         getMoney();       
     }
     
     function volunteerdiff() public senderIs(address(this)) accept {
-        _volunteerdiff[0].transfer(50 ton);
+        _volunteerdiff[0].transfer(13 ton);
         delete _volunteerdiff[0];
         this.volunteerdiff();
         getMoney();
