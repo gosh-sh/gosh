@@ -122,6 +122,15 @@ const Dispatcher = () => {
                 </Preloader>
             }
         >
+            {AppConfig.maintenance === 1 && (
+                <div className="container mt-3">
+                    <Alert variant="danger">
+                        <h1 className="font-medium">Sorry, we have temporary problems</h1>
+                        <div>Write operations don't not work due to maintanance</div>
+                    </Alert>
+                </div>
+            )}
+
             {renderApp(version)}
         </Suspense>
     )

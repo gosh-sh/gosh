@@ -13,6 +13,7 @@ export class AppConfig {
     static goshipfs: string
     static dockerclient?: any
     static supabase: SupabaseClient<any, 'public', any>
+    static maintenance: number
 
     static setup() {
         const endpoints = import.meta.env.REACT_APP_GOSH_NETWORK?.split(',')
@@ -61,6 +62,7 @@ export class AppConfig {
             'https://auth.gosh.sh',
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkaHNrdnN6dGVwYnlpc2Jxc2pqIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzA0MTMwNTEsImV4cCI6MTk4NTk4OTA1MX0._6KcFBYmSUfJqTJsKkWcMoIQBv3tuInic9hvEHuFpJg',
         )
+        AppConfig.maintenance = parseInt(import.meta.env.REACT_APP_MAINTENANCE || '0')
 
         // TODO: Remove this after git part refactor
         AppConfig._setupReactGosh()
