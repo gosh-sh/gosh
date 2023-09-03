@@ -185,6 +185,11 @@ contract VersionController is Modifiers {
     function returnMoney(address destination, uint128 value) public onlyOwner accept saveMsg {
         destination.transfer(value);
     }  
+
+
+    function returnMoneyGiver(uint128 value) public onlyOwner accept saveMsg {
+        giver.transfer(value);
+    }
     
     //Setters
     function setProfileIndex(TvmCell code) public  onlyOwner accept {

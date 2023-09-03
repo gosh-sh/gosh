@@ -93,7 +93,7 @@ contract Snapshot is Modifiers {
     function getMoney() private {
         if (block.timestamp - timeMoney > 3600) { _flag = false; timeMoney = block.timestamp; }
         if (_flag == true) { return; }
-        if (address(this).balance > 1000 ton) { return; }
+        if (address(this).balance > 100 ton) { return; }
         _flag = true;
         GoshDao(_goshdao).sendMoneySnap{value : 0.2 ton, flag: 1}(_baseCommit, _rootRepo, NameOfFile);
     }

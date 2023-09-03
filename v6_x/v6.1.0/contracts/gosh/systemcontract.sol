@@ -70,7 +70,7 @@ contract SystemContract is Modifiers {
     }
 
     function returnMoney(uint128 value) public view senderIs(_versionController) accept {
-        msg.sender.transfer(value);
+        giver.transfer(value);
     }
 
     function upgradeTag1(string namedao, string namerepo, string nametag, string namecommit, address commit, string content, string newversion) public view senderIs(getTagAddr(namedao, namerepo, nametag)) accept {
@@ -313,12 +313,13 @@ contract SystemContract is Modifiers {
     }
 
     function updateCode(TvmCell newcode, TvmCell cell) public onlyOwner accept saveMsg {
+        cell;
         tvm.setcode(newcode);
         tvm.setCurrentCode(newcode);
-        onCodeUpgrade(cell);
+        onCodeUpgrade();
     }
 
-    function onCodeUpgrade(TvmCell cell) private pure {
+    function onCodeUpgrade() private pure {
     }
 
     //Setters
