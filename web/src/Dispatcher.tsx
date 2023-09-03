@@ -6,6 +6,7 @@ import Alert from './components/Alert/Alert'
 import { useRecoilState } from 'recoil'
 import { appContextAtom } from './store/app.state'
 import { AppConfig } from './appconfig'
+import MaintenenceImg from './assets/images/maintenance.png'
 
 const App_v1 = lazy(() => import('./v1.0.0/App'))
 const App_v2 = lazy(() => import('./v2.0.0/App'))
@@ -124,14 +125,25 @@ const Dispatcher = () => {
         >
             {AppConfig.maintenance === 1 && (
                 <div className="container mt-3">
-                    <Alert variant="danger">
+                    <Alert variant="warning">
                         <h1 className="font-medium">Sorry, we have temporary problems</h1>
                         <div>Write operations don't not work due to maintanance</div>
                     </Alert>
                 </div>
             )}
 
-            {renderApp(version)}
+            {AppConfig.maintenance === 2 ? (
+                <div className="fixed left-0 top-0 w-screen h-screen">
+                    <div className="mt-20 w-auto md:w-1/2 lg:w-1/3 mx-auto">
+                        <img src={MaintenenceImg} alt="Maintenance" className="w-full" />
+                    </div>
+                    <div className="mt-10 text-lg font-medium text-center">
+                        We are on a technical break, please check back later
+                    </div>
+                </div>
+            ) : (
+                renderApp(version)
+            )}
         </Suspense>
     )
 }
