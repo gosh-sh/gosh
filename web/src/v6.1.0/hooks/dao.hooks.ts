@@ -6,7 +6,13 @@ import { AppConfig } from '../../appconfig'
 import { getSystemContract } from '../blockchain/helpers'
 import { supabase } from '../../supabase'
 import { Buffer } from 'buffer'
-import { executeByChunk, sleep, splitByChunk, whileFinite } from '../../utils'
+import {
+    executeByChunk,
+    setLockableInterval,
+    sleep,
+    splitByChunk,
+    whileFinite,
+} from '../../utils'
 import {
     DAO_TOKEN_TRANSFER_TAG,
     DISABLED_VERSIONS,
@@ -443,7 +449,8 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
                 },
                 error: undefined,
             }))
-            getDetails({ dao, repository })
+            getDetailsSubscription(dao)
+            getDetailsInterval({ dao, repository })
         } catch (e) {
             setData((state) => ({ ...state, error: e }))
             throw e
@@ -452,17 +459,10 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
         }
     }, [daoname])
 
-    const getDetails = async (params: { dao: Dao; repository: GoshRepository }) => {
-        const { dao, repository } = params
-
-        if (!dao) {
-            return
-        }
-
+    const getDetailsSubscription = async (dao: Dao) => {
         try {
             setData((state) => ({ ...state, isFetchingData: true }))
 
-            const name = await dao.getName()
             const details = await dao.getDetails()
             const members = await dao.getMembers({
                 parse: { wallets: details.wallets, daomembers: details.daoMembers },
@@ -471,8 +471,6 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
                 parse: { wallets: details.my_wallets, daomembers: {} },
                 isDaoMemberOf: true,
             })
-            const tasks = await getTaskCount(dao)
-            const { summary, description } = await getDescription(name, repository)
 
             setData((state) => ({
                 ...state,
@@ -486,9 +484,6 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
                     },
                     owner: details.pubaddr,
                     tags: Object.values(details.hashtag),
-                    tasks,
-                    summary,
-                    description,
                     isMemberOf,
                     isMintOn: details.allowMint,
                     isAskMembershipOn: details.abilityInvite,
@@ -499,6 +494,30 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
                     isUpgraded: details.isRepoUpgraded && details.isTaskUpgraded,
                     isReady: details.isUpgraded,
                 },
+            }))
+        } catch (e: any) {
+            console.error(e.message)
+        } finally {
+            setData((state) => ({ ...state, isFetchingData: false }))
+        }
+    }
+
+    const getDetailsInterval = async (params: {
+        dao: Dao
+        repository: GoshRepository
+    }) => {
+        const { dao, repository } = params
+
+        try {
+            setData((state) => ({ ...state, isFetchingData: true }))
+
+            const name = await dao.getName()
+            const tasks = await getTaskCount(dao)
+            const { summary, description } = await getDescription(name, repository)
+
+            setData((state) => ({
+                ...state,
+                details: { ...state.details, tasks, summary, description },
             }))
         } catch (e: any) {
             console.error(e.message)
@@ -593,22 +612,60 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
             return
         }
 
-        let intervalBusy = false
-        const interval = setInterval(async () => {
-            if (intervalBusy) {
-                return
-            }
+        // Subscribe for DAO incoming messages
+        const triggers = [
+            'addRegularTokenPub',
+            'addVoteTokenPub',
+            'addVoteTokenPub3',
+            'calculateBalanceManager',
+            'changeAllowDiscussion',
+            'changeAllowanceIn',
+            'changeAllowanceIn2',
+            'changeHideVotingResult',
+            'deleteWallet',
+            'deployWallets',
+            'deployedWallet',
+            'destroyedWallet',
+            'isAlone',
+            'mintReserve',
+            'receiveTokentoReserve',
+            'redeployedTask',
+            'returnAllowance',
+            'returnTaskToken',
+            'returnTaskTokenBig',
+            'returnWalletsVersion',
+            'returnWalletsVersionv4',
+            'setAbilityInvite',
+            'setRepoUpgraded',
+            'smvdeploytag',
+            'smvdeploytagin',
+            'smvdestroytag',
+            'smvnotallowmint',
+        ]
+        data.details.account?.account.subscribeMessages(
+            'msg_type body',
+            async (message) => {
+                const decoded = await data.details.account?.decodeMessageBody(
+                    message.body,
+                    message.msg_type,
+                )
+                if (decoded && triggers.indexOf(decoded.name) >= 0) {
+                    await getDetailsSubscription(data.details.account!)
+                }
+            },
+        )
 
-            intervalBusy = true
-            await getDetails({
+        // Updates by interval
+        const interval = setLockableInterval(async () => {
+            await getDetailsInterval({
                 dao: data.details.account!,
                 repository: data.details.repository!,
             })
-            intervalBusy = false
         }, 15000)
 
         return () => {
             clearInterval(interval)
+            data.details.account?.account.free()
         }
     }, [subscribe, data.details.address])
 
@@ -917,21 +974,46 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
             return
         }
 
-        let intervalBusy = false
-        const interval = setInterval(async () => {
-            if (intervalBusy) {
-                return
+        // Subscribe for DAO wallet messages
+        const triggers = [
+            'acceptUnlock',
+            'addAllowance',
+            'addAllowanceC',
+            'addRegularToken',
+            'addVoteToken',
+            'askForLimited',
+            'askForLimitedBasic',
+            'daoSendTokenToNewVersionAfter5',
+            'grantToken',
+            'grantTokenBig',
+            'lockVoting',
+            'lockVotingInDao',
+            'receiveToken',
+            'returnDaoBalance',
+            'sendTokenToDaoReserve',
+            'sendTokenToDaoReserveIn',
+            'sendToken',
+            'sendTokenIn',
+            'sendTokenToNewVersion',
+            'sendTokenToNewVersionAfter5',
+            'sendTokenToNewVersionIn',
+            'sendTokenToNewVersion5',
+            'setLimitedWallet',
+        ]
+        data.wallet?.account.subscribeMessages('msg_type body', async (message) => {
+            const decoded = await data.wallet?.decodeMessageBody(
+                message.body,
+                message.msg_type,
+            )
+            if (decoded && triggers.indexOf(decoded.name) >= 0) {
+                await getDetails()
             }
-
-            intervalBusy = true
-            await getDetails()
-            intervalBusy = false
-        }, 15000)
+        })
 
         return () => {
-            clearInterval(interval)
+            data.wallet?.account.free()
         }
-    }, [getDetails, subscribe])
+    }, [getDetails, data.wallet, subscribe])
 
     useEffect(() => {
         if (!subscribe) {
@@ -939,15 +1021,8 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
         }
 
         transferTokensFromPrevDao()
-        let isIntervalBusy = false
-        const interval = setInterval(async () => {
-            if (isIntervalBusy) {
-                return
-            }
-
-            isIntervalBusy = true
+        const interval = setLockableInterval(async () => {
             const { retry } = await transferTokensFromPrevDao()
-            isIntervalBusy = false
             if (!retry) {
                 clearInterval(interval)
             }
@@ -3690,7 +3765,7 @@ export function useTask(
                 return
             }
 
-            const interval = setInterval(async () => {
+            const interval = setLockableInterval(async () => {
                 if (!(await checkExists(task.account!))) {
                     clearInterval(interval)
                 }
