@@ -39,13 +39,11 @@ const GoshPhraseCheck = (props: TGoshPhraseProps) => {
         updateData({ step: 'phrase' })
     }
 
-    const onFormSubmit = async (values: {
-        words: { value: string; index: number }[]
-    }) => {
+    const onFormSubmit = async (values: { words: string[] }) => {
         try {
             const { words } = values
-            const validated = words.map(({ value, index }) => {
-                return value === phrase[index]
+            const validated = words.map((w, index) => {
+                return w === phrase[rndNumbers[index]]
             })
             if (!validated.every((v) => !!v)) {
                 throw new GoshError('Words check failed')
