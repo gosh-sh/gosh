@@ -6,7 +6,13 @@ import { AppConfig } from '../../appconfig'
 import { getSystemContract } from '../blockchain/helpers'
 import { supabase } from '../../supabase'
 import { Buffer } from 'buffer'
-import { executeByChunk, sleep, splitByChunk, whileFinite } from '../../utils'
+import {
+    executeByChunk,
+    setLockableInterval,
+    sleep,
+    splitByChunk,
+    whileFinite,
+} from '../../utils'
 import {
     DISABLED_VERSIONS,
     MAX_PARALLEL_READ,
@@ -540,18 +546,11 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
             return
         }
 
-        let intervalBusy = false
-        const interval = setInterval(async () => {
-            if (intervalBusy) {
-                return
-            }
-
-            intervalBusy = true
+        const interval = setLockableInterval(async () => {
             await getDetails({
                 dao: data.details.account!,
                 repository: data.details.repository!,
             })
-            intervalBusy = false
         }, 15000)
 
         return () => {
@@ -680,15 +679,8 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
             return
         }
 
-        let intervalBusy = false
-        const interval = setInterval(async () => {
-            if (intervalBusy) {
-                return
-            }
-
-            intervalBusy = true
+        const interval = setLockableInterval(async () => {
             await getDetails()
-            intervalBusy = false
         }, 15000)
 
         return () => {
@@ -3159,7 +3151,7 @@ export function useTask(
                 return
             }
 
-            const interval = setInterval(async () => {
+            const interval = setLockableInterval(async () => {
                 if (!(await checkExists(task.account!))) {
                     clearInterval(interval)
                 }
