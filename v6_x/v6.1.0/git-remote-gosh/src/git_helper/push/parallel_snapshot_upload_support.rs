@@ -319,7 +319,7 @@ impl ParallelCommitUploadSupport {
 pub struct ParallelTreeUploadSupport {
     expecting_deployed_contacts_addresses: Vec<String>,
     pushed_blobs: JoinSet<anyhow::Result<()>>,
-    pub tree_item_to_base_commit_cache: HashMap<ObjectId, String>,
+    pub tree_item_to_base_commit_cache: HashMap<String, String>,
 }
 
 #[derive(Clone, Debug)]
