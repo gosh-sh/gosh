@@ -1,6 +1,6 @@
 use super::GitHelper;
 
-use crate::blockchain::gosh_abi;
+use crate::blockchain::{gosh_abi, ZERO_SHA};
 use crate::ipfs::build_ipfs;
 use crate::{
     blockchain::{
@@ -328,8 +328,10 @@ async fn restore_a_set_of_blobs_from_a_deleted_snapshot(
         let mut visited = visited.lock().await;
         visited.insert(blob_id);
     }
-    last_restored_snapshots.put(blob_id, blob);
+    last_restored_snapshots.put(blob_id, blob.clone());
     blobs.remove(&blob_id);
+    let mut last_restored_blod_id = git_hash::ObjectId::from_str(ZERO_SHA)?;
+    let mut last_restored_blob_content = Vec::<u8>::new();
 
     tracing::info!(
         "Expecting to restore blobs: {:?} from {}",
@@ -396,23 +398,23 @@ async fn restore_a_set_of_blobs_from_a_deleted_snapshot(
             transition_content = None;
             content
         } else {
-            let patched_blob_sha = &message
-                .diff
-                .modified_blob_sha1
-                .as_ref()
-                .expect("Option on this should be reverted. It must always be there");
-            let patched_blob_sha = git_hash::ObjectId::from_str(patched_blob_sha)?;
-            let content = last_restored_snapshots
-                .get(&patched_blob_sha)
-                .expect("It is a sequence of changes. Sha must be correct. Fail otherwise");
-            let patched_blob = content.to_vec();
+            // let patched_blob_sha = &message
+            //     .diff
+            //     .modified_blob_sha1
+            //     .as_ref()
+            //     .expect("Option on this should be reverted. It must always be there");
+            // let patched_blob_sha = git_hash::ObjectId::from_str(patched_blob_sha)?;
+            // let content = last_restored_snapshots
+            //     .get(&patched_blob_sha)
+            //     .expect("It is a sequence of changes. Sha must be correct. Fail otherwise");
+            // let patched_blob = content.to_vec();
+            let patched_blob = last_restored_blob_content;
 
             message
                 .diff
                 .with_patch::<_, anyhow::Result<Vec<u8>>>(|e| match e {
                     Some(patch) => {
-                        let blob_data =
-                            diffy::apply_bytes(&patched_blob, &patch.clone().reverse())?;
+                        let blob_data = diffy::apply_bytes(&patched_blob, &patch.clone())?;
                         Ok(blob_data)
                     }
                     None => panic!("Broken diff detected: neither ipfs nor patch exists"),
@@ -422,7 +424,9 @@ async fn restore_a_set_of_blobs_from_a_deleted_snapshot(
         let blob = git_object::Data::new(git_object::Kind::Blob, &blob_data);
         let blob_id = write_git_data(repo, blob).await?;
         tracing::info!("Restored blob {}", blob_id);
-        last_restored_snapshots.put(blob_id, blob_data);
+        last_restored_snapshots.put(blob_id, blob_data.clone());
+        last_restored_blod_id = blob_id;
+        last_restored_blob_content = blob_data;
         {
             let mut visited = visited.lock().await;
             visited.insert(blob_id);
