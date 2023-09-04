@@ -817,7 +817,8 @@ where
         if !upgrade_commit {
             for deleted in tree_diff.deleted {
                 let file_path = deleted.filepath.to_string();
-
+                tracing::trace!("Delete blob from cache: {:?}", deleted.oid);
+                parallel_tree_upload_support.tree_item_to_base_commit_cache.remove(&deleted.oid);
                 if snapshot_to_commit.contains_key(&file_path) {
                     let snap_mon_vec = snapshot_to_commit.get_mut(&file_path).unwrap();
                     for i in 0..snap_mon_vec.len() {

@@ -113,7 +113,7 @@ async fn construct_tree(
     handlers: &mut ParallelTreeUploadSupport,
     previous_tree: Option<Tree>,
 ) -> anyhow::Result<HashMap<String, TreeComponent>> {
-    tracing::trace!("construct tree: tree_id={tree_id}, current_commit={current_commit}, snapshot_to_commit:{snapshot_to_commit:?}, is_upgrade={is_upgrade}");
+    tracing::trace!("construct tree: tree_id={tree_id}, current_commit={current_commit}, snapshot_to_commit:{snapshot_to_commit:?}, is_upgrade={is_upgrade}, handlers.tree_item_to_base_commit_cache={:?}", handlers.tree_item_to_base_commit_cache);
     // flatten tree map to get rid of recursive calls of async funcs
     let flat_tree = flatten_tree(context, tree_id, "")?;
     tracing::trace!("construct tree: flat_tree={flat_tree:?}");
@@ -203,6 +203,7 @@ async fn construct_tree(
                                         )?
                                 },
                             };
+                            tracing::trace!("save blob to cache: {:?} {}", entry.oid, commit);
                             handlers.tree_item_to_base_commit_cache.insert(entry.oid.clone(), commit.clone());
                             commit
                         }
