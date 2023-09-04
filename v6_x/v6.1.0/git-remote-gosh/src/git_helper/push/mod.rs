@@ -457,7 +457,8 @@ where
         let mut was_upgraded = false;
         for id in &parent_ids {
             tracing::trace!("check parent: {id}");
-            if self.pushed_commits.contains(id) {
+            if self.pushed_commits.contains_key(id) {
+                was_upgraded = self.pushed_commits.get(id).unwrap().to_owned();
                 continue;
             }
             was_upgraded = true;
@@ -501,7 +502,7 @@ where
         // If parent exists load tree of the zero parent
         let parent_tree = match parent_ids.first() {
             Some(id) => {
-                if was_upgraded || !self.pushed_commits.contains(id) {
+                if was_upgraded || !self.pushed_commits.contains_key(id) {
                     let mut repo = self.blockchain.repo_contract().clone();
                     let parent = get_commit_address(
                         self.blockchain.client(),
@@ -1006,7 +1007,7 @@ where
         // 8) Get list of objects to push with the ancestor commit
         tracing::trace!("Find objects till: {till_id:?}");
         let commit_objects_list = get_list_of_commit_objects(ancestor_id, till_id)?;
-        if self.pushed_commits.contains(&commit_objects_list[0]) {
+        if self.pushed_commits.contains_key(&commit_objects_list[0]) {
             return Ok(());
         }
 
@@ -1085,7 +1086,7 @@ where
             let object_kind = self.local_repository().find_object(object_id)?.kind;
             match object_kind {
                 git_object::Kind::Commit => {
-                    self.pushed_commits.push(oid.to_string());
+                    self.pushed_commits.insert(oid.to_string(), true);
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)
                     self.push_commit_object(
                         oid,
@@ -1471,7 +1472,7 @@ where
             tracing::trace!("Push object: {object_id:?} {object_kind:?}");
             match object_kind {
                 git_object::Kind::Commit => {
-                    self.pushed_commits.push(oid.to_string());
+                    self.pushed_commits.insert(oid.to_string(), false);
                     number_of_commits += 1;
                     // in case of fast forward commits can be already deployed for another branch
                     // Do not deploy them again

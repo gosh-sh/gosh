@@ -57,7 +57,7 @@ pub struct GitHelper<
     pub dao_addr: BlockchainContractAddress,
     pub repo_addr: BlockchainContractAddress,
     local_repository: Arc<git_repository::Repository>,
-    pushed_commits: Vec<String>,
+    pushed_commits: HashMap<String, bool>,
     repo_versions: Vec<RepoVersion>,
     database: Option<Arc<GoshDB>>,
 }
@@ -164,7 +164,7 @@ where
             dao_addr: dao.address,
             repo_addr,
             local_repository,
-            pushed_commits: vec![],
+            pushed_commits: HashMap::new(),
             repo_versions: vec![],
             database: None,
         })
@@ -619,7 +619,7 @@ pub mod tests {
             repo_addr,
             local_repository,
             // cache,
-            pushed_commits: vec![],
+            pushed_commits: HashMap::new(),
             repo_versions: vec![],
             database: None,
         }
