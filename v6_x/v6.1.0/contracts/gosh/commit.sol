@@ -129,7 +129,7 @@ contract Commit is Modifiers {
         _isCorrect = true;
 //        Tree(_tree).setCorrect{value: 0.1 ton, flag: 1}(_nameCommit);
         _timeaccept = block.timestamp;
-//        this.sendSetCorrect{value: 0.1 ton, flag: 1}(0);
+        this.sendSetCorrect{value: 0.1 ton, flag: 1}(0);
         this._acceptCommitRepo{value: 0.2 ton, bounce: true, flag: 1}(0, number, branch);
         getMoney();
     }
@@ -149,9 +149,10 @@ contract Commit is Modifiers {
         getMoney();
         if (_isCorrect == true) { return; }
         _isCorrect = true;
+        if (_initupgrade == true) { return; }
 //        Tree(_tree).setCorrect{value: 0.1 ton, flag: 1}(_nameCommit);
         _timeaccept = time;
-//        this.sendSetCorrect{value: 0.1 ton, flag: 1}(0);
+        this.sendSetCorrect{value: 0.1 ton, flag: 1}(0);
     }
 
     function fromInitUpgrade(address commit, string branch, address newcommit) public view senderIs(_rootRepo) accept {
