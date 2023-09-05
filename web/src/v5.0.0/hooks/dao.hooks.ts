@@ -6,7 +6,13 @@ import { AppConfig } from '../../appconfig'
 import { getSystemContract } from '../blockchain/helpers'
 import { supabase } from '../../supabase'
 import { Buffer } from 'buffer'
-import { executeByChunk, sleep, splitByChunk, whileFinite } from '../../utils'
+import {
+    executeByChunk,
+    setLockableInterval,
+    sleep,
+    splitByChunk,
+    whileFinite,
+} from '../../utils'
 import {
     DAO_TOKEN_TRANSFER_TAG,
     DISABLED_VERSIONS,
@@ -562,18 +568,11 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
             return
         }
 
-        let intervalBusy = false
-        const interval = setInterval(async () => {
-            if (intervalBusy) {
-                return
-            }
-
-            intervalBusy = true
+        const interval = setLockableInterval(async () => {
             await getDetails({
                 dao: data.details.account!,
                 repository: data.details.repository!,
             })
-            intervalBusy = false
         }, 15000)
 
         return () => {
@@ -867,15 +866,8 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
             return
         }
 
-        let intervalBusy = false
-        const interval = setInterval(async () => {
-            if (intervalBusy) {
-                return
-            }
-
-            intervalBusy = true
+        const interval = setLockableInterval(async () => {
             await getDetails()
-            intervalBusy = false
         }, 15000)
 
         return () => {
@@ -889,15 +881,8 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
         }
 
         transferTokensFromPrevDao()
-        let isIntervalBusy = false
-        const interval = setInterval(async () => {
-            if (isIntervalBusy) {
-                return
-            }
-
-            isIntervalBusy = true
+        const interval = setLockableInterval(async () => {
             const { retry } = await transferTokensFromPrevDao()
-            isIntervalBusy = false
             if (!retry) {
                 clearInterval(interval)
             }
@@ -3641,7 +3626,7 @@ export function useTask(
                 return
             }
 
-            const interval = setInterval(async () => {
+            const interval = setLockableInterval(async () => {
                 if (!(await checkExists(task.account!))) {
                     clearInterval(interval)
                 }

@@ -88,3 +88,17 @@ export const executeByChunk = async <Input, Output>(
     }
     return result
 }
+
+export const setLockableInterval = (callback: () => Promise<void>, timeout: number) => {
+    let locked = false
+
+    const interval = setInterval(async () => {
+        if (!locked) {
+            locked = true
+            await callback()
+            locked = false
+        }
+    }, timeout)
+
+    return interval
+}
