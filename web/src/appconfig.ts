@@ -4,6 +4,7 @@ import { GoshError } from './errors'
 import { VersionController } from './blockchain/versioncontroller'
 import { SupabaseClient, createClient } from '@supabase/supabase-js'
 import { AppConfig as _AppConfig } from 'react-gosh'
+import { DISABLED_VERSIONS } from './constants'
 
 export class AppConfig {
     static endpoints: string[]
@@ -66,6 +67,12 @@ export class AppConfig {
 
         // TODO: Remove this after git part refactor
         AppConfig._setupReactGosh()
+    }
+
+    static getLatestVersion() {
+        return Object.keys(AppConfig.versions)
+            .reverse()
+            .filter((v) => DISABLED_VERSIONS.indexOf(v) < 0)[0]
     }
 
     /**

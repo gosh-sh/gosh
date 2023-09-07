@@ -76,7 +76,8 @@ const Dispatcher = () => {
         const _setAppContext = async () => {
             const versions = Object.keys(AppConfig.versions).reverse()
 
-            let version = versions[0]
+            // Search version for DAO
+            let version: string | null = null
             if (routeMatch?.params.daoname) {
                 for (const ver of versions) {
                     console.debug(routeMatch.params.daoname, ver)
@@ -88,6 +89,9 @@ const Dispatcher = () => {
                     }
                 }
             }
+
+            // Fallback to default latest version
+            version = version || AppConfig.getLatestVersion()
 
             setAppContext((state) => ({
                 ...state,
