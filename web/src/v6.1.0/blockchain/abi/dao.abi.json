@@ -191,6 +191,8 @@
 		{
 			"name": "volunteersnap",
 			"inputs": [
+				{"name":"volunteer","type":"address[]"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -198,6 +200,8 @@
 		{
 			"name": "volunteerdiff",
 			"inputs": [
+				{"name":"volunteer","type":"address[]"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -205,6 +209,8 @@
 		{
 			"name": "volunteertree",
 			"inputs": [
+				{"name":"volunteer","type":"address[]"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -212,6 +218,8 @@
 		{
 			"name": "volunteercommit",
 			"inputs": [
+				{"name":"volunteer","type":"address[]"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
