@@ -755,6 +755,9 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
             transfer.map(async ({ wallet, amount }) => {
                 await wallet.smvReleaseTokens()
                 await wallet.smvUnlockTokens(0)
+
+                await wallet.sendTokensToUpgradedDao(amount, dao.version!)
+                await sleep(10000)
                 await wallet.sendTokensToUpgradedDao(amount, dao.version!)
             }),
         )
