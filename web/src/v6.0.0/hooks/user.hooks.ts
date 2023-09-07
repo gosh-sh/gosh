@@ -32,7 +32,7 @@ export function useUser() {
 
     const resetState = useRecoilCallback(() => () => {
         const snapshot = snapshot_UNSTABLE(({ set }) => {
-            set(appContextAtom, { version: Object.keys(AppConfig.versions).reverse()[0] })
+            set(appContextAtom, { version: AppConfig.getLatestVersion() })
         })
         gotoSnapshot(snapshot)
     })
