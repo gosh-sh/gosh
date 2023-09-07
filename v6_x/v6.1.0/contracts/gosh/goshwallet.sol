@@ -725,6 +725,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshDao(_goshdao).setCheck{value:0.1 ton, flag: 1}(_pubaddr, _index);
     }       
 
+    function destroyDiff(address repo, string commit, uint128 index1, uint128 index2) public onlyOwnerPubkeyOptional(_access)  accept view {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], repo, commit, index1, index2)).destroy{value : 0.2 ton, flag: 1}(_pubaddr, _index);
+    }
+
 /*
     function destroyObject(address obj) public onlyOwnerPubkeyOptional(_access)  accept view {
         require(_tombstone == false, ERR_TOMBSTONE);
