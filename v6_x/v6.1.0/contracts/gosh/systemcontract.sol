@@ -32,6 +32,8 @@ contract SystemContract is Modifiers {
     mapping(uint8 => TvmCell) public _code;
     mapping(uint128 => TvmCell) public _indexesCode;
 
+    uint128 _indexupdate = 0;
+
     //Limits
     uint128 _limit_wallets = 64;
 
