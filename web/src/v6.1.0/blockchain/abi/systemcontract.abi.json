@@ -993,6 +993,7 @@
 		{"name":"_flag","type":"bool"},
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_indexesCode","type":"map(uint128,cell)"},
+		{"name":"_indexupdate","type":"uint128"},
 		{"name":"_limit_wallets","type":"uint128"},
 		{"name":"m_TokenLockerCode","type":"cell"},
 		{"name":"m_SMVPlatformCode","type":"cell"},
