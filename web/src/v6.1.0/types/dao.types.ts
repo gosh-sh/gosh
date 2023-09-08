@@ -209,6 +209,7 @@ export type TTaskDetails = {
     locktime: number
     isReady: boolean
     isOpen?: boolean
+    isDeleted?: boolean
 }
 
 export type TDaoTaskList = {

@@ -3541,12 +3541,14 @@ export function useTask(
                 ...state,
                 items: state.items.map((item) => {
                     if (item.address === account.address) {
-                        return { ...item, isOpen: false }
+                        return { ...item, isOpen: false, isDeleted: true }
                     }
                     return item
                 }),
             }))
-            // Remove from list
+
+            // Remove from list after short delay to allow state read
+            await sleep(300)
             setTasks((state) => ({
                 ...state,
                 items: state.items.filter((item) => {
@@ -3586,16 +3588,16 @@ export function useTask(
 
         try {
             // Search for task in task list state atom
-            let details = tasks.items.find((item) => item.address === address)
+            let found = tasks.items.find((item) => item.address === address)
 
             // Fetch task details from blockchain
-            if (!details) {
+            if (!found) {
                 const account = await getSystemContract().getTask({ address })
-                const _details = await account.getDetails()
-                details = { account, address, ..._details }
+                const details = await account.getDetails()
+                found = { account, address, ...details }
                 setTasks((state) => ({
                     ...state,
-                    items: [...state.items, details!],
+                    items: [...state.items, { ...found! }],
                 }))
             }
         } catch (e: any) {

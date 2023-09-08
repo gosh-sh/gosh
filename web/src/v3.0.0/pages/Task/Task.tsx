@@ -1,5 +1,5 @@
 import { Tooltip } from 'react-tooltip'
-import { useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useDao, useDaoTaskList, useTask } from '../../hooks/dao.hooks'
 import CopyClipboard from '../../../components/CopyClipboard'
 import { shortString } from '../../../utils'
@@ -20,23 +20,45 @@ const TaskPageInner = (props: { address: string }) => {
     const taskList = useDaoTaskList()
     const { task, error } = useTask(address, { loadOnInit: true })
     const { showBoundary } = useErrorBoundary()
+    const ref = useRef<HTMLDivElement>(null)
 
-    const onItemClose = () => {
+    const onItemClose = useCallback(() => {
         window.history.replaceState(null, document.title, `/o/${dao.details.name}/tasks`)
         taskList.closeItems()
-    }
+    }, [dao.details.name])
 
     useEffect(() => {
-        if (!task?.isOpen) {
+        if (!!task?.isDeleted) {
             onItemClose()
         }
-    }, [task?.isOpen])
+    }, [task?.isDeleted])
 
     useEffect(() => {
         if (error) {
             showBoundary(error)
         }
     }, [error])
+
+    useEffect(() => {
+        const onClick = ({ target }: any) => {
+            // If no ref or click inide event block, do nothing
+            if (!ref.current || (ref.current && ref.current.contains(target))) {
+                return
+            }
+
+            // Click outside event block, but need to check click on event list item
+            const items = document.getElementsByClassName('dao-tasklist-item')
+            const itemClicked = Array.from(items).some((item) => item.contains(target))
+            if (!itemClicked) {
+                onItemClose()
+            }
+        }
+
+        document.addEventListener('click', onClick)
+        return () => {
+            document.removeEventListener('click', onClick)
+        }
+    }, [onItemClose])
 
     if (!task) {
         return (
@@ -50,7 +72,7 @@ const TaskPageInner = (props: { address: string }) => {
     }
 
     return (
-        <>
+        <div ref={ref}>
             <div className="flex flex-wrap items-center gap-2 border-b border-b-gray-e8eeed pt-2 pb-4 relative">
                 <div className="basis-full lg:basis-auto grow">
                     <h3 className="text-xl font-medium">{task.name}</h3>
@@ -141,7 +163,7 @@ const TaskPageInner = (props: { address: string }) => {
                 </div>
             </div>
             <Tooltip id="common-tip" clickable />
-        </>
+        </div>
     )
 }
 

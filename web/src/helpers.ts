@@ -58,7 +58,7 @@ export const getUsernameByEmail = async (email: string): Promise<string[] | null
 export const ToastOptionsShortcuts = {
     Default: {
         position: toast.POSITION.TOP_RIGHT,
-        autoClose: 5000,
+        autoClose: 3000,
         hideProgressBar: false,
         closeOnClick: false,
         pauseOnHover: true,
