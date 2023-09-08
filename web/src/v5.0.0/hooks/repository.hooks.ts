@@ -136,8 +136,8 @@ export function useDaoRepositoryList(params: { count?: number } = {}) {
         cursor?: string
     }) => {
         const { daoaddr, limit, cursor } = params
-        const systemContract = getSystemContract()
-        const codeHash = await systemContract.getRepositoryCodeHash(daoaddr)
+        const sc = getSystemContract()
+        const codeHash = await sc.getRepositoryCodeHash(daoaddr)
         const { results, lastId, completed } = await getPaginatedAccounts({
             filters: [`code_hash: {eq:"${codeHash}"}`],
             limit,
@@ -147,7 +147,7 @@ export function useDaoRepositoryList(params: { count?: number } = {}) {
             results,
             MAX_PARALLEL_READ,
             async ({ id }) => {
-                const repo = await systemContract.getRepository({ address: id })
+                const repo = await sc.getRepository({ address: id })
                 const account = repo as GoshRepository
                 const details = await account.getDetails()
                 return {

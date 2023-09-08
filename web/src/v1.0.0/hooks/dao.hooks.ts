@@ -200,8 +200,8 @@ export function useUserDaoList(params: { count?: number; loadOnInit?: boolean } 
             MAX_PARALLEL_READ,
             async ({ decoded }) => {
                 const { goshdao, ver } = decoded.value
-                const systemContract = AppConfig.goshroot.getSystemContract(ver)
-                const account = (await systemContract.getDao({ address: goshdao })) as Dao
+                const sc = AppConfig.goshroot.getSystemContract(ver)
+                const account = (await sc.getDao({ address: goshdao })) as Dao
                 const members = await account.getMembers()
                 return {
                     account,

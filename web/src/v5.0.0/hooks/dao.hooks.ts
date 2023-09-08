@@ -77,7 +77,7 @@ export function useCreateDao() {
         const { name, tags, supply, isMintOn, description } = params
 
         try {
-            const systemContract = getSystemContract()
+            const sc = getSystemContract()
 
             if (!profile || !user.keys) {
                 throw new GoshError('Access error', {
@@ -87,9 +87,7 @@ export function useCreateDao() {
 
             // Create DAO
             setStatus((state) => ({ ...state, type: 'pending', data: 'Create DAO' }))
-            const dao = (await profile.createDao(systemContract, name, [
-                profile.address,
-            ])) as Dao
+            const dao = (await profile.createDao(sc, name, [profile.address])) as Dao
             const version = await dao.getVersion()
 
             // Authorize DAO wallet
@@ -136,7 +134,7 @@ export function useCreateDao() {
                 type: 'pending',
                 data: 'Create DAO system repository',
             }))
-            const repository = (await systemContract.getRepository({
+            const repository = (await sc.getRepository({
                 path: `${name}/_index`,
             })) as GoshRepository
             await wallet.createRepository({
@@ -287,8 +285,8 @@ export function useUserDaoList(params: { count?: number; loadOnInit?: boolean } 
             MAX_PARALLEL_READ,
             async ({ decoded }) => {
                 const { goshdao, ver } = decoded.value
-                const systemContract = AppConfig.goshroot.getSystemContract(ver)
-                const account = (await systemContract.getDao({ address: goshdao })) as Dao
+                const sc = AppConfig.goshroot.getSystemContract(ver)
+                const account = (await sc.getDao({ address: goshdao })) as Dao
                 const members = await account.getMembers({})
                 return {
                     account,
@@ -421,13 +419,13 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
             }
 
             setData((state) => ({ ...state, isFetching: true }))
-            const systemContract = getSystemContract()
-            const dao = await systemContract.getDao({ name: daoname })
+            const sc = getSystemContract()
+            const dao = await sc.getDao({ name: daoname })
             if (!(await dao.isDeployed())) {
                 throw new GoshError('DAO does not exist', { name: daoname })
             }
             const version = await dao.getVersion()
-            const repository = await systemContract.getRepository({
+            const repository = await sc.getRepository({
                 path: `${daoname}/_index`,
             })
 
@@ -3167,8 +3165,8 @@ export function useDaoTaskList(params: { count?: number; loadOnInit?: boolean } 
         cursor?: string
     }) => {
         const { daoaddr, limit, cursor } = params
-        const systemContract = getSystemContract()
-        const codeHash = await systemContract.getDaoTaskTagCodeHash(daoaddr, SYSTEM_TAG)
+        const sc = getSystemContract()
+        const codeHash = await sc.getDaoTaskTagCodeHash(daoaddr, SYSTEM_TAG)
         const { results, lastId, completed } = await getPaginatedAccounts({
             filters: [`code_hash: {eq:"${codeHash}"}`],
             limit,
@@ -3178,9 +3176,9 @@ export function useDaoTaskList(params: { count?: number; loadOnInit?: boolean } 
             results,
             MAX_PARALLEL_READ,
             async ({ id }) => {
-                const tag = await systemContract.getGoshTag({ address: id })
+                const tag = await sc.getGoshTag({ address: id })
                 const { task: address } = await tag.getDetails()
-                const task = await systemContract.getTask({ address })
+                const task = await sc.getTask({ address })
                 const details = await task.getDetails()
                 return {
                     account: task,
