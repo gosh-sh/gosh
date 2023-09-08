@@ -26,6 +26,7 @@ export default {
                 // refactor
                 'gray-7c8db5': '#7c8db5',
                 'gray-fafafd': '#fafafd',
+                'gray-f6f6f9': '#f6f6f9',
                 'gray-53596d': '#53596d',
                 'gray-e6edff': '#e6edff',
                 'gray-d6e4ee': '#d6e4ee',
