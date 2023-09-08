@@ -818,7 +818,7 @@ where
             for deleted in tree_diff.deleted {
                 let file_path = deleted.filepath.to_string();
                 tracing::trace!("Delete blob from cache: {:?}", deleted.oid);
-                parallel_tree_upload_support.tree_item_to_base_commit_cache.remove(&format!("{}_{}", file_path, deleted.oid.to_string()));
+                // parallel_tree_upload_support.tree_item_to_base_commit_cache.remove(&format!("{}_{}", file_path, deleted.oid.to_string()));
                 if snapshot_to_commit.contains_key(&file_path) {
                     let snap_mon_vec = snapshot_to_commit.get_mut(&file_path).unwrap();
                     for i in 0..snap_mon_vec.len() {
@@ -1395,7 +1395,7 @@ where
 
         // TODO: change to list of commits without extra objects
         // get list of git objects in local repo, excluding ancestor ones
-        let commit_and_tree_list =
+        let commit_list =
             get_list_of_commit_objects(latest_commit, ancestor_commit_object)?;
 
         // 4. Do prepare commit for all commits
@@ -1408,7 +1408,7 @@ where
         tracing::trace!("latest commit id {latest_commit_id}");
         let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
 
-        tracing::trace!("List of objects: {commit_and_tree_list:?}");
+        tracing::trace!("List of objects: {commit_list:?}");
 
         // read last onchain commit and init map from its tree
         // map (path -> commit_where_it_was_created)
@@ -1465,9 +1465,9 @@ where
         }
 
         let mut number_of_commits = 0;
-        tracing::trace!("commit_and_tree_list:{commit_and_tree_list:?}");
+        tracing::trace!("commit_list:{commit_list:?}");
         // iterate through the git objects list and push them
-        for oid in &commit_and_tree_list {
+        for oid in &commit_list {
             let object_id = git_hash::ObjectId::from_str(oid)?;
             let object_kind = self.local_repository().find_object(object_id)?.kind;
             tracing::trace!("Push object: {object_id:?} {object_kind:?}");
