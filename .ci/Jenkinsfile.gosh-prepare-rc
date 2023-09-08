@@ -1,23 +1,5 @@
 def runFunctionSet(function_name) {
-    running_set = [
-        // "v1_x": {
-        //     "${function_name}"('v1_x')
-        // },
-        // "v2_x": {
-        //     "${function_name}"('v2_x')
-        // },
-        // "v3_x": {
-        //     "${function_name}"('v3_x')
-        // },
-        // "v4_x": {
-        //     "${function_name}"('v4_x')
-        // },
-        // "v5_x/v5.0.0": {
-        //     "${function_name}"('v5_x/v5.0.0')
-        // },
-        "v5_x/v5.1.0": {
-            "${function_name}"('v5_x/v5.1.0')
-        },
+    building_set = [
         "v6_x/v6.0.0": {
             "${function_name}"('v6_x/v6.0.0')
         },
@@ -25,7 +7,31 @@ def runFunctionSet(function_name) {
             "${function_name}"('v6_x/v6.1.0')
         }
     ]
-    parallel(running_set)
+    non_building_set = [
+        "v1_x": {
+            "${function_name}"('v1_x', 1467)
+        },
+        "v2_x": {
+            "${function_name}"('v2_x', 1471)
+        },
+        "v3_x": {
+            "${function_name}"('v3_x', 1469)
+        },
+        "v4_x": {
+            "${function_name}"('v4_x', 1466)
+        },
+        "v5_x/v5.0.0": {
+            "${function_name}"('v5_x/v5.0.0', 1472)
+        },
+        "v5_x/v5.1.0": {
+            "${function_name}"('v5_x/v5.1.0', 1468)
+        }
+    ]
+    if (function_name == 'buildRemoteGosh') {
+        parallel(building_set)
+    } else {
+        parallel(non_building_set)
+    }
 }
 
 def batchSize = 10
@@ -91,7 +97,7 @@ pipeline {
             }
             steps {
                 runFunctionSet('buildRemoteGosh')
-                // runFunctionSet('buildRemoteGoshDebug')
+                runFunctionSet('buildRemoteGoshDebug')
             }
         }
 
@@ -198,7 +204,7 @@ pipeline {
                 deployWeb()
             }
         }
-        
+
         stage('Tests: Web') {
             when { expression { return params.TEST_WEB } }
             agent {
@@ -263,7 +269,7 @@ def buildDispatcher() {
             def shExitStatus = sh script: '''
                 #!/bin/bash
                 set -ex
-                
+
                 # 2 = gosh-dispatcher
                 if [ \${DRYRUN} = "true" ]; then
                     PIPELINE_2_ID=$(az pipelines build queue --definition-id 2 --branch \${COMMIT} --project gosh --variables DRYRUN=true | jq .id)
@@ -315,7 +321,7 @@ def buildDispatcherDebug() {
 
                 az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1489 --path linux-amd64 && sleep 2
             ''', returnStatus: true
-            
+
             if (shExitStatus != 0) {
                 error("Failed to execute Bash script")
             }
@@ -357,9 +363,9 @@ def buildRemoteGosh(version) {
                     az pipelines runs artifact download --project gosh --artifact-name linux-arm64 --run-id \$PIPELINE_1_ID --path linux-arm64 && sleep 2
                     az pipelines runs artifact download --project gosh --artifact-name darwin-arm64 --run-id \$PIPELINE_1_ID --path darwin-arm64 && sleep 2
                 fi
-                
+
             """, returnStatus: true
-            
+
             if (shExitStatus != 0) {
                 error("Failed to execute Bash script")
             }
@@ -367,7 +373,7 @@ def buildRemoteGosh(version) {
     }
 }
 
-def buildRemoteGoshDebug(version) {
+def buildRemoteGoshDebug(version, run_id) {
     script {
         dir("${version}/git-remote-gosh") {
             def shExitStatus = sh script: """
@@ -376,12 +382,13 @@ def buildRemoteGoshDebug(version) {
 
                 cd ${WORKSPACE}
                 export VSTS_ARTIFACTTOOL_DISABLE_HARDLINKS=1
-                
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1494 --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1493 --path linux-amd64 && sleep 2
-                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1495 --path linux-amd64 && sleep 2
+
+                az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id ${run_id} --path linux-amd64 && sleep 2
+                # az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1494 --path linux-amd64 && sleep 2
+                # az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1493 --path linux-amd64 && sleep 2
+                # az pipelines runs artifact download --project gosh --artifact-name linux-amd64 --run-id 1495 --path linux-amd64 && sleep 2
             """, returnStatus: true
-            
+
             if (shExitStatus != 0) {
                 error("Failed to execute Bash script")
             }
