@@ -72,8 +72,8 @@ const ListItem = (props: TListItemProps) => {
     return (
         <div
             className={classNames(
-                'flex items-center px-5 py-2 gap-x-4 gap-y-2',
-                'cursor-pointer hover:bg-gray-fafafd',
+                'dao-eventlist-item flex items-center px-5 py-2 gap-x-4 gap-y-2 cursor-pointer',
+                event.isOpen ? 'bg-gray-f6f6f9' : 'hover:bg-gray-fafafd',
                 basis.contaner,
             )}
             onClick={onItemClick}

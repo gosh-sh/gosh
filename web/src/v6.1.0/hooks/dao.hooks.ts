@@ -963,7 +963,11 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
         }
 
         if (!dao.isReady) {
-            setStatus2((state) => ({ ...state, type: 'pending', data: 'Wait for DAO' }))
+            setStatus2((state) => ({
+                ...state,
+                type: 'pending',
+                data: 'Wait for DAO. It can take a while',
+            }))
         } else {
             setStatus2((state) => ({ ...state, type: 'dismiss' }))
             if (data.profile && _wallet) {
@@ -2060,14 +2064,14 @@ export function useDaoEvent(
                 setEvents((state) => {
                     const updated = [...state.items]
                     if (!updated.find(({ address }) => address === found?.address)) {
-                        updated.push(found!)
+                        updated.push({ ...found!, isOpen: true })
                     }
 
                     return {
                         ...state,
                         items: updated.map((item) => {
                             if (item.address === address) {
-                                return { ...item, ...found }
+                                return { ...item, ...found, isOpen: item.isOpen }
                             }
                             return item
                         }),

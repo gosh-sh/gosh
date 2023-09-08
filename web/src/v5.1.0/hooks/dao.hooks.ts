@@ -1920,14 +1920,14 @@ export function useDaoEvent(
                 setEvents((state) => {
                     const updated = [...state.items]
                     if (!updated.find(({ address }) => address === found?.address)) {
-                        updated.push(found!)
+                        updated.push({ ...found!, isOpen: true })
                     }
 
                     return {
                         ...state,
                         items: updated.map((item) => {
                             if (item.address === address) {
-                                return { ...item, ...found }
+                                return { ...item, ...found, isOpen: item.isOpen }
                             }
                             return item
                         }),

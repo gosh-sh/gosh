@@ -27,7 +27,7 @@ import {
     UpgradeTaskEvent,
 } from './components'
 import { Tooltip } from 'react-tooltip'
-import { useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useDao, useDaoEvent, useDaoEventList, useDaoMember } from '../../hooks/dao.hooks'
 import CopyClipboard from '../../../components/CopyClipboard'
 import { getDurationDelta, shortString } from '../../../utils'
@@ -50,17 +50,39 @@ const DaoEventPageInner = (props: { address: string }) => {
     const eventList = useDaoEventList()
     const { event, error } = useDaoEvent(address, { loadOnInit: true })
     const { showBoundary } = useErrorBoundary()
+    const ref = useRef<HTMLDivElement>(null)
 
-    const onItemClose = () => {
+    const onItemClose = useCallback(() => {
         window.history.replaceState(null, document.title, `/o/${dao.details.name}/events`)
         eventList.closeItems()
-    }
+    }, [dao.details.name])
 
     useEffect(() => {
         if (error) {
             showBoundary(error)
         }
     }, [error])
+
+    useEffect(() => {
+        const onClick = ({ target }: any) => {
+            // If no ref or click inide event block, do nothing
+            if (!ref.current || (ref.current && ref.current.contains(target))) {
+                return
+            }
+
+            // Click outside event block, but need to check click on event list item
+            const items = document.getElementsByClassName('dao-eventlist-item')
+            const itemClicked = Array.from(items).some((item) => item.contains(target))
+            if (!itemClicked) {
+                onItemClose()
+            }
+        }
+
+        document.addEventListener('click', onClick)
+        return () => {
+            document.removeEventListener('click', onClick)
+        }
+    }, [onItemClose])
 
     if (!event) {
         return (
@@ -74,7 +96,7 @@ const DaoEventPageInner = (props: { address: string }) => {
     }
 
     return (
-        <>
+        <div ref={ref}>
             <div className="flex flex-wrap items-center gap-2 border-b border-b-gray-e8eeed pt-2 pb-4 relative">
                 <div className="basis-full lg:basis-auto grow">
                     <h3 className="text-xl font-medium">{event.label}</h3>
@@ -276,7 +298,7 @@ const DaoEventPageInner = (props: { address: string }) => {
                 </div>
             </div>
             <Tooltip id="common-tip" clickable />
-        </>
+        </div>
     )
 }
 
