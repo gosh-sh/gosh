@@ -75,7 +75,7 @@ const DaoTaskListPage = () => {
             <div
                 className={classNames(
                     'fixed w-full lg:w-[60%] top-0 right-0 h-screen bg-white overflow-y-auto',
-                    'border border-gray-e6edff rounded-l-xl px-5 py-3.5',
+                    'border border-gray-e6edff rounded-l-xl px-5 py-3.5 body-scroll-lock',
                     'transition-all duration-300 shadow-xl',
                     taskOpened ? 'translate-x-0' : 'translate-x-full',
                 )}

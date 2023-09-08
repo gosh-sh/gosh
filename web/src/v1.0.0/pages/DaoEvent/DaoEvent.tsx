@@ -20,6 +20,7 @@ import { EDaoEventType } from '../../../types/common.types'
 import Skeleton from '../../../components/Skeleton'
 import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
 import Alert from '../../../components/Alert'
+import { useBodyScrollLock } from '../../../hooks/common.hooks'
 
 const DaoEventPageInner = (props: { address: string }) => {
     const { address } = props
@@ -29,6 +30,11 @@ const DaoEventPageInner = (props: { address: string }) => {
     const { event, error } = useDaoEvent(address, { loadOnInit: true })
     const { showBoundary } = useErrorBoundary()
     const ref = useRef<HTMLDivElement>(null)
+    useBodyScrollLock({
+        applyWhen: !!event?.isOpen,
+        deps: [event?.isOpen],
+        mobileOnly: true,
+    })
 
     const onItemClose = useCallback(() => {
         window.history.replaceState(null, document.title, `/o/${dao.details.name}/events`)

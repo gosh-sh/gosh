@@ -13,6 +13,7 @@ import { TaskStatusBadge } from '../../components/Task'
 import { lockToStr } from '../../components/Task/helpers'
 import { Link } from 'react-router-dom'
 import { TaskManage, TaskTeam } from './components'
+import { useBodyScrollLock } from '../../../hooks/common.hooks'
 
 const TaskPageInner = (props: { address: string }) => {
     const { address } = props
@@ -21,6 +22,11 @@ const TaskPageInner = (props: { address: string }) => {
     const { task, error } = useTask(address, { loadOnInit: true })
     const { showBoundary } = useErrorBoundary()
     const ref = useRef<HTMLDivElement>(null)
+    useBodyScrollLock({
+        applyWhen: !!task?.isOpen,
+        deps: [task?.isOpen],
+        mobileOnly: true,
+    })
 
     const onItemClose = useCallback(() => {
         window.history.replaceState(null, document.title, `/o/${dao.details.name}/tasks`)
