@@ -58,7 +58,7 @@ const DaoMemberWallet = (props: TDaoWalletSideProps) => {
             <div>
                 <div className="mb-1 text-gray-7c8db5 text-sm">Your vesting balance</div>
                 <div className="text-xl font-medium">
-                    {member.vesting ? member.vesting.toLocaleString() : '-'}
+                    {member.vesting ? member.vesting.toLocaleString() : 0}
                 </div>
             </div>
 

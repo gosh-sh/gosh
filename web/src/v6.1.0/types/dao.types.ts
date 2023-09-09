@@ -36,6 +36,7 @@ export type TDaoDetailsMemberItem = {
     wallet: DaoWallet
     allowance: number
     daomembers: { [address: string]: string }
+    vesting?: number
 }
 
 export type TDaoDetails = {

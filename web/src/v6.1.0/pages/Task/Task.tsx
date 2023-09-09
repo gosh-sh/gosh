@@ -19,7 +19,7 @@ const TaskPageInner = (props: { address: string }) => {
     const { address } = props
     const dao = useDao()
     const taskList = useDaoTaskList()
-    const { task, error } = useTask(address, { loadOnInit: true })
+    const { task, error } = useTask(address, { initialize: true })
     const { showBoundary } = useErrorBoundary()
     const ref = useRef<HTMLDivElement>(null)
     useBodyScrollLock({
