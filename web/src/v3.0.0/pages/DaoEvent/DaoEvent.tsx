@@ -48,7 +48,7 @@ const DaoEventPageInner = (props: { address: string }) => {
     const dao = useDao()
     const member = useDaoMember()
     const eventList = useDaoEventList()
-    const { event, error } = useDaoEvent(address, { loadOnInit: true })
+    const { event, error } = useDaoEvent(address, { initialize: true })
     const { showBoundary } = useErrorBoundary()
     const ref = useRef<HTMLDivElement>(null)
     useBodyScrollLock({
