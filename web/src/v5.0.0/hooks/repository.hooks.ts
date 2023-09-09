@@ -125,8 +125,10 @@ export function useCreateRepository() {
     return { create, status }
 }
 
-export function useDaoRepositoryList(params: { count?: number } = {}) {
-    const { count = 5 } = params
+export function useDaoRepositoryList(
+    params: { count?: number; initialize?: boolean } = {},
+) {
+    const { count = 5, initialize } = params
     const { details: dao } = useDao()
     const [data, setData] = useRecoilState(daoRepositoryListSelector(dao.name))
 
@@ -225,8 +227,10 @@ export function useDaoRepositoryList(params: { count?: number } = {}) {
     }, [dao.address, data.cursor])
 
     useEffect(() => {
-        getRepositoryList()
-    }, [getRepositoryList])
+        if (initialize) {
+            getRepositoryList()
+        }
+    }, [initialize, getRepositoryList])
 
     return {
         ...data,

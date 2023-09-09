@@ -12,7 +12,7 @@ import { useDao } from '../../../hooks/dao.hooks'
 const ListBoundaryInner = (props: { count: number }) => {
     const { count } = props
     const dao = useDao()
-    const repositories = useDaoRepositoryList({ count })
+    const repositories = useDaoRepositoryList({ initialize: true, count })
     const { showBoundary } = useErrorBoundary()
 
     const onGetNext = async () => {
