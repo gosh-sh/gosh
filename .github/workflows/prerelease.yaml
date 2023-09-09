@@ -11,7 +11,7 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
-  CARGO_INCREMENTAL: 0
+  CARGO_INCREMENTAL: 0  # important for cache size too
   CARGO_NET_RETRY: 10
   RUST_BACKTRACE: full
   ## warnings -> errors
@@ -80,24 +80,29 @@ jobs:
 
           ## name
           - name: git-remote-gosh-darwin-arm64
-            os: macos-latest
+            os: macos-12
             target: aarch64-apple-darwin
           - name: git-remote-gosh-darwin-amd64
-            os: macos-latest
+            os: macos-12
             target: x86_64-apple-darwin
           - name: git-remote-gosh-linux-arm64
-            os: ubuntu-latest
+            os: ubuntu-22.04
             target: aarch64-unknown-linux-gnu
           - name: git-remote-gosh-linux-amd64
-            os: ubuntu-latest
+            os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
           # - name: git-remote-gosh-windows-amd64
-          #   os: windows-latest
+          #   os: windows-2019
           #   target: x86_64-pc-windows-msvc
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+
+      - name: Set VERSION
+        id: version
+        run: |
+          echo "VERSION=$(cat version.json | jq -r .version)" >> "$GITHUB_OUTPUT"
 
       # Cache
       - name: Set up cargo cache
@@ -133,6 +138,9 @@ jobs:
 
       - name: Install Protoc
         uses: arduino/setup-protoc@v2
+        # workaround rate-limit
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Copy ABI
         if: ${{ matrix.copy_abi }}
@@ -157,6 +165,8 @@ jobs:
         with:
           path: ${{ matrix.dir }}/target/${{ matrix.target }}/release/${{ matrix.bin }}
           name: ${{ matrix.name }}--${{ matrix.bin }}
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
 
   release:
     needs:
@@ -188,14 +198,14 @@ jobs:
         run: |
           chmod +x ${{ matrix.name }}/*
           tee <<EOF '${{ matrix.name }}/dispatcher.ini'
-          git-remote-gosh_v1_0_0
-          git-remote-gosh_v2_0_0
-          git-remote-gosh_v3_0_0
-          git-remote-gosh_v4_0_0
-          git-remote-gosh_v5_0_0
-          git-remote-gosh_v5_1_0
-          git-remote-gosh_v6_0_0
           git-remote-gosh_v6_1_0
+          git-remote-gosh_v6_0_0
+          git-remote-gosh_v5_1_0
+          git-remote-gosh_v5_0_0
+          git-remote-gosh_v4_0_0
+          git-remote-gosh_v3_0_0
+          git-remote-gosh_v2_0_0
+          git-remote-gosh_v1_0_0
           EOF
 
           tar -czvf ${{ matrix.name }}.tar.gz -C ${{ matrix.name }} .
@@ -206,4 +216,4 @@ jobs:
           prerelease: true
           files: |
             ${{ matrix.name }}.tar.gz
-          tag_name: rc-${{ github.ref_name }}-${{ github.run_number }}
+          tag_name: rc-${{ needs.build.outputs.version || 'no-version' }}-${{ github.ref_name }}-${{ github.run_number }}
