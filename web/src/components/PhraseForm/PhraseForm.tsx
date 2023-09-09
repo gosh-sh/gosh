@@ -185,6 +185,7 @@ const PhraseForm = (props: TPhraseFormProps) => {
             e.currentTarget.value.split(SPLITTER).length < wordCount
         ) {
             setFieldValue('words', `${e.currentTarget.value}${SPLITTER}`)
+            setWordsQuery('')
         }
     }
 
@@ -307,6 +308,8 @@ const PhraseForm = (props: TPhraseFormProps) => {
                                         setFieldValue,
                                     )
                                 } else if (e.code === 'Space') {
+                                    onPhraseSpace(e, setFieldValue)
+                                } else if (e.code === 'Minus') {
                                     onPhraseSpace(e, setFieldValue)
                                 } else if (e.code === 'Backspace') {
                                     onPhraseBackspace(e, setFieldValue)
