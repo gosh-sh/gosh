@@ -1,0 +1,219 @@
+name: Prerelease
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - dev
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0  # important for cache size too
+  CARGO_NET_RETRY: 10
+  RUST_BACKTRACE: full
+  ## warnings -> errors
+  # RUSTFLAGS: -D warnings
+  RUSTUP_MAX_RETRIES: 10
+  CARGO_PROFILE_RELEASE_CODEGEN_UNITS: 1
+  CARGO_PROFILE_RELEASE_LTO: true
+  CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: x86_64-linux-gnu-gcc
+  CC_x86_64_unknown_linux_gnu: x86_64-linux-gnu-gcc
+  CXX_x86_64_unknown_linux_gnu: x86_64-linux-gnu-g++
+  CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+  CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
+  CXX_aarch64_unknown_linux_gnu: aarch64-linux-gnu-g++
+  ## TODO: why?
+  # BINDGEN_EXTRA_CLANG_ARGS": '--sysroot /usr/arm-linux-gnueabi'
+
+jobs:
+  build:
+    runs-on: "${{ matrix.os }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        name:
+          - git-remote-gosh-darwin-arm64
+          - git-remote-gosh-darwin-amd64
+          - git-remote-gosh-linux-arm64
+          - git-remote-gosh-linux-amd64
+        bin:
+          - git-remote-gosh
+          - git-remote-gosh_v1_0_0
+          - git-remote-gosh_v2_0_0
+          - git-remote-gosh_v3_0_0
+          - git-remote-gosh_v4_0_0
+          - git-remote-gosh_v5_0_0
+          - git-remote-gosh_v5_1_0
+          - git-remote-gosh_v6_0_0
+          - git-remote-gosh_v6_1_0
+        include:
+          ## bin
+          - bin: git-remote-gosh
+            dir: gosh-dispatcher
+          - bin: git-remote-gosh_v1_0_0
+            dir: v1_x/git-remote-gosh
+            copy_abi: true
+          - bin: git-remote-gosh_v2_0_0
+            dir: v2_x/git-remote-gosh
+            copy_abi: true
+          - bin: git-remote-gosh_v3_0_0
+            dir: v3_x/git-remote-gosh
+            copy_abi: true
+          - bin: git-remote-gosh_v4_0_0
+            dir: v4_x/git-remote-gosh
+            copy_abi: true
+          - bin: git-remote-gosh_v5_0_0
+            dir: v5_x/v5.0.0/git-remote-gosh
+            copy_abi: true
+          - bin: git-remote-gosh_v5_1_0
+            dir: v5_x/v5.1.0/git-remote-gosh
+            copy_abi: true
+          - bin: git-remote-gosh_v6_0_0
+            dir: v6_x/v6.0.0/git-remote-gosh
+            copy_abi: true
+          - bin: git-remote-gosh_v6_1_0
+            dir: v6_x/v6.1.0/git-remote-gosh
+            copy_abi: true
+
+          ## name
+          - name: git-remote-gosh-darwin-arm64
+            os: macos-12
+            target: aarch64-apple-darwin
+          - name: git-remote-gosh-darwin-amd64
+            os: macos-12
+            target: x86_64-apple-darwin
+          - name: git-remote-gosh-linux-arm64
+            os: ubuntu-22.04
+            target: aarch64-unknown-linux-gnu
+          - name: git-remote-gosh-linux-amd64
+            os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+          # - name: git-remote-gosh-windows-amd64
+          #   os: windows-2019
+          #   target: x86_64-pc-windows-msvc
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set VERSION
+        id: version
+        run: |
+          echo "VERSION=$(cat version.json | jq -r .version)" >> "$GITHUB_OUTPUT"
+
+      # Cache
+      - name: Set up cargo cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo
+      - name: Set up target cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ matrix.dir }}/target/
+          key: ${{ runner.os }}-${{ matrix.bin }}-target-${{ hashFiles(format('{0}{1}', matrix.dir, '/Cargo.lock')) }}
+          restore-keys: ${{ runner.os }}-${{ matrix.bin }}-target-
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+
+      - name: Add cross compile Linux tools
+        if: ${{ matrix.target == 'aarch64-unknown-linux-gnu' }}
+        shell: bash
+        run: |
+          sudo apt update -y
+          sudo apt install -y build-essential g++-x86-64-linux-gnu libc6-dev-amd64-cross g++-aarch64-linux-gnu libc6-dev-arm64-cross gcc-aarch64-linux-gnu
+          rustup target add aarch64-unknown-linux-gnu
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v2
+        # workaround rate-limit
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Copy ABI
+        if: ${{ matrix.copy_abi }}
+        working-directory: ${{ matrix.dir }}
+        run: make copy_abi
+
+      - name: Build Binary ${{ matrix.dir }}/target/${{ matrix.target }}/release/${{ matrix.bin }}
+        working-directory: ${{ matrix.dir }}
+        if: ${{ true }}
+        run: |
+          cargo build --release --target=${{ matrix.target }}
+          ls -lA target/${{ matrix.target }}/release
+
+      - name: FAKE Build Binary ${{ matrix.dir }}/target/${{ matrix.target }}/release/${{ matrix.bin }}
+        if: ${{ false }}
+        run: |
+          mkdir -p ${{ matrix.dir }}/target/${{ matrix.target }}/release
+          touch ${{ matrix.dir }}/target/${{ matrix.target }}/release/${{ matrix.bin }}
+
+      - name: Artifact ${{ matrix.name }}
+        uses: actions/upload-artifact@v3
+        with:
+          path: ${{ matrix.dir }}/target/${{ matrix.target }}/release/${{ matrix.bin }}
+          name: ${{ matrix.name }}--${{ matrix.bin }}
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
+
+  release:
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        name:
+          - git-remote-gosh-darwin-arm64
+          - git-remote-gosh-darwin-amd64
+          - git-remote-gosh-linux-arm64
+          - git-remote-gosh-linux-amd64
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Display structure of downloaded files
+        run: ls -R
+
+      ## IMPORTANT! only works with non-windows binaries
+      - name: Gather all binaries "${{ matrix.name }}"
+        run: |
+          mkdir -p ${{ matrix.name }}
+          cp ${{ matrix.name }}--*/* ${{ matrix.name }}
+          ls -lA ${{ matrix.name }}
+
+      - name: Make archive
+        run: |
+          chmod +x ${{ matrix.name }}/*
+          tee <<EOF '${{ matrix.name }}/dispatcher.ini'
+          git-remote-gosh_v6_1_0
+          git-remote-gosh_v6_0_0
+          git-remote-gosh_v5_1_0
+          git-remote-gosh_v5_0_0
+          git-remote-gosh_v4_0_0
+          git-remote-gosh_v3_0_0
+          git-remote-gosh_v2_0_0
+          git-remote-gosh_v1_0_0
+          EOF
+
+          tar -czvf ${{ matrix.name }}.tar.gz -C ${{ matrix.name }} .
+
+      - name: Publish
+        uses: softprops/action-gh-release@v1
+        with:
+          prerelease: true
+          files: |
+            ${{ matrix.name }}.tar.gz
+          tag_name: rc-${{ needs.build.outputs.version || 'no-version' }}-${{ github.ref_name }}-${{ github.run_number }}
