@@ -1796,22 +1796,15 @@ where
 
     #[instrument(level = "trace", skip_all)]
     pub async fn push(&mut self, refs: &str) -> anyhow::Result<String> {
-        tracing::debug!("push: refs={refs}");
-        self.check_if_wallet_is_limited().await?;
-        let splitted: Vec<&str> = refs.split(':').collect();
-        let result = match splitted.as_slice() {
-            ["", remote_tag] if remote_tag.starts_with("refs/tags") => {
-                self.delete_remote_tag(remote_tag).await?
-            }
-            ["", remote_ref] => self.delete_remote_ref(remote_ref).await?,
-            [local_tag, remote_tag] if local_tag.starts_with("refs/tags") => {
-                self.push_ref_tag(local_tag, remote_tag).await?
-            }
-            [local_ref, remote_ref] => self.push_ref(local_ref, remote_ref).await?,
-            _ => unreachable!(),
-        };
-        tracing::debug!("push ref result: {result}");
-        Ok(result)
+        let err_version_disabled = format!("
+Push is disabled in the current version (GOSH v6.0).
+Please
+ * download latest git-remote-helper (https://github.com/gosh-sh/gosh/releases)
+ * upgrade your DAO and repositories to the latest version \
+(https://app.gosh.sh/o/{}/settings/upgrade)",
+            self.remote.dao
+        );
+        anyhow::bail!("{err_version_disabled}");
     }
 
     async fn delete_remote_ref(&mut self, remote_ref: &str) -> anyhow::Result<String> {
