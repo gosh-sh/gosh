@@ -32,6 +32,8 @@ contract SystemContract is Modifiers {
     mapping(uint8 => TvmCell) public _code;
     mapping(uint128 => TvmCell) public _indexesCode;
 
+    uint128 _indexupdate = 0;
+
     //Limits
     uint128 _limit_wallets = 64;
 
@@ -44,8 +46,6 @@ contract SystemContract is Modifiers {
     //TIP3
     TvmCell m_TokenRootCode;
     TvmCell m_TokenWalletCode;
-
-    address public _lastGoshDao;
 
     constructor(mapping(uint8 => TvmCell) code) {
         require(tvm.pubkey() != 0, ERR_NEED_PUBKEY);
@@ -165,7 +165,7 @@ contract SystemContract is Modifiers {
         require(GoshLib.calculateProfileDaoAddress(_code[m_ProfileDaoCode], _versionController, name) == msg.sender, ERR_SENDER_NO_ALLOWED);
         require(checkNameDao(name), ERR_WRONG_NAME);
         TvmCell s1 = GoshLib.composeDaoStateInit(_code[m_DaoCode], address(this), name);
-        _lastGoshDao = new GoshDao {stateInit: s1, value: FEE_DEPLOY_DAO, wid: 0, flag: 1}(
+        new GoshDao {stateInit: s1, value: FEE_DEPLOY_DAO, wid: 0, flag: 1}(
             _versionController,
             pubaddr,
             msg.sender,

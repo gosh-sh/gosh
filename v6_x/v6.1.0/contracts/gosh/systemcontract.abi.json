@@ -977,14 +977,6 @@
 			"outputs": [
 				{"name":"_indexesCode","type":"map(uint128,cell)"}
 			]
-		},
-		{
-			"name": "_lastGoshDao",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"_lastGoshDao","type":"address"}
-			]
 		}
 	],
 	"data": [
@@ -1001,13 +993,13 @@
 		{"name":"_flag","type":"bool"},
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_indexesCode","type":"map(uint128,cell)"},
+		{"name":"_indexupdate","type":"uint128"},
 		{"name":"_limit_wallets","type":"uint128"},
 		{"name":"m_TokenLockerCode","type":"cell"},
 		{"name":"m_SMVPlatformCode","type":"cell"},
 		{"name":"m_SMVClientCode","type":"cell"},
 		{"name":"m_SMVProposalCode","type":"cell"},
 		{"name":"m_TokenRootCode","type":"cell"},
-		{"name":"m_TokenWalletCode","type":"cell"},
-		{"name":"_lastGoshDao","type":"address"}
+		{"name":"m_TokenWalletCode","type":"cell"}
 	]
 }

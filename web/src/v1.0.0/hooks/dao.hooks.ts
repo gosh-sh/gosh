@@ -6,7 +6,7 @@ import { validateUsername } from '../validators'
 import { AppConfig } from '../../appconfig'
 import { getSystemContract } from '../blockchain/helpers'
 import { supabase } from '../../supabase'
-import { executeByChunk, sleep, whileFinite } from '../../utils'
+import { executeByChunk, setLockableInterval, sleep, whileFinite } from '../../utils'
 import { DISABLED_VERSIONS, MAX_PARALLEL_READ } from '../../constants'
 import {
     useRecoilState,
@@ -400,15 +400,8 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
             return
         }
 
-        let intervalBusy = false
-        const interval = setInterval(async () => {
-            if (intervalBusy) {
-                return
-            }
-
-            intervalBusy = true
+        const interval = setLockableInterval(async () => {
             await getDetails(data.details.account)
-            intervalBusy = false
         }, 15000)
 
         return () => {
@@ -523,15 +516,8 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
             return
         }
 
-        let intervalBusy = false
-        const interval = setInterval(async () => {
-            if (intervalBusy) {
-                return
-            }
-
-            intervalBusy = true
+        const interval = setLockableInterval(async () => {
             await getBalance()
-            intervalBusy = false
         }, 15000)
 
         return () => {
