@@ -32,7 +32,7 @@ type TFormValues = {
 const TaskCreatePage = () => {
     const navigate = useNavigate()
     const dao = useDao()
-    const repositories = useDaoRepositoryList()
+    const repositories = useDaoRepositoryList({ initialize: true })
     const { createTask, getTokenAmount } = useCreateTask()
 
     const getRepositoryOptions = useCallback(

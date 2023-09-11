@@ -98,8 +98,10 @@ export function useCreateRepository() {
     return { create, status }
 }
 
-export function useDaoRepositoryList(params: { count?: number } = {}) {
-    const { count = 5 } = params
+export function useDaoRepositoryList(
+    params: { count?: number; initialize?: boolean } = {},
+) {
+    const { count = 5, initialize } = params
     const { details: dao } = useDao()
     const [data, setData] = useRecoilState(daoRepositoryListSelector(dao.name))
 
@@ -109,8 +111,8 @@ export function useDaoRepositoryList(params: { count?: number } = {}) {
         cursor?: string
     }) => {
         const { daoaddr, limit, cursor } = params
-        const systemContract = getSystemContract()
-        const codeHash = await systemContract.getRepositoryCodeHash(daoaddr)
+        const sc = getSystemContract()
+        const codeHash = await sc.getRepositoryCodeHash(daoaddr)
         const { results, lastId, completed } = await getPaginatedAccounts({
             filters: [`code_hash: {eq:"${codeHash}"}`],
             limit,
@@ -120,7 +122,7 @@ export function useDaoRepositoryList(params: { count?: number } = {}) {
             results,
             MAX_PARALLEL_READ,
             async ({ id }) => {
-                const repo = await systemContract.getRepository({ address: id })
+                const repo = await sc.getRepository({ address: id })
                 const account = repo as GoshRepository
                 return {
                     account,
@@ -198,8 +200,10 @@ export function useDaoRepositoryList(params: { count?: number } = {}) {
     }, [dao.address, data.cursor])
 
     useEffect(() => {
-        getRepositoryList()
-    }, [getRepositoryList])
+        if (initialize) {
+            getRepositoryList()
+        }
+    }, [initialize, getRepositoryList])
 
     return {
         ...data,

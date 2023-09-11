@@ -11,7 +11,7 @@ import { useDaoRepositoryList } from '../../hooks/repository.hooks'
 
 const DaoRepositoryListPage = (props: { count?: number }) => {
     const { count = 10 } = props
-    const repositories = useDaoRepositoryList({ count })
+    const repositories = useDaoRepositoryList()
     const member = useDaoMember()
     const setModal = useSetRecoilState(appModalStateAtom)
 

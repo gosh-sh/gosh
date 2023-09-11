@@ -15,7 +15,7 @@ const MemberList = (props: TMemberListProps) => {
     const { scrollToInviteRef } = props
     const member = useDaoMember()
     const [search, setSearch] = useState<string>('')
-    const memberList = useDaoMemberList({ loadOnInit: true })
+    const memberList = useDaoMemberList({ initialize: true })
 
     return (
         <>

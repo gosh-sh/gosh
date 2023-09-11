@@ -8,7 +8,7 @@ type TDaoEventsRecentProps = React.HTMLAttributes<HTMLDivElement>
 const DaoEventsRecent = (props: TDaoEventsRecentProps) => {
     const { className } = props
     const dao = useDao()
-    const eventList = useDaoEventList({ count: 3, loadOnInit: true })
+    const eventList = useDaoEventList({ count: 3, initialize: true })
 
     return (
         <div

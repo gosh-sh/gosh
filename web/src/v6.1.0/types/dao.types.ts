@@ -36,6 +36,7 @@ export type TDaoDetailsMemberItem = {
     wallet: DaoWallet
     allowance: number
     daomembers: { [address: string]: string }
+    vesting?: number
 }
 
 export type TDaoDetails = {
@@ -209,6 +210,7 @@ export type TTaskDetails = {
     locktime: number
     isReady: boolean
     isOpen?: boolean
+    isDeleted?: boolean
 }
 
 export type TDaoTaskList = {

@@ -9,7 +9,7 @@ import Alert from '../../../../components/Alert'
 import { useDaoTaskList } from '../../../hooks/dao.hooks'
 
 const ListBoundaryInner = () => {
-    const taskList = useDaoTaskList({ count: 10, loadOnInit: true })
+    const taskList = useDaoTaskList({ count: 10, initialize: true })
     const { showBoundary } = useErrorBoundary()
 
     const onGetNext = async () => {

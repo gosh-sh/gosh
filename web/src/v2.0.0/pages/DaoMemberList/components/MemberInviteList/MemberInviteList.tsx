@@ -6,7 +6,7 @@ import { ListBoundary } from './ListBoundary'
 import { useDaoInviteList } from '../../../../hooks/dao.hooks'
 
 const MemberInviteList = () => {
-    const inviteList = useDaoInviteList({ loadOnInit: true })
+    const inviteList = useDaoInviteList({ initialize: true })
 
     return (
         <div className="flex flex-col h-full">

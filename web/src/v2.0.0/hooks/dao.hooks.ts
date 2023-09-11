@@ -73,7 +73,7 @@ export function useCreateDao() {
         const { name, tags, supply, isMintOn, description } = params
 
         try {
-            const systemContract = getSystemContract()
+            const sc = getSystemContract()
 
             if (!profile || !user.keys) {
                 throw new GoshError('Access error', {
@@ -83,9 +83,7 @@ export function useCreateDao() {
 
             // Create DAO
             setStatus((state) => ({ ...state, type: 'pending', data: 'Create DAO' }))
-            const dao = (await profile.createDao(systemContract, name, [
-                profile.address,
-            ])) as Dao
+            const dao = (await profile.createDao(sc, name, [profile.address])) as Dao
             const version = await dao.getVersion()
 
             // Authorize DAO wallet
@@ -132,7 +130,7 @@ export function useCreateDao() {
                 type: 'pending',
                 data: 'Create DAO system repository',
             }))
-            const repository = (await systemContract.getRepository({
+            const repository = (await sc.getRepository({
                 path: `${name}/_index`,
             })) as GoshRepository
             await wallet.createRepository({
@@ -209,8 +207,8 @@ export function useCreateDao() {
     return { createDao, status }
 }
 
-export function useUserDaoList(params: { count?: number; loadOnInit?: boolean } = {}) {
-    const { count = 10, loadOnInit } = params
+export function useUserDaoList(params: { count?: number; initialize?: boolean } = {}) {
+    const { count = 10, initialize } = params
     const { user } = useUser()
     const profile = useProfile()
     const [data, setData] = useRecoilState(userDaoListAtom)
@@ -283,8 +281,8 @@ export function useUserDaoList(params: { count?: number; loadOnInit?: boolean } 
             MAX_PARALLEL_READ,
             async ({ decoded }) => {
                 const { goshdao, ver } = decoded.value
-                const systemContract = AppConfig.goshroot.getSystemContract(ver)
-                const account = (await systemContract.getDao({ address: goshdao })) as Dao
+                const sc = AppConfig.goshroot.getSystemContract(ver)
+                const account = (await sc.getDao({ address: goshdao })) as Dao
                 const members = await account.getMembers()
                 return {
                     account,
@@ -392,10 +390,10 @@ export function useUserDaoList(params: { count?: number; loadOnInit?: boolean } 
     }, [profile])
 
     useEffect(() => {
-        if (loadOnInit) {
+        if (initialize) {
             getUserDaoList()
         }
-    }, [getUserDaoList, loadOnInit])
+    }, [getUserDaoList, initialize])
 
     return {
         ...data,
@@ -405,8 +403,8 @@ export function useUserDaoList(params: { count?: number; loadOnInit?: boolean } 
     }
 }
 
-export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {}) {
-    const { loadOnInit, subscribe } = params
+export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {}) {
+    const { initialize, subscribe } = params
     const { daoname } = useRecoilValue(appContextAtom)
     const [data, setData] = useRecoilState(daoDetailsSelector(daoname))
 
@@ -417,13 +415,13 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
             }
 
             setData((state) => ({ ...state, isFetching: true }))
-            const systemContract = getSystemContract()
-            const dao = await systemContract.getDao({ name: daoname })
+            const sc = getSystemContract()
+            const dao = await sc.getDao({ name: daoname })
             if (!(await dao.isDeployed())) {
                 throw new GoshError('DAO does not exist', { name: daoname })
             }
             const version = await dao.getVersion()
-            const repository = await systemContract.getRepository({
+            const repository = await sc.getRepository({
                 path: `${daoname}/_index`,
             })
 
@@ -536,10 +534,10 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
     }
 
     useEffect(() => {
-        if (loadOnInit) {
+        if (initialize) {
             getDao()
         }
-    }, [getDao, loadOnInit])
+    }, [getDao, initialize])
 
     useEffect(() => {
         if (!subscribe || !data.details.address) {
@@ -561,8 +559,8 @@ export function useDao(params: { loadOnInit?: boolean; subscribe?: boolean } = {
     return data
 }
 
-export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean } = {}) {
-    const { loadOnInit, subscribe } = params
+export function useDaoMember(params: { initialize?: boolean; subscribe?: boolean } = {}) {
+    const { initialize, subscribe } = params
     const { user } = useUser()
     const { details: dao } = useDao()
     const [data, setData] = useRecoilState(daoMemberSelector(dao.name))
@@ -663,16 +661,16 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
     }, [user.profile, dao.members?.length, dao.address])
 
     useEffect(() => {
-        if (loadOnInit) {
+        if (initialize) {
             getBaseDetails()
         }
-    }, [getBaseDetails, loadOnInit])
+    }, [getBaseDetails, initialize])
 
     useEffect(() => {
-        if (loadOnInit) {
+        if (initialize) {
             getDetails()
         }
-    }, [getDetails, loadOnInit])
+    }, [getDetails, initialize])
 
     useEffect(() => {
         if (!subscribe) {
@@ -692,9 +690,9 @@ export function useDaoMember(params: { loadOnInit?: boolean; subscribe?: boolean
 }
 
 export function useDaoMemberList(
-    params: { count?: number; search?: string; loadOnInit?: boolean } = {},
+    params: { count?: number; search?: string; initialize?: boolean } = {},
 ) {
-    const { count = 10, search, loadOnInit } = params
+    const { count = 10, search, initialize } = params
     const { details: dao } = useDao()
     const [data, setData] = useRecoilState(
         daoMemberListSelector({ daoname: dao.name, search }),
@@ -757,10 +755,10 @@ export function useDaoMemberList(
     }, [data.items.length])
 
     useEffect(() => {
-        if (loadOnInit) {
+        if (initialize) {
             getMemberList(0, data.items.length)
         }
-    }, [getMemberList, loadOnInit])
+    }, [getMemberList, initialize])
 
     return {
         ...data,
@@ -1435,8 +1433,8 @@ export function useUpdateDaoMember() {
     }
 }
 
-export function useDaoEventList(params: { count?: number; loadOnInit?: boolean } = {}) {
-    const { count = 10, loadOnInit } = params
+export function useDaoEventList(params: { count?: number; initialize?: boolean } = {}) {
+    const { count = 10, initialize } = params
     const { details: dao } = useDao()
     const member = useDaoMember()
     const [data, setData] = useRecoilState(daoEventListSelector(dao.name))
@@ -1568,10 +1566,10 @@ export function useDaoEventList(params: { count?: number; loadOnInit?: boolean }
     }
 
     useEffect(() => {
-        if (loadOnInit) {
+        if (initialize) {
             getEventList()
         }
-    }, [getEventList, loadOnInit])
+    }, [getEventList, initialize])
 
     return {
         ...data,
@@ -1584,9 +1582,9 @@ export function useDaoEventList(params: { count?: number; loadOnInit?: boolean }
 
 export function useDaoEvent(
     address: string,
-    options: { loadOnInit?: boolean; subscribe?: boolean } = {},
+    options: { initialize?: boolean; subscribe?: boolean } = {},
 ) {
-    const { loadOnInit, subscribe } = options
+    const { initialize, subscribe } = options
     const { details: dao } = useDao()
     const member = useDaoMember()
     const [events, setEvents] = useRecoilState(daoEventListSelector(dao.name))
@@ -1620,14 +1618,14 @@ export function useDaoEvent(
                 setEvents((state) => {
                     const updated = [...state.items]
                     if (!updated.find(({ address }) => address === found?.address)) {
-                        updated.push(found!)
+                        updated.push({ ...found!, isOpen: true })
                     }
 
                     return {
                         ...state,
                         items: updated.map((item) => {
                             if (item.address === address) {
-                                return { ...item, ...found }
+                                return { ...item, ...found, isOpen: item.isOpen }
                             }
                             return item
                         }),
@@ -1687,10 +1685,10 @@ export function useDaoEvent(
     }, [event?.address, member.isFetched])
 
     useEffect(() => {
-        if (loadOnInit) {
+        if (initialize) {
             getEvent()
         }
-    }, [getEvent, loadOnInit])
+    }, [getEvent, initialize])
 
     useEffect(() => {
         if (subscribe) {
@@ -2523,8 +2521,8 @@ export function useSendMemberTokens() {
     return { send, status }
 }
 
-export function useDaoInviteList(params: { loadOnInit?: boolean } = {}) {
-    const { loadOnInit } = params
+export function useDaoInviteList(params: { initialize?: boolean } = {}) {
+    const { initialize } = params
     const { details: dao } = useDao()
     const [data, setData] = useRecoilState(daoInviteListAtom)
     const { createMember } = useCreateDaoMember()
@@ -2662,10 +2660,10 @@ export function useDaoInviteList(params: { loadOnInit?: boolean } = {}) {
     }, [dao.name])
 
     useEffect(() => {
-        if (loadOnInit) {
+        if (initialize) {
             getInviteList()
         }
-    }, [getInviteList, loadOnInit])
+    }, [getInviteList, initialize])
 
     return {
         ...data,
@@ -2677,8 +2675,8 @@ export function useDaoInviteList(params: { loadOnInit?: boolean } = {}) {
     }
 }
 
-export function useDaoTaskList(params: { count?: number; loadOnInit?: boolean } = {}) {
-    const { count = 10, loadOnInit } = params
+export function useDaoTaskList(params: { count?: number; initialize?: boolean } = {}) {
+    const { count = 10, initialize } = params
     const { details: dao } = useDao()
     const member = useDaoMember()
     const [data, setData] = useRecoilState(daoTaskListSelector(dao.name))
@@ -2689,8 +2687,8 @@ export function useDaoTaskList(params: { count?: number; loadOnInit?: boolean } 
         cursor?: string
     }) => {
         const { daoaddr, limit, cursor } = params
-        const systemContract = getSystemContract()
-        const codeHash = await systemContract.getDaoTaskTagCodeHash(daoaddr, SYSTEM_TAG)
+        const sc = getSystemContract()
+        const codeHash = await sc.getDaoTaskTagCodeHash(daoaddr, SYSTEM_TAG)
         const { results, lastId, completed } = await getPaginatedAccounts({
             filters: [`code_hash: {eq:"${codeHash}"}`],
             limit,
@@ -2700,9 +2698,9 @@ export function useDaoTaskList(params: { count?: number; loadOnInit?: boolean } 
             results,
             MAX_PARALLEL_READ,
             async ({ id }) => {
-                const tag = await systemContract.getGoshTag({ address: id })
+                const tag = await sc.getGoshTag({ address: id })
                 const { task: address } = await tag.getDetails()
-                const task = await systemContract.getTask({ address })
+                const task = await sc.getTask({ address })
                 const details = await task.getDetails()
                 return {
                     account: task,
@@ -2807,10 +2805,10 @@ export function useDaoTaskList(params: { count?: number; loadOnInit?: boolean } 
     }
 
     useEffect(() => {
-        if (loadOnInit) {
+        if (initialize) {
             getTaskList()
         }
-    }, [getTaskList, loadOnInit])
+    }, [getTaskList, initialize])
 
     return {
         ...data,
@@ -3048,9 +3046,9 @@ export function useReceiveTaskReward() {
 
 export function useTask(
     address: string,
-    options: { loadOnInit?: boolean; subscribe?: boolean } = {},
+    options: { initialize?: boolean; subscribe?: boolean } = {},
 ) {
-    const { loadOnInit, subscribe } = options
+    const { initialize, subscribe } = options
     const { details: dao } = useDao()
     const [tasks, setTasks] = useRecoilState(daoTaskListSelector(dao.name))
     const task = useRecoilValue(daoTaskSelector(address))
@@ -3063,12 +3061,14 @@ export function useTask(
                 ...state,
                 items: state.items.map((item) => {
                     if (item.address === account.address) {
-                        return { ...item, isOpen: false }
+                        return { ...item, isOpen: false, isDeleted: true }
                     }
                     return item
                 }),
             }))
-            // Remove from list
+
+            // Remove from list after short delay to allow state read
+            await sleep(300)
             setTasks((state) => ({
                 ...state,
                 items: state.items.filter((item) => {
@@ -3108,16 +3108,16 @@ export function useTask(
 
         try {
             // Search for task in task list state atom
-            let details = tasks.items.find((item) => item.address === address)
+            let found = tasks.items.find((item) => item.address === address)
 
             // Fetch task details from blockchain
-            if (!details) {
+            if (!found) {
                 const account = await getSystemContract().getTask({ address })
-                const _details = await account.getDetails()
-                details = { account, address, ..._details }
+                const details = await account.getDetails()
+                found = { account, address, ...details }
                 setTasks((state) => ({
                     ...state,
-                    items: [...state.items, details!],
+                    items: [...state.items, { ...found! }],
                 }))
             }
         } catch (e: any) {
@@ -3126,10 +3126,10 @@ export function useTask(
     }, [address])
 
     useEffect(() => {
-        if (loadOnInit) {
+        if (initialize) {
             getTask()
         }
-    }, [getTask, loadOnInit])
+    }, [getTask, initialize])
 
     useEffect(() => {
         const _subscribe = async () => {

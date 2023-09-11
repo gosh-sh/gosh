@@ -20,10 +20,8 @@ const styles: { [key: string]: string[] } = {
     ],
     custom: [],
     'outline-danger': [
-        'bg-white text-red-ff3b30',
-        '!border-red-ff3b30',
-        'hover:bg-red-ff3b30 hover:text-white',
-        'disabled:!border-gray-e6edff disabled:text-gray-e6edff',
+        'bg-white text-red-ff3b30 !border-red-ff3b30',
+        'hover:bg-red-ff3b30 hover:text-white disabled:opacity-50',
     ],
     'outline-secondary': [
         'bg-gray-fafafd text-gray-53596d',

@@ -8,7 +8,7 @@ import { ToastError } from '../../../../components/Toast'
 import { useEffect } from 'react'
 
 const ListBoundaryInner = () => {
-    const userDaoList = useUserDaoList({ count: 6, loadOnInit: true })
+    const userDaoList = useUserDaoList({ count: 6, initialize: true })
     const { showBoundary } = useErrorBoundary()
 
     const onGetNext = async () => {
