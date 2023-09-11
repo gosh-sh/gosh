@@ -14,8 +14,6 @@ env:
   CARGO_INCREMENTAL: 0  # important for cache size too
   CARGO_NET_RETRY: 10
   RUST_BACKTRACE: full
-  ## warnings -> errors
-  # RUSTFLAGS: -D warnings
   RUSTUP_MAX_RETRIES: 10
   CARGO_PROFILE_RELEASE_CODEGEN_UNITS: 1
   CARGO_PROFILE_RELEASE_LTO: true
@@ -25,8 +23,7 @@ env:
   CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
   CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
   CXX_aarch64_unknown_linux_gnu: aarch64-linux-gnu-g++
-  ## TODO: why?
-  # BINDGEN_EXTRA_CLANG_ARGS": '--sysroot /usr/arm-linux-gnueabi'
+  RUSTFLAGS: -C target-feature=+crt-static
 
 jobs:
   build:
@@ -114,12 +111,6 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
           key: ${{ runner.os }}-cargo
-      - name: Set up target cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ matrix.dir }}/target/
-          key: ${{ runner.os }}-${{ matrix.bin }}-target-${{ hashFiles(format('{0}{1}', matrix.dir, '/Cargo.lock')) }}
-          restore-keys: ${{ runner.os }}-${{ matrix.bin }}-target-
 
       - uses: actions-rs/toolchain@v1
         with:
@@ -128,17 +119,24 @@ jobs:
           target: ${{ matrix.target }}
           override: true
 
+      - name: Install Linux packages
+        if: startsWith('ubuntu-', matrix.os)
+        env:
+          packages: >
+            librocksdb-dev
+            libssl-dev
+        run: |
+          sudo apt-get update -y && sudo apt-get install -y $packages
+
       - name: Add cross compile Linux tools
         if: ${{ matrix.target == 'aarch64-unknown-linux-gnu' }}
-        shell: bash
         run: |
-          sudo apt update -y
-          sudo apt install -y build-essential g++-x86-64-linux-gnu libc6-dev-amd64-cross g++-aarch64-linux-gnu libc6-dev-arm64-cross gcc-aarch64-linux-gnu
+          sudo apt-get update -y && sudo apt-get install -y g++-aarch64-linux-gnu libc6-dev-arm64-cross gcc-aarch64-linux-gnu
           rustup target add aarch64-unknown-linux-gnu
 
       - name: Install Protoc
         uses: arduino/setup-protoc@v2
-        # workaround rate-limit
+        ## NOTE: workaround rate-limit
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
