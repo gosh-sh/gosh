@@ -1797,9 +1797,9 @@ where
     #[instrument(level = "trace", skip_all)]
     pub async fn push(&mut self, refs: &str) -> anyhow::Result<String> {
         let err_version_disabled = format!("
-Push is disabled in the current version (GOSH v6.0).
+Push is disabled in the current version (GOSH v6.0.0).
 Please
- * download latest git-remote-helper (https://github.com/gosh-sh/gosh/releases)
+ * download the latest git-remote-helper (https://github.com/gosh-sh/gosh/releases)
  * upgrade your DAO and repositories to the latest version \
 (https://app.gosh.sh/o/{}/settings/upgrade)",
             self.remote.dao
