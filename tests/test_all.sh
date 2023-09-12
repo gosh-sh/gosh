@@ -78,6 +78,8 @@ echo 28 $? >> res.txt
 echo 29 $? >> res.txt
 ./30_remove_file_in_branch.sh 
 echo 30 $? >> res.txt
+./30_1_remove_file.test.sh
+echo 30_1 $? >> res.txt
 
 ./clean.sh
 echo "All tests passed"

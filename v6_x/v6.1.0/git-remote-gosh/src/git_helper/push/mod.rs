@@ -34,7 +34,7 @@ use push_tag::push_tag;
 mod delete_tag;
 pub(crate) mod parallel_snapshot_upload_support;
 
-use crate::blockchain::{branch_list, Snapshot, Tree, tree};
+use crate::blockchain::{branch_list, get_commit_by_addr, Snapshot, Tree, tree};
 use crate::git_helper::push::parallel_snapshot_upload_support::{
     ParallelCommit, ParallelCommitUploadSupport, ParallelSnapshot, ParallelSnapshotUploadSupport,
     ParallelTreeUploadSupport,
@@ -49,6 +49,7 @@ use crate::git_helper::push::push_diff::save_data_to_ipfs;
 
 static PARALLEL_PUSH_LIMIT: usize = 1 << 6;
 static MAX_REDEPLOY_ATTEMPTS: i32 = 3;
+const GOSH_DEPLOY_RETRIES: &str = "GOSH_DEPLOY_RETRIES";
 
 #[derive(Default)]
 struct PushBlobStatistics {
@@ -453,11 +454,14 @@ where
         let commit_iter = commit.try_into_commit_iter().unwrap();
         let parent_ids: Vec<String> = commit_iter.parent_ids().map(|e| e.to_string()).collect();
 
+        let mut was_upgraded = false;
         for id in &parent_ids {
             tracing::trace!("check parent: {id}");
-            if self.pushed_commits.contains(id) {
+            if self.pushed_commits.contains_key(id) {
+                was_upgraded = self.pushed_commits.get(id).unwrap().to_owned();
                 continue;
             }
+            was_upgraded = true;
             for repo_version in &self.repo_versions {
                 let mut repo_contract =
                     GoshContract::new(&repo_version.repo_address, gosh_abi::REPO);
@@ -498,26 +502,30 @@ where
         // If parent exists load tree of the zero parent
         let parent_tree = match parent_ids.first() {
             Some(id) => {
-                let mut repo = self.blockchain.repo_contract().clone();
-                let parent = get_commit_address(
-                    self.blockchain.client(),
-                    &mut repo,
-                    &id.to_string(),
-                )
-                    .await?;
-                let commit_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
-                if !commit_contract.is_active(self.blockchain.client()).await? {
-                    None
-                } else {
-                    let result: GetTreeResult = commit_contract.run_local(self.blockchain.client(), "gettree", None).await?;
-                    let tree_address = result.address;
-                    match Tree::load(
+                if was_upgraded || !self.pushed_commits.contains_key(id) {
+                    let mut repo = self.blockchain.repo_contract().clone();
+                    let parent = get_commit_address(
                         self.blockchain.client(),
-                        &tree_address,
-                    ).await {
-                        Ok(tree) => Some(tree),
-                        Err(_) => None
+                        &mut repo,
+                        &id.to_string(),
+                    )
+                        .await?;
+                    let commit_contract = GoshContract::new(&parent, gosh_abi::COMMIT);
+                    if !commit_contract.is_active(self.blockchain.client()).await? {
+                        None
+                    } else {
+                        let result: GetTreeResult = commit_contract.run_local(self.blockchain.client(), "gettree", None).await?;
+                        let tree_address = result.address;
+                        match Tree::load(
+                            self.blockchain.client(),
+                            &tree_address,
+                        ).await {
+                            Ok(tree) => Some(tree),
+                            Err(_) => None
+                        }
                     }
+                } else {
+                    None
                 }
             },
             None => { None }
@@ -591,8 +599,14 @@ where
 
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
-        while attempts < MAX_REDEPLOY_ATTEMPTS {
-            attempts += 1;
+        let redeploy_attempts = get_redeploy_attempts();
+
+        while attempts < redeploy_attempts {
+            if attempts == redeploy_attempts {
+                anyhow::bail!(
+                "Failed to deploy all commits. Undeployed commits: {expected_contracts:?}"
+            )
+            }
             expected_contracts = push_commits
                 .wait_all_commits(self.blockchain.clone())
                 .await?;
@@ -613,11 +627,7 @@ where
                     .add_to_push_list(self, String::from(address), push_semaphore.clone())
                     .await?;
             }
-        }
-        if attempts == MAX_REDEPLOY_ATTEMPTS {
-            anyhow::bail!(
-                "Failed to deploy all commits. Undeployed commits: {expected_contracts:?}"
-            )
+            attempts += 1;
         }
 
         self.blockchain
@@ -807,7 +817,8 @@ where
         if !upgrade_commit {
             for deleted in tree_diff.deleted {
                 let file_path = deleted.filepath.to_string();
-
+                tracing::trace!("Delete blob from cache: {:?}", deleted.oid);
+                // parallel_tree_upload_support.tree_item_to_base_commit_cache.remove(&format!("{}_{}", file_path, deleted.oid.to_string()));
                 if snapshot_to_commit.contains_key(&file_path) {
                     let snap_mon_vec = snapshot_to_commit.get_mut(&file_path).unwrap();
                     for i in 0..snap_mon_vec.len() {
@@ -997,7 +1008,7 @@ where
         // 8) Get list of objects to push with the ancestor commit
         tracing::trace!("Find objects till: {till_id:?}");
         let commit_objects_list = get_list_of_commit_objects(ancestor_id, till_id)?;
-        if self.pushed_commits.contains(&commit_objects_list[0]) {
+        if self.pushed_commits.contains_key(&commit_objects_list[0]) {
             return Ok(());
         }
 
@@ -1076,7 +1087,7 @@ where
             let object_kind = self.local_repository().find_object(object_id)?.kind;
             match object_kind {
                 git_object::Kind::Commit => {
-                    self.pushed_commits.push(oid.to_string());
+                    self.pushed_commits.insert(oid.to_string(), true);
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)
                     self.push_commit_object(
                         oid,
@@ -1124,8 +1135,11 @@ where
         let mut expected_contracts = vec![];
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
-        while attempts < MAX_REDEPLOY_ATTEMPTS {
-            attempts += 1;
+        let redeploy_attempts = get_redeploy_attempts();
+        while attempts < redeploy_attempts {
+            if attempts == redeploy_attempts {
+                anyhow::bail!("Failed to deploy all trees. Undeployed trees: {expected_contracts:?}")
+            }
             expected_contracts = parallel_tree_uploads
                 .wait_all_trees(self.blockchain.clone())
                 .await?;
@@ -1147,15 +1161,17 @@ where
                     .add_to_push_list(self, String::from(&address), push_semaphore.clone())
                     .await?;
             }
-        }
-        if attempts == MAX_REDEPLOY_ATTEMPTS {
-            anyhow::bail!("Failed to deploy all trees. Undeployed trees: {expected_contracts:?}")
+            attempts += 1;
         }
 
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
-        while attempts < MAX_REDEPLOY_ATTEMPTS {
-            attempts += 1;
+        while attempts < redeploy_attempts {
+            if attempts == redeploy_attempts {
+                anyhow::bail!(
+                "Failed to deploy all commits. Undeployed commits: {expected_contracts:?}"
+            )
+            }
             expected_contracts = push_commits
                 .wait_all_commits(self.blockchain.clone())
                 .await?;
@@ -1176,59 +1192,13 @@ where
                     .add_to_push_list(self, String::from(address), push_semaphore.clone())
                     .await?;
             }
-        }
-        if attempts == MAX_REDEPLOY_ATTEMPTS {
-            anyhow::bail!(
-                "Failed to deploy all commits. Undeployed commits: {expected_contracts:?}"
-            )
+            attempts += 1;
         }
 
         let files_cnt = parallel_snapshot_uploads.get_expected().len();
         parallel_snapshot_uploads.start_push(self).await?;
 
         let stored_snapshot_addresses = parallel_snapshot_uploads.get_expected().clone();
-
-        let prev_repo_address = Some(
-            self.repo_versions
-                .iter()
-                .find(|repo| repo.version == parents_for_upgrade[0].version)
-                .expect("Failed to find prev repo address")
-                .repo_address
-                .clone(),
-        );
-
-        let mut attempts = 0;
-        let mut last_rest_cnt = 0;
-        while attempts < MAX_REDEPLOY_ATTEMPTS {
-            attempts += 1;
-            expected_contracts = parallel_snapshot_uploads
-                .wait_all_snapshots(self.blockchain.clone())
-                .await?;
-            tracing::trace!("Wait all snapshots result: {expected_contracts:?}");
-            if expected_contracts.is_empty() {
-                break;
-            }
-            if expected_contracts.len() != last_rest_cnt {
-                attempts = 0;
-            }
-            last_rest_cnt = expected_contracts.len();
-            tracing::trace!("Restart deploy on undeployed snapshots");
-            let expected = parallel_snapshot_uploads.get_expected().to_owned();
-            parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
-            for address in expected_contracts.clone() {
-                tracing::trace!("Get params of undeployed snapshot: {}", address,);
-                parallel_snapshot_uploads.push_expected(String::from(&address));
-                parallel_snapshot_uploads
-                    .add_to_push_list(self, String::from(address))
-                    .await?;
-            }
-        }
-        if attempts == MAX_REDEPLOY_ATTEMPTS {
-            anyhow::bail!(
-                "Failed to deploy all snapshots. Undeployed snapshots: {expected_contracts:?}"
-            )
-        }
-
         let db = self.get_db()?;
         for address in stored_snapshot_addresses {
             db.delete_snapshot(&address)?;
@@ -1425,7 +1395,7 @@ where
 
         // TODO: change to list of commits without extra objects
         // get list of git objects in local repo, excluding ancestor ones
-        let commit_and_tree_list =
+        let commit_list =
             get_list_of_commit_objects(latest_commit, ancestor_commit_object)?;
 
         // 4. Do prepare commit for all commits
@@ -1438,7 +1408,7 @@ where
         tracing::trace!("latest commit id {latest_commit_id}");
         let mut parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
 
-        tracing::trace!("List of objects: {commit_and_tree_list:?}");
+        tracing::trace!("List of objects: {commit_list:?}");
 
         // read last onchain commit and init map from its tree
         // map (path -> commit_where_it_was_created)
@@ -1495,24 +1465,36 @@ where
         }
 
         let mut number_of_commits = 0;
-        tracing::trace!("commit_and_tree_list:{commit_and_tree_list:?}");
+        tracing::trace!("commit_list:{commit_list:?}");
         // iterate through the git objects list and push them
-        for oid in &commit_and_tree_list {
+        for oid in &commit_list {
             let object_id = git_hash::ObjectId::from_str(oid)?;
             let object_kind = self.local_repository().find_object(object_id)?.kind;
             tracing::trace!("Push object: {object_id:?} {object_kind:?}");
             match object_kind {
                 git_object::Kind::Commit => {
-                    self.pushed_commits.push(oid.to_string());
+                    self.pushed_commits.insert(oid.to_string(), false);
                     number_of_commits += 1;
                     // in case of fast forward commits can be already deployed for another branch
                     // Do not deploy them again
                     let commit_address = self.calculate_commit_address(&object_id).await?;
-                    let commit_contract = GoshContract::new(&commit_address, gosh_abi::COMMIT);
-                    match commit_contract.is_active(self.blockchain.client()).await {
-                        Ok(true) => continue,
+                    match get_commit_by_addr(
+                        self.blockchain.client(),
+                        &commit_address
+                    ).await {
+                        Ok(Some(commit)) => {
+                            if commit.is_correct_commit {
+                                continue;
+                            }
+                        }
                         _ => {}
                     }
+
+                    // let commit_contract = GoshContract::new(&commit_address, gosh_abi::COMMIT);
+                    // match commit_contract.is_active(self.blockchain.client()).await {
+                    //     Ok(true) => continue,
+                    //     _ => {}
+                    // }
 
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)
                     let parent_tree = self.check_parents(
@@ -1565,8 +1547,11 @@ where
         let mut expected_contracts = vec![];
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
-        while attempts < MAX_REDEPLOY_ATTEMPTS {
-            attempts += 1;
+        let redeploy_attempts = get_redeploy_attempts();
+        while attempts < redeploy_attempts {
+            if attempts == redeploy_attempts {
+                anyhow::bail!("Failed to deploy all trees. Undeployed trees: {expected_contracts:?}")
+            }
             expected_contracts = parallel_tree_uploads
                 .wait_all_trees(self.blockchain.clone())
                 .await?;
@@ -1588,15 +1573,17 @@ where
                     .add_to_push_list(self, String::from(&address), push_semaphore.clone())
                     .await?;
             }
-        }
-        if attempts == MAX_REDEPLOY_ATTEMPTS {
-            anyhow::bail!("Failed to deploy all trees. Undeployed trees: {expected_contracts:?}")
+            attempts += 1;
         }
 
         let mut attempts = 0;
         let mut last_rest_cnt = 0;
-        while attempts < MAX_REDEPLOY_ATTEMPTS {
-            attempts += 1;
+        while attempts < redeploy_attempts {
+            if attempts == redeploy_attempts {
+                anyhow::bail!(
+                "Failed to deploy all commits. Undeployed commits: {expected_contracts:?}"
+            )
+            }
             expected_contracts = push_commits
                 .wait_all_commits(self.blockchain.clone())
                 .await?;
@@ -1617,79 +1604,12 @@ where
                     .add_to_push_list(self, String::from(address), push_semaphore.clone())
                     .await?;
             }
-        }
-        if attempts == MAX_REDEPLOY_ATTEMPTS {
-            anyhow::bail!(
-                "Failed to deploy all commits. Undeployed commits: {expected_contracts:?}"
-            )
+            attempts += 1;
         }
 
         // After we have all commits and trees deployed, start push of diffs
         parallel_diffs_upload_support.start_push(self).await?;
         parallel_snapshot_uploads.start_push(self).await?;
-
-        // wait for all spawned collections to finish
-        let mut attempts = 0;
-        let mut last_rest_cnt = 0;
-        while attempts < MAX_REDEPLOY_ATTEMPTS {
-            attempts += 1;
-            expected_contracts = parallel_diffs_upload_support
-                .wait_all_diffs(self.blockchain.clone())
-                .await?;
-            tracing::trace!("Wait all diffs result: {expected_contracts:?}");
-            if expected_contracts.is_empty() {
-                break;
-            }
-            if expected_contracts.len() != last_rest_cnt {
-                attempts = 0;
-            }
-            last_rest_cnt = expected_contracts.len();
-            tracing::trace!("Restart deploy on undeployed diffs");
-            let expected = parallel_diffs_upload_support.get_expected().to_owned();
-            parallel_diffs_upload_support = ParallelDiffsUploadSupport::new(&latest_commit_id);
-            for address in expected_contracts.clone() {
-                parallel_diffs_upload_support.push_expected(String::from(&address));
-                parallel_diffs_upload_support
-                    .add_to_push_list(self, String::from(address))
-                    .await?;
-            }
-            parallel_diffs_upload_support.push_dangling(self).await?;
-        }
-        if attempts == MAX_REDEPLOY_ATTEMPTS {
-            anyhow::bail!("Failed to deploy all diffs. Undeployed diffs: {expected_contracts:?}")
-        }
-
-        let mut attempts = 0;
-        let mut last_rest_cnt = 0;
-        while attempts < MAX_REDEPLOY_ATTEMPTS {
-            attempts += 1;
-            expected_contracts = parallel_snapshot_uploads
-                .wait_all_snapshots(self.blockchain.clone())
-                .await?;
-            tracing::trace!("Wait all snapshots result: {expected_contracts:?}");
-            if expected_contracts.is_empty() {
-                break;
-            }
-            if expected_contracts.len() != last_rest_cnt {
-                attempts = 0;
-            }
-            last_rest_cnt = expected_contracts.len();
-            tracing::trace!("Restart deploy on undeployed snapshots");
-            let expected = parallel_snapshot_uploads.get_expected().to_owned();
-            parallel_snapshot_uploads = ParallelSnapshotUploadSupport::new();
-            for address in expected_contracts.clone() {
-                tracing::trace!("Get params of undeployed snapshot: {}", address,);
-                parallel_snapshot_uploads.push_expected(String::from(&address));
-                parallel_snapshot_uploads
-                    .add_to_push_list(self, String::from(address))
-                    .await?;
-            }
-        }
-        if attempts == MAX_REDEPLOY_ATTEMPTS {
-            anyhow::bail!(
-                "Failed to deploy all snapshots. Undeployed snapshots: {expected_contracts:?}"
-            )
-        }
 
         // clear database after all objects were deployed
         self.delete_db()?;
@@ -1910,10 +1830,10 @@ fn get_list_of_commit_objects(
 
     tracing::trace!("commits:{commits:?}");
 
-    let mut commit_objects: Vec<git_repository::Commit> = Vec::new();
+    let mut commit_objects: HashMap<String, git_repository::Commit> = HashMap::new();
     for commit in commits.iter().rev() {
         let commit = commit.object()?.into_commit();
-        commit_objects.push(commit);
+        commit_objects.insert(commit.id.to_string(), commit);
     }
 
     // Hashmap commits -> number of children
@@ -1922,7 +1842,7 @@ fn get_list_of_commit_objects(
         commits.into_iter().map(|el| (el.to_string(), vec![]))
     );
 
-    for commit in commit_objects {
+    for (_, commit) in &commit_objects {
         for parent in commit.parent_ids() {
             match child_map.get_mut(&parent.to_string()) {
                 Some(val) => {
@@ -1936,16 +1856,16 @@ fn get_list_of_commit_objects(
     let mut res: Vec<String> = vec![];
 
     while !child_map.is_empty() {
-        {
-            let commit = child_map.iter().find(|(k, v)| v.is_empty()).ok_or(anyhow::format_err!("Failed to get commit with no children"))?.0.to_owned();
-            child_map.remove(&commit);
-            res.push(commit);
-
-        }
-        let commit = res.last().unwrap();
-        for (_, children) in &mut child_map {
-            if children.contains(commit) {
-                children.retain(|c| c != commit);
+        let mut zero_child_commits: Vec<String> = child_map.iter().filter(|(k, v)| v.is_empty()).map(|val| val.0.to_owned()).collect();
+        zero_child_commits.sort_by_key(|commit| commit_objects.get(commit).unwrap().time().unwrap());
+        zero_child_commits.reverse();
+        for commit in &zero_child_commits {
+            child_map.remove(commit);
+            res.push(commit.to_string());
+            for (_, children) in &mut child_map {
+                if children.contains(commit) {
+                    children.retain(|c| c != commit);
+                }
             }
         }
     }
@@ -2149,4 +2069,11 @@ mod tests {
         }
         shutdown_logger().await;
     }
+}
+
+pub fn get_redeploy_attempts() -> i32 {
+    std::env::var(GOSH_DEPLOY_RETRIES)
+        .ok()
+        .and_then(|num| i32::from_str_radix(&num, 10).ok())
+        .unwrap_or(MAX_REDEPLOY_ATTEMPTS)
 }

@@ -113,7 +113,7 @@ async fn construct_tree(
     handlers: &mut ParallelTreeUploadSupport,
     previous_tree: Option<Tree>,
 ) -> anyhow::Result<HashMap<String, TreeComponent>> {
-    tracing::trace!("construct tree: tree_id={tree_id}, current_commit={current_commit}, snapshot_to_commit:{snapshot_to_commit:?}, is_upgrade={is_upgrade}");
+    tracing::trace!("construct tree: tree_id={tree_id}, current_commit={current_commit}, snapshot_to_commit:{snapshot_to_commit:?}, is_upgrade={is_upgrade}, handlers.tree_item_to_base_commit_cache={:?}", handlers.tree_item_to_base_commit_cache);
     // flatten tree map to get rid of recursive calls of async funcs
     let flat_tree = flatten_tree(context, tree_id, "")?;
     tracing::trace!("construct tree: flat_tree={flat_tree:?}");
@@ -174,18 +174,24 @@ async fn construct_tree(
         };
         let file_name = entry.filename.to_string();
 
+        tracing::trace!("search commit for {file_name}");
         let commit = if !is_upgrade {
             match entry.mode {
                 Commit => {
+                    tracing::trace!("take empty commit for commit file mode");
                     "".to_string()
                 },
                 _ => {
-                    match handlers.tree_item_to_base_commit_cache.get(&entry.oid) {
-                        Some(commit) => commit.to_owned(),
+                    match handlers.tree_item_to_base_commit_cache.get(&format!("{}_{}", path, entry.oid.to_string())) {
+                        Some(commit) => {
+                            tracing::trace!("take commit from cache: {commit}");
+                            commit.to_owned()
+                        },
                         None => {
                             let commit = match snapshot_to_commit
                                 .get(path)
                                 .and_then(|val| {
+                                    tracing::trace!("snapshot_to_commit value for {file_name} : {val:?}");
                                     for snap_mon in val {
                                         if commit_chain.contains(&snap_mon.latest_commit) {
                                             return Some(snap_mon.base_commit.clone());
@@ -193,8 +199,12 @@ async fn construct_tree(
                                     }
                                     None
                                 }) {
-                                Some(commit) => commit,
+                                Some(commit) => {
+                                    tracing::trace!("take commit from snap_to_com: {commit}");
+                                    commit
+                                },
                                 None => {
+                                    tracing::trace!("take commit from previous_tree: {previous_tree:?}");
                                     previous_tree
                                         .get(path)
                                         .and_then(|node| Some(node.commit.clone()))
@@ -203,15 +213,18 @@ async fn construct_tree(
                                         )?
                                 },
                             };
-                            handlers.tree_item_to_base_commit_cache.insert(entry.oid.clone(), commit.clone());
+                            tracing::trace!("save blob to cache: {}_{:?} {}", path, entry.oid.to_string(), commit);
+                            handlers.tree_item_to_base_commit_cache.insert(format!("{}_{}", path, entry.oid.to_string()), commit.clone());
                             commit
                         }
                     }
                 }
             }
         } else {
+            tracing::trace!("take current commit");
             current_commit.to_string()
         };
+        tracing::trace!("commit for {file_name}: {commit}");
 
         let tree_node = TreeComponent::from((Some(format!("0x{file_hash}")), None, commit, entry));
         let type_obj = &tree_node.type_obj;

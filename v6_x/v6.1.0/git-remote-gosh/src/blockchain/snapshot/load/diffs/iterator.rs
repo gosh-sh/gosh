@@ -6,6 +6,7 @@ use crate::blockchain::{
 };
 use std::iter::Iterator;
 use std::sync::Arc;
+use either::Either;
 use ton_client::abi::{decode_message_body, Abi, ParamsOfDecodeMessageBody};
 use ton_client::net::ParamsOfQuery;
 
@@ -60,6 +61,8 @@ struct Node {
 struct PageInfo {
     has_previous_page: bool,
     start_cursor: String,
+    has_next_page: bool,
+    end_cursor: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -245,14 +248,21 @@ impl DiffMessagesIterator {
                         .await?;
                 self.buffer = buffer;
                 self.buffer_cursor = 0;
-                DiffMessagesIterator::into_next_page(
-                    client,
-                    &address,
-                    &mut self.repo_contract,
-                    page.cursor,
-                    &self.branch,
-                )
-                .await?
+                match page.cursor {
+                    Some(cursor) => Some(NextChunk::MessagesPage(
+                        address.clone(),
+                        Some(cursor),
+                    )),
+                    None => None
+                }
+                // DiffMessagesIterator::into_next_page(
+                //     client,
+                //     &address,
+                //     &mut self.repo_contract,
+                //     page.cursor,
+                //     &self.branch,
+                // )
+                // .await?
             }
         };
         Ok(LoadStatus::Success)
@@ -283,8 +293,7 @@ pub async fn load_messages_to(
     stop_on: Option<u64>,
     from_end_to_start: bool,
 ) -> anyhow::Result<(Vec<DiffMessage>, PageIterator)> {
-    tracing::trace!("load_messages_to: address={address}, cursor={cursor:?}, stop_on={stop_on:?}");
-    let mut subsequent_page_info: Option<String> = None;
+    tracing::trace!("load_messages_to: address={address}, cursor={cursor:?}, from_end_to_start={from_end_to_start}");
     let query = if from_end_to_start {
         r#"query($addr: String!, $before: String){
       blockchain {
@@ -293,7 +302,7 @@ pub async fn load_messages_to(
             edges {
               node { id body created_at created_lt status bounced }
             }
-            pageInfo { hasPreviousPage startCursor }
+            pageInfo { hasPreviousPage startCursor hasNextPage endCursor }
           }
         }
       }
@@ -306,7 +315,7 @@ pub async fn load_messages_to(
             edges {
               node { id body created_at created_lt status bounced }
             }
-            pageInfo { hasPreviousPage startCursor }
+            pageInfo { hasPreviousPage startCursor hasNextPage endCursor }
           }
         }
       }
@@ -344,12 +353,25 @@ pub async fn load_messages_to(
     let mut messages: Vec<DiffMessage> = Vec::new();
     let nodes = &result["data"]["blockchain"]["account"]["messages"];
     let edges: Messages = serde_json::from_value(nodes.clone())?;
-    if edges.page_info.has_previous_page {
-        subsequent_page_info = Some(edges.page_info.start_cursor);
-    }
+    let mut subsequent_page_info = if from_end_to_start {
+        if edges.page_info.has_previous_page {
+            Some(edges.page_info.start_cursor)
+        } else {
+            None
+        }
+    } else {
+        if edges.page_info.has_next_page {
+            Some(edges.page_info.end_cursor)
+        } else {
+            None
+        }
+    };
 
     tracing::trace!("Loaded {} message(s) to {}", edges.edges.len(), address);
-    for elem in edges.edges.iter().rev() {
+    for elem in match from_end_to_start {
+        false => Either::Left(edges.edges.iter()),
+        true => Either::Right(edges.edges.iter().rev())
+    } {
         let raw_msg = &elem.message;
         if stop_on != None && raw_msg.created_at >= stop_on.unwrap() {
             subsequent_page_info = None;
@@ -415,7 +437,7 @@ pub async fn load_constructor(
             edges {
               node { id body created_at created_lt status bounced }
             }
-            pageInfo { hasPreviousPage startCursor }
+            pageInfo { hasPreviousPage startCursor hasNextPage endCursor }
           }
         }
       }
@@ -489,6 +511,7 @@ pub async fn load_constructor(
             let value = decoded.value.unwrap();
 
             if value["data"] == "" && value["ipfsdata"] == serde_json::value::Value::Null {
+                tracing::trace!("constructor has an empty data. Will take it from `approve`-message");
                 first_diff = true;
                 continue;
             }

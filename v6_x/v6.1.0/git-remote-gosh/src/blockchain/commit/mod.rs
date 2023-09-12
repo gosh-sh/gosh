@@ -22,7 +22,7 @@ pub struct GoshCommit {
     pub content: String,
     pub initupgrade: bool,
     #[serde(rename = "isCorrectCommit")]
-    _is_correct_commit: bool,
+    pub is_correct_commit: bool,
     #[serde(rename = "isPinned")]
     _is_pinned: bool,
 }

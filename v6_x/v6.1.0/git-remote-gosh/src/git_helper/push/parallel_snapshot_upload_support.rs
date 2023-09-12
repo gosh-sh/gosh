@@ -23,8 +23,19 @@ use tokio::{sync::Semaphore, task::JoinSet};
 use tokio_retry::RetryIf;
 use tracing::Instrument;
 use crate::blockchain::tree::load::TreeComponent;
+use crate::git_helper::push::get_redeploy_attempts;
 
-const WAIT_TREE_READY_MAX_ATTEMPTS: i32 = 3;
+const WAIT_TREE_READY_MAX_ATTEMPTS: i32 = 4;
+const GOSH_PUSH_CHUNK: &str = "GOSH_PUSH_CHUNK";
+const DEFAULT_PUSH_CHUNK_SIZE: usize = 3000;
+const WAIT_CONTRACT_CHUNK_SIZE: usize = 50;
+
+pub fn get_push_chunk() -> usize {
+    std::env::var(GOSH_PUSH_CHUNK)
+        .ok()
+        .and_then(|num| usize::from_str_radix(&num, 10).ok())
+        .unwrap_or(DEFAULT_PUSH_CHUNK_SIZE)
+}
 
 // TODO: refactor this code and unite all this parallel pushes
 
@@ -89,11 +100,51 @@ impl ParallelSnapshotUploadSupport {
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
     ) -> anyhow::Result<()> {
-        let exp = self.expecting_deployed_contacts_addresses.clone();
-        for addr in exp {
-            self.add_to_push_list(context, addr).await?;
+        let chunk_size = get_push_chunk();
+        let max_attempts = get_redeploy_attempts();
+        tracing::trace!("Start push of snapshots, chunk_size={chunk_size}, max_attempts={max_attempts}");
+        let mut exp: Vec<BlockchainContractAddress> = self.expecting_deployed_contacts_addresses.iter().map(|addr| BlockchainContractAddress::new(addr)).collect();
+        let mut attempt = 0;
+        let mut last_rest_cnt = 0;
+        loop {
+            if attempt == max_attempts {
+                anyhow::bail!("Failed to deploy snapshots. Undeployed snapshots: {exp:?}");
+            }
+            let mut rest = vec![];
+            for chunk in exp.chunks(chunk_size) {
+                for addr in chunk {
+                    self.add_to_push_list(context, &String::from(addr)).await?;
+                }
+                self.finish_push().await?;
+                let mut tmp_rest = wait_snapshots_until_ready(&context.blockchain, chunk).await?;
+                rest.append(&mut tmp_rest);
+            }
+            exp = rest;
+            if exp.is_empty() {
+                break;
+            }
+            if exp.len() != last_rest_cnt {
+                attempt = 0;
+            }
+            last_rest_cnt = exp.len();
+
+            attempt += 1;
         }
-        sleep(Duration::from_secs(5)).await;
+        Ok(())
+    }
+
+    async fn finish_push(&mut self) -> anyhow::Result<()> {
+        while let Some(finished_task) = self.pushed_blobs.join_next().await {
+            match finished_task {
+                Err(e) => {
+                    bail!("snapshots join-handler: {}", e);
+                }
+                Ok(Err(e)) => {
+                    bail!("snapshots inner: {}", e);
+                }
+                Ok(Ok(_)) => {}
+            }
+        }
         Ok(())
     }
 
@@ -101,8 +152,9 @@ impl ParallelSnapshotUploadSupport {
     pub async fn add_to_push_list(
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
-        snapshot_address: String,
+        snapshot_address: &String,
     ) -> anyhow::Result<()> {
+        let snapshot_address = snapshot_address.to_owned();
         let blockchain = context.blockchain.clone();
         let dao_address: BlockchainContractAddress = context.dao_addr.clone();
         let remote_network: String = context.remote.network.clone();
@@ -129,25 +181,6 @@ impl ParallelSnapshotUploadSupport {
             .instrument(info_span!("tokio::spawn::push_initial_snapshot").or_current()),
         );
         Ok(())
-    }
-
-    pub async fn wait_all_snapshots<B>(
-        &mut self,
-        blockchain: B,
-    ) -> anyhow::Result<Vec<BlockchainContractAddress>>
-    where
-        B: BlockchainService + 'static,
-    {
-        // TODO:
-        // - Let user know if we reached it
-        // - Make it configurable
-        let addresses = self
-            .expecting_deployed_contacts_addresses
-            .iter()
-            .map(|addr| BlockchainContractAddress::new(addr.clone()))
-            .collect::<Vec<BlockchainContractAddress>>();
-
-        wait_snapshots_until_ready(&blockchain, &addresses).await
     }
 }
 
@@ -264,17 +297,17 @@ impl ParallelCommitUploadSupport {
             .iter()
             .map(|addr| BlockchainContractAddress::new(addr))
             .collect::<Vec<BlockchainContractAddress>>();
-        tracing::debug!(
-            "Expecting the following commit contracts to be deployed: {:?}",
-            addresses
-        );
+        // tracing::debug!(
+        //     "Expecting the following commit contracts to be deployed: {:?}",
+        //     addresses
+        // );
         while let Some(finished_task) = self.pushed_blobs.join_next().await {
             match finished_task {
                 Err(e) => {
-                    bail!("diffs join-handler: {}", e);
+                    bail!("commits join-handler: {}", e);
                 }
                 Ok(Err(e)) => {
-                    bail!("diffs inner: {}", e);
+                    bail!("commits inner: {}", e);
                 }
                 Ok(Ok(_)) => {}
             }
@@ -286,7 +319,7 @@ impl ParallelCommitUploadSupport {
 pub struct ParallelTreeUploadSupport {
     expecting_deployed_contacts_addresses: Vec<String>,
     pushed_blobs: JoinSet<anyhow::Result<()>>,
-    pub tree_item_to_base_commit_cache: HashMap<ObjectId, String>,
+    pub tree_item_to_base_commit_cache: HashMap<String, String>,
 }
 
 #[derive(Clone, Debug)]
@@ -399,49 +432,78 @@ impl ParallelTreeUploadSupport {
             .iter()
             .map(|addr| BlockchainContractAddress::new(addr))
             .collect::<Vec<BlockchainContractAddress>>();
-        tracing::debug!(
-            "Expecting the following tree contracts to be deployed: {:?}",
-            addresses
-        );
+        // tracing::debug!(
+        //     "Expecting the following tree contracts to be deployed: {:?}",
+        //     addresses
+        // );
         while let Some(finished_task) = self.pushed_blobs.join_next().await {
             match finished_task {
                 Err(e) => {
-                    bail!("diffs join-handler: {}", e);
+                    bail!("trees join-handler: {}", e);
                 }
                 Ok(Err(e)) => {
-                    bail!("diffs inner: {}", e);
+                    bail!("trees inner: {}", e);
                 }
                 Ok(Ok(_)) => {}
             }
         }
         let _ = wait_contracts_deployed(&blockchain, &addresses).await?;
 
-        let mut rest: HashMap<BlockchainContractAddress, usize> =
-            addresses.iter().map(|addr| (addr.to_owned(), 0)).collect();
-        let mut attempt = 0;
-        loop {
-            attempt += 1;
-            let mut new_rest = HashMap::new();
-            for (address, _) in &rest {
-                match check_if_tree_is_ready(&blockchain, address).await {
-                    Ok((true, _)) => {}
-                    Ok((false, num)) => {
-                        if &num != rest.get(address).unwrap() {
-                            attempt = 0;
-                        }
-                        new_rest.insert(address.to_owned(), num);
-                    }
-                    _ => {
-                        new_rest.insert(address.to_owned(), 0usize);
-                    }
-                }
-            }
-            rest = new_rest;
-            if attempt == WAIT_TREE_READY_MAX_ATTEMPTS {
-                break;
-            }
-            sleep(Duration::from_secs(5)).await;
-        }
-        Ok(rest.keys().map(|a| a.to_owned()).collect())
+        wait_trees_until_ready(&blockchain, addresses).await
     }
+}
+
+#[instrument(level = "info", skip_all)]
+pub async fn wait_trees_until_ready<B>(
+    blockchain: &B,
+    addresses: Vec<BlockchainContractAddress>,
+) -> anyhow::Result<Vec<BlockchainContractAddress>>
+    where
+        B: BlockchainService + 'static,
+{
+    let mut tree_results: JoinSet<anyhow::Result<Vec<BlockchainContractAddress>>> = JoinSet::new();
+
+    for chunk in addresses.chunks(WAIT_CONTRACT_CHUNK_SIZE) {
+        let waiting_for_addresses = Vec::from(chunk);
+        let ever = blockchain.clone();
+        tree_results.spawn(
+            async move {
+                let mut rest: HashMap<BlockchainContractAddress, usize> =
+                    waiting_for_addresses.iter().map(|addr| (addr.to_owned(), 0)).collect();
+                let mut attempt = 0;
+                loop {
+                    attempt += 1;
+                    if attempt == WAIT_TREE_READY_MAX_ATTEMPTS {
+                        break;
+                    }
+                    let mut new_rest = HashMap::new();
+                    for (address, _) in &rest {
+                        match check_if_tree_is_ready(&ever, address).await {
+                            Ok((true, _)) => {}
+                            Ok((false, num)) => {
+                                if &num != rest.get(address).unwrap() {   // TODO: check that condition
+                                    attempt = 0;
+                                }
+                                new_rest.insert(address.to_owned(), num);
+                            }
+                            _ => {
+                                new_rest.insert(address.to_owned(), 0usize);
+                            }
+                        }
+                    }
+                    rest = new_rest;
+                    sleep(Duration::from_secs(5)).await;
+                }
+                Ok(rest.keys().map(|a| a.to_owned()).collect())
+            }
+        );
+    }
+
+    let mut not_ready_trees = vec![];
+    while let Some(res) = tree_results.join_next().await {
+        let mut val = res??;
+        not_ready_trees.append(&mut val);
+    }
+
+    Ok(not_ready_trees)
 }
