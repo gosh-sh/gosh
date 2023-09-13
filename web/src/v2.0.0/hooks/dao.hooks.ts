@@ -338,7 +338,15 @@ export function useUserDaoList(params: { count?: number; initialize?: boolean } 
             }
 
             // Get onboarding items
-            const onboarding = await getOnboardingItems(user.username)
+            const onboarding = (await getOnboardingItems(user.username)).map((item) => ({
+                account: null,
+                name: item.name,
+                address: '',
+                version: '',
+                supply: -1,
+                members: -1,
+                onboarding: item.repos,
+            }))
 
             /**
              * Get blockchain items
@@ -351,17 +359,18 @@ export function useUserDaoList(params: { count?: number; initialize?: boolean } 
             })
 
             // Compose all items together
+            const different = _.differenceWith(onboarding, blockchain.items, (a, b) => {
+                return a.name === b.name
+            })
             const composed = [
-                ...onboarding.map(({ name, repos }) => ({
-                    account: null,
-                    name,
-                    address: '',
-                    version: '',
-                    supply: -1,
-                    members: -1,
-                    onboarding: repos,
-                })),
-                ...blockchain.items,
+                ...different,
+                ...blockchain.items.map((item) => {
+                    const gh = onboarding.find((ghitem) => ghitem.name === item.name)
+                    if (gh) {
+                        return { ...item, onboarding: gh.onboarding }
+                    }
+                    return item
+                }),
             ]
 
             // Update state
