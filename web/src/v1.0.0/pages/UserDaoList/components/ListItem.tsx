@@ -35,7 +35,7 @@ const ListItem = (props: TListItemProps) => {
     const navigate = useNavigate()
 
     const onItemClick = () => {
-        if (!item.onboarding) {
+        if (item.address) {
             navigate(`/o/${item.name}`)
         }
     }
@@ -45,7 +45,7 @@ const ListItem = (props: TListItemProps) => {
             className={classNames(
                 'p-5 border border-gray-e6edff rounded-xl',
                 'hover:bg-gray-e6edff/20',
-                !item.onboarding ? 'cursor-pointer' : null,
+                item.address ? 'cursor-pointer' : null,
                 className,
             )}
             test-id={`daoitem-${item.name}`}
@@ -62,32 +62,34 @@ const ListItem = (props: TListItemProps) => {
                             Loading repos ({item.onboarding.length} left)
                         </div>
                     )}
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                        <div
-                            className="text-gray-53596d text-xs"
-                            data-tooltip-id="common-tip"
-                            data-tooltip-content="Version"
-                        >
-                            <FontAwesomeIcon icon={faTag} className="mr-2" />
-                            {item.version}
+                    {item.address && (
+                        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                            <div
+                                className="text-gray-53596d text-xs"
+                                data-tooltip-id="common-tip"
+                                data-tooltip-content="Version"
+                            >
+                                <FontAwesomeIcon icon={faTag} className="mr-2" />
+                                {item.version}
+                            </div>
+                            <div
+                                className="text-gray-53596d text-xs"
+                                data-tooltip-id="common-tip"
+                                data-tooltip-content="Total supply"
+                            >
+                                <FontAwesomeIcon icon={faPiggyBank} className="mr-2" />
+                                {item.supply.toLocaleString()}
+                            </div>
+                            <div
+                                className="text-gray-53596d text-xs"
+                                data-tooltip-id="common-tip"
+                                data-tooltip-content="Members"
+                            >
+                                <FontAwesomeIcon icon={faUsers} className="mr-2" />
+                                {item.members.toLocaleString()}
+                            </div>
                         </div>
-                        <div
-                            className="text-gray-53596d text-xs"
-                            data-tooltip-id="common-tip"
-                            data-tooltip-content="Total supply"
-                        >
-                            <FontAwesomeIcon icon={faPiggyBank} className="mr-2" />
-                            {item.supply.toLocaleString()}
-                        </div>
-                        <div
-                            className="text-gray-53596d text-xs"
-                            data-tooltip-id="common-tip"
-                            data-tooltip-content="Members"
-                        >
-                            <FontAwesomeIcon icon={faUsers} className="mr-2" />
-                            {item.members.toLocaleString()}
-                        </div>
-                    </div>
+                    )}
                 </div>
                 <div className="col !grow-0">
                     <div className="overflow-hidden rounded-xl w-12 md:w-16 lg:w-20">
