@@ -1,4 +1,4 @@
-import { TonClient } from 'npm:@eversdk/core@1.41.1'
+import { TonClient } from 'npm:@eversdk/core'
 // @deno-types="../../node_modules/@eversdk/lib-web/index.d.ts"
 import { libWeb, libWebSetup } from '../../node_modules/@eversdk/lib-web/index.js'
 

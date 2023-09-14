@@ -45,7 +45,6 @@ while (true) {
     }
 
     const version = Deno.env.get('GOSH_VERSION') ?? '0.0.0'
-
     // Filter users
     // User `onboarded_at` should be null, all user repos should have
     // date at `updated_at` field
@@ -54,7 +53,7 @@ while (true) {
         .filter(({ github }) => !!github )
         .filter(({ github }) => {
             const repos = Array.isArray(github) ? github : [github]
-            return repos.length > 0 && repos.every(({ updated_at }) => !!updated_at)
+            return repos.length > 0 // && repos.every(({ updated_at }) => !!updated_at)
         })
         .filter(({ github }) => {
             console.log(github)

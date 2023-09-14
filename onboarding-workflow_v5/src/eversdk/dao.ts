@@ -4,8 +4,15 @@ import {
     PROFILE_ABI,
     SYSTEM_CONTRACT_ABI,
 } from '../eversdk/abi.ts'
-import { SYSTEM_CONTRACT_ADDR } from '../eversdk/client.ts'
+import { GOSH_ENDPOINTS, SYSTEM_CONTRACT_ADDR, getEverClient } from '../eversdk/client.ts'
 import { goshCli } from '../shortcuts.ts'
+
+export enum ProposalStatus {
+    Accepted,
+    Rejected,
+    InProgress,
+    NonExistent.
+}
 
 export async function getAddrDao(dao_name: string): Promise<string> {
     const { value0 } = await goshCli(
@@ -223,3 +230,98 @@ export async function AloneMintDaoReserve(
       JSON.stringify({ token: tokens }),
     )
 }
+
+export async function findProposal(
+    dao_addr: string,
+    kind: string,
+    repo_name: string
+): Promise<ProposalStatus> {
+    const code_hash = await getProposalCodeHash(dao_addr)
+
+    console.log(`Searching proposals for DAO <${dao_addr}>...`)
+    const args = [`${Deno.cwd()}/bin/find_proposal.sh`, code_hash, repo_name]
+    const command = new Deno.Command('bash', {
+        args,
+        env: {
+            'NETWORK': GOSH_ENDPOINTS
+        }
+    })
+    const result = await command.output()
+    const stdout = (new TextDecoder().decode(result.stdout)).trim()
+    const stderr = new TextDecoder().decode(result.stderr)
+
+    if (stderr) {
+        console.log('[findProposal()] Stderr:', stderr)
+    }
+    console.log('[findProposal()] Status:', result)
+    if (result.success) {
+        console.log(`[findProposal()] Stdout: [${stdout}]`)
+        if (stdout === "true") {
+            return ProposalStatus.Accepted
+        } else if (stdout === "false") {
+            return ProposalStatus.Rejected
+        } else if (stdout === "null") {
+            return ProposalStatus.InProgress
+        }
+        return ProposalStatus.NonExistent
+    }
+    throw new Error(`Process "${args}" return code ${result.code}\n${stdout}`)
+}
+
+async function getProposalCodeHash(dao_addr: string): Promise<string> {
+    const { value0: boc } = await goshCli(
+        'run',
+        '--abi',
+        GOSH_DAO_ABI,
+        dao_addr,
+        'getProposalCode',
+        JSON.stringify({}),
+    )
+    const { hash } = await getEverClient().boc.get_boc_hash({ boc })
+    console.log(`Proposals code hash for DAO <${dao_addr}>: ${hash}`)
+    return hash
+}
+
+export async function createProposalRepoDeploy(
+    repo_name: string,
+    wallet_addr: string,
+    seed: string,
+): Promise<string> {
+    await goshCli(
+        'call',
+        wallet_addr,
+        '--abi',
+        GOSH_WALLET_ABI,
+        '--sign',
+        seed,
+        'startProposalForDeployRepository',
+        JSON.stringify({
+            nameRepo: repo_name,
+            descr: '',
+            previous: null,
+            comment: '',
+            num_clients: 1,
+            reviewers: []
+        })
+    )
+}
+
+// async function getDaoProposals(dao_addr: string): Promise<any[]> {
+//     const code_hash = await getProposalCodeHash(dao_addr)
+
+//     const query = `query AccountsQuery($code_hash: String) {
+//         accounts(
+//             filter: {
+//                 code_hash: { eq: $code_hash },
+//             }
+//         ) { id }
+//     }`
+
+//     const result = await getEverClient().net.query({
+//         query,
+//         variables: { code_hash }
+//     })
+
+//     console.log("RESULT:", result)
+//     return null
+// }

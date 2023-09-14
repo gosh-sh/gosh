@@ -53,7 +53,7 @@ while (true) {
                 return false
             }
             const repos = Array.isArray(github) ? github : [github]
-            return repos.every(({ updated_at }) => !!updated_at)
+            return repos.length > 0 // && repos.every(({ updated_at }) => !!updated_at)
         })
 
     // Iterate ready for onboarding data

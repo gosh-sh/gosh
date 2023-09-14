@@ -1,5 +1,6 @@
 {
     "dependencies": {
-        "@eversdk/lib-web": "^1.41.1"
+        "@eversdk/core": "^1.44.1",
+        "@eversdk/lib-web": "1.44.1"
     }
 }
