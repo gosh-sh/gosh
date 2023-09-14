@@ -2591,10 +2591,7 @@ export function useDaoInviteList(params: { initialize?: boolean } = {}) {
             // Create DAO member
             await createMember([
                 {
-                    user: {
-                        name: item.username,
-                        type: 'user',
-                    },
+                    user: { name: item.username, type: 'user' },
                     allowance: item.allowance || 0,
                     comment: item.comment,
                 },

@@ -3066,16 +3066,16 @@ export function useDaoInviteList(params: { initialize?: boolean } = {}) {
             }))
 
             // Create DAO member
-            await createMember([
-                {
-                    user: {
-                        name: item.username,
-                        type: 'user',
+            await createMember(
+                [
+                    {
+                        user: { name: item.username, type: 'user' },
+                        allowance: item.allowance || 0,
+                        comment: item.comment,
                     },
-                    allowance: item.allowance || 0,
-                    comment: item.comment,
-                },
-            ])
+                ],
+                true,
+            )
 
             // Update database
             const { error } = await supabase.client
