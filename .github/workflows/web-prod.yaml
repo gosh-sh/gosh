@@ -1,0 +1,30 @@
+name: "[Web Prod] Build and Deploy"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set VERSION
+        id: version
+        run: |
+          echo "VERSION=$(cat version.json | jq -r .version)" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        working-directory: web
+        run: |
+          make build ENV=prod REACT_APP_ISDOCKEREXT=false
+
+      # TODO: credentials
+      - name: Deploy
+        working-directory: web
+        run: |
+          aws s3 rm s3://app-gosh-sh --recursive
+          aws s3 sync build/ s3://app-gosh-sh
+          aws cloudfront create-invalidation --distribution-id E2N1XW3TTILT0O --paths '/*'
