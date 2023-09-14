@@ -1,0 +1,11 @@
+You were invited to DAO
+
+User {{ sender_username }} has invited you to join their DAO
+
+Become a member of the {{ dao_name }} DAO on GOSH
+
+Vote, contribute, and earn tokens — with security and decentralization guaranteed
+
+Join now to start building
+
+START BUILDING https://app.gosh.sh/o/{{ dao_name }}/onboarding?token={{ token }}

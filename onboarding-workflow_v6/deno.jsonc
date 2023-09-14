@@ -1,0 +1,11 @@
+{
+    "fmt": {
+        "files": {
+            // disable deno fmt, use prettier for consistency
+            "exclude": ["."]
+        }
+    },
+    "tasks": {
+        "supabase_types": "mkdir -p src/db && npx supabase gen types typescript --db-url $SUPABASE_ADMIN_URI > src/db/types.ts && npx prettier -w src/db/types.ts"
+    }
+}
