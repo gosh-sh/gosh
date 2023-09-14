@@ -22,11 +22,7 @@ export function getEverClient(): TonClient {
 
         // deno-lint-ignore no-explicit-any
         TonClient.useBinaryLibrary(libWeb as any)
-        everClient = new TonClient({
-            network: {
-                endpoints: ['network.gosh.sh']
-            }
-        })
+        everClient = new TonClient()
     }
     return everClient
 }

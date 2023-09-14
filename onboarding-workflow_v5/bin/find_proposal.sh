@@ -8,17 +8,18 @@ PROPOSAL_CODE_HASH=$1
 REPO_NAME=$2
 PROPOSAL_ABI=abi/SMVProposal.abi.json
 
+ensure_provided NETWORK
 ensure_provided PROPOSAL_CODE_HASH
 ensure_provided REPO_NAME
 ensure_abi_exists PROPOSAL_ABI
 
-accounts=$(curl -s 'https://network.gosh.sh/graphql' \
+accounts=$(curl -s "$NETWORK/graphql" \
     -H 'Accept-Encoding: gzip, deflate, br' \
     -H 'Content-Type: application/json' \
     -H 'Accept: application/json' \
     -H 'Connection: keep-alive' \
     -H 'DNT: 1' \
-    -H 'Origin: https://network.gosh.sh' \
+    -H "Origin: $NETWORK" \
     --data-binary "{\"query\":\"query { accounts(filter: { code_hash: { eq: \\\"${PROPOSAL_CODE_HASH}\\\" } }) { id } }\"}" \
     --compressed \
     | jq -r '.data.accounts[] | .id?'

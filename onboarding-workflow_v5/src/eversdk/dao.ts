@@ -4,7 +4,7 @@ import {
     PROFILE_ABI,
     SYSTEM_CONTRACT_ABI,
 } from '../eversdk/abi.ts'
-import { SYSTEM_CONTRACT_ADDR, getEverClient } from '../eversdk/client.ts'
+import { GOSH_ENDPOINTS, SYSTEM_CONTRACT_ADDR, getEverClient } from '../eversdk/client.ts'
 import { goshCli } from '../shortcuts.ts'
 
 export enum ProposalStatus {
@@ -242,6 +242,9 @@ export async function findProposal(
     const args = [`${Deno.cwd()}/bin/find_proposal.sh`, code_hash, repo_name]
     const command = new Deno.Command('bash', {
         args,
+        env: {
+            'NETWORK': GOSH_ENDPOINTS
+        }
     })
     const result = await command.output()
     const stdout = (new TextDecoder().decode(result.stdout)).trim()
