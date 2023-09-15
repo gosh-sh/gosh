@@ -1,0 +1,220 @@
+version: '3.8'
+
+services:
+  redis-v6:
+    container_name: redis-v6
+    image: redis
+    restart: always
+    healthcheck:
+      test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
+      interval: 1s
+      timeout: 3s
+      retries: 5
+
+  send_email:
+    image: gosh-onboarding-v6
+    restart: always
+    depends_on:
+      redis-v6:
+        condition: service_healthy
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      REDIS_URL: redis://redis-v6:6379
+      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
+      EMAIL_USERNAME: ${EMAIL_USERNAME}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+      EMAIL_FROM: ${EMAIL_FROM}
+    command: >
+      deno run -A ./src/triggers/send_email.ts
+
+  create_dao_bot:
+    image: gosh-onboarding-v6
+    restart: always
+    depends_on:
+      redis-v6:
+        condition: service_healthy
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
+      REDIS_URL: redis://redis-v6:6379
+      GOSH_VERSION: ${GOSH_VERSION}
+    command: >
+      deno run -A ./src/triggers/create_dao_bot.ts
+
+  create_dao:
+    image: gosh-onboarding-v6
+    restart: always
+    depends_on:
+      redis-v6:
+        condition: service_healthy
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      REDIS_URL: redis://redis-v6:6379
+      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
+      GOSH_VERSION: ${GOSH_VERSION}
+    command: >
+      deno run -A ./src/triggers/create_dao.ts
+
+  new_users:
+    image: gosh-onboarding-v6
+    restart: always
+    depends_on:
+      redis-v6:
+        condition: service_healthy
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      REDIS_URL: redis://redis-v6:6379
+      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
+    command: >
+      deno run -A ./src/triggers/new_users.ts
+
+  ready_users:
+    image: gosh-onboarding-v6
+    restart: always
+    depends_on:
+      redis-v6:
+        condition: service_healthy
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      REDIS_URL: redis://redis-v6:6379
+      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
+      GOSH_VERSION: ${GOSH_VERSION}
+    command: >
+      deno run -A ./src/triggers/ready_users.ts
+
+  consumer_check_account:
+    image: gosh-onboarding-v6
+    restart: always
+    depends_on:
+      redis-v6:
+        condition: service_healthy
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      REDIS_URL: redis://redis-v6:6379
+      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
+    command: >
+      deno run -A ./src/consumers/check_account.ts
+
+  consumer_check_wallet_access:
+    image: gosh-onboarding-v6
+    restart: always
+    depends_on:
+      redis-v6:
+        condition: service_healthy
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      REDIS_URL: redis://redis-v6:6379
+      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
+    command: >
+      deno run -A ./src/consumers/check_wallet_access.ts
+
+  consumer_count_git_objects:
+    image: gosh-onboarding-v6
+    restart: always
+    depends_on:
+      redis-v6:
+        condition: service_healthy
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      REDIS_URL: redis://redis-v6:6379
+      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
+      GOSH_VERSION: ${GOSH_VERSION}
+    command: >
+      deno run -A ./src/consumers/count_git_objects.ts
+
+#  consumer_create_large_gosh_repo:
+#     image: gosh-onboarding-v6
+#     restart: always
+#     depends_on:
+#       redis-v6:
+#         condition: service_healthy
+#     volumes:
+#       - onbd_create_large_gosh_repo:/tmp
+#       #- './logs:/tmp/logs'
+#     environment:
+#       SUPABASE_URL: ${SUPABASE_URL}
+#       SUPABASE_KEY: ${SUPABASE_KEY}
+#       REDIS_URL: redis://redis-v6:6379
+#       SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+#       GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
+#       GOSH_VERSION: ${GOSH_VERSION}
+#     command: >
+#       deno run -A ./src/consumers/create_large_gosh_repo.ts
+#
+#  consumer_create_medium_gosh_repo:
+#    image: gosh-onboarding-v6
+#    restart: always
+#    depends_on:
+#      redis-v6:
+#        condition: service_healthy
+#    volumes:
+#      - onbd_create_medium_gosh_repo:/tmp
+#      #- './logs:/tmp/logs'
+#    environment:
+#      SUPABASE_URL: ${SUPABASE_URL}
+#      SUPABASE_KEY: ${SUPABASE_KEY}
+#      REDIS_URL: redis://redis-v6:6379
+#      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+#      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
+#      GOSH_VERSION: ${GOSH_VERSION}
+#    command: >
+#      deno run -A ./src/consumers/create_medium_gosh_repo.ts
+#
+#  consumer_create_small_gosh_repo:
+#    image: gosh-onboarding-v6
+#    restart: always
+#    depends_on:
+#      redis-v6:
+#        condition: service_healthy
+#    volumes:
+#      - onbd_create_small_gosh_repo:/tmp
+#      #- './logs:/tmp/logs'
+#    environment:
+#      SUPABASE_URL: ${SUPABASE_URL}
+#      SUPABASE_KEY: ${SUPABASE_KEY}
+#      REDIS_URL: redis://redis-v6:6379
+#      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+#      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
+#      GOSH_VERSION: ${GOSH_VERSION}
+#    command: >
+#      deno run -A ./src/consumers/create_small_gosh_repo.ts
+
+  upload_repos:
+    image: gosh-onboarding-v6
+    restart: always
+    depends_on:
+      redis-v6:
+        condition: service_healthy
+    volumes:
+      - onbd_upload_repos:/tmp
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      REDIS_URL: redis://redis-v6:6379
+      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
+      GOSH_VERSION: ${GOSH_VERSION}
+    command: >
+      deno run -A ./src/triggers/upload_repos_from_queue.ts
+
+volumes:
+  onbd_upload_repos:
+#  onbd_create_large_gosh_repo:
+#  onbd_create_medium_gosh_repo:
+#  onbd_create_small_gosh_repo:
