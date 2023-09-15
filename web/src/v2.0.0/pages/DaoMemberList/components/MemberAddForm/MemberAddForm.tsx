@@ -283,7 +283,7 @@ const MemberAddForm = () => {
                                             allowance: yup
                                                 .number()
                                                 .integer()
-                                                .positive()
+                                                .min(0)
                                                 .required('Field is required'),
                                             comment: yup
                                                 .string()
