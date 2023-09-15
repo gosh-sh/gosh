@@ -31,7 +31,6 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: eu-west-2
         run: |
-          aws s3 ls
-          # aws s3 rm s3://app-gosh-sh --recursive
-          # aws s3 sync build/ s3://app-gosh-sh
-          # aws cloudfront create-invalidation --distribution-id E2N1XW3TTILT0O --paths '/*'
+          aws s3 rm s3://app-gosh-sh --recursive
+          aws s3 sync build/ s3://app-gosh-sh
+          aws cloudfront create-invalidation --distribution-id E2N1XW3TTILT0O --paths '/*'
