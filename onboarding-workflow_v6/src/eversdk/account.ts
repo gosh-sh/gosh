@@ -31,12 +31,12 @@ export async function isAccountActive(addr: string): Promise<boolean> {
 
 export async function getAccess(wallet_addr: string): Promise<string | null> {
     try {
-        const { value0: granted_pubkey } = await goshCli(
+        const { value8: granted_pubkey } = await goshCli(
             'run',
             '--abi',
             GOSH_WALLET_ABI,
             wallet_addr,
-            'getAccess',
+            'getDetails',
             JSON.stringify({}),
         )
         return granted_pubkey

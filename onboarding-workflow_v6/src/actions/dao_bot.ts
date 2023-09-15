@@ -41,6 +41,7 @@ export async function initDaoBot(dao_bot: DaoBot) {
 
     dao_bot = await updateDaoBot(dao_bot.id, {
         profile_gosh_address: bot_profile_addr,
+        initialized_at: new Date().toISOString(),
     })
 
     if (!dao_bot.profile_gosh_address) {
