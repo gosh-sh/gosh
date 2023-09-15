@@ -192,7 +192,7 @@ const DaoSetupPage = () => {
                                 isLoading={isSubmitting}
                                 disabled={isSubmitting || !isDirty(values)}
                             >
-                                Save changes and create event
+                                Save changes and create proposal
                             </Button>
                         </div>
                     </div>
