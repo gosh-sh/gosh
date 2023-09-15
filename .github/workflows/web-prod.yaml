@@ -2,6 +2,9 @@ name: "[Web Prod] Build and Deploy"
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - web-prod
 
 jobs:
   run:
