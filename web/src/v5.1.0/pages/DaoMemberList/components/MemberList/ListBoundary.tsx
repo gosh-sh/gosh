@@ -142,7 +142,7 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
                                         isLoading={isSubmitting}
                                         disabled={isSubmitting}
                                     >
-                                        Save changes and create event
+                                        Save changes and create proposal
                                     </Button>
                                 </div>
                             </div>
