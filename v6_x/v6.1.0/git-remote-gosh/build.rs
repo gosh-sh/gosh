@@ -1,6 +1,7 @@
-use std::fs::File;
+use std::fs::{copy, create_dir_all, read_dir, File};
 use std::io;
 use std::io::BufRead;
+use std::path::Path;
 
 fn get_version_from_solidity_source() -> String {
     let contracts_path = std::env::var("CONTRACTS_DIR").expect(
@@ -23,6 +24,18 @@ fn get_version_from_solidity_source() -> String {
 }
 
 fn main() {
+    let resources = Path::new("./resources");
+    create_dir_all(resources).expect("create resources directory");
+
+    let abi_dir = option_env!("ABI_DIR").unwrap_or("../contracts/gosh");
+    for entry in read_dir(abi_dir).expect("read contracts directory") {
+        if let Ok(e) = entry {
+            if e.file_name().to_str().unwrap().ends_with("abi.json") {
+                copy(e.path(), resources.join(e.file_name())).expect("error while copy abi");
+            }
+        }
+    }
+
     println!("cargo:rerun-if-env-changed=CONTRACTS_DIR");
     println!("cargo:rerun-if-changed=.cargo/config.toml");
     println!("cargo:rerun-if-env-changed=GOSH_SUPPORTED_CONTRACT_VERSION");
