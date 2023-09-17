@@ -1,0 +1,2155 @@
+{
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"versionController","type":"address"},
+				{"name":"rootpubaddr","type":"address"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"nameDao","type":"string"},
+				{"name":"codeDao","type":"cell"},
+				{"name":"commitCode","type":"cell"},
+				{"name":"repositoryCode","type":"cell"},
+				{"name":"WalletCode","type":"cell"},
+				{"name":"TagCode","type":"cell"},
+				{"name":"SnapshotCode","type":"cell"},
+				{"name":"codeTree","type":"cell"},
+				{"name":"codeDiff","type":"cell"},
+				{"name":"contentSignature","type":"cell"},
+				{"name":"codeTask","type":"cell"},
+				{"name":"codeBigTask","type":"cell"},
+				{"name":"codedaotag","type":"cell"},
+				{"name":"coderepotag","type":"cell"},
+				{"name":"topiccode","type":"cell"},
+				{"name":"codekeyblock","type":"cell"},
+				{"name":"versions","type":"map(uint256,string)"},
+				{"name":"limit_wallets","type":"uint128"},
+				{"name":"access","type":"optional(uint256)"},
+				{"name":"lockerCode","type":"cell"},
+				{"name":"tokenWalletCode","type":"cell"},
+				{"name":"platformCode","type":"cell"},
+				{"name":"clientCode","type":"cell"},
+				{"name":"proposalCode","type":"cell"},
+				{"name":"tokenforperson","type":"uint128"},
+				{"name":"_tip3Root","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployIndex",
+			"inputs": [
+				{"name":"data","type":"cell"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateIndex",
+			"inputs": [
+				{"name":"data","type":"cell"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyIndex",
+			"inputs": [
+				{"name":"data","type":"cell"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellForIndex",
+			"inputs": [
+				{"name":"data","type":"cell"},
+				{"name":"index","type":"uint128"},
+				{"name":"typetr","type":"uint128"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "deployWallet",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "turnOnPubkey",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "turnOffPubkey",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "turnOnPubkeyIn",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "turnOffPubkeyIn",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployContent",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"commit","type":"string"},
+				{"name":"label","type":"string"},
+				{"name":"content","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setTombstoneWallet",
+			"inputs": [
+				{"name":"description","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "askForTombstone",
+			"inputs": [
+				{"name":"index","type":"uint128"},
+				{"name":"description","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setLimitedWallet",
+			"inputs": [
+				{"name":"decision","type":"bool"},
+				{"name":"limitwallet","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "askForLimited",
+			"inputs": [
+				{"name":"decision","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "askForLimitedBasic",
+			"inputs": [
+				{"name":"decision","type":"bool"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startCheckPaidMembership",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellStartPaidMembership",
+			"inputs": [
+				{"components":[{"name":"fiatValue","type":"uint128"},{"name":"decimals","type":"uint128"},{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"details","type":"string"},{"name":"accessKey","type":"uint256"}],"name":"newProgram","type":"tuple"},
+				{"name":"Programindex","type":"uint8"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellStopPaidMembership",
+			"inputs": [
+				{"name":"Programindex","type":"uint8"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellDaoTransferTokens",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"newwallet","type":"address"},
+				{"name":"grant","type":"uint128"},
+				{"name":"oldversion","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellDaoVote",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"platform_id","type":"uint256"},
+				{"name":"choice","type":"bool"},
+				{"name":"amount","type":"uint128"},
+				{"name":"num_clients_base","type":"uint128"},
+				{"name":"note","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellDelay",
+			"inputs": [
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellSetUpgrade",
+			"inputs": [
+				{"name":"newversion","type":"string"},
+				{"name":"description","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellChangeAllowance",
+			"inputs": [
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"increase","type":"bool[]"},
+				{"name":"grant","type":"uint128[]"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellSetTombstoneDao",
+			"inputs": [
+				{"name":"description","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellForDaoReview",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"propaddress","type":"address"},
+				{"name":"isAccept","type":"bool"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "askReviewerIn",
+			"inputs": [
+				{"name":"propAddress","type":"address"},
+				{"name":"isAccept","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellSetHideVotingResult",
+			"inputs": [
+				{"name":"res","type":"bool"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellSetAllowDiscussion",
+			"inputs": [
+				{"name":"res","type":"bool"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellTagUpgrade",
+			"inputs": [
+				{"name":"repoName","type":"string[]"},
+				{"name":"nametag","type":"string[]"},
+				{"name":"newversion","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "_tagUpgrade2",
+			"inputs": [
+				{"name":"repoName","type":"string[]"},
+				{"name":"nametag","type":"string[]"},
+				{"name":"newversion","type":"string"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setRepoUpgraded",
+			"inputs": [
+				{"name":"res","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellSetAbilityInvite",
+			"inputs": [
+				{"name":"res","type":"bool"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "AloneNotAllowMint",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "AloneDeployDaoTag",
+			"inputs": [
+				{"name":"tag","type":"string[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "AloneDeployWalletDao",
+			"inputs": [
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"pubaddr","type":"tuple[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "AloneMintDaoReserve",
+			"inputs": [
+				{"name":"token","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "AloneAddVoteTokenDao",
+			"inputs": [
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "AloneAddTokenDao",
+			"inputs": [
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "AloneDeployRepository",
+			"inputs": [
+				{"name":"nameRepo","type":"string"},
+				{"name":"descr","type":"string"},
+				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellMintToken",
+			"inputs": [
+				{"name":"token","type":"uint128"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellAllowMint",
+			"inputs": [
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellAddVoteToken",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"token","type":"uint128"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellAddRegularToken",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"token","type":"uint128"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "startProposalForDeployWalletDao",
+			"inputs": [
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
+				{"name":"dao","type":"optional(string)[]"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startProposalForDeployWalletDao2",
+			"inputs": [
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
+				{"name":"dao","type":"optional(string)[]"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellDeployWalletDao",
+			"inputs": [
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
+				{"name":"dao","type":"optional(string)[]"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellDeleteWalletDao",
+			"inputs": [
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "deployWalletIn",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyWallet",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployTopic",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"content","type":"string"},
+				{"name":"object","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployComment",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"content","type":"string"},
+				{"name":"object","type":"address"},
+				{"name":"metadata","type":"optional(string)"},
+				{"name":"commit","type":"optional(string)"},
+				{"name":"nameoffile","type":"optional(string)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployMessage",
+			"inputs": [
+				{"name":"topic","type":"address"},
+				{"name":"answer","type":"optional(uint256)"},
+				{"name":"message","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setResolveTopic",
+			"inputs": [
+				{"name":"topic","type":"address"},
+				{"name":"status","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyTopic",
+			"inputs": [
+				{"name":"topic","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setCheckDao",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyDiff",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"commit","type":"string"},
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployRepositoryDao",
+			"inputs": [
+				{"name":"nameRepo","type":"string"},
+				{"name":"descr","type":"string"},
+				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellForTaskUpgrade",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"reponame","type":"string"},
+				{"name":"oldversion","type":"string"},
+				{"name":"oldtask","type":"address"},
+				{"name":"hashtag","type":"string[]"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellTaskConfirm",
+			"inputs": [
+				{"name":"taskName","type":"string"},
+				{"name":"repoName","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellForBigTaskUpgrade",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"reponame","type":"string"},
+				{"name":"oldversion","type":"string"},
+				{"name":"oldtask","type":"address"},
+				{"name":"hashtag","type":"string[]"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellForSendDaoToken",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"pubaddr","type":"optional(address)"},
+				{"name":"grant","type":"uint128"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "startProposalForUpgradeVersionController",
+			"inputs": [
+				{"name":"UpgradeCode","type":"cell"},
+				{"name":"cell","type":"cell"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellDeployRepo",
+			"inputs": [
+				{"name":"nameRepo","type":"string"},
+				{"name":"descr","type":"string"},
+				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "deployNewSnapshot",
+			"inputs": [
+				{"name":"commitsha","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"name","type":"string"},
+				{"name":"snapshotdata","type":"bytes"},
+				{"name":"snapshotipfs","type":"optional(string)"},
+				{"name":"isPin","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deleteSnapshot",
+			"inputs": [
+				{"name":"snap","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployDiff",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"commitName","type":"string"},
+				{"components":[{"name":"snap","type":"address"},{"name":"nameSnap","type":"string"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"removeIpfs","type":"bool"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"diffs","type":"tuple[]"},
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"},
+				{"name":"last","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setPinnedCommit",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"commitName","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployCommit",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"commitName","type":"string"},
+				{"name":"fullCommit","type":"string"},
+				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"parents","type":"tuple[]"},
+				{"name":"shainnertree","type":"uint256"},
+				{"name":"upgrade","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setCommit",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"commit","type":"string"},
+				{"name":"isUpgrade","type":"bool"},
+				{"name":"numberChangedFiles","type":"uint128"},
+				{"name":"numberCommits","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployBranch",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"newName","type":"string"},
+				{"name":"fromCommit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deleteBranch",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"Name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellChangeDescription",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"descr","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "setHEAD",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployKeyBlock",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"iszero","type":"bool"},
+				{"name":"data","type":"bytes"},
+				{"name":"signatures","type":"bytes[]"},
+				{"name":"newsignatures","type":"bytes[]"},
+				{"name":"newpubkeys","type":"uint256[]"},
+				{"name":"blockhash","type":"uint256"},
+				{"name":"previousversion","type":"optional(string)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyKeyBlock",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "emptyhashKeyBlock",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "pushhashKeyBlock",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"hashes","type":"uint256[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCheckMasterKeyBlock",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"data","type":"bytes"},
+				{"name":"signatures","type":"bytes[]"},
+				{"name":"lastsession","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCheckObject",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"data","type":"bytes"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployTag",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametag","type":"string"},
+				{"name":"nameCommit","type":"string"},
+				{"name":"content","type":"string"},
+				{"name":"commit","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployTagUpgrade",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametag","type":"string"},
+				{"name":"nameCommit","type":"string"},
+				{"name":"commit","type":"address"},
+				{"name":"content","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deleteTag",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametag","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployDaoTag",
+			"inputs": [
+				{"name":"daotag","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployRepoTag",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"repotag","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyDaoTag",
+			"inputs": [
+				{"name":"daotag","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyRepoTag",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"daotag","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "approveSmallTask",
+			"inputs": [
+				{"name":"namebigtask","type":"string"},
+				{"name":"repoName","type":"string"},
+				{"name":"taskindex","type":"uint128"},
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"commit","type":"tuple"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployTaskFromBigTask",
+			"inputs": [
+				{"name":"namebigtask","type":"string"},
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"},
+				{"name":"hashtag","type":"string[]"},
+				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
+				{"name":"value","type":"uint128"},
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deploySubTask",
+			"inputs": [
+				{"name":"namebigtask","type":"string"},
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"},
+				{"name":"hashtag","type":"string[]"},
+				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
+				{"name":"value","type":"uint128"},
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroySubTask",
+			"inputs": [
+				{"name":"namebigtask","type":"string"},
+				{"name":"repoName","type":"string"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployTaskTag",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"task","type":"address"},
+				{"name":"tag","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyTaskTag",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"task","type":"address"},
+				{"name":"tag","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "askGrantToken",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"},
+				{"name":"typegrant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "askGrantTokenFull",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "askGrantBigToken",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"},
+				{"name":"typegrant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "askGrantBigTokenFull",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "askGrantTokenFullIn",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "grantToken",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "grantTokenBig",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addVoteToken",
+			"inputs": [
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addVoteTokenSub",
+			"inputs": [
+				{"name":"grant","type":"uint128"},
+				{"name":"time","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addDoubt",
+			"inputs": [
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addAllowance",
+			"inputs": [
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addAllowanceC",
+			"inputs": [
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addRegularToken",
+			"inputs": [
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokenToDaoWrapper",
+			"inputs": [
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokenToDaoReserve",
+			"inputs": [
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokenToDaoReserveIn",
+			"inputs": [
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendToken",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokenIn",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployCustomContract",
+			"inputs": [
+				{"name":"data","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokenToNewVersion",
+			"inputs": [
+				{"name":"grant","type":"uint128"},
+				{"name":"newversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokenToNewVersionAuto",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "daoSendTokenToNewVersionAuto",
+			"inputs": [
+				{"name":"wallet","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "daoSendTokenToNewVersionAuto2",
+			"inputs": [
+				{"name":"namedao","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "daoSendTokenToNewVersionAutoTree",
+			"inputs": [
+				{"name":"namedao","type":"string"},
+				{"name":"key","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokenToNewVersionAutoTree",
+			"inputs": [
+				{"name":"key","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "daoSendTokenToNewVersionAuto5",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"newversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokenToNewVersionAuto5",
+			"inputs": [
+				{"name":"newversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokenToNewVersionIn",
+			"inputs": [
+				{"name":"newwallet","type":"optional(address)"},
+				{"name":"grant","type":"uint128"},
+				{"name":"newversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokenToNewVersion5",
+			"inputs": [
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendDaoTokenToNewVersion",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"newwallet","type":"address"},
+				{"name":"grant","type":"uint128"},
+				{"name":"newversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "receiveToken",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployTree",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"shaTree","type":"string"},
+				{"name":"shainnerTree","type":"uint256"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"datatree","type":"map(uint256,tuple)"},
+				{"name":"number","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyTree",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"shainnerTree","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployAddTree",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"shainnerTree","type":"uint256"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"datatree","type":"map(uint256,tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateHead",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "lockVotingInDao",
+			"inputs": [
+				{"name":"amount","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "unlockVotingInDao",
+			"inputs": [
+				{"name":"amount","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startProposalForSetCommit",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"commit","type":"string"},
+				{"name":"numberChangedFiles","type":"uint128"},
+				{"name":"numberCommits","type":"uint128"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"task","type":"optional(tuple)"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellSetCommit",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"commit","type":"string"},
+				{"name":"numberChangedFiles","type":"uint128"},
+				{"name":"numberCommits","type":"uint128"},
+				{"name":"comment","type":"string"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"task","type":"optional(tuple)"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellForDaoAskGrant",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"repoName","type":"string"},
+				{"name":"taskName","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "daoAskUnlockAfterTombstone",
+			"inputs": [
+				{"name":"wallet","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellForDaoLockVote",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"isLock","type":"bool"},
+				{"name":"grant","type":"uint128"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellAddRepoTag",
+			"inputs": [
+				{"name":"tag","type":"string[]"},
+				{"name":"repo","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellDestroyRepoTag",
+			"inputs": [
+				{"name":"tag","type":"string[]"},
+				{"name":"repo","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellAddDaoTag",
+			"inputs": [
+				{"name":"tag","type":"string[]"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellDestroyDaoTag",
+			"inputs": [
+				{"name":"tag","type":"string[]"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellAddProtectedBranch",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellTaskDestroy",
+			"inputs": [
+				{"name":"taskName","type":"string"},
+				{"name":"repoName","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "startMultiProposal",
+			"inputs": [
+				{"name":"number","type":"uint128"},
+				{"name":"proposals","type":"cell"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startOneProposal",
+			"inputs": [
+				{"name":"proposal","type":"cell"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startMultiProposalIn",
+			"inputs": [
+				{"name":"number","type":"uint128"},
+				{"name":"proposals","type":"cell"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startMultiProposalAsDao",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"number","type":"uint128"},
+				{"name":"proposals","type":"cell"},
+				{"name":"num_clients_base","type":"uint128"},
+				{"name":"reviewers_base","type":"address[]"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellTaskMultiAsDao",
+			"inputs": [
+				{"name":"wallet","type":"address"},
+				{"name":"number","type":"uint128"},
+				{"name":"proposals","type":"cell"},
+				{"name":"num_clients_base","type":"uint128"},
+				{"name":"reviewers_base","type":"address[]"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellBigTaskDestroy",
+			"inputs": [
+				{"name":"taskName","type":"string"},
+				{"name":"repoName","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellBigTaskDeploy",
+			"inputs": [
+				{"name":"taskName","type":"string"},
+				{"name":"repoName","type":"string"},
+				{"name":"tag","type":"string[]"},
+				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"assignersdata","type":"tuple"},
+				{"name":"freebalance","type":"uint128"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellTaskDeploy",
+			"inputs": [
+				{"name":"taskName","type":"string"},
+				{"name":"repoName","type":"string"},
+				{"name":"tag","type":"string[]"},
+				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellDeleteProtectedBranch",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "tryProposalResult",
+			"inputs": [
+				{"name":"proposal","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "isCompletedCallbackIn",
+			"inputs": [
+				{"name":"num","type":"uint128"},
+				{"name":"propData","type":"cell"},
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "isCompletedCallback",
+			"inputs": [
+				{"name":"_platform_id","type":"uint256"},
+				{"name":"res","type":"optional(bool)"},
+				{"name":"propData","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setRedeployedTask",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "voteFor",
+			"inputs": [
+				{"name":"platform_id","type":"uint256"},
+				{"name":"choice","type":"bool"},
+				{"name":"amount","type":"uint128"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"note","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "voteForIn",
+			"inputs": [
+				{"name":"platform_id","type":"uint256"},
+				{"name":"choice","type":"bool"},
+				{"name":"amount","type":"uint128"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"note","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroy",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyWalletAll",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "askForDestroy",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getContentCode",
+			"inputs": [
+				{"name":"repoName","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getContentAddress",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"commit","type":"string"},
+				{"name":"label","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getDiffAddr",
+			"inputs": [
+				{"name":"reponame","type":"string"},
+				{"name":"commitName","type":"string"},
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getAddrSystemContract",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getTaskAddr",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"reponame","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getBigTaskAddr",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"reponame","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getSnapshotAddr",
+			"inputs": [
+				{"name":"commitSha","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getSnapshotCode",
+			"inputs": [
+				{"name":"repo","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getWalletAddr",
+			"inputs": [
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getWalletsCount",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"}
+			]
+		},
+		{
+			"name": "getVersion",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
+			]
+		},
+		{
+			"name": "getDiffResult",
+			"inputs": [
+				{"name":"state","type":"bytes"},
+				{"name":"diff","type":"bytes"}
+			],
+			"outputs": [
+				{"name":"value0","type":"optional(bytes)"}
+			]
+		},
+		{
+			"name": "getHash",
+			"inputs": [
+				{"name":"state","type":"bytes"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
+			"name": "getDetails",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"},
+				{"name":"value1","type":"uint128"},
+				{"name":"value2","type":"uint128"},
+				{"name":"value3","type":"address"},
+				{"name":"value4","type":"address"},
+				{"name":"value5","type":"uint128"},
+				{"name":"value6","type":"address"},
+				{"name":"value7","type":"uint128"},
+				{"name":"value8","type":"optional(uint256)"},
+				{"name":"value9","type":"bool"},
+				{"name":"value10","type":"optional(uint128)"}
+			]
+		},
+		{
+			"name": "getWalletIn",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "AddCell",
+			"inputs": [
+				{"name":"data1","type":"cell"},
+				{"name":"data2","type":"cell"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellForTask",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repoName","type":"string"},
+				{"name":"ready","type":"bool"},
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"candidates","type":"tuple[]"},
+				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
+				{"name":"hashtag","type":"string[]"},
+				{"name":"indexFinal","type":"uint128"},
+				{"name":"locktime","type":"uint128"},
+				{"name":"fullAssign","type":"uint128"},
+				{"name":"fullReview","type":"uint128"},
+				{"name":"fullManager","type":"uint128"},
+				{"name":"assigners","type":"map(address,uint128)"},
+				{"name":"reviewers","type":"map(address,uint128)"},
+				{"name":"managers","type":"map(address,uint128)"},
+				{"name":"assignfull","type":"uint128"},
+				{"name":"reviewfull","type":"uint128"},
+				{"name":"managerfull","type":"uint128"},
+				{"name":"assigncomplete","type":"uint128"},
+				{"name":"reviewcomplete","type":"uint128"},
+				{"name":"managercomplete","type":"uint128"},
+				{"name":"allassign","type":"bool"},
+				{"name":"allreview","type":"bool"},
+				{"name":"allmanager","type":"bool"},
+				{"name":"lastassign","type":"uint128"},
+				{"name":"lastreview","type":"uint128"},
+				{"name":"lastmanager","type":"uint128"},
+				{"name":"balance","type":"uint128"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellForRedeployTask",
+			"inputs": [
+				{"name":"reponame","type":"string"},
+				{"name":"nametask","type":"string"},
+				{"name":"hashtag","type":"string[]"},
+				{"name":"data","type":"cell"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellForRedeployedTask",
+			"inputs": [
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "calculateInnerTreeHash",
+			"inputs": [
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"_tree","type":"map(uint256,tuple)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
+			"name": "proposalIsCompleted",
+			"inputs": [
+				{"name":"proposal","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onLockerDeployed",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onLockerTokenWalletDeployed",
+			"inputs": [
+				{"name":"wallet","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "lockVoting",
+			"inputs": [
+				{"name":"amount","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "returnDAOBalance",
+			"inputs": [
+				{"name":"amount","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "acceptUnlock",
+			"inputs": [
+				{"name":"amount","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "unlockVoting",
+			"inputs": [
+				{"name":"amount","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getPlatfotmId",
+			"inputs": [
+				{"name":"propId","type":"uint256"},
+				{"name":"platformType","type":"uint8"},
+				{"name":"_tip3VotingLocker","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
+			"name": "acceptReviewer",
+			"inputs": [
+				{"name":"propAddress","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "rejectReviewer",
+			"inputs": [
+				{"name":"propAddress","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "clientAddressForProposal",
+			"inputs": [
+				{"name":"_tip3VotingLocker","type":"address"},
+				{"name":"_platform_id","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "proposalAddressByAccount",
+			"inputs": [
+				{"name":"acc","type":"address"},
+				{"name":"propId","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "killAccount",
+			"inputs": [
+				{"name":"address_to","type":"address"},
+				{"name":"value1","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "returnExtraLockerFunds",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "m_pseudoDAOBalance",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"m_pseudoDAOBalance","type":"uint128"}
+			]
+		},
+		{
+			"name": "m_pseudoDAOVoteBalance",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"m_pseudoDAOVoteBalance","type":"uint128"}
+			]
+		},
+		{
+			"name": "lockerTip3Wallet",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"lockerTip3Wallet","type":"address"}
+			]
+		},
+		{
+			"name": "initialized",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"initialized","type":"bool"}
+			]
+		},
+		{
+			"name": "tip3VotingLocker",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"tip3VotingLocker","type":"address"}
+			]
+		},
+		{
+			"name": "lastVoteResult",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"lastVoteResult","type":"optional(bool)"}
+			]
+		},
+		{
+			"name": "_lockedBalance",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_lockedBalance","type":"uint128"}
+			]
+		},
+		{
+			"name": "_totalDoubt",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_totalDoubt","type":"uint128"}
+			]
+		},
+		{
+			"name": "_versions",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_versions","type":"map(uint256,string)"}
+			]
+		},
+		{
+			"name": "_indexes",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_indexes","type":"map(uint128,address)"}
+			]
+		},
+		{
+			"name": "_tombstone",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_tombstone","type":"bool"}
+			]
+		},
+		{
+			"name": "_limited",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_limited","type":"bool"}
+			]
+		}
+	],
+	"data": [
+		{"key":1,"name":"_goshdao","type":"address"},
+		{"key":2,"name":"_index","type":"uint128"},
+		{"key":3,"name":"_systemcontract","type":"address"}
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
+		{"name":"_pubaddr","type":"address"},
+		{"name":"_goshdao","type":"address"},
+		{"name":"_index","type":"uint128"},
+		{"name":"nonce","type":"uint256"},
+		{"name":"m_pseudoDAOBalance","type":"uint128"},
+		{"name":"m_pseudoDAOVoteBalance","type":"uint128"},
+		{"name":"m_tokenRoot","type":"address"},
+		{"name":"m_tokenWalletCode","type":"cell"},
+		{"name":"lockerTip3Wallet","type":"address"},
+		{"name":"initialized","type":"bool"},
+		{"name":"tip3VotingLocker","type":"address"},
+		{"name":"lastVoteResult","type":"optional(bool)"},
+		{"name":"clientCodeHash","type":"uint256"},
+		{"name":"clientCodeDepth","type":"uint16"},
+		{"name":"proposalCodeHash","type":"uint256"},
+		{"name":"proposalCodeDepth","type":"uint16"},
+		{"name":"platformCodeHash","type":"uint256"},
+		{"name":"platformCodeDepth","type":"uint16"},
+		{"name":"lockerCodeHash","type":"uint256"},
+		{"name":"lockerCodeDepth","type":"uint16"},
+		{"name":"m_SMVPlatformCode","type":"cell"},
+		{"name":"m_SMVProposalCode","type":"cell"},
+		{"name":"m_SMVClientCode","type":"cell"},
+		{"name":"m_lockerCode","type":"cell"},
+		{"name":"_access","type":"optional(uint256)"},
+		{"name":"DEFAULT_DAO_BALANCE","type":"uint128"},
+		{"name":"DEFAULT_DAO_VOTE_BALANCE","type":"uint128"},
+		{"name":"_lockedBalance","type":"uint128"},
+		{"name":"_totalDoubt","type":"uint128"},
+		{"name":"_versionController","type":"address"},
+		{"name":"_systemcontract","type":"address"},
+		{"name":"_rootpubaddr","type":"address"},
+		{"name":"_nameDao","type":"string"},
+		{"name":"_flag","type":"bool"},
+		{"name":"_limittag","type":"uint128"},
+		{"name":"_code","type":"map(uint8,cell)"},
+		{"name":"counter","type":"uint128"},
+		{"name":"_last_time","type":"uint128"},
+		{"name":"_walletcounter","type":"uint128"},
+		{"name":"_limit_wallets","type":"uint128"},
+		{"name":"_versions","type":"map(uint256,string)"},
+		{"name":"_indexes","type":"map(uint128,address)"},
+		{"name":"_tombstone","type":"bool"},
+		{"name":"_limited","type":"bool"},
+		{"name":"_expiredTime","type":"optional(uint128)"},
+		{"name":"timeMoney","type":"uint128"}
+	]
+}

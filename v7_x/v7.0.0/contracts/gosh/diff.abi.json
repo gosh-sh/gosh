@@ -1,0 +1,213 @@
+{
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"goshdao","type":"address"},
+				{"name":"rootGosh","type":"address"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"nameRepo","type":"string"},
+				{"name":"nameBranch","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"WalletCode","type":"cell"},
+				{"name":"codeDiff","type":"cell"},
+				{"name":"CommitCode","type":"cell"},
+				{"name":"TreeCode","type":"cell"},
+				{"components":[{"name":"snap","type":"address"},{"name":"nameSnap","type":"string"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"removeIpfs","type":"bool"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"diffs","type":"tuple[]"},
+				{"name":"index","type":"uint128"},
+				{"name":"last","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "returnTreeAnswer",
+			"inputs": [
+				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"value1","type":"optional(tuple)"},
+				{"name":"shainnertree","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "allCorrect",
+			"inputs": [
+				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "cancelCommit",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendDiffAll",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"branchcommit","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendDiff",
+			"inputs": [
+				{"name":"index","type":"uint128"},
+				{"name":"branchcommit","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "approveDiff",
+			"inputs": [
+				{"name":"res","type":"bool"},
+				{"name":"commit","type":"string"},
+				{"name":"sha","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "approveDiffFinal",
+			"inputs": [
+				{"name":"res","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "approveDiffDiff",
+			"inputs": [
+				{"name":"res","type":"bool"},
+				{"name":"index","type":"uint128"},
+				{"name":"last","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "applyDiff",
+			"inputs": [
+				{"name":"index","type":"uint128"},
+				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "cancelDiff",
+			"inputs": [
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkSender",
+			"inputs": [
+				{"name":"index","type":"uint128"},
+				{"name":"sender","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroy",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getdiffs",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"snap","type":"address"},{"name":"nameSnap","type":"string"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"removeIpfs","type":"bool"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"value0","type":"tuple[]"}
+			]
+		},
+		{
+			"name": "getNextAddress",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getStatus",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
+			]
+		},
+		{
+			"name": "getVersion",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
+			]
+		},
+		{
+			"name": "getOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		}
+	],
+	"data": [
+		{"key":1,"name":"_index1","type":"uint128"},
+		{"key":2,"name":"_index2","type":"uint128"},
+		{"key":3,"name":"_nameCommit","type":"string"}
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
+		{"name":"_index1","type":"uint128"},
+		{"name":"_index2","type":"uint128"},
+		{"name":"_index2max","type":"uint128"},
+		{"name":"_nameCommit","type":"string"},
+		{"name":"_pubaddr","type":"address"},
+		{"name":"_rootRepo","type":"address"},
+		{"name":"_goshdao","type":"address"},
+		{"name":"_nameBranch","type":"string"},
+		{"name":"_name","type":"string"},
+		{"name":"check","type":"bool"},
+		{"components":[{"name":"snap","type":"address"},{"name":"nameSnap","type":"string"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"removeIpfs","type":"bool"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"_diff","type":"tuple[]"},
+		{"name":"_timebranch","type":"string"},
+		{"name":"_code","type":"map(uint8,cell)"},
+		{"name":"_systemcontract","type":"address"},
+		{"name":"_approved","type":"uint128"},
+		{"name":"_branchName","type":"string"},
+		{"name":"_branchcommit","type":"address"},
+		{"name":"_newC","type":"address"},
+		{"name":"_last","type":"bool"},
+		{"name":"_entry","type":"bool"},
+		{"name":"_flag","type":"bool"},
+		{"name":"_isCancel","type":"bool"},
+		{"name":"_isCorrect","type":"bool"},
+		{"name":"timeMoney","type":"uint128"},
+		{"components":[{"name":"send","type":"uint128"},{"name":"branchcommit","type":"address"},{"name":"index","type":"uint128"}],"name":"_saved","type":"optional(tuple)"}
+	]
+}
