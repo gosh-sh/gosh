@@ -69,6 +69,7 @@ jobs:
             dir: gosh-dispatcher
           - bin: git-remote-gosh_v1_0_0
             dir: v1_x/git-remote-gosh
+            cache: true
           - bin: git-remote-gosh_v2_0_0
             dir: v2_x/git-remote-gosh
             cache: true
