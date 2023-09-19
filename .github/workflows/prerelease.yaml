@@ -108,7 +108,8 @@ jobs:
       - name: Setup result cache
         uses: actions/cache@v3
         with:
-          path: ${{ env.CACHE_RESULT_DIR }}
+          # IMPORTANT: path here should be relative to the workspace directory
+          path: .result
           key: result-${{ matrix.bin }}
 
       - name: Check if can use cache
