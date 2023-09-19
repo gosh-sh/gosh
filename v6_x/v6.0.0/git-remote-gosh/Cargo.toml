@@ -13,8 +13,8 @@ edition = '2021'
 keywords = ['git-remote', 'git', 'gosh']
 name = 'git-remote-gosh'
 resolver = '2'
-rust-version = "1.68"
-version = '6.0.32'
+rust-version = "1.70"
+version = '6.0.33'
 
 [profile.profiling]
 debug = 1
