@@ -109,8 +109,10 @@ jobs:
         uses: actions/cache@v3
         with:
           # IMPORTANT: path here should be relative to the workspace directory
-          path: .result
-          key: result-${{ matrix.bin }}
+          path: |
+            .result
+            ${{ matrix.dir }}/target
+          key: builder-${{ runner.os }}-result-${{ matrix.bin }}
 
       - name: Check if can use cache
         if: matrix.cache
@@ -170,8 +172,8 @@ jobs:
           CARGO_NET_RETRY: 10
           RUST_BACKTRACE: full
           RUSTUP_MAX_RETRIES: 10
-
         run: |
+          cargo update
           cargo zigbuild -r --target ${{ matrix.target }}
 
           ls -lA target/${{ matrix.target }}/release
