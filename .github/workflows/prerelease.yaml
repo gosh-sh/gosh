@@ -1,5 +1,12 @@
 name: Prerelease
 
+# IMPORTANT: This workflow utilizes caching for previous build artifacts. In the
+# event of a full/partial rebuild, remember to manually remove corresponding
+# cache records from the GitHub Actions admin panel.
+#
+# Benefit of this caching strategy is that it allows for individual cache
+# invalidation for each binary
+
 on:
   workflow_dispatch:
   push:
@@ -148,7 +155,7 @@ jobs:
       - name: Install MacOS tools
         if: env.CACHE != 'true' && startsWith(matrix.os, 'macos-')
         run: |
-          brew install zig protobuf
+          brew install zig protobuf openssl@3
 
       - name: Install common tools
         if: env.CACHE != 'true'
