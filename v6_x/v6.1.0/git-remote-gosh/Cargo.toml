@@ -58,7 +58,7 @@ git-traverse = '0.22.2'
 hex = '0.4.3'
 indexmap = '1.9.2'
 lru = '0.8.1'
-memcache = { version = '0.17.0', default-features = false }  #! default features disables tls (openssl) which we don't use
+memcache = { version = '0.17.0', default-features = false }  #! default features disables tls/openssl
 mockall_double = '0.3.0'
 object-pool = "0.5.4"
 once_cell = "1.16.0"
@@ -105,14 +105,14 @@ features = ['full', 'rt']
 version = '1.21.2'
 
 [dependencies.ton_client]
-git = 'https://github.com/awnion/ever-sdk.git'
+git = 'https://github.com/gosh-sh/ever-sdk.git'
 default-features = false
 features = ['std', 'rustls-tls-webpki-roots']
 package = 'ton_client'
 tag = "1.43.1-rustls"
 
 [dependencies.ton_sdk]
-git = 'https://github.com/awnion/ever-sdk.git'
+git = 'https://github.com/gosh-sh/ever-sdk.git'
 package = 'ton_sdk'
 tag = "1.43.1-rustls"
 
