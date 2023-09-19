@@ -109,7 +109,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ${{ env.CACHE_RESULT_DIR }}
-          key: result-${{ matrix.target }}-${{ matrix.bin }}
+          key: result-${{ matrix.bin }}
 
       - name: Check if can use cache
         if: matrix.cache
