@@ -150,11 +150,10 @@ jobs:
           sudo apt install -yq $packages
           pip3 install ziglang
 
-      ## TODO: return back when openssl is removed from old repos (v1 v2 v3)
-      # - name: Install MacOS tools
-      #   if: env.CACHE != 'true' && startsWith(matrix.os, 'macos-')
-      #   run: |
-      #     brew install zig protobuf openssl llvm
+      - name: Install MacOS tools
+        if: env.CACHE != 'true' && startsWith(matrix.os, 'macos-')
+        run: |
+          brew install protobuf
 
       - name: Install common tools
         if: env.CACHE != 'true'
