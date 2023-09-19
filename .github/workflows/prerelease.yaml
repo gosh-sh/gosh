@@ -155,7 +155,7 @@ jobs:
       - name: Install MacOS tools
         if: env.CACHE != 'true' && startsWith(matrix.os, 'macos-')
         run: |
-          brew install zig protobuf openssl@3
+          brew install zig protobuf openssl llvm
 
       - name: Install common tools
         if: env.CACHE != 'true'
@@ -170,8 +170,17 @@ jobs:
           CARGO_NET_RETRY: 10
           RUST_BACKTRACE: full
           RUSTUP_MAX_RETRIES: 10
+
+        # IMPORTANT: don't use zigbuild on MacOS until openssl dependency present
+        # Right now they are: v1, v2, v3
+        # It doesn't cross compile (actually doesn't link) to aarch64 from x86_64
+        # rustls TLS works just fine
         run: |
-          cargo zigbuild -r --target ${{ matrix.target }}
+          if [[ "${{ runner.os }}" == "macOS" ]]; then
+            cargo build -r --target ${{ matrix.target }}
+          else
+            cargo zigbuild -r --target ${{ matrix.target }}
+          fi
 
           ls -lA target/${{ matrix.target }}/release
 
