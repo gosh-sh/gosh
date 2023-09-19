@@ -69,6 +69,7 @@ jobs:
             dir: gosh-dispatcher
           - bin: git-remote-gosh_v1_0_0
             dir: v1_x/git-remote-gosh
+            cache: true
           - bin: git-remote-gosh_v2_0_0
             dir: v2_x/git-remote-gosh
             cache: true
@@ -150,11 +151,10 @@ jobs:
           sudo apt install -yq $packages
           pip3 install ziglang
 
-      ## TODO: return back when openssl is removed from old repos (v1 v2 v3)
-      # - name: Install MacOS tools
-      #   if: env.CACHE != 'true' && startsWith(matrix.os, 'macos-')
-      #   run: |
-      #     brew install zig protobuf openssl llvm
+      - name: Install MacOS tools
+        if: env.CACHE != 'true' && startsWith(matrix.os, 'macos-')
+        run: |
+          brew install protobuf
 
       - name: Install common tools
         if: env.CACHE != 'true'
