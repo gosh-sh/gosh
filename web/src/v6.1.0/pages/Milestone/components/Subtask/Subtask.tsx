@@ -1,24 +1,29 @@
 import { Tooltip } from 'react-tooltip'
 import { useCallback, useEffect, useRef } from 'react'
-import { useDao, useDaoTaskList, useTask } from '../../hooks/dao.hooks'
-import CopyClipboard from '../../../components/CopyClipboard'
-import { shortString } from '../../../utils'
-import { Button } from '../../../components/Form'
+import { useDao, useDaoTaskList, useTask } from '../../../../hooks/dao.hooks'
+import CopyClipboard from '../../../../../components/CopyClipboard'
+import { shortString } from '../../../../../utils'
+import { Button } from '../../../../../components/Form'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
-import Skeleton from '../../../components/Skeleton'
 import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
-import Alert from '../../../components/Alert'
-import { TaskStatusBadge, TaskTeam, lockToStr } from '../../components/Task'
+import Alert from '../../../../../components/Alert'
+import { TaskStatusBadge, TaskTeam, lockToStr } from '../../../../components/Task'
 import { Link } from 'react-router-dom'
-import { TaskManage } from './components'
-import { useBodyScrollLock } from '../../../hooks/common.hooks'
+import { useBodyScrollLock } from '../../../../../hooks/common.hooks'
+import { SubtaskManage } from './Manage'
+import { TMilestoneTaskDetails } from '../../../../types/dao.types'
 
-const TaskPageInner = (props: { address: string }) => {
-    const { address } = props
+type TSubtaskPageInnerProps = {
+    address: string
+    milestone: TMilestoneTaskDetails
+}
+
+const SubtaskPageInner = (props: TSubtaskPageInnerProps) => {
+    const { address, milestone } = props
     const dao = useDao()
     const taskList = useDaoTaskList()
-    const { task, error } = useTask(address, { initialize: true })
+    const { task, error } = useTask(address)
     const { showBoundary } = useErrorBoundary()
     const ref = useRef<HTMLDivElement>(null)
     useBodyScrollLock({
@@ -28,7 +33,7 @@ const TaskPageInner = (props: { address: string }) => {
     })
 
     const onItemClose = useCallback(() => {
-        window.history.replaceState(null, document.title, `/o/${dao.details.name}/tasks`)
+        window.history.replaceState(null, document.title, document.location.pathname)
         taskList.closeItems()
     }, [dao.details.name])
 
@@ -66,14 +71,7 @@ const TaskPageInner = (props: { address: string }) => {
     }, [onItemClose])
 
     if (!task) {
-        return (
-            <Skeleton className="py-2" skeleton={{ height: 114 }}>
-                <rect x="0" y="10" rx="6" ry="6" width="100%" height="30" />
-                <rect x="0" y="60" rx="6" ry="6" width="100%" height="14" />
-                <rect x="0" y="80" rx="6" ry="6" width="100%" height="14" />
-                <rect x="0" y="100" rx="6" ry="6" width="100%" height="14" />
-            </Skeleton>
-        )
+        return null
     }
 
     return (
@@ -156,7 +154,6 @@ const TaskPageInner = (props: { address: string }) => {
                     {task.team && (
                         <>
                             <hr className="bg-gray-e6edff my-4" />
-
                             <h3 className="mb-3">Team</h3>
                             <TaskTeam task={task} />
                         </>
@@ -164,7 +161,10 @@ const TaskPageInner = (props: { address: string }) => {
                 </div>
 
                 <div className="col !basis-full md:!basis-[18rem] lg:!basis-[20.4375rem] !grow-0">
-                    <TaskManage task={task} />
+                    <SubtaskManage
+                        task={task as TMilestoneTaskDetails}
+                        milestone={milestone}
+                    />
                 </div>
             </div>
             <Tooltip id="common-tip" clickable />
@@ -172,13 +172,13 @@ const TaskPageInner = (props: { address: string }) => {
     )
 }
 
-const TaskPage = withErrorBoundary(TaskPageInner, {
+const SubtaskPage = withErrorBoundary(SubtaskPageInner, {
     fallbackRender: ({ error }) => (
         <Alert variant="danger">
-            <h3 className="font-medium">Fetch task error</h3>
+            <h3 className="font-medium">Fetch subtask error</h3>
             <div>{error.message}</div>
         </Alert>
     ),
 })
 
-export default TaskPage
+export { SubtaskPage }

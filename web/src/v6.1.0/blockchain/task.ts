@@ -9,7 +9,7 @@ import {
     TTaskGrantTotal,
     TTaskTeamMember,
 } from '../types/dao.types'
-import { SYSTEM_TAG } from '../../constants'
+import { MILESTONE_TASK_TAG, SYSTEM_TAG } from '../../constants'
 import { getSystemContract } from '../blockchain/helpers'
 import _ from 'lodash'
 import { AppConfig } from '../../appconfig'
@@ -19,8 +19,12 @@ export class Task extends BaseContract {
         super(client, TaskABI, address)
     }
 
+    async getRawDetails() {
+        return await this.runLocal('getStatus', {})
+    }
+
     async getDetails() {
-        const data = await this.runLocal('getStatus', {})
+        const data = await this.getRawDetails()
 
         const grant: { [key: string]: TTaskGrantPair[] } = {}
         const grantTotal: { [key: string]: number } = {}
@@ -34,7 +38,9 @@ export class Task extends BaseContract {
             reward += grantTotal[key]
         }
 
-        const tags = data.hashtag.filter((item: string) => item !== SYSTEM_TAG)
+        const tags = data.hashtag.filter((item: string) => {
+            return [SYSTEM_TAG, MILESTONE_TASK_TAG].indexOf(item) < 0
+        })
         const repository = await getSystemContract().getRepository({ address: data.repo })
 
         const candidate = data.candidates.length ? data.candidates[0] : null
@@ -95,6 +101,7 @@ export class Task extends BaseContract {
             grant: grant as TTaskGrant,
             grantTotal: grantTotal as TTaskGrantTotal,
             reward,
+            balance: reward,
             vestingEnd: grant.assign.slice(-1)[0].lock,
             tagsRaw: data.hashtag,
             tags,
@@ -102,6 +109,7 @@ export class Task extends BaseContract {
             team,
             locktime: parseInt(data.locktime),
             isReady: data.ready,
+            subtasks: [],
         }
     }
 }

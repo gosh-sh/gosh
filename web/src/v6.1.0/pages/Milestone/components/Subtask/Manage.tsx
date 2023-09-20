@@ -1,42 +1,39 @@
 import classNames from 'classnames'
-import { TTaskDetails } from '../../../../types/dao.types'
-import {
-    useDao,
-    useDaoMember,
-    useDeleteTask,
-    useReceiveTaskReward,
-} from '../../../../hooks/dao.hooks'
+import { TMilestoneTaskDetails } from '../../../../types/dao.types'
+import { useDeleteMilestoneTask, useReceiveTaskReward } from '../../../../hooks/dao.hooks'
 import { Form, Formik } from 'formik'
 import { Button } from '../../../../../components/Form'
 import { useUser } from '../../../../hooks/user.hooks'
 import { useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { isTaskTeamMember } from '../../../../components/Task'
 
-type TTaskManageProps = {
-    task: TTaskDetails
+type TSubtaskManageProps = {
+    task: TMilestoneTaskDetails
+    milestone: TMilestoneTaskDetails
 }
 
-const TaskManage = (props: TTaskManageProps) => {
-    const { task } = props
-    const navigate = useNavigate()
+const SubtaskManage = (props: TSubtaskManageProps) => {
+    const { task, milestone } = props
     const { user } = useUser()
-    const dao = useDao()
-    const member = useDaoMember()
     const { receiveReward } = useReceiveTaskReward()
-    const { deleteTask } = useDeleteTask()
+    const { deleteMilestoneTask } = useDeleteMilestoneTask()
 
+    const isReady = milestone.isReady && (task.isReady || task.team)
+    const canDelete = !isReady && user.profile === milestone.team?.managers[0].profile
     const isTeamMember = useMemo(() => {
         return isTaskTeamMember(task.team, user.profile)
-    }, [user.profile, task.isReady])
+    }, [user.profile, isReady])
 
     const onTaskDelete = async () => {
-        if (!window.confirm('Delete task?')) {
+        if (!window.confirm('Delete milestone task?')) {
             return
         }
         try {
-            await deleteTask({ reponame: task.repository.name, taskname: task.name })
-            navigate(`/o/${dao.details.name}/events`)
+            await deleteMilestoneTask({
+                milename: task.milestone.name,
+                reponame: task.repository.name,
+                index: task.index,
+            })
         } catch (e: any) {
             console.error(e.message)
         }
@@ -83,7 +80,7 @@ const TaskManage = (props: TTaskManageProps) => {
             </div>
             <div className="border-t border-gray-e6edff">
                 <div className="p-5">
-                    {!task.isReady && member.isMember && (
+                    {canDelete && (
                         <Formik initialValues={{}} onSubmit={onTaskDelete}>
                             {({ isSubmitting }) => (
                                 <Form>
@@ -101,7 +98,7 @@ const TaskManage = (props: TTaskManageProps) => {
                         </Formik>
                     )}
 
-                    {task.isReady && isTeamMember && (
+                    {isReady && isTeamMember && (
                         <Formik initialValues={{}} onSubmit={onTaskClaim}>
                             {({ isSubmitting }) => (
                                 <Form>
@@ -123,4 +120,4 @@ const TaskManage = (props: TTaskManageProps) => {
     )
 }
 
-export { TaskManage }
+export { SubtaskManage }

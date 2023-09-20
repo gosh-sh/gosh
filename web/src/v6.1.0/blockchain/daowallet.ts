@@ -6,8 +6,13 @@ import { SmvClient } from './smvclient'
 import { TGoshCommitTag } from '../types/repository.types'
 import { executeByChunk, sleep } from '../../utils'
 import { EDaoEventType } from '../../types/common.types'
-import { MAX_PARALLEL_READ, SYSTEM_TAG } from '../../constants'
-import { ETaskReward, TTaskGrant } from '../types/dao.types'
+import {
+    MAX_PARALLEL_READ,
+    MILESTONE_TAG,
+    MILESTONE_TASK_TAG,
+    SYSTEM_TAG,
+} from '../../constants'
+import { ETaskReward, TTaskAssignerData, TTaskGrant } from '../types/dao.types'
 import { UserProfile } from '../../blockchain/userprofile'
 
 export class DaoWallet extends BaseContract {
@@ -550,6 +555,137 @@ export class DaoWallet extends BaseContract {
         }
     }
 
+    async createMilestone(params: {
+        reponame: string
+        taskname: string
+        grant: TTaskGrant
+        assigners: TTaskAssignerData
+        budget: number
+        tags?: string[]
+        reviewers?: string[]
+        comment?: string
+        cell?: boolean
+    }) {
+        const {
+            reponame,
+            taskname,
+            grant,
+            assigners,
+            budget,
+            tags = [],
+            comment = '',
+            reviewers = [],
+            cell,
+        } = params
+
+        const tagList = [MILESTONE_TAG, ...tags]
+        const cellParams = {
+            repoName: reponame,
+            taskName: taskname,
+            grant,
+            assignersdata: {
+                task: assigners.taskaddr,
+                pubaddrassign: assigners.assigner,
+                pubaddrreview: assigners.reviewer,
+                pubaddrmanager: assigners.manager,
+                daoMembers: assigners.daomember,
+            },
+            freebalance: budget,
+            tag: tagList,
+            comment,
+        }
+
+        if (cell) {
+            const { value0 } = await this.runLocal('getCellBigTaskDeploy', cellParams)
+            return value0
+        } else {
+            const cell = await this.createMilestone({ ...params, cell: true })
+            await this.createSingleEvent({ cell, reviewers })
+        }
+    }
+
+    async deleteMilestone(params: {
+        reponame: string
+        taskname: string
+        reviewers?: string[]
+        comment?: string
+        cell?: boolean
+    }) {
+        const { reponame, taskname, comment = '', reviewers = [], cell } = params
+
+        const cellParams = { repoName: reponame, taskName: taskname, comment }
+
+        if (cell) {
+            const { value0 } = await this.runLocal('getCellBigTaskDestroy', cellParams)
+            return value0
+        } else {
+            const cell = await this.deleteMilestone({ ...params, cell: true })
+            await this.createSingleEvent({ cell, reviewers })
+        }
+    }
+
+    async completeMilestone(params: {
+        reponame: string
+        taskname: string
+        reviewers?: string[]
+        comment?: string
+        cell?: boolean
+    }) {
+        const { reponame, taskname, comment = '', reviewers = [], cell } = params
+
+        const cellParams = { repoName: reponame, taskName: taskname, comment }
+
+        if (cell) {
+            const { value0 } = await this.runLocal('getCellTaskConfirm', cellParams)
+            return value0
+        } else {
+            const cell = await this.completeMilestone({ ...params, cell: true })
+            await this.createSingleEvent({ cell, reviewers })
+        }
+    }
+
+    async createMilestoneTask(params: {
+        milename: string
+        reponame: string
+        taskname: string
+        grant: TTaskGrant
+        amount: number
+        tags?: string[]
+    }) {
+        const { milename, reponame, taskname, grant, amount, tags = [] } = params
+
+        const tagList = [MILESTONE_TASK_TAG, ...tags]
+        await this.run('deploySubTask', {
+            namebigtask: milename,
+            repoName: reponame,
+            nametask: taskname,
+            grant,
+            value: amount,
+            hashtag: tagList,
+        })
+    }
+
+    async deleteMilestoneTask(params: {
+        milename: string
+        reponame: string
+        index: number
+    }) {
+        const { milename, reponame, index } = params
+        await this.run('destroySubTask', {
+            namebigtask: milename,
+            repoName: reponame,
+            index,
+        })
+    }
+
+    async receiveMilestoneReward(params: { reponame: string; taskname: string }) {
+        const { reponame, taskname } = params
+        await this.run('askGrantBigTokenFull', {
+            repoName: reponame,
+            nametask: taskname,
+        })
+    }
+
     async createTask(params: {
         reponame: string
         taskname: string
@@ -607,16 +743,11 @@ export class DaoWallet extends BaseContract {
         }
     }
 
-    async receiveTaskReward(params: {
-        reponame: string
-        taskname: string
-        type: ETaskReward
-    }) {
-        const { reponame, taskname, type } = params
-        await this.run('askGrantToken', {
+    async receiveTaskReward(params: { reponame: string; taskname: string }) {
+        const { reponame, taskname } = params
+        await this.run('askGrantTokenFull', {
             repoName: reponame,
             nametask: taskname,
-            typegrant: type,
         })
     }
 

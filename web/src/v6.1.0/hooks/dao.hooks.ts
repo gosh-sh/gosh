@@ -18,6 +18,8 @@ import {
     DISABLED_VERSIONS,
     MAX_PARALLEL_READ,
     MAX_PARALLEL_WRITE,
+    MILESTONE_TAG,
+    MILESTONE_TASK_TAG,
     SYSTEM_TAG,
 } from '../../constants'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
@@ -34,7 +36,6 @@ import {
 } from '../store/dao.state'
 import {
     EDaoMemberType,
-    ETaskReward,
     TDaoDetailsMemberItem,
     TDaoEventDetails,
     TDaoInviteListItem,
@@ -59,6 +60,8 @@ import { Task } from '../blockchain/task'
 import { AggregationFn } from '@eversdk/core'
 import { SystemContract } from '../blockchain/systemcontract'
 import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
+import { Milestone } from '../blockchain/milestone'
+import { getGrantMapping } from '../components/Task'
 
 export function useCreateDao() {
     const profile = useProfile()
@@ -614,13 +617,15 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
     }
 
     const getTaskCount = async (dao: Dao) => {
-        const codeHash = await getSystemContract().getDaoTaskTagCodeHash(
-            dao.address,
-            SYSTEM_TAG,
-        )
+        const sc = getSystemContract()
+        const codes = [
+            await sc.getDaoTaskTagCodeHash(dao.address, SYSTEM_TAG),
+            await sc.getDaoTaskTagCodeHash(dao.address, MILESTONE_TAG),
+            await sc.getDaoTaskTagCodeHash(dao.address, MILESTONE_TASK_TAG),
+        ]
         const { values } = await dao.account.client.net.aggregate_collection({
             collection: 'accounts',
-            filter: { code_hash: { eq: codeHash } },
+            filter: { code_hash: { in: codes } },
             fields: [{ field: 'id', fn: AggregationFn.COUNT }],
         })
         return parseInt(values[0])
@@ -628,15 +633,24 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
 
     const getMembersVesting = async (dao: Dao) => {
         const sc = getSystemContract()
-        const code = await sc.getDaoTaskTagCodeHash(dao.address, SYSTEM_TAG)
+        const codes = [
+            await sc.getDaoTaskTagCodeHash(dao.address, SYSTEM_TAG),
+            await sc.getDaoTaskTagCodeHash(dao.address, MILESTONE_TAG),
+            await sc.getDaoTaskTagCodeHash(dao.address, MILESTONE_TASK_TAG),
+        ]
         const result = await getAllAccounts({
-            filters: [`code_hash: {eq:"${code}"}`],
+            filters: [`code_hash: {in: ${JSON.stringify(codes)}}`],
+            result: ['code_hash'],
         })
-        const tasks = await executeByChunk(result, 30, async ({ id }) => {
+        const tasks = await executeByChunk(result, 30, async ({ id, code_hash }) => {
             const tag = await sc.getGoshTag({ address: id })
             const data = await tag.getDetails()
-            const task = await sc.getTask({ address: data.task })
-            return await task.runLocal('getStatus', {})
+
+            const isMilestone = code_hash === codes[1]
+            const task = isMilestone
+                ? await sc.getMilestone({ address: data.task })
+                : await sc.getTask({ address: data.task })
+            return await task.getRawDetails()
         })
 
         const mapping: { [profile: string]: number } = {}
@@ -738,7 +752,7 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
     }, [subscribe, data.details.address])
 
     useEffect(() => {
-        if (subscribe && data.details.address && !!data.details.tasks) {
+        if (subscribe && data.details.address) {
             getMembersVesting(data.details.account!)
         }
     }, [subscribe, data.details.address, data.details.tasks])
@@ -3304,43 +3318,62 @@ export function useDaoTaskList(params: { count?: number; initialize?: boolean } 
     const [data, setData] = useRecoilState(daoTaskListSelector(dao.name))
 
     const getBlockchainItems = async (params: {
+        daoname: string
         daoaddr: string
         limit: number
         cursor?: string
     }) => {
-        const { daoaddr, limit, cursor } = params
+        const { daoname, daoaddr, limit, cursor } = params
         const sc = getSystemContract()
-        const code = await sc.getDaoTaskTagCodeHash(daoaddr, SYSTEM_TAG)
+
+        const codes = [
+            await sc.getDaoTaskTagCodeHash(daoaddr, SYSTEM_TAG),
+            await sc.getDaoTaskTagCodeHash(daoaddr, MILESTONE_TAG),
+        ]
         const { results, lastId, completed } = await getPaginatedAccounts({
-            filters: [`code_hash: {eq:"${code}"}`],
+            filters: [`code_hash: {in: ${JSON.stringify(codes)}}`],
+            result: ['code_hash'],
             limit,
             lastId: cursor,
         })
-        const items = await executeByChunk<{ id: string }, TTaskDetails>(
-            results,
-            MAX_PARALLEL_READ,
-            async ({ id }) => {
-                const tag = await sc.getGoshTag({ address: id })
-                const { task: address } = await tag.getDetails()
-                const task = await sc.getTask({ address })
-                const details = await task.getDetails()
-                return {
-                    account: task,
-                    address: task.address,
-                    ...details,
-                }
-            },
-        )
+
+        const items = await executeByChunk<
+            { id: string; code_hash: string },
+            TTaskDetails
+        >(results, MAX_PARALLEL_READ, async ({ id, code_hash }) => {
+            const isMilestone = code_hash === codes[1]
+            const tag = await sc.getGoshTag({ address: id })
+            const { task: address } = await tag.getDetails()
+
+            let task: Milestone | Task
+            let details: any
+            if (isMilestone) {
+                task = await sc.getMilestone({ address })
+                details = await task.getDetails(daoname)
+            } else {
+                task = await sc.getTask({ address })
+                details = await task.getDetails()
+            }
+
+            return {
+                account: task,
+                address: task.address,
+                isMilestone,
+                isSubtask: false,
+                ...details,
+            }
+        })
         return { items, cursor: lastId, hasNext: !completed }
     }
 
     const getTaskList = useCallback(async () => {
         try {
-            if (!dao.address) {
+            if (!dao.address || !dao.name) {
                 return
             }
             setData((state) => ({ ...state, isFetching: true }))
             const blockchain = await getBlockchainItems({
+                daoname: dao.name,
                 daoaddr: dao.address,
                 limit: count,
             })
@@ -3348,16 +3381,12 @@ export function useDaoTaskList(params: { count?: number; initialize?: boolean } 
                 const different = _.differenceWith(
                     blockchain.items,
                     state.items,
-                    (a, b) => {
-                        return a.address === b.address
-                    },
+                    (a, b) => a.address === b.address,
                 )
                 const intersect = _.intersectionWith(
                     blockchain.items,
                     state.items,
-                    (a, b) => {
-                        return a.address === b.address
-                    },
+                    (a, b) => a.address === b.address,
                 )
 
                 return {
@@ -3366,7 +3395,7 @@ export function useDaoTaskList(params: { count?: number; initialize?: boolean } 
                         const found = intersect.find(
                             (_item) => _item.address === item.address,
                         )
-                        return { ...item, ...found } || item
+                        return found ? { ...item, ...found } : item
                     }),
                     cursor: blockchain.cursor,
                     hasNext: blockchain.hasNext,
@@ -3377,12 +3406,13 @@ export function useDaoTaskList(params: { count?: number; initialize?: boolean } 
         } finally {
             setData((state) => ({ ...state, isFetching: false }))
         }
-    }, [dao.address, count])
+    }, [dao.address, dao.name, count])
 
     const getNext = useCallback(async () => {
         try {
             setData((state) => ({ ...state, isFetching: true }))
             const blockchain = await getBlockchainItems({
+                daoname: dao.name!,
                 daoaddr: dao.address!,
                 limit: count,
                 cursor: data.cursor,
@@ -3407,13 +3437,17 @@ export function useDaoTaskList(params: { count?: number; initialize?: boolean } 
         } finally {
             setData((state) => ({ ...state, isFetching: false }))
         }
-    }, [dao.address, data.cursor, member.isFetched])
+    }, [dao.address, dao.name, data.cursor, member.isFetched])
 
     const openItem = (address: string) => {
         setData((state) => ({
             ...state,
             items: state.items.map((item) => ({
                 ...item,
+                subtasks: item.subtasks.map((subtask) => ({
+                    ...subtask,
+                    isOpen: subtask.address === address,
+                })),
                 isOpen: item.address === address,
             })),
         }))
@@ -3422,7 +3456,26 @@ export function useDaoTaskList(params: { count?: number; initialize?: boolean } 
     const closeItems = () => {
         setData((state) => ({
             ...state,
-            items: state.items.map((item) => ({ ...item, isOpen: false })),
+            items: state.items.map((item) => ({
+                ...item,
+                subtasks: item.subtasks.map((subtask) => ({
+                    ...subtask,
+                    isOpen: false,
+                })),
+                isOpen: false,
+            })),
+        }))
+    }
+
+    const expandItem = (address: string) => {
+        setData((state) => ({
+            ...state,
+            items: state.items.map((item) => {
+                if (item.address !== address) {
+                    return item
+                }
+                return { ...item, isExpanded: !item.isExpanded }
+            }),
         }))
     }
 
@@ -3435,9 +3488,497 @@ export function useDaoTaskList(params: { count?: number; initialize?: boolean } 
     return {
         ...data,
         openItem,
+        expandItem,
         closeItems,
         getNext,
         isEmpty: !data.isFetching && !data.items.length,
+    }
+}
+
+export function useCreateMilestone() {
+    const { details: dao } = useDao()
+    const member = useDaoMember()
+    const { beforeCreateEvent } = useDaoHelpers()
+    const [status, setStatus] = useRecoilState(
+        appToastStatusSelector('__createmilestone'),
+    )
+
+    const createMilestone = useCallback(
+        async (params: {
+            reponame: string
+            taskname: string
+            manager: {
+                username: string
+                reward: number
+            }
+            budget: number
+            lock: number
+            vesting: number
+            tags?: string[]
+            comment?: string
+        }) => {
+            try {
+                if (!dao.name) {
+                    throw new GoshError('Value error', 'DAO name undefined')
+                }
+
+                setStatus((state) => ({
+                    ...state,
+                    type: 'pending',
+                    data: 'Validating data',
+                }))
+
+                // Check if task already exists
+                const account = await getSystemContract().getMilestone({
+                    data: {
+                        daoname: dao.name,
+                        reponame: params.reponame,
+                        taskname: params.taskname,
+                    },
+                })
+                if (await account.isDeployed()) {
+                    throw new GoshError('Account error', {
+                        message: 'Milestone with provided name already exists',
+                        name: params.taskname,
+                    })
+                }
+
+                // Resolve manager username -> profile
+                const manager = await AppConfig.goshroot.getUserProfile({
+                    username: params.manager.username,
+                })
+                if (!(await manager.isDeployed())) {
+                    throw new GoshError('Profile error', {
+                        message: 'Manager profile does not exist',
+                        username: params.manager.username,
+                    })
+                }
+
+                // Calculate grant map
+                const grant: { [k: string]: { t: number; g: TTaskGrantPair[] } } = {
+                    manager: { t: params.manager.reward, g: [] },
+                    subtask: { t: params.budget, g: [] },
+                }
+                for (const key of ['manager', 'subtask']) {
+                    // Reward should be positive
+                    if (grant[key].t <= 0) {
+                        throw new GoshError('Value error', {
+                            message: `Reward should greater than 0`,
+                            key,
+                        })
+                    }
+
+                    // No vesting period
+                    let total = grant[key].t
+                    if (!params.vesting) {
+                        grant[key].g.push({ grant: total, lock: params.lock * 60 })
+                        continue
+                    }
+
+                    // Has vesting period
+                    for (let tick = params.vesting; tick > 0; tick--) {
+                        const delay = params.lock + (params.vesting - tick + 1)
+                        const amount = Math.trunc(total / tick)
+                        grant[key].g.push({ grant: amount, lock: delay * 60 })
+                        total -= amount
+                    }
+                }
+
+                // Prepare balance for create event
+                await beforeCreateEvent(20, { onPendingCallback: setStatus })
+
+                // Create milestone create event
+                // Skip `member.wallet` check, because `beforeCreate` checks it
+                setStatus((state) => ({
+                    ...state,
+                    type: 'pending',
+                    data: 'Creating milestone',
+                }))
+                await member.wallet!.createMilestone({
+                    reponame: params.reponame,
+                    taskname: params.taskname,
+                    grant: {
+                        assign: [],
+                        review: [],
+                        manager: grant.manager.g,
+                        subtask: grant.subtask.g,
+                    },
+                    assigners: {
+                        taskaddr: account.address,
+                        assigner: {},
+                        reviewer: {},
+                        manager: { [manager.address]: true },
+                        daomember: {},
+                    },
+                    budget: params.budget,
+                    tags: params.tags,
+                    comment: params.comment || `Create milestone ${params.taskname}`,
+                })
+
+                setStatus((state) => ({
+                    ...state,
+                    type: 'success',
+                    data: {
+                        title: 'Create milestone',
+                        content: 'Create milestone event created',
+                    },
+                }))
+            } catch (e: any) {
+                setStatus((state) => ({ ...state, type: 'error', data: e }))
+                throw e
+            }
+        },
+        [dao.name, member.isMember, member.isReady],
+    )
+
+    return {
+        createMilestone,
+        status,
+    }
+}
+
+export function useDeleteMilestone() {
+    const member = useDaoMember()
+    const { beforeCreateEvent } = useDaoHelpers()
+    const [status, setStatus] = useRecoilState(
+        appToastStatusSelector('__deletemilestone'),
+    )
+
+    const deleteMilestone = useCallback(
+        async (params: { reponame: string; taskname: string; comment?: string }) => {
+            try {
+                // Prepare balance for create event
+                await beforeCreateEvent(20, { onPendingCallback: setStatus })
+
+                // Create milestone delete event
+                // Skip `member.wallet` check, because `beforeCreate` checks it
+                setStatus((state) => ({
+                    ...state,
+                    type: 'pending',
+                    data: 'Deleting milestone',
+                }))
+                await member.wallet!.deleteMilestone({
+                    reponame: params.reponame,
+                    taskname: params.taskname,
+                    comment: params.comment || `Delete milestone ${params.taskname}`,
+                })
+
+                setStatus((state) => ({
+                    ...state,
+                    type: 'success',
+                    data: {
+                        title: 'Delete milestone',
+                        content: 'Delete milestone event created',
+                    },
+                }))
+            } catch (e: any) {
+                setStatus((state) => ({ ...state, type: 'error', data: e }))
+                throw e
+            }
+        },
+        [member.isMember, member.isReady],
+    )
+
+    return {
+        deleteMilestone,
+        status,
+    }
+}
+
+export function useCompleteMilestone() {
+    const member = useDaoMember()
+    const { beforeCreateEvent } = useDaoHelpers()
+    const [status, setStatus] = useRecoilState(
+        appToastStatusSelector('__completemilestone'),
+    )
+
+    const completeMilestone = useCallback(
+        async (params: { reponame: string; taskname: string; comment?: string }) => {
+            try {
+                // Prepare balance for create event
+                await beforeCreateEvent(20, { onPendingCallback: setStatus })
+
+                // Create milestone complete event
+                // Skip `member.wallet` check, because `beforeCreate` checks it
+                setStatus((state) => ({
+                    ...state,
+                    type: 'pending',
+                    data: 'Completing milestone',
+                }))
+                await member.wallet!.completeMilestone({
+                    reponame: params.reponame,
+                    taskname: params.taskname,
+                    comment: params.comment || `Complete milestone ${params.taskname}`,
+                })
+
+                setStatus((state) => ({
+                    ...state,
+                    type: 'success',
+                    data: {
+                        title: 'Complete milestone',
+                        content: 'Complete milestone event created',
+                    },
+                }))
+            } catch (e: any) {
+                setStatus((state) => ({ ...state, type: 'error', data: e }))
+                throw e
+            }
+        },
+        [member.isMember, member.isReady],
+    )
+
+    return {
+        completeMilestone,
+        status,
+    }
+}
+
+export function useReceiveMilestoneReward() {
+    const member = useDaoMember()
+    const [status, setStatus] = useRecoilState(
+        appToastStatusSelector('__receivemilestonereward'),
+    )
+
+    const receiveReward = useCallback(
+        async (params: { reponame: string; taskname: string }) => {
+            const { reponame, taskname } = params
+
+            try {
+                if (!member.isReady || !member.wallet) {
+                    throw new GoshError(
+                        'Access error',
+                        'Wallet does not exist or not activated',
+                    )
+                }
+
+                setStatus((state) => ({
+                    ...state,
+                    type: 'pending',
+                    data: 'Request milestone reward',
+                }))
+                await member.wallet!.receiveMilestoneReward({ reponame, taskname })
+                setStatus((state) => ({
+                    ...state,
+                    type: 'success',
+                    data: {
+                        title: 'Request reward',
+                        content: 'Milestone reward requested',
+                    },
+                }))
+            } catch (e: any) {
+                setStatus((state) => ({ ...state, type: 'error', data: e }))
+                throw e
+            }
+        },
+        [member.isReady],
+    )
+
+    return { receiveReward, status }
+}
+
+export function useCreateMilestoneTask() {
+    const { details: dao } = useDao()
+    const member = useDaoMember()
+    const setTasks = useSetRecoilState(daoTaskListSelector(dao.name))
+    const [status, setStatus] = useRecoilState(
+        appToastStatusSelector('__createmilestonetask'),
+    )
+
+    const createMilestoneTask = useCallback(
+        async (params: {
+            milename: string
+            reponame: string
+            taskname: string
+            reward: {
+                assign: number
+                review: number
+                manager: number
+            }
+            amount: number
+            tags?: string[]
+        }) => {
+            const { milename, reponame, reward, amount, tags } = params
+            const sc = getSystemContract()
+            const taskname = `${milename}:${params.taskname}`
+            const sumpercent = _.sum(Object.values(reward))
+
+            try {
+                // Vars check
+                if (!member.wallet) {
+                    throw new GoshError('Value error', 'Member wallet undefined')
+                }
+                if (!dao.name) {
+                    throw new GoshError('Value error', 'Dao name undefined')
+                }
+                if (sumpercent !== 100) {
+                    throw new GoshError('Value error', {
+                        message: 'Total percent sum should be equal to 100%',
+                        current: sumpercent,
+                    })
+                }
+
+                setStatus((state) => ({
+                    ...state,
+                    type: 'pending',
+                    data: 'Creating milestone task',
+                }))
+
+                // Check if already exists
+                const account = await sc.getTask({
+                    data: { daoname: dao.name, reponame, taskname },
+                })
+                if (await account.isDeployed()) {
+                    throw new GoshError('Account error', {
+                        message: 'Task with provided name already exists',
+                        name: params.taskname,
+                    })
+                }
+
+                // Calculate grant map
+                const milestone = await sc.getMilestone({
+                    data: { daoname: dao.name, reponame, taskname: milename },
+                })
+                const milestoneraw = await milestone.getRawDetails()
+                const lock = milestoneraw.grant.subtask.map((item: any) => {
+                    return parseInt(item.lock)
+                })
+                const grant = getGrantMapping({ amount, percent: reward, lock })
+
+                // Check total rewards are correct
+                for (const key of ['assign', 'review', 'manager']) {
+                    const { percent, int } = grant[key]
+                    if ((percent > 0 && int > 0) || (percent === 0 && int === 0)) {
+                        continue
+                    }
+
+                    throw new GoshError('Value error', {
+                        message: 'Incorrect token distribution',
+                        key,
+                        percent,
+                        reward: int,
+                    })
+                }
+
+                // Create milestone task
+                await member.wallet.createMilestoneTask({
+                    milename,
+                    reponame,
+                    taskname,
+                    grant: {
+                        assign: grant.assign.list,
+                        review: grant.review.list,
+                        manager: grant.manager.list,
+                        subtask: [],
+                    },
+                    amount,
+                    tags,
+                })
+                const wait = await whileFinite(async () => {
+                    return await account.isDeployed()
+                })
+                if (!wait) {
+                    throw new GoshError('Timeout error', {
+                        message: 'Create milestone task timeout',
+                        name: params.taskname,
+                    })
+                }
+
+                // Get details and update tasks list
+                const index = await milestone.getSubtaskLastIndex()
+                const details = await account.getDetails()
+                setTasks((state) => ({
+                    ...state,
+                    items: state.items.map((item) => {
+                        if (item.name !== milename) {
+                            return item
+                        }
+                        return {
+                            ...item,
+                            balance: item.balance - amount,
+                            subtasks: [
+                                ...item.subtasks,
+                                {
+                                    account,
+                                    address: account.address,
+                                    index,
+                                    milestone: {
+                                        address: milestone.address,
+                                        name: milename,
+                                    },
+                                    isMilestone: false,
+                                    isSubtask: true,
+                                    ...details,
+                                },
+                            ],
+                        }
+                    }),
+                }))
+
+                setStatus((state) => ({
+                    ...state,
+                    type: 'success',
+                    data: {
+                        title: 'Add milestone task',
+                        content: 'Milestone task added',
+                    },
+                }))
+            } catch (e: any) {
+                setStatus((state) => ({ ...state, type: 'error', data: e }))
+                throw e
+            }
+        },
+        [dao.name, member.isMember, member.isReady],
+    )
+
+    return {
+        createMilestoneTask,
+        status,
+    }
+}
+
+export function useDeleteMilestoneTask() {
+    const { details: dao } = useDao()
+    const member = useDaoMember()
+    const [status, setStatus] = useRecoilState(
+        appToastStatusSelector('__deletemilestonetask'),
+    )
+
+    const deleteMilestoneTask = useCallback(
+        async (params: { milename: string; reponame: string; index: number }) => {
+            const { milename, reponame, index } = params
+
+            try {
+                // Vars check
+                if (!member.wallet) {
+                    throw new GoshError('Value error', 'Member wallet undefined')
+                }
+
+                // Delete milestone task
+                setStatus((state) => ({
+                    ...state,
+                    type: 'pending',
+                    data: 'Deleting milestone task',
+                }))
+                await member.wallet.deleteMilestoneTask({ milename, reponame, index })
+                setStatus((state) => ({
+                    ...state,
+                    type: 'success',
+                    data: {
+                        title: 'Delete milestone task',
+                        content: 'Milestone task deleted',
+                    },
+                }))
+            } catch (e: any) {
+                setStatus((state) => ({ ...state, type: 'error', data: e }))
+                throw e
+            }
+        },
+        [dao.name, member.isMember, member.isReady],
+    )
+
+    return {
+        deleteMilestoneTask,
+        status,
     }
 }
 
@@ -3641,29 +4182,45 @@ export function useDeleteTask() {
 
 export function useReceiveTaskReward() {
     const member = useDaoMember()
+    const [status, setStatus] = useRecoilState(
+        appToastStatusSelector('__receivetaskreward'),
+    )
 
     const receiveReward = useCallback(
         async (params: { reponame: string; taskname: string }) => {
             const { reponame, taskname } = params
 
-            if (!member.isReady || !member.wallet) {
-                throw new GoshError(
-                    'Access error',
-                    'Wallet does not exist or not activated',
-                )
-            }
+            try {
+                if (!member.isReady || !member.wallet) {
+                    throw new GoshError(
+                        'Access error',
+                        'Wallet does not exist or not activated',
+                    )
+                }
 
-            const types = [ETaskReward.ASSING, ETaskReward.MANAGER, ETaskReward.REVIEW]
-            await Promise.all(
-                types.map(async (type) => {
-                    await member.wallet!.receiveTaskReward({ reponame, taskname, type })
-                }),
-            )
+                setStatus((state) => ({
+                    ...state,
+                    type: 'pending',
+                    data: 'Request task reward',
+                }))
+                await member.wallet!.receiveTaskReward({ reponame, taskname })
+                setStatus((state) => ({
+                    ...state,
+                    type: 'success',
+                    data: {
+                        title: 'Request reward',
+                        content: 'Task reward requested',
+                    },
+                }))
+            } catch (e: any) {
+                setStatus((state) => ({ ...state, type: 'error', data: e }))
+                throw e
+            }
         },
         [member.isReady],
     )
 
-    return { receiveReward }
+    return { receiveReward, status }
 }
 
 export function useTask(
@@ -3682,10 +4239,23 @@ export function useTask(
             setTasks((state) => ({
                 ...state,
                 items: state.items.map((item) => {
+                    // Update simple task or milestone
                     if (item.address === account.address) {
                         return { ...item, isOpen: false, isDeleted: true }
                     }
-                    return item
+
+                    // Update milestone subtask
+                    return {
+                        ...item,
+                        subtasks: item.subtasks.map((subitem) => ({
+                            ...subitem,
+                            isOpen:
+                                subitem.address === account.address
+                                    ? false
+                                    : subitem.isOpen,
+                            isDeleted: subitem.address === account.address,
+                        })),
+                    }
                 }),
             }))
 
@@ -3693,9 +4263,24 @@ export function useTask(
             await sleep(300)
             setTasks((state) => ({
                 ...state,
-                items: state.items.filter((item) => {
-                    return item.address !== account.address
-                }),
+                items: state.items
+                    .filter((item) => {
+                        // Filter simple task or milestone
+                        return item.address !== account.address
+                    })
+                    .map((item) => {
+                        // Filter milestone tasks if current task is subtask
+                        const subfound = item.subtasks.find((subitem) => {
+                            return subitem.address === account.address
+                        })
+                        const filtered = subfound
+                            ? item.subtasks.filter((subitem) => {
+                                  return subitem.address !== account.address
+                              })
+                            : item.subtasks
+
+                        return { ...item, subtasks: filtered }
+                    }),
             }))
             return false
         }
@@ -3715,7 +4300,16 @@ export function useTask(
                     if (item.address === account.address) {
                         return { ...item, ...verbose }
                     }
-                    return item
+
+                    return {
+                        ...item,
+                        subtasks: item.subtasks.map((subtask) => {
+                            if (subtask.address === account.address) {
+                                return { ...subtask, ...verbose }
+                            }
+                            return subtask
+                        }),
+                    }
                 }),
             }))
         } catch (e: any) {
@@ -3736,7 +4330,13 @@ export function useTask(
             if (!found) {
                 const account = await getSystemContract().getTask({ address })
                 const details = await account.getDetails()
-                found = { account, address, ...details }
+                found = {
+                    account,
+                    address,
+                    isMilestone: false,
+                    isSubtask: false,
+                    ...details,
+                }
                 setTasks((state) => ({
                     ...state,
                     items: [...state.items, { ...found! }],
@@ -3763,7 +4363,7 @@ export function useTask(
                 const decoded = await task.account!.decodeMessageBody(body, 0)
                 const triggers = ['destroy', 'isReady', 'getGrant']
                 if (decoded && triggers.indexOf(decoded.name) >= 0) {
-                    await getTaskData(task.account!)
+                    await getTaskData(task.account! as Task)
                 }
             })
         }
@@ -3774,7 +4374,7 @@ export function useTask(
             }
 
             const interval = setLockableInterval(async () => {
-                if (!(await checkExists(task.account!))) {
+                if (!(await checkExists(task.account! as Task))) {
                     clearInterval(interval)
                 }
             }, 10000)
@@ -3794,6 +4394,144 @@ export function useTask(
             }
         }
     }, [task?.address, subscribe])
+
+    return { task, error }
+}
+
+export function useMilestone(
+    address: string,
+    options: { initialize?: boolean; subscribe?: boolean } = {},
+) {
+    const { initialize, subscribe } = options
+    const { details: dao } = useDao()
+    const [tasks, setTasks] = useRecoilState(daoTaskListSelector(dao.name))
+    const task = useRecoilValue(daoTaskSelector(address))
+    const [error, setError] = useState<any>()
+
+    const checkExists = async (account: Milestone) => {
+        if (!(await account.isDeployed())) {
+            // Close if opened
+            setTasks((state) => ({
+                ...state,
+                items: state.items.map((item) => {
+                    if (item.address === account.address) {
+                        return { ...item, isOpen: false, isDeleted: true }
+                    }
+                    return item
+                }),
+            }))
+
+            // Remove from list after short delay to allow state read
+            await sleep(300)
+            setTasks((state) => ({
+                ...state,
+                items: state.items.filter((item) => {
+                    return item.address !== account.address
+                }),
+            }))
+            return false
+        }
+        return true
+    }
+
+    const getMilestoneData = async (daoname: string, account: Milestone) => {
+        try {
+            if (!(await checkExists(account))) {
+                return
+            }
+
+            const verbose = await account.getDetails(daoname)
+            setTasks((state) => ({
+                ...state,
+                items: state.items.map((item) => {
+                    if (item.address === account.address) {
+                        return { ...item, ...verbose }
+                    }
+                    return item
+                }),
+            }))
+        } catch (e: any) {
+            setError(e)
+        }
+    }
+
+    const getMilestone = useCallback(async () => {
+        if (!address || !dao.name) {
+            return
+        }
+
+        try {
+            // Search for task in task list state atom
+            let found = tasks.items.find((item) => item.address === address)
+
+            // Fetch task details from blockchain
+            if (!found) {
+                const account = await getSystemContract().getMilestone({ address })
+                const details = await account.getDetails(dao.name)
+                found = {
+                    account,
+                    address,
+                    isMilestone: true,
+                    isSubtask: false,
+                    ...details,
+                }
+                setTasks((state) => ({
+                    ...state,
+                    items: [...state.items, { ...found! }],
+                }))
+            }
+        } catch (e: any) {
+            setError(e)
+        }
+    }, [address, dao.name])
+
+    useEffect(() => {
+        if (initialize) {
+            getMilestone()
+        }
+    }, [getMilestone, initialize])
+
+    useEffect(() => {
+        const _subscribe = async () => {
+            if (!dao.name || !task?.address || !task.account) {
+                return
+            }
+
+            await task.account.account.subscribeMessages('body', async ({ body }) => {
+                const decoded = await task.account!.decodeMessageBody(body, 0)
+                const triggers = ['destroy', 'isReady', 'getGrant']
+                if (decoded && triggers.indexOf(decoded.name) >= 0) {
+                    await getMilestoneData(dao.name!, task.account! as Milestone)
+                }
+            })
+        }
+
+        const _checkExists = () => {
+            if (!task?.address || !task.account) {
+                return
+            }
+
+            const interval = setLockableInterval(async () => {
+                if (!(await checkExists(task.account! as Milestone))) {
+                    clearInterval(interval)
+                }
+            }, 10000)
+            return interval
+        }
+
+        let interval: any
+        if (subscribe) {
+            _subscribe()
+            interval = _checkExists()
+        }
+
+        return () => {
+            if (subscribe) {
+                task?.account?.account.free()
+                clearInterval(interval)
+            }
+        }
+    }, [dao.name, task?.address, subscribe])
 
     return { task, error }
 }
