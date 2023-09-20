@@ -3253,10 +3253,10 @@ export function useDaoTaskList(params: { count?: number; initialize?: boolean } 
                 return {
                     ...state,
                     items: [...different, ...state.items].map((item) => {
-                        const found = intersect.find(
-                            (_item) => _item.address === item.address,
-                        )
-                        return { ...item, ...found } || item
+                        const found = intersect.find((_item) => {
+                            return _item.address === item.address
+                        })
+                        return found ? { ...item, ...found } : item
                     }),
                     cursor: blockchain.cursor,
                     hasNext: blockchain.hasNext,
