@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import { TTaskDetails } from '../../../types/dao.types'
+import { TMilestoneTaskDetails } from '../../../types/dao.types'
 import {
     useCompleteMilestone,
     useDao,
@@ -15,7 +15,7 @@ import { useMemo } from 'react'
 import { useUser } from '../../../hooks/user.hooks'
 
 type TMilestoneManageProps = {
-    task: TTaskDetails
+    task: TMilestoneTaskDetails
 }
 
 const MilestoneManage = (props: TMilestoneManageProps) => {

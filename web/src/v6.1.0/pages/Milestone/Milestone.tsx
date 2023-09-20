@@ -207,7 +207,7 @@ const MilestonePageInner = (props: { address: string }) => {
                     </div>
 
                     <div className="col !basis-full md:!basis-[18rem] lg:!basis-[20.4375rem] !grow-0">
-                        <MilestoneManage task={task} />
+                        <MilestoneManage task={task as TMilestoneTaskDetails} />
                     </div>
                 </div>
 
