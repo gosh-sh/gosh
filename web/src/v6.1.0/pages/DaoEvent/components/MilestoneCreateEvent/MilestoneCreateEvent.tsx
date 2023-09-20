@@ -1,6 +1,4 @@
-import CopyClipboard from '../../../../../components/CopyClipboard'
 import { MemberIcon } from '../../../../../components/Dao'
-import { shortString } from '../../../../../utils'
 import { TaskGrantList } from '../../../../components/Task'
 import { EDaoMemberType, TTaskGrant } from '../../../../types/dao.types'
 
@@ -22,17 +20,6 @@ const MilestoneCreateEvent = (props: TMilestoneCreateEventProps) => {
 
     return (
         <div className="flex flex-col gap-2 py-3">
-            <div className="flex items-center gap-6">
-                <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
-                    Milestone address
-                </div>
-                <div className="text-sm">
-                    {/* <CopyClipboard
-                        label={shortString(data.commit.task)}
-                        componentProps={{ text: data.commit!.task }}
-                    /> */}
-                </div>
-            </div>
             <div className="flex items-center gap-6">
                 <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
                     Milestone name

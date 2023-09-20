@@ -35,7 +35,7 @@ const ListItemMilestone = (props: TListItemMilestoneProps) => {
     const setModal = useSetRecoilState(appModalStateAtom)
     useMilestone(item.address, { subscribe: true })
 
-    const attrId = `dao-tasklist-item-${item.name}`
+    const attrId = `dao-tasklist-item-${item.address.slice(2)}`
     const isManager = user.profile === item.team?.managers[0].profile
 
     const onItemClick = (e: any) => {

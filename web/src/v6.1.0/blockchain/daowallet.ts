@@ -1138,6 +1138,18 @@ export class DaoWallet extends BaseContract {
                 if (type === EDaoEventType.TASK_REDEPLOYED) {
                     return await this.setTasksUpgraded({ ...params, cell: true })
                 }
+                if (type === EDaoEventType.MILESTONE_CREATE) {
+                    return await this.createMilestone({ ...params, cell: true })
+                }
+                if (type === EDaoEventType.MILESTONE_DELETE) {
+                    return await this.deleteMilestone({ ...params, cell: true })
+                }
+                if (type === EDaoEventType.MILESTONE_COMPLETE) {
+                    return await this.completeMilestone({ ...params, cell: true })
+                }
+                if (type === EDaoEventType.MILESTONE_UPGRADE) {
+                    return await this.upgradeMilestone({ ...params, cell: true })
+                }
                 return null
             },
         )
