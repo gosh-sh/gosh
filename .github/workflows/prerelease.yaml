@@ -223,9 +223,9 @@ jobs:
       - name: Make archive
         run: |
           chmod +x ${{ matrix.result }}/*
-          printf "%s\n" ${{ matrix.result }}/git-remote-gosh_* | sort -rV | tee '${{ matrix.result }}/dispatcher.ini'
-
-          tar -czvf ${{ matrix.result }}.tar.gz -C ${{ matrix.result }} .
+          cd ${{ matrix.result }}
+          printf "%s\n" git-remote-gosh_* | sort -rV | tee dispatcher.ini
+          tar -czvf ../${{ matrix.result }}.tar.gz .
 
       - name: Upload Draft
         uses: softprops/action-gh-release@v1
