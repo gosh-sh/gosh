@@ -242,7 +242,7 @@ jobs:
         if: env.release == 'true'
         with:
           prerelease: true
-          tag_name: rc-${{ github.ref_name }}-build-${{ github.run_number }}
+          tag_name: ${{ github.ref_name }}
           files: |
             ${{ matrix.result }}.tar.gz
           name: "Version: ${{ github.ref_name }}"
