@@ -2516,6 +2516,85 @@ export function useUpgradeDaoComplete() {
         return { isEvent }
     }
 
+    const upgradeMilestones = async (params: {
+        wallet: DaoWallet
+        daoprev: { account: Dao; version: string } | null
+        repositories: any[]
+    }) => {
+        const { wallet, daoprev } = params
+
+        if (!daoprev || daoprev.version < '5.0.0') {
+            return { isEvent: false }
+        }
+
+        // Prepare repositories of needed version
+        const repositories = params.repositories.filter(
+            (item: any) => item.version === daoprev.version,
+        )
+
+        // Get task code hash for each repository
+        setStatus((state) => ({ ...state, type: 'pending', data: 'Fetching milestones' }))
+        const taskcode = await executeByChunk(
+            repositories,
+            MAX_PARALLEL_READ,
+            async ({ name }) => ({
+                reponame: name,
+                codehash: await daoprev.account.getMilestoneCodeHash(name),
+            }),
+        )
+
+        // Transfer/upgrade tasks
+        setStatus((state) => ({ ...state, type: 'pending', data: 'Upgrade tasks' }))
+        const sc = AppConfig.goshroot.getSystemContract(daoprev.version) as SystemContract
+
+        // Prepare cells
+        const cells: { type: number; params: any }[] = []
+        for (const { reponame, codehash } of taskcode) {
+            const accounts = await getAllAccounts({
+                filters: [`code_hash: {eq:"${codehash}"}`],
+                result: ['id'],
+            })
+            const items = await executeByChunk(
+                accounts,
+                MAX_PARALLEL_READ,
+                async ({ id }) => {
+                    const task = await sc.getMilestone({ address: id })
+                    const details = await task.getRawDetails()
+                    const version = await task.getVersion()
+                    return {
+                        type: EDaoEventType.MILESTONE_UPGRADE,
+                        params: {
+                            reponame,
+                            taskname: details.nametask,
+                            taskprev: { address: id, version },
+                            tags: details.hashtag,
+                        },
+                    }
+                },
+            )
+            cells.push(...items)
+        }
+
+        // Create multi event or return
+        if (cells.length === 0) {
+            return { isEvent: false }
+        }
+        if (cells.length === 1) {
+            cells.push({ type: EDaoEventType.DELAY, params: {} })
+        }
+        await executeByChunk(
+            splitByChunk(cells, 50),
+            MAX_PARALLEL_WRITE,
+            async (chunk) => {
+                await wallet.createMultiEvent({
+                    proposals: chunk,
+                    comment: 'Upgrade milestones',
+                })
+            },
+        )
+        return { isEvent: true }
+    }
+
     const upgradeTasks = async (params: {
         wallet: DaoWallet
         daoprev: { account: Dao; version: string } | null
@@ -2690,6 +2769,14 @@ export function useUpgradeDaoComplete() {
                 })
                 isEvent = isEvent || isRepositoriesEvent
             }
+
+            // Upgrade milestones
+            const { isEvent: isMilestonesEvent } = await upgradeMilestones({
+                wallet: member.wallet!,
+                daoprev,
+                repositories,
+            })
+            isEvent = isEvent || isMilestonesEvent
 
             // Upgrade tasks
             if (!isTaskUpgraded) {

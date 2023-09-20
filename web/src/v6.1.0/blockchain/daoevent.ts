@@ -136,6 +136,8 @@ export class DaoEvent extends BaseContract {
             fn = 'getBigTaskProposalParams'
         } else if (type === EDaoEventType.MILESTONE_COMPLETE) {
             fn = 'getBigTaskProposalParams'
+        } else if (type === EDaoEventType.MILESTONE_UPGRADE) {
+            fn = 'getBigTaskUpgradeProposalParams'
         } else if (type === EDaoEventType.MULTI_PROPOSAL) {
             const { num, data0 } = await this.runLocal('getDataFirst', {}, undefined, {
                 useCachedBoc: true,
@@ -403,6 +405,15 @@ export class DaoEvent extends BaseContract {
             fn = 'getUpgradeTaskProposalParamsData'
         } else if (type === EDaoEventType.TASK_REDEPLOYED) {
             return { type, label: DaoEventType[type], data: {} }
+        } else if (type === EDaoEventType.MILESTONE_CREATE) {
+            fn = 'getBigTaskDeployParamsData'
+            parser = this.parseMilestoneCreateEventParams
+        } else if (type === EDaoEventType.MILESTONE_DELETE) {
+            fn = 'getBigTaskParamsData'
+        } else if (type === EDaoEventType.MILESTONE_COMPLETE) {
+            fn = 'getBigTaskParamsData'
+        } else if (type === EDaoEventType.MILESTONE_UPGRADE) {
+            fn = 'getBigTaskUpgradeProposalParamsData'
         } else if (type === EDaoEventType.DELAY) {
             return { type, label: DaoEventType[type], data: {} }
         } else {

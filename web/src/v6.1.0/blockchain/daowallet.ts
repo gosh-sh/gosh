@@ -686,6 +686,46 @@ export class DaoWallet extends BaseContract {
         })
     }
 
+    async upgradeMilestone(params: {
+        reponame: string
+        taskname: string
+        taskprev: {
+            address: string
+            version: string
+        }
+        tags: string[]
+        comment?: string
+        reviewers?: string[]
+        cell?: boolean | undefined
+    }) {
+        const {
+            reponame,
+            taskname,
+            taskprev,
+            tags,
+            comment = '',
+            reviewers = [],
+            cell,
+        } = params
+
+        const cellParams = {
+            reponame,
+            nametask: taskname,
+            oldversion: taskprev.version,
+            oldtask: taskprev.address,
+            hashtag: tags,
+            comment,
+        }
+
+        if (cell) {
+            const { value0 } = await this.runLocal('getCellForBigTaskUpgrade', cellParams)
+            return value0
+        } else {
+            const cell = await this.upgradeMilestone({ ...params, cell: true })
+            await this.createSingleEvent({ cell, reviewers })
+        }
+    }
+
     async createTask(params: {
         reponame: string
         taskname: string
