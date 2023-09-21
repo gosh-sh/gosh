@@ -32,7 +32,6 @@ permissions:
 
 env:
   release: ${{ startsWith(github.ref, 'refs/tags/') && github.repository == 'gosh-sh/gosh' }}
-  CARGO_TERM_COLOR: always
 
 jobs:
   build:
@@ -108,6 +107,12 @@ jobs:
       CACHE_RESULT_DIR: ${{ github.workspace }}/.result/${{ matrix.result }}
       CACHE_RESULT_BIN: ${{ github.workspace }}/.result/${{ matrix.result }}/${{ matrix.bin }}
 
+      CARGO_TERM_COLOR: always
+      SCCACHE_GHA_VERSION: ${{ vars.SCCACHE_GHA_VERSION || 1 }} # Setting this env var enables the caching
+      RUSTC_WRAPPER: sccache
+      CMAKE_C_COMPILER_LAUNCHER: sccache
+      CMAKE_CXX_COMPILER_LAUNCHER: sccache
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -117,13 +122,16 @@ jobs:
         run: |
           echo "VERSION=$(cat version.json | jq -r .version)" >> "$GITHUB_OUTPUT"
 
-      - name: Setup result cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            .result
-            ${{ matrix.dir }}/target
-          key: builder-${{ matrix.target }}-result-${{ matrix.bin }}
+      # - name: Setup result cache
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: |
+      #       .result
+      #       ${{ matrix.dir }}/target
+      #     key: builder-${{ matrix.target }}-result-${{ matrix.bin }}
+
+      - name: Configure sccache
+        uses: mozilla-actions/sccache-action@v0.0.3
 
       - name: Check if can use cache
         if: matrix.cache
