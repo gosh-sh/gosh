@@ -1945,24 +1945,20 @@ export function useDaoEventList(params: { count?: number; initialize?: boolean }
                 const different = _.differenceWith(
                     blockchain.items,
                     state.items,
-                    (a, b) => {
-                        return a.address === b.address
-                    },
+                    (a, b) => a.address === b.address,
                 )
                 const intersect = _.intersectionWith(
                     blockchain.items,
                     state.items,
-                    (a, b) => {
-                        return a.address === b.address
-                    },
+                    (a, b) => a.address === b.address,
                 )
                 return {
                     ...state,
                     items: [...different, ...state.items].map((item) => {
-                        const found = intersect.find(
-                            (_item) => _item.address === item.address,
-                        )
-                        return { ...item, ...found } || item
+                        const found = intersect.find((_item) => {
+                            return _item.address === item.address
+                        })
+                        return found ? { ...item, ...found } : item
                     }),
                     cursor: blockchain.cursor,
                     hasNext: blockchain.hasNext,
@@ -1988,9 +1984,7 @@ export function useDaoEventList(params: { count?: number; initialize?: boolean }
                 const different = _.differenceWith(
                     blockchain.items,
                     state.items,
-                    (a, b) => {
-                        return a.address === b.address
-                    },
+                    (a, b) => a.address === b.address,
                 )
 
                 return {
@@ -3508,9 +3502,7 @@ export function useDaoTaskList(params: { count?: number; initialize?: boolean } 
                 const different = _.differenceWith(
                     blockchain.items,
                     state.items,
-                    (a, b) => {
-                        return a.address === b.address
-                    },
+                    (a, b) => a.address === b.address,
                 )
                 return {
                     ...state,
