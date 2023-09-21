@@ -12,10 +12,20 @@ on:
   push:
     branches:
       - main
+      - dev
       - 'ci/**'
     tags:
       - '[0-9]+.[0-9]+'
       - '[0-9]+.[0-9]+.[0-9]+'
+    paths:
+      - '.github/workflows/prerelease.yaml'
+      - 'git-remote-gosh/**'
+      - 'v1_x/**'
+      - 'v2_x/**'
+      - 'v3_x/**'
+      - 'v4_x/**'
+      - 'v5_x/**'
+      - 'v6_x/**'
 
 permissions:
   contents: write
@@ -91,6 +101,8 @@ jobs:
           - bin: git-remote-gosh_v6_1_0
             dir: v6_x/v6.1.0/git-remote-gosh
 
+    name: B ${{ matrix.bin }} ${{ matrix.target }}
+
     env:
       CACHE: false  # default env value
       CACHE_RESULT_DIR: ${{ github.workspace }}/.result/${{ matrix.result }}
@@ -108,11 +120,10 @@ jobs:
       - name: Setup result cache
         uses: actions/cache@v3
         with:
-          # IMPORTANT: path here should be relative to the workspace directory
           path: |
             .result
             ${{ matrix.dir }}/target
-          key: builder-${{ runner.os }}-result-${{ matrix.bin }}
+          key: builder-${{ matrix.target }}-result-${{ matrix.bin }}
 
       - name: Check if can use cache
         if: matrix.cache
