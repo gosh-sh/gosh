@@ -2537,8 +2537,8 @@ export function useUpgradeDaoComplete() {
             }),
         )
 
-        // Transfer/upgrade tasks
-        setStatus((state) => ({ ...state, type: 'pending', data: 'Upgrade tasks' }))
+        // Transfer/upgrade milestones
+        setStatus((state) => ({ ...state, type: 'pending', data: 'Upgrade milestones' }))
         const sc = AppConfig.goshroot.getSystemContract(daoprev.version) as SystemContract
 
         // Prepare cells
