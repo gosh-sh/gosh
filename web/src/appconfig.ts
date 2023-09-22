@@ -69,6 +69,19 @@ export class AppConfig {
         AppConfig._setupReactGosh()
     }
 
+    static getVersions(options: { reverse?: boolean } = {}) {
+        const { reverse } = options
+
+        let active = Object.keys(AppConfig.versions).filter((v) => {
+            return DISABLED_VERSIONS.indexOf(v) < 0
+        })
+        if (reverse) {
+            active = active.reverse()
+        }
+
+        return Object.fromEntries(active.map((v) => [v, AppConfig.versions[v]]))
+    }
+
     static getLatestVersion() {
         return Object.keys(AppConfig.versions)
             .reverse()

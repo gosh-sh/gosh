@@ -67,7 +67,7 @@ const ListBoundaryInner = () => {
     )
 }
 
-const ListBoundary = withErrorBoundary(ListBoundaryInner, {
+const ListBoundaryUser = withErrorBoundary(ListBoundaryInner, {
     fallbackRender: ({ error }) => (
         <Alert variant="danger">
             <h3 className="font-medium">Fetch DAO list error</h3>
@@ -76,4 +76,4 @@ const ListBoundary = withErrorBoundary(ListBoundaryInner, {
     ),
 })
 
-export { ListBoundary }
+export { ListBoundaryUser }

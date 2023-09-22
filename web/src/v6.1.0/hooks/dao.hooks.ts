@@ -18,6 +18,7 @@ import {
     DISABLED_VERSIONS,
     MAX_PARALLEL_READ,
     MAX_PARALLEL_WRITE,
+    PARTNER_DAO_NAMES,
     SYSTEM_TAG,
 } from '../../constants'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
@@ -30,6 +31,7 @@ import {
     daoMemberSelector,
     daoTaskListSelector,
     daoTaskSelector,
+    partnerDaoListAtom,
     userDaoListAtom,
 } from '../store/dao.state'
 import {
@@ -59,6 +61,60 @@ import { Task } from '../blockchain/task'
 import { AggregationFn } from '@eversdk/core'
 import { SystemContract } from '../blockchain/systemcontract'
 import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
+
+export function usePartnerDaoList(params: { initialize?: boolean } = {}) {
+    const { initialize } = params
+    const [data, setData] = useRecoilState(partnerDaoListAtom)
+
+    const getDaoList = useCallback(async () => {
+        try {
+            setData((state) => ({ ...state, isFetching: true }))
+
+            const items: TDaoListItem[] = []
+            for (const ver of Object.keys(AppConfig.getVersions({ reverse: true }))) {
+                const sc = AppConfig.goshroot.getSystemContract(ver)
+                await Promise.all(
+                    PARTNER_DAO_NAMES.map(async (name) => {
+                        const account = (await sc.getDao({ name })) as Dao
+                        if (await account.isDeployed()) {
+                            const members = await account.getMembers({})
+                            items.push({
+                                account,
+                                name,
+                                address: account.address,
+                                version: ver,
+                                supply: _.sum(members.map(({ allowance }) => allowance)),
+                                members: members.length,
+                            })
+                        }
+                    }),
+                )
+
+                if (items.length === PARTNER_DAO_NAMES.length) {
+                    break
+                }
+            }
+
+            setData((state) => ({ ...state, items }))
+        } catch (e: any) {
+            setData((state) => ({ ...state, error: e }))
+        } finally {
+            setData((state) => ({ ...state, isFetching: false }))
+        }
+    }, [])
+
+    useEffect(() => {
+        if (initialize && PARTNER_DAO_NAMES.length) {
+            getDaoList()
+        }
+    }, [initialize, getDaoList])
+
+    return {
+        ...data,
+        items: [...data.items].sort((a, b) => (a.name > b.name ? 1 : -1)),
+        isEmpty: !data.isFetching && !data.items.length,
+    }
+}
 
 export function useCreateDao() {
     const profile = useProfile()
