@@ -4,10 +4,12 @@ import githubgosh from '../../../../assets/images/githubgosh.svg'
 import { useEffect } from 'react'
 import { Button } from '../../../../components/Form'
 import { useOnboardingData } from '../../../hooks/onboarding.hooks'
+import { useUser } from '../../../hooks/user.hooks'
 
 const OnboardingComplete = () => {
+    const { user } = useUser()
     const {
-        data: { username, emailOther },
+        data: { emailOther },
         updateData,
         resetData,
     } = useOnboardingData()
@@ -31,7 +33,7 @@ const OnboardingComplete = () => {
                 <div>
                     <div className="mb-4 text-2xl md:text-3xl font-semibold leading-tight">
                         Welcome to GOSH, <br />
-                        {username}
+                        {user.username}
                     </div>
 
                     <p className="text-gray-53596d">
@@ -47,4 +49,4 @@ const OnboardingComplete = () => {
     )
 }
 
-export default OnboardingComplete
+export { OnboardingComplete }

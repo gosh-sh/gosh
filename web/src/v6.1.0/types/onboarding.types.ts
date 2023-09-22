@@ -8,14 +8,7 @@ export enum EDaoInviteStatus {
 }
 
 export type TOnboardingData = {
-    step?:
-        | 'signin'
-        | 'invites'
-        | 'organizations'
-        | 'phrase'
-        | 'phrase-check'
-        | 'username'
-        | 'complete'
+    step?: 'signin' | 'invites' | 'organizations' | 'complete'
     invites: {
         items: TOnboardingInvite[]
         isFetching: boolean
@@ -24,9 +17,6 @@ export type TOnboardingData = {
         items: TOnboardingOrganization[]
         isFetching: boolean
     }
-    phrase: string[]
-    isEmailPublic: boolean
-    username: string
     emailOther: string
     redirectTo?: string
 }

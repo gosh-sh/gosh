@@ -96,4 +96,4 @@ const GoshDaoInvites = (props: TGoshDaoInvitesProps) => {
     )
 }
 
-export default GoshDaoInvites
+export { GoshDaoInvites }

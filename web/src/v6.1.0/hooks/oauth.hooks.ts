@@ -10,8 +10,8 @@ export function useOauth() {
     const [oauth, setOAuth] = useRecoilState(OAuthSessionAtom)
     const resetOAuth = useResetRecoilState(OAuthSessionAtom)
 
-    const signin = async (provider: Provider) => {
-        await supabase.singinOAuth(provider)
+    const signin = async (provider: Provider, options?: { redirectTo?: string }) => {
+        await supabase.singinOAuth(provider, options)
     }
 
     const signout = async () => {

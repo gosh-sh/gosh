@@ -3,9 +3,9 @@ import { TOnboardingOrganization } from '../../../../types/onboarding.types'
 import { TOAuthSession } from '../../../../types/oauth.types'
 import { useOnboardingData } from '../../../../hooks/onboarding.hooks'
 import classNames from 'classnames'
-import GithubRepositories from '../GithubRepositories'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronUp } from '@fortawesome/free-solid-svg-icons'
+import { GithubRepositories } from '../GithubRepositories'
 
 type TOrganizationListItemProps = {
     oauth: TOAuthSession

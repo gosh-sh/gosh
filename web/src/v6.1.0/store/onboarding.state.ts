@@ -15,9 +15,6 @@ export const onboardingDataAtom = atom<TOnboardingData>({
     default: {
         invites: { items: [], isFetching: false },
         organizations: { items: [], isFetching: false },
-        phrase: [],
-        isEmailPublic: true,
-        username: '',
         emailOther: '',
     },
 })
