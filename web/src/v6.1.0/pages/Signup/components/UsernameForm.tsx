@@ -11,11 +11,11 @@ type TFormValues = {
 }
 
 const UsernameForm = () => {
-    const { data, updateUsernameStep } = useUserSignup()
+    const { data, submitUsernameStep } = useUserSignup()
 
     const onFormSubmit = async (values: TFormValues) => {
         try {
-            await updateUsernameStep(values)
+            await submitUsernameStep(values)
         } catch (e: any) {
             console.error(e.message)
         }
@@ -37,7 +37,7 @@ const UsernameForm = () => {
                         }}
                         onSubmit={onFormSubmit}
                         validationSchema={yup.object().shape({
-                            email: yup.string().required(),
+                            email: yup.string().email().required(),
                             username: yup.string().username().required(),
                         })}
                     >
@@ -46,7 +46,6 @@ const UsernameForm = () => {
                                 <div className="mb-4">
                                     <Field
                                         name="email"
-                                        type="email"
                                         component={FormikInput}
                                         autoComplete="off"
                                         placeholder="Email"

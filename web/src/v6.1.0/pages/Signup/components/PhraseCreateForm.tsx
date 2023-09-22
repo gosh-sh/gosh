@@ -5,15 +5,20 @@ import yup from '../../../yup-extended'
 import PhraseForm from '../../../../components/PhraseForm'
 import { PreviousStep } from './PreviousStep'
 import { useUserSignup } from '../../../hooks/user.hooks'
+import { useState } from 'react'
 
 const PhraseCreateForm = () => {
-    const { data, updatePhrase, updatePhraseCreateStep } = useUserSignup()
+    const { data, setPhrase, submitPhraseCreateStep } = useUserSignup()
+    const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
 
     const onFormSubmit = async (values: { words: string[] }) => {
         try {
-            await updatePhraseCreateStep(values.words)
+            setIsSubmitting(true)
+            await submitPhraseCreateStep(values.words)
         } catch (e: any) {
             console.error(e.message)
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
@@ -21,13 +26,14 @@ const PhraseCreateForm = () => {
         <div className="flex flex-wrap items-center justify-center gap-14">
             <div className="basis-full lg:basis-4/12 text-center lg:text-start">
                 <div className="mb-6">
-                    <PreviousStep step="username" />
+                    <PreviousStep
+                        step={!!data.daoinvites.length ? 'daoinvite' : 'username'}
+                        disabled={isSubmitting}
+                    />
                 </div>
-
                 <div className="mb-8 text-3xl font-medium">
                     Let's set up your GOSH account
                 </div>
-
                 <div className="text-gray-53596d">
                     Write down the seed phrase in a safe place or enter an existing one if
                     you already have a GOSH account
@@ -50,7 +56,7 @@ const PhraseCreateForm = () => {
                         btnClear
                         btnSubmitContent="Continue"
                         onSubmit={onFormSubmit}
-                        onGenerate={async (words) => updatePhrase(words)}
+                        onGenerate={async (words) => setPhrase(words)}
                     >
                         <Alert variant="danger" className="mt-5">
                             <div className="text-xs">

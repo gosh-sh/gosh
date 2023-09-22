@@ -1,18 +1,17 @@
-import { TOnboardingInvite } from '../../../../types/onboarding.types'
-import { TOAuthSession } from '../../../../types/oauth.types'
-import { useOnboardingData } from '../../../../hooks/onboarding.hooks'
 import classNames from 'classnames'
 import emptylogo from '../../../../../assets/images/emptylogo.svg'
 import { Button } from '../../../../../components/Form'
+import { TDBDaoInvite } from '../../../../types/dao.types'
+import { useUserSignup } from '../../../../hooks/user.hooks'
 
 type TOrganizationListItemProps = {
-    oauth: TOAuthSession
-    item: TOnboardingInvite
+    item: TDBDaoInvite
+    disabled?: boolean
 }
 
 const DaoInviteListItem = (props: TOrganizationListItemProps) => {
-    const { oauth, item } = props
-    const { toggleDaoInvite } = useOnboardingData(oauth)
+    const { item, disabled } = props
+    const { setDaoInviteStatus } = useUserSignup()
 
     return (
         <div className="border rounded-xl overflow-hidden">
@@ -40,8 +39,9 @@ const DaoInviteListItem = (props: TOrganizationListItemProps) => {
                                     ? '!bg-red-ff3b30 !text-white !border-transparent'
                                     : null,
                             )}
+                            disabled={disabled}
                             onClick={() => {
-                                toggleDaoInvite(false, item)
+                                setDaoInviteStatus(item.id, false)
                             }}
                         >
                             Reject
@@ -59,8 +59,9 @@ const DaoInviteListItem = (props: TOrganizationListItemProps) => {
                                     ? '!bg-green-600 !text-white !border-transparent'
                                     : null,
                             )}
+                            disabled={disabled}
                             onClick={() => {
-                                toggleDaoInvite(true, item)
+                                setDaoInviteStatus(item.id, true)
                             }}
                         >
                             Accept

@@ -29,8 +29,8 @@ const OnboardingComplete = () => {
                 <FontAwesomeIcon icon={faTimes} size="lg" />
             </Button>
 
-            <div className="flex flex-nowrap items-center overflow-hidden">
-                <div>
+            <div className="flex flex-nowrap items-center justify-between overflow-hidden gap-x-14">
+                <div className="grow">
                     <div className="mb-4 text-2xl md:text-3xl font-semibold leading-tight">
                         Welcome to GOSH, <br />
                         {user.username}

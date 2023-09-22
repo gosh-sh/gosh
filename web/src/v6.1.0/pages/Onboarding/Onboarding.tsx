@@ -7,13 +7,13 @@ import { useOauth } from '../../hooks/oauth.hooks'
 import { withRouteAnimation } from '../../hocs'
 import { useUser } from '../../hooks/user.hooks'
 import Loader from '../../../components/Loader'
-import { GithubOrganizations, GoshDaoInvites, OAuthSignin } from './components'
+import { GithubOrganizations, OAuthSignin } from './components'
 
 const OnboardingPage = () => {
     const navigate = useNavigate()
     const user = useUser()
-    const { signin, signout, oauth } = useOauth()
-    const { data } = useOnboardingData(oauth)
+    const { signin, signout, oauth } = useOauth({ initialize: true })
+    const { data } = useOnboardingData(oauth, { initialize: true })
 
     const signinOAuth = async () => {
         try {
@@ -53,9 +53,6 @@ const OnboardingPage = () => {
             {oauth.isLoading && <Loader>Please, wait...</Loader>}
 
             {data.step === 'signin' && <OAuthSignin signinOAuth={signinOAuth} />}
-            {data.step === 'invites' && (
-                <GoshDaoInvites oauth={oauth} signoutOAuth={signoutOAuth} />
-            )}
             {data.step === 'organizations' && (
                 <GithubOrganizations oauth={oauth} signoutOAuth={signoutOAuth} />
             )}

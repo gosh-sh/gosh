@@ -23,25 +23,29 @@ const generateRandomWordNumbers = () => {
 }
 
 const PhraseCheckForm = () => {
-    const { data, updateStep, updatePhraseCheckStep } = useUserSignup()
+    const { data, setStep, submitPhraseCheckStep } = useUserSignup()
     const setModal = useSetRecoilState(appModalStateAtom)
     const [rndNumbers, setRndNumbers] = useState<number[]>([])
+    const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
 
     const onFormSubmit = async (values: { words: string[] }) => {
         try {
-            await updatePhraseCheckStep({ words: values.words, numbers: rndNumbers })
+            setIsSubmitting(true)
+            await submitPhraseCheckStep({ words: values.words, numbers: rndNumbers })
             setModal({
                 static: true,
                 isOpen: true,
                 element: (
                     <PinCodeModal
                         phrase={data.phrase.join(' ')}
-                        onUnlock={() => updateStep('complete')}
+                        onUnlock={() => setStep('complete')}
                     />
                 ),
             })
         } catch (e: any) {
             console.error(e.message)
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
@@ -53,13 +57,11 @@ const PhraseCheckForm = () => {
         <div className="flex flex-wrap items-center justify-center gap-14">
             <div className="basis-full lg:basis-4/12 text-center lg:text-start">
                 <div className="mb-6">
-                    <PreviousStep step="phrase" />
+                    <PreviousStep step="phrase" disabled={isSubmitting} />
                 </div>
-
                 <div className="mb-8 text-3xl font-medium">
                     Let's set up your GOSH account
                 </div>
-
                 <div className="text-gray-53596d">
                     Please input requested words from your phrase to ensure it is written
                     correctly

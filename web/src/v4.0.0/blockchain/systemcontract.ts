@@ -13,6 +13,7 @@ import { contextVersion } from '../constants'
 import { getAllAccounts } from '../../blockchain/utils'
 import { MAX_PARALLEL_READ } from '../../constants'
 import { GoshCommitTag } from './committag'
+import { DaoProfile } from '../../blockchain/daoprofile'
 
 export class SystemContract extends BaseContract {
     versionController: VersionController
@@ -65,6 +66,13 @@ export class SystemContract extends BaseContract {
 
         const found = details.find(({ name }) => name === data!.tagname)
         return found?.account || null
+    }
+
+    async getDaoProfile(name: string) {
+        const { value0 } = await this.runLocal('getProfileDaoAddr', { name }, undefined, {
+            useCachedBoc: true,
+        })
+        return new DaoProfile(this.account.client, value0)
     }
 
     async getDao(params: { name?: string; address?: string }) {

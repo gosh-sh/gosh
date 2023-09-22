@@ -7,7 +7,6 @@ import {
 } from 'recoil'
 import _ from 'lodash'
 import {
-    daoInvitesSelector,
     octokitSelector,
     onboardingDataAtom,
     onboardingStatusDataAtom,
@@ -18,8 +17,6 @@ import {
 import { supabase } from '../../supabase'
 import { TOAuthSession } from '../types/oauth.types'
 import {
-    EDaoInviteStatus,
-    TOnboardingInvite,
     TOnboardingOrganization,
     TOnboardingRepository,
     TOnboardingStatusDao,
@@ -31,15 +28,19 @@ import { validateOnboardingDao, validateOnboardingRepo } from '../validators'
 import { useOauth } from './oauth.hooks'
 import { appToastStatusSelector } from '../../store/app.state'
 
-export function useOnboardingData(oauth?: TOAuthSession) {
+export function useOnboardingData(
+    oauth?: TOAuthSession,
+    options?: { initialize?: boolean },
+) {
+    const { initialize } = options || {}
     const [status, setStatus] = useRecoilState(
         appToastStatusSelector('__onboardingupload'),
     )
     const user = useUser()
+    const { signout } = useOauth()
     const [data, setData] = useRecoilState(onboardingDataAtom)
     const resetData = useResetRecoilState(onboardingDataAtom)
     const [organizations, setOrganizations] = useRecoilState(organizationsSelector)
-    const [invites, setInvites] = useRecoilState(daoInvitesSelector)
     const repositoriesChecked = useRecoilValue(repositoriesCheckedSelector)
     const octokit = useRecoilValue(octokitSelector)
 
@@ -98,46 +99,16 @@ export function useOnboardingData(oauth?: TOAuthSession) {
         }))
     }
 
-    const getDaoInvites = async () => {
-        if (!oauth?.session) {
-            return
-        }
-
-        setInvites((state) => ({ ...state, isFetching: true }))
-        const { data, error } = await supabase.client
-            .from('dao_invite')
-            .select('id, dao_name')
-            .eq('recipient_email', oauth.session.user.email)
-            .is('recipient_status', null)
-        if (error) {
-            setInvites({ isFetching: false, items: [] })
-            throw new GoshError('Get DAO invites', error.message)
-        }
-        setInvites((state) => ({
-            ...state,
-            items: data.map((item) => {
-                const found = state.items.find((i) => i.id === item.id)
-                if (found) {
-                    return found
-                }
-                return { id: item.id, daoname: item.dao_name, accepted: null }
-            }),
-            isFetching: false,
-        }))
-
-        return !!data.length
-    }
-
     const upload = async (params: { email: string }) => {
         const { email } = params
 
         try {
-            if (!user.persist.username) {
+            if (!user.persist.username || !oauth?.session?.user.id) {
                 throw new GoshError('Value error', 'User undefined')
             }
 
-            // Search for DB record for current username
-            const dbUser = await getDbUser(user.persist.username)
+            // Create DB record for current username
+            let dbUser = await _getDbUser(user.persist.username)
             if (!dbUser) {
                 throw new GoshError(
                     'Value error',
@@ -145,42 +116,26 @@ export function useOnboardingData(oauth?: TOAuthSession) {
                 )
             }
 
-            // Update db user
-            const { error } = await supabase.client
-                .from('users')
-                .update({ auth_user: oauth?.session?.user.id, email_other: email })
-                .eq('id', dbUser.id)
-            if (error) {
-                throw new GoshError('Update user error', error.message)
-            }
+            // Create one more record of db user because of RLS
+            // TODO: Replace with update when backend service appears
+            dbUser = await _createDbUser({
+                username: dbUser.gosh_username,
+                pubkey: dbUser.gosh_pubkey,
+                authid: oauth?.session?.user.id,
+                email: dbUser.email,
+                emailextra: email,
+            })
 
             // Save auto clone repositories
             const goshAddress = AppConfig.versions[AppConfig.getLatestVersion()]
             const goshProtocol = `gosh://${goshAddress}`
             for (const item of repositoriesChecked) {
                 const { daoname, name } = item
-                await createDbGithubRecord({
+                await _createDbGithubRecord({
                     user_id: dbUser.id,
                     github_url: `/${daoname}/${name}`,
                     gosh_url: `${goshProtocol}/${daoname.toLowerCase()}/${name.toLowerCase()}`,
                 })
-            }
-
-            // Update DAO invites status
-            for (const invite of invites.items) {
-                const { error } = await supabase.client
-                    .from('dao_invite')
-                    .update({
-                        recipient_username: user.persist.username,
-                        recipient_status: invite.accepted
-                            ? EDaoInviteStatus.ACCEPTED
-                            : EDaoInviteStatus.REJECTED,
-                        token_expired: true,
-                    })
-                    .eq('id', invite.id)
-                if (error) {
-                    throw new GoshError(error.message)
-                }
             }
 
             // Validate onboarding data
@@ -200,44 +155,69 @@ export function useOnboardingData(oauth?: TOAuthSession) {
                 }),
             )
 
-            setData((state) => ({ ...state, step: 'complete' }))
-            return validated.every((r) => !!r)
+            setData((state) => ({
+                ...state,
+                emailOther: email || oauth?.session?.user.email || '',
+                step: 'complete',
+            }))
+            const valid = validated.every((r) => !!r)
+            if (valid) {
+                setData((state) => ({ ...state, redirectTo: '/a/orgs' }))
+                await signout()
+            } else {
+                setData((state) => ({ ...state, redirectTo: '/onboarding/status' }))
+            }
         } catch (e: any) {
             setStatus((state) => ({ ...state, type: 'error', data: e }))
             throw e
         }
     }
 
-    const toggleDaoInvite = (status: boolean, item: TOnboardingInvite) => {
-        setInvites((state) => ({
-            ...state,
-            items: state.items.map((i) => {
-                if (i.id !== item.id) {
-                    return i
-                }
-                return { ...item, accepted: status }
-            }),
-        }))
-    }
-
     const updateData = (data?: object) => {
         setData((state) => ({ ...state, ...data }))
     }
 
-    const getDbUser = async (username: string) => {
+    const _getDbUser = async (username: string) => {
         const { data, error } = await supabase.client
             .from('users')
             .select()
             .eq('gosh_username', username)
             .single()
-        if (error?.code === 'PGRST116') return null
+        if (error?.code === 'PGRST116') {
+            return null
+        }
         if (error) {
             throw new GoshError(error.message)
         }
         return data
     }
 
-    const createDbGithubRecord = async (item: {
+    const _createDbUser = async (params: {
+        username: string
+        pubkey: string
+        authid: string
+        email: string | null
+        emailextra: string | null
+    }) => {
+        const { username, pubkey, authid, email, emailextra } = params
+        const { data, error } = await supabase.client
+            .from('users')
+            .insert({
+                gosh_username: username,
+                gosh_pubkey: `0x${pubkey}`,
+                auth_user: authid,
+                email,
+                email_other: emailextra,
+            })
+            .select()
+            .single()
+        if (error) {
+            throw new GoshError(error.message)
+        }
+        return data
+    }
+
+    const _createDbGithubRecord = async (item: {
         user_id: string
         github_url: string
         gosh_url: string
@@ -262,31 +242,25 @@ export function useOnboardingData(oauth?: TOAuthSession) {
     }
 
     useEffect(() => {
-        if (oauth && !data.redirectTo) {
-            setData((state) => {
-                const { isLoading, session } = oauth
-                if (isLoading) {
-                    return { ...state, step: undefined }
-                }
-                if (!session) {
-                    return { ...state, step: 'signin' }
-                }
-                return { ...state, step: state.step || 'invites' }
-            })
+        if (initialize && !data.redirectTo) {
+            if (oauth?.isLoading) {
+                setData((state) => ({ ...state, step: undefined }))
+            } else if (!oauth?.session) {
+                setData((state) => ({ ...state, step: 'signin' }))
+            } else {
+                setData((state) => ({ ...state, step: state.step || 'organizations' }))
+            }
         }
-    }, [oauth, data.redirectTo, setData])
+    }, [initialize, oauth?.isLoading, data.redirectTo])
 
     return {
         data,
-        invites,
         organizations,
         repositories: {
             selected: repositoriesChecked,
         },
         getOrganizations,
         toggleOrganization,
-        getDaoInvites,
-        toggleDaoInvite,
         upload,
         uploadStatus: status,
         updateData,

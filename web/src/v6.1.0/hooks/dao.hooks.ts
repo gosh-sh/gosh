@@ -34,6 +34,7 @@ import {
 } from '../store/dao.state'
 import {
     EDaoMemberType,
+    EDaoInviteStatus,
     ETaskReward,
     TDaoDetailsMemberItem,
     TDaoEventDetails,
@@ -54,7 +55,6 @@ import { GoshAdapterFactory } from 'react-gosh'
 import { TSystemContract } from '../../types/blockchain.types'
 import { TGoshCommitTag } from '../types/repository.types'
 import { GoshRepository } from '../blockchain/repository'
-import { EDaoInviteStatus } from '../types/onboarding.types'
 import { Task } from '../blockchain/task'
 import { AggregationFn } from '@eversdk/core'
 import { SystemContract } from '../blockchain/systemcontract'
@@ -221,6 +221,7 @@ export function useUserDaoList(params: { count?: number; initialize?: boolean } 
             .from('users')
             .select(`*, github (updated_at, gosh_url)`)
             .eq('gosh_username', username)
+            .not('auth_user', 'is', null)
         if (error) {
             throw new GoshError('Get onboarding data', error.message)
         }
@@ -229,8 +230,7 @@ export function useUserDaoList(params: { count?: number; initialize?: boolean } 
         }
 
         const imported: { [name: string]: string[] } = {}
-        const row = data[0]
-        for (const item of row.github) {
+        for (const item of data[0].github) {
             if (item.updated_at) {
                 continue
             }

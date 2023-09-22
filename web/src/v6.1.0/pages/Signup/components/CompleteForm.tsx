@@ -2,25 +2,33 @@ import { Form, Formik } from 'formik'
 import { Button } from '../../../../components/Form'
 import { useUserSignup } from '../../../hooks/user.hooks'
 import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 
 const CompleteForm = () => {
     const navigate = useNavigate()
-    const { updateCompleteStep } = useUserSignup()
+    const { submitCompleteStep } = useUserSignup()
+    const [isAnySubmitting, setIsAnySubmitting] = useState<boolean>(false)
 
     const onGithubSubmit = async () => {
         try {
-            await updateCompleteStep({ provider: 'github' })
+            setIsAnySubmitting(true)
+            await submitCompleteStep({ provider: 'github' })
         } catch (e: any) {
             console.error(e.message)
+        } finally {
+            setIsAnySubmitting(false)
         }
     }
 
     const onSkipSubmit = async () => {
         try {
-            await updateCompleteStep({ provider: null })
+            setIsAnySubmitting(true)
+            await submitCompleteStep({ provider: null })
             navigate('/a/orgs')
         } catch (e: any) {
             console.error(e.message)
+        } finally {
+            setIsAnySubmitting(false)
         }
     }
 
@@ -41,7 +49,7 @@ const CompleteForm = () => {
                                     type="submit"
                                     size="xl"
                                     className="w-full"
-                                    disabled={isSubmitting}
+                                    disabled={isSubmitting || isAnySubmitting}
                                     isLoading={isSubmitting}
                                 >
                                     Upload repository from GitHub
@@ -59,7 +67,7 @@ const CompleteForm = () => {
                                     variant="outline-secondary"
                                     size="xl"
                                     className="w-full"
-                                    disabled={isSubmitting}
+                                    disabled={isSubmitting || isAnySubmitting}
                                     isLoading={isSubmitting}
                                 >
                                     No, thanks

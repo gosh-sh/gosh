@@ -14,7 +14,6 @@ import { Button } from '../../../../../components/Form'
 import { toast } from 'react-toastify'
 import { ToastError } from '../../../../../components/Toast'
 import OrganizationListItem from './ListItem'
-import { useNavigate } from 'react-router-dom'
 
 type TGithubOrganizationsProps = {
     oauth: TOAuthSession
@@ -23,16 +22,8 @@ type TGithubOrganizationsProps = {
 
 const GithubOrganizations = (props: TGithubOrganizationsProps) => {
     const { oauth, signoutOAuth } = props
-    const navigate = useNavigate()
-    const {
-        data,
-        invites,
-        organizations,
-        repositories,
-        updateData,
-        getOrganizations,
-        upload,
-    } = useOnboardingData(oauth)
+    const { data, organizations, repositories, updateData, getOrganizations, upload } =
+        useOnboardingData(oauth)
 
     const onBackClick = () => {
         updateData({ step: 'invites' })
@@ -40,13 +31,7 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
 
     const onFormSubmit = async (values: { email_other: string }) => {
         try {
-            const valid = await upload({ email: values.email_other })
-            if (valid) {
-                await signoutOAuth()
-                navigate('/a/orgs', { replace: true })
-            } else {
-                navigate('/onboarding/status', { replace: true })
-            }
+            await upload({ email: values.email_other })
         } catch (e: any) {
             console.error(e.message)
         }
@@ -73,11 +58,7 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
         <div className="flex flex-wrap items-start">
             <div className="basis-1/2 p-0 lg:p-16">
                 <div className="mb-6">
-                    {!invites.items.length ? (
-                        <OAuthProfile oauth={oauth} onSignout={signoutOAuth} />
-                    ) : (
-                        <PreviousStep onClick={onBackClick} />
-                    )}
+                    <OAuthProfile oauth={oauth} onSignout={signoutOAuth} />
                 </div>
 
                 <div className="mb-8 text-3xl font-medium">

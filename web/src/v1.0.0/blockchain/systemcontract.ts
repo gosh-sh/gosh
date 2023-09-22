@@ -7,6 +7,7 @@ import { GoshRepository } from './repository'
 import { AppConfig } from '../../appconfig'
 import { VersionController } from '../../blockchain/versioncontroller'
 import { whileFinite } from '../../utils'
+import { DaoProfile } from '../../blockchain/daoprofile'
 
 export class SystemContract extends BaseContract {
     versionController: VersionController
@@ -14,6 +15,13 @@ export class SystemContract extends BaseContract {
     constructor(client: TonClient, address: string) {
         super(client, GoshABI, address)
         this.versionController = AppConfig.goshroot
+    }
+
+    async getDaoProfile(name: string) {
+        const { value0 } = await this.runLocal('getProfileDaoAddr', { name }, undefined, {
+            useCachedBoc: true,
+        })
+        return new DaoProfile(this.account.client, value0)
     }
 
     async getDao(params: { name?: string; address?: string }) {

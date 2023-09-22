@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useUserSignup } from '../../hooks/user.hooks'
 import {
     CompleteForm,
+    DaoInvitesForm,
     PhraseCheckForm,
     PhraseCreateForm,
     UsernameForm,
@@ -24,6 +25,11 @@ const SignupPage = () => {
                 {data.step === 'username' && (
                     <motion.div key="username" {...motionProps}>
                         <UsernameForm />
+                    </motion.div>
+                )}
+                {data.step === 'daoinvite' && (
+                    <motion.div key="daoinvite" {...motionProps}>
+                        <DaoInvitesForm />
                     </motion.div>
                 )}
                 {data.step === 'phrase' && (

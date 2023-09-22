@@ -1,18 +1,7 @@
 import { TValidationResult } from '../../types/validator.types'
 
-export enum EDaoInviteStatus {
-    ACCEPTED = 'accepted',
-    REJECTED = 'rejected',
-    REVOKED = 'revoked',
-    PROPOSAL_CREATED = 'proposal_created',
-}
-
 export type TOnboardingData = {
-    step?: 'signin' | 'invites' | 'organizations' | 'complete'
-    invites: {
-        items: TOnboardingInvite[]
-        isFetching: boolean
-    }
+    step?: 'signin' | 'organizations' | 'complete'
     organizations: {
         items: TOnboardingOrganization[]
         isFetching: boolean
@@ -43,12 +32,6 @@ export type TOnboardingRepository = {
     description: string
     updatedAt: string
     isSelected: boolean
-}
-
-export type TOnboardingInvite = {
-    id: string
-    daoname: string
-    accepted: boolean | null
 }
 
 export type TOnboardingStatusDao = {

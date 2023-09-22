@@ -3,9 +3,10 @@ import { useRecoilState, useResetRecoilState } from 'recoil'
 import { OAuthSessionAtom } from '../store/oauth.state'
 import { Provider } from '@supabase/supabase-js'
 import { supabase } from '../../supabase'
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 
-export function useOauth() {
+export function useOauth(options?: { initialize?: boolean }) {
+    const { initialize } = options || {}
     const location = useLocation()
     const [oauth, setOAuth] = useRecoilState(OAuthSessionAtom)
     const resetOAuth = useResetRecoilState(OAuthSessionAtom)
@@ -19,15 +20,17 @@ export function useOauth() {
         resetOAuth()
     }
 
-    useEffect(() => {
-        const _getOAuthSession = async () => {
-            setOAuth({ session: null, isLoading: true })
-            const { data } = await supabase.client.auth.getSession()
-            setOAuth({ session: data.session, isLoading: false })
-        }
+    const getOAuthSession = useCallback(async () => {
+        setOAuth({ session: null, isLoading: true })
+        const { data } = await supabase.client.auth.getSession()
+        setOAuth({ session: data.session, isLoading: false })
+    }, [])
 
-        _getOAuthSession()
-    }, [setOAuth])
+    useEffect(() => {
+        if (initialize) {
+            getOAuthSession()
+        }
+    }, [initialize, getOAuthSession])
 
     useEffect(() => {
         const params = new URLSearchParams(location.search)

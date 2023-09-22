@@ -6,13 +6,11 @@ import { Dao } from './dao'
 import { GoshRepository } from './repository'
 import { AppConfig } from '../../appconfig'
 import { VersionController } from '../../blockchain/versioncontroller'
-import { executeByChunk, whileFinite } from '../../utils'
+import { whileFinite } from '../../utils'
 import { GoshTag } from './goshtag'
 import { Task } from './task'
-import { contextVersion } from '../constants'
-import { getAllAccounts } from '../../blockchain/utils'
-import { MAX_PARALLEL_READ } from '../../constants'
 import { GoshCommitTag } from './committag'
+import { DaoProfile } from '../../blockchain/daoprofile'
 
 export class SystemContract extends BaseContract {
     versionController: VersionController
@@ -49,6 +47,13 @@ export class SystemContract extends BaseContract {
             tagName: tagname,
         })
         return new GoshCommitTag(this.client, value0)
+    }
+
+    async getDaoProfile(name: string) {
+        const { value0 } = await this.runLocal('getProfileDaoAddr', { name }, undefined, {
+            useCachedBoc: true,
+        })
+        return new DaoProfile(this.account.client, value0)
     }
 
     async getDao(params: { name?: string; address?: string }) {
