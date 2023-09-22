@@ -1541,7 +1541,7 @@ export function useCreateDaoMember() {
                     })
                     const daonames = _.flatten(profiles.map(({ daonames }) => daonames))
                     await member.wallet!.createDaoMember({ members, daonames, comment })
-                } else {
+                } else if (profiles.length > 0) {
                     const memberAddCells = profiles.map(({ profile, daonames }) => ({
                         type: EDaoEventType.DAO_MEMBER_ADD,
                         params: {
