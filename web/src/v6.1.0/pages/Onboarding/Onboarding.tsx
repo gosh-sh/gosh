@@ -41,7 +41,7 @@ const OnboardingPage = () => {
     }, [oauth.error])
 
     if (!user.persist.phrase) {
-        return <Navigate to="/a/signin?redirect_to=/onboarding" />
+        return <Navigate to="/a/signup" />
     }
 
     if (data.redirectTo) {
