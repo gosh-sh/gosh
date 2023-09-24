@@ -12,17 +12,26 @@ on:
   push:
     branches:
       - main
+      - dev
       - 'ci/**'
     tags:
       - '[0-9]+.[0-9]+'
       - '[0-9]+.[0-9]+.[0-9]+'
+    paths:
+      - '.github/workflows/prerelease.yaml'
+      - 'git-remote-gosh/**'
+      - 'v1_x/**'
+      - 'v2_x/**'
+      - 'v3_x/**'
+      - 'v4_x/**'
+      - 'v5_x/**'
+      - 'v6_x/**'
 
 permissions:
   contents: write
 
 env:
   release: ${{ startsWith(github.ref, 'refs/tags/') && github.repository == 'gosh-sh/gosh' }}
-  CARGO_TERM_COLOR: always
 
 jobs:
   build:
@@ -91,10 +100,18 @@ jobs:
           - bin: git-remote-gosh_v6_1_0
             dir: v6_x/v6.1.0/git-remote-gosh
 
+    name: B ${{ matrix.bin }} ${{ matrix.target }}
+
     env:
       CACHE: false  # default env value
       CACHE_RESULT_DIR: ${{ github.workspace }}/.result/${{ matrix.result }}
       CACHE_RESULT_BIN: ${{ github.workspace }}/.result/${{ matrix.result }}/${{ matrix.bin }}
+
+      CARGO_TERM_COLOR: always
+      SCCACHE_GHA_VERSION: ${{ vars.SCCACHE_GHA_VERSION || 1 }} # Setting this env var enables the caching
+      RUSTC_WRAPPER: sccache
+      CMAKE_C_COMPILER_LAUNCHER: sccache
+      CMAKE_CXX_COMPILER_LAUNCHER: sccache
 
     steps:
       - name: Checkout repo
@@ -105,14 +122,16 @@ jobs:
         run: |
           echo "VERSION=$(cat version.json | jq -r .version)" >> "$GITHUB_OUTPUT"
 
-      - name: Setup result cache
-        uses: actions/cache@v3
-        with:
-          # IMPORTANT: path here should be relative to the workspace directory
-          path: |
-            .result
-            ${{ matrix.dir }}/target
-          key: builder-${{ runner.os }}-result-${{ matrix.bin }}
+      # - name: Setup result cache
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: |
+      #       .result
+      #       ${{ matrix.dir }}/target
+      #     key: builder-${{ matrix.target }}-result-${{ matrix.bin }}
+
+      - name: Configure sccache
+        uses: mozilla-actions/sccache-action@v0.0.3
 
       - name: Check if can use cache
         if: matrix.cache
