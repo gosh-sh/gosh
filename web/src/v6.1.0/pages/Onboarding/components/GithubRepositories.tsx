@@ -7,7 +7,7 @@ import ListEmpty from './ListEmpty'
 import { toast } from 'react-toastify'
 import { ToastError } from '../../../../components/Toast'
 import { useOnboardingRepositories } from '../../../hooks/onboarding.hooks'
-import Loader from '../../../../components/Loader/Loader'
+import Loader from '../../../../components/Loader'
 
 type TGithubRepositoriesProps = {
     organization: TOnboardingOrganization
@@ -92,4 +92,4 @@ const GithubRepositories = (props: TGithubRepositoriesProps) => {
     )
 }
 
-export default GithubRepositories
+export { GithubRepositories }

@@ -13,6 +13,14 @@ import {
     TTaskDetails,
 } from '../types/dao.types'
 
+export const partnerDaoListAtom = atom<TUserDaoList>({
+    key: `PartnerDaoListAtom_${contextVersion}`,
+    default: {
+        isFetching: false,
+        items: [],
+    },
+})
+
 export const userDaoListAtom = atom<TUserDaoList>({
     key: `UserDaoListAtom_${contextVersion}`,
     default: {

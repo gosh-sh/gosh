@@ -6,7 +6,7 @@ import ListEmpty from '../ListEmpty'
 import OAuthProfile from '../OAuthProfile'
 import PreviousStep from '../PreviousStep'
 import { Formik, Form, Field } from 'formik'
-import { FormikCheckbox, FormikInput } from '../../../../../components/Formik'
+import { FormikInput } from '../../../../../components/Formik'
 import yup from '../../../../yup-extended'
 import { TOAuthSession } from '../../../../types/oauth.types'
 import { useOnboardingData } from '../../../../hooks/onboarding.hooks'
@@ -22,19 +22,19 @@ type TGithubOrganizationsProps = {
 
 const GithubOrganizations = (props: TGithubOrganizationsProps) => {
     const { oauth, signoutOAuth } = props
-    const { data, invites, organizations, repositories, updateData, getOrganizations } =
+    const { data, organizations, repositories, updateData, getOrganizations, upload } =
         useOnboardingData(oauth)
 
     const onBackClick = () => {
         updateData({ step: 'invites' })
     }
 
-    const onContinueClick = (values: any) => {
-        updateData({
-            step: 'phrase',
-            isEmailPublic: values.is_email_public,
-            emailOther: values.email_other,
-        })
+    const onFormSubmit = async (values: { email_other: string }) => {
+        try {
+            await upload({ email: values.email_other })
+        } catch (e: any) {
+            console.error(e.message)
+        }
     }
 
     useEffect(() => {
@@ -58,11 +58,7 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
         <div className="flex flex-wrap items-start">
             <div className="basis-1/2 p-0 lg:p-16">
                 <div className="mb-6">
-                    {!invites.items.length ? (
-                        <OAuthProfile oauth={oauth} onSignout={signoutOAuth} />
-                    ) : (
-                        <PreviousStep onClick={onBackClick} />
-                    )}
+                    <OAuthProfile oauth={oauth} onSignout={signoutOAuth} />
                 </div>
 
                 <div className="mb-8 text-3xl font-medium">
@@ -75,33 +71,15 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                 <Formik
                     initialValues={{
                         email_other: data.emailOther,
-                        is_email_public: data.isEmailPublic,
                     }}
                     validationSchema={yup.object().shape({
                         email_other: yup.string().email(),
                     })}
-                    onSubmit={onContinueClick}
+                    onSubmit={onFormSubmit}
                     enableReinitialize
                 >
-                    {() => (
+                    {({ isSubmitting }) => (
                         <Form>
-                            <div className="mb-8">
-                                <Field
-                                    name="is_email_public"
-                                    type="checkbox"
-                                    component={FormikCheckbox}
-                                    inputProps={{
-                                        label: (
-                                            <div className="text-sm leading-normal">
-                                                Enable other GOSH users to find me by
-                                                email {oauth.session?.user.email}{' '}
-                                                (optional)
-                                            </div>
-                                        ),
-                                    }}
-                                />
-                            </div>
-
                             <div className="mb-8">
                                 <Field
                                     name="email_other"
@@ -109,6 +87,7 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                                     component={FormikInput}
                                     autoComplete="off"
                                     placeholder="Email for notifications"
+                                    disabled={isSubmitting}
                                     help="You can input another email to send notifications to"
                                 />
                             </div>
@@ -117,7 +96,10 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                                 <Button
                                     type="submit"
                                     size="xl"
-                                    disabled={!repositories.selected.length}
+                                    disabled={
+                                        !repositories.selected.length || isSubmitting
+                                    }
+                                    isLoading={isSubmitting}
                                 >
                                     Upload
                                 </Button>
@@ -125,21 +107,8 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
                         </Form>
                     )}
                 </Formik>
-
-                {!repositories.selected.length &&
-                    !!invites.items.filter((i) => i.accepted === true).length && (
-                        <div className="text-center mt-4">
-                            <Button
-                                type="button"
-                                variant="custom"
-                                className="text-gray-53596d hover:text-black"
-                                onClick={onContinueClick}
-                            >
-                                Skip this step
-                            </Button>
-                        </div>
-                    )}
             </div>
+
             <div className="grow basis-0">
                 <div className="text-end text-gray-7c8db5">
                     <Button
@@ -178,4 +147,4 @@ const GithubOrganizations = (props: TGithubOrganizationsProps) => {
     )
 }
 
-export default GithubOrganizations
+export { GithubOrganizations }

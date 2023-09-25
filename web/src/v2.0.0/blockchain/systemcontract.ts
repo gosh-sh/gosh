@@ -9,6 +9,7 @@ import { VersionController } from '../../blockchain/versioncontroller'
 import { whileFinite } from '../../utils'
 import { GoshTag } from './goshtag'
 import { Task } from './task'
+import { DaoProfile } from '../../blockchain/daoprofile'
 
 export class SystemContract extends BaseContract {
     versionController: VersionController
@@ -21,6 +22,13 @@ export class SystemContract extends BaseContract {
     async getGoshTag(params: { address: string }) {
         const { address } = params
         return new GoshTag(this.client, address)
+    }
+
+    async getDaoProfile(name: string) {
+        const { value0 } = await this.runLocal('getProfileDaoAddr', { name }, undefined, {
+            useCachedBoc: true,
+        })
+        return new DaoProfile(this.account.client, value0)
     }
 
     async getDao(params: { name?: string; address?: string }) {

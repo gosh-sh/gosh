@@ -1,15 +1,14 @@
-import { useRecoilValue } from 'recoil'
-import { onboardingDataAtom } from '../store/onboarding.state'
 import { withPin, withRouteAnimation } from '../hocs'
-import OnboardingComplete from './Onboarding/components/Complete'
+import { OnboardingComplete } from './Onboarding/components'
 import { AnimatedOutlet } from '../components/Outlet'
+import { useOnboardingData } from '../hooks/onboarding.hooks'
 
 const AccountLayout = () => {
-    const { step } = useRecoilValue(onboardingDataAtom)
+    const { data } = useOnboardingData()
 
     return (
         <div className="container py-10">
-            {step === 'complete' && <OnboardingComplete />}
+            {data.step === 'complete' && <OnboardingComplete />}
             <AnimatedOutlet />
         </div>
     )

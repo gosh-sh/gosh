@@ -19,6 +19,9 @@ const Header = () => {
     const location = useLocation()
     const setModal = useSetRecoilState(appModalStateAtom)
 
+    const isSignin = location.pathname.search('/signin') >= 0
+    const isSignup = location.pathname.search('/signup') >= 0
+
     return (
         <header>
             <Disclosure
@@ -104,14 +107,11 @@ const Header = () => {
                             </a>
 
                             {!user.persist.phrase &&
-                                location.pathname.search(/signin|signup/) < 0 && (
+                                ((!isSignin && !isSignup) || isSignup) && (
                                     <ButtonLink to={`/a/signin`}>Sign in</ButtonLink>
                                 )}
-                            {location.pathname.search('/signin') >= 0 && (
-                                <ButtonLink to={`/`}>Sign up</ButtonLink>
-                            )}
-                            {location.pathname.search('/signup') >= 0 && (
-                                <ButtonLink to={`/a/signin`}>Sign in</ButtonLink>
+                            {!user.persist.phrase && isSignin && (
+                                <ButtonLink to={`/a/signup`}>Sign up</ButtonLink>
                             )}
 
                             {/* Mobile menu button. Simple dropdown menu is used for now */}

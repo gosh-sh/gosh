@@ -1,11 +1,10 @@
 import CopyClipboard from '../../../../../components/CopyClipboard'
-import { TDaoInviteListItem } from '../../../../types/dao.types'
+import { EDaoInviteStatus, TDaoInviteListItem } from '../../../../types/dao.types'
 import { shortString } from '../../../../../utils'
 import Skeleton from '../../../../../components/Skeleton'
 import { useDao, useDaoInviteList } from '../../../../hooks/dao.hooks'
 import { ToastError } from '../../../../../components/Toast'
 import { Button } from '../../../../../components/Form'
-import { EDaoInviteStatus } from '../../../../types/onboarding.types'
 import classNames from 'classnames'
 import { toast } from 'react-toastify'
 

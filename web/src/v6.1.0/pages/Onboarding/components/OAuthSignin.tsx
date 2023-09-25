@@ -27,7 +27,7 @@ const OAuthSignin = (props: TOAuthSigninProps) => {
 
                 <div className="mt-14">
                     <Button type="button" size="xl" onClick={signinOAuth}>
-                        Create account with Github
+                        Sign in with Github
                     </Button>
                 </div>
             </div>
@@ -35,4 +35,4 @@ const OAuthSignin = (props: TOAuthSigninProps) => {
     )
 }
 
-export default OAuthSignin
+export { OAuthSignin }
