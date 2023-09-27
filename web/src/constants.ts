@@ -6,6 +6,8 @@ export const MAX_PARALLEL_WRITE = 200
 export const SYSTEM_TAG = '___!system!___'
 export const DAO_TOKEN_TRANSFER_TAG = '___!daotokentransfer!___'
 export const VESTING_BALANCE_TAG = '___!vestingbalance!___'
+export const MILESTONE_TAG = '___!milestone!___'
+export const MILESTONE_TASK_TAG = '___!milestonetask!___'
 export const DISABLED_VERSIONS = ['5.0.0', '6.0.0']
 
 export const PARTNER_DAO_NAMES: string[] = JSON.parse(
@@ -20,7 +22,7 @@ export const DaoEventType: { [key: number]: string } = {
     6: 'Remove DAO member',
     7: 'Upgrade DAO',
     8: 'Change DAO config',
-    9: 'Confirm task',
+    9: 'Complete milestone',
     10: 'Delete task',
     11: 'Create task',
     12: 'Create repository',
@@ -49,6 +51,9 @@ export const DaoEventType: { [key: number]: string } = {
     35: 'DAO token lock',
     36: 'Redeploy task',
     37: 'Redeployed task',
-    38: 'Task upgrade',
+    38: 'Upgrade task',
     39: 'DAO transfer tokens from previous version',
+    42: 'Delete milestone',
+    43: 'Create milestone',
+    44: 'Upgrade milestone',
 }

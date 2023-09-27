@@ -151,9 +151,18 @@ export class Dao extends BaseContract {
             'getTaskCode',
             { repoName: reponame },
             undefined,
-            {
-                useCachedBoc: true,
-            },
+            { useCachedBoc: true },
+        )
+        const { hash } = await this.client.boc.get_boc_hash({ boc: value0 })
+        return hash
+    }
+
+    async getMilestoneCodeHash(reponame: string): Promise<string> {
+        const { value0 } = await this.runLocal(
+            'getBigTaskCode',
+            { repoName: reponame },
+            undefined,
+            { useCachedBoc: true },
         )
         const { hash } = await this.client.boc.get_boc_hash({ boc: value0 })
         return hash

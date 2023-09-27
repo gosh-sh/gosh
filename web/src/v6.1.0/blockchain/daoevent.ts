@@ -1,14 +1,20 @@
 import { TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
 import SmvEventABI from './abi/smvproposal.abi.json'
-import { DaoEventType, MAX_PARALLEL_READ, SYSTEM_TAG } from '../../constants'
+import {
+    DaoEventType,
+    MAX_PARALLEL_READ,
+    MILESTONE_TAG,
+    SYSTEM_TAG,
+} from '../../constants'
 import { DaoWallet } from './daowallet'
 import { EDaoEventType } from '../../types/common.types'
 import { GoshError } from '../../errors'
 import { executeByChunk, sleep } from '../../utils'
 import _ from 'lodash'
-import { TDaoEventReviewer, TTaskGrantPair } from '../types/dao.types'
-import { getDaoOrProfile } from './helpers'
+import { EDaoMemberType, TDaoEventReviewer, TTaskGrantPair } from '../types/dao.types'
+import { getDaoOrProfile, getSystemContract } from './helpers'
+import { AppConfig } from '../../appconfig'
 
 export class DaoEvent extends BaseContract {
     constructor(client: TonClient, address: string) {
@@ -123,6 +129,15 @@ export class DaoEvent extends BaseContract {
             fn = 'getChangeAllowDiscussionProposalParams'
         } else if (type === EDaoEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE) {
             fn = 'getAbilityInviteProposalParams'
+        } else if (type === EDaoEventType.MILESTONE_CREATE) {
+            fn = 'getBigTaskDeployProposalParams'
+            parser = this.parseMilestoneCreateEventParams
+        } else if (type === EDaoEventType.MILESTONE_DELETE) {
+            fn = 'getBigTaskProposalParams'
+        } else if (type === EDaoEventType.MILESTONE_COMPLETE) {
+            fn = 'getBigTaskProposalParams'
+        } else if (type === EDaoEventType.MILESTONE_UPGRADE) {
+            fn = 'getBigTaskUpgradeProposalParams'
         } else if (type === EDaoEventType.MULTI_PROPOSAL) {
             const { num, data0 } = await this.runLocal('getDataFirst', {}, undefined, {
                 useCachedBoc: true,
@@ -247,6 +262,41 @@ export class DaoEvent extends BaseContract {
         }
     }
 
+    async parseMilestoneCreateEventParams(data: any) {
+        const { tag, hashtag, ...rest } = data
+
+        const grant: { [key: string]: TTaskGrantPair[] } = {}
+        const grantTotal: { [key: string]: number } = {}
+        let budget: number = 0
+
+        for (const key of ['assign', 'review', 'manager', 'subtask']) {
+            grant[key] = data.grant[key].map((item: any) => ({
+                grant: parseInt(item.grant),
+                lock: parseInt(item.lock),
+            }))
+            grantTotal[key] = _.sum(grant[key].map((item: any) => item.grant))
+            budget += grantTotal[key]
+        }
+
+        const manager = await AppConfig.goshroot.getUserProfile({
+            address: Object.keys(data.commit.pubaddrmanager)[0],
+        })
+        const tags = tag || hashtag
+
+        return {
+            ...rest,
+            grant,
+            grantTotal,
+            budget,
+            manager: {
+                username: await manager.getName(),
+                usertype: EDaoMemberType.User,
+            },
+            tagsRaw: tags,
+            tags: tags.filter((item: string) => item !== MILESTONE_TAG),
+        }
+    }
+
     private async parseMultiEventCell(params: {
         count: number
         cell: string
@@ -355,6 +405,15 @@ export class DaoEvent extends BaseContract {
             fn = 'getUpgradeTaskProposalParamsData'
         } else if (type === EDaoEventType.TASK_REDEPLOYED) {
             return { type, label: DaoEventType[type], data: {} }
+        } else if (type === EDaoEventType.MILESTONE_CREATE) {
+            fn = 'getBigTaskDeployParamsData'
+            parser = this.parseMilestoneCreateEventParams
+        } else if (type === EDaoEventType.MILESTONE_DELETE) {
+            fn = 'getBigTaskParamsData'
+        } else if (type === EDaoEventType.MILESTONE_COMPLETE) {
+            fn = 'getBigTaskParamsData'
+        } else if (type === EDaoEventType.MILESTONE_UPGRADE) {
+            fn = 'getBigTaskUpgradeProposalParamsData'
         } else if (type === EDaoEventType.DELAY) {
             return { type, label: DaoEventType[type], data: {} }
         } else {

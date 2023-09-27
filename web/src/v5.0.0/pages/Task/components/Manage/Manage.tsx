@@ -14,6 +14,7 @@ import { toast } from 'react-toastify'
 import { ToastError, ToastSuccess } from '../../../../../components/Toast'
 import { useNavigate } from 'react-router-dom'
 import Alert from '../../../../../components/Alert'
+import { isTaskTeamMember } from '../../../../components/Task/helpers'
 
 type TTaskManageProps = {
     task: TTaskDetails
@@ -28,18 +29,8 @@ const TaskManage = (props: TTaskManageProps) => {
     const { receiveReward } = useReceiveTaskReward()
     const { deleteTask } = useDeleteTask()
 
-    const isTaskTeamMember = useMemo(() => {
-        const isAssigner = task.team?.assigners.find(
-            ({ profile }) => profile === user.profile,
-        )
-        const isReviewer = task.team?.reviewers.find(
-            ({ profile }) => profile === user.profile,
-        )
-        const isManager = task.team?.managers.find(
-            ({ profile }) => profile === user.profile,
-        )
-
-        return [isAssigner, isReviewer, isManager].some((v) => !!v)
+    const isTeamMember = useMemo(() => {
+        return isTaskTeamMember(task.team, user.profile)
     }, [user.profile, task.isReady])
 
     const onTaskDelete = async () => {
@@ -122,7 +113,7 @@ const TaskManage = (props: TTaskManageProps) => {
                         </Formik>
                     )}
 
-                    {task.isReady && isTaskTeamMember && (
+                    {task.isReady && isTeamMember && (
                         <Formik initialValues={{}} onSubmit={onTaskClaim}>
                             {({ isSubmitting }) => (
                                 <Form>

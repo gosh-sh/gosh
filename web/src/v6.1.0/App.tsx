@@ -76,6 +76,10 @@ const App = () => {
                             <Route path="tasks">
                                 <Route index element={<DaoTaskListPage />} />
                                 <Route path="create" element={<TaskCreatePage />} />
+                                <Route
+                                    path="milestone/:address"
+                                    element={<DaoTaskListPage />}
+                                />
                                 <Route path=":address" element={<DaoTaskListPage />} />
                             </Route>
                             <Route path="settings" element={<DaoSettingsLayout />}>

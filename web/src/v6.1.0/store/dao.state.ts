@@ -11,6 +11,7 @@ import {
     TDaoInviteList,
     TDaoTaskList,
     TTaskDetails,
+    TMilestoneTaskDetails,
 } from '../types/dao.types'
 
 export const partnerDaoListAtom = atom<TUserDaoList>({
@@ -231,14 +232,29 @@ export const daoTaskListSelector = selectorFamily<TDaoTaskList, string | undefin
     dangerouslyAllowMutability: true,
 })
 
-export const daoTaskSelector = selectorFamily<TTaskDetails | undefined, string>({
+export const daoTaskSelector = selectorFamily<
+    TTaskDetails | TMilestoneTaskDetails | undefined,
+    string
+>({
     key: `DaoTaskSelector_${contextVersion}`,
     get:
         (address) =>
         ({ get }) => {
             const atom = get(daoTaskListAtom)
             const list = _.flatten(Object.values(atom).map(({ items }) => items))
-            return list.find((item) => item.address === address)
+
+            // Search for simple task or milestone
+            let task = list.find((item) => item.address === address)
+            if (!task) {
+                // Search for milestone tasks
+                for (const item of list) {
+                    task = item.subtasks.find((subitem) => subitem.address === address)
+                    if (task) {
+                        break
+                    }
+                }
+            }
+            return task
         },
     dangerouslyAllowMutability: true,
 })

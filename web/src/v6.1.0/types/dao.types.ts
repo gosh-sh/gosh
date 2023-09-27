@@ -6,6 +6,7 @@ import { DaoWallet } from '../blockchain/daowallet'
 import { Task } from '../blockchain/task'
 import { TGoshCommit } from './repository.types'
 import { GoshRepository } from '../blockchain/repository'
+import { Milestone } from '../blockchain/milestone'
 
 export enum EDaoMemberType {
     Dao = 'dao',
@@ -181,10 +182,19 @@ export type TTaskGrant = {
     subtask: TTaskGrantPair[]
 }
 
+export type TTaskAssignerData = {
+    taskaddr: string
+    assigner: { [profile: string]: boolean }
+    reviewer: { [profile: string]: boolean }
+    manager: { [profile: string]: boolean }
+    daomember: { [daoaddr: string]: string }
+}
+
 export type TTaskGrantTotal = {
     assign: number
     review: number
     manager: number
+    subtask: number
 }
 
 export type TTaskTeamMember = {
@@ -194,7 +204,7 @@ export type TTaskTeamMember = {
 }
 
 export type TTaskDetails = {
-    account: Task
+    account: Task | Milestone
     address: string
     name: string
     repository: {
@@ -204,6 +214,7 @@ export type TTaskDetails = {
     grant: TTaskGrant
     grantTotal: TTaskGrantTotal
     reward: number
+    balance: number
     vestingEnd: number
     tagsRaw: string[]
     tags: string[]
@@ -215,9 +226,21 @@ export type TTaskDetails = {
         commit: TGoshCommit
     } | null
     locktime: number
+    subtasks: TMilestoneTaskDetails[]
+    isMilestone: boolean
+    isSubtask: boolean
     isReady: boolean
     isOpen?: boolean
     isDeleted?: boolean
+    isExpanded?: boolean
+}
+
+export type TMilestoneTaskDetails = TTaskDetails & {
+    milestone: {
+        address: string
+        name: string
+    }
+    index: number
 }
 
 export type TDaoTaskList = {
