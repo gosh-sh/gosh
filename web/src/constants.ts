@@ -10,6 +10,10 @@ export const MILESTONE_TAG = '___!milestone!___'
 export const MILESTONE_TASK_TAG = '___!milestonetask!___'
 export const DISABLED_VERSIONS = ['5.0.0', '6.0.0']
 
+export const PARTNER_DAO_NAMES: string[] = JSON.parse(
+    import.meta.env.REACT_APP_DAO_PARTNER || '[]',
+)
+
 export const DaoEventType: { [key: number]: string } = {
     1: 'Pull request',
     2: 'Add branch protection',

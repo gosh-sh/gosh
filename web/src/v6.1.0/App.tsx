@@ -4,6 +4,7 @@ import { ToastOptionsShortcuts } from '../helpers'
 import BaseModal from '../components/Modal/BaseModal'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
+import HomePage from '../pages/Home'
 import AccountLayout from './pages/AccountLayout'
 import DaoLayout from './pages/DaoLayout'
 import NotFoundPage from '../pages/404'
@@ -49,7 +50,7 @@ const App = () => {
             <main id="main" className="grow">
                 <AnimatePresence mode="wait">
                     <Routes>
-                        <Route path="/" element={<Navigate to="onboarding" replace />} />
+                        <Route path="/" element={<HomePage />} />
                         <Route path="/containers" element={<Containers />} />
                         <Route path="/onboarding">
                             <Route index element={<OnboardingPage />} />

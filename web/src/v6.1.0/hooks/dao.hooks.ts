@@ -18,6 +18,7 @@ import {
     DISABLED_VERSIONS,
     MAX_PARALLEL_READ,
     MAX_PARALLEL_WRITE,
+    PARTNER_DAO_NAMES,
     MILESTONE_TAG,
     MILESTONE_TASK_TAG,
     SYSTEM_TAG,
@@ -32,10 +33,12 @@ import {
     daoMemberSelector,
     daoTaskListSelector,
     daoTaskSelector,
+    partnerDaoListAtom,
     userDaoListAtom,
 } from '../store/dao.state'
 import {
     EDaoMemberType,
+    EDaoInviteStatus,
     TDaoDetailsMemberItem,
     TDaoEventDetails,
     TDaoInviteListItem,
@@ -55,13 +58,66 @@ import { GoshAdapterFactory } from 'react-gosh'
 import { TSystemContract } from '../../types/blockchain.types'
 import { TGoshCommitTag } from '../types/repository.types'
 import { GoshRepository } from '../blockchain/repository'
-import { EDaoInviteStatus } from '../types/onboarding.types'
 import { Task } from '../blockchain/task'
 import { AggregationFn } from '@eversdk/core'
 import { SystemContract } from '../blockchain/systemcontract'
 import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
 import { Milestone } from '../blockchain/milestone'
 import { getGrantMapping } from '../components/Task'
+
+export function usePartnerDaoList(params: { initialize?: boolean } = {}) {
+    const { initialize } = params
+    const [data, setData] = useRecoilState(partnerDaoListAtom)
+
+    const getDaoList = useCallback(async () => {
+        try {
+            setData((state) => ({ ...state, isFetching: true }))
+
+            const items: TDaoListItem[] = []
+            for (const ver of Object.keys(AppConfig.getVersions({ reverse: true }))) {
+                const sc = AppConfig.goshroot.getSystemContract(ver)
+                await Promise.all(
+                    PARTNER_DAO_NAMES.map(async (name) => {
+                        const account = (await sc.getDao({ name })) as Dao
+                        if (await account.isDeployed()) {
+                            const members = await account.getMembers({})
+                            items.push({
+                                account,
+                                name,
+                                address: account.address,
+                                version: ver,
+                                supply: _.sum(members.map(({ allowance }) => allowance)),
+                                members: members.length,
+                            })
+                        }
+                    }),
+                )
+
+                if (items.length === PARTNER_DAO_NAMES.length) {
+                    break
+                }
+            }
+
+            setData((state) => ({ ...state, items }))
+        } catch (e: any) {
+            setData((state) => ({ ...state, error: e }))
+        } finally {
+            setData((state) => ({ ...state, isFetching: false }))
+        }
+    }, [])
+
+    useEffect(() => {
+        if (initialize && PARTNER_DAO_NAMES.length) {
+            getDaoList()
+        }
+    }, [initialize, getDaoList])
+
+    return {
+        ...data,
+        items: [...data.items].sort((a, b) => (a.name > b.name ? 1 : -1)),
+        isEmpty: !data.isFetching && !data.items.length,
+    }
+}
 
 export function useCreateDao() {
     const profile = useProfile()
@@ -224,6 +280,7 @@ export function useUserDaoList(params: { count?: number; initialize?: boolean } 
             .from('users')
             .select(`*, github (updated_at, gosh_url)`)
             .eq('gosh_username', username)
+            .not('auth_user', 'is', null)
         if (error) {
             throw new GoshError('Get onboarding data', error.message)
         }
@@ -232,8 +289,7 @@ export function useUserDaoList(params: { count?: number; initialize?: boolean } 
         }
 
         const imported: { [name: string]: string[] } = {}
-        const row = data[0]
-        for (const item of row.github) {
+        for (const item of data[0].github) {
             if (item.updated_at) {
                 continue
             }
@@ -1555,7 +1611,7 @@ export function useCreateDaoMember() {
                     })
                     const daonames = _.flatten(profiles.map(({ daonames }) => daonames))
                     await member.wallet!.createDaoMember({ members, daonames, comment })
-                } else {
+                } else if (profiles.length > 0) {
                     const memberAddCells = profiles.map(({ profile, daonames }) => ({
                         type: EDaoEventType.DAO_MEMBER_ADD,
                         params: {

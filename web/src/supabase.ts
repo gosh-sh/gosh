@@ -4,8 +4,9 @@ import { GoshError } from './errors'
 
 export const supabase = {
     client: AppConfig.supabase,
-    singinOAuth: async (provider: Provider) => {
+    singinOAuth: async (provider: Provider, options?: { redirectTo?: string }) => {
         const scopes = 'read:user read:org'
+        const { redirectTo } = options || {}
 
         if (AppConfig.dockerclient) {
             const nounce = Date.now()
@@ -13,7 +14,9 @@ export const supabase = {
             const { data, error } = await AppConfig.supabase.auth.signInWithOAuth({
                 provider,
                 options: {
-                    redirectTo: `https://open.docker.com/dashboard/extension-tab?extensionId=teamgosh/docker-extension&nounce=${nounce}`,
+                    redirectTo:
+                        redirectTo ||
+                        `https://open.docker.com/dashboard/extension-tab?extensionId=teamgosh/docker-extension&nounce=${nounce}`,
                     scopes,
                     skipBrowserRedirect: true,
                 },
@@ -29,7 +32,7 @@ export const supabase = {
             const { error } = await AppConfig.supabase.auth.signInWithOAuth({
                 provider,
                 options: {
-                    redirectTo: document.location.href,
+                    redirectTo: redirectTo || document.location.href,
                     scopes,
                 },
             })

@@ -116,8 +116,8 @@ export const validateOnboardingDao = async (name: string): Promise<TValidationRe
         return validated
     }
 
-    const dao = await getSystemContract().getDao({ name })
-    if (await dao.isDeployed()) {
+    const daoprofile = await getSystemContract().getDaoProfile(name)
+    if (await daoprofile.isDeployed()) {
         return { valid: false, reason: EGoshError.DAO_EXISTS }
     }
 

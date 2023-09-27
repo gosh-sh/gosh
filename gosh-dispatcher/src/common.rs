@@ -15,28 +15,15 @@ pub async fn write_output(output: &Vec<String>) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub async fn write_output_as_bytes(buffer: &Vec<u8>) -> anyhow::Result<()> {
-    tracing::trace!(
-        "send output: '{buffer:?}' {}",
-        String::from_utf8_lossy(buffer)
-    );
-    io::stdout().write_all(&buffer).await?;
-    io::stdout().flush().await?;
-    Ok(())
-}
-
-pub fn get_new_args(
-    args: &mut Vec<String>,
-    system_contract_address: &String,
-) -> anyhow::Result<()> {
+pub fn get_new_args(args: &mut [String], system_contract_address: &str) -> anyhow::Result<()> {
     let old_system = args[1]
         .split("://")
         .collect::<Vec<&str>>()
         .get(1)
         .ok_or(anyhow::format_err!("Wrong amount of args"))?
-        .split("/")
+        .split('/')
         .collect::<Vec<&str>>()
-        .get(0)
+        .first()
         .ok_or(anyhow::format_err!("Wrong remote url format"))?
         .to_string();
     let new_repo_link = args[1]

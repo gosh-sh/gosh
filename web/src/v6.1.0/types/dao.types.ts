@@ -13,6 +13,13 @@ export enum EDaoMemberType {
     User = 'user',
 }
 
+export enum EDaoInviteStatus {
+    ACCEPTED = 'accepted',
+    REJECTED = 'rejected',
+    REVOKED = 'revoked',
+    PROPOSAL_CREATED = 'proposal_created',
+}
+
 export type TDaoListItem = {
     account: Dao | null
     name: string
@@ -242,4 +249,10 @@ export type TDaoTaskList = {
     cursor?: string
     hasNext?: boolean
     error?: any
+}
+
+export type TDBDaoInvite = {
+    id: string
+    daoname: string
+    accepted: boolean | null
 }

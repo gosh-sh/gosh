@@ -1,6 +1,5 @@
 use std::fmt;
 
-use crate::grpc::constants::GOSH_GRPC_CONTAINER;
 use std::process::Stdio;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::{Child, Command};
@@ -156,8 +155,7 @@ impl GoshRemote {
         let out = self
             .process
             .as_mut()
-            .map(|helper| helper.stdout.as_mut())
-            .flatten()
+            .and_then(|helper| helper.stdout.as_mut())
             .ok_or(anyhow::format_err!(
                 "Failed to get child process out stream"
             ))?;
@@ -166,9 +164,6 @@ impl GoshRemote {
         while let Ok(Some(line)) = lines.next_line().await {
             tracing::trace!("caught output line: {line}");
             if line == DISPATCHER_ENDL {
-                if std::env::var(GOSH_GRPC_CONTAINER).is_ok() {
-                    output.push(line.clone());
-                }
                 break;
             }
             if line.starts_with("dispatcher") {
