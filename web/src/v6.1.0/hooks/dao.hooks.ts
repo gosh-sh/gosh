@@ -3652,6 +3652,8 @@ export function useCreateMilestone() {
             tags?: string[]
             comment?: string
         }) => {
+            const month2sec = 30 * 24 * 60 * 60
+
             try {
                 if (!dao.name) {
                     throw new GoshError('Value error', 'DAO name undefined')
@@ -3706,7 +3708,7 @@ export function useCreateMilestone() {
                     // No vesting period
                     let total = grant[key].t
                     if (!params.vesting) {
-                        grant[key].g.push({ grant: total, lock: params.lock * 60 })
+                        grant[key].g.push({ grant: total, lock: params.lock * month2sec })
                         continue
                     }
 
@@ -3714,7 +3716,7 @@ export function useCreateMilestone() {
                     for (let tick = params.vesting; tick > 0; tick--) {
                         const delay = params.lock + (params.vesting - tick + 1)
                         const amount = Math.trunc(total / tick)
-                        grant[key].g.push({ grant: amount, lock: delay * 60 })
+                        grant[key].g.push({ grant: amount, lock: delay * month2sec })
                         total -= amount
                     }
                 }
