@@ -9,10 +9,9 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import Skeleton from '../../../components/Skeleton'
 import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
 import Alert from '../../../components/Alert'
-import { TaskStatusBadge } from '../../components/Task'
-import { lockToStr } from '../../components/Task/helpers'
+import { TaskStatusBadge, TaskTeam, lockToStr } from '../../components/Task'
 import { Link } from 'react-router-dom'
-import { TaskManage, TaskTeam } from './components'
+import { TaskManage } from './components'
 import { useBodyScrollLock } from '../../../hooks/common.hooks'
 
 const TaskPageInner = (props: { address: string }) => {
@@ -47,12 +46,12 @@ const TaskPageInner = (props: { address: string }) => {
 
     useEffect(() => {
         const onClick = ({ target }: any) => {
-            // If no ref or click inide event block, do nothing
+            // If no ref or click inide task block, do nothing
             if (!ref.current || (ref.current && ref.current.contains(target))) {
                 return
             }
 
-            // Click outside event block, but need to check click on event list item
+            // Click outside task block, but need to check click on task list item
             const items = document.getElementsByClassName('dao-tasklist-item')
             const itemClicked = Array.from(items).some((item) => item.contains(target))
             if (!itemClicked) {

@@ -2,31 +2,48 @@ import { useEffect, useState } from 'react'
 import { Button, Input } from '../../../components/Form'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
-import { useDao, useDaoMember, useDaoTaskList } from '../../hooks/dao.hooks'
+import { useDaoMember, useDaoTaskList } from '../../hooks/dao.hooks'
 import Loader from '../../../components/Loader'
 import { ListBoundary } from './components'
-import { matchPath, useNavigate } from 'react-router-dom'
+import { matchPath } from 'react-router-dom'
 import classNames from 'classnames'
 import TaskPage from '../Task'
+import { useSetRecoilState } from 'recoil'
+import { appModalStateAtom } from '../../../store/app.state'
+import { MilestoneCreateModal } from '../../components/Modal'
+import MilestonePage from '../Milestone/Milestone'
 
 const DaoTaskListPage = () => {
-    const navigate = useNavigate()
-    const dao = useDao()
     const member = useDaoMember()
     const taskList = useDaoTaskList()
+    const setModal = useSetRecoilState(appModalStateAtom)
     const [taskOpened, setTaskOpened] = useState<string>()
+    const [milestoneOpened, setMilestoneOpened] = useState<string>()
 
-    const onTaskCreate = () => {
-        navigate(`/o/${dao.details.name}/tasks/create`)
+    const onCreateMilestone = () => {
+        setModal({
+            static: true,
+            isOpen: true,
+            element: <MilestoneCreateModal />,
+        })
     }
 
     useEffect(() => {
-        const matched = matchPath('/o/:dao/tasks/:address', document.location.pathname)
-        if (matched?.params.address) {
-            taskList.openItem(matched.params.address)
-            setTaskOpened(matched.params.address)
+        const matched = [
+            matchPath('/o/:dao/tasks/:address', document.location.pathname),
+            matchPath('/o/:dao/tasks/milestone/:address', document.location.pathname),
+        ]
+        if (matched[0]?.params.address) {
+            taskList.openItem(matched[0].params.address)
+            setMilestoneOpened(undefined)
+            setTaskOpened(matched[0].params.address)
+        } else if (matched[1]?.params.address) {
+            taskList.openItem(matched[1].params.address)
+            setMilestoneOpened(matched[1].params.address)
+            setTaskOpened(undefined)
         } else {
             taskList.closeItems()
+            setMilestoneOpened(undefined)
             setTaskOpened(undefined)
         }
     }, [document.location.pathname])
@@ -37,7 +54,7 @@ const DaoTaskListPage = () => {
                 <Input
                     className="grow"
                     type="search"
-                    placeholder="Search task (disabled)"
+                    placeholder="Search (disabled)"
                     autoComplete="off"
                     disabled
                     before={
@@ -46,16 +63,16 @@ const DaoTaskListPage = () => {
                             className="text-gray-7c8db5 font-extralight py-3 pl-4"
                         />
                     }
-                    test-id="input-repo-search"
+                    test-id="input-task-search"
                 />
                 {member.isMember && (
                     <Button
                         variant="outline-secondary"
                         size="xl"
-                        test-id="link-repo-create"
-                        onClick={onTaskCreate}
+                        test-id="btn-milestone-create"
+                        onClick={onCreateMilestone}
                     >
-                        Create new
+                        Create milestone
                     </Button>
                 )}
             </div>
@@ -77,10 +94,11 @@ const DaoTaskListPage = () => {
                     'fixed w-full lg:w-[60%] top-0 right-0 h-screen bg-white overflow-y-auto',
                     'border border-gray-e6edff rounded-l-xl px-5 py-3.5 body-scroll-lock',
                     'transition-all duration-300 shadow-xl',
-                    taskOpened ? 'translate-x-0' : 'translate-x-full',
+                    milestoneOpened || taskOpened ? 'translate-x-0' : 'translate-x-full',
                 )}
             >
-                <TaskPage address={taskOpened || ''} />
+                {milestoneOpened && <MilestonePage address={milestoneOpened} />}
+                {taskOpened && <TaskPage address={taskOpened} />}
             </div>
         </>
     )
