@@ -4,6 +4,7 @@ import { Button } from '../../../../components/Form'
 import { useBridgeTransfer } from '../../../hooks/bridge.hooks'
 import yup from '../../../yup-extended'
 import { EBridgeNetwork } from '../../../types/bridge.types'
+import { round2precision } from '../../../../helpers'
 
 const RouteStep = () => {
     const {
@@ -14,11 +15,6 @@ const RouteStep = () => {
         setSummaryFormValues,
         submitRouteStep,
     } = useBridgeTransfer()
-
-    const getHelpBalance = (balance: number, precision: number = 4) => {
-        const multiplier = 10 ** precision
-        return Math.round(balance * multiplier) / multiplier
-    }
 
     const onFieldChange = (
         e: any,
@@ -130,7 +126,7 @@ const RouteStep = () => {
                                     help={
                                         <>
                                             Balance{' '}
-                                            {getHelpBalance(
+                                            {round2precision(
                                                 networks[values.from_network].balance,
                                             )}
                                         </>
@@ -212,7 +208,7 @@ const RouteStep = () => {
                                     help={
                                         <>
                                             Balance{' '}
-                                            {getHelpBalance(
+                                            {round2precision(
                                                 networks[values.to_network].balance,
                                             )}
                                         </>

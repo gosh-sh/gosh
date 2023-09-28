@@ -8,6 +8,7 @@ import classNames from 'classnames'
 import { useEffect } from 'react'
 import Alert from '../../../components/Alert'
 import CopyClipboard from '../../../components/CopyClipboard'
+import { round2precision } from '../../../helpers'
 
 const motionProps = {
     initial: { opacity: 0 },
@@ -94,6 +95,12 @@ const BridgePage = () => {
                                         }}
                                     />
                                 </div>
+                                <div className="mt-1 text-right">
+                                    {round2precision(
+                                        networks[summary.from.network].balance,
+                                    )}{' '}
+                                    {networks[summary.from.network].token}
+                                </div>
                             </div>
                         </div>
                         <div className="flex items-center justify-between text-sm">
@@ -116,6 +123,12 @@ const BridgePage = () => {
                                             text: summary.to.address,
                                         }}
                                     />
+                                </div>
+                                <div className="mt-1 text-right">
+                                    {round2precision(
+                                        networks[summary.to.network].balance,
+                                    )}{' '}
+                                    {networks[summary.to.network].token}
                                 </div>
                             </div>
                         </div>
