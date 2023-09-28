@@ -37,6 +37,9 @@ const BridgePage = () => {
                         The contract has not been very formally verified yet. Set them a
                         little.
                     </div>
+                    <div className="mt-3">
+                        Gosh to Gosh transactions are temporary unavailable.
+                    </div>
                 </Alert>
                 <div className="my-10">
                     <Breadcrumbs />
