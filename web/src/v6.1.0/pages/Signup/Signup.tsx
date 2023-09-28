@@ -27,7 +27,7 @@ const SignupPage = () => {
                         <UsernameForm />
                     </motion.div>
                 )}
-                {data.step === 'daoinvite' && (
+                {/* {data.step === 'daoinvite' && (
                     <motion.div key="daoinvite" {...motionProps}>
                         <DaoInvitesForm />
                     </motion.div>
@@ -46,7 +46,7 @@ const SignupPage = () => {
                     <motion.div key="complete" {...motionProps}>
                         <CompleteForm />
                     </motion.div>
-                )}
+                )} */}
             </AnimatePresence>
         </div>
     )

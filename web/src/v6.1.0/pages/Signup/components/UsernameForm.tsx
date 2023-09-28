@@ -30,7 +30,10 @@ const UsernameForm = () => {
 
             <div className="basis-full md:basis-8/12 lg:basis-5/12 xl:basis-4/12">
                 <div className="border border-gray-e6edff rounded-xl p-8">
-                    <Formik
+                    <Alert variant="danger" className="font-medium">
+                        We are upgrading the DAO please wait
+                    </Alert>
+                    {/* <Formik
                         initialValues={{
                             email: data.email,
                             username: data.username,
@@ -89,7 +92,7 @@ const UsernameForm = () => {
                                 </div>
                             </Form>
                         )}
-                    </Formik>
+                    </Formik> */}
                 </div>
             </div>
         </div>

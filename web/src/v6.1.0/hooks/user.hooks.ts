@@ -283,41 +283,38 @@ export function useUserSignup() {
     }) => {
         const { words, numbers } = params
         try {
-            // Check random words against phrase
-            const validated = words.map((w, index) => {
-                return w === data.phrase[numbers[index]]
-            })
-            if (!validated.every((v) => !!v)) {
-                throw new GoshError('Value error', 'Words check failed')
-            }
-
-            // Create GOSH account
-            setStatus((state) => ({
-                ...state,
-                type: 'pending',
-                data: 'Create GOSH account',
-            }))
-            const { keys } = await _signup({
-                phrase: data.phrase.join(' '),
-                username: data.username,
-            })
-
-            // Create DB record for user
-            setStatus((state) => ({
-                ...state,
-                type: 'pending',
-                data: 'Update database',
-            }))
-            const dbUser = await _getDbUser(data.username)
-            if (!dbUser) {
-                await _createDbUser({
-                    username: data.username,
-                    pubkey: keys.public,
-                    email: data.email,
-                })
-            }
-
-            setStatus((state) => ({ ...state, type: 'dismiss', data: null }))
+            // // Check random words against phrase
+            // const validated = words.map((w, index) => {
+            //     return w === data.phrase[numbers[index]]
+            // })
+            // if (!validated.every((v) => !!v)) {
+            //     throw new GoshError('Value error', 'Words check failed')
+            // }
+            // // Create GOSH account
+            // setStatus((state) => ({
+            //     ...state,
+            //     type: 'pending',
+            //     data: 'Create GOSH account',
+            // }))
+            // const { keys } = await _signup({
+            //     phrase: data.phrase.join(' '),
+            //     username: data.username,
+            // })
+            // // Create DB record for user
+            // setStatus((state) => ({
+            //     ...state,
+            //     type: 'pending',
+            //     data: 'Update database',
+            // }))
+            // const dbUser = await _getDbUser(data.username)
+            // if (!dbUser) {
+            //     await _createDbUser({
+            //         username: data.username,
+            //         pubkey: keys.public,
+            //         email: data.email,
+            //     })
+            // }
+            // setStatus((state) => ({ ...state, type: 'dismiss', data: null }))
         } catch (e: any) {
             setStatus((state) => ({ ...state, type: 'error', data: e }))
             throw e
