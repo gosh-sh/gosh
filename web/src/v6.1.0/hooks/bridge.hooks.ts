@@ -9,7 +9,6 @@ import { GoshError } from '../../errors'
 import { useUser } from './user.hooks'
 import { whileFinite } from '../../utils'
 import { EBridgeNetwork, TBridgeTransferStatusItem } from '../types/bridge.types'
-import { TIP3Wallet } from '../../blockchain/tip3wallet'
 
 export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
     const { initialize } = options
@@ -289,6 +288,7 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
             throw new GoshError('Gosh error', 'Gosh wallet undefined')
         }
 
+        const timeout = 24 * 60 * 60 * 1000 // 24h
         const start = Math.round(Date.now() / 1000)
 
         // Send to Ethereum
@@ -316,8 +316,8 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
             async () => {
                 return data.gosh.instance!.isDeployed()
             },
-            5000,
-            1200000,
+            10000,
+            timeout,
         )
         if (!waitDeployed) {
             throw new GoshError('Timeout error', 'Gosh wallet is not deployed')
@@ -342,8 +342,8 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
                 )
                 return index >= 0
             },
-            5000,
-            1200000,
+            10000,
+            timeout,
         )
         if (!waitMinted) {
             throw new GoshError('Timeout error', 'Tokens did not arive during timeout')
@@ -358,6 +358,8 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
         if (!data.gosh.instance) {
             throw new GoshError('Gosh error', 'Gosh wallet undefined')
         }
+
+        const timeout = 24 * 60 * 60 * 1000 // 24h
 
         const { web3 } = getWeb3()
         const balance = await web3.eth.getBalance(data.summary.to.address)
@@ -379,8 +381,8 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
                 const currBalance = parseInt(web3.utils.fromWei(balance, 'wei'))
                 return currBalance > startBalance
             },
-            5000,
-            1200000,
+            10000,
+            timeout,
         )
         if (!waitEth) {
             throw new GoshError('Timeout error', 'Wait for ethereum balance')

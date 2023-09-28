@@ -155,27 +155,39 @@ const RouteStep = () => {
                             To
                         </div>
                         <div className="grow">
-                            <div>
-                                <Field
-                                    label="Blockchain"
-                                    name="to_network"
-                                    type="select"
-                                    component={FormikSelect}
-                                    className="bg-white"
-                                    onChange={(e: any) => {
-                                        onFieldChange(e, setFieldValue)
-                                    }}
-                                >
-                                    {Object.entries(networks).map((value) => (
-                                        <option
-                                            key={value[0]}
-                                            value={value[0]}
-                                            disabled={value[0] === values.from_network}
-                                        >
-                                            {value[1].label}
-                                        </option>
-                                    ))}
-                                </Field>
+                            <div className="flex items-end flex-nowrap gap-x-5">
+                                <div className="grow">
+                                    <Field
+                                        label="Blockchain"
+                                        name="to_network"
+                                        type="select"
+                                        component={FormikSelect}
+                                        className="bg-white"
+                                        onChange={(e: any) => {
+                                            onFieldChange(e, setFieldValue)
+                                        }}
+                                    >
+                                        {Object.entries(networks).map((value) => (
+                                            <option
+                                                key={value[0]}
+                                                value={value[0]}
+                                                disabled={
+                                                    value[0] === values.from_network
+                                                }
+                                            >
+                                                {value[1].label}
+                                            </option>
+                                        ))}
+                                    </Field>
+                                </div>
+                                {values.to_network === EBridgeNetwork.ETH &&
+                                    !web3.instance && (
+                                        <div>
+                                            <Button type="button" onClick={web3Connect}>
+                                                Connect wallet
+                                            </Button>
+                                        </div>
+                                    )}
                             </div>
                             <div className="mt-5">
                                 <Field
