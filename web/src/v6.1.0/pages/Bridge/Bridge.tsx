@@ -33,10 +33,13 @@ const BridgePage = () => {
             <div className="grow">
                 <h1 className="text-3xl font-medium mb-4">Cross-chain transfer</h1>
                 <Alert variant="warning" className="mb-6">
-                    <h3 className="font-medium">Ethereum bridge Alfa testing!</h3>
+                    <h3 className="font-medium">
+                        GOSH Ethereum L2 <span className="text-red-ff3b30">Alfa</span>{' '}
+                        Testing
+                    </h3>
                     <div>
-                        The contract has not been very formally verified yet. Set them a
-                        little.
+                        The contract has not been formally verified yet. Please do not
+                        send a lot!
                     </div>
                     <div className="mt-3">
                         Gosh to Gosh transactions are temporary unavailable.

@@ -15,9 +15,9 @@ export class TIP3Wallet extends BaseContract {
     async withdraw(params: { amount: number; l1addr: string }) {
         const { amount, l1addr } = params
 
-        await this.run('burn_tokens', {
+        await this.run('burnTokens', {
             _answer_id: 0,
-            tokens: amount,
+            tokens: amount.toString(),
             to: l1addr,
         })
     }

@@ -304,7 +304,8 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
             to: AppConfig.elockaddr,
             value: data.web3.instance.utils.toWei(data.summary.from.amount, 'ether'),
             data: edata,
-            gas: 1000000,
+            gasLimit: 100000,
+            maxPriorityFeePerGas: 25000,
         })
         console.debug('ETH receipt', receipt)
         setSummaryProgress(0, 'completed')
