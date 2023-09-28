@@ -694,11 +694,14 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
             await sc.getDaoTaskTagCodeHash(dao.address, MILESTONE_TAG),
             await sc.getDaoTaskTagCodeHash(dao.address, MILESTONE_TASK_TAG),
         ]
-        const result = await getAllAccounts({
-            filters: [`code_hash: {in: ${JSON.stringify(codes)}}`],
-            result: ['code_hash'],
+        const result = await executeByChunk<string, any>(codes, 2, async (chunk) => {
+            return await getAllAccounts({
+                filters: [`code_hash: {in: ${JSON.stringify(chunk)}}`],
+                result: ['code_hash'],
+            })
         })
-        const tasks = await executeByChunk(result, 30, async ({ id, code_hash }) => {
+        const flattened = _.flatten(result)
+        const tasks = await executeByChunk(flattened, 30, async ({ id, code_hash }) => {
             const tag = await sc.getGoshTag({ address: id })
             const data = await tag.getDetails()
 
