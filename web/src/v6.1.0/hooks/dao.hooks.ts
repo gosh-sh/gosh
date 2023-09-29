@@ -284,7 +284,7 @@ export function useUserDaoList(params: { count?: number; initialize?: boolean } 
             .from('users')
             .select(`*, github (updated_at, gosh_url)`)
             .eq('gosh_username', username)
-            .not('auth_user', 'is', null)
+            .order('created_at', { ascending: false })
         if (error) {
             throw new GoshError('Get onboarding data', error.message)
         }
