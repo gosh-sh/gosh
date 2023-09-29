@@ -4,6 +4,7 @@ import { useUser, useUserSignup } from '../../hooks/user.hooks'
 import {
     CompleteForm,
     DaoInvitesForm,
+    OAuthForm,
     PhraseCheckForm,
     PhraseCreateForm,
     UsernameForm,
@@ -19,7 +20,7 @@ const motionProps = {
 
 const SignupPage = () => {
     const { persist } = useUser()
-    const { data } = useUserSignup()
+    const { data } = useUserSignup({ initialize: true })
 
     if (persist.pin && data.step !== 'complete') {
         return <Navigate to="/a/orgs" />
@@ -28,6 +29,11 @@ const SignupPage = () => {
     return (
         <div className="container pt-20 pb-8">
             <AnimatePresence mode="wait">
+                {data.step === 'oauth' && (
+                    <motion.div key="oauth" {...motionProps}>
+                        <OAuthForm />
+                    </motion.div>
+                )}
                 {data.step === 'username' && (
                     <motion.div key="username" {...motionProps}>
                         <UsernameForm />

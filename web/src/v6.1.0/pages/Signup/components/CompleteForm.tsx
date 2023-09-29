@@ -12,7 +12,7 @@ const CompleteForm = () => {
     const onGithubSubmit = async () => {
         try {
             setIsAnySubmitting(true)
-            await submitCompleteStep({ provider: 'github' })
+            await submitCompleteStep({ provider: true })
         } catch (e: any) {
             console.error(e.message)
         } finally {
@@ -23,7 +23,7 @@ const CompleteForm = () => {
     const onSkipSubmit = async () => {
         try {
             setIsAnySubmitting(true)
-            await submitCompleteStep({ provider: null })
+            await submitCompleteStep({ provider: false })
             navigate('/a/orgs')
         } catch (e: any) {
             console.error(e.message)

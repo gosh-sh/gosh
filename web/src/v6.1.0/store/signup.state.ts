@@ -7,7 +7,7 @@ export const userSignupAtom = atom<{
     email: string
     phrase: string[]
     daoinvites: TDBDaoInvite[]
-    step: 'username' | 'daoinvite' | 'phrase' | 'phrasecheck' | 'complete'
+    step: 'oauth' | 'username' | 'daoinvite' | 'phrase' | 'phrasecheck' | 'complete'
 }>({
     key: `UserSignupAtom_${contextVersion}`,
     default: {
@@ -15,6 +15,6 @@ export const userSignupAtom = atom<{
         email: '',
         phrase: [],
         daoinvites: [],
-        step: 'username',
+        step: 'oauth',
     },
 })

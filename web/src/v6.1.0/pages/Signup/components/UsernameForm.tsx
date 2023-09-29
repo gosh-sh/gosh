@@ -4,42 +4,24 @@ import { FormikInput } from '../../../../components/Formik'
 import Alert from '../../../../components/Alert'
 import { Button } from '../../../../components/Form'
 import { useUserSignup } from '../../../hooks/user.hooks'
-import { useEffect, useState } from 'react'
-import {
-    loadCaptchaEnginge,
-    LoadCanvasTemplateNoReload,
-    validateCaptcha,
-} from 'react-simple-captcha'
-import { GoshError } from '../../../../errors'
-import { toast } from 'react-toastify'
-import { ToastError } from '../../../../components/Toast'
+import { useOauth } from '../../../hooks/oauth.hooks'
 
 type TFormValues = {
     email: string
     username: string
-    captcha: string
 }
 
 const UsernameForm = () => {
+    const { oauth, signout } = useOauth()
     const { data, submitUsernameStep } = useUserSignup()
 
     const onFormSubmit = async (values: TFormValues) => {
         try {
-            const valid = validateCaptcha(values.captcha)
-            if (!valid) {
-                throw new GoshError('Value error', 'Wrong capture')
-            }
-
             await submitUsernameStep({ email: values.email, username: values.username })
         } catch (e: any) {
-            toast.error(<ToastError error={e} />)
             console.error(e.message)
         }
     }
-
-    useEffect(() => {
-        loadCaptchaEnginge(6)
-    }, [])
 
     return (
         <div className="flex flex-wrap items-center justify-center gap-14">
@@ -52,15 +34,13 @@ const UsernameForm = () => {
                 <div className="border border-gray-e6edff rounded-xl p-8">
                     <Formik
                         initialValues={{
-                            email: data.email,
+                            email: data.email || oauth.session?.user.email || '',
                             username: data.username,
-                            captcha: '',
                         }}
                         onSubmit={onFormSubmit}
                         validationSchema={yup.object().shape({
                             email: yup.string().email().required(),
                             username: yup.string().username().required(),
-                            captcha: yup.string().required(),
                         })}
                     >
                         {({ isSubmitting, setFieldValue }) => (
@@ -98,19 +78,6 @@ const UsernameForm = () => {
                                         will be impossible to change it in the future
                                     </div>
                                 </Alert>
-
-                                <div className="max-w-[12rem] mx-auto mb-8">
-                                    <div className="max-w-[10rem] mx-auto">
-                                        <LoadCanvasTemplateNoReload />
-                                    </div>
-                                    <Field
-                                        name="captcha"
-                                        component={FormikInput}
-                                        autoComplete="off"
-                                        placeholder="Input symbols above"
-                                        disabled={isSubmitting}
-                                    />
-                                </div>
 
                                 <div className="text-center">
                                     <Button

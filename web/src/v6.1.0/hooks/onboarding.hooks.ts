@@ -204,7 +204,7 @@ export function useOnboardingData(
             .from('users')
             .insert({
                 gosh_username: username,
-                gosh_pubkey: `0x${pubkey}`,
+                gosh_pubkey: pubkey,
                 auth_user: authid,
                 email,
                 email_other: emailextra,

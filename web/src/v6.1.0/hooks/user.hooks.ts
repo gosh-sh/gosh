@@ -22,6 +22,8 @@ import { useOauth } from './oauth.hooks'
 import { useCreateDao } from './dao.hooks'
 import { supabase } from '../../supabase'
 import { EDaoInviteStatus } from '../types/dao.types'
+import { useCallback, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export function useUser() {
     const [userPersist, setUserPersist] = useRecoilState(userPersistAtom)
@@ -164,11 +166,14 @@ export function useProfile() {
     return profile
 }
 
-export function useUserSignup() {
+export function useUserSignup(options: { initialize?: boolean } = {}) {
+    const { initialize } = options
+    const navigate = useNavigate()
+    const { oauth, signout } = useOauth({ initialize })
     const { signup: _signup } = useUser()
-    const { signin } = useOauth()
     const { createDao } = useCreateDao()
     const [data, setData] = useRecoilState(userSignupAtom)
+    const reset = useResetRecoilState(userSignupAtom)
     const [status, setStatus] = useRecoilState(appToastStatusSelector('__signupuser'))
 
     const setStep = (step: 'username' | 'daoinvite' | 'phrase' | 'complete') => {
@@ -212,7 +217,7 @@ export function useUserSignup() {
             }
 
             // Get DAO invites, generate random phrase and update state
-            const daoinvites = await _getDaoInvites(email)
+            const daoinvites = await getDaoInvites(email)
             const { phrase } = await AppConfig.goshclient.crypto.mnemonic_from_random({})
             setData((state) => ({
                 ...state,
@@ -290,6 +295,9 @@ export function useUserSignup() {
             if (!validated.every((v) => !!v)) {
                 throw new GoshError('Value error', 'Words check failed')
             }
+            if (!oauth.session?.user.id) {
+                throw new GoshError('OAuth error', 'OAuth session undefined')
+            }
 
             // Create GOSH account
             setStatus((state) => ({
@@ -308,9 +316,10 @@ export function useUserSignup() {
                 type: 'pending',
                 data: 'Update database',
             }))
-            const dbUser = await _getDbUser(data.username)
+            const dbUser = await getDbUser(oauth.session.user.id)
             if (!dbUser) {
-                await _createDbUser({
+                await createDbUser({
+                    auth_id: oauth.session.user.id,
                     username: data.username,
                     pubkey: keys.public,
                     email: data.email,
@@ -324,14 +333,12 @@ export function useUserSignup() {
         }
     }
 
-    const submitCompleteStep = async (params: { provider: 'github' | null }) => {
+    const submitCompleteStep = async (params: { provider: boolean }) => {
         const { provider } = params
 
         try {
             if (provider) {
-                await signin(provider, {
-                    redirectTo: `${document.location.origin}/onboarding`,
-                })
+                navigate('/onboarding')
             } else {
                 await createDao({
                     name: data.username,
@@ -339,6 +346,7 @@ export function useUserSignup() {
                     supply: 20,
                     isMintOn: true,
                 })
+                await signout()
             }
         } catch (e: any) {
             setStatus((state) => ({ ...state, type: 'error', data: e }))
@@ -346,11 +354,11 @@ export function useUserSignup() {
         }
     }
 
-    const _getDbUser = async (username: string) => {
+    const getDbUser = async (auth_id: string) => {
         const { data, error } = await supabase.client
             .from('users')
             .select()
-            .eq('gosh_username', username)
+            .eq('auth_user', auth_id)
             .single()
         if (error?.code === 'PGRST116') {
             return null
@@ -361,15 +369,21 @@ export function useUserSignup() {
         return data
     }
 
-    const _createDbUser = async (params: {
+    const createDbUser = async (params: {
+        auth_id: string
         username: string
         pubkey: string
         email: string
     }) => {
-        const { username, pubkey, email } = params
+        const { auth_id, username, pubkey, email } = params
         const { data, error } = await supabase.client
             .from('users')
-            .insert({ gosh_username: username, gosh_pubkey: `0x${pubkey}`, email })
+            .insert({
+                auth_user: auth_id,
+                gosh_username: username,
+                gosh_pubkey: `0x${pubkey}`,
+                email,
+            })
             .select()
             .single()
         if (error) {
@@ -378,7 +392,7 @@ export function useUserSignup() {
         return data
     }
 
-    const _getDaoInvites = async (email: string) => {
+    const getDaoInvites = async (email: string) => {
         const { data, error } = await supabase.client
             .from('dao_invite')
             .select('id, dao_name')
@@ -390,6 +404,48 @@ export function useUserSignup() {
         }
         return data
     }
+
+    const validateOAuthSession = useCallback(async () => {
+        try {
+            console.debug('HERE', oauth)
+            if (!oauth.session?.user.id) {
+                reset()
+                return
+            }
+
+            // Search db for auth user
+            const { count, error } = await supabase.client
+                .from('users')
+                .select('*', { count: 'exact' })
+                .eq('auth_user', oauth.session.user.id)
+            if (error) {
+                throw new GoshError('Database error', error.message)
+            }
+            if (count && count > 0) {
+                throw new GoshError('Signup error', 'You have already been registered')
+            }
+
+            // If everything is ok, set next step
+            setStep('username')
+        } catch (e: any) {
+            setStatus((state) => ({ ...state, type: 'error', data: e }))
+            signout()
+            reset()
+        }
+    }, [oauth.isLoading, oauth.session?.user.id])
+
+    useEffect(() => {
+        if (initialize) {
+            validateOAuthSession()
+        }
+    }, [initialize, validateOAuthSession])
+
+    useEffect(() => {
+        if (initialize && oauth.error) {
+            setStatus((state) => ({ ...state, type: 'error', data: oauth.error }))
+            signout()
+        }
+    }, [initialize, oauth.error])
 
     return {
         data,
