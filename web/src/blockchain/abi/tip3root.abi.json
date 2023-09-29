@@ -151,7 +151,7 @@
             "name": "setOldRoot",
             "inputs": [
                 { "name": "_answer_id", "type": "uint32" },
-                { "name": "oldroot", "type": "address" }
+                { "name": "oldroot", "type": "optional(address)" }
             ],
             "outputs": [],
             "id": "0x3fd"
@@ -160,7 +160,7 @@
             "name": "setNewRoot",
             "inputs": [
                 { "name": "_answer_id", "type": "uint32" },
-                { "name": "newroot", "type": "address" }
+                { "name": "newroot", "type": "optional(address)" }
             ],
             "outputs": [],
             "id": "0x3fe"
