@@ -74,10 +74,14 @@ export function usePartnerDaoList(params: { initialize?: boolean } = {}) {
             setData((state) => ({ ...state, isFetching: true }))
 
             const items: TDaoListItem[] = []
-            for (const ver of Object.keys(AppConfig.getVersions({ reverse: true }))) {
+            const versions = AppConfig.getVersions({ reverse: true, withDisabled: true })
+            for (const ver of Object.keys(versions)) {
                 const sc = AppConfig.goshroot.getSystemContract(ver)
+                const rest = PARTNER_DAO_NAMES.filter((name) => {
+                    return items.findIndex((item) => item.name === name) < 0
+                })
                 await Promise.all(
-                    PARTNER_DAO_NAMES.map(async (name) => {
+                    rest.map(async (name) => {
                         const account = (await sc.getDao({ name })) as Dao
                         if (await account.isDeployed()) {
                             const members = await account.getMembers({})
