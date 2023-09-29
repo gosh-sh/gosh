@@ -12,7 +12,7 @@ type TFormValues = {
 }
 
 const UsernameForm = () => {
-    const { oauth, signout } = useOauth()
+    const { oauth } = useOauth()
     const { data, submitUsernameStep } = useUserSignup()
 
     const onFormSubmit = async (values: TFormValues) => {

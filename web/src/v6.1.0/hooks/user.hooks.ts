@@ -299,6 +299,9 @@ export function useUserSignup(options: { initialize?: boolean } = {}) {
                 throw new GoshError('OAuth error', 'OAuth session undefined')
             }
 
+            // Check if OAuth user still does not exist
+            await checkOAuthExists()
+
             // Create GOSH account
             setStatus((state) => ({
                 ...state,
@@ -405,47 +408,58 @@ export function useUserSignup(options: { initialize?: boolean } = {}) {
         return data
     }
 
+    const checkOAuthExists = async () => {
+        if (!oauth.session?.user.id) {
+            throw new GoshError('OAuth error', 'OAuth session undefined')
+        }
+
+        const { count, error } = await supabase.client
+            .from('users')
+            .select('*', { count: 'exact' })
+            .eq('auth_user', oauth.session.user.id)
+        if (error) {
+            throw new GoshError('Database error', error.message)
+        }
+        if (count && count > 0) {
+            throw new GoshError('Signup error', 'You have already been registered')
+        }
+    }
+
     const validateOAuthSession = useCallback(async () => {
+        // No need to validate on
+        if (data.step === 'complete') {
+            return
+        }
+
         try {
-            console.debug('HERE', oauth)
+            if (oauth.error) {
+                throw new GoshError('OAuth error', oauth.error)
+            }
             if (!oauth.session?.user.id) {
-                reset()
+                if (data.step !== 'oauth') {
+                    throw new GoshError('OAuth error', 'OAuth session undefined')
+                }
                 return
             }
 
-            // Search db for auth user
-            const { count, error } = await supabase.client
-                .from('users')
-                .select('*', { count: 'exact' })
-                .eq('auth_user', oauth.session.user.id)
-            if (error) {
-                throw new GoshError('Database error', error.message)
+            if (data.step === 'oauth') {
+                await checkOAuthExists()
+                setStep('username')
+            } else {
+                setStep(data.step as any)
             }
-            if (count && count > 0) {
-                throw new GoshError('Signup error', 'You have already been registered')
-            }
-
-            // If everything is ok, set next step
-            setStep('username')
         } catch (e: any) {
             setStatus((state) => ({ ...state, type: 'error', data: e }))
             signout()
             reset()
         }
-    }, [oauth.isLoading, oauth.session?.user.id])
+    }, [oauth.error, oauth.session?.user.id, data.step])
 
     useEffect(() => {
         if (initialize) {
             validateOAuthSession()
         }
     }, [initialize, validateOAuthSession])
-
-    useEffect(() => {
-        if (initialize && oauth.error) {
-            setStatus((state) => ({ ...state, type: 'error', data: oauth.error }))
-            signout()
-        }
-    }, [initialize, oauth.error])
 
     return {
         data,

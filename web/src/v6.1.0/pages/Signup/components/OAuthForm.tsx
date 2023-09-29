@@ -4,7 +4,7 @@ import { useOauth } from '../../../hooks/oauth.hooks'
 const OAuthForm = () => {
     const { oauth, signin } = useOauth()
 
-    const onOAuthClick = async () => {
+    const onOAuthSigninClick = async () => {
         signin('github', { redirectTo: `${document.location.origin}/a/signup` })
     }
 
@@ -19,16 +19,18 @@ const OAuthForm = () => {
                 <div className="border border-gray-e6edff rounded-xl p-8">
                     <h2 className="text-lg text-center mb-6">Sign in with</h2>
 
-                    <Button
-                        type="button"
-                        size="xl"
-                        className="w-full"
-                        disabled={oauth.isLoading || !!oauth.session}
-                        isLoading={oauth.isLoading || !!oauth.session}
-                        onClick={onOAuthClick}
-                    >
-                        Sign in with Github
-                    </Button>
+                    <div>
+                        <Button
+                            type="button"
+                            size="xl"
+                            className="w-full"
+                            disabled={oauth.isLoading || !!oauth.session}
+                            isLoading={oauth.isLoading || !!oauth.session}
+                            onClick={onOAuthSigninClick}
+                        >
+                            Sign in with GitHub
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>
