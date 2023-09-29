@@ -245,13 +245,13 @@ export function useOnboardingData(
         if (initialize && !data.redirectTo) {
             if (oauth?.isLoading) {
                 setData((state) => ({ ...state, step: undefined }))
-            } else if (!oauth?.session) {
+            } else if (!oauth?.session?.user.id) {
                 setData((state) => ({ ...state, step: 'signin' }))
             } else {
                 setData((state) => ({ ...state, step: state.step || 'organizations' }))
             }
         }
-    }, [initialize, oauth?.isLoading, data.redirectTo])
+    }, [initialize, oauth?.isLoading, oauth?.session?.user.id, data.redirectTo])
 
     return {
         data,
