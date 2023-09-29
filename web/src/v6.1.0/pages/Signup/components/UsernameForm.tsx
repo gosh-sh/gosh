@@ -28,7 +28,6 @@ const UsernameForm = () => {
             <div className="basis-full lg:basis-4/12 text-center lg:text-start">
                 <div className="mb-4 text-3xl font-medium">Welcome to Gosh</div>
                 <div className="text-gray-53596d">Choose a short Nickname and Email</div>
-                <button onClick={signout}>signout</button>
             </div>
 
             <div className="basis-full md:basis-8/12 lg:basis-5/12 xl:basis-4/12">
