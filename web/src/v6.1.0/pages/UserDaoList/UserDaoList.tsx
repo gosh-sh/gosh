@@ -54,7 +54,7 @@ const UserDaoListPage = () => {
             {!!PARTNER_DAO_NAMES.length && (
                 <div className="mt-24 mb-4">
                     <div className="flex items-center justify-between pb-2 gap-4">
-                        <h1 className="text-xl font-medium">Partners</h1>
+                        <h1 className="text-xl font-medium">Most popular DAOs</h1>
                         {partnerDaoList.isFetching && (
                             <Loader className="text-sm">Updating...</Loader>
                         )}

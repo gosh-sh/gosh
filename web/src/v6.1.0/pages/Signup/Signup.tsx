@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useUserSignup } from '../../hooks/user.hooks'
+import { Navigate } from 'react-router-dom'
+import { useUser, useUserSignup } from '../../hooks/user.hooks'
 import {
     CompleteForm,
     DaoInvitesForm,
@@ -17,7 +18,12 @@ const motionProps = {
 }
 
 const SignupPage = () => {
+    const { persist } = useUser()
     const { data } = useUserSignup()
+
+    if (persist.pin && data.step !== 'complete') {
+        return <Navigate to="/a/orgs" />
+    }
 
     return (
         <div className="container pt-20 pb-8">
