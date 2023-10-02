@@ -41,7 +41,7 @@ const L2PageInner = () => {
     }, [])
 
     return (
-        <div className="flex flex-wrap items-start justify-center gap-16">
+        <div className="flex flex-wrap xl:flex-nowrap items-start justify-center gap-16">
             <div className="grow">
                 <h1 className="text-3xl font-medium mb-4">Cross-chain transfer</h1>
                 <Alert variant="warning" className="mb-6">
@@ -76,7 +76,7 @@ const L2PageInner = () => {
                     )}
                 </AnimatePresence>
             </div>
-            <div className="basis-full lg:basis-4/12 shrink-0">
+            <div className="basis-full xl:basis-4/12 shrink-0">
                 <div className="border border-gray-e6edff rounded-xl p-5">
                     <h3 className="text-xl font-medium">Accounts</h3>
 
