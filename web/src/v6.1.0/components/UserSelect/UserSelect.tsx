@@ -23,7 +23,11 @@ const UserSelect = (props: TUserSelectProps) => {
             if (await query.isDeployed()) {
                 options.push({
                     label: input,
-                    value: { name: input, type: EDaoMemberType.User },
+                    value: {
+                        name: input,
+                        address: query.address,
+                        type: EDaoMemberType.User,
+                    },
                 })
             }
         }
@@ -33,7 +37,11 @@ const UserSelect = (props: TUserSelectProps) => {
             if (await query.isDeployed()) {
                 options.push({
                     label: input,
-                    value: { name: input, type: EDaoMemberType.Dao },
+                    value: {
+                        name: input,
+                        address: query.address,
+                        type: EDaoMemberType.Dao,
+                    },
                 })
             }
         }

@@ -1,14 +1,13 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useBridgeTransfer } from '../../hooks/bridge.hooks'
 import { CompleteStep, TransferStep, RouteStep, Breadcrumbs } from './components'
-import { shortString } from '../../../utils'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowRightLong } from '@fortawesome/free-solid-svg-icons'
-import classNames from 'classnames'
+import { fromBigint, shortString, roundNumber } from '../../../utils'
 import { useEffect } from 'react'
 import Alert from '../../../components/Alert'
 import CopyClipboard from '../../../components/CopyClipboard'
-import { round2precision } from '../../../helpers'
+import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
+import { EBridgeNetwork } from '../../types/bridge.types'
+import { Button } from '../../../components/Form'
 
 const motionProps = {
     initial: { opacity: 0 },
@@ -17,10 +16,23 @@ const motionProps = {
     transition: { duration: 0.25 },
 }
 
-const BridgePage = () => {
-    const { networks, summary, step, reset } = useBridgeTransfer({
-        initialize: true,
-    })
+const BridgePageInner = () => {
+    const { showBoundary } = useErrorBoundary()
+    const { web3, gosh, networks, summary, step, reset, error, connectWeb3 } =
+        useBridgeTransfer({
+            initialize: true,
+        })
+
+    const getNetworkBalance = (network: string) => {
+        const floatstr = fromBigint(networks[network].balance, networks[network].decimals)
+        return roundNumber(floatstr, 5)
+    }
+
+    useEffect(() => {
+        if (error) {
+            showBoundary(error)
+        }
+    }, [error])
 
     useEffect(() => {
         return () => {
@@ -34,15 +46,12 @@ const BridgePage = () => {
                 <h1 className="text-3xl font-medium mb-4">Cross-chain transfer</h1>
                 <Alert variant="warning" className="mb-6">
                     <h3 className="font-medium">
-                        GOSH Ethereum L2 <span className="text-red-ff3b30">Alfa</span>{' '}
+                        GOSH Ethereum L2 <span className="text-red-ff3b30">Alpha</span>{' '}
                         Testing
                     </h3>
                     <div>
                         The contract has not been formally verified yet. Please do not
                         send a lot!
-                    </div>
-                    <div className="mt-3">
-                        Gosh to Gosh transactions are temporary unavailable.
                     </div>
                 </Alert>
                 <div className="my-10">
@@ -68,106 +77,122 @@ const BridgePage = () => {
                 </AnimatePresence>
             </div>
             <div className="basis-full lg:basis-4/12 shrink-0">
-                <div className="border border-gray-e6edff rounded-xl py-5">
-                    <h3 className="px-5 text-xl font-medium">Summary</h3>
+                <div className="border border-gray-e6edff rounded-xl p-5">
+                    <h3 className="text-xl font-medium">Accounts</h3>
 
-                    <div className="py-8 px-5 flex flex-col gap-y-5 border-b border-b-gray-e6edff">
-                        <div className="flex items-center justify-between text-sm">
-                            <div className="grow">
-                                <div className="inline-block w-12 text-gray-7c8db5 font-medium">
-                                    From
-                                </div>
-                                {networks[summary.from.network].label}
-                            </div>
-                            <div
-                                className={classNames(
-                                    'grow text-gray-7c8db5',
-                                    summary.from.address ? 'block' : 'hidden',
-                                )}
-                            >
-                                <div className="flex flex-nowrap items-center gap-x-3">
-                                    <img
-                                        src={networks[summary.from.network].iconpath}
-                                        className="w-8 ml-auto"
-                                        alt="Blockchain"
-                                    />
-                                    <CopyClipboard
-                                        label={shortString(summary.from.address, 6, 6)}
-                                        componentProps={{
-                                            text: summary.from.address,
-                                        }}
-                                    />
-                                </div>
-                                <div className="mt-1 text-right">
-                                    {round2precision(
-                                        networks[summary.from.network].balance,
-                                    )}{' '}
-                                    {networks[summary.from.network].token}
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                            <div className="grow">
-                                <div className="inline-block w-12 text-gray-7c8db5 font-medium">
-                                    To
-                                </div>
-                                {networks[summary.to.network].label}
-                            </div>
-                            <div className="grow text-gray-7c8db5">
-                                <div className="flex flex-nowrap items-center gap-x-3">
-                                    <img
-                                        src={networks[summary.to.network].iconpath}
-                                        className="w-8 ml-auto"
-                                        alt="Blockchain"
-                                    />
-                                    <CopyClipboard
-                                        label={shortString(summary.to.address, 6, 6)}
-                                        componentProps={{
-                                            text: summary.to.address,
-                                        }}
-                                    />
-                                </div>
-                                <div className="mt-1 text-right">
-                                    {round2precision(
-                                        networks[summary.to.network].balance,
-                                    )}{' '}
-                                    {networks[summary.to.network].token}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="py-8 px-5 flex flex-col gap-y-5 border-b border-b-gray-e6edff">
-                        <div className="flex items-center justify-between">
-                            <div className="grow font-medium">Token</div>
-                            <div className="grow text-end">
-                                <span className="font-medium">
-                                    {networks[summary.from.network].token}
-                                </span>
-                                <FontAwesomeIcon
-                                    icon={faArrowRightLong}
-                                    className="mx-3"
+                    <div className="mt-6 flex flex-col gap-y-5">
+                        <div className="flex items-center justify-between gap-x-6">
+                            <div className="grow flex flex-nowrap items-center gap-x-3">
+                                <img
+                                    src={networks[EBridgeNetwork.ETH].iconpath}
+                                    className="w-8"
+                                    alt="Blockchain"
                                 />
-                                <span className="font-medium">
-                                    {networks[summary.to.network].token}
+                                <div>
+                                    {networks[EBridgeNetwork.ETH].label}
+                                    {web3.instance && (
+                                        <CopyClipboard
+                                            className="text-xs text-gray-7c8db5"
+                                            label={shortString(web3.address)}
+                                            componentProps={{ text: web3.address }}
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                            <div className="font-medium">
+                                {web3.instance ? (
+                                    <>
+                                        {getNetworkBalance(EBridgeNetwork.ETH)}{' '}
+                                        <span className="text-gray-7c8db5 font-light text-sm">
+                                            {networks[EBridgeNetwork.ETH].token}
+                                        </span>
+                                    </>
+                                ) : (
+                                    <Button type="button" size="sm" onClick={connectWeb3}>
+                                        Connect
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between gap-x-6">
+                            <div className="grow flex flex-nowrap items-center gap-x-3">
+                                <img
+                                    src={networks[EBridgeNetwork.GOSH].iconpath}
+                                    className="w-8"
+                                    alt="Blockchain"
+                                />
+                                <div>
+                                    {networks[EBridgeNetwork.GOSH].label}
+                                    <CopyClipboard
+                                        className="text-xs text-gray-7c8db5"
+                                        label={shortString(gosh.address)}
+                                        componentProps={{ text: gosh.address }}
+                                    />
+                                </div>
+                            </div>
+                            <div className="font-medium">
+                                {getNetworkBalance(EBridgeNetwork.GOSH)}{' '}
+                                <span className="text-gray-7c8db5 font-light text-sm">
+                                    {networks[EBridgeNetwork.GOSH].token}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-6 border border-gray-e6edff rounded-xl p-5">
+                    <h3 className="text-xl font-medium">Summary</h3>
+
+                    <div className="mt-6">
+                        <h4 className="text-gray-7c8db5 text-sm mb-1">Send</h4>
+                        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+                            <div className="grow flex flex-nowrap items-center gap-x-3">
+                                <img
+                                    src={networks[summary.from.network].iconpath}
+                                    className="w-8"
+                                    alt="Blockchain"
+                                />
+                                <div>
+                                    {networks[summary.from.network].label}
+                                    <CopyClipboard
+                                        className="text-xs text-gray-7c8db5"
+                                        label={shortString(summary.from.wallet)}
+                                        componentProps={{ text: summary.from.wallet }}
+                                    />
+                                </div>
+                            </div>
+                            <div className="text-sm font-medium whitespace-nowrap">
+                                {summary.from.amount.toLocaleString()}{' '}
+                                <span className="text-gray-7c8db5 font-light text-sm">
+                                    {networks[summary.from.network].token}
                                 </span>
                             </div>
                         </div>
                     </div>
 
-                    <div className="pt-8 px-5 flex flex-col gap-y-5">
-                        <div className="flex items-center justify-between font-medium">
-                            <div className="grow">Send</div>
-                            <div className="grow text-end">
-                                {summary.from.amount.toLocaleString()}{' '}
-                                {networks[summary.from.network].token}
+                    <div className="mt-6">
+                        <h4 className="text-gray-7c8db5 text-sm mb-1">Receive</h4>
+                        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+                            <div className="grow flex flex-nowrap items-center gap-x-3">
+                                <img
+                                    src={networks[summary.to.network].iconpath}
+                                    className="w-8"
+                                    alt="Blockchain"
+                                />
+                                <div>
+                                    {networks[summary.to.network].label}
+                                    <CopyClipboard
+                                        className="text-xs text-gray-7c8db5"
+                                        label={shortString(summary.to.wallet)}
+                                        componentProps={{ text: summary.to.wallet }}
+                                    />
+                                </div>
                             </div>
-                        </div>
-                        <div className="flex items-center justify-between font-medium">
-                            <div className="grow">Receive</div>
-                            <div className="grow text-end ">
+                            <div className="text-sm font-medium whitespace-nowrap">
                                 {summary.to.amount.toLocaleString()}{' '}
-                                {networks[summary.to.network].token}
+                                <span className="text-gray-7c8db5 font-light text-sm">
+                                    {networks[summary.to.network].token}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -176,5 +201,14 @@ const BridgePage = () => {
         </div>
     )
 }
+
+const BridgePage = withErrorBoundary(BridgePageInner, {
+    fallbackRender: ({ error }) => (
+        <Alert variant="danger">
+            <h3 className="font-medium">Ethereum L2 error</h3>
+            <div>{error.message}</div>
+        </Alert>
+    ),
+})
 
 export default BridgePage

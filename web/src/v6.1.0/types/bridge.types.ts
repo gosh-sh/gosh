@@ -12,6 +12,11 @@ export type TBridgeTransferStatusItem = {
     message: string
 }
 
+export type TBridgeUser = {
+    label: string
+    value: { name: string; address: string; type: string; pubkey: string }
+}
+
 export type TBridgeTransferData = {
     web3: {
         instance: Web3<RegisteredSubscription> | null
@@ -22,20 +27,29 @@ export type TBridgeTransferData = {
         address: string
     }
     networks: {
-        [key: string]: { label: string; token: string; balance: number; iconpath: string }
+        [key: string]: {
+            label: string
+            token: string
+            balance: bigint
+            iconpath: string
+            decimals: number
+        }
     }
     summary: {
         from: {
             network: string
-            address: string
+            user: TBridgeUser | null
+            wallet: string
             amount: string
         }
         to: {
             network: string
-            address: string
+            user: TBridgeUser | null
+            wallet: string
             amount: string
         }
         progress: TBridgeTransferStatusItem[]
     }
     step: 'route' | 'transfer' | 'complete'
+    error?: any
 }

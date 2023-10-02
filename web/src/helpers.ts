@@ -52,11 +52,6 @@ export const getUsernameByEmail = async (email: string): Promise<string[] | null
     return data.length ? data.map(({ gosh_username }) => gosh_username) : null
 }
 
-export const round2precision = (value: number, precision: number = 5) => {
-    const multiplier = 10 ** precision
-    return Math.round(value * multiplier) / multiplier
-}
-
 /**
  * Toast shortcuts
  */

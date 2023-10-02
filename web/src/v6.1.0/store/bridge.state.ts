@@ -17,25 +17,29 @@ export const bridgeTransferAtom = atom<TBridgeTransferData>({
             [EBridgeNetwork.ETH]: {
                 label: 'Ethereum',
                 token: 'ETH',
-                balance: 0,
+                balance: 0n,
+                decimals: 18,
                 iconpath: '/images/tokens/ethereum.webp',
             },
             [EBridgeNetwork.GOSH]: {
                 label: 'GOSH',
                 token: 'WETH',
-                balance: 0,
+                balance: 0n,
+                decimals: 18,
                 iconpath: '/images/tokens/gosh.webp',
             },
         },
         summary: {
             from: {
                 network: EBridgeNetwork.ETH,
-                address: '',
+                user: null,
+                wallet: '',
                 amount: '0',
             },
             to: {
                 network: EBridgeNetwork.GOSH,
-                address: '',
+                user: null,
+                wallet: '',
                 amount: '0',
             },
             progress: [],

@@ -7,15 +7,22 @@ import { AppConfig } from '../../appconfig'
 import { appToastStatusSelector } from '../../store/app.state'
 import { GoshError } from '../../errors'
 import { useUser } from './user.hooks'
-import { whileFinite } from '../../utils'
-import { EBridgeNetwork, TBridgeTransferStatusItem } from '../types/bridge.types'
+import { fromBigint, toBigint, whileFinite } from '../../utils'
+import {
+    EBridgeNetwork,
+    TBridgeTransferStatusItem,
+    TBridgeUser,
+} from '../types/bridge.types'
+import { L2_COMISSION } from '../../constants'
 
 export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
     const { initialize } = options
+    const timeout = 24 * 60 * 60 * 1000 // 24h
+
     const { user } = useUser()
     const [data, setData] = useRecoilState(bridgeTransferAtom)
     const resetData = useResetRecoilState(bridgeTransferAtom)
-    const [status, setStatus] = useRecoilState(appToastStatusSelector('__bridge'))
+    const [status, setStatus] = useRecoilState(appToastStatusSelector('__bridgetransfer'))
 
     const getWeb3 = () => {
         const provider = (window as any).ethereum
@@ -28,17 +35,17 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
         return { web3: new Web3(provider), provider }
     }
 
-    const getGoshWallet = useCallback(async () => {
-        if (!user.keys?.public) {
+    const connectGosh = useCallback(async () => {
+        if (!user.keys?.public || !AppConfig.tip3root) {
             return
         }
 
-        const wallet = await AppConfig.tip3root!.getWallet({
+        const wallet = await AppConfig.tip3root.getWallet({
             data: { pubkey: `0x${user.keys.public}` },
             keys: user.keys,
         })
 
-        let balance = 0
+        let balance = 0n
         if (await wallet.isDeployed()) {
             balance = await wallet.getBalance()
         }
@@ -53,20 +60,28 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
                     balance,
                 },
             },
-            summary: setSummaryAddress(state.summary, {
-                key: EBridgeNetwork.GOSH,
-                address: wallet.address,
+            summary: setSummaryUser(state.summary, {
+                network: EBridgeNetwork.GOSH,
+                wallet: wallet.address,
+                user: {
+                    label: user.username!,
+                    value: {
+                        name: user.username!,
+                        address: user.profile!,
+                        type: 'user',
+                        pubkey: `0x${user.keys!.public}`,
+                    },
+                },
             }),
         }))
     }, [user.keys?.public])
 
-    const web3Connect = async () => {
+    const connectWeb3 = async () => {
         try {
             const { web3, provider } = getWeb3()
             const accounts = await provider.request({ method: 'eth_requestAccounts' })
             const address = accounts[0]
             const balance = await web3.eth.getBalance(address)
-
             setData((state) => ({
                 ...state,
                 web3: { instance: web3, address },
@@ -74,12 +89,13 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
                     ...state.networks,
                     [EBridgeNetwork.ETH]: {
                         ...state.networks[EBridgeNetwork.ETH],
-                        balance: parseFloat(web3.utils.fromWei(balance, 'ether')),
+                        balance,
                     },
                 },
-                summary: setSummaryAddress(state.summary, {
-                    key: EBridgeNetwork.ETH,
-                    address,
+                summary: setSummaryUser(state.summary, {
+                    network: EBridgeNetwork.ETH,
+                    wallet: address,
+                    user: null,
                 }),
             }))
         } catch (e: any) {
@@ -90,7 +106,7 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
 
     const reset = async () => {
         resetData()
-        await getGoshWallet()
+        await connectGosh()
     }
 
     const setStep = (step: 'route') => {
@@ -101,23 +117,36 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
         from_network?: string
         from_amount?: string
         to_network?: string
-        to_address?: string
+        to_user?: { user: TBridgeUser | null; wallet: string }
+        to_wallet?: string
     }) => {
+        const goshCurrentUser = {
+            label: user.username!,
+            value: {
+                name: user.username!,
+                address: user.profile!,
+                type: 'user',
+                pubkey: `0x${user.keys!.public}`,
+            },
+        }
+
         if (values.from_network) {
             setData((state) => {
                 const { to } = state.summary
 
-                let to_network = to.network
+                let from_user: TBridgeUser | null = null
+                if (values.from_network === EBridgeNetwork.GOSH) {
+                    from_user = goshCurrentUser
+                }
+
+                const to_updated = { ...to }
                 if (
                     values.from_network === EBridgeNetwork.ETH &&
                     to.network === EBridgeNetwork.ETH
                 ) {
-                    to_network = EBridgeNetwork.GOSH
-                } else if (
-                    values.from_network === EBridgeNetwork.GOSH &&
-                    to.network === EBridgeNetwork.GOSH
-                ) {
-                    to_network = EBridgeNetwork.ETH
+                    to_updated.network = EBridgeNetwork.GOSH
+                    to_updated.user = goshCurrentUser
+                    to_updated.wallet = getNetworkAddress(to_updated.network)
                 }
 
                 return {
@@ -126,49 +155,100 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
                         ...state.summary,
                         from: {
                             network: values.from_network!,
-                            address: getNetworkAddress(values.from_network!),
+                            user: from_user,
+                            wallet: getNetworkAddress(values.from_network!),
                             amount: state.summary.from.amount,
                         },
-                        to:
-                            to.network !== to_network
-                                ? {
-                                      network: to_network,
-                                      address: getNetworkAddress(to_network),
-                                      amount: state.summary.from.amount,
-                                  }
-                                : state.summary.to,
+                        to: {
+                            ...to_updated,
+                            amount: state.summary.from.amount,
+                        },
                     },
                 }
             })
         } else if (values.from_amount && parseFloat(values.from_amount) > 0) {
-            setData((state) => ({
-                ...state,
-                summary: {
-                    ...state.summary,
-                    from: { ...state.summary.from, amount: values.from_amount! },
-                    to: { ...state.summary.to, amount: values.from_amount! },
-                },
-            }))
-        } else if (values.to_network) {
-            setData((state) => ({
-                ...state,
-                summary: {
-                    ...state.summary,
-                    to: {
-                        network: values.to_network!,
-                        address: getNetworkAddress(values.to_network!),
-                        amount: state.summary.to.amount,
+            setData((state) => {
+                // Subtract comission when ETH -> GOSH
+                let to_amount = toBigint(
+                    values.from_amount!,
+                    state.networks[state.summary.from.network].decimals,
+                )
+                if (state.summary.from.network === EBridgeNetwork.ETH) {
+                    to_amount = to_amount - to_amount / BigInt(L2_COMISSION)
+                }
+
+                return {
+                    ...state,
+                    summary: {
+                        ...state.summary,
+                        from: { ...state.summary.from, amount: values.from_amount! },
+                        to: {
+                            ...state.summary.to,
+                            amount: fromBigint(
+                                to_amount,
+                                state.networks[state.summary.to.network].decimals,
+                            ),
+                        },
                     },
-                },
-            }))
-        } else if (values.to_address) {
+                }
+            })
+        } else if (values.to_network) {
+            setData((state) => {
+                const { from } = state.summary
+
+                let to_user: TBridgeUser | null = null
+                if (values.to_network === EBridgeNetwork.GOSH) {
+                    to_user = goshCurrentUser
+                }
+
+                const from_updated = { ...from }
+                if (
+                    values.to_network === EBridgeNetwork.ETH &&
+                    from.network === EBridgeNetwork.ETH
+                ) {
+                    from_updated.network = EBridgeNetwork.GOSH
+                    from_updated.user = goshCurrentUser
+                    from_updated.wallet = getNetworkAddress(from_updated.network)
+                }
+
+                return {
+                    ...state,
+                    summary: {
+                        ...state.summary,
+                        to: {
+                            network: values.to_network!,
+                            user: to_user,
+                            wallet: getNetworkAddress(values.to_network!),
+                            amount: state.summary.to.amount,
+                        },
+                        from: {
+                            ...from_updated,
+                            amount: state.summary.from.amount,
+                        },
+                    },
+                }
+            })
+        } else if (values.to_user) {
             setData((state) => ({
                 ...state,
                 summary: {
                     ...state.summary,
                     to: {
                         ...state.summary.to,
-                        address: values.to_address!,
+                        user: values.to_user!.user,
+                        wallet: values.to_user!.wallet,
+                    },
+                },
+            }))
+        } else if (values.to_wallet) {
+            setData((state) => ({
+                ...state,
+                summary: {
+                    ...state.summary,
+                    to: {
+                        ...state.summary.to,
+                        user: null,
+                        wallet: values.to_wallet!.toLowerCase(),
                     },
                 },
             }))
@@ -189,6 +269,11 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
                 { type: 'awaiting', message: 'Send WETH tokens' },
                 { type: 'awaiting', message: 'Receive ETH tokens' },
             ]
+        } else if (route === `${EBridgeNetwork.GOSH}:${EBridgeNetwork.GOSH}`) {
+            progress = [
+                { type: 'awaiting', message: 'Prepare receiver wallet' },
+                { type: 'awaiting', message: 'Send WETH tokens' },
+            ]
         }
 
         setData((state) => ({
@@ -205,6 +290,8 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
                 await eth2gosh()
             } else if (route === `${EBridgeNetwork.GOSH}:${EBridgeNetwork.ETH}`) {
                 await gosh2eth()
+            } else if (route === `${EBridgeNetwork.GOSH}:${EBridgeNetwork.GOSH}`) {
+                await gosh2gosh()
             } else {
                 throw new GoshError('Value error', {
                     message: 'Transfer route unsupported',
@@ -230,21 +317,19 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
         }
     }
 
-    const setSummaryAddress = (
+    const setSummaryUser = (
         state: typeof data['summary'],
-        network: { key: string; address: string },
+        value: { network: string; wallet: string; user: TBridgeUser | null },
     ) => {
-        const { key, address } = network
+        const { network, wallet, user } = value
         return {
             ...state,
             from: {
                 ...state.from,
-                address: state.from.network === key ? address : state.from.address,
+                wallet: state.from.network === network ? wallet : state.from.wallet,
+                user: state.from.network === network ? user : state.from.user,
             },
-            to: {
-                ...state.to,
-                address: state.to.network === key ? address : state.to.address,
-            },
+            to: state.to.wallet ? state.to : { ...state.to, wallet, user },
         }
     }
 
@@ -275,8 +360,8 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
     }
 
     const eth2gosh = async () => {
-        if (!user.keys?.public) {
-            throw new GoshError('Value error', 'GOSH user pubkey undefined')
+        if (!AppConfig.tip3root) {
+            throw new GoshError('Value error', 'TIP3 root undefined')
         }
         if (!AppConfig.elockaddr) {
             throw new GoshError('Value error', 'ELock address undefined')
@@ -287,8 +372,13 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
         if (!data.gosh.instance) {
             throw new GoshError('Gosh error', 'Gosh wallet undefined')
         }
+        if (!data.summary.to.user?.value.pubkey) {
+            throw new GoshError('Value error', 'Receiver pubkey undefined')
+        }
 
-        const timeout = 24 * 60 * 60 * 1000 // 24h
+        const wallet = await AppConfig.tip3root.getWallet({
+            address: data.summary.to.wallet,
+        })
         const start = Math.round(Date.now() / 1000)
 
         // Send to Ethereum
@@ -298,7 +388,7 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
             AppConfig.elockaddr,
         )
         // @ts-ignore
-        const edata = elock.methods.deposit(`0x${user.keys.public}`).encodeABI()
+        const edata = elock.methods.deposit(data.summary.to.user.value.pubkey).encodeABI()
         const receipt = await data.web3.instance.eth.sendTransaction({
             from: data.web3.address,
             to: AppConfig.elockaddr,
@@ -314,7 +404,7 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
         setSummaryProgress(1, 'pending')
         const waitDeployed = await whileFinite(
             async () => {
-                return data.gosh.instance!.isDeployed()
+                return await wallet.isDeployed()
             },
             10000,
             timeout,
@@ -325,18 +415,13 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
 
         const waitMinted = await whileFinite(
             async () => {
-                const { messages } = await data.gosh.instance!.getMessages(
+                const { messages } = await wallet.getMessages(
                     { msgType: ['IntIn'], node: ['created_at'] },
                     true,
                 )
-                console.debug('Start', start)
-                console.debug('Messages', messages)
-
                 const filtered = messages
                     .filter(({ decoded }) => !!decoded)
                     .filter(({ message }) => message.created_at >= start)
-                console.debug('Filtered', filtered)
-
                 const index = filtered.findIndex(
                     ({ decoded }) => decoded.name === 'acceptMint',
                 )
@@ -352,24 +437,25 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
     }
 
     const gosh2eth = async () => {
-        if (!data.summary.to.address) {
+        if (!data.summary.to.wallet) {
             throw new GoshError('Value error', 'Ethereum address undefined')
         }
         if (!data.gosh.instance) {
             throw new GoshError('Gosh error', 'Gosh wallet undefined')
         }
 
-        const timeout = 24 * 60 * 60 * 1000 // 24h
-
         const { web3 } = getWeb3()
-        const balance = await web3.eth.getBalance(data.summary.to.address)
+        const balance = await web3.eth.getBalance(data.summary.to.wallet)
         const startBalance = parseInt(web3.utils.fromWei(balance, 'wei'))
 
-        // Send to gosh
+        // Send from gosh
         setSummaryProgress(0, 'pending')
         await data.gosh.instance.withdraw({
-            amount: Math.round(parseFloat(data.summary.to.amount) * 10 ** 18),
-            l1addr: data.summary.to.address,
+            amount: toBigint(
+                data.summary.from.amount,
+                data.networks[EBridgeNetwork.GOSH].decimals,
+            ),
+            l1addr: data.summary.to.wallet,
         })
         setSummaryProgress(0, 'completed')
 
@@ -377,7 +463,7 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
         setSummaryProgress(1, 'pending')
         const waitEth = await whileFinite(
             async () => {
-                const balance = await web3.eth.getBalance(data.summary.to.address)
+                const balance = await web3.eth.getBalance(data.summary.to.wallet)
                 const currBalance = parseInt(web3.utils.fromWei(balance, 'wei'))
                 return currBalance > startBalance
             },
@@ -390,7 +476,52 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
         setSummaryProgress(1, 'completed')
     }
 
-    const onWeb3Change = useCallback(async () => {
+    const gosh2gosh = async () => {
+        if (!AppConfig.tip3root) {
+            throw new GoshError('Value error', 'TIP3 root undefined')
+        }
+        if (!data.gosh.instance) {
+            throw new GoshError('Gosh error', 'Gosh wallet undefined')
+        }
+        if (!data.summary.to.user?.value.pubkey) {
+            throw new GoshError('Value error', 'Receiver pubkey undefined')
+        }
+
+        // Get receiver wallet and deploy if needed
+        setSummaryProgress(0, 'pending')
+        const to_wallet = await AppConfig.tip3root.getWallet({
+            address: data.summary.to.wallet,
+        })
+        if (!(await to_wallet.isDeployed())) {
+            await data.gosh.instance.createEmptyWallet({
+                pubkey: data.summary.to.user.value.pubkey,
+            })
+            const waitDeployed = await whileFinite(
+                async () => {
+                    return await to_wallet.isDeployed()
+                },
+                10000,
+                timeout,
+            )
+            if (!waitDeployed) {
+                throw new GoshError('Timeout error', 'Gosh wallet is not deployed')
+            }
+        }
+        setSummaryProgress(0, 'completed')
+
+        // Send tokens to receiver
+        setSummaryProgress(1, 'pending')
+        await data.gosh.instance.transfer({
+            address: to_wallet.address,
+            amount: toBigint(
+                data.summary.from.amount,
+                data.networks[EBridgeNetwork.GOSH].decimals,
+            ),
+        })
+        setSummaryProgress(1, 'completed')
+    }
+
+    const web3SubscribeCallback = useCallback(async () => {
         try {
             if (!data.web3.instance) {
                 throw new GoshError('Web3 error', 'Web3 is not connected')
@@ -406,19 +537,18 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
             const balance = await data.web3.instance.eth.getBalance(address)
             setData((state) => ({
                 ...state,
-                web3: { ...state.web3, address },
+                web3: { ...state.web3, address: address.toLowerCase() },
                 networks: {
                     ...state.networks,
                     [EBridgeNetwork.ETH]: {
                         ...state.networks[EBridgeNetwork.ETH],
-                        balance: parseFloat(
-                            data.web3.instance!.utils.fromWei(balance, 'ether'),
-                        ),
+                        balance,
                     },
                 },
-                summary: setSummaryAddress(state.summary, {
-                    key: EBridgeNetwork.ETH,
-                    address,
+                summary: setSummaryUser(state.summary, {
+                    network: EBridgeNetwork.ETH,
+                    wallet: address.toLowerCase(),
+                    user: null,
                 }),
             }))
         } catch (e: any) {
@@ -427,36 +557,93 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
         }
     }, [!!data.web3.instance])
 
+    const goshSubscribeCallback = useCallback(async () => {
+        if (!data.gosh.instance) {
+            return
+        }
+
+        const balance = await data.gosh.instance.getBalance()
+        setData((state) => ({
+            ...state,
+            networks: {
+                ...state.networks,
+                [EBridgeNetwork.GOSH]: {
+                    ...state.networks[EBridgeNetwork.GOSH],
+                    balance,
+                },
+            },
+        }))
+    }, [data.gosh.instance?.address])
+
+    // Connect GOSH account
     useEffect(() => {
         if (initialize) {
-            getGoshWallet()
+            if (!AppConfig.tip3root) {
+                setData((state) => ({
+                    ...state,
+                    error: new GoshError('TIP3 root undefined'),
+                }))
+            } else {
+                connectGosh()
+            }
         }
-    }, [initialize, getGoshWallet])
+    }, [initialize, connectGosh])
 
+    // Subscribe GOSH account
     useEffect(() => {
         if (!initialize) {
             return
         }
 
-        data.web3.instance?.provider?.on('chainChanged', () => {
-            onWeb3Change()
-        })
-        data.web3.instance?.provider?.on('accountsChanged', () => {
-            onWeb3Change()
+        data.gosh.instance?.account.subscribeMessages(
+            'id body msg_type',
+            async ({ body, msg_type }) => {
+                const decoded = await data.gosh.instance!.decodeMessageBody(
+                    body,
+                    msg_type,
+                )
+                const triggers = ['acceptMint', 'acceptTransfer', 'transfer']
+                if (decoded && triggers.indexOf(decoded.name) >= 0) {
+                    await goshSubscribeCallback()
+                }
+            },
+        )
+
+        return () => {
+            if (initialize) {
+                data.gosh.instance?.account.free()
+            }
+        }
+    }, [initialize, goshSubscribeCallback])
+
+    // Subscribe ETH account/provider
+    useEffect(() => {
+        if (!initialize) {
+            return
+        }
+
+        data.web3.instance?.provider?.on('chainChanged', web3SubscribeCallback)
+        data.web3.instance?.provider?.on('accountsChanged', web3SubscribeCallback)
+        data.web3.instance?.eth.subscribe('newBlockHeaders').then((subscription) => {
+            subscription.on('data', web3SubscribeCallback)
+            subscription.on('error', (data) => console.error('[web3 subscribe]', data))
         })
 
         return () => {
-            data.web3.instance?.provider?.removeListener('chainChanged', () => {})
-            data.web3.instance?.provider?.removeListener('accountsChanged', () => {})
+            if (initialize) {
+                data.web3.instance?.provider?.removeListener('chainChanged', () => {})
+                data.web3.instance?.provider?.removeListener('accountsChanged', () => {})
+                data.web3.instance?.eth.clearSubscriptions()
+            }
         }
-    }, [initialize, onWeb3Change])
+    }, [initialize, web3SubscribeCallback])
 
     return {
         ...data,
         status,
         reset,
         setStep,
-        web3Connect,
+        connectWeb3,
         setSummaryFormValues,
         submitRouteStep,
         submitTransferStep,

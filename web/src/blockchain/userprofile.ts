@@ -36,15 +36,10 @@ export class UserProfile extends BaseContract {
         return new DaoProfile(this.account.client, value0)
     }
 
-    // async getOwners(): Promise<TAddress[]> {
-    //     const owners = await this.runLocal('getAccess', {})
-    //     return Object.keys(owners.value0)
-    // }
-
-    // async getGoshAddress(): Promise<TAddress> {
-    //     const { value0 } = await this.runLocal('getCurrentSystemContract', {})
-    //     return value0
-    // }
+    async getPubkeys(): Promise<string[]> {
+        const { value0 } = await this.runLocal('getAccess', {})
+        return Object.keys(value0)
+    }
 
     async createDao(
         systemcontract: TSystemContract,
