@@ -2,7 +2,7 @@ import { ButtonLink } from '../../../components/Form'
 import { DaoMemberWallet, DaoMembers, DaoSupply } from '../../components/Dao'
 import { useDaoMember } from '../../hooks/dao.hooks'
 
-const DaoTokenBridgePage = () => {
+const DaoTokenL2Page = () => {
     const member = useDaoMember()
 
     return (
@@ -13,23 +13,19 @@ const DaoTokenBridgePage = () => {
                         <div className="max-w-md mx-auto">
                             <img
                                 src="/images/bridge-img.webp"
-                                alt="Bridge"
+                                alt="Ethereum L2"
                                 className="w-full"
                             />
                         </div>
-                        <div className="mt-7 max-w-[9.375em] mx-auto">
-                            <img
-                                src="/images/bridge-soon.webp"
-                                alt="Coming soon"
-                                className="w-full"
-                            />
-                        </div>
-                        <h2 className="mt-6 font-medium text-3xl text-center leading-normal">
-                            DAO Token exchange with Ethereum Bridge
+                        <h2 className="mt-7 font-medium text-xl lg:text-3xl text-center leading-normal">
+                            GOSH Ethereum Layer 2
                         </h2>
+                        <div className="mt-4 text-center lg:text-lg">
+                            Connect DAO token with any erc-20 is coming soon
+                        </div>
                         <div className="mt-9 text-center">
-                            <ButtonLink to="/a/bridge" size="xl">
-                                Test Ethereum Bridge Alfa version
+                            <ButtonLink to="/a/l2" size="xl">
+                                Test ETH transfer now (in Alpha)
                             </ButtonLink>
                         </div>
                     </div>
@@ -47,4 +43,4 @@ const DaoTokenBridgePage = () => {
     )
 }
 
-export default DaoTokenBridgePage
+export default DaoTokenL2Page

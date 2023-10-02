@@ -2,7 +2,7 @@ import { Form, Formik } from 'formik'
 import { Button } from '../../../../components/Form'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCircleCheck, faSpinner } from '@fortawesome/free-solid-svg-icons'
-import { useBridgeTransfer } from '../../../hooks/bridge.hooks'
+import { useL2Transfer } from '../../../hooks/l2.hooks'
 import classNames from 'classnames'
 import { faCircle } from '@fortawesome/free-regular-svg-icons'
 
@@ -31,7 +31,7 @@ const StatusBadge = (props: { type: 'awaiting' | 'pending' | 'completed' }) => {
 }
 
 const TransferStep = () => {
-    const { summary, setStep, submitTransferStep } = useBridgeTransfer()
+    const { summary, setStep, submitTransferStep } = useL2Transfer()
 
     const onBackClick = () => {
         setStep('route')

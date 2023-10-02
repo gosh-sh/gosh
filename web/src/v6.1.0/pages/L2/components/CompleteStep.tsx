@@ -1,8 +1,8 @@
 import { Button } from '../../../../components/Form'
-import { useBridgeTransfer } from '../../../hooks/bridge.hooks'
+import { useL2Transfer } from '../../../hooks/l2.hooks'
 
 const CompleteStep = () => {
-    const { reset } = useBridgeTransfer()
+    const { reset } = useL2Transfer()
 
     return (
         <div className="border border-gray-e6edff rounded-xl bg-gray-fafafd px-5 py-16">
