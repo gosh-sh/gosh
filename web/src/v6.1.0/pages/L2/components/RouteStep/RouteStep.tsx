@@ -93,7 +93,7 @@ const RouteStep = () => {
                 from_wallet: yup.string().required(),
                 from_amount: yup
                     .number()
-                    // .min(0.01)
+                    .min(0.01)
                     .max(
                         parseFloat(
                             fromBigint(
