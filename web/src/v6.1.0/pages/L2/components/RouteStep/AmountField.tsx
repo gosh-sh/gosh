@@ -1,6 +1,6 @@
 import { Field } from 'formik'
 import { FormikInput } from '../../../../../components/Formik'
-import { useBridgeTransfer } from '../../../../hooks/bridge.hooks'
+import { useL2Transfer } from '../../../../hooks/l2.hooks'
 import { Button } from '../../../../../components/Form'
 import classNames from 'classnames'
 import { fromBigint, roundNumber } from '../../../../../utils'
@@ -15,7 +15,7 @@ type TAmountFieldProps = {
 
 const AmountField = (props: TAmountFieldProps) => {
     const { network, prefix, label, disabled, onChange } = props
-    const { networks, setSummaryFormValues } = useBridgeTransfer()
+    const { networks, setSummaryFormValues } = useL2Transfer()
 
     const getNetworkBalance = (network: string) => {
         const floatstr = fromBigint(networks[network].balance, networks[network].decimals)

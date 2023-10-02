@@ -12,7 +12,7 @@ const DropdownMenu = () => {
     const items = [
         { to: '/a/orgs', title: 'Organizations', className: 'text-gray-050a15' },
         { to: '/a/settings', title: 'Settings', className: 'text-gray-050a15' },
-        { to: '/a/bridge', title: 'Ethereum', className: 'text-gray-050a15' },
+        { to: '/a/l2', title: 'Ethereum', className: 'text-gray-050a15' },
         {
             to: '',
             title: 'Sign out',

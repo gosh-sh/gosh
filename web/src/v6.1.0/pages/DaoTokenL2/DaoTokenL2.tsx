@@ -2,7 +2,7 @@ import { ButtonLink } from '../../../components/Form'
 import { DaoMemberWallet, DaoMembers, DaoSupply } from '../../components/Dao'
 import { useDaoMember } from '../../hooks/dao.hooks'
 
-const DaoTokenBridgePage = () => {
+const DaoTokenL2Page = () => {
     const member = useDaoMember()
 
     return (
@@ -13,7 +13,7 @@ const DaoTokenBridgePage = () => {
                         <div className="max-w-md mx-auto">
                             <img
                                 src="/images/bridge-img.webp"
-                                alt="Bridge"
+                                alt="Ethereum L2"
                                 className="w-full"
                             />
                         </div>
@@ -24,7 +24,7 @@ const DaoTokenBridgePage = () => {
                             Connect DAO token with any erc-20 is coming soon
                         </div>
                         <div className="mt-9 text-center">
-                            <ButtonLink to="/a/bridge" size="xl">
+                            <ButtonLink to="/a/l2" size="xl">
                                 Test ETH transfer now (in Alpha)
                             </ButtonLink>
                         </div>
@@ -43,4 +43,4 @@ const DaoTokenBridgePage = () => {
     )
 }
 
-export default DaoTokenBridgePage
+export default DaoTokenL2Page

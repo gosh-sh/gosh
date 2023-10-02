@@ -1,8 +1,8 @@
 import classNames from 'classnames'
-import { useBridgeTransfer } from '../../../hooks/bridge.hooks'
+import { useL2Transfer } from '../../../hooks/l2.hooks'
 
 const Breadcrumbs = () => {
-    const { step } = useBridgeTransfer()
+    const { step } = useL2Transfer()
 
     return (
         <div className="flex items-center justify-between">

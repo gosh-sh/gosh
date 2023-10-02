@@ -1,12 +1,12 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useBridgeTransfer } from '../../hooks/bridge.hooks'
+import { useL2Transfer } from '../../hooks/l2.hooks'
 import { CompleteStep, TransferStep, RouteStep, Breadcrumbs } from './components'
 import { fromBigint, shortString, roundNumber } from '../../../utils'
 import { useEffect } from 'react'
 import Alert from '../../../components/Alert'
 import CopyClipboard from '../../../components/CopyClipboard'
 import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
-import { EBridgeNetwork } from '../../types/bridge.types'
+import { EL2Network } from '../../types/l2.types'
 import { Button } from '../../../components/Form'
 
 const motionProps = {
@@ -16,10 +16,10 @@ const motionProps = {
     transition: { duration: 0.25 },
 }
 
-const BridgePageInner = () => {
+const L2PageInner = () => {
     const { showBoundary } = useErrorBoundary()
     const { web3, gosh, networks, summary, step, reset, error, connectWeb3 } =
-        useBridgeTransfer({
+        useL2Transfer({
             initialize: true,
         })
 
@@ -84,12 +84,12 @@ const BridgePageInner = () => {
                         <div className="flex items-center justify-between gap-x-6">
                             <div className="grow flex flex-nowrap items-center gap-x-3">
                                 <img
-                                    src={networks[EBridgeNetwork.ETH].iconpath}
+                                    src={networks[EL2Network.ETH].iconpath}
                                     className="w-8"
                                     alt="Blockchain"
                                 />
                                 <div>
-                                    {networks[EBridgeNetwork.ETH].label}
+                                    {networks[EL2Network.ETH].label}
                                     {web3.instance && (
                                         <CopyClipboard
                                             className="text-xs text-gray-7c8db5"
@@ -102,9 +102,9 @@ const BridgePageInner = () => {
                             <div className="font-medium">
                                 {web3.instance ? (
                                     <>
-                                        {getNetworkBalance(EBridgeNetwork.ETH)}{' '}
+                                        {getNetworkBalance(EL2Network.ETH)}{' '}
                                         <span className="text-gray-7c8db5 font-light text-sm">
-                                            {networks[EBridgeNetwork.ETH].token}
+                                            {networks[EL2Network.ETH].token}
                                         </span>
                                     </>
                                 ) : (
@@ -117,12 +117,12 @@ const BridgePageInner = () => {
                         <div className="flex items-center justify-between gap-x-6">
                             <div className="grow flex flex-nowrap items-center gap-x-3">
                                 <img
-                                    src={networks[EBridgeNetwork.GOSH].iconpath}
+                                    src={networks[EL2Network.GOSH].iconpath}
                                     className="w-8"
                                     alt="Blockchain"
                                 />
                                 <div>
-                                    {networks[EBridgeNetwork.GOSH].label}
+                                    {networks[EL2Network.GOSH].label}
                                     <CopyClipboard
                                         className="text-xs text-gray-7c8db5"
                                         label={shortString(gosh.address)}
@@ -131,9 +131,9 @@ const BridgePageInner = () => {
                                 </div>
                             </div>
                             <div className="font-medium">
-                                {getNetworkBalance(EBridgeNetwork.GOSH)}{' '}
+                                {getNetworkBalance(EL2Network.GOSH)}{' '}
                                 <span className="text-gray-7c8db5 font-light text-sm">
-                                    {networks[EBridgeNetwork.GOSH].token}
+                                    {networks[EL2Network.GOSH].token}
                                 </span>
                             </div>
                         </div>
@@ -202,7 +202,7 @@ const BridgePageInner = () => {
     )
 }
 
-const BridgePage = withErrorBoundary(BridgePageInner, {
+const L2Page = withErrorBoundary(L2PageInner, {
     fallbackRender: ({ error }) => (
         <Alert variant="danger">
             <h3 className="font-medium">Ethereum L2 error</h3>
@@ -211,4 +211,4 @@ const BridgePage = withErrorBoundary(BridgePageInner, {
     ),
 })
 
-export default BridgePage
+export default L2Page

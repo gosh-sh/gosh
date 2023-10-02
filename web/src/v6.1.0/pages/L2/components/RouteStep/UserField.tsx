@@ -1,19 +1,19 @@
 import { ErrorMessage, Field } from 'formik'
-import { EBridgeNetwork, TBridgeUser } from '../../../../types/bridge.types'
+import { EL2Network, TL2User } from '../../../../types/l2.types'
 import { BaseField, FormikInput } from '../../../../../components/Formik'
 import { shortString } from '../../../../../utils'
 import { UserSelect } from '../../../../components/UserSelect'
 
 type TUserFieldProps = {
     network: string
-    user: TBridgeUser | null
+    user: TL2User | null
     wallet: string
     prefix: string
     label?: string
     disabled?: boolean
     isUserFetching?: boolean
     onFieldChange(e: any): void
-    onUserFieldChange(option: TBridgeUser): void
+    onUserFieldChange(option: TL2User): void
 }
 
 const UserField = (props: TUserFieldProps) => {
@@ -29,7 +29,7 @@ const UserField = (props: TUserFieldProps) => {
         onUserFieldChange,
     } = props
 
-    if (network !== EBridgeNetwork.GOSH) {
+    if (network !== EL2Network.GOSH) {
         return (
             <Field
                 label={label}

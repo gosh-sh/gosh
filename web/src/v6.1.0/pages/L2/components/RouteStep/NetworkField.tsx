@@ -1,6 +1,6 @@
 import { Field } from 'formik'
 import { FormikSelect } from '../../../../../components/Formik'
-import { useBridgeTransfer } from '../../../../hooks/bridge.hooks'
+import { useL2Transfer } from '../../../../hooks/l2.hooks'
 
 type TNetworkFieldProps = {
     prefix: string
@@ -10,7 +10,7 @@ type TNetworkFieldProps = {
 
 const NetworkField = (props: TNetworkFieldProps) => {
     const { prefix, label, onChange } = props
-    const { networks } = useBridgeTransfer()
+    const { networks } = useL2Transfer()
 
     return (
         <Field

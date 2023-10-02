@@ -1,9 +1,9 @@
 import { atom } from 'recoil'
 import { contextVersion } from '../constants'
-import { EBridgeNetwork, TBridgeTransferData } from '../types/bridge.types'
+import { EL2Network, TL2TransferData } from '../types/l2.types'
 
-export const bridgeTransferAtom = atom<TBridgeTransferData>({
-    key: `BridgeTransferAtom${contextVersion}`,
+export const l2TransferAtom = atom<TL2TransferData>({
+    key: `L2TransferAtom${contextVersion}`,
     default: {
         web3: {
             instance: null,
@@ -14,14 +14,14 @@ export const bridgeTransferAtom = atom<TBridgeTransferData>({
             address: '',
         },
         networks: {
-            [EBridgeNetwork.ETH]: {
+            [EL2Network.ETH]: {
                 label: 'Ethereum',
                 token: 'ETH',
                 balance: 0n,
                 decimals: 18,
                 iconpath: '/images/tokens/ethereum.webp',
             },
-            [EBridgeNetwork.GOSH]: {
+            [EL2Network.GOSH]: {
                 label: 'GOSH',
                 token: 'WETH',
                 balance: 0n,
@@ -31,13 +31,13 @@ export const bridgeTransferAtom = atom<TBridgeTransferData>({
         },
         summary: {
             from: {
-                network: EBridgeNetwork.ETH,
+                network: EL2Network.ETH,
                 user: null,
                 wallet: '',
                 amount: '0',
             },
             to: {
-                network: EBridgeNetwork.GOSH,
+                network: EL2Network.GOSH,
                 user: null,
                 wallet: '',
                 amount: '0',

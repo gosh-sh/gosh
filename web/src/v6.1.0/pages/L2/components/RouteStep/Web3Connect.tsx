@@ -1,6 +1,6 @@
 import { Button } from '../../../../../components/Form'
-import { useBridgeTransfer } from '../../../../hooks/bridge.hooks'
-import { EBridgeNetwork } from '../../../../types/bridge.types'
+import { useL2Transfer } from '../../../../hooks/l2.hooks'
+import { EL2Network } from '../../../../types/l2.types'
 
 type TWeb3ConnectProps = {
     network: string
@@ -8,9 +8,9 @@ type TWeb3ConnectProps = {
 
 const Web3Connect = (props: TWeb3ConnectProps) => {
     const { network } = props
-    const { web3, connectWeb3 } = useBridgeTransfer()
+    const { web3, connectWeb3 } = useL2Transfer()
 
-    if (network === EBridgeNetwork.ETH && !web3.instance) {
+    if (network === EL2Network.ETH && !web3.instance) {
         return (
             <div>
                 <Button type="button" onClick={connectWeb3}>

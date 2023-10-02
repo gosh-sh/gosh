@@ -23,11 +23,11 @@ import Containers from '../docker-extension/pages/Containers'
 import DaoSettingsLayout from './pages/DaoSettingsLayout'
 import DaoUpgradePage from './pages/DaoUpgrade'
 import DaoSetupPage from './pages/DaoSetup'
-import DaoTokenBridgePage from './pages/DaoTokenBridge'
+import DaoTokenL2Page from './pages/DaoTokenL2'
 import OnboardingDaoPage from './pages/OnboardingDao'
 import DaoTaskListPage from './pages/DaoTaskList'
 import TaskCreatePage from './pages/TaskCreate'
-import BridgePage from './pages/Bridge'
+import L2Page from './pages/L2'
 
 // TODO: Update after full refactor
 import RepoLayout from '../pages/RepoLayout'
@@ -64,7 +64,7 @@ const App = () => {
                             <Route index element={null} />
                             <Route path="orgs/create" element={<DaoCreatePage />} />
                             <Route path="orgs" element={<UserDaoListPage />} />
-                            <Route path="bridge" element={<BridgePage />} />
+                            <Route path="l2" element={<L2Page />} />
                             <Route path="settings" element={<SettingsPage />} />
                         </Route>
                         <Route path="/o/:daoname" element={<DaoLayout />}>
@@ -93,7 +93,7 @@ const App = () => {
                                 <Route path="upgrade" element={<DaoUpgradePage />} />
                                 <Route path="setup" element={<DaoSetupPage />} />
                             </Route>
-                            <Route path="bridge" element={<DaoTokenBridgePage />} />
+                            <Route path="l2" element={<DaoTokenL2Page />} />
                         </Route>
                         <Route path="/o/:daoName/r/:repoName" element={<RepoLayout />}>
                             <Route index element={<RepoPage />} />

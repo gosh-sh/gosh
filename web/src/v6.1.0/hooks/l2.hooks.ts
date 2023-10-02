@@ -1,28 +1,24 @@
 import { useRecoilState, useResetRecoilState } from 'recoil'
 import Web3 from 'web3'
 import ELockAbi from '../../blockchain/abi/elock.abi.json'
-import { bridgeTransferAtom } from '../store/bridge.state'
+import { l2TransferAtom } from '../store/l2.state'
 import { useCallback, useEffect } from 'react'
 import { AppConfig } from '../../appconfig'
 import { appToastStatusSelector } from '../../store/app.state'
 import { GoshError } from '../../errors'
 import { useUser } from './user.hooks'
 import { fromBigint, toBigint, whileFinite } from '../../utils'
-import {
-    EBridgeNetwork,
-    TBridgeTransferStatusItem,
-    TBridgeUser,
-} from '../types/bridge.types'
+import { EL2Network, TL2TransferStatusItem, TL2User } from '../types/l2.types'
 import { L2_COMISSION } from '../../constants'
 
-export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
+export function useL2Transfer(options: { initialize?: boolean } = {}) {
     const { initialize } = options
     const timeout = 24 * 60 * 60 * 1000 // 24h
 
     const { user } = useUser()
-    const [data, setData] = useRecoilState(bridgeTransferAtom)
-    const resetData = useResetRecoilState(bridgeTransferAtom)
-    const [status, setStatus] = useRecoilState(appToastStatusSelector('__bridgetransfer'))
+    const [data, setData] = useRecoilState(l2TransferAtom)
+    const resetData = useResetRecoilState(l2TransferAtom)
+    const [status, setStatus] = useRecoilState(appToastStatusSelector('__l2transfer'))
 
     const getWeb3 = () => {
         const provider = (window as any).ethereum
@@ -55,13 +51,13 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
             gosh: { instance: wallet, address: wallet.address },
             networks: {
                 ...state.networks,
-                [EBridgeNetwork.GOSH]: {
-                    ...state.networks[EBridgeNetwork.GOSH],
+                [EL2Network.GOSH]: {
+                    ...state.networks[EL2Network.GOSH],
                     balance,
                 },
             },
             summary: setSummaryUser(state.summary, {
-                network: EBridgeNetwork.GOSH,
+                network: EL2Network.GOSH,
                 wallet: wallet.address,
                 user: {
                     label: user.username!,
@@ -87,13 +83,13 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
                 web3: { instance: web3, address },
                 networks: {
                     ...state.networks,
-                    [EBridgeNetwork.ETH]: {
-                        ...state.networks[EBridgeNetwork.ETH],
+                    [EL2Network.ETH]: {
+                        ...state.networks[EL2Network.ETH],
                         balance,
                     },
                 },
                 summary: setSummaryUser(state.summary, {
-                    network: EBridgeNetwork.ETH,
+                    network: EL2Network.ETH,
                     wallet: address,
                     user: null,
                 }),
@@ -117,7 +113,7 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
         from_network?: string
         from_amount?: string
         to_network?: string
-        to_user?: { user: TBridgeUser | null; wallet: string }
+        to_user?: { user: TL2User | null; wallet: string }
         to_wallet?: string
     }) => {
         const goshCurrentUser = {
@@ -134,17 +130,17 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
             setData((state) => {
                 const { to } = state.summary
 
-                let from_user: TBridgeUser | null = null
-                if (values.from_network === EBridgeNetwork.GOSH) {
+                let from_user: TL2User | null = null
+                if (values.from_network === EL2Network.GOSH) {
                     from_user = goshCurrentUser
                 }
 
                 const to_updated = { ...to }
                 if (
-                    values.from_network === EBridgeNetwork.ETH &&
-                    to.network === EBridgeNetwork.ETH
+                    values.from_network === EL2Network.ETH &&
+                    to.network === EL2Network.ETH
                 ) {
-                    to_updated.network = EBridgeNetwork.GOSH
+                    to_updated.network = EL2Network.GOSH
                     to_updated.user = goshCurrentUser
                     to_updated.wallet = getNetworkAddress(to_updated.network)
                 }
@@ -173,7 +169,7 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
                     values.from_amount!,
                     state.networks[state.summary.from.network].decimals,
                 )
-                if (state.summary.from.network === EBridgeNetwork.ETH) {
+                if (state.summary.from.network === EL2Network.ETH) {
                     to_amount = to_amount - to_amount / BigInt(L2_COMISSION)
                 }
 
@@ -196,17 +192,17 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
             setData((state) => {
                 const { from } = state.summary
 
-                let to_user: TBridgeUser | null = null
-                if (values.to_network === EBridgeNetwork.GOSH) {
+                let to_user: TL2User | null = null
+                if (values.to_network === EL2Network.GOSH) {
                     to_user = goshCurrentUser
                 }
 
                 const from_updated = { ...from }
                 if (
-                    values.to_network === EBridgeNetwork.ETH &&
-                    from.network === EBridgeNetwork.ETH
+                    values.to_network === EL2Network.ETH &&
+                    from.network === EL2Network.ETH
                 ) {
-                    from_updated.network = EBridgeNetwork.GOSH
+                    from_updated.network = EL2Network.GOSH
                     from_updated.user = goshCurrentUser
                     from_updated.wallet = getNetworkAddress(from_updated.network)
                 }
@@ -259,17 +255,17 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
         const route = `${data.summary.from.network}:${data.summary.to.network}`
 
         let progress: typeof data['summary']['progress'] = []
-        if (route === `${EBridgeNetwork.ETH}:${EBridgeNetwork.GOSH}`) {
+        if (route === `${EL2Network.ETH}:${EL2Network.GOSH}`) {
             progress = [
                 { type: 'awaiting', message: 'Send ETH tokens' },
                 { type: 'awaiting', message: 'Receive WETH tokens' },
             ]
-        } else if (route === `${EBridgeNetwork.GOSH}:${EBridgeNetwork.ETH}`) {
+        } else if (route === `${EL2Network.GOSH}:${EL2Network.ETH}`) {
             progress = [
                 { type: 'awaiting', message: 'Send WETH tokens' },
                 { type: 'awaiting', message: 'Receive ETH tokens' },
             ]
-        } else if (route === `${EBridgeNetwork.GOSH}:${EBridgeNetwork.GOSH}`) {
+        } else if (route === `${EL2Network.GOSH}:${EL2Network.GOSH}`) {
             progress = [
                 { type: 'awaiting', message: 'Prepare receiver wallet' },
                 { type: 'awaiting', message: 'Send WETH tokens' },
@@ -286,11 +282,11 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
     const submitTransferStep = async () => {
         try {
             const route = `${data.summary.from.network}:${data.summary.to.network}`
-            if (route === `${EBridgeNetwork.ETH}:${EBridgeNetwork.GOSH}`) {
+            if (route === `${EL2Network.ETH}:${EL2Network.GOSH}`) {
                 await eth2gosh()
-            } else if (route === `${EBridgeNetwork.GOSH}:${EBridgeNetwork.ETH}`) {
+            } else if (route === `${EL2Network.GOSH}:${EL2Network.ETH}`) {
                 await gosh2eth()
-            } else if (route === `${EBridgeNetwork.GOSH}:${EBridgeNetwork.GOSH}`) {
+            } else if (route === `${EL2Network.GOSH}:${EL2Network.GOSH}`) {
                 await gosh2gosh()
             } else {
                 throw new GoshError('Value error', {
@@ -319,7 +315,7 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
 
     const setSummaryUser = (
         state: typeof data['summary'],
-        value: { network: string; wallet: string; user: TBridgeUser | null },
+        value: { network: string; wallet: string; user: TL2User | null },
     ) => {
         const { network, wallet, user } = value
         return {
@@ -333,10 +329,7 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
         }
     }
 
-    const setSummaryProgress = (
-        index: number,
-        type: TBridgeTransferStatusItem['type'],
-    ) => {
+    const setSummaryProgress = (index: number, type: TL2TransferStatusItem['type']) => {
         setData((state) => ({
             ...state,
             summary: {
@@ -350,9 +343,9 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
 
     const getNetworkAddress = (network: string) => {
         switch (network) {
-            case EBridgeNetwork.ETH:
+            case EL2Network.ETH:
                 return data.web3.address
-            case EBridgeNetwork.GOSH:
+            case EL2Network.GOSH:
                 return data.gosh.address
             default:
                 return ''
@@ -453,7 +446,7 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
         await data.gosh.instance.withdraw({
             amount: toBigint(
                 data.summary.from.amount,
-                data.networks[EBridgeNetwork.GOSH].decimals,
+                data.networks[EL2Network.GOSH].decimals,
             ),
             l1addr: data.summary.to.wallet,
         })
@@ -515,7 +508,7 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
             address: to_wallet.address,
             amount: toBigint(
                 data.summary.from.amount,
-                data.networks[EBridgeNetwork.GOSH].decimals,
+                data.networks[EL2Network.GOSH].decimals,
             ),
         })
         setSummaryProgress(1, 'completed')
@@ -540,13 +533,13 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
                 web3: { ...state.web3, address: address.toLowerCase() },
                 networks: {
                     ...state.networks,
-                    [EBridgeNetwork.ETH]: {
-                        ...state.networks[EBridgeNetwork.ETH],
+                    [EL2Network.ETH]: {
+                        ...state.networks[EL2Network.ETH],
                         balance,
                     },
                 },
                 summary: setSummaryUser(state.summary, {
-                    network: EBridgeNetwork.ETH,
+                    network: EL2Network.ETH,
                     wallet: address.toLowerCase(),
                     user: null,
                 }),
@@ -567,8 +560,8 @@ export function useBridgeTransfer(options: { initialize?: boolean } = {}) {
             ...state,
             networks: {
                 ...state.networks,
-                [EBridgeNetwork.GOSH]: {
-                    ...state.networks[EBridgeNetwork.GOSH],
+                [EL2Network.GOSH]: {
+                    ...state.networks[EL2Network.GOSH],
                     balance,
                 },
             },
