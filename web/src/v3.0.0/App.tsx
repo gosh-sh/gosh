@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import { ToastContainer } from 'react-toastify'
 import Header from './components/Header'
 import { ToastOptionsShortcuts } from '../helpers'
@@ -122,7 +123,10 @@ const App = () => {
             </main>
             <footer className="footer"></footer>
 
-            <ToastContainer {...ToastOptionsShortcuts.Default} />
+            {createPortal(
+                <ToastContainer {...ToastOptionsShortcuts.Default} />,
+                document.body,
+            )}
             <ToastStatus />
             <BaseModal />
         </div>

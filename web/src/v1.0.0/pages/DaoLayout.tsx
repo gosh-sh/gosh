@@ -67,7 +67,7 @@ const DaoLayout = () => {
                         </span>
                     </h1>
                     <CopyClipboard
-                        className="text-xs text-gray-7c8db5"
+                        className="w-fit text-xs text-gray-7c8db5"
                         label={
                             <span
                                 data-tooltip-id="common-tip"
