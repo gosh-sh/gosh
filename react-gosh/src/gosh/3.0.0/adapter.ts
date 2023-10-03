@@ -4387,7 +4387,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         original: string,
     ) => {
         // Get lib patch
-        let patch = Diff.createPatch(treepath, original, modified)
+        let patch = Diff.createPatch(treepath, original, modified, undefined, undefined, {
+            context: 0,
+        })
 
         // Format to GOSH patch
         patch = patch.split('\n').slice(4).join('\n')
