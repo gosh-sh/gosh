@@ -543,11 +543,23 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
         // TODO: /Remove/refactor this after git part refactored
 
         // TODO: Refactor this after git part refactored
+        const treeitems = ['description.txt', 'readme.md'].map((filename) => {
+            const treeitem = _tree.items.find(({ path, name }) => {
+                const treepath = `${path}/${name}`.toLowerCase()
+                const searchpath = `/${filename}`.toLowerCase()
+                return treepath === searchpath
+            })
+            return treeitem || null
+        })
         const [summary, description] = await Promise.all(
-            ['description.txt', 'README.md'].map(async (filename) => {
+            treeitems.map(async (treeitem) => {
+                if (!treeitem) {
+                    return ''
+                }
+
                 if (commit.version < '6.0.0') {
                     const snapshot = await repository.getSnapshot({
-                        data: { branch: 'main', filename, commitname: '' },
+                        data: { branch: 'main', filename: treeitem.name, commitname: '' },
                     })
 
                     if (await snapshot.isDeployed()) {
@@ -556,22 +568,17 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
                             return result.content
                         }
                     }
-                } else {
-                    const treeitem = _tree.items.find(
-                        ({ path, name }) => `${path}/${name}` === `/${filename}`,
+                } else if (treeitem.commit) {
+                    const snapshot = await repository.getSnapshot({
+                        data: { filename: treeitem.name, commitname: treeitem.commit },
+                    })
+                    const { current } = await _adapter.getCommitBlob(
+                        snapshot.address,
+                        treeitem.name,
+                        _commit.name,
                     )
-                    if (treeitem?.commit) {
-                        const snapshot = await repository.getSnapshot({
-                            data: { filename, commitname: treeitem.commit },
-                        })
-                        const { current } = await _adapter.getCommitBlob(
-                            snapshot.address,
-                            filename,
-                            _commit.name,
-                        )
-                        if (!Buffer.isBuffer(current)) {
-                            return current
-                        }
+                    if (!Buffer.isBuffer(current)) {
+                        return current
                     }
                 }
 
