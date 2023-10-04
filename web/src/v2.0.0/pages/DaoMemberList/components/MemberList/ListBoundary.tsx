@@ -82,11 +82,12 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
                             allowance: yup
                                 .number()
                                 .integer()
+                                .min(0)
                                 .required('Field is required'),
                             balance: yup
                                 .number()
                                 .integer()
-                                .positive()
+                                .min(0)
                                 .required('Field is required'),
                         }),
                     ),
