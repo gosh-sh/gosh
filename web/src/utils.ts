@@ -20,10 +20,40 @@ export const roundNumber = (value: number | string, precision: number = 5) => {
     return Math.round(floatvalue * multiplier) / multiplier
 }
 
-export const getDurationDelta = (time: number) => {
+export const getDurationDelta = (time: number, format: string) => {
     const ms = moment(time).diff(moment())
     const delta = moment.duration(ms)
-    return `${delta.days()}d ${delta.hours()}h ${delta.minutes()}m`
+
+    const parsed = []
+    while (format) {
+        const sindex = format.indexOf('[')
+        const eindex = format.indexOf(']')
+        const group = format.slice(sindex + 1, eindex)
+        format = format.slice(eindex + 1)
+
+        const nindex = format.indexOf('[')
+        const delimiter = format.slice(0, nindex)
+        format = format.slice(nindex)
+
+        parsed.push([group, delimiter])
+    }
+
+    const filled = parsed.map(([group, delimiter]) => {
+        const [sign, label] = group.split(':').concat('')
+
+        let value = 0
+        if (sign === 'd') {
+            value = delta.days()
+        } else if (sign === 'h') {
+            value = delta.hours()
+        } else if (sign === 'm') {
+            value = delta.minutes()
+        } else if (sign === 's') {
+            value = delta.seconds()
+        }
+        return `${value}${label}${delimiter}`
+    })
+    return filled.join('')
 }
 
 export const sleep = (ms: number = 0) => {
