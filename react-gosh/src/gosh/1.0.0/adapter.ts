@@ -1193,6 +1193,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     async getCommit(options: { name?: string; address?: TAddress }): Promise<TCommit> {
         const commit = await this._getCommit(options)
         const details = await commit.runLocal('getCommit', {})
+        const { value0: treeaddr } = await commit.runLocal('gettree', {})
         const { branch, sha, parents, content, initupgrade } = details
 
         // Parse content
@@ -1238,6 +1239,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             parents: _parents,
             version: commit.version,
             initupgrade,
+            correct: true,
+            treeaddr,
         }
     }
 
@@ -1953,7 +1956,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return value0
     }
 
-    private async _getBranch(name: string): Promise<any> {
+    async _getBranch(name: string): Promise<any> {
         const { value0 } = await this.repo.runLocal('getAddrBranch', { name })
         return value0
     }
@@ -2200,7 +2203,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return restored
     }
 
-    private async _getCommit(options: {
+    async _getCommit(options: {
         name?: string
         address?: TAddress
     }): Promise<IGoshCommit> {

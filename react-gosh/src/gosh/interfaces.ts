@@ -362,6 +362,7 @@ interface IGoshRepositoryAdapter {
         ipfs: boolean
     }>
     getCommit(options: { name?: string; address?: TAddress }): Promise<TCommit>
+    _getCommit(options: { name?: string; address?: TAddress }): Promise<IGoshCommit>
     getCommitBlob(
         treepath: string,
         branch: string,
@@ -379,6 +380,7 @@ interface IGoshRepositoryAdapter {
         commit: string | TCommit,
     ): Promise<{ address: string; treepath: string; index: number }[]>
     getBranch(name: string): Promise<TBranch>
+    _getBranch(name: string): Promise<any>
     getBranches(): Promise<TBranch[]>
     getCommitTags(): Promise<TCommitTag[]>
     getUpgrade(commit: string): Promise<TUpgradeData>
@@ -423,7 +425,10 @@ interface IGoshRepositoryAdapter {
             callback?: IPushCallback
         },
     ): Promise<void>
-    pushUpgrade(data: TUpgradeData, options: { callback?: IPushCallback }): Promise<void>
+    pushUpgrade(
+        data: TUpgradeData,
+        options: { setCommit?: boolean; callback?: IPushCallback },
+    ): Promise<void>
     createCommitTag(params: TRepositoryCreateCommitTagParams): Promise<void>
 
     deployContentSignature(
