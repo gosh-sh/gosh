@@ -164,6 +164,10 @@ export const fromBigint = (number: bigint, decimals: number) => {
     // 001234 -> '001234'
     const fraction = zeroPaddedValue.slice(-decimals).replace(/\.?0+$/, '')
 
+    if (integer === '' && fraction === '') {
+        return '0'
+    }
+
     if (integer === '') {
         return `0.${fraction}`
     }

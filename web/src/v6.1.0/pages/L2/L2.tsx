@@ -30,11 +30,12 @@ const getPayoutTime = () => {
 
 const L2PageInner = () => {
     const { showBoundary } = useErrorBoundary()
-    const { web3, gosh, networks, summary, step, reset, error, connectWeb3 } =
+    const { web3, gosh, comissions, networks, summary, step, reset, error, connectWeb3 } =
         useL2Transfer({
             initialize: true,
         })
     const [payout, setPayout] = useState<any>(getPayoutTime())
+    const route = `${summary.from.network}:${summary.to.network}`
 
     const getNetworkBalance = (network: string) => {
         const floatstr = fromBigint(networks[network].balance, networks[network].decimals)
@@ -212,15 +213,29 @@ const L2PageInner = () => {
                             </div>
                         </div>
                     </div>
+
                     <div className="mt-6 pt-5 border-t border-t-gray-e6edff">
                         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
-                            <div className="grow flex flex-nowrap items-center gap-x-3">
-                                Next payout
-                            </div>
-                            <div className="text-sm font-medium font-mono whitespace-nowrap">
-                                {getDurationDelta(payout, '[h:h] [m:m] [s:s]')}
+                            <div className="grow text-sm">Estimate comission</div>
+                            <div className="text-sm font-medium whitespace-nowrap">
+                                {fromBigint(
+                                    comissions[route],
+                                    networks[summary.to.network].decimals,
+                                )}{' '}
+                                <span className="text-gray-7c8db5 font-light text-sm">
+                                    {networks[summary.to.network].token}
+                                </span>
                             </div>
                         </div>
+
+                        {route === `${EL2Network.GOSH}:${EL2Network.ETH}` && (
+                            <div className="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+                                <div className="grow text-sm">Next payout</div>
+                                <div className="text-sm font-medium font-mono whitespace-nowrap">
+                                    {getDurationDelta(payout, '[h:h] [m:m] [s:s]')}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
