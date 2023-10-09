@@ -10,10 +10,6 @@ name: Prerelease
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
-      - dev
-      - 'ci/**'
     tags:
       - '[0-9]+.[0-9]+'
       - '[0-9]+.[0-9]+.[0-9]+'
