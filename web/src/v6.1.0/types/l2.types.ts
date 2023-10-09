@@ -26,6 +26,7 @@ export type TL2TransferData = {
         instance: TIP3Wallet | null
         address: string
     }
+    comissions: { [route: string]: bigint }
     networks: {
         [key: string]: {
             label: string

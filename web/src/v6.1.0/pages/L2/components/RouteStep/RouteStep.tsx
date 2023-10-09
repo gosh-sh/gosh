@@ -82,11 +82,11 @@ const RouteStep = () => {
                 from_network: summary.from.network,
                 from_user: summary.from.user,
                 from_wallet: summary.from.wallet,
-                from_amount: summary.from.amount.toString(),
+                from_amount: summary.from.amount,
                 to_network: summary.to.network,
                 to_user: summary.to.user,
                 to_wallet: summary.to.wallet,
-                to_amount: summary.to.amount.toString(),
+                to_amount: summary.to.amount,
             }}
             validationSchema={yup.object().shape({
                 from_network: yup.string().required(),

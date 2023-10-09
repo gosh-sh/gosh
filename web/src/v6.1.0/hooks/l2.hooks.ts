@@ -7,9 +7,10 @@ import { AppConfig } from '../../appconfig'
 import { appToastStatusSelector } from '../../store/app.state'
 import { GoshError } from '../../errors'
 import { useUser } from './user.hooks'
-import { fromBigint, toBigint, whileFinite } from '../../utils'
+import { fromBigint, setLockableInterval, toBigint, whileFinite } from '../../utils'
 import { EL2Network, TL2TransferStatusItem, TL2User } from '../types/l2.types'
 import { L2_COMISSION } from '../../constants'
+import { supabase } from '../../supabase'
 
 export function useL2Transfer(options: { initialize?: boolean } = {}) {
     const { initialize } = options
@@ -162,29 +163,30 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                     },
                 }
             })
-        } else if (values.from_amount && parseFloat(values.from_amount) > 0) {
+        } else if (values.from_amount && parseFloat(values.from_amount) >= 0) {
             setData((state) => {
-                // Subtract comission when ETH -> GOSH
-                let to_amount = toBigint(
+                // Cast from_amount to BigInt
+                const from_amount = toBigint(
                     values.from_amount!,
                     state.networks[state.summary.from.network].decimals,
                 )
-                if (state.summary.from.network === EL2Network.ETH) {
-                    to_amount = to_amount - to_amount / BigInt(L2_COMISSION)
+
+                // Calculate comission
+                const route = `${data.summary.from.network}:${data.summary.to.network}`
+                let comission = 0n
+                if (route === `${EL2Network.ETH}:${EL2Network.GOSH}`) {
+                    comission = from_amount / BigInt(L2_COMISSION)
+                } else if (route === `${EL2Network.GOSH}:${EL2Network.ETH}`) {
+                    comission = data.comissions[route]
                 }
 
+                // to.amount is calculated by useCallback with deps
                 return {
                     ...state,
+                    comissions: { ...state.comissions, [route]: comission },
                     summary: {
                         ...state.summary,
                         from: { ...state.summary.from, amount: values.from_amount! },
-                        to: {
-                            ...state.summary.to,
-                            amount: fromBigint(
-                                to_amount,
-                                state.networks[state.summary.to.network].decimals,
-                            ),
-                        },
                     },
                 }
             })
@@ -568,6 +570,36 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
         }))
     }, [data.gosh.instance?.address])
 
+    const getWeb3Comission = useCallback(async () => {
+        try {
+            const { data, error } = await supabase.client
+                .from('l2_state')
+                .select()
+                .order('created_at', { ascending: false })
+            if (error) {
+                throw new GoshError('Get web3 comission', error.message)
+            }
+            if (!data.length) {
+                throw new GoshError('Get web3 comission', 'No data')
+            }
+
+            const row = data[0]
+            let comission = BigInt(row.current_approximate_elock_commissions)
+            comission += 21000n * BigInt(row.current_eth_gas_price)
+            comission /= BigInt(row.queued_burns_cnt + 1)
+
+            setData((state) => ({
+                ...state,
+                comissions: {
+                    ...state.comissions,
+                    [`${EL2Network.GOSH}:${EL2Network.ETH}`]: comission,
+                },
+            }))
+        } catch (e: any) {
+            console.warn(e.message)
+        }
+    }, [])
+
     // Connect GOSH account
     useEffect(() => {
         if (initialize) {
@@ -609,7 +641,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
         }
     }, [initialize, goshSubscribeCallback])
 
-    // Subscribe ETH account/provider
+    // Subscribe web3 account/provider
     useEffect(() => {
         if (!initialize) {
             return
@@ -630,6 +662,51 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
             }
         }
     }, [initialize, web3SubscribeCallback])
+
+    // Subscribe (periodic update) for web3 comission
+    useEffect(() => {
+        let interval: NodeJS.Timer
+        if (initialize) {
+            getWeb3Comission()
+            interval = setLockableInterval(async () => {
+                await getWeb3Comission()
+            }, 15000)
+        }
+
+        return () => {
+            clearInterval(interval)
+        }
+    }, [initialize, getWeb3Comission])
+
+    // Update to_amount by deps
+    useEffect(() => {
+        const { summary, comissions, networks } = data
+        const comission = comissions[`${summary.from.network}:${summary.to.network}`]
+        const from_amount = toBigint(
+            summary.from.amount,
+            networks[summary.from.network].decimals,
+        )
+        const to_amount = from_amount - comission
+
+        setData((state) => ({
+            ...state,
+            summary: {
+                ...state.summary,
+                to: {
+                    ...state.summary.to,
+                    amount: fromBigint(
+                        to_amount > 0 ? to_amount : 0n,
+                        networks[state.summary.to.network].decimals,
+                    ),
+                },
+            },
+        }))
+    }, [
+        data.summary.from.network,
+        data.summary.to.network,
+        data.summary.from.amount,
+        data.comissions,
+    ])
 
     return {
         ...data,
