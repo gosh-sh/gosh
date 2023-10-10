@@ -67,7 +67,7 @@ opentelemetry = {version = "0.18.0", features = ["rt-tokio"]}
 opentelemetry-otlp = {version = "0.11.0", features = ["grpc-tonic"]}
 opentelemetry-semantic-conventions = "0.10.0"
 primitive-types = '0.12.1'
-proc-macro2 = "=1.0.52"
+# proc-macro2 = "=1.0.52"
 reqwest-middleware = "0.2.0"
 reqwest-tracing = "0.4.0"
 rmp-serde = "1.1.1"
@@ -107,12 +107,12 @@ version = '1.21.2'
 [dependencies.ton_client]
 git = 'https://github.com/tonlabs/ever-sdk.git'
 package = 'ton_client'
-tag = "1.43.1"
+tag = "1.44.3"
 
 [dependencies.ton_sdk]
 git = 'https://github.com/tonlabs/ever-sdk.git'
 package = 'ton_sdk'
-tag = "1.43.1"
+tag = "1.44.3"
 
 [dependencies.zstd]
 default-features = false

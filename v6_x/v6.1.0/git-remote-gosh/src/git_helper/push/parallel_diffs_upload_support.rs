@@ -1,11 +1,13 @@
 use crate::blockchain::BlockchainService;
 use crate::blockchain::{snapshot::PushDiffCoordinate, BlockchainContractAddress};
-use crate::git_helper::push::push_diff::{diff_address, is_diff_deployed, push_diff};
+use crate::git_helper::push::push_diff::{diff_address, push_diff, prepush_diff};
 use crate::git_helper::GitHelper;
 
 use crate::blockchain::snapshot::diffs::wait_diffs_ready::wait_diffs_until_ready;
 use anyhow::bail;
-use std::collections::HashMap;
+use ton_client::processing::{fetch_next_monitor_results, ParamsOfFetchNextMonitorResults, MessageMonitoringResult, MessageMonitoringStatus};
+use std::collections::{HashMap, HashSet};
+use std::time::SystemTime;
 use std::vec::Vec;
 use tokio::task::JoinSet;
 use tracing::Instrument;
@@ -93,7 +95,11 @@ impl ParallelDiffsUploadSupport {
         let chunk_size = get_push_chunk();
         let max_attempts = get_redeploy_attempts();
         tracing::trace!("Start push of diffs, chunk_size={chunk_size}, max_attempts={max_attempts}");
-        let mut exp: Vec<BlockchainContractAddress> = self.expecting_deployed_contacts_addresses.iter().map(|addr| BlockchainContractAddress::new(addr)).collect();
+        let mut exp: Vec<BlockchainContractAddress> = self
+            .expecting_deployed_contacts_addresses
+            .iter()
+            .map(|addr| BlockchainContractAddress::new(addr))
+            .collect();
         let mut attempt = 0;
         let mut last_rest_cnt = 0;
         loop {
@@ -123,6 +129,111 @@ impl ParallelDiffsUploadSupport {
         Ok(())
     }
 
+    async fn push_in_chunks(
+        &mut self,
+        context: &mut GitHelper<impl BlockchainService + 'static>,
+    ) -> anyhow::Result<()> {
+        #[derive(Deserialize)]
+        struct ExpectedAddress {
+            expected_address: String,
+        }
+
+        let chunk_size = get_push_chunk();
+        let max_attempts = 3u32 /* get_redeploy_attempts() */;
+
+        let mut exp: Vec<BlockchainContractAddress> = self
+            .expecting_deployed_contacts_addresses
+            .iter()
+            .map(|addr| BlockchainContractAddress::new(addr))
+            .collect();
+
+        let blockchain = context.blockchain.clone();
+        let wallet = blockchain.user_wallet(&context.dao_addr,&context.remote.network).await?;
+        let ipfs_endpoint = context.config.ipfs_http_endpoint().to_string();
+        let last_commit_id = self.last_commit_id;
+        let database = context.get_db()?.clone();
+
+        let mut attempt = 0u32;
+        let mut expected_addresses: HashSet<String> = HashSet::new();
+        loop {
+            if attempt == max_attempts {
+                anyhow::bail!("Failed to deploy diffs. Undeployed diffs: {exp:?}");
+            }
+
+            let mut q_in_q: HashSet<String> = HashSet::new();
+            for chunk in exp.chunks(chunk_size) {
+                let mut message_bocs: Vec<(String, Option<BlockchainContractAddress>)> = vec![];
+                for addr in chunk {
+                    let wallet_contract = wallet.take_one().await?;
+                    let diff_address = &String::from(addr);
+                    let boc = prepush_diff(
+                        &blockchain,
+                        context.remote.repo.clone(),
+                        &wallet,
+                        &ipfs_endpoint,
+                        &last_commit_id,
+                        &diff_address,
+                        database.clone(),
+                    ).await?;
+                    message_bocs.push((boc, Some(addr.clone())));
+                }
+                let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
+                let expire = now.as_secs() as u32 + 120 /* todo remove magic num */;
+                let queue_name = blockchain.send_messages(&message_bocs, expire).await?;
+                q_in_q.insert(queue_name);
+            }
+
+            loop {
+                for queue in q_in_q {
+                    let sent_messages = fetch_next_monitor_results(
+                        blockchain.client().clone(),
+                        ParamsOfFetchNextMonitorResults {
+                            queue,
+                            wait_mode: None,
+                        }
+                    ).await?;
+
+                    for sent_result in sent_messages.results {
+                        let MessageMonitoringResult {
+                            hash,
+                            status,
+                            error,
+                            user_data,
+                            ..
+                        } = sent_result;
+                        match status {
+                            MessageMonitoringStatus::Finalized => {
+                                if let Some(payload) = user_data {
+                                    let payload: ExpectedAddress = serde_json::from_value(payload)?;
+                                    expected_addresses.insert(payload.expected_address.clone());
+                                    exp.retain(|addr| String::from(addr) == payload.expected_address);
+                                } else {
+                                    unreachable!();
+                                }
+                            },
+                            MessageMonitoringStatus::Timeout => {
+                                let mut reason = "message expired";
+                                if let Some(err) = error {
+                                    reason = "error: {err}";
+                                }
+                                tracing::debug!(
+                                    "deploy diff was failed: message id={}, expected address={:?}, reason={}",
+                                    hash,
+                                    user_data,
+                                    reason
+                                );
+                            },
+                            MessageMonitoringStatus::Reserved => unreachable!()
+                        }
+                    }
+                }
+                // todo sleep and repeat
+                break;
+            }
+            attempt += 1;
+        }
+        Ok(())
+    }
 
     pub async fn add_to_push_list(
         &mut self,

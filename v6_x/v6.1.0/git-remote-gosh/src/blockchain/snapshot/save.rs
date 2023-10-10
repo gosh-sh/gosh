@@ -109,6 +109,18 @@ pub trait DeployDiff {
         index2: u32,
         last: bool,
     ) -> anyhow::Result<()>;
+
+    async fn construct_deploy_diff_message(
+        &self,
+        wallet: &UserWallet,
+        repo_name: String,
+        branch_name: String,
+        commit_id: String,
+        diffs: Diff,
+        index1: u32,
+        index2: u32,
+        last: bool,
+    ) -> anyhow::Result<String>;
 }
 
 #[async_trait]
@@ -125,7 +137,15 @@ impl DeployDiff for Everscale {
         index2: u32,
         last: bool,
     ) -> anyhow::Result<()> {
-        tracing::trace!("deploy_diff: repo_name={repo_name}, branch_name={branch_name}, commit_id={commit_id}, index1={index1}, index2={index2}, last={last}");
+        tracing::trace!(
+            "deploy_diff: repo_name={}, branch_name={}, commit_id={}, index1={}, index2={}, last={}",
+            repo_name,
+            branch_name,
+            commit_id,
+            index1,
+            index2,
+            last,
+        );
         let diffs = vec![diff];
         let args = DeployDiffParams {
             repo_name,
@@ -150,6 +170,52 @@ impl DeployDiff for Everscale {
         drop(wallet_contract);
         tracing::trace!("deployDiff result: {:?}", result);
         Ok(())
+    }
+
+    #[instrument(level = "info", skip_all)]
+    async fn construct_deploy_diff_message(
+        &self,
+        wallet: &UserWallet,
+        repo_name: String,
+        branch_name: String,
+        commit_id: String,
+        diff: Diff,
+        index1: u32,
+        index2: u32,
+        last: bool,
+    ) -> anyhow::Result<String> {
+        tracing::trace!(
+            "construct_deploy_diff_message: repo_name={}, branch_name={}, commit_id={}, index1={}, index2={}, last={}",
+            repo_name,
+            branch_name,
+            commit_id,
+            index1,
+            index2,
+            last,
+        );
+        let diffs = vec![diff];
+        let args = DeployDiffParams {
+            repo_name,
+            branch_name,
+            commit_id,
+            diffs,
+            index1,
+            index2,
+            last,
+        };
+
+        let wallet_contract = wallet.take_one().await?;
+        tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
+        let (_, boc) = self
+            .construct_boc(
+                wallet_contract.deref(),
+                "deployDiff",
+                Some(serde_json::to_value(args)?),
+            )
+            .await?;
+        drop(wallet_contract);
+        tracing::trace!("construct_deploy_diff_message done");
+        Ok(boc)
     }
 }
 

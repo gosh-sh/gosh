@@ -1,5 +1,6 @@
 use super::{
     branch::{DeleteBranch, DeployBranch},
+    call::BlockchainCall,
     commit::save::BlockchainCommitPusher,
     contract::ContractRead,
     snapshot::save::{DeleteSnapshot, DeployDiff, DeployNewSnapshot},
@@ -53,6 +54,7 @@ pub trait BlockchainService:
     + Sync
     + Send
     //
+    + BlockchainCall
     + BlockchainCommitService
     + BlockchainCommitPusher
     + BlockchainUserWalletService
@@ -234,6 +236,18 @@ pub mod tests {
                 index2: u32,
                 last: bool,
             ) -> anyhow::Result<()>;
+
+            async fn construct_deploy_diff_message(
+                &self,
+                wallet: &UserWallet,
+                repo_name: String,
+                branch_name: String,
+                commit_id: String,
+                diffs: Diff,
+                index1: u32,
+                index2: u32,
+                last: bool,
+            ) -> anyhow::Result<String>;
         }
 
         #[async_trait]
@@ -340,6 +354,7 @@ pub mod tests {
             fn root_contract(&self) -> &GoshContract;
             fn repo_contract(&self) -> &GoshContract;
         }
+
         #[async_trait]
         impl BlockchainReadContractState for Everscale {
             async fn check_contracts_state(

@@ -1,10 +1,8 @@
 use crate::blockchain::{
     self, call::BlockchainCall, contract::ContractInfo, gosh_abi, user_wallet::UserWallet,
-    BlockchainContractAddress, BlockchainService, Everscale, GoshBlobBitFlags, GoshContract, Tree,
+    BlockchainContractAddress, BlockchainService, Everscale, GoshContract, Tree,
 };
 use async_trait::async_trait;
-use git_object;
-use git_object::tree;
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::Arc;
