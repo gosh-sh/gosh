@@ -1,4 +1,5 @@
-use crate::blockchain::BlockchainService;
+use crate::blockchain::{BlockchainService, self};
+use crate::blockchain::user_wallet::UserWalletMirrors;
 use crate::blockchain::{snapshot::PushDiffCoordinate, BlockchainContractAddress};
 use crate::git_helper::push::push_diff::{diff_address, push_diff, prepush_diff};
 use crate::git_helper::GitHelper;
@@ -7,14 +8,15 @@ use crate::blockchain::snapshot::diffs::wait_diffs_ready::wait_diffs_until_ready
 use anyhow::bail;
 use ton_client::processing::{fetch_next_monitor_results, ParamsOfFetchNextMonitorResults, MessageMonitoringResult, MessageMonitoringStatus};
 use std::collections::{HashMap, HashSet};
-use std::time::SystemTime;
+use std::sync::Arc;
+use std::time::{SystemTime, Duration, Instant};
 use std::vec::Vec;
 use tokio::task::JoinSet;
 use tracing::Instrument;
 use crate::git_helper::push::get_redeploy_attempts;
 use crate::git_helper::push::parallel_snapshot_upload_support::get_push_chunk;
 
-const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
+// const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
 
 pub struct ParallelDiffsUploadSupport {
     parallels: HashMap<String, u32>,
@@ -80,9 +82,9 @@ impl ParallelDiffsUploadSupport {
         }
     }
 
-    pub fn get_expected(&self) -> &Vec<String> {
+    /* pub fn get_expected(&self) -> &Vec<String> {
         &self.expecting_deployed_contacts_addresses
-    }
+    } */
 
     pub fn push_expected(&mut self, value: String) {
         self.expecting_deployed_contacts_addresses.push(value);
@@ -149,9 +151,6 @@ impl ParallelDiffsUploadSupport {
 
         let blockchain = context.blockchain.clone();
         let wallet = blockchain.user_wallet(&context.dao_addr,&context.remote.network).await?;
-        let ipfs_endpoint = context.config.ipfs_http_endpoint().to_string();
-        let last_commit_id = self.last_commit_id;
-        let database = context.get_db()?.clone();
 
         let mut attempt = 0u32;
         let mut expected_addresses: HashSet<String> = HashSet::new();
@@ -162,77 +161,115 @@ impl ParallelDiffsUploadSupport {
 
             let mut q_in_q: HashSet<String> = HashSet::new();
             for chunk in exp.chunks(chunk_size) {
-                let mut message_bocs: Vec<(String, Option<BlockchainContractAddress>)> = vec![];
-                for addr in chunk {
-                    let wallet_contract = wallet.take_one().await?;
-                    let diff_address = &String::from(addr);
-                    let boc = prepush_diff(
-                        &blockchain,
-                        context.remote.repo.clone(),
-                        &wallet,
-                        &ipfs_endpoint,
-                        &last_commit_id,
-                        &diff_address,
-                        database.clone(),
-                    ).await?;
-                    message_bocs.push((boc, Some(addr.clone())));
-                }
-                let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
-                let expire = now.as_secs() as u32 + 120 /* todo remove magic num */;
-                let queue_name = blockchain.send_messages(&message_bocs, expire).await?;
+                let queue_name = self.push_chunk(context, chunk, wallet.clone()).await?;
                 q_in_q.insert(queue_name);
             }
 
-            loop {
-                for queue in q_in_q {
-                    let sent_messages = fetch_next_monitor_results(
-                        blockchain.client().clone(),
-                        ParamsOfFetchNextMonitorResults {
-                            queue,
-                            wait_mode: None,
-                        }
-                    ).await?;
-
-                    for sent_result in sent_messages.results {
-                        let MessageMonitoringResult {
-                            hash,
-                            status,
-                            error,
-                            user_data,
-                            ..
-                        } = sent_result;
-                        match status {
-                            MessageMonitoringStatus::Finalized => {
-                                if let Some(payload) = user_data {
-                                    let payload: ExpectedAddress = serde_json::from_value(payload)?;
-                                    expected_addresses.insert(payload.expected_address.clone());
-                                    exp.retain(|addr| String::from(addr) == payload.expected_address);
-                                } else {
-                                    unreachable!();
-                                }
-                            },
-                            MessageMonitoringStatus::Timeout => {
-                                let mut reason = "message expired";
-                                if let Some(err) = error {
-                                    reason = "error: {err}";
-                                }
-                                tracing::debug!(
-                                    "deploy diff was failed: message id={}, expected address={:?}, reason={}",
-                                    hash,
-                                    user_data,
-                                    reason
-                                );
-                            },
-                            MessageMonitoringStatus::Reserved => unreachable!()
-                        }
-                    }
-                }
-                // todo sleep and repeat
-                break;
-            }
             attempt += 1;
         }
         Ok(())
+    }
+
+    pub async fn push_chunk(
+        &mut self,
+        context: &mut GitHelper<impl BlockchainService + 'static>,
+        chunk: &[BlockchainContractAddress],
+        wallet: Arc<UserWalletMirrors>,
+    ) -> anyhow::Result<String> {
+        let mut message_bocs: Vec<(String, Option<BlockchainContractAddress>)> = vec![];
+        for addr in chunk {
+            let wallet_contract = wallet.take_one().await?;
+            let diff_address = &String::from(addr);
+            let boc = prepush_diff(
+                &context.blockchain,
+                context.remote.repo.clone(),
+                &wallet,
+                &context.config.ipfs_http_endpoint().to_string(),
+                &self.last_commit_id,
+                &diff_address,
+                context.get_db()?.clone(),
+            ).await?;
+            message_bocs.push((boc, Some(addr.clone())));
+        }
+        let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
+        let expire = now.as_secs() as u32 + 120; // todo remove magic num
+
+        context.blockchain.send_messages(&message_bocs, expire).await
+
+        // todo wait for send_messages to be completed
+    }
+
+    pub async fn wait_chunk_until_send(
+        &mut self,
+        blockchain: &impl BlockchainService,
+        chunk: &[BlockchainContractAddress],
+        queue: String,
+    ) -> anyhow::Result<Vec<BlockchainContractAddress>> {
+        #[derive(Debug, Deserialize)]
+        struct UserData {
+            expected_address: String,
+        }
+
+        let mut failed_messages: Vec<BlockchainContractAddress> = vec![];
+
+        let start = Instant::now();
+        let timeout = Duration::from_secs(120); // todo remove magic num
+        let mut sent_messages_count = 0;
+        loop {
+            let sent_messages = fetch_next_monitor_results(
+                blockchain.client().clone(),
+                ParamsOfFetchNextMonitorResults {
+                    queue: queue.clone(),
+                    wait_mode: None,
+                }
+            ).await?;
+
+            for sent_result in sent_messages.results {
+                let MessageMonitoringResult {
+                    hash,
+                    status,
+                    error,
+                    user_data,
+                    ..
+                } = sent_result;
+                match status {
+                    MessageMonitoringStatus::Finalized => sent_messages_count += 1,
+                    MessageMonitoringStatus::Timeout => {
+                        let reason = match error {
+                            Some(err) => "error: {err}",
+                            None => "message expired"
+                        };
+                        tracing::debug!(
+                            "deploy diff was failed: message id={}, expected address={:?}, reason={}",
+                            hash,
+                            user_data,
+                            reason
+                        );
+                        failed_messages.push(
+                            match user_data {
+                                Some(payload) => {
+                                    let UserData { expected_address } = serde_json::from_value(payload)?;
+                                    BlockchainContractAddress::new(expected_address)
+                                },
+                                None => unreachable!(),
+                            }
+                        );
+                    },
+                    MessageMonitoringStatus::Reserved => unreachable!()
+                }
+            }
+
+            if sent_messages_count >= chunk.len() {
+                tracing::debug!("deploy diffs succeed");
+                break;
+            } else if start.elapsed() > timeout {
+                tracing::debug!("deploy diffs failed: time is up");
+                break;
+            }
+            tokio::time::sleep(Duration::from_secs(10)).await; // todo remove magic num
+        }
+
+        Ok(failed_messages)
     }
 
     pub async fn add_to_push_list(
