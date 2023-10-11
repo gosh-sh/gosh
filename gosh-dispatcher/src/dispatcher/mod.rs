@@ -6,33 +6,19 @@ use tokio::io::{AsyncBufReadExt, BufReader};
 
 use crate::common::{get_new_args, write_output};
 use crate::gosh_remote::GoshRemote;
-use crate::grpc::constants::GOSH_GRPC_ENABLE;
-use crate::grpc::grpc_mode;
 use crate::ini::load_remote_versions_from_ini;
 use version_compare::Version;
 
 // TODO: create struct and store a stack of commands from git or previous remotes
+#[derive(Debug, Default)]
 pub struct Dispatcher {
     commands: Vec<(String, String)>, // Vector of commands for remotes in pair: (version, command)
     remotes_map: HashMap<String, Box<GoshRemote>>, // Mapping of GOSH remotes: version -> GoshRemote
     system_contracts: HashMap<String, String>, // Mapping of system contacts: version -> address
 }
 
-impl Default for Dispatcher {
-    fn default() -> Self {
-        Dispatcher {
-            commands: vec![],
-            remotes_map: HashMap::new(),
-            system_contracts: HashMap::new(),
-        }
-    }
-}
-
 impl Dispatcher {
     pub async fn start(&mut self) -> anyhow::Result<()> {
-        if let Ok(_) = std::env::var(GOSH_GRPC_ENABLE) {
-            return grpc_mode().await;
-        }
         tracing::trace!("Start of dispatcher");
         let mut args = std::env::args().collect::<Vec<String>>();
         if args.len() < 3 {
@@ -55,7 +41,7 @@ impl Dispatcher {
                 "No git-remote-gosh version capable to work with repo version {highest} was found."
             ));
         }
-        get_new_args(&mut args, &self.system_contracts.get(&highest).unwrap())?;
+        get_new_args(&mut args, self.system_contracts.get(&highest).unwrap())?;
         self.start_messages_interchange(highest, args).await
     }
 
@@ -85,15 +71,15 @@ impl Dispatcher {
 
     async fn get_highest_repo_version(&mut self, args: Vec<String>) -> anyhow::Result<String> {
         tracing::trace!("Obtaining highest repo version");
-        for (_, remote) in &self.remotes_map {
+        for remote in self.remotes_map.values() {
             tracing::trace!("Run {:?}", remote);
             if let Ok(versions) = remote.get_repo_versions(args.clone()).await {
                 tracing::trace!("Got versions: {:?}", versions);
-                if versions.len() != 0 {
+                if !versions.is_empty() {
                     let mut parse = versions
                         .iter()
                         .map(|s| {
-                            let mut iter = s.split(" ");
+                            let mut iter = s.split(' ');
                             (
                                 Version::from(iter.next().unwrap_or("Unknown")).unwrap(),
                                 iter.next().unwrap_or("").to_string(),

@@ -128,7 +128,7 @@ const DaoEventPageInner = (props: { address: string }) => {
                                 End date
                             </div>
                             <div className="text-sm">
-                                {getDurationDelta(event.time.finish)}
+                                {getDurationDelta(event.time.finish, '[d:d] [h:h] [m:m]')}
                             </div>
                         </div>
                     </div>

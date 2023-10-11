@@ -11,7 +11,16 @@ import {
     TDaoInviteList,
     TDaoTaskList,
     TTaskDetails,
+    TMilestoneTaskDetails,
 } from '../types/dao.types'
+
+export const partnerDaoListAtom = atom<TUserDaoList>({
+    key: `PartnerDaoListAtom_${contextVersion}`,
+    default: {
+        isFetching: false,
+        items: [],
+    },
+})
 
 export const userDaoListAtom = atom<TUserDaoList>({
     key: `UserDaoListAtom_${contextVersion}`,
@@ -150,7 +159,10 @@ export const daoEventListSelector = selectorFamily<TDaoEventList, string | undef
             return {
                 ...data,
                 items: [...data.items].sort((a, b) => {
-                    return a.updatedAt >= b.updatedAt ? -1 : 1
+                    if (a.updatedAt === b.updatedAt) {
+                        return 0
+                    }
+                    return a.updatedAt > b.updatedAt ? -1 : 1
                 }),
             }
         },
@@ -220,14 +232,29 @@ export const daoTaskListSelector = selectorFamily<TDaoTaskList, string | undefin
     dangerouslyAllowMutability: true,
 })
 
-export const daoTaskSelector = selectorFamily<TTaskDetails | undefined, string>({
+export const daoTaskSelector = selectorFamily<
+    TTaskDetails | TMilestoneTaskDetails | undefined,
+    string
+>({
     key: `DaoTaskSelector_${contextVersion}`,
     get:
         (address) =>
         ({ get }) => {
             const atom = get(daoTaskListAtom)
             const list = _.flatten(Object.values(atom).map(({ items }) => items))
-            return list.find((item) => item.address === address)
+
+            // Search for simple task or milestone
+            let task = list.find((item) => item.address === address)
+            if (!task) {
+                // Search for milestone tasks
+                for (const item of list) {
+                    task = item.subtasks.find((subitem) => subitem.address === address)
+                    if (task) {
+                        break
+                    }
+                }
+            }
+            return task
         },
     dangerouslyAllowMutability: true,
 })

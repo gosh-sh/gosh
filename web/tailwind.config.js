@@ -42,6 +42,7 @@ export default {
                 'red-ff3b30': '#ff3b30',
                 'red-ff624d40': '#ff624d40',
                 'yellow-faedcc': '#faedcc',
+                'yellow-eecf29': '#eecf29',
             },
             spacing: {
                 '30px': '1.875rem',

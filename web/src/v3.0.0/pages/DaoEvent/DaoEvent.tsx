@@ -154,7 +154,10 @@ const DaoEventPageInner = (props: { address: string }) => {
                                           event.time.completed || event.time.finish,
                                       ).toLocaleDateString()
                                     : event.time.finish > 0
-                                    ? getDurationDelta(event.time.finish)
+                                    ? getDurationDelta(
+                                          event.time.finish,
+                                          '[d:d] [h:h] [m:m]',
+                                      )
                                     : 'Review required'}
                             </div>
                         </div>

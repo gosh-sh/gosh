@@ -543,11 +543,23 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
         // TODO: /Remove/refactor this after git part refactored
 
         // TODO: Refactor this after git part refactored
+        const treeitems = ['description.txt', 'readme.md'].map((filename) => {
+            const treeitem = _tree.items.find(({ path, name }) => {
+                const treepath = `${path}/${name}`.toLowerCase()
+                const searchpath = `/${filename}`.toLowerCase()
+                return treepath === searchpath
+            })
+            return treeitem || null
+        })
         const [summary, description] = await Promise.all(
-            ['description.txt', 'README.md'].map(async (filename) => {
+            treeitems.map(async (treeitem) => {
+                if (!treeitem) {
+                    return ''
+                }
+
                 if (commit.version < '6.0.0') {
                     const snapshot = await repository.getSnapshot({
-                        data: { branch: 'main', filename, commitname: '' },
+                        data: { branch: 'main', filename: treeitem.name, commitname: '' },
                     })
 
                     if (await snapshot.isDeployed()) {
@@ -556,22 +568,17 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
                             return result.content
                         }
                     }
-                } else {
-                    const treeitem = _tree.items.find(
-                        ({ path, name }) => `${path}/${name}` === `/${filename}`,
+                } else if (treeitem.commit) {
+                    const snapshot = await repository.getSnapshot({
+                        data: { filename: treeitem.name, commitname: treeitem.commit },
+                    })
+                    const { current } = await _adapter.getCommitBlob(
+                        snapshot.address,
+                        treeitem.name,
+                        _commit.name,
                     )
-                    if (treeitem?.commit) {
-                        const snapshot = await repository.getSnapshot({
-                            data: { filename, commitname: treeitem.commit },
-                        })
-                        const { current } = await _adapter.getCommitBlob(
-                            snapshot.address,
-                            filename,
-                            _commit.name,
-                        )
-                        if (!Buffer.isBuffer(current)) {
-                            return current
-                        }
+                    if (!Buffer.isBuffer(current)) {
+                        return current
                     }
                 }
 
@@ -1435,7 +1442,7 @@ export function useCreateDaoMember() {
                     })
                     const daonames = _.flatten(profiles.map(({ daonames }) => daonames))
                     await member.wallet!.createDaoMember({ members, daonames, comment })
-                } else {
+                } else if (profiles.length > 0) {
                     const memberAddCells = profiles.map(({ profile, daonames }) => ({
                         type: EDaoEventType.DAO_MEMBER_ADD,
                         params: {
@@ -1825,24 +1832,20 @@ export function useDaoEventList(params: { count?: number; initialize?: boolean }
                 const different = _.differenceWith(
                     blockchain.items,
                     state.items,
-                    (a, b) => {
-                        return a.address === b.address
-                    },
+                    (a, b) => a.address === b.address,
                 )
                 const intersect = _.intersectionWith(
                     blockchain.items,
                     state.items,
-                    (a, b) => {
-                        return a.address === b.address
-                    },
+                    (a, b) => a.address === b.address,
                 )
                 return {
                     ...state,
                     items: [...different, ...state.items].map((item) => {
-                        const found = intersect.find(
-                            (_item) => _item.address === item.address,
-                        )
-                        return { ...item, ...found } || item
+                        const found = intersect.find((_item) => {
+                            return _item.address === item.address
+                        })
+                        return found ? { ...item, ...found } : item
                     }),
                     cursor: blockchain.cursor,
                     hasNext: blockchain.hasNext,
@@ -1868,9 +1871,7 @@ export function useDaoEventList(params: { count?: number; initialize?: boolean }
                 const different = _.differenceWith(
                     blockchain.items,
                     state.items,
-                    (a, b) => {
-                        return a.address === b.address
-                    },
+                    (a, b) => a.address === b.address,
                 )
 
                 return {
@@ -3096,16 +3097,16 @@ export function useDaoInviteList(params: { initialize?: boolean } = {}) {
             }))
 
             // Create DAO member
-            await createMember([
-                {
-                    user: {
-                        name: item.username,
-                        type: 'user',
+            await createMember(
+                [
+                    {
+                        user: { name: item.username, type: 'user' },
+                        allowance: item.allowance || 0,
+                        comment: item.comment,
                     },
-                    allowance: item.allowance || 0,
-                    comment: item.comment,
-                },
-            ])
+                ],
+                true,
+            )
 
             // Update database
             const { error } = await supabase.client
@@ -3253,10 +3254,10 @@ export function useDaoTaskList(params: { count?: number; initialize?: boolean } 
                 return {
                     ...state,
                     items: [...different, ...state.items].map((item) => {
-                        const found = intersect.find(
-                            (_item) => _item.address === item.address,
-                        )
-                        return { ...item, ...found } || item
+                        const found = intersect.find((_item) => {
+                            return _item.address === item.address
+                        })
+                        return found ? { ...item, ...found } : item
                     }),
                     cursor: blockchain.cursor,
                     hasNext: blockchain.hasNext,

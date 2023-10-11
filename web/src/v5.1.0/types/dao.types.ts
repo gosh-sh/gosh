@@ -211,6 +211,14 @@ export type TTaskDetails = {
     isDeleted?: boolean
 }
 
+export type TMilestoneTaskDetails = TTaskDetails & {
+    milestone: {
+        address: string
+        name: string
+    }
+    index: number
+}
+
 export type TDaoTaskList = {
     isFetching: boolean
     items: TTaskDetails[]

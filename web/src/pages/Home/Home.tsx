@@ -1,48 +1,46 @@
-import { Link } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
-import { userPersistAtom } from 'react-gosh'
+import { ButtonLink } from '../../components/Form'
+import { userPersistAtom } from '../../store/user.state'
+import { Navigate } from 'react-router-dom'
 
 const HomePage = () => {
-    const userStatePersist = useRecoilValue(userPersistAtom)
+    const user = useRecoilValue(userPersistAtom)
+
+    if (user.phrase) {
+        return <Navigate to="/a/orgs" />
+    }
 
     return (
-        <div className="container pt-16">
-            <div className="text-center">
-                <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight">
+        <div className="container pt-20 pb-8">
+            <div
+                className="border border-gray-e6edff rounded-3xl overflow-hidden
+                    py-14 lg:py-28 px-6 lg:px-12"
+            >
+                <h1 className="text-3xl lg:text-6xl font-semibold text-center">
                     Git Open Source Hodler
                 </h1>
-                <div className="text-base mt-10 sm:text-lg sm:max-w-2xl sm:mx-auto md:text-xl text-left">
-                    <p>GOSH secures delivery and decentralization of your code.</p>
-                    <p className="mt-6">
-                        The first development platform blockchain, purpose-built for
-                        securing the software supply chain and extracting the value locked
-                        in your projects.
-                    </p>
+
+                <div
+                    className="mt-7 text-lg lg:text-xl text-gray-53596d lg:leading-8
+                        max-w-[39.75rem] mx-auto text-center"
+                >
+                    Decentralized Git-on-chain DAO platform, and the fastest, most
+                    scalable, and free to use Ethereum Layer 2 blockchain
                 </div>
-                <div className="my-10 flex flex-wrap justify-center gap-x-8 gap-y-4">
-                    {userStatePersist.phrase ? (
-                        <Link
-                            to="/a/orgs"
-                            className="btn btn--body py-3 px-10 text-xl leading-normal w-full sm:w-auto"
-                        >
-                            Organizations
-                        </Link>
-                    ) : (
-                        <>
-                            <Link
-                                to="/a/signin"
-                                className="btn btn--body py-3 px-10 text-xl leading-normal w-full sm:w-auto"
-                            >
-                                Sign in
-                            </Link>
-                            <Link
-                                to="/a/signup"
-                                className="btn btn--body py-3 px-10 text-xl leading-normal w-full sm:w-auto"
-                            >
-                                Create account
-                            </Link>
-                        </>
-                    )}
+
+                <div className="mt-16 lg:mt-20 text-gray-53596d max-w-[39.75rem] mx-auto text-center">
+                    GOSH guarantees the decentralization and security of your code, and
+                    offers easy Ethereum ecosystem integration for your project
+                </div>
+
+                <div className="mt-10 text-center">
+                    <ButtonLink
+                        to="/a/signup"
+                        size="xl"
+                        className="inline-block w-full md:w-auto mx-auto"
+                    >
+                        Create account
+                    </ButtonLink>
                 </div>
             </div>
         </div>

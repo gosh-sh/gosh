@@ -1,10 +1,12 @@
 import Skeleton from '../../../../components/Skeleton'
 import classNames from 'classnames'
-import { TTaskDetails } from '../../../types/dao.types'
+import { TMilestoneTaskDetails, TTaskDetails } from '../../../types/dao.types'
 import { useDao, useDaoTaskList, useTask } from '../../../hooks/dao.hooks'
 import { Link } from 'react-router-dom'
 import { TaskStatusBadge } from '../../../components/Task'
 import { lockToStr } from '../../../components/Task/helpers'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons'
 
 const basis = {
     contaner: 'flex-wrap lg:flex-nowrap',
@@ -50,7 +52,7 @@ const ListItemHeader = (props: React.HTMLAttributes<HTMLDivElement>) => {
 }
 
 type TListItemProps = {
-    item: TTaskDetails
+    item: TTaskDetails | TMilestoneTaskDetails
 }
 
 const ListItem = (props: TListItemProps) => {
@@ -60,31 +62,61 @@ const ListItem = (props: TListItemProps) => {
     useTask(item.address, { subscribe: true })
 
     const onItemClick = () => {
-        window.history.replaceState(
-            null,
-            document.title,
-            `/o/${dao.details.name}/tasks/${item.address}`,
-        )
-        taskList.openItem(item.address)
+        if (item.isSubtask) {
+            const subtask = item as TMilestoneTaskDetails
+            window.history.replaceState(
+                null,
+                document.title,
+                `/o/${dao.details.name}/tasks/milestone/${subtask.milestone.address}?subtask=${subtask.address}`,
+            )
+            taskList.openItem(subtask.milestone.address)
+        } else if (!item.isSubtask) {
+            window.history.replaceState(
+                null,
+                document.title,
+                `/o/${dao.details.name}/tasks/${item.address}`,
+            )
+            taskList.openItem(item.address)
+        }
     }
 
     return (
         <div
             className={classNames(
-                'dao-tasklist-item flex items-center px-5 py-2 gap-x-4 gap-y-2 cursor-pointer',
+                'dao-tasklist-item group flex items-center gap-x-4 gap-y-2 cursor-pointer px-5 py-2',
                 item.isOpen ? 'bg-gray-f6f6f9' : 'hover:bg-gray-fafafd',
                 basis.contaner,
             )}
             onClick={onItemClick}
         >
-            <div className={classNames(basis.name, 'text-sm truncate')}>{item.name}</div>
+            <div
+                className={classNames(
+                    basis.name,
+                    'text-sm flex flex-nowrap items-center overflow-hidden',
+                    item.isSubtask ? 'pl-6' : null,
+                )}
+            >
+                <div className="grow truncate mr-3">{item.name}</div>
+                <div>
+                    <FontAwesomeIcon
+                        icon={faChevronRight}
+                        size="sm"
+                        className={classNames(
+                            'mr-2 text-gray-e6edff transition-transform duration-200',
+                            'group-hover:-translate-x-2 group-hover:text-gray-7c8db5',
+                        )}
+                    />
+                </div>
+            </div>
             <div className={classNames(basis.repository, 'text-xs')}>
-                <Link
-                    to={`/o/${dao.details.name}/r/${item.repository.name}`}
-                    className="text-blue-2b89ff"
-                >
-                    {item.repository.name}
-                </Link>
+                {!item.isSubtask && (
+                    <Link
+                        to={`/o/${dao.details.name}/r/${item.repository.name}`}
+                        className="text-blue-2b89ff"
+                    >
+                        {item.repository.name}
+                    </Link>
+                )}
             </div>
             <div className={classNames(basis.status, 'flex items-center')}>
                 <TaskStatusBadge item={item} />
@@ -98,7 +130,7 @@ const ListItem = (props: TListItemProps) => {
                     'text-xs text-gray-53596d whitespace-nowrap',
                 )}
             >
-                {lockToStr(item.vestingEnd)}
+                {!item.isSubtask ? lockToStr(item.vestingEnd) : null}
             </div>
         </div>
     )

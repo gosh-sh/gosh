@@ -62,7 +62,7 @@ const DaoEventProgressBar = (props: TEventProgressBarProps) => {
                     ? `Closed at ${new Date(
                           time.completed || time.finish,
                       ).toLocaleDateString()}`
-                    : `Ends in ${getDurationDelta(time.finish)}`}
+                    : `Ends in ${getDurationDelta(time.finish, '[d:d] [h:h] [m:m]')}`}
             </div>
         </div>
     )

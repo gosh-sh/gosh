@@ -1,5 +1,5 @@
 import { ErrorMessage, Field, useFormikContext } from 'formik'
-import { classNames, useTaskList } from 'react-gosh'
+import { TTaskDetails, classNames, useTaskList } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { TPushProgress } from 'react-gosh'
 import { useNavigate } from 'react-router-dom'
@@ -12,6 +12,7 @@ import {
 } from '../../../Formik'
 import CommitProgress from '../../CommitProgress'
 import { UserSelect } from '../../../UserSelect'
+import { useState } from 'react'
 
 type TCommitFieldsProps = {
     dao: IGoshDaoAdapter
@@ -29,6 +30,7 @@ const CommitFields = (props: TCommitFieldsProps) => {
     const navigate = useNavigate()
     const { setFieldValue } = useFormikContext()
     const tasks = useTaskList(dao, { repository, perPage: 0 })
+    const [grant, setGrant] = useState<TTaskDetails['config'] | null>(null)
 
     return (
         <div
@@ -82,15 +84,27 @@ const CommitFields = (props: TCommitFieldsProps) => {
                             label="Select task (optional)"
                             disabled={isSubmitting || tasks.isFetching}
                             test-id="input-commit-task"
+                            onChange={(e: any) => {
+                                const option = e.target[e.target.options.selectedIndex]
+                                const grant = JSON.parse(
+                                    option.getAttribute('data-grant'),
+                                )
+                                setGrant(grant)
+                                setFieldValue('task', e.target.value)
+                            }}
                         >
                             <option value="">
                                 {tasks.isFetching ? 'Loading...' : 'Select task'}
                             </option>
                             {tasks.items
                                 .filter(({ confirmed }) => !confirmed)
-                                .map(({ name }, index) => (
-                                    <option value={name} key={index}>
-                                        {name}
+                                .map((item, index) => (
+                                    <option
+                                        key={index}
+                                        value={item.name}
+                                        data-grant={JSON.stringify(item.config)}
+                                    >
+                                        {item.name}
                                     </option>
                                 ))}
                         </Field>
@@ -103,7 +117,7 @@ const CommitFields = (props: TCommitFieldsProps) => {
                             gosh={dao.getGosh()}
                             placeholder="Assigners"
                             isMulti
-                            isDisabled={isSubmitting}
+                            isDisabled={isSubmitting || !grant?.assign.length}
                             onChange={(selected) => {
                                 setFieldValue(
                                     'assigners',
@@ -126,7 +140,7 @@ const CommitFields = (props: TCommitFieldsProps) => {
                             gosh={dao.getGosh()}
                             placeholder="Reviewers"
                             isMulti
-                            isDisabled={isSubmitting}
+                            isDisabled={isSubmitting || !grant?.review.length}
                             onChange={(selected) => {
                                 setFieldValue(
                                     'reviewers',
@@ -144,7 +158,7 @@ const CommitFields = (props: TCommitFieldsProps) => {
                             gosh={dao.getGosh()}
                             placeholder="Managers"
                             isMulti
-                            isDisabled={isSubmitting}
+                            isDisabled={isSubmitting || !grant?.manager.length}
                             onChange={(selected) => {
                                 setFieldValue(
                                     'managers',

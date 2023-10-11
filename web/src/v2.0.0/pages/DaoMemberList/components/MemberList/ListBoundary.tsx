@@ -82,11 +82,12 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
                             allowance: yup
                                 .number()
                                 .integer()
+                                .min(0)
                                 .required('Field is required'),
                             balance: yup
                                 .number()
                                 .integer()
-                                .positive()
+                                .min(0)
                                 .required('Field is required'),
                         }),
                     ),
@@ -141,7 +142,7 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
                                         isLoading={isSubmitting}
                                         disabled={isSubmitting}
                                     >
-                                        Save changes and create event
+                                        Save changes and create proposal
                                     </Button>
                                 </div>
                             </div>

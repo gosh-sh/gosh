@@ -3,7 +3,6 @@ import { atom, selector, selectorFamily } from 'recoil'
 import { contextVersion } from '../constants'
 import {
     TOnboardingData,
-    TOnboardingInvite,
     TOnboardingOrganization,
     TOnboardingRepository,
     TOnboardingStatusDao,
@@ -13,11 +12,7 @@ import { OAuthSessionAtom } from './oauth.state'
 export const onboardingDataAtom = atom<TOnboardingData>({
     key: `OnboardingDataAtom_${contextVersion}`,
     default: {
-        invites: { items: [], isFetching: false },
         organizations: { items: [], isFetching: false },
-        phrase: [],
-        isEmailPublic: true,
-        username: '',
         emailOther: '',
     },
 })
@@ -96,20 +91,4 @@ export const repositoriesSelector = selectorFamily<
                 },
             }))
         },
-})
-
-export const daoInvitesSelector = selector<{
-    items: TOnboardingInvite[]
-    isFetching: boolean
-}>({
-    key: `DaoInvitesSelector_${contextVersion}`,
-    get: ({ get }) => {
-        return get(onboardingDataAtom).invites
-    },
-    set: ({ set }, value) => {
-        set(onboardingDataAtom, (state) => ({
-            ...state,
-            invites: value as any,
-        }))
-    },
 })

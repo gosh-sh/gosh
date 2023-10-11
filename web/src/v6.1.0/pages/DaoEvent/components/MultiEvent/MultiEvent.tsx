@@ -12,6 +12,10 @@ import { DisableMintTokensEvent } from '../DisableMintTokensEvent/DisableMintTok
 import { MemberAddEvent } from '../MemberAddEvent/MemberAddEvent'
 import { MemberDeleteEvent } from '../MemberDeleteEvent/MemberDeleteEvent'
 import { MemberUpdateEvent } from '../MemberUpdateEvent/MemberUpdateEvent'
+import { MilestoneCompleteEvent } from '../MilestoneCompleteEvent/MilestoneCompleteEvent'
+import { MilestoneCreateEvent } from '../MilestoneCreateEvent/MilestoneCreateEvent'
+import { MilestoneDeleteEvent } from '../MilestoneDeleteEvent/MilestoneDeleteEvent'
+import { MilestoneUpgradeEvent } from '../MilestoneUpgradeEvent/MilestoneUpgradeEvent'
 import { MintTokensEvent } from '../MintTokensEvent/MintTokensEvent'
 import { RedeployTaskCompleteEvent } from '../RedeployTaskCompleteEvent/RedeployTaskCompleteEvent'
 import { RedeployTaskEvent } from '../RedeployTaskEvent/RedeployTaskEvent'
@@ -106,6 +110,18 @@ const MultiEvent = (props: TMultiEventProps) => {
                         )}
                         {item.type === EDaoEventType.TASK_REDEPLOYED && (
                             <RedeployTaskCompleteEvent key={index} data={item.data} />
+                        )}
+                        {item.type === EDaoEventType.MILESTONE_CREATE && (
+                            <MilestoneCreateEvent key={index} data={item.data} />
+                        )}
+                        {item.type === EDaoEventType.MILESTONE_DELETE && (
+                            <MilestoneDeleteEvent key={index} data={item.data} />
+                        )}
+                        {item.type === EDaoEventType.MILESTONE_COMPLETE && (
+                            <MilestoneCompleteEvent key={index} data={item.data} />
+                        )}
+                        {item.type === EDaoEventType.MILESTONE_UPGRADE && (
+                            <MilestoneUpgradeEvent key={index} data={item.data} />
                         )}
                     </div>
                 ))}

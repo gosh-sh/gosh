@@ -34,7 +34,7 @@ const BaseField = (props: IBaseFieldProps) => {
                         'block mb-2 text-sm',
                         labelClassName,
                         form.touched[field.name] && form.errors[field.name]
-                            ? 'text-rose-600'
+                            ? 'text-red-ff3b30'
                             : 'text-gray-7c8db5',
                     )}
                 >
@@ -45,7 +45,7 @@ const BaseField = (props: IBaseFieldProps) => {
             {help && (
                 <div
                     className={classNames(
-                        'text-xs text-gray-7c8db5 mt-0.5',
+                        'text-xs text-gray-7c8db5 mt-0.5 px-1',
                         helpClassName,
                     )}
                 >
@@ -55,7 +55,7 @@ const BaseField = (props: IBaseFieldProps) => {
             {errorEnabled && form.touched[field.name] && form.errors[field.name] && (
                 <div
                     className={classNames(
-                        'text-red-ff3b30 text-xs mt-0.5',
+                        'text-red-ff3b30 text-xs mt-0.5 px-1',
                         errorClassName,
                     )}
                 >

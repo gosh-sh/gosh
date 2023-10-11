@@ -1,0 +1,21 @@
+include = ["**/*.toml"]
+
+[formatting]
+reorder_arrays = false
+# Once it will be fixed in taplo
+indent_string = "    "
+
+[[rule]]
+include = ["**/Cargo.toml"]
+formatting.inline_table_expand = false
+
+[[rule]]
+include = ["**/Cargo.toml"]
+keys = ["dependencies", "*-dependencies", "workspace.dependencies"]
+[rule.formatting]
+reorder_keys = true
+
+[[rule]]
+include = ["Cargo.toml"]
+keys = ["workspace", "members"]
+formatting.reorder_arrays = true

@@ -3043,7 +3043,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const commit = await this._getCommit(options)
         const details = await commit.runLocal('getCommit', {})
         const { value0: treeaddr } = await commit.runLocal('gettree', {})
-        const { time, branch, sha, parents, content, initupgrade } = details
+        const { time, branch, sha, parents, content, initupgrade, isCorrectCommit } =
+            details
 
         // Parse content
         const splitted = (content as string).split('\n')
@@ -3092,6 +3093,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             initupgrade,
             time: time && parseInt(time),
             treeaddr,
+            correct: isCorrectCommit,
         }
     }
 
@@ -3901,10 +3903,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     async pushUpgrade(
         data: TUpgradeData,
-        options: { callback?: IPushCallback },
+        options: { setCommit?: boolean; callback?: IPushCallback },
     ): Promise<void> {
         const { blobs, commit, tree } = data
-        const { callback } = options
+        const { callback, setCommit = true } = options
         const cb: IPushCallback = (params) => callback && callback(params)
 
         cb({
@@ -3960,13 +3962,15 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
 
         // Set commit
-        await this._setCommit(commit.branch, commit.name, blobs.length, true)
-        const wait = await whileFinite(async () => {
-            const check = await this.getBranch(commit.branch)
-            return check.commit.address !== commit.address
-        })
-        if (!wait) {
-            throw new GoshError('Push upgrade timeout reached')
+        if (setCommit) {
+            await this._setCommit(commit.branch, commit.name, blobs.length, true)
+            const wait = await whileFinite(async () => {
+                const check = await this.getBranch(commit.branch)
+                return check.commit.address !== commit.address
+            })
+            if (!wait) {
+                throw new GoshError('Push upgrade timeout reached')
+            }
         }
         cb({ completed: true })
     }
@@ -4126,7 +4130,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return value0
     }
 
-    private async _getBranch(name: string): Promise<any> {
+    async _getBranch(name: string): Promise<any> {
         const { value0 } = await this.repo.runLocal('getAddrBranch', { name })
         return value0
     }
@@ -4403,7 +4407,15 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     ): Promise<string | Buffer> {
         // Get commit tree items filtered by blob tree path,
         // find resulting blob sha1 after commit was applied
-        const tree = (await this.getTree(commit, treepath)).items
+        let _repo: IGoshRepositoryAdapter = this
+        if (commit.version !== this.getVersion()) {
+            const _gosh = GoshAdapterFactory.create(commit.version)
+            const _dao = await this._getDao()
+            const _daoname = await _dao.getName()
+            const _reponame = await this.getName()
+            _repo = await _gosh.getRepository({ path: `${_daoname}/${_reponame}` })
+        }
+        const tree = (await _repo.getTree(commit, treepath)).items
         const found = tree.find((item) => getTreeItemFullPath(item) === treepath)
         const sha1 = found?.sha1 || ZERO_BLOB_SHA1
 
@@ -4442,7 +4454,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return restored
     }
 
-    private async _getCommit(options: {
+    async _getCommit(options: {
         name?: string
         address?: TAddress
     }): Promise<IGoshCommit> {
@@ -5192,7 +5204,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         original: string,
     ) => {
         // Get lib patch
-        let patch = Diff.createPatch(treepath, original, modified)
+        let patch = Diff.createPatch(treepath, original, modified, undefined, undefined, {
+            context: 0,
+        })
 
         // Format to GOSH patch
         patch = patch.split('\n').slice(4).join('\n')

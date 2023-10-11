@@ -5,6 +5,7 @@ import { VersionController } from './blockchain/versioncontroller'
 import { SupabaseClient, createClient } from '@supabase/supabase-js'
 import { AppConfig as _AppConfig } from 'react-gosh'
 import { DISABLED_VERSIONS } from './constants'
+import { TIP3Root } from './blockchain/tip3root'
 
 export class AppConfig {
     static endpoints: string[]
@@ -15,6 +16,8 @@ export class AppConfig {
     static dockerclient?: any
     static supabase: SupabaseClient<any, 'public', any>
     static maintenance: number
+    static tip3root: TIP3Root | null
+    static elockaddr: string
 
     static setup() {
         const endpoints = import.meta.env.REACT_APP_GOSH_NETWORK?.split(',')
@@ -36,6 +39,8 @@ export class AppConfig {
         if (!ipfsUrl) {
             throw new GoshError('IPFS url is undefined')
         }
+
+        const tip3RootAddress = import.meta.env.REACT_APP_TIP3_ROOTADDR
 
         AppConfig.endpoints = endpoints
         AppConfig.goshclient = new TonClient({
@@ -64,9 +69,27 @@ export class AppConfig {
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkaHNrdnN6dGVwYnlpc2Jxc2pqIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzA0MTMwNTEsImV4cCI6MTk4NTk4OTA1MX0._6KcFBYmSUfJqTJsKkWcMoIQBv3tuInic9hvEHuFpJg',
         )
         AppConfig.maintenance = parseInt(import.meta.env.REACT_APP_MAINTENANCE || '0')
+        AppConfig.tip3root = tip3RootAddress
+            ? new TIP3Root(AppConfig.goshclient, tip3RootAddress)
+            : null
+        AppConfig.elockaddr = import.meta.env.REACT_APP_ELOCKADDR
 
         // TODO: Remove this after git part refactor
         AppConfig._setupReactGosh()
+    }
+
+    static getVersions(options: { reverse?: boolean; withDisabled?: boolean } = {}) {
+        const { reverse, withDisabled } = options
+
+        let versions = Object.keys(AppConfig.versions)
+        if (!withDisabled) {
+            versions = versions.filter((v) => DISABLED_VERSIONS.indexOf(v) < 0)
+        }
+        if (reverse) {
+            versions = versions.reverse()
+        }
+
+        return Object.fromEntries(versions.map((v) => [v, AppConfig.versions[v]]))
     }
 
     static getLatestVersion() {

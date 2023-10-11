@@ -68,7 +68,7 @@ const DaoEventProgressBar = (props: TEventProgressBarProps) => {
                           time.completed || time.finish,
                       ).toLocaleDateString()}`
                     : time.finish > 0
-                    ? `Ends in ${getDurationDelta(time.finish)}`
+                    ? `Ends in ${getDurationDelta(time.finish, '[d:d] [h:h] [m:m]')}`
                     : 'Review required'}
             </div>
         </div>

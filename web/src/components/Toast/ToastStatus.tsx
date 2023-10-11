@@ -34,10 +34,12 @@ const getToastOptions = (status: TToastStatus) => {
                 create: {
                     ...ToastOptionsShortcuts.Default,
                     type: toast.TYPE.ERROR,
+                    autoClose: 5000,
                 },
                 update: {
                     ...ToastOptionsShortcuts.Default,
                     type: toast.TYPE.ERROR,
+                    autoClose: 5000,
                     render: () => <ToastError error={data} />,
                 },
             }

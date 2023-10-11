@@ -1,0 +1,294 @@
+{
+    "ABI version": 2,
+    "version": "2.3.0",
+    "header": ["pubkey", "time", "expire"],
+    "functions": [
+        {
+            "name": "constructor",
+            "inputs": [
+                { "name": "name", "type": "string" },
+                { "name": "symbol", "type": "string" },
+                { "name": "decimals", "type": "uint8" },
+                { "name": "root_pubkey", "type": "uint256" },
+                { "name": "root_owner", "type": "optional(address)" },
+                { "name": "total_supply", "type": "uint128" },
+                { "name": "checker", "type": "address" },
+                { "name": "oldroot_", "type": "optional(address)" },
+                { "name": "newroot_", "type": "optional(address)" }
+            ],
+            "outputs": [],
+            "id": "0xa"
+        },
+        {
+            "name": "setWalletCode",
+            "inputs": [
+                { "name": "_answer_id", "type": "uint32" },
+                { "name": "wallet_code", "type": "cell" }
+            ],
+            "outputs": [{ "name": "value0", "type": "bool" }],
+            "id": "0xb"
+        },
+        {
+            "name": "deployWallet",
+            "inputs": [
+                { "name": "_answer_id", "type": "uint32" },
+                { "name": "pubkey", "type": "uint256" },
+                { "name": "owner", "type": "optional(address)" },
+                { "name": "tokens", "type": "uint128" },
+                { "name": "evers", "type": "uint128" },
+                { "name": "notify", "type": "optional(cell)" }
+            ],
+            "outputs": [{ "name": "value0", "type": "address" }],
+            "id": "0xc"
+        },
+        {
+            "name": "deployEmptyWallet",
+            "inputs": [
+                { "name": "_answer_id", "type": "uint32" },
+                { "name": "pubkey", "type": "uint256" },
+                { "name": "owner", "type": "optional(address)" },
+                { "name": "evers", "type": "uint128" }
+            ],
+            "outputs": [{ "name": "value0", "type": "address" }],
+            "id": "0xd"
+        },
+        {
+            "name": "grant",
+            "inputs": [
+                { "name": "_answer_id", "type": "uint32" },
+                { "name": "dest", "type": "address" },
+                { "name": "tokens", "type": "uint128" },
+                { "name": "evers", "type": "uint128" },
+                { "name": "notify", "type": "optional(cell)" }
+            ],
+            "outputs": [],
+            "id": "0xe"
+        },
+        {
+            "name": "grantBatch",
+            "inputs": [
+                { "name": "_answer_id", "type": "uint32" },
+                {
+                    "components": [
+                        { "name": "pubkey", "type": "uint256" },
+                        { "name": "tokens", "type": "uint128" },
+                        { "name": "hash", "type": "uint256" }
+                    ],
+                    "name": "transactions",
+                    "type": "tuple[]"
+                },
+                { "name": "a", "type": "uint128" },
+                { "name": "b", "type": "uint128" }
+            ],
+            "outputs": [],
+            "id": "0x3f6"
+        },
+        {
+            "name": "grantBatchIndex",
+            "inputs": [
+                { "name": "_answer_id", "type": "uint32" },
+                {
+                    "components": [
+                        { "name": "pubkey", "type": "uint256" },
+                        { "name": "tokens", "type": "uint128" },
+                        { "name": "hash", "type": "uint256" }
+                    ],
+                    "name": "transactions",
+                    "type": "tuple[]"
+                },
+                { "name": "index", "type": "uint128" },
+                { "name": "a", "type": "uint128" },
+                { "name": "b", "type": "uint128" }
+            ],
+            "outputs": [],
+            "id": "0x3f7"
+        },
+        {
+            "name": "askEvers",
+            "inputs": [
+                { "name": "_answer_id", "type": "uint32" },
+                { "name": "pubkey", "type": "uint256" },
+                { "name": "owner", "type": "optional(address)" }
+            ],
+            "outputs": [],
+            "id": "0x3f8"
+        },
+        {
+            "name": "burnTokens",
+            "inputs": [
+                { "name": "_answer_id", "type": "uint32" },
+                { "name": "pubkey", "type": "uint256" },
+                { "name": "owner", "type": "optional(address)" },
+                { "name": "tokens", "type": "uint128" },
+                { "name": "to", "type": "uint256" }
+            ],
+            "outputs": [],
+            "id": "0x3f9"
+        },
+        {
+            "name": "burnTokensToNewRoot",
+            "inputs": [
+                { "name": "_answer_id", "type": "uint32" },
+                { "name": "pubkey", "type": "uint256" },
+                { "name": "owner", "type": "optional(address)" },
+                { "name": "tokens", "type": "uint128" }
+            ],
+            "outputs": [],
+            "id": "0x3fb"
+        },
+        {
+            "name": "deployUpgradeWallet",
+            "inputs": [
+                { "name": "_answer_id", "type": "uint32" },
+                { "name": "pubkey", "type": "uint256" },
+                { "name": "owner", "type": "optional(address)" },
+                { "name": "tokens", "type": "uint128" }
+            ],
+            "outputs": [],
+            "id": "0x3fc"
+        },
+        {
+            "name": "setOldRoot",
+            "inputs": [
+                { "name": "_answer_id", "type": "uint32" },
+                { "name": "oldroot", "type": "optional(address)" }
+            ],
+            "outputs": [],
+            "id": "0x3fd"
+        },
+        {
+            "name": "setNewRoot",
+            "inputs": [
+                { "name": "_answer_id", "type": "uint32" },
+                { "name": "newroot", "type": "optional(address)" }
+            ],
+            "outputs": [],
+            "id": "0x3fe"
+        },
+        {
+            "name": "onUpgrade",
+            "inputs": [
+                { "name": "_answer_id", "type": "uint32" },
+                { "name": "newcode", "type": "cell" }
+            ],
+            "outputs": [],
+            "id": "0x3fa"
+        },
+        {
+            "name": "deployEmptyWalletFree",
+            "inputs": [
+                { "name": "_answer_id", "type": "uint32" },
+                { "name": "pubkey", "type": "uint256" }
+            ],
+            "outputs": [{ "name": "value0", "type": "address" }],
+            "id": "0x3ff"
+        },
+        {
+            "name": "mint",
+            "inputs": [
+                { "name": "_answer_id", "type": "uint32" },
+                { "name": "tokens", "type": "uint128" }
+            ],
+            "outputs": [{ "name": "value0", "type": "bool" }],
+            "id": "0xf"
+        },
+        {
+            "name": "requestTotalGranted",
+            "inputs": [{ "name": "_answer_id", "type": "uint32" }],
+            "outputs": [{ "name": "value0", "type": "uint128" }],
+            "id": "0x10"
+        },
+        {
+            "name": "getName",
+            "inputs": [],
+            "outputs": [{ "name": "value0", "type": "string" }],
+            "id": "0x11"
+        },
+        {
+            "name": "getSymbol",
+            "inputs": [],
+            "outputs": [{ "name": "value0", "type": "string" }],
+            "id": "0x12"
+        },
+        {
+            "name": "getDecimals",
+            "inputs": [],
+            "outputs": [{ "name": "value0", "type": "uint8" }],
+            "id": "0x13"
+        },
+        {
+            "name": "getRootKey",
+            "inputs": [],
+            "outputs": [{ "name": "value0", "type": "uint256" }],
+            "id": "0x14"
+        },
+        {
+            "name": "getRootOwner",
+            "inputs": [],
+            "outputs": [{ "name": "value0", "type": "optional(address)" }],
+            "id": "0x15"
+        },
+        {
+            "name": "getTotalSupply",
+            "inputs": [],
+            "outputs": [{ "name": "value0", "type": "uint128" }],
+            "id": "0x16"
+        },
+        {
+            "name": "getTotalGranted",
+            "inputs": [],
+            "outputs": [{ "name": "value0", "type": "uint128" }],
+            "id": "0x17"
+        },
+        {
+            "name": "hasWalletCode",
+            "inputs": [],
+            "outputs": [{ "name": "value0", "type": "bool" }],
+            "id": "0x18"
+        },
+        {
+            "name": "getWalletCode",
+            "inputs": [],
+            "outputs": [{ "name": "value0", "type": "cell" }],
+            "id": "0x19"
+        },
+        {
+            "name": "getBurnCount",
+            "inputs": [],
+            "outputs": [{ "name": "value0", "type": "uint128" }],
+            "id": "0x3fb"
+        },
+        {
+            "name": "getWalletAddress",
+            "inputs": [
+                { "name": "pubkey", "type": "uint256" },
+                { "name": "owner", "type": "optional(address)" }
+            ],
+            "outputs": [{ "name": "value0", "type": "address" }],
+            "id": "0x1a"
+        },
+        {
+            "name": "getWalletCodeHash",
+            "inputs": [],
+            "outputs": [{ "name": "value0", "type": "uint256" }],
+            "id": "0x1b"
+        }
+    ],
+    "fields": [
+        { "name": "__uninitialized", "type": "bool" },
+        { "name": "__replay", "type": "uint64" },
+        { "name": "name_", "type": "string" },
+        { "name": "symbol_", "type": "string" },
+        { "name": "decimals_", "type": "uint8" },
+        { "name": "root_pubkey_", "type": "uint256" },
+        { "name": "root_owner_", "type": "optional(address)" },
+        { "name": "total_supply_", "type": "uint128" },
+        { "name": "total_granted_", "type": "uint128" },
+        { "name": "wallet_code_", "type": "optional(cell)" },
+        { "name": "checker_", "type": "address" },
+        { "name": "burncount_", "type": "uint128" },
+        { "name": "oldroot_", "type": "optional(address)" },
+        { "name": "newroot_", "type": "optional(address)" }
+    ],
+    "events": []
+}
