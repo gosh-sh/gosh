@@ -51,7 +51,7 @@ export function useUserNotificationSettings(options: { initialize?: boolean } = 
     }
 
     const getUserSettings = useCallback(async () => {
-        if (!user.username) {
+        if (!user.username || !user.keys?.public) {
             return
         }
 
@@ -62,6 +62,7 @@ export function useUserNotificationSettings(options: { initialize?: boolean } = 
                 const db_user = await getDbUser(user.username)
                 nt_user = await createServiceUser({
                     username: user.username,
+                    pubkey: user.keys.public,
                     email: db_user?.email,
                 })
             }
