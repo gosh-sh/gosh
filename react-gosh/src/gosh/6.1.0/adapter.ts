@@ -196,6 +196,7 @@ import { GoshProfileDao } from '../goshprofiledao'
 import { GoshRoot } from '../goshroot'
 import { GoshBigTask } from './goshbigtask'
 import ABI from '../../resources/contracts/abi.json'
+import { AppConfig } from '../../appconfig'
 
 class GoshAdapter_6_1_0 implements IGoshAdapter {
     private static instance: GoshAdapter_6_1_0
@@ -3881,6 +3882,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
 
         // Set commit or start PR proposal
+        const daoname = await (await this._getDao()).getName()
+        const reponame = await this.getName()
         const patched = blobsData.filter(({ data }) => !!data.patch)
         if (!isPullRequest) {
             await this._setCommit(branch, commitHash, patched.length, false, task)
@@ -3888,7 +3891,16 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 const check = await this.getBranch(branch)
                 return check.commit.address !== branchTo.commit.address
             })
-            if (!wait) throw new GoshError('Push timeout reached')
+            if (!wait) {
+                throw new GoshError('Push timeout reached')
+            }
+
+            // Create notification
+            await AppConfig.db.from('nt_notification').insert({
+                daoname,
+                type: 'repo_commit_pushed',
+                meta: { reponame, branch, commit: commitHash },
+            })
         } else {
             await this._startProposalForSetCommit(
                 branch,
@@ -3897,6 +3909,16 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 message,
                 task,
             )
+
+            // Create notification
+            await AppConfig.db.from('nt_notification').insert({
+                daoname,
+                type: 'dao_event_created',
+                meta: {
+                    label: 'Pull request',
+                    comment: `New pull request to repository ${reponame}`,
+                },
+            })
         }
         cb({ completed: true })
     }

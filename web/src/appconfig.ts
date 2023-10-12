@@ -119,6 +119,7 @@ export class AppConfig {
             goshver: versions,
             ipfs: import.meta.env.REACT_APP_IPFS || '',
             isDockerExt: import.meta.env.REACT_APP_ISDOCKEREXT === 'true',
+            db: AppConfig.supabase,
         }
         _AppConfig.setup(config)
     }
