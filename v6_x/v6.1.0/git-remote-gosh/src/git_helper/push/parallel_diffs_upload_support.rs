@@ -155,9 +155,12 @@ impl ParallelDiffsUploadSupport {
 
             let mut rest: Vec<BlockchainContractAddress> = vec![];
             for chunk in exp.chunks(chunk_size) {
-                let mut failed_messages =
+                let mut unsent =
                     self.push_chunk(context, chunk, wallet.clone()).await?;
-                rest.append(&mut failed_messages);
+                rest.append(&mut unsent);
+                let mut undeployed =
+                    wait_diffs_until_ready(&context.blockchain, chunk).await?;
+                rest.append(&mut undeployed)
             }
             if rest.len() == 0 {
                 break;
