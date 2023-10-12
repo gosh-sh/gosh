@@ -1608,7 +1608,7 @@ where
         }
 
         // After we have all commits and trees deployed, start push of diffs
-        parallel_diffs_upload_support.start_push(self).await?;
+        parallel_diffs_upload_support.push_in_chunks(self).await?;
         parallel_snapshot_uploads.start_push(self).await?;
 
         // clear database after all objects were deployed

@@ -107,7 +107,7 @@ version = '1.21.2'
 [dependencies.ton_client]
 git = 'https://github.com/gosh-sh/ever-sdk.git'
 default-features = false
-features = ['std', 'rustls-tls-webpki-roots']
+features = ['std']
 package = 'ton_client'
 tag = "1.44.3"
 

@@ -131,15 +131,10 @@ impl ParallelDiffsUploadSupport {
         Ok(())
     }
 
-    async fn push_in_chunks(
+    pub async fn push_in_chunks(
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
     ) -> anyhow::Result<()> {
-        #[derive(Deserialize)]
-        struct ExpectedAddress {
-            expected_address: String,
-        }
-
         let chunk_size = get_push_chunk();
         let max_attempts = 3u32 /* get_redeploy_attempts() */;
 
@@ -153,16 +148,21 @@ impl ParallelDiffsUploadSupport {
         let wallet = blockchain.user_wallet(&context.dao_addr,&context.remote.network).await?;
 
         let mut attempt = 0u32;
-        let mut expected_addresses: HashSet<String> = HashSet::new();
         loop {
             if attempt == max_attempts {
                 anyhow::bail!("Failed to deploy diffs. Undeployed diffs: {exp:?}");
             }
 
-            let mut q_in_q: HashSet<String> = HashSet::new();
+            let mut rest: Vec<BlockchainContractAddress> = vec![];
             for chunk in exp.chunks(chunk_size) {
-                let queue_name = self.push_chunk(context, chunk, wallet.clone()).await?;
-                q_in_q.insert(queue_name);
+                let mut failed_messages =
+                    self.push_chunk(context, chunk, wallet.clone()).await?;
+                rest.append(&mut failed_messages);
+            }
+            if rest.len() == 0 {
+                break;
+            } else {
+                exp = rest;
             }
 
             attempt += 1;
@@ -170,12 +170,12 @@ impl ParallelDiffsUploadSupport {
         Ok(())
     }
 
-    pub async fn push_chunk(
+    async fn push_chunk(
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
         chunk: &[BlockchainContractAddress],
         wallet: Arc<UserWalletMirrors>,
-    ) -> anyhow::Result<String> {
+    ) -> anyhow::Result<Vec<BlockchainContractAddress>> {
         let mut message_bocs: Vec<(String, Option<BlockchainContractAddress>)> = vec![];
         for addr in chunk {
             let wallet_contract = wallet.take_one().await?;
@@ -194,9 +194,12 @@ impl ParallelDiffsUploadSupport {
         let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
         let expire = now.as_secs() as u32 + 120; // todo remove magic num
 
-        context.blockchain.send_messages(&message_bocs, expire).await
+        let queue_name = context.blockchain.send_messages(&message_bocs, expire).await?;
 
-        // todo wait for send_messages to be completed
+        let failed_messages =
+            self.wait_chunk_until_send(&context.blockchain, chunk, queue_name).await?;
+
+        Ok(failed_messages)
     }
 
     pub async fn wait_chunk_until_send(
