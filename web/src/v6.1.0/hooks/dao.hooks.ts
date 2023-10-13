@@ -22,6 +22,7 @@ import {
     MILESTONE_TAG,
     MILESTONE_TASK_TAG,
     SYSTEM_TAG,
+    DaoEventType,
 } from '../../constants'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import {
@@ -64,6 +65,7 @@ import { SystemContract } from '../blockchain/systemcontract'
 import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
 import { Milestone } from '../blockchain/milestone'
 import { getGrantMapping } from '../components/Task'
+import { ENotificationType } from '../../types/notification.types'
 
 export function usePartnerDaoList(params: { initialize?: boolean } = {}) {
     const { initialize } = params
@@ -1450,8 +1452,43 @@ export function useDaoHelpers() {
         return { isMember }
     }
 
+    const afterCreateEvent = async (
+        meta: object,
+        options: {
+            onPendingCallback?: (status: TToastStatus) => void
+            onSuccessCallback?: (status: TToastStatus) => void
+            onErrorCallback?: (status: TToastStatus) => void
+        },
+    ) => {
+        const {
+            onPendingCallback = nocallback,
+            onSuccessCallback = nocallback,
+            onErrorCallback = nocallback,
+        } = options
+
+        try {
+            onPendingCallback({ type: 'pending', data: 'Finalizing' })
+
+            // Create notification
+            const { error } = await supabase.client.from('nt_notification').insert({
+                daoname: dao.name,
+                type: ENotificationType.DAO_EVENT_CREATED,
+                meta,
+            })
+            if (error) {
+                console.warn('Create notification', error.message)
+            }
+
+            onSuccessCallback({ type: 'success', data: 'Completed' })
+        } catch (e: any) {
+            onErrorCallback({ type: 'error', data: e })
+            throw e
+        }
+    }
+
     return {
         beforeCreateEvent,
+        afterCreateEvent,
         beforeVote,
         voting2regular,
         checkDaoWallet,
@@ -1463,7 +1500,7 @@ export function useCreateDaoMember() {
     const { details: dao } = useDao()
     const member = useDaoMember()
     const setInviteList = useSetRecoilState(daoInviteListAtom)
-    const { beforeCreateEvent } = useDaoHelpers()
+    const { beforeCreateEvent, afterCreateEvent } = useDaoHelpers()
     const [status, setStatus] = useRecoilState(
         appToastStatusSelector('__createdaomember'),
     )
@@ -1619,12 +1656,18 @@ export function useCreateDaoMember() {
                 // Prepare balance for create event
                 await beforeCreateEvent(0, { onPendingCallback: setStatus })
 
+                const notification = {
+                    label: DaoEventType[EDaoEventType.DAO_MEMBER_ADD],
+                    comment,
+                }
+
                 if (requestMembership) {
                     const members = profiles.map(({ profile }) => {
                         return { profile, allowance: 0, expired: 0 }
                     })
                     const daonames = _.flatten(profiles.map(({ daonames }) => daonames))
                     await member.wallet!.createDaoMember({ members, daonames, comment })
+                    await afterCreateEvent(notification, { onPendingCallback: setStatus })
                 } else if (profiles.length > 0) {
                     const memberAddCells = profiles.map(({ profile, daonames }) => ({
                         type: EDaoEventType.DAO_MEMBER_ADD,
@@ -1647,6 +1690,7 @@ export function useCreateDaoMember() {
                         ],
                         comment,
                     })
+                    await afterCreateEvent(notification, { onPendingCallback: setStatus })
                 }
 
                 setStatus((state) => ({
@@ -1683,7 +1727,7 @@ export function useDeleteDaoMember() {
     const { details: dao } = useDao()
     const member = useDaoMember()
     const setMemberList = useSetRecoilState(daoMemberListSelector({ daoname: dao.name }))
-    const { beforeCreateEvent } = useDaoHelpers()
+    const { beforeCreateEvent, afterCreateEvent } = useDaoHelpers()
     const [status, setStatus] = useRecoilState(
         appToastStatusSelector('__deletedaomember'),
     )
@@ -1750,6 +1794,10 @@ export function useDeleteDaoMember() {
                 },
             )
 
+            comment =
+                comment ||
+                `Delete members ${users.map(({ username }) => username).join(', ')}`
+
             // Create delete DAO members multi event
             // Skip `member.wallet` check, because `beforeCreate` checks it
             // Prepare balance for create event
@@ -1765,10 +1813,17 @@ export function useDeleteDaoMember() {
             }))
             await member.wallet!.createMultiEvent({
                 proposals: [...memberDeleteAllowanceCells, ...memberDeleteCells],
-                comment:
-                    comment ||
-                    `Delete members ${users.map(({ username }) => username).join(', ')}`,
+                comment,
             })
+
+            // Event post create
+            await afterCreateEvent(
+                {
+                    label: DaoEventType[EDaoEventType.DAO_MEMBER_DELETE],
+                    comment,
+                },
+                { onPendingCallback: setStatus },
+            )
 
             setStatus((state) => ({
                 ...state,
@@ -1795,7 +1850,7 @@ export function useDeleteDaoMember() {
 export function useUpdateDaoMember() {
     const { details: dao } = useDao()
     const member = useDaoMember()
-    const { beforeCreateEvent } = useDaoHelpers()
+    const { beforeCreateEvent, afterCreateEvent } = useDaoHelpers()
     const [status, setStatus] = useRecoilState(
         appToastStatusSelector('__updatedaomember'),
     )
@@ -1887,24 +1942,28 @@ export function useUpdateDaoMember() {
 
                 // Prepare event data
                 const events = []
+                const comments = []
                 for (const item of profiles) {
                     // Balance change
                     if (item.balance > item._balance) {
                         const delta = item.balance - item._balance
+                        const _comment = `Add ${delta} regular tokens to ${item.username}`
                         events.push({
                             type: EDaoEventType.DAO_TOKEN_REGULAR_ADD,
                             params: {
                                 profile: item.profile,
                                 amount: delta,
-                                comment: `Add ${delta} regular tokens to ${item.username}`,
+                                comment: _comment,
                             },
                             fn: 'addDaoRegularTokens',
                         })
+                        comments.push(_comment)
                     }
 
                     // Allowance change
                     if (item.allowance - item._allowance !== 0) {
                         const delta = Math.abs(item.allowance - item._allowance)
+                        const _comment = `Change ${item.username} karma from ${item._allowance} to ${item.allowance}`
                         events.push({
                             type: EDaoEventType.DAO_ALLOWANCE_CHANGE,
                             params: {
@@ -1915,10 +1974,11 @@ export function useUpdateDaoMember() {
                                         amount: delta,
                                     },
                                 ],
-                                comment: `Change member karma from ${item._allowance} to ${item.allowance}`,
+                                comment: _comment,
                             },
                             fn: 'updateDaoMemberAllowance',
                         })
+                        comments.push(_comment)
                     }
                 }
 
@@ -1936,9 +1996,18 @@ export function useUpdateDaoMember() {
                 } else {
                     await member.wallet!.createMultiEvent({
                         proposals: events,
-                        comment: comment || 'Update DAO members',
+                        comment: comment || comments.join('\n'),
                     })
                 }
+
+                // Event post create
+                await afterCreateEvent(
+                    {
+                        label: 'Update DAO members',
+                        comment: comment || comments.join('\n'),
+                    },
+                    { onPendingCallback: setStatus },
+                )
 
                 setStatus((state) => ({
                     ...state,
@@ -2288,7 +2357,7 @@ export function useVoteDaoEvent() {
 export function useUpgradeDao() {
     const dao = useDao()
     const member = useDaoMember()
-    const { beforeCreateEvent } = useDaoHelpers()
+    const { beforeCreateEvent, afterCreateEvent } = useDaoHelpers()
     const [versions, setVersions] = useState<string[]>()
     const [alert, setAlert] = useState<
         'isNotLatest' | 'isUpgradeAvailable' | 'isUpgradeUncompleted'
@@ -2415,6 +2484,15 @@ export function useUpgradeDao() {
                 // Skip `member.wallet` check, because `beforeCreate` checks it
                 await member.wallet!.upgradeDao({ version, description: comment })
 
+                // Event post create
+                await afterCreateEvent(
+                    {
+                        label: DaoEventType[EDaoEventType.DAO_UPGRADE],
+                        comment,
+                    },
+                    { onPendingCallback: setStatus },
+                )
+
                 setStatus((state) => ({
                     ...state,
                     type: 'success',
@@ -2442,7 +2520,7 @@ export function useUpgradeDao() {
 export function useUpgradeDaoComplete() {
     const dao = useDao()
     const member = useDaoMember()
-    const { beforeCreateEvent } = useDaoHelpers()
+    const { beforeCreateEvent, afterCreateEvent } = useDaoHelpers()
     const [status, setStatus] = useRecoilState(
         appToastStatusSelector('__upgradedaocomplete'),
     )
@@ -2574,6 +2652,17 @@ export function useUpgradeDaoComplete() {
             isEvent = true
         }
 
+        // Event post create
+        if (isEvent) {
+            await afterCreateEvent(
+                {
+                    label: 'Upgrade repositories',
+                    comment: args.map(({ name }) => name).join(', '),
+                },
+                { onPendingCallback: setStatus },
+            )
+        }
+
         // Update DAO flag
         setStatus((state) => ({ ...state, type: 'pending', data: 'Update DAO flag' }))
         await wallet.setRepositoriesUpgraded()
@@ -2652,10 +2741,23 @@ export function useUpgradeDaoComplete() {
             async (chunk) => {
                 await wallet.createMultiEvent({
                     proposals: chunk,
-                    comment: 'Upgrade milestones',
+                    comment: DaoEventType[EDaoEventType.MILESTONE_UPGRADE],
                 })
             },
         )
+
+        // Event post create
+        await afterCreateEvent(
+            {
+                label: DaoEventType[EDaoEventType.MILESTONE_UPGRADE],
+                comment: cells
+                    .filter(({ type }) => type === EDaoEventType.MILESTONE_UPGRADE)
+                    .map(({ params }) => params.taskname)
+                    .join(', '),
+            },
+            { onPendingCallback: setStatus },
+        )
+
         return { isEvent: true }
     }
 
@@ -2747,10 +2849,23 @@ export function useUpgradeDaoComplete() {
             async (chunk) => {
                 await wallet.createMultiEvent({
                     proposals: chunk,
-                    comment: 'Upgrade tasks',
+                    comment: DaoEventType[EDaoEventType.TASK_UPGRADE],
                 })
             },
         )
+
+        // Event post create
+        await afterCreateEvent(
+            {
+                label: DaoEventType[EDaoEventType.TASK_UPGRADE],
+                comment: cells
+                    .filter(({ type }) => type === EDaoEventType.TASK_UPGRADE)
+                    .map(({ params }) => params.taskname)
+                    .join(', '),
+            },
+            { onPendingCallback: setStatus },
+        )
+
         return { isEvent: true }
     }
 
@@ -2770,10 +2885,16 @@ export function useUpgradeDaoComplete() {
         }))
         const isMintOnPrev = await daoprev.account.isMintOn()
         if (!isMintOnPrev && isMintOnCurr) {
-            await wallet.disableMintDaoTokens({
-                comment:
-                    'This proposal will pass the Token Mint Disable flag on to the newer version of your DAO',
-            })
+            const comment =
+                'This proposal will pass the Token Mint Disable flag on to the newer version of your DAO'
+            await wallet.disableMintDaoTokens({ comment })
+            await afterCreateEvent(
+                {
+                    label: DaoEventType[EDaoEventType.DAO_TOKEN_MINT_DISABLE],
+                    comment,
+                },
+                { onPendingCallback: setStatus },
+            )
         }
     }
 
@@ -2885,7 +3006,7 @@ export function useUpgradeDaoComplete() {
 export function useUpdateDaoSettings() {
     const { details: dao } = useDao()
     const member = useDaoMember()
-    const { beforeCreateEvent } = useDaoHelpers()
+    const { beforeCreateEvent, afterCreateEvent } = useDaoHelpers()
     const [status, setStatus] = useRecoilState(
         appToastStatusSelector('__updatedaosettings'),
     )
@@ -2984,9 +3105,15 @@ export function useUpdateDaoSettings() {
                 } else {
                     await member.wallet.createMultiEvent({
                         proposals: events,
-                        comment: 'Update DAO settings',
+                        comment: params.comment || 'Update DAO settings',
                     })
                 }
+
+                // Event post create
+                await afterCreateEvent(
+                    { label: 'Update DAO settings' },
+                    { onPendingCallback: setStatus },
+                )
 
                 setStatus((state) => ({
                     ...state,
@@ -3018,12 +3145,13 @@ export function useUpdateDaoSettings() {
 export function useMintDaoTokens() {
     const { details: dao } = useDao()
     const member = useDaoMember()
-    const { beforeCreateEvent } = useDaoHelpers()
+    const { beforeCreateEvent, afterCreateEvent } = useDaoHelpers()
     const [status, setStatus] = useRecoilState(appToastStatusSelector('__mintdaotokens'))
 
     const mint = useCallback(
         async (params: { amount: number; comment?: string }) => {
-            const { amount, comment } = params
+            const { amount } = params
+            const comment = params.comment || `Mint ${amount.toLocaleString()} tokens`
 
             try {
                 setStatus((state) => ({
@@ -3060,11 +3188,18 @@ export function useMintDaoTokens() {
                     type: 'pending',
                     data: 'Minting tokens',
                 }))
-                await member.wallet.mintDaoTokens({
-                    amount,
-                    comment: comment || `Mint ${amount.toLocaleString()} tokens`,
-                    alone,
-                })
+                await member.wallet.mintDaoTokens({ amount, comment, alone })
+
+                // Event post create
+                if (!alone) {
+                    await afterCreateEvent(
+                        {
+                            label: DaoEventType[EDaoEventType.DAO_TOKEN_MINT],
+                            comment,
+                        },
+                        { onPendingCallback: setStatus },
+                    )
+                }
 
                 // Update status depending on alone
                 setStatus((state) => ({
@@ -3091,7 +3226,7 @@ export function useMintDaoTokens() {
 export function useSendDaoTokens() {
     const { details: dao } = useDao()
     const member = useDaoMember()
-    const { beforeCreateEvent, checkDaoWallet } = useDaoHelpers()
+    const { beforeCreateEvent, checkDaoWallet, afterCreateEvent } = useDaoHelpers()
     const [status, setStatus] = useRecoilState(appToastStatusSelector('__senddaotokens'))
 
     const send = useCallback(
@@ -3102,7 +3237,7 @@ export function useSendDaoTokens() {
             isVoting: boolean
             comment?: string
         }) => {
-            const { username, usertype, amount, isVoting, comment } = params
+            const { username, usertype, amount, isVoting } = params
             const sc = getSystemContract()
 
             try {
@@ -3158,11 +3293,12 @@ export function useSendDaoTokens() {
                     data: 'Sending tokens',
                 }))
                 const _txtTokens = isVoting ? 'voting' : 'regular'
-                const _comment = `Send ${amount} ${_txtTokens} tokens to ${username}`
+                const comment =
+                    params.comment || `Send ${amount} ${_txtTokens} tokens to ${username}`
                 const kwargs = {
                     profile: profile.address,
                     amount,
-                    comment: comment || _comment,
+                    comment,
                     alone,
                 }
                 if (isVoting) {
@@ -3195,11 +3331,22 @@ export function useSendDaoTokens() {
                                     },
                                 },
                             ],
-                            comment: comment || _comment,
+                            comment,
                         })
                     }
                 } else {
                     await member.wallet.addDaoRegularTokens(kwargs)
+                }
+
+                // Event post create
+                if (!alone) {
+                    await afterCreateEvent(
+                        {
+                            label: 'Send DAO tokens',
+                            comment,
+                        },
+                        { onPendingCallback: setStatus },
+                    )
                 }
 
                 // Update status depending on alone
@@ -3647,7 +3794,7 @@ export function useDaoTaskList(params: { count?: number; initialize?: boolean } 
 export function useCreateMilestone() {
     const { details: dao } = useDao()
     const member = useDaoMember()
-    const { beforeCreateEvent } = useDaoHelpers()
+    const { beforeCreateEvent, afterCreateEvent } = useDaoHelpers()
     const [status, setStatus] = useRecoilState(
         appToastStatusSelector('__createmilestone'),
     )
@@ -3667,6 +3814,7 @@ export function useCreateMilestone() {
             comment?: string
         }) => {
             const month2sec = 30 * 24 * 60 * 60
+            const comment = params.comment || `Create milestone ${params.taskname}`
 
             try {
                 if (!dao.name) {
@@ -3763,8 +3911,17 @@ export function useCreateMilestone() {
                     },
                     budget: params.budget,
                     tags: params.tags,
-                    comment: params.comment || `Create milestone ${params.taskname}`,
+                    comment,
                 })
+
+                // Event post create
+                await afterCreateEvent(
+                    {
+                        label: DaoEventType[EDaoEventType.MILESTONE_CREATE],
+                        comment,
+                    },
+                    { onPendingCallback: setStatus },
+                )
 
                 setStatus((state) => ({
                     ...state,
@@ -3790,13 +3947,15 @@ export function useCreateMilestone() {
 
 export function useDeleteMilestone() {
     const member = useDaoMember()
-    const { beforeCreateEvent } = useDaoHelpers()
+    const { beforeCreateEvent, afterCreateEvent } = useDaoHelpers()
     const [status, setStatus] = useRecoilState(
         appToastStatusSelector('__deletemilestone'),
     )
 
     const deleteMilestone = useCallback(
         async (params: { reponame: string; taskname: string; comment?: string }) => {
+            const comment = params.comment || `Delete milestone ${params.taskname}`
+
             try {
                 // Prepare balance for create event
                 await beforeCreateEvent(20, { onPendingCallback: setStatus })
@@ -3811,8 +3970,17 @@ export function useDeleteMilestone() {
                 await member.wallet!.deleteMilestone({
                     reponame: params.reponame,
                     taskname: params.taskname,
-                    comment: params.comment || `Delete milestone ${params.taskname}`,
+                    comment,
                 })
+
+                // Event post create
+                await afterCreateEvent(
+                    {
+                        label: DaoEventType[EDaoEventType.MILESTONE_DELETE],
+                        comment,
+                    },
+                    { onPendingCallback: setStatus },
+                )
 
                 setStatus((state) => ({
                     ...state,
@@ -3838,13 +4006,15 @@ export function useDeleteMilestone() {
 
 export function useCompleteMilestone() {
     const member = useDaoMember()
-    const { beforeCreateEvent } = useDaoHelpers()
+    const { beforeCreateEvent, afterCreateEvent } = useDaoHelpers()
     const [status, setStatus] = useRecoilState(
         appToastStatusSelector('__completemilestone'),
     )
 
     const completeMilestone = useCallback(
         async (params: { reponame: string; taskname: string; comment?: string }) => {
+            const comment = params.comment || `Complete milestone ${params.taskname}`
+
             try {
                 // Prepare balance for create event
                 await beforeCreateEvent(20, { onPendingCallback: setStatus })
@@ -3859,8 +4029,17 @@ export function useCompleteMilestone() {
                 await member.wallet!.completeMilestone({
                     reponame: params.reponame,
                     taskname: params.taskname,
-                    comment: params.comment || `Complete milestone ${params.taskname}`,
+                    comment,
                 })
+
+                // Event post create
+                await afterCreateEvent(
+                    {
+                        label: DaoEventType[EDaoEventType.MILESTONE_COMPLETE],
+                        comment,
+                    },
+                    { onPendingCallback: setStatus },
+                )
 
                 setStatus((state) => ({
                     ...state,

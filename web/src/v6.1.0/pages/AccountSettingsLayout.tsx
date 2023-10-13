@@ -1,29 +1,24 @@
-import { NavLink, useParams } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import { classNames } from 'react-gosh'
 import { withErrorBoundary } from 'react-error-boundary'
 import { withPin, withRouteAnimation } from '../hocs'
 import Alert from '../../components/Alert'
 import { AnimatedOutlet } from '../components/Outlet'
-import { faGear, faWrench } from '@fortawesome/free-solid-svg-icons'
+import { faGear, faLock, faUser } from '@fortawesome/free-solid-svg-icons'
 import { faBell } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
-const DaoSettingsLayout = () => {
-    const { daoname } = useParams()
-
+const AccountSettingsLayout = () => {
     const getTabs = () => {
         const tabs = []
-        tabs.push({ to: `/o/${daoname}/settings/setup`, title: 'Setup', icon: faGear })
+        tabs.push({ to: `/a/settings/details`, title: 'Main info', icon: faUser })
         tabs.push({
-            to: `/o/${daoname}/settings/notifications`,
+            to: `/a/settings/notifications`,
             title: 'Notifications',
             icon: faBell,
         })
-        tabs.push({
-            to: `/o/${daoname}/settings/upgrade`,
-            title: 'Upgrade',
-            icon: faWrench,
-        })
+        tabs.push({ to: `/a/settings/security`, title: 'Security', icon: faLock })
+        tabs.push({ to: `/a/settings/git-remote`, title: 'Git remote', icon: faGear })
         return tabs
     }
 
@@ -47,14 +42,16 @@ const DaoSettingsLayout = () => {
                 ))}
             </div>
             <div className="basis-full md:basis-4/5 overflow-hidden">
-                <AnimatedOutlet />
+                <div className="border border-gray-e6edff rounded-xl p-5">
+                    <AnimatedOutlet />
+                </div>
             </div>
         </div>
     )
 }
 
 export default withErrorBoundary(
-    withRouteAnimation(withPin(DaoSettingsLayout, { redirect: false })),
+    withRouteAnimation(withPin(AccountSettingsLayout, { redirect: true })),
     {
         fallbackRender: ({ error }) => (
             <div className="container py-10">
