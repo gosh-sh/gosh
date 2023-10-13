@@ -3875,7 +3875,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const apply = reverse
             ? this._reverseBlobDiffPatch(patchOrContent)
             : patchOrContent
-        return Diff.applyPatch(content as string, apply)
+        // TODO: applyPatch can return boolean (false)
+        return Diff.applyPatch(content as string, apply) as string
     }
 
     private _getTreeFromItems(items: TTreeItem[]): TTree {
