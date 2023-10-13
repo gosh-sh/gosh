@@ -155,7 +155,7 @@ const ListItem = (props: TListItemProps) => {
                                     <Popover.Panel
                                         as={motion.div}
                                         className="absolute right-0 mt-2 rounded-xl shadow-sm shadow-[#7c8db5]/5
-                                            border border-gray-e6edff bg-white px-4 py-2"
+                                            border border-gray-e6edff bg-white px-4 py-2 z-1"
                                         initial={{ opacity: 0, translateY: '0.25rem' }}
                                         animate={{ opacity: 1, translateY: 0 }}
                                         exit={{ opacity: 0, translateY: '0.25rem' }}
