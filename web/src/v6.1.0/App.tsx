@@ -5,7 +5,10 @@ import { ToastOptionsShortcuts } from '../helpers'
 import BaseModal from '../components/Modal/BaseModal'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
-import { useUserNotificationSettings } from './hooks/notification.hooks'
+import {
+    useUserNotificationList,
+    useUserNotificationSettings,
+} from './hooks/notification.hooks'
 import HomePage from '../pages/Home'
 import AccountLayout from './pages/AccountLayout'
 import AccountSettingsLayout from './pages/AccountSettingsLayout'
@@ -35,6 +38,7 @@ import DaoTaskListPage from './pages/DaoTaskList'
 import TaskCreatePage from './pages/TaskCreate'
 import L2Page from './pages/L2'
 import AccountDetailsPage from './pages/AccountDetails'
+import { ToastStatus } from '../components/Toast'
 
 // TODO: Update after full refactor
 import RepoLayout from '../pages/RepoLayout'
@@ -49,11 +53,11 @@ import CommitPage from '../pages/Commit'
 import MergeCreatePage from '../pages/MergeCreate'
 import BuildPage from '../docker-extension/pages/Build'
 import GotoPage from '../pages/Goto'
-import { ToastStatus } from '../components/Toast'
 // TODO: /Update after full refactor
 
 const App = () => {
     useUserNotificationSettings({ initialize: true })
+    useUserNotificationList({ initialize: true })
 
     return (
         <div className="wrapper">

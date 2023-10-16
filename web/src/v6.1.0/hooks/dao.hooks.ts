@@ -66,6 +66,7 @@ import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
 import { Milestone } from '../blockchain/milestone'
 import { getGrantMapping } from '../components/Task'
 import { ENotificationType } from '../../types/notification.types'
+import { NotificationsAPI } from '../../apis/notifications'
 
 export function usePartnerDaoList(params: { initialize?: boolean } = {}) {
     const { initialize } = params
@@ -1216,6 +1217,7 @@ export function useDaoMemberList(
 }
 
 export function useDaoHelpers() {
+    const { user } = useUser()
     const { details: dao } = useDao()
     const member = useDaoMember()
 
@@ -1466,23 +1468,34 @@ export function useDaoHelpers() {
             onErrorCallback = nocallback,
         } = options
 
+        // Create DAO notification
         try {
-            onPendingCallback({ type: 'pending', data: 'Finalizing' })
-
-            // Create notification
-            const { error } = await supabase.client.from('nt_notification').insert({
-                daoname: dao.name,
-                type: ENotificationType.DAO_EVENT_CREATED,
-                meta,
-            })
-            if (error) {
-                console.warn('Create notification', error.message)
+            if (!user.username) {
+                throw new GoshError('Value error', 'Username undefined')
+            }
+            if (!user.keys) {
+                throw new GoshError('Value error', 'User keys undefined')
+            }
+            if (!dao.name) {
+                throw new GoshError('Value error', 'DAO name undefined')
             }
 
+            onPendingCallback({ type: 'pending', data: 'Finalizing' })
+            await NotificationsAPI.notifications.createNotificaton({
+                data: {
+                    username: user.username,
+                    payload: {
+                        daoname: dao.name,
+                        type: ENotificationType.DAO_EVENT_CREATED,
+                        meta,
+                    },
+                },
+                keys: user.keys,
+            })
             onSuccessCallback({ type: 'success', data: 'Completed' })
         } catch (e: any) {
             onErrorCallback({ type: 'error', data: e })
-            throw e
+            console.warn('Post create event error', e.message)
         }
     }
 

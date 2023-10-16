@@ -12,3 +12,10 @@ export type TDaoNotificationSettings = {
         types: { [name: string]: boolean }
     }
 }
+
+export type TUserNotificationList = {
+    isFetching: boolean
+    unread: number
+    daolist: { daoname: string; selected: boolean }[]
+    items: any[]
+}

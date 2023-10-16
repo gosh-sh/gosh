@@ -3,6 +3,7 @@ import { contextVersion } from '../constants'
 import {
     TUserNotificationSettings,
     TDaoNotificationSettings,
+    TUserNotificationList,
 } from '../types/notification.types'
 
 export const userSettingsAtom = atom<TUserNotificationSettings>({
@@ -45,4 +46,14 @@ export const daoSettingsSelector = selectorFamily<
                 }))
             }
         },
+})
+
+export const userNotificationListAtom = atom<TUserNotificationList>({
+    key: `UserNotificationListAtom_${contextVersion}`,
+    default: {
+        isFetching: false,
+        unread: 0,
+        daolist: [],
+        items: [],
+    },
 })

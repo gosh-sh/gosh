@@ -1,6 +1,4 @@
 import { Field, Form, Formik } from 'formik'
-import { toast } from 'react-toastify'
-import { ToastError } from '../../../components/Toast'
 import { FormikCheckbox, FormikInput } from '../../../components/Formik'
 import { Button } from '../../../components/Form'
 import { useUserNotificationSettings } from '../../hooks/notification.hooks'
@@ -18,7 +16,6 @@ const AccountNotificationsPage = () => {
         try {
             await updateUserSettings(values)
         } catch (e: any) {
-            toast.error(<ToastError error={e} />)
             console.error(e.message)
         }
     }
