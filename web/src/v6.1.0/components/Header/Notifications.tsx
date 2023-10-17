@@ -172,11 +172,11 @@ const Notifications = () => {
                                                         </span>
                                                     </div>
                                                     <div className="text-xs text-gray-53596d whitespace-nowrap">
-                                                        {!item.is_read && (
-                                                            <div className="inline-block w-2 h-2 rounded-full bg-red-ff3b30 mr-2" />
-                                                        )}
                                                         {moment(item.created_at).format(
                                                             'HH:mm',
+                                                        )}
+                                                        {!item.is_read && (
+                                                            <div className="inline-block w-2 h-2 rounded-full bg-red-ff3b30 ml-2" />
                                                         )}
                                                     </div>
                                                 </Popover.Button>
