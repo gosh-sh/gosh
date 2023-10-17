@@ -280,5 +280,11 @@ contract VersionController is Modifiers {
     function getHashCell(TvmCell state) external pure returns(uint256) {
         return tvm.hash(state);
     }
+
+    function getPropIdFromCell(TvmCell propData) external pure returns(uint256) {
+        TvmSlice s = propData.toSlice();
+        (,, uint256 propid) = s.decode(uint8, address, uint256);
+        return propid;
+    }
 }
 
