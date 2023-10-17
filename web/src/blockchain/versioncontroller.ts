@@ -49,6 +49,26 @@ export class VersionController extends BaseContract {
         }
     }
 
+    async getHashFromCell(cell: string) {
+        const { value0 } = await this.runLocal(
+            'getHashCell',
+            { state: cell },
+            undefined,
+            { useCachedBoc: true },
+        )
+        return value0
+    }
+
+    async getEventPropIdFromCell(cell: string) {
+        const { value0 } = await this.runLocal(
+            'getPropIdFromCell',
+            { propData: cell },
+            undefined,
+            { useCachedBoc: true },
+        )
+        return value0
+    }
+
     async getUserProfile(params: { username?: string; address?: string }) {
         const { username, address } = params
         if (address) {

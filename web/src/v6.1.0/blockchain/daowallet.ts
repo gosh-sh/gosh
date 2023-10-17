@@ -12,8 +12,10 @@ import {
     MILESTONE_TASK_TAG,
     SYSTEM_TAG,
 } from '../../constants'
-import { ETaskReward, TTaskAssignerData, TTaskGrant } from '../types/dao.types'
+import { TTaskAssignerData, TTaskGrant } from '../types/dao.types'
 import { UserProfile } from '../../blockchain/userprofile'
+import { AppConfig } from '../../appconfig'
+import { GoshError } from 'react-gosh'
 
 export class DaoWallet extends BaseContract {
     constructor(client: TonClient, address: string, keys?: KeyPair) {
@@ -73,6 +75,26 @@ export class DaoWallet extends BaseContract {
             locked: balance.locked,
             allowance: balance.total + details.balance.pseudodaovote,
         }
+    }
+
+    async getEventAddress(params: { cell?: string; prop_id?: string }): Promise<string> {
+        const { cell } = params
+
+        if (!cell && !params.prop_id) {
+            throw new GoshError('Value error', 'cell or prop_id should be provided')
+        }
+
+        let prop_id = params.prop_id
+        if (!prop_id) {
+            prop_id = await AppConfig.goshroot.getHashFromCell(cell!)
+        }
+        const { value0 } = await this.runLocal(
+            'proposalAddressByAccount',
+            { acc: this.address, propId: prop_id },
+            undefined,
+            { useCachedBoc: true },
+        )
+        return value0
     }
 
     async setRepositoriesUpgraded(): Promise<void> {
@@ -988,26 +1010,42 @@ export class DaoWallet extends BaseContract {
             reviewers,
             num_clients: await this.smvClientsCount(),
         })
+        return await this.getEventAddress({ cell })
     }
 
     async createMultiEvent(params: {
         proposals: { type: EDaoEventType; params: any }[]
         comment?: string
         reviewers?: string[]
-    }): Promise<void> {
+    }) {
         const { proposals, comment, reviewers = [] } = params
 
         // Prepare cells
         const { cell, count } = await this.createMultiEventData(proposals)
 
         // Create proposal
-        await this.run('startMultiProposal', {
+        const result = await this.run('startMultiProposal', {
             number: count,
             proposals: cell,
             reviewers,
             comment,
             num_clients: await this.smvClientsCount(),
         })
+
+        // Calculate event address
+        const locker = await this.getSmvLocker()
+        const decoded = await locker.decodeMessage(result.out_messages[0])
+        if (!decoded) {
+            console.error('Locker could not decode `startPlatform` message', {
+                msg_id: result.transaction.out_msgs,
+            })
+            return null
+        }
+
+        const prop_id = await AppConfig.goshroot.getEventPropIdFromCell(
+            decoded.value.staticCell,
+        )
+        return await this.getEventAddress({ prop_id })
     }
 
     private async createMultiEventData(
