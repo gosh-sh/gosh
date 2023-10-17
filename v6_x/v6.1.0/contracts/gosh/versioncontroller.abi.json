@@ -393,6 +393,15 @@
 			"outputs": [
 				{"name":"value0","type":"uint256"}
 			]
+		},
+		{
+			"name": "getPropIdFromCell",
+			"inputs": [
+				{"name":"propData","type":"cell"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
 		}
 	],
 	"data": [
