@@ -281,12 +281,7 @@ contract VersionController is Modifiers {
         return tvm.hash(state);
     }
 
-    function getPropIdFromCell(TvmCell state) external pure returns(uint256) {
-        (,, uint256 res,,) = abi.decode(state, (uint8, address, uint256, uint256, uint16));
-        return res;
-    }
-
-    function getPropIdFromCellTest(TvmCell propData) external pure returns(uint256) {
+    function getPropIdFromCell(TvmCell propData) external pure returns(uint256) {
         TvmSlice s = propData.toSlice();
         (,, uint256 propid) = s.decode(uint8, address, uint256);
         return propid;

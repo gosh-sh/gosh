@@ -397,15 +397,6 @@
 		{
 			"name": "getPropIdFromCell",
 			"inputs": [
-				{"name":"state","type":"cell"}
-			],
-			"outputs": [
-				{"name":"value0","type":"uint256"}
-			]
-		},
-		{
-			"name": "getPropIdFromCellTest",
-			"inputs": [
 				{"name":"propData","type":"cell"}
 			],
 			"outputs": [
