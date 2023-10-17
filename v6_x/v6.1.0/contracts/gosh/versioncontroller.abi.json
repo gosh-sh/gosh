@@ -409,7 +409,7 @@
 				{"name":"propData","type":"cell"}
 			],
 			"outputs": [
-				{"name":"value0","type":"uint8"}
+				{"name":"value0","type":"uint256"}
 			]
 		}
 	],
