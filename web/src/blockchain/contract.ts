@@ -249,6 +249,18 @@ class BaseContract {
         }
     }
 
+    async decodeMessage(boc: string): Promise<DecodedMessageBody | null> {
+        try {
+            return await this.account.client.abi.decode_message({
+                abi: this.account.abi,
+                message: boc,
+                allow_partial: true,
+            })
+        } catch {
+            return null
+        }
+    }
+
     async decodeAccountData(data?: string) {
         if (!data) {
             data = await this.data()
