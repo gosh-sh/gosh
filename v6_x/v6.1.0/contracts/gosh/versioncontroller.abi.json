@@ -384,6 +384,15 @@
 				{"name":"value0","type":"string"},
 				{"name":"value1","type":"string"}
 			]
+		},
+		{
+			"name": "getHashCell",
+			"inputs": [
+				{"name":"state","type":"cell"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
 		}
 	],
 	"data": [
