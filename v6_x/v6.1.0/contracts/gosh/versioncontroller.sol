@@ -288,8 +288,7 @@ contract VersionController is Modifiers {
 
     function getPropIdFromCellTest(TvmCell propData) external pure returns(uint8) {
         TvmSlice s = propData.toSlice();
-        TvmSlice propDataSlice = s.loadRefAsSlice();
-        (uint8 proposalKind) = propDataSlice.decode(uint8);
+        (uint8 proposalKind) = s.decode(uint8);
         return proposalKind;
     }
 }
