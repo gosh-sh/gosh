@@ -44,7 +44,7 @@ const Notifications = () => {
     const onItemClick = (item: any) => {
         let link = `/o/${item.notification.daoname}`
         if (item.notification.type === ENotificationType.DAO_EVENT_CREATED) {
-            link += '/events'
+            link += `/events/${item.notification.meta.eventaddr || ''}`
         }
         updateUserNotification(item.id, { is_read: true })
         navigate(link)

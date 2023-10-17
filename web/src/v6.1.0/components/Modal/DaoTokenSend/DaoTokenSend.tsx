@@ -37,7 +37,7 @@ const DaoTokenSendModal = () => {
         try {
             const { isVoting, comment, username, usertype } = values
             const amount = parseInt(values.amount)
-            const { isEvent } = await send({
+            const { eventaddr } = await send({
                 username,
                 usertype,
                 amount,
@@ -45,8 +45,8 @@ const DaoTokenSendModal = () => {
                 comment,
             })
             onModalReset()
-            if (isEvent) {
-                navigate(`/o/${dao.details.name}/events`)
+            if (eventaddr) {
+                navigate(`/o/${dao.details.name}/events/${eventaddr}`)
             }
         } catch (e: any) {
             console.error(e.message)

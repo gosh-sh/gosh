@@ -23,8 +23,8 @@ const DaoUpgradePage = () => {
             const comment = [new Date().toLocaleString(), values.comment]
                 .filter((i) => !!i)
                 .join('\n')
-            await upgrade(values.version, comment)
-            navigate(`/o/${daoname}/events`)
+            const { eventaddr } = await upgrade(values.version, comment)
+            navigate(`/o/${daoname}/events/${eventaddr}`)
         } catch (e: any) {
             console.error(e.message)
         }

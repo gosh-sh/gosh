@@ -39,11 +39,11 @@ const MilestoneManage = (props: TMilestoneManageProps) => {
             return
         }
         try {
-            await completeMilestone({
+            const { eventaddr } = await completeMilestone({
                 reponame: task.repository.name,
                 taskname: task.name,
             })
-            navigate(`/o/${dao.details.name}/events`)
+            navigate(`/o/${dao.details.name}/events/${eventaddr}`)
         } catch (e: any) {
             console.error(e.message)
         }
@@ -54,8 +54,11 @@ const MilestoneManage = (props: TMilestoneManageProps) => {
             return
         }
         try {
-            await deleteMilestone({ reponame: task.repository.name, taskname: task.name })
-            navigate(`/o/${dao.details.name}/events`)
+            const { eventaddr } = await deleteMilestone({
+                reponame: task.repository.name,
+                taskname: task.name,
+            })
+            navigate(`/o/${dao.details.name}/events/${eventaddr}`)
         } catch (e: any) {
             console.error(e.message)
         }

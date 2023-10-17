@@ -29,7 +29,7 @@ const RequestDaoMembershipModal = () => {
     const onRequestMembership = async (values: TFormValues) => {
         try {
             const { comment } = values
-            await createMember(
+            const { eventaddr } = await createMember(
                 [
                     {
                         user: { name: user.username!, type: EDaoMemberType.User },
@@ -40,7 +40,9 @@ const RequestDaoMembershipModal = () => {
                 true,
             )
             onModalReset()
-            navigate(`/o/${dao.details.name}/events`)
+            if (eventaddr) {
+                navigate(`/o/${dao.details.name}/events/${eventaddr}`)
+            }
         } catch (e: any) {
             console.error(e.message)
         }

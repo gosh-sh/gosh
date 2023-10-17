@@ -35,8 +35,11 @@ const TaskManage = (props: TTaskManageProps) => {
             return
         }
         try {
-            await deleteTask({ reponame: task.repository.name, taskname: task.name })
-            navigate(`/o/${dao.details.name}/events`)
+            const { eventaddr } = await deleteTask({
+                reponame: task.repository.name,
+                taskname: task.name,
+            })
+            navigate(`/o/${dao.details.name}/events/${eventaddr}`)
         } catch (e: any) {
             console.error(e.message)
         }

@@ -59,7 +59,7 @@ const MilestoneCreateModal = () => {
 
     const onCreateMilestone = async (values: TFormValues) => {
         try {
-            await createMilestone({
+            const { eventaddr } = await createMilestone({
                 reponame: values.repository,
                 taskname: values.name,
                 manager: {
@@ -72,7 +72,7 @@ const MilestoneCreateModal = () => {
                 tags: values.tags,
             })
             onModalReset()
-            navigate(`/o/${dao.details.name}/events`)
+            navigate(`/o/${dao.details.name}/events/${eventaddr}`)
         } catch (e: any) {
             console.error(e.message)
         }
