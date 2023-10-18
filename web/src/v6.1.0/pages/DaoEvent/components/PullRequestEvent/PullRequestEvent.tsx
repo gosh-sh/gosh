@@ -1,11 +1,11 @@
 import { getCommitTime, usePullRequestCommit } from 'react-gosh'
-import { useDao } from '../../../../hooks/dao.hooks'
+import { useDao, useDaoMember } from '../../../../hooks/dao.hooks'
 import CopyClipboard from '../../../../../components/CopyClipboard'
 import { shortString } from '../../../../../utils'
 import { Commiter } from '../../../../../components/Commit'
 import Loader from '../../../../../components/Loader'
 import BlobDiffPreview from '../../../../../components/Blob/DiffPreview'
-import { Link } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 
 type TPullRequestEventProps = {
     data: { branchName: string; repoName: string; commit: string }
@@ -13,7 +13,9 @@ type TPullRequestEventProps = {
 
 const PullRequestEvent = (props: TPullRequestEventProps) => {
     const { data } = props
+    const urlparams = useParams()
     const dao = useDao()
+    const member = useDaoMember()
     const { isFetching, commit, blobs } = usePullRequestCommit(
         dao.details.name!,
         data.repoName,
@@ -92,9 +94,11 @@ const PullRequestEvent = (props: TPullRequestEventProps) => {
                             modified={current}
                             original={previous}
                             commit={commit!}
+                            commentsObject={urlparams.address}
                             snapshotAddress={item.address}
                             isDiffLoaded={showDiff}
                             isDiffFetching={isFetching}
+                            isAuthMember={member.isMember}
                             getDiff={() => blobs.getDiff(index)}
                         />
                     </div>
