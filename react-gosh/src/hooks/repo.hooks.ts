@@ -26,7 +26,7 @@ import {
     TTree,
     TTreeItem,
 } from '../types/repo.types'
-import { sleep } from '../utils'
+import { sleep, whileFinite } from '../utils'
 
 function useRepoList(dao: string, params: { perPage?: number; version?: string }) {
     const [search, setSearch] = useState<string>('')
@@ -329,6 +329,24 @@ function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
             setProgress({ type: 'create', isFetching: true, details: {} })
 
             const branch = await repo.getBranch(from)
+
+            /**
+             * For version 6.1.0
+             * If last commit in branch is initupgrade commit with `isCorrectCommit=false`,
+             * show message, that this branch has to receive common repair commit
+             */
+            if (
+                repo.getVersion() === '6.1.0' &&
+                branch.commit.version <= '5.1.0' &&
+                !branch.commit.correct
+            ) {
+                throw new GoshError(
+                    'Consistency error',
+                    `Branch ${branch.name} should be repaired. Please unlock (if locked) branch ${branch.name} and push any commit. Then branch can be made protected again`,
+                )
+            }
+
+            // Common flow
             await pushUpgrade(branch.name, branch.commit.name, branch.commit.version)
             await repo.createBranch(
                 name.toLowerCase(),
@@ -766,6 +784,9 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branchName?: string) {
             task?: TTaskCommitConfig
         },
     ) => {
+        if (!repo.auth) {
+            throw new GoshError('Auth error', 'DAO wallet undefined')
+        }
         if (!branch) {
             throw new GoshError(EGoshError.NO_BRANCH)
         }
@@ -775,8 +796,112 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branchName?: string) {
 
         const { message, tags, parent, task, isPullRequest = false } = options
         const { name, version } = branch.commit
-        await pushUpgrade(branch.name, name, version)
 
+        /**
+         * For version 6.1.0
+         * If last commit in branch is initupgrade commit with `isCorrectCommit=false`,
+         * find previous correct commit, create temporary branch from that commit,
+         * delete current push branch, create current push branch from temporary
+         */
+        if (
+            repo.getVersion() === '6.1.0' &&
+            branch.commit.version <= '5.1.0' &&
+            !branch.commit.correct
+        ) {
+            console.debug('[REPAIR BRANCH]', branch.name)
+
+            // Check if current push branch is not protected
+            if (branch.isProtected) {
+                throw new GoshError(
+                    'Access error',
+                    `Branch ${branch.name} should be repaired, but is protected. Please unlock branch ${branch.name} and push any commit. Then branch can be made protected again`,
+                )
+            }
+
+            // Find correct commit
+            const reponame = await repo.getName()
+            let repairRepo = repo
+            let repairCommit = branch.commit
+            while (!repairCommit.correct) {
+                const _parent = branch.commit.parents[0]
+                if (!_parent) {
+                    throw new GoshError('Value error', 'Correct commit not found')
+                }
+
+                const _gosh = GoshAdapterFactory.create(_parent.version)
+                repairRepo = await _gosh.getRepository({
+                    path: `${dao.name}/${reponame}`,
+                })
+                repairCommit = await repairRepo.getCommit({ address: _parent.address })
+                if (repairCommit.name === ZERO_COMMIT) {
+                    throw new GoshError('Value error', 'Correct commit not found')
+                }
+            }
+
+            // Deploy upgrade commit (without setCommit)
+            const upgradeData = await repairRepo.getUpgrade(repairCommit.name)
+            const repairCommitAcc = await repo._getCommit({ name: repairCommit.name })
+            await repo.pushUpgrade(upgradeData, { setCommit: false })
+            const waitRepairCommit = await whileFinite(async () => {
+                return await repairCommitAcc.isDeployed()
+            })
+            if (!waitRepairCommit) {
+                throw new GoshError('Create repair upgrade commit timeout reached')
+            }
+
+            // Create repair branch from correct commit
+            const repairBranch = `${branch.name}-recover__system`
+            await repo.auth.wallet0.run('deployBranch', {
+                repoName: reponame,
+                newName: repairBranch,
+                fromCommit: repairCommit.name,
+            })
+            const waitRepairBranch = await whileFinite(async () => {
+                const { branchname } = await repo._getBranch(repairBranch)
+                return branchname === repairBranch
+            })
+            if (!waitRepairBranch) {
+                throw new GoshError('Create repair branch timeout reached')
+            }
+
+            // Delete current push branch
+            await repo.auth.wallet0.run('deleteBranch', {
+                repoName: reponame,
+                Name: branch.name,
+            })
+            const waitDeleteBranch = await whileFinite(async () => {
+                const { branchname } = await repo._getBranch(branch.name)
+                return !branchname
+            })
+            if (!waitDeleteBranch) {
+                throw new GoshError('Delete original branch timeout reached')
+            }
+
+            // Create current push branch from repair branch
+            await repo.auth.wallet0.run('deployBranch', {
+                repoName: reponame,
+                newName: branch.name,
+                fromCommit: repairCommit.name,
+            })
+            const waitOriginalBranch = await whileFinite(async () => {
+                const { branchname } = await repo._getBranch(branch.name)
+                return branchname === branch.name
+            })
+            if (!waitOriginalBranch) {
+                throw new GoshError('Create original branch timeout reached')
+            }
+
+            // Delete repair branch
+            await repo.auth.wallet0.run('deleteBranch', {
+                repoName: reponame,
+                Name: repairBranch,
+            })
+        } else {
+            console.debug('[COMMON INITUPGRADE]', branch.name)
+            await pushUpgrade(branch.name, name, version)
+        }
+
+        // Continue push
         const comment = [title, message].filter((v) => !!v).join('\n\n')
         await repo.push(branch.name, blobs, comment, isPullRequest, {
             tags,

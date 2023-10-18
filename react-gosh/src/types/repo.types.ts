@@ -58,8 +58,9 @@ type TCommit = {
     parents: { address: TAddress; version: string; name: string }[]
     version: string
     initupgrade: boolean
+    correct: boolean
     time?: number
-    treeaddr?: string
+    treeaddr: string
 }
 
 type TBranch = {

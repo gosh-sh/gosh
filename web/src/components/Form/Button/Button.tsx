@@ -1,5 +1,6 @@
 import classNames from 'classnames'
 import Spinner from '../../Spinner'
+import { forwardRef } from 'react'
 
 export type TButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
     isLoading?: boolean
@@ -38,7 +39,7 @@ const sizes: { [key: string]: string[] } = {
     xl: ['text-sm px-8 py-2.5'],
 }
 
-const Button = (props: TButtonProps) => {
+const Button = forwardRef<HTMLButtonElement, TButtonProps>((props: TButtonProps, ref) => {
     const {
         isLoading,
         className,
@@ -59,6 +60,7 @@ const Button = (props: TButtonProps) => {
                 className,
             )}
             {...rest}
+            ref={ref}
             disabled={disabled || isLoading}
             test-id={testId}
         >
@@ -66,6 +68,6 @@ const Button = (props: TButtonProps) => {
             {children}
         </button>
     )
-}
+})
 
 export { Button }

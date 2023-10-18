@@ -12,8 +12,13 @@ const TaskGrantList = (props: TTaskGrantList) => {
             return []
         }
 
-        const { assign, review, manager } = config
-        const maxLen = Math.max(assign.length, review.length, manager.length)
+        const { assign, review, manager, subtask = [] } = config
+        const maxLen = Math.max(
+            assign.length,
+            review.length,
+            manager.length,
+            subtask.length,
+        )
         const list = []
         for (let i = 0; i < maxLen; i++) {
             const lock = (assign[i] || review[i] || manager[i]).lock
@@ -22,6 +27,7 @@ const TaskGrantList = (props: TTaskGrantList) => {
                 assign: assign[i] ? assign[i].grant : 0,
                 review: review[i] ? review[i].grant : 0,
                 manager: manager[i] ? manager[i].grant : 0,
+                subtask: subtask[i] ? subtask[i].grant : 0,
             })
         }
         return list
@@ -35,6 +41,7 @@ const TaskGrantList = (props: TTaskGrantList) => {
                     <th className="font-light px-2">Assigners</th>
                     <th className="font-light px-2">Reviewers</th>
                     <th className="font-light px-2">Managers</th>
+                    {!!config.subtask && <th className="font-light px-2">Subtasks</th>}
                 </tr>
             </thead>
             <tbody>
@@ -46,6 +53,11 @@ const TaskGrantList = (props: TTaskGrantList) => {
                         <td className="px-2">
                             {parseInt(item.manager).toLocaleString()}
                         </td>
+                        {!!config.subtask && (
+                            <td className="px-2">
+                                {parseInt(item.subtask).toLocaleString()}
+                            </td>
+                        )}
                     </tr>
                 ))}
             </tbody>

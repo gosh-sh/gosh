@@ -29,6 +29,7 @@ const DaoLayout = () => {
 
         if (member.isMember) {
             tabs.push({ to: `/o/${daoname}/settings`, title: 'Settings', order: 5 })
+            tabs.push({ to: `/o/${daoname}/l2`, title: 'Ethereum', order: 6 })
         }
 
         return tabs.sort((a, b) => a.order - b.order)
@@ -87,7 +88,7 @@ const DaoLayout = () => {
                     <DaoSummary className="my-2 text-sm" />
 
                     <CopyClipboard
-                        className="text-xs text-gray-7c8db5"
+                        className="w-fit text-xs text-gray-7c8db5"
                         label={
                             <span
                                 data-tooltip-id="common-tip"

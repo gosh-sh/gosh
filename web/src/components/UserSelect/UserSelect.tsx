@@ -10,6 +10,7 @@ const UserSelect = (props: TUserSelectProps) => {
     const { gosh, ...rest } = props
 
     const getUsernameOptions = async (input: string) => {
+        input = input.toLowerCase()
         const options: any[] = []
         const profileQuery = await gosh.getProfile({ username: input })
         if (await profileQuery.isDeployed()) {

@@ -1,12 +1,14 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
 import { ButtonLink, Input } from '../../../components/Form'
-import { ListBoundary } from './components'
+import { ListBoundaryUser, ListBoundaryPartner } from './components'
 import Loader from '../../../components/Loader'
-import { useUserDaoList } from '../../hooks/dao.hooks'
+import { usePartnerDaoList, useUserDaoList } from '../../hooks/dao.hooks'
+import { PARTNER_DAO_NAMES } from '../../../constants'
 
 const UserDaoListPage = () => {
     const userDaoList = useUserDaoList()
+    const partnerDaoList = usePartnerDaoList()
 
     return (
         <>
@@ -39,14 +41,27 @@ const UserDaoListPage = () => {
                 </div>
             </div>
 
-            <div className="flex items-center justify-between pb-2 mb-4 gap-4">
-                <h1 className="text-xl font-medium">Your organizations</h1>
-                {userDaoList.isFetching && (
-                    <Loader className="text-sm">Updating...</Loader>
-                )}
+            <div className="mb-4">
+                <div className="flex items-center justify-between pb-2 gap-4">
+                    <h1 className="text-xl font-medium mb-4">Your organizations</h1>
+                    {userDaoList.isFetching && (
+                        <Loader className="text-sm">Updating...</Loader>
+                    )}
+                </div>
+                <ListBoundaryUser />
             </div>
 
-            <ListBoundary />
+            {!!PARTNER_DAO_NAMES.length && (
+                <div className="mt-24 mb-4">
+                    <div className="flex items-center justify-between pb-2 gap-4">
+                        <h1 className="text-xl font-medium mb-4">Most popular DAOs</h1>
+                        {partnerDaoList.isFetching && (
+                            <Loader className="text-sm">Updating...</Loader>
+                        )}
+                    </div>
+                    <ListBoundaryPartner />
+                </div>
+            )}
         </>
     )
 }

@@ -13,6 +13,7 @@ const UserSelect = (props: TUserSelectProps) => {
     const { searchUser = true, searchDao = false, ...rest } = props
 
     const getUsernameOptions = async (input: string) => {
+        input = input.toLowerCase()
         const options: any[] = []
 
         if (searchUser) {

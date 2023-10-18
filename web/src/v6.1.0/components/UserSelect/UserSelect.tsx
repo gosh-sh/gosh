@@ -14,6 +14,7 @@ const UserSelect = (props: TUserSelectProps) => {
     const { searchUser = true, searchDao = false, ...rest } = props
 
     const getUsernameOptions = async (input: string) => {
+        input = input.toLowerCase()
         const options: any[] = []
 
         if (searchUser) {
@@ -23,7 +24,11 @@ const UserSelect = (props: TUserSelectProps) => {
             if (await query.isDeployed()) {
                 options.push({
                     label: input,
-                    value: { name: input, type: EDaoMemberType.User },
+                    value: {
+                        name: input,
+                        address: query.address,
+                        type: EDaoMemberType.User,
+                    },
                 })
             }
         }
@@ -33,7 +38,11 @@ const UserSelect = (props: TUserSelectProps) => {
             if (await query.isDeployed()) {
                 options.push({
                     label: input,
-                    value: { name: input, type: EDaoMemberType.Dao },
+                    value: {
+                        name: input,
+                        address: query.address,
+                        type: EDaoMemberType.Dao,
+                    },
                 })
             }
         }

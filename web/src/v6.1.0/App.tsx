@@ -1,15 +1,21 @@
+import { createPortal } from 'react-dom'
 import { ToastContainer } from 'react-toastify'
 import Header from './components/Header'
 import { ToastOptionsShortcuts } from '../helpers'
 import BaseModal from '../components/Modal/BaseModal'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
+import { useUserNotificationSettings } from './hooks/notification.hooks'
+import HomePage from '../pages/Home'
 import AccountLayout from './pages/AccountLayout'
+import AccountSettingsLayout from './pages/AccountSettingsLayout'
+import AccountSecurityPage from './pages/AccountSecurity'
+import AccountGitRemotePage from './pages/AccountGitRemote'
+import AccountNotificationsPage from './pages/AccountNotifications'
 import DaoLayout from './pages/DaoLayout'
 import NotFoundPage from '../pages/404'
 import SigninPage from './pages/Signin'
 import SignupPage from './pages/Signup'
-import SettingsPage from './pages/Settings'
 import DaoCreatePage from './pages/DaoCreate'
 import OnboardingPage from './pages/Onboarding'
 import OnboardingStatusPage from './pages/OnboardingStatus'
@@ -21,10 +27,14 @@ import DaoEventListPage from './pages/DaoEventList'
 import Containers from '../docker-extension/pages/Containers'
 import DaoSettingsLayout from './pages/DaoSettingsLayout'
 import DaoUpgradePage from './pages/DaoUpgrade'
-import DaoSetupPage from './pages/DaoSetup/DaoSetup'
+import DaoSetupPage from './pages/DaoSetup'
+import DaoNotificationsPage from './pages/DaoNotifications'
+import DaoTokenL2Page from './pages/DaoTokenL2'
 import OnboardingDaoPage from './pages/OnboardingDao'
 import DaoTaskListPage from './pages/DaoTaskList'
 import TaskCreatePage from './pages/TaskCreate'
+import L2Page from './pages/L2'
+import AccountDetailsPage from './pages/AccountDetails'
 
 // TODO: Update after full refactor
 import RepoLayout from '../pages/RepoLayout'
@@ -43,13 +53,15 @@ import { ToastStatus } from '../components/Toast'
 // TODO: /Update after full refactor
 
 const App = () => {
+    useUserNotificationSettings({ initialize: true })
+
     return (
         <div className="wrapper">
             <Header />
             <main id="main" className="grow">
                 <AnimatePresence mode="wait">
                     <Routes>
-                        <Route path="/" element={<Navigate to="onboarding" replace />} />
+                        <Route path="/" element={<HomePage />} />
                         <Route path="/containers" element={<Containers />} />
                         <Route path="/onboarding">
                             <Route index element={<OnboardingPage />} />
@@ -61,7 +73,26 @@ const App = () => {
                             <Route index element={null} />
                             <Route path="orgs/create" element={<DaoCreatePage />} />
                             <Route path="orgs" element={<UserDaoListPage />} />
-                            <Route path="settings" element={<SettingsPage />} />
+                            <Route path="l2" element={<L2Page />} />
+                            <Route path="settings" element={<AccountSettingsLayout />}>
+                                <Route
+                                    index
+                                    element={<Navigate to="details" replace={true} />}
+                                />
+                                <Route path="details" element={<AccountDetailsPage />} />
+                                <Route
+                                    path="security"
+                                    element={<AccountSecurityPage />}
+                                />
+                                <Route
+                                    path="git-remote"
+                                    element={<AccountGitRemotePage />}
+                                />
+                                <Route
+                                    path="notifications"
+                                    element={<AccountNotificationsPage />}
+                                />
+                            </Route>
                         </Route>
                         <Route path="/o/:daoname" element={<DaoLayout />}>
                             <Route index element={<DaoPage />} />
@@ -75,6 +106,10 @@ const App = () => {
                             <Route path="tasks">
                                 <Route index element={<DaoTaskListPage />} />
                                 <Route path="create" element={<TaskCreatePage />} />
+                                <Route
+                                    path="milestone/:address"
+                                    element={<DaoTaskListPage />}
+                                />
                                 <Route path=":address" element={<DaoTaskListPage />} />
                             </Route>
                             <Route path="settings" element={<DaoSettingsLayout />}>
@@ -84,7 +119,12 @@ const App = () => {
                                 />
                                 <Route path="upgrade" element={<DaoUpgradePage />} />
                                 <Route path="setup" element={<DaoSetupPage />} />
+                                <Route
+                                    path="notifications"
+                                    element={<DaoNotificationsPage />}
+                                />
                             </Route>
+                            <Route path="l2" element={<DaoTokenL2Page />} />
                         </Route>
                         <Route path="/o/:daoName/r/:repoName" element={<RepoLayout />}>
                             <Route index element={<RepoPage />} />
@@ -122,7 +162,10 @@ const App = () => {
             </main>
             <footer className="footer"></footer>
 
-            <ToastContainer {...ToastOptionsShortcuts.Default} />
+            {createPortal(
+                <ToastContainer {...ToastOptionsShortcuts.Default} />,
+                document.body,
+            )}
             <ToastStatus />
             <BaseModal />
         </div>

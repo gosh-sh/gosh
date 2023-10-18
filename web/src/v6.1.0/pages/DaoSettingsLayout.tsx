@@ -4,14 +4,26 @@ import { withErrorBoundary } from 'react-error-boundary'
 import { withPin, withRouteAnimation } from '../hocs'
 import Alert from '../../components/Alert'
 import { AnimatedOutlet } from '../components/Outlet'
+import { faGear, faWrench } from '@fortawesome/free-solid-svg-icons'
+import { faBell } from '@fortawesome/free-regular-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 const DaoSettingsLayout = () => {
     const { daoname } = useParams()
 
     const getTabs = () => {
         const tabs = []
-        tabs.push({ to: `/o/${daoname}/settings/setup`, title: 'Setup' })
-        tabs.push({ to: `/o/${daoname}/settings/upgrade`, title: 'Upgrade' })
+        tabs.push({ to: `/o/${daoname}/settings/setup`, title: 'Setup', icon: faGear })
+        tabs.push({
+            to: `/o/${daoname}/settings/notifications`,
+            title: 'Notifications',
+            icon: faBell,
+        })
+        tabs.push({
+            to: `/o/${daoname}/settings/upgrade`,
+            title: 'Upgrade',
+            icon: faWrench,
+        })
         return tabs
     }
 
@@ -21,7 +33,7 @@ const DaoSettingsLayout = () => {
                 {getTabs().map((item, index) => (
                     <NavLink
                         key={index}
-                        to={item!.to}
+                        to={item.to}
                         className={({ isActive }) =>
                             classNames(
                                 'py-2 text-gray-7c8db5 hover:text-black',
@@ -29,7 +41,8 @@ const DaoSettingsLayout = () => {
                             )
                         }
                     >
-                        {item!.title}
+                        <FontAwesomeIcon icon={item.icon} fixedWidth className="mr-2" />
+                        {item.title}
                     </NavLink>
                 ))}
             </div>

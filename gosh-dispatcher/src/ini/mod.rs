@@ -42,7 +42,7 @@ pub fn load_remote_versions_from_ini() -> anyhow::Result<Vec<String>> {
     let res = buf
         .lines()
         .map(|l| l.expect("Failed to parse ini string."))
-        .filter(|line| !line.is_empty() && !line.starts_with("#"))
+        .filter(|line| !line.is_empty() && !line.starts_with('#'))
         .collect();
     tracing::trace!("git-remote-gosh versions from ini: {res:?}");
     Ok(res)

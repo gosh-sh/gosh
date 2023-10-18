@@ -7,7 +7,6 @@ use crate::logger::set_up_logger;
 mod common;
 mod dispatcher;
 mod gosh_remote;
-mod grpc;
 mod ini;
 mod logger;
 

@@ -2556,7 +2556,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     async getCommit(options: { name?: string; address?: TAddress }): Promise<TCommit> {
         const commit = await this._getCommit(options)
         const details = await commit.runLocal('getCommit', {})
-        const { branch, sha, parents, content, initupgrade } = details
+        const { value0: treeaddr } = await commit.runLocal('gettree', {})
+        const { branch, sha, parents, content, initupgrade, isCorrectCommit } = details
 
         // Parse content
         const splitted = (content as string).split('\n')
@@ -2603,6 +2604,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             parents: _parents,
             version: commit.version,
             initupgrade,
+            correct: isCorrectCommit,
+            treeaddr,
         }
     }
 
@@ -3527,7 +3530,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return value0
     }
 
-    private async _getBranch(name: string): Promise<any> {
+    async _getBranch(name: string): Promise<any> {
         const { value0 } = await this.repo.runLocal('getAddrBranch', { name })
         return value0
     }
@@ -3780,7 +3783,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return restored
     }
 
-    private async _getCommit(options: {
+    async _getCommit(options: {
         name?: string
         address?: TAddress
     }): Promise<IGoshCommit> {
@@ -4410,7 +4413,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const apply = reverse
             ? this._reverseBlobDiffPatch(patchOrContent)
             : patchOrContent
-        return Diff.applyPatch(content as string, apply)
+        // TODO: applyPatch can return boolean (false)
+        return Diff.applyPatch(content as string, apply) as string
     }
 
     private _getTreeFromItems(items: TTreeItem[]): TTree {
@@ -4490,7 +4494,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         original: string,
     ) => {
         // Get lib patch
-        let patch = Diff.createPatch(treepath, original, modified)
+        let patch = Diff.createPatch(treepath, original, modified, undefined, undefined, {
+            context: 0,
+        })
 
         // Format to GOSH patch
         patch = patch.split('\n').slice(4).join('\n')
