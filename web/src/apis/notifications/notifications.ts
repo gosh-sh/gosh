@@ -1,4 +1,3 @@
-import { KeyPair } from '@eversdk/core'
 import { prepareRequestPayload, processResponse } from './helpers'
 import {
     TGetUserDaoSettingsRequest,

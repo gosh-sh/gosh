@@ -39,7 +39,7 @@ const TaskManage = (props: TTaskManageProps) => {
                 reponame: task.repository.name,
                 taskname: task.name,
             })
-            navigate(`/o/${dao.details.name}/events/${eventaddr}`)
+            navigate(`/o/${dao.details.name}/events/${eventaddr || ''}`)
         } catch (e: any) {
             console.error(e.message)
         }

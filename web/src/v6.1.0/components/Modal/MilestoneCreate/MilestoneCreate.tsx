@@ -72,7 +72,7 @@ const MilestoneCreateModal = () => {
                 tags: values.tags,
             })
             onModalReset()
-            navigate(`/o/${dao.details.name}/events/${eventaddr}`)
+            navigate(`/o/${dao.details.name}/events/${eventaddr || ''}`)
         } catch (e: any) {
             console.error(e.message)
         }

@@ -1,4 +1,4 @@
-import { KeyPair, TonClient } from '@eversdk/core'
+import { KeyPair, ResultOfProcessMessage, TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
 import WalletABI from './abi/daowallet.abi.json'
 import { SmvLocker } from './smvlocker'
@@ -15,8 +15,6 @@ import {
 import { TTaskAssignerData, TTaskGrant } from '../types/dao.types'
 import { UserProfile } from '../../blockchain/userprofile'
 import { AppConfig } from '../../appconfig'
-import { GoshError } from 'react-gosh'
-import moment from 'moment'
 
 export class DaoWallet extends BaseContract {
     constructor(client: TonClient, address: string, keys?: KeyPair) {
@@ -78,24 +76,26 @@ export class DaoWallet extends BaseContract {
         }
     }
 
-    async getEventAddress(params: { cell?: string; prop_id?: string }): Promise<string> {
-        const { cell } = params
-
-        if (!cell && !params.prop_id) {
-            throw new GoshError('Value error', 'cell or prop_id should be provided')
+    async getEventAddress(result: ResultOfProcessMessage) {
+        const locker = await this.getSmvLocker()
+        const decoded = await locker.decodeMessage(result.out_messages[0])
+        if (!decoded) {
+            console.error('Locker could not decode `startPlatform` message', {
+                msg_id: result.transaction.out_msgs,
+            })
+            return null
         }
 
-        let prop_id = params.prop_id
-        if (!prop_id) {
-            prop_id = await AppConfig.goshroot.getHashFromCell(cell!)
-        }
+        const prop_id = await AppConfig.goshroot.getEventPropIdFromCell(
+            decoded.value.staticCell,
+        )
         const { value0 } = await this.runLocal(
             'proposalAddressByAccount',
             { acc: this.address, propId: prop_id },
             undefined,
             { useCachedBoc: true },
         )
-        return value0
+        return value0 as string
     }
 
     async setRepositoriesUpgraded(): Promise<void> {
@@ -191,7 +191,6 @@ export class DaoWallet extends BaseContract {
         reviewers?: string[]
         cell?: boolean
         alone?: boolean
-        timestamp?: number
     }) {
         const {
             members = [],
@@ -200,7 +199,6 @@ export class DaoWallet extends BaseContract {
             reviewers = [],
             cell,
             alone,
-            timestamp,
         } = params
 
         const aloneParams = {
@@ -211,7 +209,7 @@ export class DaoWallet extends BaseContract {
             })),
             dao: daonames,
         }
-        const cellParams = { ...aloneParams, comment, timestamp }
+        const cellParams = { ...aloneParams, comment }
 
         if (cell) {
             const { value0 } = await this.runLocal('getCellDeployWalletDao', cellParams)
@@ -220,19 +218,12 @@ export class DaoWallet extends BaseContract {
             await this.run('AloneDeployWalletDao', aloneParams)
             return null
         } else {
-            const _timestamp = moment().unix()
-            const _cell: any = await this.createDaoMember({
-                ...params,
-                timestamp: _timestamp,
-                cell: true,
-            })
-            await this.run('startProposalForDeployWalletDao', {
+            const result = await this.run('startProposalForDeployWalletDao', {
                 ...cellParams,
-                timestamp: _timestamp,
                 reviewers,
                 num_clients: await this.smvClientsCount(),
             })
-            return await this.getEventAddress({ cell: _cell as string })
+            return await this.getEventAddress(result)
         }
     }
 
@@ -250,7 +241,7 @@ export class DaoWallet extends BaseContract {
             const { value0 } = await this.runLocal('getCellDeleteWalletDao', cellParams)
             return value0 as string
         } else {
-            const cell: string = await this.deleteDaoMember({ ...params, cell: true })
+            const cell: any = await this.deleteDaoMember({ ...params, cell: true })
             return await this.createSingleEvent({ cell, reviewers })
         }
     }
@@ -278,7 +269,7 @@ export class DaoWallet extends BaseContract {
             const { value0 } = await this.runLocal('getCellChangeAllowance', cellParams)
             return value0 as string
         } else {
-            const cell: string = await this.updateDaoMemberAllowance({
+            const cell: any = await this.updateDaoMemberAllowance({
                 ...params,
                 cell: true,
             })
@@ -1022,22 +1013,23 @@ export class DaoWallet extends BaseContract {
         const { code, data, comment = '', reviewers = [] } = params
 
         const cellParams = { UpgradeCode: code, cell: data, comment }
-        await this.run('startProposalForUpgradeVersionController', {
+        const result = await this.run('startProposalForUpgradeVersionController', {
             ...cellParams,
             reviewers,
             num_clients: await this.smvClientsCount(),
         })
+        return await this.getEventAddress(result)
     }
 
     async createSingleEvent(params: { cell: string; reviewers?: string[] }) {
         const { cell, reviewers = [] } = params
 
-        await this.run('startOneProposal', {
+        const result = await this.run('startOneProposal', {
             proposal: cell,
             reviewers,
             num_clients: await this.smvClientsCount(),
         })
-        return await this.getEventAddress({ cell })
+        return await this.getEventAddress(result)
     }
 
     async createMultiEvent(params: {
@@ -1058,21 +1050,7 @@ export class DaoWallet extends BaseContract {
             comment,
             num_clients: await this.smvClientsCount(),
         })
-
-        // Calculate event address
-        const locker = await this.getSmvLocker()
-        const decoded = await locker.decodeMessage(result.out_messages[0])
-        if (!decoded) {
-            console.error('Locker could not decode `startPlatform` message', {
-                msg_id: result.transaction.out_msgs,
-            })
-            return null
-        }
-
-        const prop_id = await AppConfig.goshroot.getEventPropIdFromCell(
-            decoded.value.staticCell,
-        )
-        return await this.getEventAddress({ prop_id })
+        return await this.getEventAddress(result)
     }
 
     private async createMultiEventData(

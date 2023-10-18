@@ -31,6 +31,31 @@ const getGroupedItems = (items: any[], daoname?: string) => {
     return groups
 }
 
+const NotificationLabel = (props: { item: any }) => {
+    const { item } = props
+    const { notification } = item
+
+    if (notification.type === ENotificationType.DAO_EVENT_CREATED) {
+        return (
+            <>
+                {notification.meta.label} in{' '}
+                <span className="text-blue-2b89ff">{notification.daoname}</span>
+            </>
+        )
+    }
+    if (notification.type === ENotificationType.REPO_COMMIT_PUSHED) {
+        return (
+            <>
+                New commit in DAO{' '}
+                <span className="text-blue-2b89ff">{notification.daoname}</span>{' '}
+                repository{' '}
+                <span className="text-blue-2b89ff">{notification.meta.reponame}</span>{' '}
+            </>
+        )
+    }
+    return null
+}
+
 const Notifications = () => {
     const navigate = useNavigate()
     const { data, setFilters, updateUserNotification } = useUserNotificationList()
@@ -42,9 +67,13 @@ const Notifications = () => {
     }
 
     const onItemClick = (item: any) => {
-        let link = `/o/${item.notification.daoname}`
-        if (item.notification.type === ENotificationType.DAO_EVENT_CREATED) {
-            link += `/events/${item.notification.meta.eventaddr || ''}`
+        const { notification } = item
+
+        let link = `/o/${notification.daoname}`
+        if (notification.type === ENotificationType.DAO_EVENT_CREATED) {
+            link += `/events/${notification.meta.eventaddr || ''}`
+        } else if (notification.type === ENotificationType.REPO_COMMIT_PUSHED) {
+            link += `/r/${notification.meta.reponame}/commits/${notification.meta.branch}/${notification.meta.commit}`
         }
         updateUserNotification(item.id, { is_read: true })
         navigate(link)
@@ -166,10 +195,7 @@ const Notifications = () => {
                                                     onClick={() => onItemClick(item)}
                                                 >
                                                     <div className="grow">
-                                                        {item.notification.meta.label} in{' '}
-                                                        <span className="text-blue-2b89ff">
-                                                            {item.notification.daoname}
-                                                        </span>
+                                                        <NotificationLabel item={item} />
                                                     </div>
                                                     <div className="text-xs text-gray-53596d whitespace-nowrap">
                                                         {moment(item.created_at).format(
