@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { MemberIcon } from '../../../../../components/Dao'
 import { TTaskDetails, TTaskTeamMember } from '../../../../types/dao.types'
 import { useDao } from '../../../../hooks/dao.hooks'
-import { shortString } from 'react-gosh'
+import { shortString } from '../../../../../utils'
 
 const TaskTeamMembers = (props: { users?: TTaskTeamMember[] }) => {
     const { users } = props

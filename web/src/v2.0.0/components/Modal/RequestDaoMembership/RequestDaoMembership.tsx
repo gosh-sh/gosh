@@ -1,6 +1,5 @@
 import { Dialog } from '@headlessui/react'
 import { Field, Form, Formik } from 'formik'
-import { useUser } from 'react-gosh'
 import { useNavigate } from 'react-router-dom'
 import { useSetRecoilState } from 'recoil'
 import { appModalStateAtom } from '../../../../store/app.state'
@@ -9,6 +8,7 @@ import { ModalCloseButton } from '../../../../components/Modal'
 import { FormikTextarea } from '../../../../components/Formik'
 import { Button } from '../../../../components/Form'
 import { useDao, useCreateDaoMember } from '../../../hooks/dao.hooks'
+import { useUser } from '../../../hooks/user.hooks'
 
 type TFormValues = {
     comment: string

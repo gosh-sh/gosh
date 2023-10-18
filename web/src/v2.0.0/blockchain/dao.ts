@@ -5,7 +5,7 @@ import { TDaoDetailsMemberItem } from '../types/dao.types'
 import { UserProfile } from '../../blockchain/userprofile'
 import { DaoWallet } from './daowallet'
 import { DaoEvent } from './daoevent'
-import { GoshError } from 'react-gosh'
+import { GoshError } from '../../errors'
 
 export class Dao extends BaseContract {
     constructor(client: TonClient, address: string) {

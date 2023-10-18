@@ -1,5 +1,4 @@
 import { NavLink } from 'react-router-dom'
-import { classNames } from 'react-gosh'
 import { withErrorBoundary } from 'react-error-boundary'
 import { withPin, withRouteAnimation } from '../hocs'
 import Alert from '../../components/Alert'
@@ -7,6 +6,7 @@ import { AnimatedOutlet } from '../components/Outlet'
 import { faGear, faLock, faUser } from '@fortawesome/free-solid-svg-icons'
 import { faBell } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import classNames from 'classnames'
 
 const AccountSettingsLayout = () => {
     const getTabs = () => {
