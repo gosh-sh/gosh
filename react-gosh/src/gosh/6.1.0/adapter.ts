@@ -1,4 +1,4 @@
-import { KeyPair, TonClient } from '@eversdk/core'
+import { KeyPair, ResultOfProcessMessage, TonClient } from '@eversdk/core'
 import { Buffer } from 'buffer'
 import isUtf8 from 'isutf8'
 import { EGoshError, GoshError } from '../../errors'
@@ -2874,6 +2874,30 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return this.repo.address
     }
 
+    async getEventAddress(result: ResultOfProcessMessage) {
+        const dao = await this._getDao()
+        const smv = await dao.getSmv()
+        const locker = await smv.getLocker(this.auth?.wallet0)
+        const decoded = await locker.decodeMessage(result.out_messages[0])
+        if (!decoded) {
+            console.error('Locker could not decode `startPlatform` message', {
+                msg_id: result.transaction.out_msgs,
+            })
+            return null
+        }
+
+        const prop_id = await AppConfig.goshroot.getEventPropIdFromCell(
+            decoded.value.staticCell,
+        )
+        const { value0 } = await this.auth?.wallet0.runLocal(
+            'proposalAddressByAccount',
+            { acc: this.auth?.wallet0.address, propId: prop_id },
+            undefined,
+            { useCachedBoc: true },
+        )
+        return value0 as string
+    }
+
     async getName(): Promise<string> {
         if (!this.name) {
             const { value0 } = await this.repo.runLocal('getName', {}, undefined, {
@@ -3701,7 +3725,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             task?: TTaskCommitConfig
             callback?: IPushCallback
         },
-    ): Promise<void> {
+    ): Promise<string | null> {
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
@@ -3901,8 +3925,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 type: 'repo_commit_pushed',
                 meta: { reponame, branch, commit: commitHash },
             })
+            return null
         } else {
-            await this._startProposalForSetCommit(
+            const eventaddr = await this._startProposalForSetCommit(
                 branch,
                 commitHash,
                 patched.length,
@@ -3917,8 +3942,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 meta: {
                     label: 'Pull request',
                     comment: `New pull request to repository ${reponame}`,
+                    eventaddr,
                 },
             })
+            return eventaddr
         }
         cb({ completed: true })
     }
@@ -4921,7 +4948,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             pubaddrreview: { [address: string]: boolean }
             pubaddrmanager: { [address: string]: boolean }
         },
-    ): Promise<void> {
+    ) {
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
@@ -4937,7 +4964,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         )
 
         const smvClientsCount = await this._validateProposalStart(0)
-        await this.auth.wallet0.run('startProposalForSetCommit', {
+        const result = await this.auth.wallet0.run('startProposalForSetCommit', {
             repoName: await this.getName(),
             branchName: branch,
             commit,
@@ -4948,6 +4975,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             num_clients: smvClientsCount,
             reviewers: _reviewers,
         })
+        return await this.getEventAddress(result)
     }
 
     private async _getTaskCommitConfig(config?: TTaskCommitConfig) {
@@ -5354,7 +5382,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     }
 
     async getClientsCount(): Promise<number> {
-        const locker = await this._getLocker()
+        const locker = await this.getLocker()
         const { m_num_clients } = await locker.runLocal('m_num_clients', {})
         return parseInt(m_num_clients)
     }
@@ -5664,7 +5692,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     }
 
     private async _isLockerBusy(wallet?: IGoshWallet): Promise<boolean> {
-        const locker = await this._getLocker(wallet)
+        const locker = await this.getLocker(wallet)
         const { lockerBusy } = await locker.runLocal('lockerBusy', {})
         return lockerBusy
     }
@@ -5678,7 +5706,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         return tip3VotingLocker
     }
 
-    private async _getLocker(wallet?: IGoshWallet): Promise<IGoshSmvLocker> {
+    async getLocker(wallet?: IGoshWallet): Promise<IGoshSmvLocker> {
         const address = await this._getLockerAddress(wallet)
         return new GoshSmvLocker(this.client, address)
     }
@@ -5686,7 +5714,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     private async _getLockerBalance(
         wallet?: IGoshWallet,
     ): Promise<{ total: number; locked: number }> {
-        const locker = await this._getLocker(wallet)
+        const locker = await this.getLocker(wallet)
         const { m_tokenBalance } = await locker.runLocal('m_tokenBalance', {})
         const { votes_locked } = await locker.runLocal('votes_locked', {})
         return { total: parseInt(m_tokenBalance), locked: parseInt(votes_locked) }

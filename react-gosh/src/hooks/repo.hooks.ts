@@ -903,13 +903,15 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branchName?: string) {
 
         // Continue push
         const comment = [title, message].filter((v) => !!v).join('\n\n')
-        await repo.push(branch.name, blobs, comment, isPullRequest, {
+        const eventaddr = await repo.push(branch.name, blobs, comment, isPullRequest, {
             tags,
             branchParent: parent,
             task,
             callback: pushCallback,
         })
         !isPullRequest && (await updateBranch(branch.name))
+
+        return eventaddr
     }
 
     const pushUpgrade = async (branch: string, commit: string, version: string) => {
@@ -1166,7 +1168,7 @@ function useMergeRequest(
         const { deleteSrcBranch, ...rest } = options
         const { name: srcCommit, version: srcVersion } = srcBranch!.commit
         await _pushUpgrade(srcBranch!.name, srcCommit, srcVersion)
-        await _push(title, buildProgress.items, {
+        const eventaddr = await _push(title, buildProgress.items, {
             ...rest,
             parent: squash ? undefined : srcBranch!.name,
         })
@@ -1174,6 +1176,8 @@ function useMergeRequest(
             await deleteBranch(srcBranch!.name)
             await updateBranches()
         }
+
+        return eventaddr
     }
 
     return {

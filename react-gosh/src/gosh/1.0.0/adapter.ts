@@ -1758,7 +1758,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             branchParent?: string
             callback?: IPushCallback
         },
-    ): Promise<void> {
+    ): Promise<string | null> {
         if (!this.auth) throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         const { tags, branchParent, callback } = options
 
@@ -1852,6 +1852,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             await this._startProposalForSetCommit(branch, commitHash, blobsData.length)
         }
         cb({ completed: true })
+        return null
     }
 
     async pushUpgrade(data: TUpgradeData): Promise<void> {
@@ -2893,7 +2894,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     }
 
     async getClientsCount(): Promise<number> {
-        const locker = await this._getLocker()
+        const locker = await this.getLocker()
         const { m_num_clients } = await locker.runLocal('m_num_clients', {})
         return +m_num_clients
     }
@@ -3057,7 +3058,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     }
 
     private async _isLockerBusy(): Promise<boolean> {
-        const locker = await this._getLocker()
+        const locker = await this.getLocker()
         const { lockerBusy } = await locker.runLocal('lockerBusy', {})
         return lockerBusy
     }
@@ -3068,14 +3069,14 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         return tip3VotingLocker
     }
 
-    private async _getLocker(): Promise<IGoshSmvLocker> {
+    async getLocker(): Promise<IGoshSmvLocker> {
         const address = await this._getLockerAddress()
         if (!this.locker) this.locker = new GoshSmvLocker(this.client, address)
         return this.locker
     }
 
     private async _getLockerBalance(): Promise<{ total: number; locked: number }> {
-        const locker = await this._getLocker()
+        const locker = await this.getLocker()
         const { m_tokenBalance } = await locker.runLocal('m_tokenBalance', {})
         const { votes_locked } = await locker.runLocal('votes_locked', {})
         return { total: +m_tokenBalance, locked: +votes_locked }

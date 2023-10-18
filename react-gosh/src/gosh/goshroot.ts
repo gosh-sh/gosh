@@ -13,6 +13,26 @@ class GoshRoot extends BaseContract implements IGoshRoot {
         super(client, GoshRoot.key, address)
     }
 
+    async getHashFromCell(cell: string) {
+        const { value0 } = await this.runLocal(
+            'getHashCell',
+            { state: cell },
+            undefined,
+            { useCachedBoc: true },
+        )
+        return value0
+    }
+
+    async getEventPropIdFromCell(cell: string) {
+        const { value0 } = await this.runLocal(
+            'getPropIdFromCell',
+            { propData: cell },
+            undefined,
+            { useCachedBoc: true },
+        )
+        return value0
+    }
+
     async getProfileIndex(options: {
         address?: TAddress
         pubkey?: string

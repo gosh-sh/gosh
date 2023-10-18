@@ -48,9 +48,15 @@ const MergeCreatePage = () => {
                 task = { task: values.task, assigners, reviewers, managers }
             }
 
-            await push(title, { message, tags, isPullRequest, deleteSrcBranch, task })
+            const eventaddr = await push(title, {
+                message,
+                tags,
+                isPullRequest,
+                deleteSrcBranch,
+                task,
+            })
             if (isPullRequest) {
-                navigate(`/o/${daoName}/events`, { replace: true })
+                navigate(`/o/${daoName}/events/${eventaddr || ''}`, { replace: true })
             } else {
                 navigate(`/o/${daoName}/r/${repoName}/tree/${dstBranch?.name}`, {
                     replace: true,
