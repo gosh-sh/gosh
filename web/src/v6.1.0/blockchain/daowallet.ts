@@ -78,17 +78,35 @@ export class DaoWallet extends BaseContract {
 
     async getEventAddress(result: ResultOfProcessMessage) {
         const locker = await this.getSmvLocker()
-        const decoded = await locker.decodeMessage(result.out_messages[0])
-        if (!decoded) {
-            console.error('Locker could not decode `startPlatform` message', {
-                msg_id: result.transaction.out_msgs,
+
+        let static_cell = ''
+        let depth = 0
+        let msg_id = result.transaction.out_msgs[0]
+        while (true) {
+            const { result } = await this.account.client.net.query_collection({
+                collection: 'messages',
+                filter: { id: { eq: msg_id } },
+                result: 'boc dst_transaction {out_messages {id}}',
             })
-            return null
+            if (
+                !result.length ||
+                !result[0].dst_transaction.out_messages.length ||
+                depth === 9
+            ) {
+                return null
+            }
+
+            const decoded = await locker.decodeMessage(result[0].boc)
+            if (decoded) {
+                static_cell = decoded.value.staticCell
+                break
+            }
+
+            msg_id = result[0].dst_transaction.out_messages[0].id
+            depth += 1
         }
 
-        const prop_id = await AppConfig.goshroot.getEventPropIdFromCell(
-            decoded.value.staticCell,
-        )
+        const prop_id = await AppConfig.goshroot.getEventPropIdFromCell(static_cell)
         const { value0 } = await this.runLocal(
             'proposalAddressByAccount',
             { acc: this.address, propId: prop_id },
