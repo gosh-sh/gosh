@@ -173,7 +173,7 @@ type TRepositoryChangeBranchProtectionParams = TEventCreateParams & {
     cell?: boolean
 }
 
-type TRepositoryChangeBranchProtectionResult = Promise<void | string>
+type TRepositoryChangeBranchProtectionResult = Promise<void | string | null>
 
 type TRepositoryTagCreateParams = TEventCreateParams & {
     repository: string

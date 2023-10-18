@@ -376,10 +376,11 @@ function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
     const lock = async (name: string) => {
         try {
             setProgress({ name, type: '(un)lock', isFetching: true, details: {} })
-            await repo.lockBranch({
+            const eventaddr = await repo.lockBranch({
                 repository: await repo.getName(),
                 branch: name.toLowerCase(),
             })
+            return { eventaddr }
         } catch (e) {
             throw e
         } finally {
@@ -390,10 +391,11 @@ function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
     const unlock = async (name: string) => {
         try {
             setProgress({ name, type: '(un)lock', isFetching: true, details: {} })
-            await repo.unlockBranch({
+            const eventaddr = await repo.unlockBranch({
                 repository: await repo.getName(),
                 branch: name.toLowerCase(),
             })
+            return { eventaddr }
         } catch (e) {
             throw e
         } finally {

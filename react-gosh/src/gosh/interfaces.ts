@@ -281,8 +281,10 @@ interface IGoshDaoAdapter {
     createTag(params: TDaoTagCreateParams): Promise<TDaoTagCreateResult>
     deleteTag(params: TDaoTagDeleteParams): Promise<TDaoTagDeleteResult>
 
-    createSingleProposal(params: TEventSignleCreateProposalParams): Promise<void>
-    createMultiProposal(params: TEventMultipleCreateProposalParams): Promise<void>
+    createSingleProposal(params: TEventSignleCreateProposalParams): Promise<string | null>
+    createMultiProposal(
+        params: TEventMultipleCreateProposalParams,
+    ): Promise<string | null>
     createMultiProposalAsDao(
         params: TEventMultipleCreateProposalAsDaoParams,
     ): Promise<void>
@@ -333,6 +335,7 @@ interface IGoshDaoAdapter {
         params: TCodeCommentThreadResdolveParams,
     ): Promise<TCodeCommentThreadResolveResult>
     createCodeComment(params: TCodeCommentCreateParams): Promise<TCodeCommentCreateResult>
+    getEventAddress(result: ResultOfProcessMessage): Promise<string | null>
 }
 
 interface IGoshRepositoryAdapter {

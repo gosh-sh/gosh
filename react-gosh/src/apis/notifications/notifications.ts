@@ -1,13 +1,12 @@
+import { AppConfig } from '../../appconfig'
 import { prepareRequestPayload, processResponse } from './helpers'
 import { TSetNotificationRequest } from './types'
-
-const API_URL = process.env.REACT_APP_NOTIFICATIONS_API
 
 export const NotificationsAPI = {
     notifications: {
         createNotificaton: async (params: TSetNotificationRequest) => {
             const { data, keys } = params
-            const response = await fetch(`${API_URL}/notifications`, {
+            const response = await fetch(`${AppConfig.ntApiUrl}/notifications`, {
                 method: 'POST',
                 body: JSON.stringify({
                     username: data.username,

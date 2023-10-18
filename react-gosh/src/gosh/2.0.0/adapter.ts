@@ -1,4 +1,4 @@
-import { KeyPair, TonClient } from '@eversdk/core'
+import { KeyPair, ResultOfProcessMessage, TonClient } from '@eversdk/core'
 import { Buffer } from 'buffer'
 import isUtf8 from 'isutf8'
 import { EGoshError, GoshError } from '../../errors'
@@ -1352,11 +1352,19 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
-    async createSingleProposal(params: TEventSignleCreateProposalParams): Promise<void> {
+    async getEventAddress(result: ResultOfProcessMessage): Promise<string | null> {
         throw new Error('Method is unavailable in current version')
     }
 
-    async createMultiProposal(params: TEventMultipleCreateProposalParams): Promise<void> {
+    async createSingleProposal(
+        params: TEventSignleCreateProposalParams,
+    ): Promise<string | null> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createMultiProposal(
+        params: TEventMultipleCreateProposalParams,
+    ): Promise<string | null> {
         if (!this.wallet) {
             throw new GoshError(EGoshError.WALLET_UNDEFINED)
         }
@@ -1459,6 +1467,8 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: await smv.getClientsCount(),
         })
+
+        return null
     }
 
     async createMultiProposalAsDao(

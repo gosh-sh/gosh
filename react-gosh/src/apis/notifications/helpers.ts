@@ -1,10 +1,11 @@
 import { KeyPair } from '@eversdk/core'
 import { signData } from '../../helpers'
+import { AppConfig } from '../../appconfig'
 
 export const prepareRequestPayload = async (data: object, keys: KeyPair) => {
     const payload = {
         timestamp: Math.round(Date.now() / 1000),
-        network: process.env.REACT_APP_NOTIFICATIONS_NET,
+        network: AppConfig.ntApiNet,
         data,
     }
     const { signed } = await signData(JSON.stringify(payload), keys)
