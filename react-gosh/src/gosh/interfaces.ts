@@ -361,6 +361,10 @@ interface IGoshRepositoryAdapter {
         content: string | Buffer
         ipfs: boolean
     }>
+    _getSnapshot(options: {
+        fullpath?: string
+        address?: TAddress
+    }): Promise<IGoshSnapshot>
     getCommit(options: { name?: string; address?: TAddress }): Promise<TCommit>
     _getCommit(options: { name?: string; address?: TAddress }): Promise<IGoshCommit>
     getCommitBlob(
