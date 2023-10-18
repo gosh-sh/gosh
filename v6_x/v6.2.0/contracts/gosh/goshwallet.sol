@@ -1031,98 +1031,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
-    function deployKeyBlock(
-        address repo,
-        uint128 seqno,
-        bool iszero,
-        bytes data,
-        bytes[] signatures,
-        bytes[] newsignatures,
-        uint256[] newpubkeys,
-        uint256 blockhash,
-        optional(string) previousversion
-    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        bytes empt;
-        TvmCell s1 = GoshLib.composeKeyBlockStateInit(_code[m_KeyBlockCode], empt, _systemcontract, _goshdao, repo, seqno);
-        new KeyBlock{
-            stateInit: s1, value: FEE_DEPLOY_KEYBLOCK, wid: 0, bounce: true, flag: 1
-        }(_pubaddr, _index, _systemcontract, _code[m_WalletCode], _code[m_KeyBlockCode], iszero, data, signatures, newsignatures, newpubkeys, blockhash, previousversion, false);
-        getMoney();
-    }
-
-    function destroyKeyBlock(
-        address repo,
-        uint128 seqno
-    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(_limited == false, ERR_WALLET_LIMITED);        
-        bytes empt;
-        address key = GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, _systemcontract, _goshdao, repo, seqno);
-        KeyBlock(key).destroy{value: 0.1 ton, flag: 1}(_pubaddr, _index);
-        getMoney();
-    }
-
-    function emptyhashKeyBlock(
-        address repo,
-        uint128 seqno
-    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        bytes empt;
-        address key = GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, _systemcontract, _goshdao, repo, seqno);
-        KeyBlock(key).emptyHashes{value: 1 ton, flag: 1}(_pubaddr, _index);
-        getMoney();
-    }
-
-    function pushhashKeyBlock(
-        address repo,
-        uint128 seqno,
-        uint256[] hashes
-    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        bytes empt;
-        address key = GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, _systemcontract, _goshdao, repo, seqno);
-        KeyBlock(key).pushHashes{value: 1 ton, flag: 1}(_pubaddr, _index, hashes);
-        getMoney();
-    }
-
-    function getCheckMasterKeyBlock(
-        address repo,
-        uint128 seqno,
-        bytes data, 
-        bytes[] signatures, 
-        bool lastsession
-    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        bytes empt;
-        address key = GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, _systemcontract, _goshdao, repo, seqno);
-        KeyBlock(key).getCheckMasterBlock{value: 10 ton, flag: 1}(_pubaddr, _index, data, signatures, lastsession);
-        getMoney();
-    }
-
-    function getCheckObject(
-        address repo,
-        uint128 seqno,
-        bytes data
-    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        bytes empt;
-        address key = GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, _systemcontract, _goshdao, repo, seqno);
-        KeyBlock(key).getCheckObject{value: 10 ton, flag: 1}(_pubaddr, _index, data);
-        getMoney();
-    }
-
     //Tag part
     function deployTag(
         string repoName,
@@ -1556,13 +1464,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     function sendTokenToDaoWrapper(
-        uint128 grant
+        uint128 grant,
+        uint256 pubkey
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(grant <= m_pseudoDAOBalance, ERR_TOO_LOW_BALANCE);
         m_pseudoDAOBalance -= grant;
-        GoshDao(_goshdao).receiveTokentoWrapper{value: 0.1 ton, flag: 1}(_pubaddr, _index, grant);
+        GoshDao(_goshdao).receiveTokentoWrapper{value: 0.1 ton, flag: 1}(_pubaddr, _index, grant, pubkey);
         getMoney();
     }
     

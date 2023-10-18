@@ -19,10 +19,50 @@ import "../goshdao.sol";
 import "../tag.sol";
 import "../profile.sol";
 import "../profiledao.sol";
-import "../keyblock.sol";
+
+contract IRootToken {
+    bool static __uninitialized;
+    uint64 static __replay;
+    string static name_;
+    string static symbol_;
+    uint8 static decimals_;
+    uint256 static root_pubkey_;
+    optional(address) static root_owner_;
+    uint128 static total_supply_;
+    uint128 static total_granted_;
+    optional(TvmCell) static wallet_code_;
+    address static checker_;
+    uint256 static ethroot_;
+    uint128 static burncount_;
+    optional(address) static oldroot_;
+    optional(address) static newroot_;
+    address static receiver_;
+    optional(address) static trusted_;
+    bool static flag_;
+    uint32 static money_timestamp_;
+
+    constructor(string name, string symbol, uint8 decimals, uint256 root_pubkey, optional(address) root_owner, uint128 total_supply, address checker, uint256 eth_root, optional(address) oldroot, optional(address) newroot, address receiver, optional(address) trusted) functionID(0xa) {
+    }
+}
+
 
 library GoshLib {
     string constant versionLib = "6.2.0";
+
+//ROOT PART
+    function calculateRootAddress(TvmCell code, RootData root, uint256 pubkey, address receiver) public returns(address) {
+        TvmCell s1 = composeRootStateInit(code, root.name, root.symbol, root.decimals, root.ethroot, pubkey, receiver);
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
+
+    function composeRootStateInit(TvmCell code, string name, string symbol, uint8 decimals, uint256 ethroot, uint256 pubkey, address receiver) public returns(TvmCell) {
+        TvmCell s1 = tvm.buildStateInit({
+            code: code,
+            contr: IRootToken,
+            varInit: {name_ : name, symbol_ : symbol, decimals_ : decimals, ethroot_ : ethroot, root_pubkey_: pubkey, root_owner_: null, receiver_: receiver, trusted_: null}
+        });
+        return s1;
+    }
 
 //Address part
     function calculateTaskAddress(TvmCell code, address goshdao, address repo, string nametask) public returns(address) {
@@ -70,28 +110,6 @@ library GoshLib {
             code: deployCode,
             contr: Repository,
             varInit: { _name: name }
-        })));
-    }
-
-    function calculateKeyBlockAddress(TvmCell code, bytes data, address systemcontract, address goshdao, address repo, uint128 seqno) public returns (address) {
-        TvmCell deployCode = buildKeyBlockCode(
-            code, systemcontract, goshdao, repo, versionLib
-        );
-        return address(tvm.hash(tvm.buildStateInit({
-            code: deployCode,
-            contr: KeyBlock,
-            varInit: { _seqNo: seqno, _goshdao: goshdao, _repo: repo, _data: data }
-        })));
-    }
-
-    function calculateMasterBlockAddress(TvmCell code, bytes data, address systemcontract, address goshdao, address repo, uint128 seqno) public returns (address) {
-        TvmCell deployCode = buildMasterBlockCode(
-            code, systemcontract, goshdao, repo, versionLib
-        );
-        return address(tvm.hash(tvm.buildStateInit({
-            code: deployCode,
-            contr: KeyBlock,
-            varInit: { _seqNo: seqno, _goshdao: goshdao, _repo: repo, _data: data }
         })));
     }
 
@@ -233,28 +251,6 @@ library GoshLib {
             varInit: {_name : name, _versioncontroller: versionController}
         });
         return s1;
-    }
-
-    function composeKeyBlockStateInit(TvmCell code, bytes data, address systemcontract, address goshdao, address repo, uint128 seqno) public returns(TvmCell) {
-        TvmCell deployCode = buildKeyBlockCode(
-            code, systemcontract, goshdao, repo, versionLib
-        );
-        return tvm.buildStateInit({
-            code: deployCode,
-            contr: KeyBlock,
-            varInit: { _seqNo: seqno, _goshdao: goshdao, _repo: repo, _data: data }
-        });
-    }
-
-    function composeMasterBlockStateInit(TvmCell code, bytes data, address systemcontract, address goshdao, address repo, uint128 seqno) public returns(TvmCell) {
-        TvmCell deployCode = buildMasterBlockCode(
-            code, systemcontract, goshdao, repo, versionLib
-        );
-        return tvm.buildStateInit({
-            code: deployCode,
-            contr: KeyBlock,
-            varInit: { _seqNo: seqno, _goshdao: goshdao, _repo: repo, _data: data }
-        });
     }
 
     function composeWalletStateInit(TvmCell code, address systemcontract, address goshdao, address pubaddr, uint128 index) public returns(TvmCell) {
@@ -417,43 +413,6 @@ library GoshLib {
         b.store(goshaddr);
         b.store(dao);
         b.store(version);
-        uint256 hash = tvm.hash(b.toCell());
-        delete b;
-        b.store(hash);
-        return tvm.setCodeSalt(originalCode, b.toCell());
-    }
-
-    function buildKeyBlockCode(
-        TvmCell originalCode,
-        address goshaddr,
-        address dao,
-        address repo,
-        string version
-    ) public returns (TvmCell) {
-        TvmBuilder b;
-        b.store(goshaddr);
-        b.store(dao);
-        b.store(repo);
-        b.store(version);
-        uint256 hash = tvm.hash(b.toCell());
-        delete b;
-        b.store(hash);
-        return tvm.setCodeSalt(originalCode, b.toCell());
-    }
-
-    function buildMasterBlockCode(
-        TvmCell originalCode,
-        address goshaddr,
-        address dao,
-        address repo,
-        string version
-    ) public returns (TvmCell) {
-        TvmBuilder b;
-        b.store(goshaddr);
-        b.store(dao);
-        b.store(repo);
-        b.store(version);
-        b.store("master");
         uint256 hash = tvm.hash(b.toCell());
         delete b;
         b.store(hash);

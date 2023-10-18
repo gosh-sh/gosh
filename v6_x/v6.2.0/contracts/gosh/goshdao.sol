@@ -1302,9 +1302,11 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function receiveTokentoWrapper(
         address pubaddr,
         uint128 index,
-        uint128 grant
+        uint128 grant,
+        uint256 pubkey
     ) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index)) accept saveMsg {
-        _reserve += grant;
+        RootData root = RootData(_nameDao, _nameDao, 0, 0);
+        SystemContract(_systemcontract).sendTokenToRoot{value : 0.2 ton, flag: 1}(_nameDao, pubkey, grant, root);
         getMoney();
     }
     

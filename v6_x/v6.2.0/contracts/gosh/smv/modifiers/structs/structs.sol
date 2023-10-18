@@ -7,6 +7,13 @@
 pragma ever-solidity >=0.66.0;
 
 //Structs
+struct RootData {
+    string name;
+    string symbol;
+    uint8 decimals;
+    uint256 ethroot;
+}
+
 struct Subtask {
     uint128 value;
     string name;
