@@ -61,6 +61,22 @@ services:
     command: >
       deno run -A ./src/triggers/create_dao.ts
 
+  dao_invites:
+    image: gosh-onboarding-v6
+    restart: always
+    depends_on:
+      redis-v6:
+        condition: service_healthy
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      REDIS_URL: redis://redis-v6:6379
+      SYSTEM_CONTRACT_ADDR: ${SYSTEM_CONTRACT_ADDR}
+      GOSH_ENDPOINTS: ${GOSH_ENDPOINTS}
+      GOSH_VERSION: ${GOSH_VERSION}
+    command: >
+      deno run -A ./src/triggers/dao_invites.ts
+
   new_users:
     image: gosh-onboarding-v6
     restart: always
