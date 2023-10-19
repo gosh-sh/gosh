@@ -1,26 +1,14 @@
-import { Mutex } from 'https://deno.land/x/semaphore@v1.1.2/mod.ts'
+import { sleep } from 'https://deno.land/x/sleep@v1.2.1/mod.ts'
 import { getDb } from '../db/db.ts'
 import { getEmailsNotSent } from '../db/emails.ts'
 import { sendEmail } from '../utils/email.ts'
 
-const mutex = new Mutex()
-
-getDb()
-    .channel('emails:not_sent')
-    .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'emails' },
-        (payload) => {
-            console.log('check emails', payload)
-            sendEmails()
-        },
-    )
-    .subscribe()
-
-sendEmails()
+while (true) {
+    await sendEmails()
+    await sleep(10)
+}
 
 async function sendEmails() {
-    const release = await mutex.acquire()
     try {
         const emails = await getEmailsNotSent()
         console.log('Emails', emails)
@@ -50,5 +38,4 @@ async function sendEmails() {
     } catch (err) {
         console.error(err)
     }
-    release()
 }

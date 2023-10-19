@@ -1064,7 +1064,10 @@ function _useMergeRequest(
             MAX_PARALLEL_READ,
             async (treepath, index) => {
                 const { src, dst } = treepath
-                const srcFullPath = `${src.treeitem.commit}/${src.path}`
+                const srcFullPath =
+                    srcRepo.getVersion() < '6.0.0'
+                        ? `${srcBranch.name}/${src.path}`
+                        : `${src.treeitem.commit}/${src.path}`
                 const _srcSnapshot = await srcRepo._getSnapshot({
                     fullpath: srcFullPath,
                 })
@@ -1075,7 +1078,10 @@ function _useMergeRequest(
                 )
                 const srcContent = srcBlob.current
 
-                const dstFullPath = `${dst.treeitem?.commit}/${dst.path}`
+                const dstFullPath =
+                    dstRepo.getVersion() < '6.0.0'
+                        ? `${dstBranch.name}/${dst.path}`
+                        : `${dst.treeitem?.commit}/${dst.path}`
                 let dstContent: string | Buffer = ''
                 if (dst.path) {
                     const _dstSnapshot = await dstRepo._getSnapshot({
