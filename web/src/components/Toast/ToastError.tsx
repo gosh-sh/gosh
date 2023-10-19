@@ -9,31 +9,41 @@ const ToastError = (props: TToastErrorProps) => {
     const { error } = props
 
     if (error instanceof GoshError) {
+        let data: string | null = null
+        if (error.data) {
+            data =
+                typeof error.data === 'string'
+                    ? error.data
+                    : JSON.stringify(error.data, undefined, 1)
+        }
+
         return (
             <>
                 <h3 className="font-semibold">{error.title || 'Something went wrong'}</h3>
-                {error.data && (
-                    <p className="text-sm">
-                        {typeof error.data === 'string'
-                            ? error.data
-                            : JSON.stringify(error.data, undefined, 1)}
-                    </p>
+                {data && (
+                    <>
+                        <p className="text-sm">{data}</p>
+                        <CopyClipboard
+                            label="Copy error message"
+                            className="mt-3 text-xs"
+                            componentProps={{ text: data }}
+                        />
+                    </>
                 )}
             </>
         )
     }
 
+    const data = error.data ? JSON.stringify(error, undefined, 1) : null
     return (
         <>
             <h3 className="font-semibold">{error.name || 'Internal error'}</h3>
             <p className="text-sm">{error.message}</p>
-            <p className="text-xs">{JSON.stringify(error)}</p>
+            {data && <p className="text-xs">{data}</p>}
             <CopyClipboard
                 label="Copy error message"
                 className="mt-3 text-xs"
-                componentProps={{
-                    text: JSON.stringify(error),
-                }}
+                componentProps={{ text: data || error.message }}
             />
         </>
     )
