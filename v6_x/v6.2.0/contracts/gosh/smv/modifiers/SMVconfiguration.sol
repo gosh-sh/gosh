@@ -62,4 +62,5 @@ abstract contract SMVConfiguration is ReplayProtection {
     uint256 constant BIGTASK_DEPLOY_PROPOSAL_KIND = 43;
     uint256 constant BIGTASK_UPGRADE_PROPOSAL_KIND = 44;
     uint256 constant INDEX_PROPOSAL_KIND = 45;
+    uint256 constant DESTROY_REPOSITORY_PROPOSAL_KIND = 46;
 }

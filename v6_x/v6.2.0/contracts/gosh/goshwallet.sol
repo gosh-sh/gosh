@@ -743,6 +743,34 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _deployRepository(nameRepo, descr, previous);
         getMoney();
     }
+
+    function startProposalForDestroyRepository(
+        string nameRepo,
+        uint128 num_clients , 
+        address[] reviewers
+    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+        uint256 proposalKind = DESTROY_REPOSITORY_PROPOSAL_KIND;
+        TvmCell c = abi.encode(proposalKind, nameRepo, block.timestamp);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
+        getMoney();
+    }
+    
+    function getCellForDestroyRepository(
+        string nameRepo,
+        optional(uint32) time
+    ) external pure returns(TvmCell) {
+        uint256 proposalKind = DESTROY_REPOSITORY_PROPOSAL_KIND;
+        if (time.hasValue() == false) { time = block.timestamp; }
+        return abi.encode(proposalKind, nameRepo, time.get());
+    }
+
+    function _destroyRepository(string nameRepo) private {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);        
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, nameRepo);
+        Repository(repo).destroyRepo(_pubaddr, _index);
+        getMoney();
+    }
     
     
     function _deployRepository(string nameRepo, string descr, optional(AddrVersion) previous) private {
@@ -2308,7 +2336,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 if (typetr == 0) { _deployIndex(data, index); }
                 if (typetr == 1) { _updateIndex(data, index); }
                 if (typetr == 2) { _destroyIndex(data, index); }
-            } 
+            } else 
+            if (kind == DESTROY_REPOSITORY_PROPOSAL_KIND) {
+                (,string repoName,) = abi.decode(propData,(uint256, string, uint32));
+                _destroyRepository(repoName);
+            }
         }
     }
 

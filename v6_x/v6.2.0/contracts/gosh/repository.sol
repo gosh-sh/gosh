@@ -229,8 +229,30 @@ contract Repository is Modifiers{
     }
 
     //Selfdestruct
-    function destroy(address pubaddr, uint128 index) public {
+    function destroyRepo(address pubaddr, uint128 index) public view {
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        uint256 key;
+        this.destroyBranches{value: 0.1 ton, flag: 1}(key);
+    }
+
+    function destroyBranches(uint256 index) public senderIs(this) accept {
+        for (uint128 i = 0; i < BATCH_SIZE_TREE; i++) {
+            optional(uint256, Item) res = _Branches.next(index);
+            if (res.hasValue()) {
+                (uint256 key, Item data) = res.get();
+                index = key;
+                Commit(data.commitaddr).cleanTree{value: 0.1 ton, flag: 1}();
+            }
+            else {
+                destroy();
+                return;
+            }
+        }
+        this.destroyBranches{value: 0.1 ton, flag: 1}(index);
+    }
+
+    function destroy() private {
         selfdestruct(_systemcontract);
     }
 
