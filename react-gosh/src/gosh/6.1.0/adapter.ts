@@ -3800,6 +3800,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
         const { tags, branchParent, callback } = options
 
+        const daoname = await (await this._getDao()).getName()
+        const reponame = await this.getName()
         const taglist = tags ? tags.split(' ') : []
         const cb: IPushCallback = (params) => callback && callback(params)
 
@@ -3844,6 +3846,23 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             branchParent,
         )
 
+        // Get branch to commit time
+        let branchto_commit = branchTo.commit
+        let adapter = this as IGoshRepositoryAdapter
+        while (true) {
+            if (branchto_commit.initupgrade) {
+                const parent = branchto_commit.parents[0]
+                if (parent.version !== this.getVersion()) {
+                    const gosh = GoshAdapterFactory.create(parent.version)
+                    adapter = await gosh.getRepository({ path: `${daoname}/${reponame}` })
+                }
+
+                branchto_commit = await adapter.getCommit({ address: parent.address })
+                continue
+            }
+            break
+        }
+
         // Update tree items with commit, update blob items with address
         for (const key of Object.keys(updatedTree0.tree)) {
             for (const treeitem of updatedTree0.tree[key]) {
@@ -3873,7 +3892,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                         name: snapshot.onchain.tmpcommit,
                     })
 
-                    if ((commit.time ?? 0) > (branchTo.commit.time ?? 0)) {
+                    if ((commit.time ?? 0) > (branchto_commit.time ?? 0)) {
                         console.debug('Deploy new snapshot with content')
                         treeitem.commit = commitHash
                         blob.patch = ''
@@ -3966,7 +3985,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         let tagsCounter = 0
         await this._runMultiwallet(taglist, async (wallet, tag) => {
             await this.createCommitTag({
-                repository: await this.getName(),
+                repository: reponame,
                 commit: commitHash,
                 tag,
                 wallet,
@@ -3976,8 +3995,6 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Set commit or start PR proposal
         const signer = this.auth.wallet0.account.signer as any
-        const daoname = await (await this._getDao()).getName()
-        const reponame = await this.getName()
         const patched = blobsData.filter(({ data }) => !!data.patch)
         if (!isPullRequest) {
             await this._setCommit(branch, commitHash, patched.length, false, task)
