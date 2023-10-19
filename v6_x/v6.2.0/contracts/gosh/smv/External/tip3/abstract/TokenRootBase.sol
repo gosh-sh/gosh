@@ -225,8 +225,8 @@ abstract contract TokenRootBase is ITokenRoot, ICallbackParamsStructure {
         @dev Used in case token wallet .accept fails so the totalSupply_ can be decreased back
     */
     onBounce(TvmSlice slice) external {
-        if (slice.decode(uint32) == tvm.functionId(ITokenWallet.acceptMint)) {
-            totalSupply_ -= slice.decode(uint128);
+        if (slice.load(uint32) == tvm.functionId(ITokenWallet.acceptMint)) {
+            totalSupply_ -= slice.load(uint128);
         }
     }
 

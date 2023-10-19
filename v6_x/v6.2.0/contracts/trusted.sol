@@ -10,6 +10,7 @@ pragma AbiHeader pubkey;
 
 import "./smv/modifiers/modifiers.sol";
 import "./libraries/GoshLib.sol";
+import "systemcontract.sol";
 
 interface IRootContract {
     function grantTrusted(
@@ -22,7 +23,7 @@ contract Trusted is Modifiers {
 
     string constant _version = "6.2.0";
 
-    mapping(uint256 => bool) _access;
+    mapping(uint256 => address) _access;
 
     TvmCell _rootCode;
     address _receiver;
@@ -35,7 +36,7 @@ contract Trusted is Modifiers {
         TvmBuilder b;
         b.store(system);
         uint256 hash = tvm.hash(b.toCell());
-        _access[hash] = true;
+        _access[hash] = system;
     }
 
     function deleteAccess(address system) public onlyOwner accept {
@@ -61,8 +62,12 @@ contract Trusted is Modifiers {
         IRootContract(GoshLib.calculateRootAddress(_rootCode, root, tvm.pubkey(), _receiver)).grantTrusted{value: 0.1 ton, flag: 1}(pubkey, value);
     }
 
-    function returnTokenToDao(RootData root, string name, uint128 tokens)  public view senderIs(GoshLib.calculateRootAddress(_rootCode, root, tvm.pubkey(), _receiver)) accept functionID(1018) {
-
+    function returnTokenToDao(address systemcontract, RootData root, address pubaddr, uint128 tokens)  public view senderIs(GoshLib.calculateRootAddress(_rootCode, root, tvm.pubkey(), _receiver)) accept functionID(1018) {
+        TvmBuilder b;
+        b.store(systemcontract);
+        uint256 hash = tvm.hash(b.toCell());
+        if (!_access.exists(hash)) { return; }
+        SystemContract(_access[hash]).returnTokenToDao{value: 0.1 ton, flag: 1}(root.name, pubaddr, tokens);
     }
 
     function updateCode(TvmCell newcode, TvmCell cell) public view onlyOwner accept {

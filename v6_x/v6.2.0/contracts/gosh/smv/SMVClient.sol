@@ -40,10 +40,10 @@ function onCodeUpgrade (address goshdao,
     _goshdao = goshdao;
     initialized = false;
     votes[true] = votes[false] = 0;
-    leftBro.reset();
-    rightBro.reset();
-    rightAmount.reset();
-    currentHead.reset();
+    delete leftBro;
+    delete rightBro;
+    delete rightAmount;
+    delete currentHead;
     platform_id = _platform_id;
     total_votes = totalVotes;
     currentAmount = amountToLock;
@@ -52,7 +52,7 @@ function onCodeUpgrade (address goshdao,
 
     uint256 pid;
 
-    ( , tokenLocker , pid, platformCodeHash, platformCodeDepth) = staticCell.toSlice().decode(uint8, address, uint256, uint256, uint16);
+    ( , tokenLocker , pid, platformCodeHash, platformCodeDepth) = staticCell.toSlice().load(uint8, address, uint256, uint256, uint16);
     smvProposal = address.makeAddrStd(0, calcClientAddress(pid));
 
     ISMVProposal(smvProposal).getInitialize {value: SMVConstants.PROP_INITIALIZE_FEE + SMVConstants.ACTION_FEE, flag: 1}
@@ -109,8 +109,8 @@ function _performAction () internal
         inserted = false;
         TvmSlice s = currentCell.toSlice();
         TvmSlice s1 = s.loadRefAsSlice();
-        currentChoice = s1.decode(bool);
-        currentHead = s.decode (optional (address));
+        currentChoice = s1.load(bool);
+        currentHead = s.load (optional (address));
         delete_and_do_action();
     }
 } 
@@ -135,9 +135,9 @@ function onProposalVoted (bool success) external override check_proposal
     tvm.accept();
 
 
-    leftBro.reset();
-    rightBro.reset();
-    rightAmount.reset();
+    delete leftBro;
+    delete rightBro;
+    delete rightAmount;
     if (success) {
       votes[currentChoice] += currentAmount;
     }
@@ -177,7 +177,7 @@ function _getLockedAmount () public view returns(uint128)
 
 function continueUpdateHead (uint256 _platform_id) external override check_client(_platform_id)
 {
-    leftBro.reset();
+    delete leftBro;
     uint128 extra = _reserve (SMVConstants.CLIENT_MIN_BALANCE , SMVConstants.ACTION_FEE);
     if (extra > SMVConstants.VOTING_COMPLETION_FEE)
         ISMVProposal(smvProposal).isCompleted {value: extra, 
@@ -228,7 +228,7 @@ function updateHead() external override check_locker()
 }
 
 onBounce(TvmSlice body) external view {
-    uint32 functionId = body.decode(uint32);
+    uint32 functionId = body.load(uint32);
     if (functionId == tvm.functionId(ISMVProposal.getInitialize)) 
     {
         optional (address) emptyAddress;

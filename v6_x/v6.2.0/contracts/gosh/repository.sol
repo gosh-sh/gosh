@@ -7,7 +7,6 @@
 pragma ever-solidity >=0.66.0;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
-pragma AbiHeader time;
 
 import "commit.sol";
 import "goshwallet.sol";

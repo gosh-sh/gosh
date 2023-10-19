@@ -207,10 +207,10 @@ abstract contract TokenWalletBase is ITokenWallet {
     onBounce(TvmSlice body) external {
         tvm.rawReserve(_reserve(), 2);
 
-        uint32 functionId = body.decode(uint32);
+        uint32 functionId = body.load(uint32);
 
         if (functionId == tvm.functionId(ITokenWallet.acceptTransfer)) {
-            uint128 amount = body.decode(uint128);
+            uint128 amount = body.load(uint128);
             balance_ += amount;
             IBounceTokensTransferCallback(owner_).onBounceTokensTransfer{
                 value: 0,
@@ -222,7 +222,7 @@ abstract contract TokenWalletBase is ITokenWallet {
                 msg.sender
             );
         } else if (functionId == tvm.functionId(ITokenRoot.acceptBurn)) {
-            uint128 amount = body.decode(uint128);
+            uint128 amount = body.load(uint128);
             balance_ += amount;
             IBounceTokensBurnCallback(owner_).onBounceTokensBurn{
                 value: 0,

@@ -7,7 +7,6 @@
 pragma ever-solidity >=0.66.0;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
-pragma AbiHeader time;
 
 import "./libraries/GoshLib.sol";
 import "./smv/modifiers/modifiers.sol";
@@ -212,7 +211,7 @@ contract Snapshot is Modifiers {
         _applying = false;
 //        this.sendContent{value: 0.1 ton, flag: 1}(_snapshot, _ipfsold, _commits);
         if ((_oldsnapshot.empty()) && (_ipfsold.hasValue() == false)) { selfdestruct(_systemcontract); return; }
-        Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits)).canDelete(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _pushcommit), _baseCommit, NameOfFile);
+        Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits)).canDelete{value: 0.1 ton, flag: 1}(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _pushcommit), _baseCommit, NameOfFile);
         _pushcommit = _commits;
     }
 

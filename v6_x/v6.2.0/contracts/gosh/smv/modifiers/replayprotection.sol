@@ -43,9 +43,9 @@ abstract contract ReplayProtection is Errors {
     
     // Function with predefined name which is used to replace custom replay protection.
     function afterSignatureCheck(TvmSlice body, TvmCell message) private inline returns (TvmSlice) {
-        body.decode(uint64); // The first 64 bits contain timestamp which is usually used to differentiate messages.
+        body.load(uint64); // The first 64 bits contain timestamp which is usually used to differentiate messages.
         // check expireAt
-        uint32 expireAt = body.decode(uint32);
+        uint32 expireAt = body.load(uint32);
         require(expireAt > block.timestamp, ERR_MESSAGE_EXPIRED);   // Check whether the message is not expired.
         require(expireAt < block.timestamp + 5 minutes, ERR_MESSAGE_WITH_HUGE_EXPIREAT); // Check whether expireAt is not too huge.
 

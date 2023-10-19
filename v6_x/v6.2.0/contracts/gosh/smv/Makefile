@@ -12,16 +12,18 @@ build-contracts:
 	done \
 
 	for i in $(tvcs); do \
-		../../compiler/solc $$i.sol || exit $$@; \
+		../../compiler/sold --tvm-version gosh $$i.sol || exit $$@; \
 		../../compiler/tvm_linker compile $$i.code -o $$i.tvc --lib ../../compiler/stdlib_sol.tvm || exit $$@; \
 		if [ "${target-dir}" != "" ] ; then cp $$i.* ${target-dir}/ ; fi; \
 	done \
 
-	../../compiler/solc ./External/tip3/TokenRoot.sol || exit $$@; \
+	../../compiler/sold --tvm-version gosh ./External/tip3/TokenRoot.sol || exit $$@; \
 	../../compiler/tvm_linker compile TokenRoot.code -o TokenRoot.tvc --lib ../../compiler/stdlib_sol.tvm || exit $$@; \
 
-	../../compiler/solc ./External/tip3/TokenWallet.sol || exit $$@; \
+	../../compiler/sold --tvm-version gosh ./External/tip3/TokenWallet.sol || exit $$@; \
 	../../compiler/tvm_linker compile TokenWallet.code -o TokenWallet.tvc --lib ../../compiler/stdlib_sol.tvm || exit $$@; \
+
+	rm *.debug.json;
 
 prepare-docker:
 	docker build -t everdev:latest ../../../../.ci/

@@ -7,7 +7,6 @@
 pragma ever-solidity >=0.66.0;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
-pragma AbiHeader time;
 
 import "./smv/modifiers/modifiers.sol";
 import "goshwallet.sol";
@@ -55,11 +54,15 @@ contract SystemContract is Modifiers {
         _versionController = msg.sender;
     }
 
+    function returnTokenToDao(string nameDao, address pubaddr, uint128 value) public view senderIs(_trusted) accept {
+        GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), nameDao), pubaddr, 0)).returnTokenToDao{value: 0.1 ton, flag: 1}(value);
+    }
+
     function setTrusted(address trusted) public onlyOwner accept {
         _trusted = trusted;
     }
 
-    function sendTokenToRoot(string namedao, uint256 pubkey, uint128 value, RootData root) public {
+    function sendTokenToRoot(string namedao, uint256 pubkey, uint128 value, RootData root) public view {
         address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao);
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();

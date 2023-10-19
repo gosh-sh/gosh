@@ -1,5 +1,4 @@
 pragma ton-solidity >=0.54.0;
-pragma AbiHeader time;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 
@@ -108,17 +107,17 @@ function onCodeUpgrade (address goshdao,
 
     _goshdao = goshdao;
     initialized = true;
-    votingResult.reset();
-    leftBro.reset();
-    rightBro.reset();
-    rightAmount.reset();
-    currentHead.reset();
+    delete votingResult;
+    delete leftBro;
+    delete rightBro;
+    delete rightAmount;
+    delete currentHead;
     platform_id = _platform_id;
     amountLocked = amountToLock;
     //proposalBusy = false;
     //total_votes = totalVotes;
 
-    ( , tokenLocker , propId, platformCodeHash, platformCodeDepth) = staticCell.toSlice().decode(uint8, address, uint256, uint256, uint16);
+    ( , tokenLocker , propId, platformCodeHash, platformCodeDepth) = staticCell.toSlice().load(uint8, address, uint256, uint256, uint16);
 
     TvmSlice s = inputCell.toSlice();
     TvmSlice s1 = s.loadRefAsSlice(); //inputCell+currentHead
@@ -126,11 +125,11 @@ function onCodeUpgrade (address goshdao,
     TvmSlice propDataExtra = s1.loadRefAsSlice();
     propData = propDataExtra.loadRef();
     TvmSlice reviewersSlice = propDataExtra.loadRefAsSlice();
-    reviewers = reviewersSlice.decode(mapping (address => bool));
+    reviewers = reviewersSlice.load(mapping (address => bool));
 
 
     TvmSlice s12 = s1.loadRefAsSlice();
-    (deltaStartTime, deltaFinishTime, ownerAddress, tokenRoot) = s12.decode(uint32, uint32, address, address);
+    (deltaStartTime, deltaFinishTime, ownerAddress, tokenRoot) = s12.load(uint32, uint32, address, address);
     if (reviewers.empty())
     {
         startTime = block.timestamp + deltaStartTime;
@@ -142,7 +141,7 @@ function onCodeUpgrade (address goshdao,
         finishTime = 0;
     }
     realFinishTime = finishTime;
-    currentHead = s.decode(optional(address));
+    currentHead = s.load(optional(address));
 
     uint128 extra = 0;
     if (address(this).balance > SMVConstants.PROPOSAL_INIT_VALUE)
@@ -165,9 +164,9 @@ function onContinueAction(uint128 t) external senderIs(_goshdao) accept
 {
     totalSupply = t;
 
-    leftBro.reset();
-    rightBro.reset();
-    rightAmount.reset();
+    delete leftBro;
+    delete rightBro;
+    delete rightAmount;
 
     if ((currentHead.hasValue()) && (currentHead.get()!=address(this))) {
         uint128 extra = _reserve (SMVConstants.PROPOSAL_MIN_BALANCE, SMVConstants.ACTION_FEE);
@@ -284,7 +283,7 @@ function _isCompleted () public view returns (optional (bool))
 function getGoshProposalKind() external view returns( uint256  proposalKind)
 {
     TvmSlice s = propData.toSlice();
-    (proposalKind) = s.decode(uint256);
+    (proposalKind) = s.load(uint256);
 }
 
 function getGoshSetCommitProposalParams () external view
@@ -535,7 +534,7 @@ function getDaoVoteProposalParams () external view
 function getGoshProposalKindData(TvmCell Data) external pure returns( uint256  proposalKind)
 {
     TvmSlice s = Data.toSlice();
-    (proposalKind) = s.decode(uint256);
+    (proposalKind) = s.load(uint256);
 }
 
 function getGoshSetCommitProposalParamsData (TvmCell Data) external pure
@@ -817,7 +816,7 @@ function getDetails () external view
         returns(uint256, optional (bool), uint32, uint32, uint32, uint128, uint128, uint128, uint256, mapping(address => bool))
 {
     TvmSlice s = propData.toSlice();
-    (uint256 proposalKind) = s.decode(uint256);
+    (uint256 proposalKind) = s.load(uint256);
     return (proposalKind, votingResult, startTime, finishTime, realFinishTime, votesYes, votesNo, totalSupply, platform_id, reviewers);
 }    
 ////////////////////////////////////
@@ -827,7 +826,7 @@ function calcVotingResult (uint128 t) internal virtual {}
 
 function continueUpdateHead (uint256 _platform_id) external override check_client(_platform_id)
 {
-     leftBro.reset();
+     delete leftBro;
 /*    uint128 extra = _reserve (SMVConstants.PROPOSAL_MIN_BALANCE , SMVConstants.ACTION_FEE);
 
     if (extra > SMVConstants.VOTING_COMPLETION_FEE)

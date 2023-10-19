@@ -1,5 +1,4 @@
 pragma ton-solidity >=0.54.0;
-pragma AbiHeader time;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 
@@ -335,7 +334,7 @@ function startProposal (/* TvmCell platformCode, TvmCell proposalCode, */ uint25
 
     TvmSlice s = propData.toSlice();
     TvmSlice propDataSlice = s.loadRefAsSlice();    
-    (uint256 proposalKind) = propDataSlice.decode(uint256);
+    (uint256 proposalKind) = propDataSlice.load(uint256);
 
     if ((proposalKind == SETCOMMIT_PROPOSAL_KIND) || (proposalKind == DEPLOY_WALLET_DAO_PROPOSAL_KIND)) { amount = 0; }
 

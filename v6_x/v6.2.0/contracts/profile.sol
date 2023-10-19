@@ -8,7 +8,6 @@ pragma ever-solidity >=0.66.0;
 pragma ignoreIntOverflow;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
-pragma AbiHeader time;
 
 import "./smv/modifiers/modifiers.sol";
 import "./libraries/GoshLib.sol";
@@ -97,7 +96,7 @@ contract Profile is Modifiers {
     }
     
     function _generateId() inline private pure returns (uint64) {
-        return (uint64(block.timestamp) << 32) | (tx.timestamp & 0xFFFFFFFF);
+        return (uint64(block.timestamp) << 32) | (tx.logicaltime & 0xFFFFFFFF);
     }
     
     function confirmTransaction(uint64 id) public onlyOwnerPubkeyList  accept saveMsg {        

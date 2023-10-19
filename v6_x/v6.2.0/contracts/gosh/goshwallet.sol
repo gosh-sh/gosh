@@ -7,7 +7,6 @@
 pragma ever-solidity >=0.66.0;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
-pragma AbiHeader time;
 
 import "./repository.sol";
 import "./commit.sol";
@@ -1577,6 +1576,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
+    function returnTokenToDao(uint128 value) public senderIs(_systemcontract) accept {
+        m_pseudoDAOBalance += value;
+        getMoney();
+    }
+
     function daoSendTokenToNewVersionAuto5(address pubaddr, string newversion) public senderIs(_systemcontract) accept {
         optional(address) newwallet;
         if (_lockedBalance != 0) {
@@ -2115,7 +2119,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         }
         if (true) {
             TvmSlice s = propData.toSlice();
-            uint256 kind = s.decode(uint256);
+            uint256 kind = s.load(uint256);
             if (kind == SETCOMMIT_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
                 (, string repoName, string branchName, string commit, uint128 numberChangedFiles, uint128 numberCommits, optional(ConfigCommit) task, , ) =
@@ -2321,7 +2325,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         updateHeadIn();
         if (res.hasValue() && res.get()) {
             TvmSlice s = propData.toSlice();
-            uint256 kind = s.decode(uint256);
+            uint256 kind = s.load(uint256);
             if (kind == MULTI_PROPOSAL_KIND) { 
                 (, uint128 num, TvmCell allpr,) = abi.decode(propData,(uint256, uint128, TvmCell, uint32));
                 (TvmCell data1, TvmCell data2) = abi.decode(allpr,(TvmCell, TvmCell));

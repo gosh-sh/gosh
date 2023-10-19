@@ -7,7 +7,6 @@
 pragma ever-solidity >=0.66.0;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
-pragma AbiHeader time;
 
 import "./smv/modifiers/modifiers.sol";
 import "systemcontract.sol";
@@ -32,7 +31,7 @@ contract ProfileIndex is Modifiers {
         _profile = profile;
         _code[m_ProfileCode] = codeProfile;
         string ver;
-        (_pubkey, _versioncontroller, ver) = s.decode(uint256, address, string);
+        (_pubkey, _versioncontroller, ver) = s.load(uint256, address, string);
         require(msg.sender == _getProfileAddr(_name), ERR_SENDER_NO_ALLOWED);
         require(ver == version, ERR_CONTRACT_BAD_VERSION);
     }

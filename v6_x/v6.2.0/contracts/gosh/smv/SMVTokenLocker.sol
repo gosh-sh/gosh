@@ -1,5 +1,4 @@
 pragma ton-solidity >=0.54.0;
-pragma AbiHeader time;
 pragma AbiHeader expire;
 // pragma AbiHeader pubkey;
 
@@ -75,7 +74,7 @@ function startPlatform (TvmCell platformCode, TvmCell clientCode, uint128 amount
     require(amountToLock <= m_tokenBalance, SMVErrors.error_not_enough_votes);
 
     TvmSlice s = staticCell.toSlice();
-    ( , address locker) = s.decode(uint8, address);
+    ( , address locker) = s.load(uint8, address);
 
     require(locker == address(this), SMVErrors.error_not_my_locker);
     tvm.accept();
@@ -116,7 +115,7 @@ constructor(uint256 _platformCodeHash, uint16 _platformCodeDepth, TvmCell _m_wal
     lockerBusy = false;
     m_tokenWalletCode = _m_walletCode;
     m_tokenRoot = _m_tokenRoot;
-    clientHead.reset();
+    delete clientHead;
     m_tokenBalance = 0;
     votes_locked = 0;
     m_num_clients = 0;
@@ -309,7 +308,7 @@ function onCodeUpgrade (TvmCell ) private
 {}
 
 onBounce(TvmSlice body) external  {
-    uint32 functionId = body.decode(uint32);
+    uint32 functionId = body.load(uint32);
     if (functionId == tvm.functionId(LockableBase.performAction)) 
     {
        platformPerformActionFailed = true;

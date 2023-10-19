@@ -6,9 +6,7 @@
  */
 pragma ever-solidity >=0.66.0;
 pragma AbiHeader expire;
-pragma AbiHeader time;
 pragma AbiHeader pubkey;
-pragma AbiHeader time;
 
 import "./smv/modifiers/modifiers.sol";
 import "./libraries/GoshLib.sol";
