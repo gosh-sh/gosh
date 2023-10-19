@@ -281,8 +281,10 @@ interface IGoshDaoAdapter {
     createTag(params: TDaoTagCreateParams): Promise<TDaoTagCreateResult>
     deleteTag(params: TDaoTagDeleteParams): Promise<TDaoTagDeleteResult>
 
-    createSingleProposal(params: TEventSignleCreateProposalParams): Promise<void>
-    createMultiProposal(params: TEventMultipleCreateProposalParams): Promise<void>
+    createSingleProposal(params: TEventSignleCreateProposalParams): Promise<string | null>
+    createMultiProposal(
+        params: TEventMultipleCreateProposalParams,
+    ): Promise<string | null>
     createMultiProposalAsDao(
         params: TEventMultipleCreateProposalAsDaoParams,
     ): Promise<void>
@@ -333,6 +335,7 @@ interface IGoshDaoAdapter {
         params: TCodeCommentThreadResdolveParams,
     ): Promise<TCodeCommentThreadResolveResult>
     createCodeComment(params: TCodeCommentCreateParams): Promise<TCodeCommentCreateResult>
+    getEventAddress(result: ResultOfProcessMessage): Promise<string | null>
 }
 
 interface IGoshRepositoryAdapter {
@@ -428,7 +431,7 @@ interface IGoshRepositoryAdapter {
             task?: TTaskCommitConfig
             callback?: IPushCallback
         },
-    ): Promise<void>
+    ): Promise<string | null>
     pushUpgrade(
         data: TUpgradeData,
         options: { setCommit?: boolean; callback?: IPushCallback },
@@ -476,6 +479,7 @@ interface IGoshSmvAdapter {
         event?: IGoshSmvProposal
     }): Promise<TSmvEventTime>
     getWalletBalance(wallet: IGoshWallet): Promise<number>
+    getLocker(wallet?: IGoshWallet): Promise<IGoshSmvLocker>
 
     validateProposalStart(min?: number): Promise<void>
 
@@ -518,6 +522,7 @@ interface IContract {
         options?: AccountRunLocalOptions,
         settings?: { logging?: boolean; retries?: number; useCachedBoc?: boolean },
     ): Promise<any>
+    decodeMessage(boc: string): Promise<DecodedMessageBody | null>
     decodeMessageBody(body: string, type: number): Promise<DecodedMessageBody | null>
     decodeAccountData(data?: string): Promise<any>
 }
@@ -533,6 +538,8 @@ interface IGoshRoot extends IContract {
     getProfileIndexes(
         pubkey: string,
     ): Promise<{ pubkey: string; name: string; profile: TAddress }[]>
+    getHashFromCell(cell: string): Promise<string>
+    getEventPropIdFromCell(cell: string): Promise<string>
 }
 
 interface IGoshProfile extends IContract {

@@ -49,9 +49,14 @@ const BlobCreatePage = () => {
                 task = { task: values.task, assigners, reviewers, managers }
             }
 
-            await push(title, [blobObject], { isPullRequest, message, tags, task })
+            const eventaddr = await push(title, [blobObject], {
+                isPullRequest,
+                message,
+                tags,
+                task,
+            })
             if (isPullRequest) {
-                navigate(`/o/${daoName}/events`, { replace: true })
+                navigate(`/o/${daoName}/events/${eventaddr || ''}`, { replace: true })
             } else {
                 navigate(urlBack)
             }

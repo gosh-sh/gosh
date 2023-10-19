@@ -1,4 +1,4 @@
-import { KeyPair, TonClient } from '@eversdk/core'
+import { KeyPair, ResultOfProcessMessage, TonClient } from '@eversdk/core'
 import { Buffer } from 'buffer'
 import isUtf8 from 'isutf8'
 import { EGoshError, GoshError } from '../../errors'
@@ -1611,11 +1611,19 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
-    async createSingleProposal(params: TEventSignleCreateProposalParams): Promise<void> {
+    async getEventAddress(result: ResultOfProcessMessage): Promise<string | null> {
         throw new Error('Method is unavailable in current version')
     }
 
-    async createMultiProposal(params: TEventMultipleCreateProposalParams): Promise<void> {
+    async createSingleProposal(
+        params: TEventSignleCreateProposalParams,
+    ): Promise<string | null> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async createMultiProposal(
+        params: TEventMultipleCreateProposalParams,
+    ): Promise<string | null> {
         if (!this.wallet) {
             throw new GoshError(EGoshError.WALLET_UNDEFINED)
         }
@@ -1634,6 +1642,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: await smv.getClientsCount(),
         })
+        return null
     }
 
     async createMultiProposalAsDao(
@@ -3196,7 +3205,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             task?: TTaskCommitConfig
             callback?: IPushCallback
         },
-    ): Promise<void> {
+    ): Promise<string | null> {
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
@@ -3308,6 +3317,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             )
         }
         cb({ completed: true })
+        return null
     }
 
     async pushUpgrade(
@@ -4612,7 +4622,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     }
 
     async getClientsCount(): Promise<number> {
-        const locker = await this._getLocker()
+        const locker = await this.getLocker()
         const { m_num_clients } = await locker.runLocal('m_num_clients', {})
         return parseInt(m_num_clients)
     }
@@ -4924,7 +4934,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     }
 
     private async _isLockerBusy(wallet?: IGoshWallet): Promise<boolean> {
-        const locker = await this._getLocker(wallet)
+        const locker = await this.getLocker(wallet)
         const { lockerBusy } = await locker.runLocal('lockerBusy', {})
         return lockerBusy
     }
@@ -4938,7 +4948,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         return tip3VotingLocker
     }
 
-    private async _getLocker(wallet?: IGoshWallet): Promise<IGoshSmvLocker> {
+    async getLocker(wallet?: IGoshWallet): Promise<IGoshSmvLocker> {
         const address = await this._getLockerAddress(wallet)
         return new GoshSmvLocker(this.client, address)
     }
@@ -4946,7 +4956,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     private async _getLockerBalance(
         wallet?: IGoshWallet,
     ): Promise<{ total: number; locked: number }> {
-        const locker = await this._getLocker(wallet)
+        const locker = await this.getLocker(wallet)
         const { m_tokenBalance } = await locker.runLocal('m_tokenBalance', {})
         const { votes_locked } = await locker.runLocal('votes_locked', {})
         return { total: parseInt(m_tokenBalance), locked: parseInt(votes_locked) }

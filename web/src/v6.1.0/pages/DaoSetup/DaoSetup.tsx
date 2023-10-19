@@ -54,8 +54,11 @@ const DaoSetupPage = () => {
     const onSubmit = async (values: TFormValues) => {
         try {
             const { isEventProgressOff, ...rest } = values
-            await update({ isEventProgressOn: !isEventProgressOff, ...rest })
-            navigate(`/o/${dao.details.name}/events`)
+            const { eventaddr } = await update({
+                isEventProgressOn: !isEventProgressOff,
+                ...rest,
+            })
+            navigate(`/o/${dao.details.name}/events/${eventaddr || ''}`)
         } catch (e: any) {
             console.error(e.message)
         }

@@ -51,9 +51,14 @@ const BlobDeletePage = () => {
                 task = { task: values.task, assigners, reviewers, managers }
             }
 
-            await push(title, [blobObject], { message, tags, task, isPullRequest })
+            const eventaddr = await push(title, [blobObject], {
+                message,
+                tags,
+                task,
+                isPullRequest,
+            })
             if (isPullRequest) {
-                navigate(`/o/${daoName}/events`, { replace: true })
+                navigate(`/o/${daoName}/events/${eventaddr || ''}`, { replace: true })
             } else {
                 navigate(`/o/${daoName}/r/${repoName}/tree/${branchName}`)
             }

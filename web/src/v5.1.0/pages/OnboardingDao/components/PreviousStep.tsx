@@ -1,6 +1,6 @@
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { classNames } from 'react-gosh'
+import classNames from 'classnames'
 
 type TPreviousStepProps = {
     onClick(): void | Promise<void>

@@ -2,6 +2,7 @@ import { Buffer } from 'buffer'
 import { AppConfig } from '../appconfig'
 import { TPaginatedAccountsResult } from '../types/blockchain.types'
 import { sleep } from '../utils'
+import { KeyPair } from '@eversdk/core'
 
 export const generateRandomBytes = async (
     length: number,
@@ -139,4 +140,11 @@ export const getAllAccounts = async (params: {
         await sleep(200)
     }
     return results
+}
+
+export const signData = async (data: string, keys: KeyPair) => {
+    return await AppConfig.goshclient.crypto.sign({
+        unsigned: Buffer.from(data).toString('base64'),
+        keys,
+    })
 }

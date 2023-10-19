@@ -28,10 +28,10 @@ const RepositoryCreateModal = () => {
     const onRepositoryCreate = async (values: TFormValues) => {
         const { name, description } = values
         try {
-            const { isEvent } = await createRepository(name, description)
+            const { eventaddr } = await createRepository(name, description)
             onModalReset()
-            if (isEvent) {
-                navigate(`/o/${dao.details.name}/events`)
+            if (eventaddr) {
+                navigate(`/o/${dao.details.name}/events/${eventaddr}`)
             }
         } catch (e: any) {
             console.error(e.message)
