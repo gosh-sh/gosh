@@ -3,6 +3,7 @@ export type TUserNotificationSettings = {
     data: {
         email: string | null
         email_enabled: boolean | null
+        app_enabled: boolean | null
     }
 }
 

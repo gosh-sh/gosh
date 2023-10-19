@@ -33,7 +33,10 @@ export function useUserNotificationSettings(options: { initialize?: boolean } = 
             })
             if (nt_user.error) {
                 nt_user = await NotificationsAPI.settings.createUserSettings({
-                    data: { username: user.username, payload: { email_enabled: true } },
+                    data: {
+                        username: user.username,
+                        payload: { email_enabled: true, app_enabled: true },
+                    },
                     keys: user.keys,
                 })
             }
@@ -42,6 +45,7 @@ export function useUserNotificationSettings(options: { initialize?: boolean } = 
                 data: {
                     email: nt_user.data!.email,
                     email_enabled: nt_user.data!.email_enabled,
+                    app_enabled: nt_user.data!.app_enabled,
                 },
             }))
         } catch (e: any) {
@@ -52,7 +56,11 @@ export function useUserNotificationSettings(options: { initialize?: boolean } = 
     }, [user.username])
 
     const updateUserSettings = useCallback(
-        async (params: { email?: string; email_enabled?: boolean }) => {
+        async (params: {
+            email?: string
+            email_enabled?: boolean
+            app_enabled?: boolean
+        }) => {
             try {
                 if (!user.username) {
                     throw new GoshError('Value error', 'Username undefined')

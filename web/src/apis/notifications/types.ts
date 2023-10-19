@@ -15,6 +15,7 @@ type TAPIUserSettings = {
     email: string
     username: string
     email_enabled: boolean
+    app_enabled: boolean
     pubkey: string
 }
 
@@ -30,7 +31,7 @@ export type TGetUserSettingsResponse = {
 export type TSetUserSettingsRequest = {
     data: {
         username: string
-        payload: { email?: string; email_enabled?: boolean }
+        payload: { email?: string; email_enabled?: boolean; app_enabled?: boolean }
     }
     keys: KeyPair
 }
