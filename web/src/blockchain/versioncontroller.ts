@@ -11,6 +11,7 @@ import { SystemContract as SystemContract5 } from '../v5.0.0/blockchain/systemco
 import { SystemContract as SystemContract5_1 } from '../v5.1.0/blockchain/systemcontract'
 import { SystemContract as SystemContract6 } from '../v6.0.0/blockchain/systemcontract'
 import { SystemContract as SystemContract6_1 } from '../v6.1.0/blockchain/systemcontract'
+import { SystemContract as SystemContract6_2 } from '../v6.2.0/blockchain/systemcontract'
 import { UserProfileIndex } from './userprofileindex'
 import { UserProfile } from './userprofile'
 import { DaoProfile } from './daoprofile'
@@ -44,6 +45,8 @@ export class VersionController extends BaseContract {
                 return new SystemContract6(this.client, address)
             case '6.1.0':
                 return new SystemContract6_1(this.client, address)
+            case '6.2.0':
+                return new SystemContract6_2(this.client, address)
             default:
                 throw new GoshError('Version not found', { version })
         }
