@@ -604,6 +604,26 @@
 			]
 		},
 		{
+			"name": "startProposalForDestroyRepository",
+			"inputs": [
+				{"name":"nameRepo","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellForDestroyRepository",
+			"inputs": [
+				{"name":"nameRepo","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "getCellForTaskUpgrade",
 			"inputs": [
 				{"name":"nametask","type":"string"},
