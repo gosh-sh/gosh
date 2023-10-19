@@ -11,6 +11,44 @@
 			]
 		},
 		{
+			"name": "checkKeyBlock3",
+			"inputs": [
+				{"name":"goshdao","type":"address"},
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"prev","type":"string"},
+				{"name":"ver","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setNewBlock2",
+			"inputs": [
+				{"name":"goshdao","type":"address"},
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"prev","type":"string"},
+				{"name":"ver","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkKeyBlock4",
+			"inputs": [
+				{"name":"goshdao","type":"address"},
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"blockhash","type":"uint256"},
+				{"name":"prev","type":"string"},
+				{"name":"ver","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deploySystemContract",
 			"inputs": [
 				{"name":"version","type":"string"}
@@ -19,9 +57,41 @@
 			]
 		},
 		{
+			"name": "getMoneyFromSystemContract",
+			"inputs": [
+				{"name":"version","type":"string"},
+				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "destroySS",
 			"inputs": [
 				{"name":"version","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "daoSendTokenToNewVersionAuto3",
+			"inputs": [
+				{"name":"version","type":"string"},
+				{"name":"previousversion","type":"string"},
+				{"name":"namesubdao","type":"string"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"namedao","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokenToNewVersionAuto3",
+			"inputs": [
+				{"name":"version","type":"string"},
+				{"name":"previousversion","type":"string"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"namedao","type":"string"}
 			],
 			"outputs": [
 			]
@@ -128,6 +198,20 @@
 			]
 		},
 		{
+			"name": "checkOldBigTaskVersion3",
+			"inputs": [
+				{"name":"namedao","type":"string"},
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"string"},
+				{"name":"previous","type":"string"},
+				{"name":"previousaddr","type":"address"},
+				{"name":"version","type":"string"},
+				{"name":"answer","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "DaoTransferToken3",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
@@ -157,6 +241,23 @@
 			"inputs": [
 				{"name":"newcode","type":"cell"},
 				{"name":"cell","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "returnMoney",
+			"inputs": [
+				{"name":"destination","type":"address"},
+				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "returnMoneyGiver",
+			"inputs": [
+				{"name":"value","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -282,6 +383,24 @@
 			"outputs": [
 				{"name":"value0","type":"string"},
 				{"name":"value1","type":"string"}
+			]
+		},
+		{
+			"name": "getHashCell",
+			"inputs": [
+				{"name":"state","type":"cell"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
+			"name": "getPropIdFromCell",
+			"inputs": [
+				{"name":"propData","type":"cell"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
 			]
 		}
 	],

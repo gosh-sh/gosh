@@ -30,6 +30,7 @@ import copyClipboard from 'copy-to-clipboard'
 import Alert from '../../../../../components/Alert/Alert'
 import { MemberIcon } from '../../../../../components/Dao'
 import { getSystemContract } from '../../../../blockchain/helpers'
+import { useNavigate } from 'react-router-dom'
 
 const getUsernameOptions = async (input: string) => {
     if (input.indexOf('@') >= 0) {
@@ -228,6 +229,7 @@ type TFormValues = {
 }
 
 const MemberAddForm = () => {
+    const navigate = useNavigate()
     const dao = useDao()
     const { createMember, createInvitation } = useCreateDaoMember()
     const [transition, setTransition] = useState<{ form: boolean; success: boolean }>({
@@ -243,8 +245,11 @@ const MemberAddForm = () => {
                 allowance: parseInt(item.allowance),
                 comment: item.comment,
             }))
-            await createMember(args)
+            const { eventaddr } = await createMember(args)
             setTransition({ form: false, success: true })
+            if (eventaddr) {
+                navigate(`/o/${dao.details.name}/events/${eventaddr}`)
+            }
         } catch (e: any) {
             console.error(e.message)
         }

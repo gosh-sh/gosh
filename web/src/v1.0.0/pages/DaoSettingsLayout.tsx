@@ -1,10 +1,10 @@
 import { Navigate, NavLink, useParams } from 'react-router-dom'
-import { classNames } from 'react-gosh'
 import { useDaoMember } from '../hooks/dao.hooks'
 import { withErrorBoundary } from 'react-error-boundary'
 import { withPin, withRouteAnimation } from '../hocs'
 import Alert from '../../components/Alert'
 import { AnimatedOutlet } from '../components/Outlet'
+import classNames from 'classnames'
 
 const DaoSettingsLayout = () => {
     const { daoname } = useParams()

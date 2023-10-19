@@ -1,4 +1,9 @@
-import { KeyPair, TonClient } from '@eversdk/core'
+import {
+    KeyPair,
+    ResultOfProcessMessage,
+    SignerKeysVariant,
+    TonClient,
+} from '@eversdk/core'
 import { Buffer } from 'buffer'
 import isUtf8 from 'isutf8'
 import { EGoshError, GoshError } from '../../errors'
@@ -197,6 +202,7 @@ import { GoshRoot } from '../goshroot'
 import { GoshBigTask } from './goshbigtask'
 import ABI from '../../resources/contracts/abi.json'
 import { AppConfig } from '../../appconfig'
+import { NotificationsAPI } from '../../apis/notifications'
 
 class GoshAdapter_6_1_0 implements IGoshAdapter {
     private static instance: GoshAdapter_6_1_0
@@ -1679,7 +1685,9 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         }
     }
 
-    async createSingleProposal(params: TEventSignleCreateProposalParams): Promise<void> {
+    async createSingleProposal(
+        params: TEventSignleCreateProposalParams,
+    ): Promise<string | null> {
         if (!this.wallet) {
             throw new GoshError(EGoshError.WALLET_UNDEFINED)
         }
@@ -1691,14 +1699,17 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         const _reviewers = await this.getReviewers(reviewers)
         const smv = await this.getSmv()
         await smv.validateProposalStart()
-        await this.wallet.run('startOneProposal', {
+        const result = await this.wallet.run('startOneProposal', {
             proposal: cell,
             reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: await smv.getClientsCount(),
         })
+        return await this.getEventAddress(result)
     }
 
-    async createMultiProposal(params: TEventMultipleCreateProposalParams): Promise<void> {
+    async createMultiProposal(
+        params: TEventMultipleCreateProposalParams,
+    ): Promise<string | null> {
         if (!this.wallet) {
             throw new GoshError(EGoshError.WALLET_UNDEFINED)
         }
@@ -1711,12 +1722,13 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
         const _reviewers = await this.getReviewers(reviewers)
         const smv = await this.getSmv()
         await smv.validateProposalStart()
-        await this.wallet.run('startMultiProposal', {
+        const result = await this.wallet.run('startMultiProposal', {
             number: count,
             proposals: cell,
             reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: await smv.getClientsCount(),
         })
+        return await this.getEventAddress(result)
     }
 
     async createMultiProposalAsDao(
@@ -2406,6 +2418,33 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             message,
             answerId,
         })
+    }
+
+    async getEventAddress(result: ResultOfProcessMessage) {
+        if (!this.wallet) {
+            throw new GoshError(EGoshError.PROFILE_UNDEFINED)
+        }
+
+        const smv = await this.getSmv()
+        const locker = await smv.getLocker(this.wallet)
+        const decoded = await locker.decodeMessage(result.out_messages[0])
+        if (!decoded) {
+            console.error('Locker could not decode `startPlatform` message', {
+                msg_id: result.transaction.out_msgs,
+            })
+            return null
+        }
+
+        const prop_id = await AppConfig.goshroot.getEventPropIdFromCell(
+            decoded.value.staticCell,
+        )
+        const { value0 } = await this.wallet.runLocal(
+            'proposalAddressByAccount',
+            { acc: this.wallet.address, propId: prop_id },
+            undefined,
+            { useCachedBoc: true },
+        )
+        return value0 as string
     }
 
     private async _isAuthMember(): Promise<boolean> {
@@ -3633,13 +3672,40 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             return value0
         } else {
             const dao = await this._getDao()
-            await dao.createSingleProposal({
+            const eventaddr = await dao.createSingleProposal({
                 proposal: {
                     type: ESmvEventType.BRANCH_LOCK,
                     params: { repository, branch, comment },
                 },
                 reviewers,
             })
+
+            // Create notification
+            const signer = this.auth.wallet0.account.signer as any
+            const daoname = await dao.getName()
+            const reponame = await this.getName()
+            try {
+                const comment = `Add branch protection in DAO ${daoname} repostitory ${reponame}`
+                await NotificationsAPI.notifications.createNotificaton({
+                    data: {
+                        username: this.auth.username,
+                        payload: {
+                            daoname,
+                            type: 'dao_event_created',
+                            meta: {
+                                label: 'Add repository branch protection',
+                                comment,
+                                eventaddr,
+                            },
+                        },
+                    },
+                    keys: signer.keys,
+                })
+            } catch (e: any) {
+                console.warn('Post create event error', e.message)
+            }
+
+            return eventaddr
         }
     }
 
@@ -3667,13 +3733,40 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             return value0
         } else {
             const dao = await this._getDao()
-            await dao.createSingleProposal({
+            const eventaddr = await dao.createSingleProposal({
                 proposal: {
                     type: ESmvEventType.BRANCH_UNLOCK,
                     params: { repository, branch, comment },
                 },
                 reviewers,
             })
+
+            // Create notification
+            const signer = this.auth.wallet0.account.signer as any
+            const daoname = await dao.getName()
+            const reponame = await this.getName()
+            try {
+                const comment = `Remove branch protection in DAO ${daoname} repostitory ${reponame}`
+                await NotificationsAPI.notifications.createNotificaton({
+                    data: {
+                        username: this.auth.username,
+                        payload: {
+                            daoname,
+                            type: 'dao_event_created',
+                            meta: {
+                                label: 'Remove repository branch protection',
+                                comment,
+                                eventaddr,
+                            },
+                        },
+                    },
+                    keys: signer.keys,
+                })
+            } catch (e: any) {
+                console.warn('Post create event error', e.message)
+            }
+
+            return eventaddr
         }
     }
 
@@ -3701,7 +3794,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             task?: TTaskCommitConfig
             callback?: IPushCallback
         },
-    ): Promise<void> {
+    ): Promise<string | null> {
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
@@ -3882,6 +3975,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
 
         // Set commit or start PR proposal
+        const signer = this.auth.wallet0.account.signer as any
         const daoname = await (await this._getDao()).getName()
         const reponame = await this.getName()
         const patched = blobsData.filter(({ data }) => !!data.patch)
@@ -3896,13 +3990,26 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             }
 
             // Create notification
-            await AppConfig.db.from('nt_notification').insert({
-                daoname,
-                type: 'repo_commit_pushed',
-                meta: { reponame, branch, commit: commitHash },
-            })
+            try {
+                await NotificationsAPI.notifications.createNotificaton({
+                    data: {
+                        username: this.auth.username,
+                        payload: {
+                            daoname,
+                            type: 'repo_commit_pushed',
+                            meta: { reponame, branch, commit: commitHash },
+                        },
+                    },
+                    keys: signer.keys,
+                })
+            } catch (e: any) {
+                console.warn('Post create event error', e.message)
+            }
+
+            cb({ completed: true })
+            return null
         } else {
-            await this._startProposalForSetCommit(
+            const eventaddr = await this._startProposalForSetCommit(
                 branch,
                 commitHash,
                 patched.length,
@@ -3911,16 +4018,29 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             )
 
             // Create notification
-            await AppConfig.db.from('nt_notification').insert({
-                daoname,
-                type: 'dao_event_created',
-                meta: {
-                    label: 'Pull request',
-                    comment: `New pull request to repository ${reponame}`,
-                },
-            })
+            try {
+                await NotificationsAPI.notifications.createNotificaton({
+                    data: {
+                        username: this.auth.username,
+                        payload: {
+                            daoname,
+                            type: 'dao_event_created',
+                            meta: {
+                                label: 'Pull request',
+                                comment: `New pull request to repository ${reponame}`,
+                                eventaddr,
+                            },
+                        },
+                    },
+                    keys: signer.keys,
+                })
+            } catch (e: any) {
+                console.warn('Post create event error', e.message)
+            }
+
+            cb({ completed: true })
+            return eventaddr
         }
-        cb({ completed: true })
     }
 
     async pushUpgrade(
@@ -4157,7 +4277,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return value0
     }
 
-    private async _getSnapshot(options: {
+    async _getSnapshot(options: {
         fullpath?: string
         address?: TAddress
     }): Promise<IGoshSnapshot> {
@@ -4921,7 +5041,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             pubaddrreview: { [address: string]: boolean }
             pubaddrmanager: { [address: string]: boolean }
         },
-    ): Promise<void> {
+    ) {
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
@@ -4937,7 +5057,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         )
 
         const smvClientsCount = await this._validateProposalStart(0)
-        await this.auth.wallet0.run('startProposalForSetCommit', {
+        const result = await this.auth.wallet0.run('startProposalForSetCommit', {
             repoName: await this.getName(),
             branchName: branch,
             commit,
@@ -4948,6 +5068,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             num_clients: smvClientsCount,
             reviewers: _reviewers,
         })
+        return await dao.getEventAddress(result)
     }
 
     private async _getTaskCommitConfig(config?: TTaskCommitConfig) {
@@ -5354,7 +5475,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     }
 
     async getClientsCount(): Promise<number> {
-        const locker = await this._getLocker()
+        const locker = await this.getLocker()
         const { m_num_clients } = await locker.runLocal('m_num_clients', {})
         return parseInt(m_num_clients)
     }
@@ -5664,7 +5785,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     }
 
     private async _isLockerBusy(wallet?: IGoshWallet): Promise<boolean> {
-        const locker = await this._getLocker(wallet)
+        const locker = await this.getLocker(wallet)
         const { lockerBusy } = await locker.runLocal('lockerBusy', {})
         return lockerBusy
     }
@@ -5678,7 +5799,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
         return tip3VotingLocker
     }
 
-    private async _getLocker(wallet?: IGoshWallet): Promise<IGoshSmvLocker> {
+    async getLocker(wallet?: IGoshWallet): Promise<IGoshSmvLocker> {
         const address = await this._getLockerAddress(wallet)
         return new GoshSmvLocker(this.client, address)
     }
@@ -5686,7 +5807,7 @@ class GoshSmvAdapter implements IGoshSmvAdapter {
     private async _getLockerBalance(
         wallet?: IGoshWallet,
     ): Promise<{ total: number; locked: number }> {
-        const locker = await this._getLocker(wallet)
+        const locker = await this.getLocker(wallet)
         const { m_tokenBalance } = await locker.runLocal('m_tokenBalance', {})
         const { votes_locked } = await locker.runLocal('votes_locked', {})
         return { total: parseInt(m_tokenBalance), locked: parseInt(votes_locked) }

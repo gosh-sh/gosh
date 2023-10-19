@@ -119,7 +119,8 @@ export class AppConfig {
             goshver: versions,
             ipfs: import.meta.env.REACT_APP_IPFS || '',
             isDockerExt: import.meta.env.REACT_APP_ISDOCKEREXT === 'true',
-            db: AppConfig.supabase,
+            ntApiUrl: import.meta.env.REACT_APP_NOTIFICATIONS_API,
+            ntApiNet: import.meta.env.REACT_APP_NOTIFICATIONS_NET,
         }
         _AppConfig.setup(config)
     }

@@ -171,3 +171,12 @@ body,
 [data-pseudo-content--after]::after {
     content: attr(data-pseudo-content);
 }
+
+/**
+ * Markdown renderer table fix
+ */
+.markdown-body {
+    table {
+        @apply w-full;
+    }
+}

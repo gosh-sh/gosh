@@ -5,7 +5,7 @@ import { AppConfig } from './appconfig'
 import { GoshError } from './errors'
 import { TAddress, TTreeItem, TPaginatedAccountsResult } from './types'
 import { GoshAdapterFactory } from './gosh'
-import { Abi, DecodedMessageBody, abiJson } from '@eversdk/core'
+import { Abi, DecodedMessageBody, KeyPair, abiJson } from '@eversdk/core'
 
 export const retry = async (fn: Function, maxAttempts: number) => {
     const delay = (fn: Function, ms: number) => {
@@ -437,4 +437,11 @@ export const decodeMessageBody = async (
     } catch {
         return null
     }
+}
+
+export const signData = async (data: string, keys: KeyPair) => {
+    return await AppConfig.goshclient.crypto.sign({
+        unsigned: Buffer.from(data).toString('base64'),
+        keys,
+    })
 }

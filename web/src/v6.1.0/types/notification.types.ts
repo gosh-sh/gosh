@@ -3,6 +3,7 @@ export type TUserNotificationSettings = {
     data: {
         email: string | null
         email_enabled: boolean | null
+        app_enabled: boolean | null
     }
 }
 
@@ -11,4 +12,11 @@ export type TDaoNotificationSettings = {
     data: {
         types: { [name: string]: boolean }
     }
+}
+
+export type TUserNotificationList = {
+    isFetching: boolean
+    unread: number
+    daolist: { daoname: string; selected: boolean }[]
+    items: any[]
 }

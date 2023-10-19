@@ -25,13 +25,14 @@ const ToastError = (props: TToastErrorProps) => {
 
     return (
         <>
-            <h3 className="font-semibold">{error.title || 'Internal error'}</h3>
-            <p className="text-xs">{error.message}</p>
+            <h3 className="font-semibold">{error.name || 'Internal error'}</h3>
+            <p className="text-sm">{error.message}</p>
+            <p className="text-xs">{JSON.stringify(error)}</p>
             <CopyClipboard
                 label="Copy error message"
                 className="mt-3 text-xs"
                 componentProps={{
-                    text: error.message,
+                    text: JSON.stringify(error),
                 }}
             />
         </>

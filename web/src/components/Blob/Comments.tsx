@@ -9,7 +9,7 @@ import {
     faTimes,
 } from '@fortawesome/free-solid-svg-icons'
 import { useBlobComments } from '../../hooks/codecomment.hooks'
-import { useOutletContext } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { Field, Form, Formik, FormikHelpers } from 'formik'
 import { toast } from 'react-toastify'
 import { ToastError } from '../Toast'
@@ -19,7 +19,7 @@ import { faCheckCircle } from '@fortawesome/free-regular-svg-icons'
 import { Tooltip } from 'react-tooltip'
 import Loader from '../Loader/Loader'
 import moment from 'moment'
-import { useDao, useDaoMember } from '../../v5.1.0/hooks/dao.hooks'
+import { useDao } from 'react-gosh'
 
 const CommentBlock = (props: any) => {
     const { comment, className } = props
@@ -60,9 +60,9 @@ type TCodeCommentsProps = {
 }
 
 const CodeComments = (props: TCodeCommentsProps) => {
+    const urlparams = useParams()
     const { filename, multiple } = props
-    const { details: dao } = useDao()
-    const member = useDaoMember()
+    const dao = useDao(urlparams.daoname || urlparams.daoName || '')
     const {
         threads,
         toggleThread,
@@ -71,7 +71,7 @@ const CodeComments = (props: TCodeCommentsProps) => {
         getCommentsNext,
         submitComment,
     } = useBlobComments({
-        dao: dao._adapter!,
+        dao: dao.adapter!,
         filename,
         multiple,
     })
@@ -210,7 +210,7 @@ const CodeComments = (props: TCodeCommentsProps) => {
                                 </Button>
                             </div>
                             <div>
-                                {member.isMember && !thread.isResolved && (
+                                {dao.details?.isAuthMember && !thread.isResolved && (
                                     <div className="inline-block">
                                         <Formik
                                             initialValues={{ id: thread.id }}
@@ -281,7 +281,7 @@ const CodeComments = (props: TCodeCommentsProps) => {
                                 <CommentBlock key={i} comment={item} />
                             ))}
                         </div>
-                        {member.isMember && (
+                        {dao.details?.isAuthMember && (
                             <div className="mt-1 border rounded-lg overflow-hidden bg-gray-fafafd">
                                 <Formik
                                     initialValues={{ thread_id: thread.id, comment: '' }}

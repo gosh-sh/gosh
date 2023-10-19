@@ -17,7 +17,7 @@ export function useCreateRepository() {
     const { details: dao } = useDao()
     const member = useDaoMember()
     const setRepositories = useSetRecoilState(daoRepositoryListSelector(dao.name))
-    const { beforeCreateEvent } = useDaoHelpers()
+    const { beforeCreateEvent, afterCreateEvent } = useDaoHelpers()
     const [status, setStatus] = useRecoilState(
         appToastStatusSelector('__createrepository'),
     )
@@ -70,10 +70,11 @@ export function useCreateRepository() {
                     type: 'pending',
                     data: 'Create repository',
                 }))
-                await member.wallet.createRepository({
+                const comment = `Create repository ${name}`
+                const eventaddr = await member.wallet.createRepository({
                     name,
                     description,
-                    comment: `Create repository ${name}`,
+                    comment,
                     alone,
                 })
 
@@ -103,6 +104,10 @@ export function useCreateRepository() {
                         },
                     }))
                 } else {
+                    await afterCreateEvent(
+                        { label: 'Update DAO members', comment, eventaddr },
+                        { onPendingCallback: setStatus },
+                    )
                     setStatus((state) => ({
                         ...state,
                         type: 'success',
@@ -113,7 +118,7 @@ export function useCreateRepository() {
                     }))
                 }
 
-                return { repository: account, isEvent: !alone }
+                return { repository: account, eventaddr }
             } catch (e: any) {
                 setStatus((state) => ({ ...state, type: 'error', data: e }))
                 throw e
@@ -265,7 +270,7 @@ export function useCreateRepositoryTag() {
                     type: 'pending',
                     data: 'Create event',
                 }))
-                await member.wallet.createRepositoryTag({
+                const eventaddr = await member.wallet.createRepositoryTag({
                     reponame,
                     tags,
                     comment: comment || `Add tags for ${reponame} repository`,
@@ -279,6 +284,8 @@ export function useCreateRepositoryTag() {
                         content: 'Repository tags add event created',
                     },
                 }))
+
+                return { eventaddr }
             } catch (e: any) {
                 setStatus((state) => ({ ...state, type: 'error', data: e }))
                 throw e
@@ -316,7 +323,7 @@ export function useDeleteRepositoryTag() {
                     type: 'pending',
                     data: 'Create event',
                 }))
-                await member.wallet.deleteRepositoryTag({
+                const eventaddr = await member.wallet.deleteRepositoryTag({
                     reponame,
                     tags,
                     comment: comment || `Delete tags for ${reponame} repository`,
@@ -330,6 +337,8 @@ export function useDeleteRepositoryTag() {
                         content: 'Repository tags delete event created',
                     },
                 }))
+
+                return { eventaddr }
             } catch (e: any) {
                 setStatus((state) => ({ ...state, type: 'error', data: e }))
                 throw e
@@ -367,12 +376,11 @@ export function useUpdateRepositoryDescription() {
                     type: 'pending',
                     data: 'Create event',
                 }))
-                await member.wallet.updateRepositoryDescription({
+                const eventaddr = await member.wallet.updateRepositoryDescription({
                     reponame,
                     description,
                     comment: comment || `Update ${reponame} repository description`,
                 })
-
                 setStatus((state) => ({
                     ...state,
                     type: 'success',
@@ -381,6 +389,8 @@ export function useUpdateRepositoryDescription() {
                         content: 'Repository tags delete event created',
                     },
                 }))
+
+                return { eventaddr }
             } catch (e: any) {
                 setStatus((state) => ({ ...state, type: 'error', data: e }))
                 throw e

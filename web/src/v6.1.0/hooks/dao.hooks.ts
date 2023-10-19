@@ -66,6 +66,7 @@ import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
 import { Milestone } from '../blockchain/milestone'
 import { getGrantMapping } from '../components/Task'
 import { ENotificationType } from '../../types/notification.types'
+import { NotificationsAPI } from '../../apis/notifications'
 
 export function usePartnerDaoList(params: { initialize?: boolean } = {}) {
     const { initialize } = params
@@ -1216,6 +1217,7 @@ export function useDaoMemberList(
 }
 
 export function useDaoHelpers() {
+    const { user } = useUser()
     const { details: dao } = useDao()
     const member = useDaoMember()
 
@@ -1466,23 +1468,34 @@ export function useDaoHelpers() {
             onErrorCallback = nocallback,
         } = options
 
+        // Create DAO notification
         try {
-            onPendingCallback({ type: 'pending', data: 'Finalizing' })
-
-            // Create notification
-            const { error } = await supabase.client.from('nt_notification').insert({
-                daoname: dao.name,
-                type: ENotificationType.DAO_EVENT_CREATED,
-                meta,
-            })
-            if (error) {
-                console.warn('Create notification', error.message)
+            if (!user.username) {
+                throw new GoshError('Value error', 'Username undefined')
+            }
+            if (!user.keys) {
+                throw new GoshError('Value error', 'User keys undefined')
+            }
+            if (!dao.name) {
+                throw new GoshError('Value error', 'DAO name undefined')
             }
 
+            onPendingCallback({ type: 'pending', data: 'Finalizing' })
+            await NotificationsAPI.notifications.createNotificaton({
+                data: {
+                    username: user.username,
+                    payload: {
+                        daoname: dao.name,
+                        type: ENotificationType.DAO_EVENT_CREATED,
+                        meta,
+                    },
+                },
+                keys: user.keys,
+            })
             onSuccessCallback({ type: 'success', data: 'Completed' })
         } catch (e: any) {
             onErrorCallback({ type: 'error', data: e })
-            throw e
+            console.warn('Post create event error', e.message)
         }
     }
 
@@ -1654,11 +1667,13 @@ export function useCreateDaoMember() {
                 // Create add DAO members multi event
                 // Skip `member.wallet` check, because `beforeCreate` checks it
                 // Prepare balance for create event
+                let eventaddr: string | null = null
                 await beforeCreateEvent(0, { onPendingCallback: setStatus })
 
                 const notification = {
                     label: DaoEventType[EDaoEventType.DAO_MEMBER_ADD],
                     comment,
+                    eventaddr,
                 }
 
                 if (requestMembership) {
@@ -1666,8 +1681,15 @@ export function useCreateDaoMember() {
                         return { profile, allowance: 0, expired: 0 }
                     })
                     const daonames = _.flatten(profiles.map(({ daonames }) => daonames))
-                    await member.wallet!.createDaoMember({ members, daonames, comment })
-                    await afterCreateEvent(notification, { onPendingCallback: setStatus })
+                    eventaddr = await member.wallet!.createDaoMember({
+                        members,
+                        daonames,
+                        comment,
+                    })
+                    await afterCreateEvent(
+                        { ...notification, eventaddr },
+                        { onPendingCallback: setStatus },
+                    )
                 } else if (profiles.length > 0) {
                     const memberAddCells = profiles.map(({ profile, daonames }) => ({
                         type: EDaoEventType.DAO_MEMBER_ADD,
@@ -1682,7 +1704,7 @@ export function useCreateDaoMember() {
                             params: { profile, amount: allowance },
                         }),
                     )
-                    await member.wallet!.createMultiEvent({
+                    eventaddr = await member.wallet!.createMultiEvent({
                         proposals: [
                             ...memberAddCells,
                             { type: EDaoEventType.DELAY, params: {} },
@@ -1690,7 +1712,10 @@ export function useCreateDaoMember() {
                         ],
                         comment,
                     })
-                    await afterCreateEvent(notification, { onPendingCallback: setStatus })
+                    await afterCreateEvent(
+                        { ...notification, eventaddr },
+                        { onPendingCallback: setStatus },
+                    )
                 }
 
                 setStatus((state) => ({
@@ -1701,6 +1726,8 @@ export function useCreateDaoMember() {
                         content: 'Members add event created',
                     },
                 }))
+
+                return { eventaddr }
             } catch (e: any) {
                 setStatus((state) => ({ ...state, type: 'error', data: e }))
                 throw e
@@ -1811,7 +1838,7 @@ export function useDeleteDaoMember() {
                 type: EDaoEventType.DAO_MEMBER_DELETE,
                 params: { profile: [profile] },
             }))
-            await member.wallet!.createMultiEvent({
+            const eventaddr = await member.wallet!.createMultiEvent({
                 proposals: [...memberDeleteAllowanceCells, ...memberDeleteCells],
                 comment,
             })
@@ -1821,6 +1848,7 @@ export function useDeleteDaoMember() {
                 {
                     label: DaoEventType[EDaoEventType.DAO_MEMBER_DELETE],
                     comment,
+                    eventaddr,
                 },
                 { onPendingCallback: setStatus },
             )
@@ -1830,6 +1858,8 @@ export function useDeleteDaoMember() {
                 type: 'success',
                 data: { title: 'Remove DAO members', content: 'Event created' },
             }))
+
+            return { eventaddr }
         } catch (e: any) {
             setStatus((state) => ({ ...state, type: 'error', data: e }))
             throw e
@@ -1983,6 +2013,7 @@ export function useUpdateDaoMember() {
                 }
 
                 // Prepare balance for create event
+                let eventaddr: string | null = null
                 await beforeCreateEvent(20, { onPendingCallback: setStatus })
 
                 // Create update DAO member event
@@ -1992,9 +2023,9 @@ export function useUpdateDaoMember() {
                 } else if (events.length === 1) {
                     // TODO: Think how to make better
                     // @ts-ignore
-                    await member.wallet[events[0].fn](events[0].params)
+                    eventaddr = await member.wallet[events[0].fn](events[0].params)
                 } else {
-                    await member.wallet!.createMultiEvent({
+                    eventaddr = await member.wallet!.createMultiEvent({
                         proposals: events,
                         comment: comment || comments.join('\n'),
                     })
@@ -2005,6 +2036,7 @@ export function useUpdateDaoMember() {
                     {
                         label: 'Update DAO members',
                         comment: comment || comments.join('\n'),
+                        eventaddr,
                     },
                     { onPendingCallback: setStatus },
                 )
@@ -2017,6 +2049,8 @@ export function useUpdateDaoMember() {
                         content: 'Members update event created',
                     },
                 }))
+
+                return { eventaddr }
             } catch (e: any) {
                 setStatus((state) => ({ ...state, type: 'error', data: e }))
                 throw e
@@ -2482,13 +2516,17 @@ export function useUpgradeDao() {
 
                 // Create upgrade DAO event
                 // Skip `member.wallet` check, because `beforeCreate` checks it
-                await member.wallet!.upgradeDao({ version, description: comment })
+                const eventaddr = await member.wallet!.upgradeDao({
+                    version,
+                    description: comment,
+                })
 
                 // Event post create
                 await afterCreateEvent(
                     {
                         label: DaoEventType[EDaoEventType.DAO_UPGRADE],
                         comment,
+                        eventaddr,
                     },
                     { onPendingCallback: setStatus },
                 )
@@ -2498,6 +2536,8 @@ export function useUpgradeDao() {
                     type: 'success',
                     data: { title: 'Upgrade DAO', content: 'Event created' },
                 }))
+
+                return { eventaddr }
             } catch (e: any) {
                 setStatus((state) => ({ ...state, type: 'error', data: e }))
                 throw e
@@ -2632,7 +2672,10 @@ export function useUpgradeDaoComplete() {
         }))
         if (args.length === 1 || alone) {
             await executeByChunk(args, MAX_PARALLEL_WRITE, async (kwargs) => {
-                await wallet.createRepository({ ...kwargs, alone })
+                const eventaddr = await wallet.createRepository({ ...kwargs, alone })
+                if (eventaddr) {
+                    await afterCreateEvent({ label: kwargs.comment, eventaddr }, {})
+                }
             })
             isEvent = !alone
         } else if (args.length > 1) {
@@ -2640,27 +2683,21 @@ export function useUpgradeDaoComplete() {
                 splitByChunk(args, 50),
                 MAX_PARALLEL_WRITE,
                 async (chunk) => {
-                    await wallet.createMultiEvent({
+                    const comment = 'Upgrade repositories'
+                    const eventaddr = await wallet.createMultiEvent({
                         proposals: chunk.map((p) => ({
                             type: EDaoEventType.REPO_CREATE,
                             params: p,
                         })),
-                        comment: 'Upgrade repositories',
+                        comment,
                     })
+                    await afterCreateEvent(
+                        { label: comment, comment: `${comment} chunk`, eventaddr },
+                        {},
+                    )
                 },
             )
             isEvent = true
-        }
-
-        // Event post create
-        if (isEvent) {
-            await afterCreateEvent(
-                {
-                    label: 'Upgrade repositories',
-                    comment: args.map(({ name }) => name).join(', '),
-                },
-                { onPendingCallback: setStatus },
-            )
         }
 
         // Update DAO flag
@@ -2739,23 +2776,16 @@ export function useUpgradeDaoComplete() {
             splitByChunk(cells, 50),
             MAX_PARALLEL_WRITE,
             async (chunk) => {
-                await wallet.createMultiEvent({
+                const comment = DaoEventType[EDaoEventType.MILESTONE_UPGRADE]
+                const eventaddr = await wallet.createMultiEvent({
                     proposals: chunk,
-                    comment: DaoEventType[EDaoEventType.MILESTONE_UPGRADE],
+                    comment,
                 })
+                await afterCreateEvent(
+                    { label: comment, comment: `${comment} chunk`, eventaddr },
+                    {},
+                )
             },
-        )
-
-        // Event post create
-        await afterCreateEvent(
-            {
-                label: DaoEventType[EDaoEventType.MILESTONE_UPGRADE],
-                comment: cells
-                    .filter(({ type }) => type === EDaoEventType.MILESTONE_UPGRADE)
-                    .map(({ params }) => params.taskname)
-                    .join(', '),
-            },
-            { onPendingCallback: setStatus },
         )
 
         return { isEvent: true }
@@ -2847,23 +2877,16 @@ export function useUpgradeDaoComplete() {
             splitByChunk(cells, 50),
             MAX_PARALLEL_WRITE,
             async (chunk) => {
-                await wallet.createMultiEvent({
+                const comment = DaoEventType[EDaoEventType.TASK_UPGRADE]
+                const eventaddr = await wallet.createMultiEvent({
                     proposals: chunk,
-                    comment: DaoEventType[EDaoEventType.TASK_UPGRADE],
+                    comment,
                 })
+                await afterCreateEvent(
+                    { label: comment, comment: `${comment} chunk`, eventaddr },
+                    {},
+                )
             },
-        )
-
-        // Event post create
-        await afterCreateEvent(
-            {
-                label: DaoEventType[EDaoEventType.TASK_UPGRADE],
-                comment: cells
-                    .filter(({ type }) => type === EDaoEventType.TASK_UPGRADE)
-                    .map(({ params }) => params.taskname)
-                    .join(', '),
-            },
-            { onPendingCallback: setStatus },
         )
 
         return { isEvent: true }
@@ -2887,13 +2910,14 @@ export function useUpgradeDaoComplete() {
         if (!isMintOnPrev && isMintOnCurr) {
             const comment =
                 'This proposal will pass the Token Mint Disable flag on to the newer version of your DAO'
-            await wallet.disableMintDaoTokens({ comment })
+            const eventaddr = await wallet.disableMintDaoTokens({ comment })
             await afterCreateEvent(
                 {
                     label: DaoEventType[EDaoEventType.DAO_TOKEN_MINT_DISABLE],
                     comment,
+                    eventaddr,
                 },
-                { onPendingCallback: setStatus },
+                {},
             )
         }
     }
@@ -2986,6 +3010,8 @@ export function useUpgradeDaoComplete() {
                         : 'You can continue working with DAO',
                 },
             }))
+
+            return { isEvent }
         } catch (e: any) {
             setStatus((state) => ({ ...state, type: 'error', data: e }))
             throw e
@@ -3095,15 +3121,16 @@ export function useUpdateDaoSettings() {
                 }
 
                 // Prepare balance for create event
+                let eventaddr: string | null = null
                 await beforeCreateEvent(20, { onPendingCallback: setStatus })
 
                 // Create event/multievent
                 if (events.length === 1) {
                     // TODO: Think how to make better
                     // @ts-ignore
-                    await member.wallet[events[0].fn](events[0].params)
+                    eventaddr = await member.wallet[events[0].fn](events[0].params)
                 } else {
-                    await member.wallet.createMultiEvent({
+                    eventaddr = await member.wallet.createMultiEvent({
                         proposals: events,
                         comment: params.comment || 'Update DAO settings',
                     })
@@ -3111,7 +3138,7 @@ export function useUpdateDaoSettings() {
 
                 // Event post create
                 await afterCreateEvent(
-                    { label: 'Update DAO settings' },
+                    { label: 'Update DAO settings', eventaddr },
                     { onPendingCallback: setStatus },
                 )
 
@@ -3123,6 +3150,8 @@ export function useUpdateDaoSettings() {
                         content: 'Update DAO settings event created',
                     },
                 }))
+
+                return { eventaddr }
             } catch (e: any) {
                 setStatus((state) => ({ ...state, type: 'error', data: e }))
                 throw e
@@ -3188,7 +3217,11 @@ export function useMintDaoTokens() {
                     type: 'pending',
                     data: 'Minting tokens',
                 }))
-                await member.wallet.mintDaoTokens({ amount, comment, alone })
+                const eventaddr = await member.wallet.mintDaoTokens({
+                    amount,
+                    comment,
+                    alone,
+                })
 
                 // Event post create
                 if (!alone) {
@@ -3196,6 +3229,7 @@ export function useMintDaoTokens() {
                         {
                             label: DaoEventType[EDaoEventType.DAO_TOKEN_MINT],
                             comment,
+                            eventaddr,
                         },
                         { onPendingCallback: setStatus },
                     )
@@ -3211,7 +3245,7 @@ export function useMintDaoTokens() {
                     },
                 }))
 
-                return { isEvent: !alone }
+                return { eventaddr }
             } catch (e: any) {
                 setStatus((state) => ({ ...state, type: 'error', data: e }))
                 throw e
@@ -3281,6 +3315,7 @@ export function useSendDaoTokens() {
                 const { isMember } = await checkDaoWallet(profile.address)
 
                 // Prepare balance for create event (if not alone)
+                let eventaddr: string | null = null
                 const alone = dao.members?.length === 1
                 if (!alone) {
                     await beforeCreateEvent(20, { onPendingCallback: setStatus })
@@ -3303,13 +3338,13 @@ export function useSendDaoTokens() {
                 }
                 if (isVoting) {
                     if (isMember) {
-                        await member.wallet.addDaoVotingTokens(kwargs)
+                        eventaddr = await member.wallet.addDaoVotingTokens(kwargs)
                     } else {
                         const daonames =
                             usertype === EDaoMemberType.Dao
                                 ? [username.toLowerCase()]
                                 : [null]
-                        await member.wallet.createMultiEvent({
+                        eventaddr = await member.wallet.createMultiEvent({
                             proposals: [
                                 {
                                     type: EDaoEventType.DAO_MEMBER_ADD,
@@ -3335,16 +3370,13 @@ export function useSendDaoTokens() {
                         })
                     }
                 } else {
-                    await member.wallet.addDaoRegularTokens(kwargs)
+                    eventaddr = await member.wallet.addDaoRegularTokens(kwargs)
                 }
 
                 // Event post create
                 if (!alone) {
                     await afterCreateEvent(
-                        {
-                            label: 'Send DAO tokens',
-                            comment,
-                        },
+                        { label: 'Send DAO tokens', comment, eventaddr },
                         { onPendingCallback: setStatus },
                     )
                 }
@@ -3359,7 +3391,7 @@ export function useSendDaoTokens() {
                     },
                 }))
 
-                return { isEvent: !alone || (isVoting && !isMember) }
+                return { eventaddr }
             } catch (e: any) {
                 setStatus((state) => ({ ...state, type: 'error', data: e }))
                 throw e
@@ -3514,7 +3546,7 @@ export function useDaoInviteList(params: { initialize?: boolean } = {}) {
             }))
 
             // Create DAO member
-            await createMember(
+            const eventaddr = await createMember(
                 [
                     {
                         user: { name: item.username, type: 'user' },
@@ -3541,6 +3573,8 @@ export function useDaoInviteList(params: { initialize?: boolean } = {}) {
                 ...state,
                 items: state.items.filter((i) => i.id !== item.id),
             }))
+
+            return { eventaddr }
         } catch (e: any) {
             setStatus((state) => ({ ...state, type: 'error', data: e }))
             throw e
@@ -3893,7 +3927,7 @@ export function useCreateMilestone() {
                     type: 'pending',
                     data: 'Creating milestone',
                 }))
-                await member.wallet!.createMilestone({
+                const eventaddr = await member.wallet!.createMilestone({
                     reponame: params.reponame,
                     taskname: params.taskname,
                     grant: {
@@ -3919,6 +3953,7 @@ export function useCreateMilestone() {
                     {
                         label: DaoEventType[EDaoEventType.MILESTONE_CREATE],
                         comment,
+                        eventaddr,
                     },
                     { onPendingCallback: setStatus },
                 )
@@ -3931,6 +3966,8 @@ export function useCreateMilestone() {
                         content: 'Create milestone event created',
                     },
                 }))
+
+                return { eventaddr }
             } catch (e: any) {
                 setStatus((state) => ({ ...state, type: 'error', data: e }))
                 throw e
@@ -3967,7 +4004,7 @@ export function useDeleteMilestone() {
                     type: 'pending',
                     data: 'Deleting milestone',
                 }))
-                await member.wallet!.deleteMilestone({
+                const eventaddr = await member.wallet!.deleteMilestone({
                     reponame: params.reponame,
                     taskname: params.taskname,
                     comment,
@@ -3978,6 +4015,7 @@ export function useDeleteMilestone() {
                     {
                         label: DaoEventType[EDaoEventType.MILESTONE_DELETE],
                         comment,
+                        eventaddr,
                     },
                     { onPendingCallback: setStatus },
                 )
@@ -3990,6 +4028,8 @@ export function useDeleteMilestone() {
                         content: 'Delete milestone event created',
                     },
                 }))
+
+                return { eventaddr }
             } catch (e: any) {
                 setStatus((state) => ({ ...state, type: 'error', data: e }))
                 throw e
@@ -4026,7 +4066,7 @@ export function useCompleteMilestone() {
                     type: 'pending',
                     data: 'Completing milestone',
                 }))
-                await member.wallet!.completeMilestone({
+                const eventaddr = await member.wallet!.completeMilestone({
                     reponame: params.reponame,
                     taskname: params.taskname,
                     comment,
@@ -4037,6 +4077,7 @@ export function useCompleteMilestone() {
                     {
                         label: DaoEventType[EDaoEventType.MILESTONE_COMPLETE],
                         comment,
+                        eventaddr,
                     },
                     { onPendingCallback: setStatus },
                 )
@@ -4049,6 +4090,8 @@ export function useCompleteMilestone() {
                         content: 'Complete milestone event created',
                     },
                 }))
+
+                return { eventaddr }
             } catch (e: any) {
                 setStatus((state) => ({ ...state, type: 'error', data: e }))
                 throw e
@@ -4438,7 +4481,7 @@ export function useCreateTask() {
                     type: 'pending',
                     data: 'Creating task',
                 }))
-                await member.wallet!.createTask({
+                const eventaddr = await member.wallet!.createTask({
                     reponame: params.reponame,
                     taskname: params.taskname,
                     config: grant,
@@ -4454,6 +4497,8 @@ export function useCreateTask() {
                         content: 'Create task event created',
                     },
                 }))
+
+                return { eventaddr }
             } catch (e: any) {
                 setStatus((state) => ({ ...state, type: 'error', data: e }))
                 throw e
@@ -4489,7 +4534,11 @@ export function useDeleteTask() {
                     type: 'pending',
                     data: 'Deleting task',
                 }))
-                await member.wallet!.deleteTask({ reponame, taskname, comment })
+                const eventaddr = await member.wallet!.deleteTask({
+                    reponame,
+                    taskname,
+                    comment,
+                })
 
                 setStatus((state) => ({
                     ...state,
@@ -4499,6 +4548,8 @@ export function useDeleteTask() {
                         content: 'Delete task event created',
                     },
                 }))
+
+                return { eventaddr }
             } catch (e: any) {
                 setStatus((state) => ({ ...state, type: 'error', data: e }))
                 throw e

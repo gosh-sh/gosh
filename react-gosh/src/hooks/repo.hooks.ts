@@ -376,10 +376,11 @@ function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
     const lock = async (name: string) => {
         try {
             setProgress({ name, type: '(un)lock', isFetching: true, details: {} })
-            await repo.lockBranch({
+            const eventaddr = await repo.lockBranch({
                 repository: await repo.getName(),
                 branch: name.toLowerCase(),
             })
+            return { eventaddr }
         } catch (e) {
             throw e
         } finally {
@@ -390,10 +391,11 @@ function useBranchManagement(dao: TDao, repo: IGoshRepositoryAdapter) {
     const unlock = async (name: string) => {
         try {
             setProgress({ name, type: '(un)lock', isFetching: true, details: {} })
-            await repo.unlockBranch({
+            const eventaddr = await repo.unlockBranch({
                 repository: await repo.getName(),
                 branch: name.toLowerCase(),
             })
+            return { eventaddr }
         } catch (e) {
             throw e
         } finally {
@@ -903,13 +905,15 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branchName?: string) {
 
         // Continue push
         const comment = [title, message].filter((v) => !!v).join('\n\n')
-        await repo.push(branch.name, blobs, comment, isPullRequest, {
+        const eventaddr = await repo.push(branch.name, blobs, comment, isPullRequest, {
             tags,
             branchParent: parent,
             task,
             callback: pushCallback,
         })
         !isPullRequest && (await updateBranch(branch.name))
+
+        return eventaddr
     }
 
     const pushUpgrade = async (branch: string, commit: string, version: string) => {
@@ -1060,27 +1064,31 @@ function _useMergeRequest(
             MAX_PARALLEL_READ,
             async (treepath, index) => {
                 const { src, dst } = treepath
-                const srcFullPath = `${src.treeitem.commit}/${src.path}`
-                const _srcBlob = await srcRepo.getBlob({
-                    commit: srcBranch.commit.name,
+                const srcFullPath =
+                    srcRepo.getVersion() < '6.0.0'
+                        ? `${srcBranch.name}/${src.path}`
+                        : `${src.treeitem.commit}/${src.path}`
+                const _srcSnapshot = await srcRepo._getSnapshot({
                     fullpath: srcFullPath,
                 })
                 const srcBlob = await srcRepo.getCommitBlob(
-                    _srcBlob.address,
+                    _srcSnapshot.address,
                     src.path,
                     srcBranch.commit.name,
                 )
                 const srcContent = srcBlob.current
 
-                const dstFullPath = `${dst.treeitem?.commit}/${dst.path}`
+                const dstFullPath =
+                    dstRepo.getVersion() < '6.0.0'
+                        ? `${dstBranch.name}/${dst.path}`
+                        : `${dst.treeitem?.commit}/${dst.path}`
                 let dstContent: string | Buffer = ''
                 if (dst.path) {
-                    const _dstBlob = await dstRepo.getBlob({
-                        commit: dstBranch.commit.name,
+                    const _dstSnapshot = await dstRepo._getSnapshot({
                         fullpath: dstFullPath,
                     })
                     const dstBlob = await dstRepo.getCommitBlob(
-                        _dstBlob.address,
+                        _dstSnapshot.address,
                         dst.path,
                         dstBranch.commit.name,
                     )
@@ -1166,7 +1174,7 @@ function useMergeRequest(
         const { deleteSrcBranch, ...rest } = options
         const { name: srcCommit, version: srcVersion } = srcBranch!.commit
         await _pushUpgrade(srcBranch!.name, srcCommit, srcVersion)
-        await _push(title, buildProgress.items, {
+        const eventaddr = await _push(title, buildProgress.items, {
             ...rest,
             parent: squash ? undefined : srcBranch!.name,
         })
@@ -1174,6 +1182,8 @@ function useMergeRequest(
             await deleteBranch(srcBranch!.name)
             await updateBranches()
         }
+
+        return eventaddr
     }
 
     return {
