@@ -1065,12 +1065,11 @@ function _useMergeRequest(
             async (treepath, index) => {
                 const { src, dst } = treepath
                 const srcFullPath = `${src.treeitem.commit}/${src.path}`
-                const _srcBlob = await srcRepo.getBlob({
-                    commit: srcBranch.commit.name,
+                const _srcSnapshot = await srcRepo._getSnapshot({
                     fullpath: srcFullPath,
                 })
                 const srcBlob = await srcRepo.getCommitBlob(
-                    _srcBlob.address,
+                    _srcSnapshot.address,
                     src.path,
                     srcBranch.commit.name,
                 )
@@ -1079,12 +1078,11 @@ function _useMergeRequest(
                 const dstFullPath = `${dst.treeitem?.commit}/${dst.path}`
                 let dstContent: string | Buffer = ''
                 if (dst.path) {
-                    const _dstBlob = await dstRepo.getBlob({
-                        commit: dstBranch.commit.name,
+                    const _dstSnapshot = await dstRepo._getSnapshot({
                         fullpath: dstFullPath,
                     })
                     const dstBlob = await dstRepo.getCommitBlob(
-                        _dstBlob.address,
+                        _dstSnapshot.address,
                         dst.path,
                         dstBranch.commit.name,
                     )

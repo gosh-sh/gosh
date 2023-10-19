@@ -3477,7 +3477,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         return value0
     }
 
-    private async _getSnapshot(options: {
+    async _getSnapshot(options: {
         fullpath?: string
         address?: TAddress
     }): Promise<IGoshSnapshot> {
