@@ -58,10 +58,6 @@ contract SystemContract is Modifiers {
         GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), nameDao), pubaddr, 0)).returnTokenToDao{value: 0.1 ton, flag: 1}(value);
     }
 
-    function setTrusted(address trusted) public onlyOwner accept {
-        _trusted = trusted;
-    }
-
     function sendTokenToRoot(string namedao, uint256 pubkey, uint128 value, RootData root) public view {
         address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao);
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
@@ -409,6 +405,10 @@ contract SystemContract is Modifiers {
     function setTopic(TvmCell code) public  onlyOwner accept {
         require(_flag == true, ERR_GOSH_UPDATE);
         _code[m_TopicCode] = code;
+    }
+
+    function setTrusted(address trusted) public onlyOwner accept {
+        _trusted = trusted;
     }
 
     //Getters

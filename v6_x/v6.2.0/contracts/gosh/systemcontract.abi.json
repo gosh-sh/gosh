@@ -22,14 +22,6 @@
 			]
 		},
 		{
-			"name": "setTrusted",
-			"inputs": [
-				{"name":"trusted","type":"address"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "sendTokenToRoot",
 			"inputs": [
 				{"name":"namedao","type":"string"},
@@ -610,6 +602,14 @@
 			"name": "setTopic",
 			"inputs": [
 				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setTrusted",
+			"inputs": [
+				{"name":"trusted","type":"address"}
 			],
 			"outputs": [
 			]
