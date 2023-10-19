@@ -222,7 +222,7 @@ class BaseContract {
                 }
             } catch (e: any) {
                 if (e.code === 414 && e.data?.exit_code === 60) {
-                    throw new GoshError(e.message)
+                    throw new GoshError('Blockchain error', e.message)
                 } else {
                     throw e
                 }
