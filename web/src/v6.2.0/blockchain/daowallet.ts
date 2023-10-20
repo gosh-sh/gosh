@@ -336,6 +336,27 @@ export class DaoWallet extends BaseContract {
         }
     }
 
+    async deleteRepository(params: {
+        name: string
+        comment?: string
+        reviewers?: string[]
+        cell?: boolean
+    }) {
+        const { name, comment = '', reviewers = [], cell } = params
+        const cellParams = { nameRepo: name.toLowerCase(), comment }
+
+        if (cell) {
+            const { value0 } = await this.runLocal(
+                'getCellForDestroyRepository',
+                cellParams,
+            )
+            return value0 as string
+        } else {
+            const cell: any = await this.deleteRepository({ ...params, cell: true })
+            return await this.createSingleEvent({ cell, reviewers })
+        }
+    }
+
     async createCommitTag(tag: TGoshCommitTag) {
         await this.run('deployTag', {
             repoName: tag.reponame,
@@ -1210,6 +1231,9 @@ export class DaoWallet extends BaseContract {
                 }
                 if (type === EDaoEventType.MILESTONE_UPGRADE) {
                     return await this.upgradeMilestone({ ...params, cell: true })
+                }
+                if (type === EDaoEventType.REPO_DELETE) {
+                    return await this.deleteRepository({ ...params, cell: true })
                 }
                 return null
             },

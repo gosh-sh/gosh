@@ -59,6 +59,7 @@ export const DaoEventType: { [key: number]: string } = {
     42: 'Delete milestone',
     43: 'Create milestone',
     44: 'Upgrade milestone',
+    46: 'Delete repository',
 }
 
 export const NotificationType: { [key: string]: string } = {

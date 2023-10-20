@@ -1,7 +1,6 @@
-import { KeyPair, signerKeys, TonClient } from '@eversdk/core'
+import { KeyPair, TonClient } from '@eversdk/core'
 import { BaseContract } from './contract'
 import { whileFinite } from '../utils'
-// import { executeByChunk } from '../helpers'
 import UserProfileABI from './abi/profile.abi.json'
 import { DaoProfile } from './daoprofile'
 import { EGoshError, GoshError } from '../errors'

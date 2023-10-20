@@ -19,7 +19,7 @@ const RepositoryCreateModal = () => {
     const navigate = useNavigate()
     const setModal = useSetRecoilState(appModalStateAtom)
     const dao = useDao()
-    const { create: createRepository } = useCreateRepository()
+    const { createRepository } = useCreateRepository()
 
     const onModalReset = () => {
         setModal((state) => ({ ...state, isOpen: false }))

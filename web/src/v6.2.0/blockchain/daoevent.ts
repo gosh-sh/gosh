@@ -138,6 +138,8 @@ export class DaoEvent extends BaseContract {
             fn = 'getBigTaskProposalParams'
         } else if (type === EDaoEventType.MILESTONE_UPGRADE) {
             fn = 'getBigTaskUpgradeProposalParams'
+        } else if (type === EDaoEventType.REPO_DELETE) {
+            fn = 'getDestroyRepositoryProposalParams'
         } else if (type === EDaoEventType.MULTI_PROPOSAL) {
             const { num, data0 } = await this.runLocal('getDataFirst', {}, undefined, {
                 useCachedBoc: true,
@@ -414,6 +416,8 @@ export class DaoEvent extends BaseContract {
             fn = 'getBigTaskParamsData'
         } else if (type === EDaoEventType.MILESTONE_UPGRADE) {
             fn = 'getBigTaskUpgradeProposalParamsData'
+        } else if (type === EDaoEventType.REPO_DELETE) {
+            fn = 'getDestroyRepositoryProposalParamsData'
         } else if (type === EDaoEventType.DELAY) {
             return { type, label: DaoEventType[type], data: {} }
         } else {

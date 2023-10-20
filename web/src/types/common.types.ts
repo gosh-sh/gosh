@@ -47,4 +47,5 @@ export enum EDaoEventType {
     MILESTONE_DELETE = 42,
     MILESTONE_CREATE = 43,
     MILESTONE_UPGRADE = 44,
+    REPO_DELETE = 46,
 }

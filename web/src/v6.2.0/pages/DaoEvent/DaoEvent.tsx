@@ -29,6 +29,7 @@ import {
     MilestoneDeleteEvent,
     MilestoneCompleteEvent,
     MilestoneUpgradeEvent,
+    RepositoryDeleteEvent,
 } from './components'
 import { Tooltip } from 'react-tooltip'
 import { useCallback, useEffect, useRef } from 'react'
@@ -266,6 +267,12 @@ const DaoEventPageInner = (props: { address: string }) => {
                             )}
                             {event.type === EDaoEventType.MILESTONE_UPGRADE && (
                                 <MilestoneUpgradeEvent data={event.data} />
+                            )}
+                            {event.type === EDaoEventType.REPO_DELETE && (
+                                <RepositoryDeleteEvent
+                                    data={event.data}
+                                    isCompleted={event.status.completed}
+                                />
                             )}
                             {event.type === EDaoEventType.MULTI_PROPOSAL && (
                                 <MultiEvent event={event} />

@@ -700,6 +700,16 @@
 			]
 		},
 		{
+			"name": "getDestroyRepositoryProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
 			"name": "getIndexProposalParamsData",
 			"inputs": [
 				{"name":"Data","type":"cell"}
@@ -1016,6 +1026,17 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"result","type":"bool"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getDestroyRepositoryProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
 				{"name":"comment","type":"string"}
 			]
 		},
