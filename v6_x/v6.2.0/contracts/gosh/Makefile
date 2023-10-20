@@ -4,7 +4,7 @@ KEYS_PATH = ${CURDIR}
 EXTRA_DOCKER_ARGS = --network=host --add-host localnode:127.0.0.1
 
 clean:
-	rm -f *.tvc *.abi.json *.code
+	rm -f *.tvc *.abi.json *.code *.debug.json
 	rm -rf .solc_imports
 	rm -rf .sold_imports
 
@@ -16,7 +16,6 @@ build-contracts:
 	done
 	for i in $(tvcs); do \
 		../compiler/sold --tvm-version gosh $$i.sol || exit $$@; \
-		../compiler/tvm_linker compile $$i.code -o $$i.tvc --lib ../compiler/stdlib_sol.tvm || exit $$@; \
 		if [ "${target-dir}" != "" ] ; then cp $$i.* ${target-dir}/ ; fi; \
 	done
 	rm *.debug.json;
@@ -26,10 +25,7 @@ build-contracts:
 
 clean-contracts:
 	for i in $(cpfl); do \
-		rm $$i.sol  || exit $$@; \
-		rm $$i.code || exit $$@; \
-		rm $$i.tvc || exit $$@; \
-		rm $$i.abi.json || exit $$@; \
+		rm $$i.*  || exit $$@; \
 		if [ "${target-dir}" != "" ] ; then cp $$i.* ${target-dir}/ ; fi; \
 	done
 
