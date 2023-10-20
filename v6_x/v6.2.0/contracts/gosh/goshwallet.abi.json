@@ -604,16 +604,6 @@
 			]
 		},
 		{
-			"name": "startProposalForDestroyRepository",
-			"inputs": [
-				{"name":"nameRepo","type":"string"},
-				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "getCellForDestroyRepository",
 			"inputs": [
 				{"name":"nameRepo","type":"string"},

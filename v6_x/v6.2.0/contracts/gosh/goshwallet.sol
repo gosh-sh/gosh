@@ -743,17 +743,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _deployRepository(nameRepo, descr, previous);
         getMoney();
     }
-
-    function startProposalForDestroyRepository(
-        string nameRepo,
-        uint128 num_clients , 
-        address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
-        uint256 proposalKind = DESTROY_REPOSITORY_PROPOSAL_KIND;
-        TvmCell c = abi.encode(proposalKind, nameRepo, block.timestamp);
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers);
-        getMoney();
-    }
     
     function getCellForDestroyRepository(
         string nameRepo,
