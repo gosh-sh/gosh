@@ -254,5 +254,15 @@ contract VersionController is Modifiers {
     function getVersion() external pure returns(string, string) {
         return ("versioncontroller", _version);
     }
+
+    function getHashCell(TvmCell state) external pure returns(uint256) {
+        return tvm.hash(state);
+    }
+
+    function getPropIdFromCell(TvmCell propData) external pure returns(uint256) {
+        TvmSlice s = propData.toSlice();
+        (,, uint256 propid) = s.load(uint8, address, uint256);
+        return propid;
+    }
 }
 
