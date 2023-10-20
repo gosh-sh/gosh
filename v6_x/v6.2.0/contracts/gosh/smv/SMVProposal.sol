@@ -610,9 +610,9 @@ function getDaoTransferTokenProposalParams () external view
 }
 
 function getDestroyRepositoryProposalParams () external view
-         returns(uint256  proposalKind,  string repoName)
+         returns(uint256  proposalKind,  string repoName, string comment)
 {
-    (proposalKind, repoName, ) = abi.decode(propData, (uint256, string, uint32));
+    (proposalKind, repoName, comment, ) = abi.decode(propData, (uint256, string, string, uint32));
 }
 
 function getIndexProposalParamsData (TvmCell Data) external pure
@@ -789,9 +789,9 @@ function getChangeHideVotingResultProposalParamsData (TvmCell Data) external pur
 }
 
 function getDestroyRepositoryProposalParamsData (TvmCell Data) external pure
-         returns(uint256  proposalKind,  string repoName)
+         returns(uint256  proposalKind,  string repoName, string comment)
 {
-    (proposalKind, repoName, ) = abi.decode(Data, (uint256, string, uint32));
+    (proposalKind, repoName, comment, ) = abi.decode(Data, (uint256, string, string, uint32));
 }
 
 function getChangeAllowDiscussionProposalParamsData (TvmCell Data) external pure

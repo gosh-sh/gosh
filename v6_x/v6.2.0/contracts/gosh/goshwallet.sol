@@ -746,18 +746,19 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     function getCellForDestroyRepository(
         string nameRepo,
+        string comment,
         optional(uint32) time
     ) external pure returns(TvmCell) {
         uint256 proposalKind = DESTROY_REPOSITORY_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
-        return abi.encode(proposalKind, nameRepo, time.get());
+        return abi.encode(proposalKind, nameRepo, comment, time.get());
     }
 
     function _destroyRepository(string nameRepo) private {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);        
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, nameRepo);
-        Repository(repo).destroyRepo(_pubaddr, _index);
+        Repository(repo).destroyRepo{value: 0.1 ton, flag: 1}(_pubaddr, _index);
         getMoney();
     }
     
@@ -2327,7 +2328,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 if (typetr == 2) { _destroyIndex(data, index); }
             } else 
             if (kind == DESTROY_REPOSITORY_PROPOSAL_KIND) {
-                (,string repoName,) = abi.decode(propData,(uint256, string, uint32));
+                (,string repoName,,) = abi.decode(propData,(uint256, string, string, uint32));
                 _destroyRepository(repoName);
             }
         }

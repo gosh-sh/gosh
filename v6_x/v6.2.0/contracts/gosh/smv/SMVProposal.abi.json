@@ -705,7 +705,8 @@
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
-				{"name":"repoName","type":"string"}
+				{"name":"repoName","type":"string"},
+				{"name":"comment","type":"string"}
 			]
 		},
 		{
@@ -1035,7 +1036,8 @@
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
-				{"name":"repoName","type":"string"}
+				{"name":"repoName","type":"string"},
+				{"name":"comment","type":"string"}
 			]
 		},
 		{

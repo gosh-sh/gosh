@@ -607,6 +607,7 @@
 			"name": "getCellForDestroyRepository",
 			"inputs": [
 				{"name":"nameRepo","type":"string"},
+				{"name":"comment","type":"string"},
 				{"name":"time","type":"optional(uint32)"}
 			],
 			"outputs": [
