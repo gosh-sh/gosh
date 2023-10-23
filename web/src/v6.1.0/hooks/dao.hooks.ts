@@ -3546,7 +3546,7 @@ export function useDaoInviteList(params: { initialize?: boolean } = {}) {
             }))
 
             // Create DAO member
-            const eventaddr = await createMember(
+            const { eventaddr } = await createMember(
                 [
                     {
                         user: { name: item.username, type: 'user' },
