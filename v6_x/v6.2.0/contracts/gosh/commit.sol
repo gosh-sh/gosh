@@ -229,6 +229,7 @@ contract Commit is Modifiers {
         getMoney();
         if (_isCorrect == true) {
             Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch, branchcommit, _nameCommit, _number, _numcommits, _task, true); 
+            return;
         }
         if (_initupgrade == true) { SendDiffAll(branch, branchcommit, number, numcommits, task, isUpgrade); return; }
         Tree(_tree).SendDiff2{value: 0.2 ton, flag: 1}(_nameCommit, branch, branchcommit, number, numcommits, task, isUpgrade);
@@ -274,7 +275,8 @@ contract Commit is Modifiers {
         tvm.accept();
         getMoney();
         if (_isCorrect == true) {
-            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch, branchcommit, _nameCommit, _number, _numcommits, _task, true); 
+            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch, branchcommit, _nameCommit, _number, _numcommits, _task, true);
+            return; 
         }
         require(_initupgrade == false, ERR_WRONG_UPGRADE_STATUS);
         require(_continueChain == false, ERR_PROCCESS_IS_EXIST);
