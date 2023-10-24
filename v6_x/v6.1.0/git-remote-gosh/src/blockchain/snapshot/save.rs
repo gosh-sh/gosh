@@ -120,6 +120,7 @@ pub trait DeployDiff {
         index1: u32,
         index2: u32,
         last: bool,
+        expire: u32,
     ) -> anyhow::Result<String>;
 }
 
@@ -183,6 +184,7 @@ impl DeployDiff for Everscale {
         index1: u32,
         index2: u32,
         last: bool,
+        expire: u32,
     ) -> anyhow::Result<String> {
         tracing::trace!(
             "construct_deploy_diff_message: repo_name={}, branch_name={}, commit_id={}, index1={}, index2={}, last={}",
@@ -206,15 +208,16 @@ impl DeployDiff for Everscale {
 
         let wallet_contract = wallet.take_one().await?;
         tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
-        let (_, boc) = self
+        let (message_id, boc) = self
             .construct_boc(
                 wallet_contract.deref(),
                 "deployDiff",
                 Some(serde_json::to_value(args)?),
+                Some(expire),
             )
             .await?;
         drop(wallet_contract);
-        tracing::trace!("construct_deploy_diff_message done");
+        tracing::trace!("construct_deploy_diff_message done: {message_id}");
         Ok(boc)
     }
 }

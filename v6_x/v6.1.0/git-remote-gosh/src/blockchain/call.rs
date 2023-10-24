@@ -11,7 +11,7 @@ use std::{
     time::{Duration, Instant},
 };
 use ton_client::{
-    abi::{CallSet, ParamsOfEncodeMessage, ResultOfEncodeMessage, Signer},
+    abi::{CallSet, ParamsOfEncodeMessage, ResultOfEncodeMessage, Signer, FunctionHeader},
     processing::{
         MessageSendingParams, ParamsOfProcessMessage, ParamsOfSendMessage,
         ResultOfProcessMessage, ResultOfSendMessage, ParamsOfSendMessages,
@@ -51,6 +51,7 @@ pub trait BlockchainCall {
         contract: &C,
         function_name: &str,
         args: Option<serde_json::Value>,
+        expire: Option<u32>,
     ) -> anyhow::Result<(String, String)>
     where
         C: ContractInfo + Sync;
@@ -138,7 +139,8 @@ impl BlockchainCall for Everscale {
             expected_address,
         );
 
-        let (message_id, message) = self.construct_boc(contract, function_name, args).await?;
+        let (message_id, message) =
+            self.construct_boc(contract, function_name, args, None).await?;
 
         tracing::trace!("sending message ({message_id}) to {}", contract.get_address());
         let ResultOfSendMessage {
@@ -223,6 +225,7 @@ impl BlockchainCall for Everscale {
         contract: &C,
         function_name: &str,
         args: Option<serde_json::Value>,
+        expire: Option<u32>,
     ) -> anyhow::Result<(String, String)>
     where
         C: ContractInfo + Sync,
@@ -234,7 +237,14 @@ impl BlockchainCall for Everscale {
             args,
         );
         let call_set = match args {
-            Some(value) => CallSet::some_with_function_and_input(function_name, value),
+            Some(value) => Some(CallSet {
+                function_name: function_name.into(),
+                header: Some(FunctionHeader {
+                    expire,
+                    ..Default::default()
+                }),
+                input: Some(value)
+            }),
             None => CallSet::some_with_function(function_name),
         };
         let signer = match contract.get_keys() {

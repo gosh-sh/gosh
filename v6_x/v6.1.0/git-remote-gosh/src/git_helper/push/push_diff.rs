@@ -213,15 +213,19 @@ pub async fn inner_push_diff(
 }
 
 #[instrument(level = "info", skip_all)]
-pub async fn prepush_diff(
-    blockchain: &impl BlockchainService,
-    repo_name: String,
+pub async fn prepush_diff<B>(
+    blockchain: &B,
+    repo_name: &str,
     wallet: &UserWallet,
     ipfs_endpoint: &str,
     last_commit_id: &git_hash::ObjectId,
     diff_address: &str,
     database: Arc<GoshDB>,
-) -> anyhow::Result<String> {
+    expire: u32,
+) -> anyhow::Result<String>
+where
+    B: BlockchainService,
+{
     let (parallel_diff, diff_coordinate, is_last) = database.get_diff(diff_address)?;
 
     let commit_id = parallel_diff.commit_id.to_string();
@@ -327,13 +331,14 @@ pub async fn prepush_diff(
     let boc = blockchain
         .construct_deploy_diff_message(
             &wallet,
-            repo_name,
+            repo_name.to_owned(),
             branch_name.to_string(),
             last_commit_id.to_string(),
             diff,
             diff_coordinate.index_of_parallel_thread,
             diff_coordinate.order_of_diff_in_the_parallel_thread,
             is_last,
+            expire,
         )
         .await?;
 
