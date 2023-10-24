@@ -44,8 +44,8 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
                 allowance: parseInt(item.allowance.toString()),
                 _allowance: parseInt(item._allowance),
             }))
-            await updateMember(items, values.comment)
-            navigate(`/o/${dao.details.name}/events`)
+            const { eventaddr } = await updateMember(items, values.comment)
+            navigate(`/o/${dao.details.name}/events/${eventaddr || ''}`)
         } catch (e: any) {
             console.error(e.message)
         }

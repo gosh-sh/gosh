@@ -22,8 +22,16 @@ const DaoInvitationSubmit = (props: TDaoInvitationSubmitProps) => {
     const onFormSubmit = async (values: { comment: string }) => {
         try {
             const { comment } = values
-            await create({ id: tokenId, token: '', username, allowance: 0, comment })
-            navigate(`/o/${dao.details.name}/events`)
+            const { eventaddr } = await create({
+                id: tokenId,
+                token: '',
+                username,
+                allowance: 0,
+                comment,
+            })
+            if (eventaddr) {
+                navigate(`/o/${dao.details.name}/events/${eventaddr}`)
+            }
         } catch (e: any) {
             console.error(e.message)
         }

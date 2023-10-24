@@ -217,6 +217,18 @@ class BaseContract implements IContract {
         return result.decoded?.output
     }
 
+    async decodeMessage(boc: string): Promise<DecodedMessageBody | null> {
+        try {
+            return await this.account.client.abi.decode_message({
+                abi: this.account.abi,
+                message: boc,
+                allow_partial: true,
+            })
+        } catch {
+            return null
+        }
+    }
+
     async decodeMessageBody(
         body: string,
         type: number,

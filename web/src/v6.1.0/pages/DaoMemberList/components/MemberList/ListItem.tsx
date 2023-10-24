@@ -78,8 +78,8 @@ const ListItem = (props: TListItemProps) => {
     const onDelete = async (user: { username: string; usertype: EDaoMemberType }) => {
         if (window.confirm('Delete member?')) {
             try {
-                await deleteMember([user])
-                navigate(`/o/${dao.details.name}/events`)
+                const { eventaddr } = await deleteMember([user])
+                navigate(`/o/${dao.details.name}/events/${eventaddr || ''}`)
             } catch (e: any) {
                 console.error(e.message)
             }

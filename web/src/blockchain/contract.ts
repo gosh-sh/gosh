@@ -222,7 +222,7 @@ class BaseContract {
                 }
             } catch (e: any) {
                 if (e.code === 414 && e.data?.exit_code === 60) {
-                    throw new GoshError(e.message)
+                    throw new GoshError('Blockchain error', e.message)
                 } else {
                     throw e
                 }
@@ -242,6 +242,18 @@ class BaseContract {
                 abi: this.account.abi,
                 body,
                 is_internal: type === 0,
+                allow_partial: true,
+            })
+        } catch {
+            return null
+        }
+    }
+
+    async decodeMessage(boc: string): Promise<DecodedMessageBody | null> {
+        try {
+            return await this.account.client.abi.decode_message({
+                abi: this.account.abi,
+                message: boc,
                 allow_partial: true,
             })
         } catch {

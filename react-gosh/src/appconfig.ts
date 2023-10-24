@@ -9,6 +9,8 @@ class AppConfig {
     static versions: { [ver: string]: string }
     static goshipfs: string
     static dockerclient?: any
+    static ntApiUrl?: string
+    static ntApiNet?: string
 
     static setup(params: {
         goshclient: ClientConfig
@@ -16,8 +18,11 @@ class AppConfig {
         goshver: { [ver: string]: string }
         ipfs: string
         isDockerExt: boolean
+        ntApiUrl?: string
+        ntApiNet?: string
     }) {
-        const { goshclient, goshroot, goshver, ipfs, isDockerExt } = params
+        const { goshclient, goshroot, goshver, ipfs, isDockerExt, ntApiUrl, ntApiNet } =
+            params
         if (!goshroot) throw Error('Gosh version controller address is undefined')
         if (!Object.keys(goshver).length) throw Error('Gosh versions undefined')
         if (!ipfs) throw Error('IPFS url is undefined')
@@ -27,6 +32,8 @@ class AppConfig {
         AppConfig.goshroot = new GoshRoot(AppConfig.goshclient, goshroot)
         AppConfig.versions = goshver
         AppConfig.goshipfs = ipfs
+        AppConfig.ntApiUrl = ntApiUrl
+        AppConfig.ntApiNet = ntApiNet
     }
 }
 

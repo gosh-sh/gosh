@@ -13,6 +13,7 @@ import { onExternalLinkClick } from '../../../helpers'
 import { useUser } from '../../hooks/user.hooks'
 import { AppConfig } from '../../../appconfig'
 import { ButtonLink } from '../../../components/Form'
+import { Notifications } from './Notifications'
 
 const Header = () => {
     const user = useUser()
@@ -118,7 +119,12 @@ const Header = () => {
                             {/* <Disclosure.Button className="btn btn--header btn--burger icon-burger" /> */}
 
                             {/* Menu dropdown (is used as for mobile, as for desktop for now) */}
-                            {user.persist.phrase && <DropdownMenu />}
+                            {user.persist.phrase && (
+                                <>
+                                    <Notifications />
+                                    <DropdownMenu />
+                                </>
+                            )}
                         </div>
 
                         <Disclosure.Panel className="sm:hidden">

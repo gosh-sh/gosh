@@ -19,9 +19,11 @@ const DaoUpgradeCompleteModal = () => {
 
     const onCompleteUpgrade = async () => {
         try {
-            await upgrade()
+            const { isEvent } = await upgrade()
             onModalReset()
-            navigate(`/o/${dao.details.name}/events`)
+            if (isEvent) {
+                navigate(`/o/${dao.details.name}/events`)
+            }
         } catch (e: any) {
             console.error(e.message)
         }

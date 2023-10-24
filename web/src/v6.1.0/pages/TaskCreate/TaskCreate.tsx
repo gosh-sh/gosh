@@ -57,8 +57,12 @@ const TaskCreatePage = () => {
     const onCreateTask = async (values: TFormValues) => {
         try {
             const { repository, name, ...rest } = values
-            await createTask({ reponame: repository, taskname: name, ...rest })
-            navigate(`/o/${dao.details.name}/events`)
+            const { eventaddr } = await createTask({
+                reponame: repository,
+                taskname: name,
+                ...rest,
+            })
+            navigate(`/o/${dao.details.name}/events/${eventaddr || ''}`)
         } catch (e: any) {
             console.error(e.message)
         }

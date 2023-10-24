@@ -12,8 +12,8 @@ import {
 import { MILESTONE_TAG } from '../../constants'
 import { getSystemContract } from './helpers'
 import _ from 'lodash'
-import { executeByChunk } from 'react-gosh'
 import { AppConfig } from '../../appconfig'
+import { executeByChunk } from '../../utils'
 
 export class Milestone extends BaseContract {
     constructor(client: TonClient, address: string) {

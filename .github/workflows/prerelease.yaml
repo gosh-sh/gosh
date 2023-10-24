@@ -55,54 +55,43 @@ jobs:
           # targets
           - result: git-remote-gosh-darwin-arm64
             target: aarch64-apple-darwin
-            os: macos-12
+            os: macos-13
 
           - result: git-remote-gosh-darwin-amd64
             target: x86_64-apple-darwin
-            os: macos-12
+            os: macos-13
 
           - result: git-remote-gosh-linux-arm64
             target: aarch64-unknown-linux-musl
-            os: ubuntu-22.04
+            os: ubuntu-latest
 
           - result: git-remote-gosh-linux-amd64
             target: x86_64-unknown-linux-musl
-            os: ubuntu-22.04
+            os: ubuntu-latest
 
           # cargo projects
           - bin: git-remote-gosh
             dir: gosh-dispatcher
           - bin: git-remote-gosh_v1_0_0
             dir: v1_x/git-remote-gosh
-            cache: true
           - bin: git-remote-gosh_v2_0_0
             dir: v2_x/git-remote-gosh
-            cache: true
           - bin: git-remote-gosh_v3_0_0
             dir: v3_x/git-remote-gosh
-            cache: true
           - bin: git-remote-gosh_v4_0_0
             dir: v4_x/git-remote-gosh
-            cache: true
           - bin: git-remote-gosh_v5_0_0
             dir: v5_x/v5.0.0/git-remote-gosh
-            cache: true
           - bin: git-remote-gosh_v5_1_0
             dir: v5_x/v5.1.0/git-remote-gosh
-            cache: true
           - bin: git-remote-gosh_v6_0_0
             dir: v6_x/v6.0.0/git-remote-gosh
-            cache: true
           - bin: git-remote-gosh_v6_1_0
             dir: v6_x/v6.1.0/git-remote-gosh
 
     name: B ${{ matrix.bin }} ${{ matrix.target }}
 
     env:
-      CACHE: false  # default env value
-      CACHE_RESULT_DIR: ${{ github.workspace }}/.result/${{ matrix.result }}
-      CACHE_RESULT_BIN: ${{ github.workspace }}/.result/${{ matrix.result }}/${{ matrix.bin }}
-
       CARGO_TERM_COLOR: always
       SCCACHE_GHA_VERSION: ${{ vars.SCCACHE_GHA_VERSION || 1 }} # Setting this env var enables the caching
       RUSTC_WRAPPER: sccache
@@ -118,26 +107,10 @@ jobs:
         run: |
           echo "VERSION=$(cat version.json | jq -r .version)" >> "$GITHUB_OUTPUT"
 
-      # - name: Setup result cache
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: |
-      #       .result
-      #       ${{ matrix.dir }}/target
-      #     key: builder-${{ matrix.target }}-result-${{ matrix.bin }}
-
       - name: Configure sccache
         uses: mozilla-actions/sccache-action@v0.0.3
 
-      - name: Check if can use cache
-        if: matrix.cache
-        run: |
-          if [[ -f ${{ env.CACHE_RESULT_BIN }} ]] ; then
-            echo "CACHE=true" >> $GITHUB_ENV
-          fi
-
       - name: Setup cargo cache
-        if: env.CACHE != 'true'
         uses: actions/cache@v3
         with:
           path: |
@@ -148,13 +121,12 @@ jobs:
           key: builder-${{ runner.os }}-cargo
 
       - name: Install Rust
-        if: env.CACHE != 'true'
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
 
       - name: Install Linux tools
-        if: env.CACHE != 'true' && startsWith(matrix.os, 'ubuntu-')
+        if: startsWith(matrix.os, 'ubuntu-')
         env:
           packages: >-
             build-essential
@@ -168,20 +140,15 @@ jobs:
           sudo apt update -yq
           sudo apt install -yq $packages
           pip3 install ziglang
+          [[ -f ~/.cargo/bin/cargo-zigbuild ]] || cargo install cargo-zigbuild
 
       - name: Install MacOS tools
-        if: env.CACHE != 'true' && startsWith(matrix.os, 'macos-')
+        if: startsWith(matrix.os, 'macos-')
         run: |
-          brew install protobuf zig
-
-      - name: Install common tools
-        if: env.CACHE != 'true'
-        run: |
-          [[ -f ~/.cargo/bin/cargo-zigbuild ]] || cargo install cargo-zigbuild
+          brew install protobuf
 
       - name: Build Binary ${{ matrix.dir }}/target/${{ matrix.target }}/release/${{ matrix.bin }}
         working-directory: ${{ matrix.dir }}
-        if: env.CACHE != 'true'
         env:
           CARGO_INCREMENTAL: 0  # important for cache size too
           CARGO_NET_RETRY: 10
@@ -189,19 +156,19 @@ jobs:
           RUSTUP_MAX_RETRIES: 10
         run: |
           cargo update
-          cargo zigbuild -r --target ${{ matrix.target }}
+
+          if [[ "${{ runner.os }}" == "macOS" ]]; then
+            cargo build -r --target ${{ matrix.target }}
+          else
+            cargo zigbuild -r --target ${{ matrix.target }}
+          fi
 
           ls -lA target/${{ matrix.target }}/release
-
-          mkdir -p ${{ env.CACHE_RESULT_DIR }}
-          cp target/${{ matrix.target }}/release/${{ matrix.bin }} ${{ env.CACHE_RESULT_BIN }}
-
-          ls -lA ${{ env.CACHE_RESULT_DIR }}
 
       - name: Artifact ${{ matrix.result }}
         uses: actions/upload-artifact@v3
         with:
-          path: ${{ env.CACHE_RESULT_BIN }}
+          path: ${{ matrix.dir }}/target/${{ matrix.target }}/release/${{ matrix.bin }}
           name: ${{ matrix.result }}--${{ matrix.bin }}
           if-no-files-found: error
           retention-days: 3
@@ -247,7 +214,7 @@ jobs:
         if: env.release != 'true'
         with:
           draft: true
-          tag_name: ${{ github.ref_name  }}-${{ github.run_number }}
+          tag_name: ${{ github.ref_name }}-${{ github.run_number }}
           files: |
             ${{ matrix.result }}.tar.gz
           body: ""

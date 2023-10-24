@@ -43,8 +43,8 @@ export const BranchesPage = () => {
 
     const onBranchLock = async (name: string) => {
         try {
-            await lockBranch(name)
-            navigate(`/o/${daoName}/events`, { replace: true })
+            const { eventaddr } = await lockBranch(name)
+            navigate(`/o/${daoName}/events/${eventaddr || ''}`, { replace: true })
         } catch (e: any) {
             console.error(e)
             toast.error(<ToastError error={e} />)
@@ -53,8 +53,8 @@ export const BranchesPage = () => {
 
     const onBranchUnlock = async (name: string) => {
         try {
-            await unlockBranch(name)
-            navigate(`/o/${daoName}/events`, { replace: true })
+            const { eventaddr } = await unlockBranch(name)
+            navigate(`/o/${daoName}/events/${eventaddr || ''}`, { replace: true })
         } catch (e: any) {
             console.error(e)
             toast.error(<ToastError error={e} />)

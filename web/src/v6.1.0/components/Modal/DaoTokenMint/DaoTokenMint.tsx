@@ -27,10 +27,10 @@ const DaoTokenMintModal = () => {
     const onSubmit = async (values: TFormValues) => {
         try {
             const { comment } = values
-            const { isEvent } = await mint({ amount: parseInt(values.amount), comment })
+            const { eventaddr } = await mint({ amount: parseInt(values.amount), comment })
             onModalReset()
-            if (isEvent) {
-                navigate(`/o/${dao.details.name}/events`)
+            if (eventaddr) {
+                navigate(`/o/${dao.details.name}/events/${eventaddr}`)
             }
         } catch (e: any) {
             console.error(e.message)
