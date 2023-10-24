@@ -135,7 +135,7 @@ impl ParallelDiffsUploadSupport {
     }
 
     #[instrument(level = "info", skip_all)]
-    pub async fn push_in_chunks(
+    pub async fn push_diffs_in_chunks(
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
     ) -> anyhow::Result<()> {
@@ -154,9 +154,10 @@ impl ParallelDiffsUploadSupport {
         let mut attempt = 0u32;
         loop {
             if attempt == max_attempts {
-                anyhow::bail!("Failed to deploy diffs. Undeployed diffs: {exp:?}");
+                anyhow::bail!("Failed to send deploy diff messages. Undeployed diffs: {exp:?}");
             }
 
+            let mut rest: Vec<BlockchainContractAddress> = vec![];
             for chunk in exp.chunks(chunk_size) {
                 let blockchain = context.blockchain.clone();
                 let dao_address: BlockchainContractAddress = context.dao_addr.clone();
@@ -166,7 +167,7 @@ impl ParallelDiffsUploadSupport {
                 let last_commit_id = self.last_commit_id.clone();
                 let database = context.get_db()?.clone();
 
-                push_chunk(
+                let mut unsent = push_chunk(
                     &blockchain,
                     &repo_name,
                     &dao_address,
@@ -176,6 +177,21 @@ impl ParallelDiffsUploadSupport {
                     database,
                     chunk,
                 ).await?;
+                rest.append(&mut unsent);
+            }
+
+            if rest.len() == 0 {
+                break;
+            } else {
+                exp = rest;
+            }
+            attempt += 1;
+        }
+
+        attempt = 0;
+        loop {
+            if attempt == max_attempts {
+                anyhow::bail!("Failed to deploy diffs. Undeployed diffs: {exp:?}");
             }
 
             let mut rest: Vec<BlockchainContractAddress> = vec![];
@@ -368,58 +384,44 @@ async fn push_chunk<'a, B>(
     last_commit_id: &'a git_hash::ObjectId,
     database: Arc<GoshDB>,
     chunk: &[BlockchainContractAddress],
-) -> anyhow::Result<()>
+) -> anyhow::Result<Vec<BlockchainContractAddress>>
 where
     B: BlockchainService,
 {
     let wallet = blockchain.user_wallet(dao_address, remote_network).await?;
 
-    let mut attempt = 0;
-    let max_attempts = 3;
-
     let mut diffs = chunk.to_vec();
+    let mut message_bocs: Vec<(String, Option<BlockchainContractAddress>)> = vec![];
 
-    loop {
-        if attempt >= max_attempts {
-            anyhow::bail!("Failed to send deploy diff messages. Undeployed diffs: {:?}", diffs.clone());
-        }
+    let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
+    let expire = now.as_secs() as u32 + 120; // todo remove magic num
 
-        let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
-        let expire = now.as_secs() as u32 + 120; // todo remove magic num
-
-        let mut message_bocs: Vec<(String, Option<BlockchainContractAddress>)> = vec![];
-
-        for addr in &diffs {
-            let wallet_contract = wallet.take_one().await?;
-            let diff_address = &String::from(addr.clone());
-            let boc = prepush_diff(
-                blockchain,
-                repo_name,
-                &wallet,
-                &ipfs_endpoint,
-                &last_commit_id,
-                &diff_address,
-                database.clone(),
-                expire,
-            ).await?;
-            message_bocs.push((boc, Some(addr.clone())));
-        }
-
-        let wait_until = expire + 5;
-        let queue_name = blockchain.send_messages(&message_bocs, wait_until).await?;
-
-        wait_chunk_until_send(blockchain, &mut diffs, queue_name).await?;
-
-        if diffs.len() == 0 {
-            tracing::trace!("sent whole chunk");
-            break;
-        }
-
-        tracing::trace!("failed to send {} messages", diffs.len());
-        attempt += 1;
+    for addr in &diffs {
+        let wallet_contract = wallet.take_one().await?;
+        let diff_address = &String::from(addr.clone());
+        let boc = prepush_diff(
+            blockchain,
+            repo_name,
+            &wallet,
+            &ipfs_endpoint,
+            &last_commit_id,
+            &diff_address,
+            database.clone(),
+            expire,
+        ).await?;
+        message_bocs.push((boc, Some(addr.clone())));
     }
 
-    Ok(())
+    let wait_until = expire + 5;
+    let queue_name = blockchain.send_messages(&message_bocs, wait_until).await?;
+
+    wait_chunk_until_send(blockchain, &mut diffs, queue_name).await?;
+
+    if diffs.len() > 0 {
+        tracing::trace!("failed to send {} messages", diffs.len());
+    }
+
+    Ok(diffs)
 }
 
 #[instrument(level = "info", skip_all)]
@@ -434,7 +436,7 @@ pub async fn wait_chunk_until_send(
     }
 
     let start = Instant::now();
-    let timeout = Duration::from_secs(180); // todo remove magic num
+    let timeout = Duration::from_secs(150); // todo remove magic num
 
     let expected_receipts_count = chunk.len();
     let mut receipts_count = 0;
@@ -470,7 +472,7 @@ pub async fn wait_chunk_until_send(
                     };
                     chunk.remove(
                         chunk.iter().position(|x| x == &diff_addr)
-                        .expect("unexpected: element must be exists")
+                        .expect("unexpected: element must exists")
                     );
                 },
                 MessageMonitoringStatus::Timeout => {
