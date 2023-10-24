@@ -123,8 +123,9 @@ contract Commit is Modifiers {
         getMoney();
     }
 
-    function allCorrect(uint128 number, string branch) public senderIs(_rootRepo){
+    function allCorrect(uint128 number, string branch, bool force) public senderIs(_rootRepo){
         tvm.accept();
+        if (force == true) { return; }
         _isCorrect = true;
 //        Tree(_tree).setCorrect{value: 0.1 ton, flag: 1}(_nameCommit);
         _timeaccept = block.timestamp;

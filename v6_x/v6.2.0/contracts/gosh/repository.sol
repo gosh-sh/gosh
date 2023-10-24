@@ -200,7 +200,7 @@ contract Repository is Modifiers{
 
     function correctCommit(string namecommit, string branch) public senderIs(_previousversion.get().addr) accept {
         _Branches[tvm.hash(branch)] = Item(branch, getCommitAddr(namecommit), version);
-        Commit(getCommitAddr(namecommit)).allCorrect{value: 0.1 ton, flag: 1}(0, branch);
+        Commit(getCommitAddr(namecommit)).allCorrect{value: 0.1 ton, flag: 1}(0, branch, false);
     }
 
     function changeDescription(address pubaddr, string descr, uint128 index) public {
@@ -271,7 +271,7 @@ contract Repository is Modifiers{
             ConfigCommitBase tasksend = ConfigCommitBase({task: taskf.task, commit: getCommitAddr(namecommit), number_commit: number_commit, pubaddrassign: taskf.pubaddrassign, pubaddrreview: taskf.pubaddrreview, pubaddrmanager: taskf.pubaddrmanager, daoMembers: taskf.daoMembers});
             Task(taskf.task).isReady{value: 0.1 ton, flag: 1}(tasksend);
         }
-        if (force == false) { Commit(getCommitAddr(namecommit)).allCorrect{value: 0.1 ton, flag: 1}(number, nameBranch); }
+        Commit(getCommitAddr(namecommit)).allCorrect{value: 0.1 ton, flag: 1}(number, nameBranch, force); 
     }
 
     function fromInitUpgrade2(string nameCommit, address commit, string ver, string branch) public view senderIs(getCommitAddr(nameCommit)) accept {
