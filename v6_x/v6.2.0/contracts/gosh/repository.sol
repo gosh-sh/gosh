@@ -257,11 +257,11 @@ contract Repository is Modifiers{
     }
 
     //Setters
-    function setCommit(string nameBranch, address oldcommit, string namecommit, uint128 number, uint128 number_commit, optional(ConfigCommit) task) public senderIs(getCommitAddr(namecommit)) {
+    function setCommit(string nameBranch, address oldcommit, string namecommit, uint128 number, uint128 number_commit, optional(ConfigCommit) task, bool force) public senderIs(getCommitAddr(namecommit)) {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_Branches.exists(tvm.hash(nameBranch)), ERR_BRANCH_NOT_EXIST);
         tvm.accept();
-        if (_Branches[tvm.hash(nameBranch)].commitaddr != oldcommit) {
+        if ((_Branches[tvm.hash(nameBranch)].commitaddr != oldcommit) && (force == false)) {
             Commit(getCommitAddr(namecommit)).NotCorrectRepo{value: 0.1 ton, flag: 1}(number);
             return;
         }
@@ -271,7 +271,7 @@ contract Repository is Modifiers{
             ConfigCommitBase tasksend = ConfigCommitBase({task: taskf.task, commit: getCommitAddr(namecommit), number_commit: number_commit, pubaddrassign: taskf.pubaddrassign, pubaddrreview: taskf.pubaddrreview, pubaddrmanager: taskf.pubaddrmanager, daoMembers: taskf.daoMembers});
             Task(taskf.task).isReady{value: 0.1 ton, flag: 1}(tasksend);
         }
-        Commit(getCommitAddr(namecommit)).allCorrect{value: 0.1 ton, flag: 1}(number, nameBranch);
+        if (force == false) { Commit(getCommitAddr(namecommit)).allCorrect{value: 0.1 ton, flag: 1}(number, nameBranch); }
     }
 
     function fromInitUpgrade2(string nameCommit, address commit, string ver, string branch) public view senderIs(getCommitAddr(nameCommit)) accept {

@@ -227,6 +227,9 @@ contract Commit is Modifiers {
     function SendDiff(string branch, address branchcommit, uint128 number, uint128 numcommits, optional(ConfigCommit) task, bool isUpgrade) public senderIs(_rootRepo){
         tvm.accept();
         getMoney();
+        if (_isCorrect == true) {
+            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch, branchcommit, _nameCommit, _number, _numcommits, _task, true); 
+        }
         if (_initupgrade == true) { SendDiffAll(branch, branchcommit, number, numcommits, task, isUpgrade); return; }
         Tree(_tree).SendDiff2{value: 0.2 ton, flag: 1}(_nameCommit, branch, branchcommit, number, numcommits, task, isUpgrade);
     }
@@ -270,6 +273,9 @@ contract Commit is Modifiers {
     function SendDiffSmv(string branch, address branchcommit, uint128 number, uint128 numcommits, optional(ConfigCommit) task) public senderIs(_rootRepo){
         tvm.accept();
         getMoney();
+        if (_isCorrect == true) {
+            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch, branchcommit, _nameCommit, _number, _numcommits, _task, true); 
+        }
         require(_initupgrade == false, ERR_WRONG_UPGRADE_STATUS);
         require(_continueChain == false, ERR_PROCCESS_IS_EXIST);
         require(_continueDiff == false, ERR_PROCCESS_IS_EXIST);
@@ -294,7 +300,7 @@ contract Commit is Modifiers {
             }
         }
         if (typer == TYPE_SET_COMMIT) {
-            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch.get(), branchcommit.get(), _nameCommit, _number, _numcommits, _task);
+            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch.get(), branchcommit.get(), _nameCommit, _number, _numcommits, _task, false);
             _number = 0;
         }
         getMoney();
@@ -446,7 +452,7 @@ contract Commit is Modifiers {
 
     function acceptAll(string branch, address branchCommit) public senderIs(address(this)) {
         if ((_commitcheck != false) && (_diffcheck != false)) {
-            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch, branchCommit, _nameCommit, _number, _numcommits, _task); 
+            Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch, branchCommit, _nameCommit, _number, _numcommits, _task, false); 
             _number = 0;
 //            Tree(_tree).checkFull{value: 0.14 ton, flag:1}(_nameCommit, branch, _rootRepo, _nameCommit, TYPE_SET_COMMIT, branchCommit);
         }
@@ -458,7 +464,7 @@ contract Commit is Modifiers {
     }
 
     function treeAcceptAfterCommit(string branch, address branchCommit) public senderIs(_tree) accept {
-        Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch, branchCommit, _nameCommit, _number, _numcommits, _task); 
+        Repository(_rootRepo).setCommit{value: 0.3 ton, bounce: true , flag: 1}(branch, branchCommit, _nameCommit, _number, _numcommits, _task, false); 
         _number = 0;
     }
 
