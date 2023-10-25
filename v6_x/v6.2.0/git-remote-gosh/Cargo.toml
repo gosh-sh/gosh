@@ -1,5 +1,5 @@
 [[bin]]
-name = 'git-remote-gosh_v6_1_0'
+name = 'git-remote-gosh_v6_2_0'
 path = 'src/bin/main.rs'
 
 [lib]
@@ -14,7 +14,7 @@ keywords = ['git-remote', 'git', 'gosh']
 name = 'git-remote-gosh'
 resolver = '2'
 rust-version = "1.70"
-version = '6.1.35'
+version = '6.2.36'
 
 [profile.profiling]
 debug = 1

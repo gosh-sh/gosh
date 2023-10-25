@@ -34,7 +34,7 @@ use push_tag::push_tag;
 mod delete_tag;
 pub(crate) mod parallel_snapshot_upload_support;
 
-use crate::blockchain::{branch_list, get_commit_by_addr, Snapshot, Tree, tree};
+use crate::blockchain::{branch_list, get_commit_by_addr, GoshCommit, Snapshot, Tree, tree};
 use crate::git_helper::push::parallel_snapshot_upload_support::{
     ParallelCommit, ParallelCommitUploadSupport, ParallelSnapshot, ParallelSnapshotUploadSupport,
     ParallelTreeUploadSupport,
@@ -1088,6 +1088,16 @@ where
             match object_kind {
                 git_object::Kind::Commit => {
                     self.pushed_commits.insert(oid.to_string(), true);
+                    let commit_address = self.calculate_commit_address(&object_id).await?;
+                    match get_commit_by_addr(
+                        self.blockchain.client(),
+                        &commit_address
+                    ).await {
+                        Ok(Some(GoshCommit {is_correct_commit: true, .. })) => {
+                            continue;
+                        }
+                        _ => {}
+                    }
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)
                     self.push_commit_object(
                         oid,
@@ -1410,6 +1420,43 @@ where
 
         tracing::trace!("List of objects: {commit_list:?}");
 
+        let mut last_correct_onchain_commit = None;
+        let mut n_commit_list = vec![];
+        for commit in commit_list {
+            let object_id = git_hash::ObjectId::from_str(&commit)?;
+            let commit_address = self.calculate_commit_address(&object_id).await?;
+            match get_commit_by_addr(
+                self.blockchain.client(),
+                &commit_address
+            ).await {
+                Ok(Some(GoshCommit { is_correct_commit: true, .. })) => {
+                    last_correct_onchain_commit = Some(object_id);
+                }
+                _ => {
+                    n_commit_list.push(commit);
+                }
+            }
+        }
+        let commit_list = n_commit_list;
+        tracing::trace!("Filtered list of objects: {commit_list:?}, last_correct_onchain_commit={last_correct_onchain_commit:?}");
+
+        if let Some(commit) = last_correct_onchain_commit {
+            tracing::trace!("Set commit for onchain correct commit: {commit:?}");
+            self.blockchain
+                .notify_commit(
+                    &commit,
+                    local_branch_name,
+                    0,
+                    0,
+                    &self.remote,
+                    &self.dao_addr,
+                    false,
+                    &self.config,
+                )
+                .await?;
+            prev_commit_id = Some(commit);
+        }
+
         // read last onchain commit and init map from its tree
         // map (path -> commit_where_it_was_created)
         tracing::trace!("prev_commit_id={prev_commit_id:?}");
@@ -1475,26 +1522,6 @@ where
                 git_object::Kind::Commit => {
                     self.pushed_commits.insert(oid.to_string(), false);
                     number_of_commits += 1;
-                    // in case of fast forward commits can be already deployed for another branch
-                    // Do not deploy them again
-                    let commit_address = self.calculate_commit_address(&object_id).await?;
-                    match get_commit_by_addr(
-                        self.blockchain.client(),
-                        &commit_address
-                    ).await {
-                        Ok(Some(commit)) => {
-                            if commit.is_correct_commit {
-                                continue;
-                            }
-                        }
-                        _ => {}
-                    }
-
-                    // let commit_contract = GoshContract::new(&commit_address, gosh_abi::COMMIT);
-                    // match commit_contract.is_active(self.blockchain.client()).await {
-                    //     Ok(true) => continue,
-                    //     _ => {}
-                    // }
 
                     // TODO: fix lifetimes (oid can be trivially inferred from object_id)
                     let parent_tree = self.check_parents(

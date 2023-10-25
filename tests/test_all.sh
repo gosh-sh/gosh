@@ -80,6 +80,8 @@ echo 29 $? >> res.txt
 echo 30 $? >> res.txt
 ./30_1_remove_file.test.sh
 echo 30_1 $? >> res.txt
+./32-push_branch_with_existing_commit.test.sh 
+echo 32 $? >> res.txt
 
 ./clean.sh
 echo "All tests passed"
