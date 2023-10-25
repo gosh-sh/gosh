@@ -52,7 +52,8 @@
 			"name": "allCorrect",
 			"inputs": [
 				{"name":"number","type":"uint128"},
-				{"name":"branch","type":"string"}
+				{"name":"branch","type":"string"},
+				{"name":"force","type":"bool"}
 			],
 			"outputs": [
 			]
