@@ -38,6 +38,12 @@ import DaoTaskListPage from './pages/DaoTaskList'
 import TaskCreatePage from './pages/TaskCreate'
 import L2Page from './pages/L2'
 import AccountDetailsPage from './pages/AccountDetails'
+import DaoHackGrantListPage from './pages/DaoHackGrantList'
+import HackGrantLayout from './pages/HackGrantLayout'
+import HackGrantOverviewPage from './pages/HackGrantOverview'
+import HackGrantParticipantListPage from './pages/HackGrantParticipantList'
+import HackGrantRewardPage from './pages/HackGrantReward'
+import HackGrantCreatePage from './pages/HackGrantCreate'
 import { ToastStatus } from '../components/Toast'
 
 // TODO: Update after full refactor
@@ -129,6 +135,27 @@ const App = () => {
                                 />
                             </Route>
                             <Route path="l2" element={<DaoTokenL2Page />} />
+                            <Route
+                                path="hacksgrants"
+                                element={<DaoHackGrantListPage />}
+                            />
+                        </Route>
+                        <Route
+                            path="/o/:daoname/hacksgrants"
+                            element={<HackGrantLayout />}
+                        >
+                            <Route
+                                path="create/:type"
+                                element={<HackGrantCreatePage />}
+                            />
+                            <Route path=":address">
+                                <Route index element={<HackGrantOverviewPage />} />
+                                <Route path="rewards" element={<HackGrantRewardPage />} />
+                                <Route
+                                    path="participants"
+                                    element={<HackGrantParticipantListPage />}
+                                />
+                            </Route>
                         </Route>
                         <Route path="/o/:daoName/r/:repoName" element={<RepoLayout />}>
                             <Route index element={<RepoPage />} />

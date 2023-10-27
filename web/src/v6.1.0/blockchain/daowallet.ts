@@ -1039,6 +1039,42 @@ export class DaoWallet extends BaseContract {
         return await this.getEventAddress(result)
     }
 
+    async setCommit(params: {
+        repo_name: string
+        branch_name: string
+        commit_name: string
+        num_files: number
+        num_commits: number
+        task?: any
+        comment?: string
+        reviewers?: string[]
+        cell?: boolean | undefined
+    }) {
+        const { comment = '', reviewers = [], cell } = params
+
+        const cellParams = {
+            repoName: params.repo_name,
+            branchName: params.branch_name,
+            commit: params.commit_name,
+            numberChangedFiles: params.num_files,
+            numberCommits: params.num_commits,
+            task: params.task,
+            comment,
+        }
+
+        if (cell) {
+            const { value0 } = await this.runLocal('getCellSetCommit', cellParams)
+            return value0 as string
+        } else {
+            const result = await this.run('startProposalForSetCommit', {
+                ...cellParams,
+                reviewers,
+                num_clients: await this.smvClientsCount(),
+            })
+            return await this.getEventAddress(result)
+        }
+    }
+
     async createSingleEvent(params: { cell: string; reviewers?: string[] }) {
         const { cell, reviewers = [] } = params
 
@@ -1210,6 +1246,9 @@ export class DaoWallet extends BaseContract {
                 }
                 if (type === EDaoEventType.MILESTONE_UPGRADE) {
                     return await this.upgradeMilestone({ ...params, cell: true })
+                }
+                if (type === EDaoEventType.PULL_REQUEST) {
+                    return await this.setCommit({ ...params, cell: true })
                 }
                 return null
             },

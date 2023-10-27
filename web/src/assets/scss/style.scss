@@ -42,11 +42,11 @@ body,
 }
 
 .row {
-    @apply flex flex-wrap gap-y-4 -mx-2;
+    @apply flex flex-wrap gap-y-4 -mx-3;
 }
 
 .col {
-    @apply px-2 w-full grow basis-0;
+    @apply px-3 w-full grow basis-0;
 }
 
 .col-n {
@@ -177,6 +177,23 @@ body,
  */
 .markdown-body {
     table {
+        @apply w-full;
+    }
+}
+
+/**
+ * Customize react-multi-date-picker
+ */
+.date-picker-fw {
+    &.rmdp-wrapper {
+        @apply w-full;
+    }
+
+    .rmdp-calendar {
+        @apply w-full;
+    }
+
+    .rmdp-day-picker > div {
         @apply w-full;
     }
 }
