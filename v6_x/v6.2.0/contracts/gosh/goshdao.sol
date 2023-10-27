@@ -353,6 +353,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
             MemberToken pub1 = MemberToken(pub.member, pub.count, 0);
             deployWalletIn(pub1);
             this.returnWallets{value: 0.1 ton, flag: 1}(key, wallets);
+        } else {
+            _isUpgraded = true;
         }
         getMoney();
     }
