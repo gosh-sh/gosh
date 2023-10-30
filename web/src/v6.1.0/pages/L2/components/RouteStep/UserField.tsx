@@ -5,7 +5,7 @@ import { shortString } from '../../../../../utils'
 import { UserSelect } from '../../../../components/UserSelect'
 
 type TUserFieldProps = {
-    network: string
+    network?: string
     user: TL2User | null
     wallet: string
     prefix: string
@@ -46,7 +46,7 @@ const UserField = (props: TUserFieldProps) => {
 
     return (
         <>
-            <Field type="hidden" name="to_wallet" />
+            <Field type="hidden" name={`${prefix}_wallet`} />
             <Field
                 label={label}
                 name={`${prefix}_user`}
