@@ -436,7 +436,7 @@ pub async fn wait_chunk_until_send(
     }
 
     let start = Instant::now();
-    let timeout = Duration::from_secs(150); // todo remove magic num
+    let timeout = Duration::from_secs(130); // todo remove magic num
 
     let expected_receipts_count = chunk.len();
     let mut receipts_count = 0;
