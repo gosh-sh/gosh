@@ -22,6 +22,7 @@ export const l2TransferAtom = atom<TL2TransferData>({
             token: null,
             balance: 0n,
         },
+        withdrawals: [],
         comissions: {
             [`${EL2Network.ETH}:${EL2Network.GOSH}`]: 0n,
             [`${EL2Network.GOSH}:${EL2Network.ETH}`]: 0n,

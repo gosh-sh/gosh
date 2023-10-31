@@ -10,6 +10,7 @@ import { TL2Token } from '../../types/l2.types'
 import { Button } from '../../../components/Form'
 import { L2Web3Chains } from '../../../constants'
 import Summary from './components/Summary'
+import Withdrawals from './components/Withdrawals'
 
 const motionProps = {
     initial: { opacity: 0 },
@@ -20,7 +21,7 @@ const motionProps = {
 
 const L2PageInner = () => {
     const { showBoundary } = useErrorBoundary()
-    const { web3, gosh, step, error, connectWeb3 } = useL2Transfer({
+    const { web3, gosh, step, withdrawals, error, connectWeb3 } = useL2Transfer({
         initialize: true,
     })
 
@@ -149,6 +150,12 @@ const L2PageInner = () => {
                         </div>
                     </div>
                 </div>
+
+                {!!withdrawals.length && web3.instance && (
+                    <div className="mt-6 border border-gray-e6edff rounded-xl p-5">
+                        <Withdrawals />
+                    </div>
+                )}
 
                 <div className="mt-6 border border-gray-e6edff rounded-xl p-5">
                     <Summary />

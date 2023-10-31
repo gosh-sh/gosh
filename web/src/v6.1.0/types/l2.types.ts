@@ -28,6 +28,12 @@ export type TL2Token = {
     pair: string[]
 }
 
+export type TL2Withdrawal = {
+    token: TL2Token
+    commission: bigint
+    value: bigint
+}
+
 export type TL2TransferData = {
     web3: {
         instance: Web3<RegisteredSubscription> | null
@@ -43,6 +49,7 @@ export type TL2TransferData = {
         token?: TL2Token | null
         balance: bigint
     }
+    withdrawals: TL2Withdrawal[]
     comissions: { [route: string]: bigint }
     summary: {
         from: {

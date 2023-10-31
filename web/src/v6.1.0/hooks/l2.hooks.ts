@@ -85,6 +85,22 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
         [data.web3.address],
     )
 
+    const getErc20Approvement = async (rootaddr: string, walletaddr: string) => {
+        if (!data.web3.instance) {
+            throw new GoshError('Web3 error', 'Web3 is not connected')
+        }
+
+        const elock = new data.web3.instance.eth.Contract(
+            ELockAbi.abi,
+            AppConfig.elockaddr,
+        )
+        const result: any = await elock.methods
+            // @ts-ignore
+            .getERC20Approvement(rootaddr, walletaddr)
+            .call()
+        return { commission: result.commission as bigint, value: result.value as bigint }
+    }
+
     const connectGosh = useCallback(async () => {
         if (!user.keys?.public) {
             return
@@ -244,17 +260,18 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
 
             steps.push({ type: 'receive', status: 'awaiting', message: 'Receive tokens' })
         } else if (route === `${EL2Network.GOSH}:${EL2Network.ETH}`) {
+            steps = [
+                {
+                    type: 'withdraw_gosh',
+                    status: 'awaiting',
+                    message: 'Withdraw from GOSH',
+                },
+            ]
             if (data.summary.from.token.symbol !== 'WETH') {
                 steps.push({
                     type: 'withdraw_erc20',
-                    status: 'awaiting',
-                    message: 'Withdraw tokens',
-                })
-            } else {
-                steps.push({
-                    type: 'withdraw_eth',
-                    status: 'awaiting',
-                    message: 'Withdraw tokens',
+                    status: 'disabled',
+                    message: 'Withdraw from ELock',
                 })
             }
 
@@ -527,7 +544,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
         }
     }
 
-    const withdrawEth = async () => {
+    const withdrawGosh = async (options: { isErc20: boolean }) => {
         try {
             if (!data.summary.to.wallet) {
                 throw new GoshError('Value error', 'Ethereum address undefined')
@@ -536,7 +553,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                 throw new GoshError('Gosh error', 'Gosh wallet undefined')
             }
 
-            setSummaryProgress('withdraw_eth', 'pending')
+            setSummaryProgress('withdraw_gosh', 'pending')
 
             // Get start balance
             const balance = await getWeb3Balance(data.summary.to.wallet)
@@ -549,40 +566,32 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                 ),
                 l1addr: data.summary.to.wallet,
             })
+            setSummaryProgress('withdraw_gosh', 'completed')
 
-            setSummaryProgress('withdraw_eth', 'completed')
-            await receiveEth(balance)
+            if (options.isErc20) {
+                setSummaryProgress('withdraw_erc20', 'awaiting')
+            } else {
+                await receiveEth(balance)
+            }
         } catch (e) {
             setStatus((state) => ({ ...state, type: 'error', data: e }))
-            setSummaryProgress('withdraw_eth', 'awaiting')
+            setSummaryProgress('withdraw_gosh', 'awaiting')
         }
     }
 
-    const withdrawErc20 = async () => {
+    const withdrawErc20 = async (params: {
+        rootaddr: string
+        walletaddr: string
+        alone?: boolean
+    }) => {
+        const { rootaddr, walletaddr, alone } = params
+
         try {
             if (!data.web3.instance) {
                 throw new GoshError('Web3 error', 'Web3 is not connected')
             }
-            if (!data.summary.to.wallet) {
-                throw new GoshError('Value error', 'Ethereum address undefined')
-            }
-            if (!data.summary.to.token.rootaddr) {
-                throw new GoshError('Value error', 'Token root undefiled')
-            }
-            if (!data.gosh.instance) {
-                throw new GoshError('Gosh error', 'Gosh wallet undefined')
-            }
 
             setSummaryProgress('withdraw_erc20', 'pending')
-
-            // Burn
-            await data.gosh.instance.withdraw({
-                amount: toBigint(
-                    data.summary.from.amount,
-                    data.summary.from.token.decimals,
-                ),
-                l1addr: data.summary.to.wallet,
-            })
 
             // Withdraw commission
             let commission = 0n
@@ -592,15 +601,8 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
             )
             const wait_commission = await whileFinite(
                 async () => {
-                    const result = await elock.methods
-                        .getERC20Approvement(
-                            // @ts-ignore
-                            data.summary.to.token.rootaddr,
-                            data.summary.to.wallet,
-                        )
-                        .call()
-                    commission = (result as any).commission
-                    console.debug('getERC20Approvement', commission)
+                    const result = await getErc20Approvement(rootaddr, walletaddr)
+                    commission = result.commission
                     return commission > 0n
                 },
                 10000,
@@ -611,16 +613,11 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
             }
 
             // Get start balance
-            const balance = await getWeb3Balance(
-                data.summary.to.wallet,
-                data.summary.to.token.rootaddr,
-            )
+            const balance = await getWeb3Balance(walletaddr, rootaddr)
 
             // Withdraw
-            const edata = elock.methods
-                // @ts-ignore
-                .withdrawERC20(data.summary.to.token.rootaddr)
-                .encodeABI()
+            // @ts-ignore
+            const edata = elock.methods.withdrawERC20(rootaddr).encodeABI()
             const receipt = await data.web3.instance.eth.sendTransaction({
                 from: data.web3.address,
                 to: AppConfig.elockaddr,
@@ -632,10 +629,11 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
             console.debug('withdrawErc20', receipt)
 
             setSummaryProgress('withdraw_erc20', 'completed')
-            await receiveErc20(balance)
+            await receiveErc20({ rootaddr, walletaddr, start_balance: balance, alone })
         } catch (e) {
             setStatus((state) => ({ ...state, type: 'error', data: e }))
             setSummaryProgress('withdraw_erc20', 'awaiting')
+            throw e
         }
     }
 
@@ -667,24 +665,27 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
         }
     }
 
-    const receiveErc20 = async (start_balance: bigint) => {
+    const receiveErc20 = async (params: {
+        rootaddr: string
+        walletaddr: string
+        start_balance: bigint
+        alone?: boolean
+    }) => {
+        const { rootaddr, walletaddr, start_balance, alone } = params
         try {
             if (!data.web3.instance) {
                 throw new GoshError('Web3 error', 'Web3 is not connected')
             }
-            if (!data.summary.to.token.rootaddr) {
-                throw new GoshError('Value error', 'Token root undefiled')
-            }
 
-            setSummaryProgress('receive', 'pending')
+            // Alone means running method outside steps flow
+            if (!alone) {
+                setSummaryProgress('receive', 'pending')
+            }
 
             console.debug('start_balance', start_balance)
             const wait_erc20 = await whileFinite(
                 async () => {
-                    const curr_balance = await getWeb3Balance(
-                        data.summary.to.wallet,
-                        data.summary.to.token.rootaddr,
-                    )
+                    const curr_balance = await getWeb3Balance(walletaddr, rootaddr)
                     console.debug('curr_balance', curr_balance)
                     return curr_balance > start_balance
                 },
@@ -695,43 +696,69 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                 throw new GoshError('Timeout error', 'Wait for ethereum balance')
             }
 
-            setSummaryProgress('receive', 'completed')
-            setData((state) => ({ ...state, step: 'complete' }))
+            if (!alone) {
+                setSummaryProgress('receive', 'completed')
+            }
+            setData((state) => ({
+                ...state,
+                withdrawals: state.withdrawals.map((item) => {
+                    if (item.token.rootaddr !== rootaddr) {
+                        return item
+                    }
+                    return { ...item, value: 0n, commission: 0n }
+                }),
+                step: !alone ? 'complete' : state.step,
+            }))
         } catch (e) {
             setStatus((state) => ({ ...state, type: 'error', data: e }))
             setSummaryProgress('receive', 'awaiting')
         }
     }
 
-    const getWeb3Comission = useCallback(async () => {
+    // Get incoming withdrawals (periodically)
+    const getEthWithdrawals = useCallback(async () => {
         try {
-            const { data, error } = await supabase.client
-                .from('l2_state')
-                .select()
-                .order('created_at', { ascending: false })
-            if (error) {
-                throw new GoshError('Get web3 comission', error.message)
-            }
-            if (!data.length) {
-                throw new GoshError('Get web3 comission', 'No data')
+            if (!data.web3.instance) {
+                throw new GoshError('Web3 error', 'Web3 is not connected')
             }
 
-            const row = data[0]
-            let comission = BigInt(row.current_approximate_elock_commissions)
-            comission += 21000n * BigInt(row.current_eth_gas_price)
-            comission /= BigInt(row.queued_burns_cnt + 1)
+            const elock = new data.web3.instance.eth.Contract(
+                ELockAbi.abi,
+                AppConfig.elockaddr,
+            )
 
-            setData((state) => ({
-                ...state,
-                comissions: {
-                    ...state.comissions,
-                    [`${EL2Network.GOSH}:${EL2Network.ETH}`]: comission,
-                },
-            }))
-        } catch (e: any) {
-            console.warn(e.message)
+            let roots: string[] = await elock.methods.getTokenRoots().call()
+            roots = roots.filter((item) => {
+                return item !== '0x0000000000000000000000000000000000000000'
+            })
+
+            const withdrawals = await Promise.all(
+                roots.map(async (root) => {
+                    const result = await getErc20Approvement(root, data.web3.address)
+                    const token = l2Tokens.filter((item) => item.rootaddr === root)[0]
+                    return { token, ...result }
+                }),
+            )
+            console.debug('W', withdrawals)
+            setData((state) => ({ ...state, withdrawals }))
+        } catch (e) {
+            console.error('Get eth withrawals', e)
         }
-    }, [])
+    }, [data.web3.chain_id, data.web3.address, user.keys?.public])
+
+    useEffect(() => {
+        let interval: NodeJS.Timeout
+
+        if (initialize) {
+            getEthWithdrawals()
+            interval = setLockableInterval(async () => await getEthWithdrawals(), 60000)
+        }
+
+        return () => {
+            clearInterval(interval)
+        }
+    }, [initialize, getEthWithdrawals])
+    // /Get incoming withdrawals (periodically)
 
     // React on `token_from` change
     const onSetTokenFromCallback = useCallback(async () => {
@@ -1038,20 +1065,50 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
     }, [initialize, web3ChainChangedCallback, web3SubscribeCallback])
     // /Subscribe web3 account/provider
 
-    // Subscribe (periodic update) for web3 comission
+    // Subscribe (periodic update) for eth comission
+    const getEthComission = useCallback(async () => {
+        try {
+            const { data, error } = await supabase.client
+                .from('l2_state')
+                .select()
+                .order('created_at', { ascending: false })
+            if (error) {
+                throw new GoshError('Get web3 comission', error.message)
+            }
+            if (!data.length) {
+                throw new GoshError('Get web3 comission', 'No data')
+            }
+
+            const row = data[0]
+            let comission = BigInt(row.current_approximate_elock_commissions)
+            comission += 21000n * BigInt(row.current_eth_gas_price)
+            comission /= BigInt(row.queued_burns_cnt + 1)
+
+            setData((state) => ({
+                ...state,
+                comissions: {
+                    ...state.comissions,
+                    [`${EL2Network.GOSH}:${EL2Network.ETH}`]: comission,
+                },
+            }))
+        } catch (e: any) {
+            console.warn(e.message)
+        }
+    }, [])
+
     useEffect(() => {
         let interval: NodeJS.Timer
         if (initialize) {
-            getWeb3Comission()
+            getEthComission()
             interval = setLockableInterval(async () => {
-                await getWeb3Comission()
+                await getEthComission()
             }, 15000)
         }
 
         return () => {
             clearInterval(interval)
         }
-    }, [initialize, getWeb3Comission])
+    }, [initialize, getEthComission])
     // /Subscribe (periodic update) for web3 comission
 
     return {
@@ -1068,7 +1125,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
         approveErc20,
         depositErc20,
         depositEth,
-        withdrawEth,
+        withdrawGosh,
         withdrawErc20,
         transferGosh,
     }

@@ -14,7 +14,7 @@
         "symbol": "WETH",
         "decimals": 18,
         "iconpath": "/images/tokens/gosh.webp",
-        "rootaddr": "0:9807713206b2f78b79020d392eb62104e6fc331b1bcaabbf6c5726965a5709fb",
+        "rootaddr": "0:d00dfe58faa74e3e257fa720cbd6408d2d624585117a4f1821a210446c4d6adf",
         "pair": ["ETH", "WETH"]
     },
     {
@@ -32,7 +32,7 @@
         "symbol": "WWEENUS",
         "decimals": 18,
         "iconpath": "/images/tokens/gosh.webp",
-        "rootaddr": "0:9799eb4551842c0af9a752c9165d8d67f720a94a4a4d4e8d4f80004503839dcc",
+        "rootaddr": "0:1ee6d908a0dfc3d446a75f69cfc7a4fdfd2aaf01423ea54bf3b55a3b725985c9",
         "pair": ["WEENUS", "WWEENUS"]
     },
     {
@@ -50,7 +50,7 @@
         "symbol": "WXEENUS",
         "decimals": 18,
         "iconpath": "/images/tokens/gosh.webp",
-        "rootaddr": "0:13d0d055aad69af68707bbbd9db035d329b311301143f4155efaf21d34ba30d2",
+        "rootaddr": "0:a58d1da25512e375195dadc579d66a6e1bd8d99b9834a971299a558eee7af24a",
         "pair": ["XEENUS", "WXEENUS"]
     }
 ]

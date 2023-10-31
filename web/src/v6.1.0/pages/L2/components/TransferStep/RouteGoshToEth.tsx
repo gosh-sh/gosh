@@ -4,7 +4,21 @@ import StatusBadge from './StatusBadge'
 import { isStatusItemDisabled, isStatusItemLoading } from './helpers'
 
 const RouteGoshToEth = () => {
-    const { summary, withdrawEth, withdrawErc20 } = useL2Transfer()
+    const { summary, withdrawGosh, withdrawErc20 } = useL2Transfer()
+
+    const onWithdrawGosh = async () => {
+        const isErc20 = !!summary.progress.steps.find((item) => {
+            return item.type === 'withdraw_erc20'
+        })
+        await withdrawGosh({ isErc20 })
+    }
+
+    const onWithdrawErc20 = async () => {
+        await withdrawErc20({
+            rootaddr: summary.to.token.rootaddr!,
+            walletaddr: summary.to.wallet,
+        })
+    }
 
     return (
         <>
@@ -16,23 +30,24 @@ const RouteGoshToEth = () => {
                     <div className="grow text-sm font-medium">
                         {item.message}
                         <div className="mt-1">
-                            {item.status !== 'completed' && item.type === 'withdraw_eth' && (
-                                <Button
-                                    size="sm"
-                                    disabled={isStatusItemDisabled(item)}
-                                    isLoading={isStatusItemLoading(item)}
-                                    onClick={withdrawEth}
-                                >
-                                    Withdraw
-                                </Button>
-                            )}
+                            {item.status !== 'completed' &&
+                                item.type === 'withdraw_gosh' && (
+                                    <Button
+                                        size="sm"
+                                        disabled={isStatusItemDisabled(item)}
+                                        isLoading={isStatusItemLoading(item)}
+                                        onClick={onWithdrawGosh}
+                                    >
+                                        Withdraw
+                                    </Button>
+                                )}
                             {item.status !== 'completed' &&
                                 item.type === 'withdraw_erc20' && (
                                     <Button
                                         size="sm"
                                         disabled={isStatusItemDisabled(item)}
                                         isLoading={isStatusItemLoading(item)}
-                                        onClick={withdrawErc20}
+                                        onClick={onWithdrawErc20}
                                     >
                                         Withdraw
                                     </Button>
