@@ -29,7 +29,9 @@ modifier check_proposal {
   _ ;
 }
 
-function onCodeUpgrade (address goshdao,
+function onCodeUpgrade (bool isTag, 
+                        address pubaddr,
+                        address goshdao,
                         uint256 _platform_id, 
                         uint128 amountToLock,
                         uint128 totalVotes, 
@@ -37,7 +39,9 @@ function onCodeUpgrade (address goshdao,
                         TvmCell inputCell) internal override
 {
     tvm.resetStorage();
+    _isTag = isTag;
     _goshdao = goshdao;
+    _pubaddr = pubaddr;
     initialized = false;
     votes[true] = votes[false] = 0;
     delete leftBro;
@@ -127,7 +131,7 @@ function performAction (uint128 amountToLock, uint128 total_votes_, TvmCell inpu
 function do_action () internal override
 {
     ISMVProposal(smvProposal).vote {value: SMVConstants.PROPOSAL_VOTING_FEE, flag: 1 }
-                                   (tokenLocker, platform_id, currentChoice, currentAmount) ;
+                                   (tokenLocker, platform_id, currentChoice, currentAmount, _pubaddr) ;
 }
 
 function onProposalVoted (bool success) external override check_proposal

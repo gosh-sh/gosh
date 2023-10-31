@@ -28,7 +28,10 @@
 		{
 			"name": "onContinueAction",
 			"inputs": [
-				{"name":"t","type":"uint128"}
+				{"name":"t","type":"uint128"},
+				{"name":"ttag","type":"uint128"},
+				{"name":"daoMembersTag","type":"map(uint256,string)"},
+				{"name":"daoTagData","type":"map(uint256,uint128)"}
 			],
 			"outputs": [
 			]
@@ -59,7 +62,8 @@
 				{"name":"_locker","type":"address"},
 				{"name":"_platform_id","type":"uint256"},
 				{"name":"choice","type":"bool"},
-				{"name":"amount","type":"uint128"}
+				{"name":"amount","type":"uint128"},
+				{"name":"pubaddr","type":"address"}
 			],
 			"outputs": [
 			]
@@ -476,6 +480,86 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"taskname","type":"string"},
 				{"name":"repoName","type":"string"}
+			]
+		},
+		{
+			"name": "getCreateDaoMembersTagParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"tags","type":"string[]"},
+				{"name":"multiples","type":"uint128[]"}
+			]
+		},
+		{
+			"name": "getCreateDaoMembersTagParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"tags","type":"string[]"},
+				{"name":"multiples","type":"uint128[]"}
+			]
+		},
+		{
+			"name": "getDestroyDaoMembersTagParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"tags","type":"string[]"}
+			]
+		},
+		{
+			"name": "getDestroyDaoMembersTagParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"tags","type":"string[]"}
+			]
+		},
+		{
+			"name": "getSetDaoMembersTagParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"tags","type":"string[]"}
+			]
+		},
+		{
+			"name": "getSetDaoMembersTagParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"tags","type":"string[]"}
+			]
+		},
+		{
+			"name": "getDeleteDaoMembersTagParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"pubaddr","type":"address[]"}
+			]
+		},
+		{
+			"name": "getDeleteDaoMembersTagParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"pubaddr","type":"address[]"}
 			]
 		},
 		{
@@ -1403,7 +1487,9 @@
 		{"name":"__value","type":"uint256"},
 		{"name":"tokenLocker","type":"address"},
 		{"name":"platform_id","type":"uint256"},
+		{"name":"_isTag","type":"bool"},
 		{"name":"_goshdao","type":"address"},
+		{"name":"_pubaddr","type":"address"},
 		{"name":"platformCodeHash","type":"uint256"},
 		{"name":"platformCodeDepth","type":"uint16"},
 		{"name":"leftBro","type":"optional(address)"},
@@ -1417,6 +1503,8 @@
 		{"name":"tokenRoot","type":"address"},
 		{"name":"propData","type":"cell"},
 		{"name":"reviewers","type":"map(address,bool)"},
+		{"name":"_daoMembersTag","type":"map(uint256,string)"},
+		{"name":"_daoTagData","type":"map(uint256,uint128)"},
 		{"name":"startTime","type":"uint32"},
 		{"name":"finishTime","type":"uint32"},
 		{"name":"deltaStartTime","type":"uint32"},

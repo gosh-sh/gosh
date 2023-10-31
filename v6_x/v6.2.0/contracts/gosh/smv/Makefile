@@ -13,15 +13,12 @@ build-contracts:
 
 	for i in $(tvcs); do \
 		../../compiler/sold --tvm-version gosh $$i.sol || exit $$@; \
-		../../compiler/tvm_linker compile $$i.code -o $$i.tvc --lib ../../compiler/stdlib_sol.tvm || exit $$@; \
 		if [ "${target-dir}" != "" ] ; then cp $$i.* ${target-dir}/ ; fi; \
 	done \
 
 	../../compiler/sold --tvm-version gosh ./External/tip3/TokenRoot.sol || exit $$@; \
-	../../compiler/tvm_linker compile TokenRoot.code -o TokenRoot.tvc --lib ../../compiler/stdlib_sol.tvm || exit $$@; \
 
 	../../compiler/sold --tvm-version gosh ./External/tip3/TokenWallet.sol || exit $$@; \
-	../../compiler/tvm_linker compile TokenWallet.code -o TokenWallet.tvc --lib ../../compiler/stdlib_sol.tvm || exit $$@; \
 
 	rm *.debug.json;
 

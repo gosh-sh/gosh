@@ -44,6 +44,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
     optional(address) _previous;
     mapping(uint256 => MemberToken) _wallets;
     mapping(uint256 => string) _daoMembers;
+    mapping(uint256 => string) _daoMembersTag;
+    mapping(uint256 => uint128) _daoTagData;
     mapping(uint8 => TvmCell) _code;
     mapping(uint256 => string) _hashtag;
     mapping(uint256 => string) _versions;
@@ -74,6 +76,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     uint128 _reserve = 0;
     uint128 _allbalance = 0;
+    uint128 _allbalanceTags = 0;
     uint128 _totalsupply = 0;
     
     bool public _isRepoUpgraded = false;
@@ -192,7 +195,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function getPreviousInfo(string name) public internalMsg view {
         require(_nameDao == name, ERR_WRONG_DAO);
         tvm.accept();
-        TvmCell a = abi.encode(_allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _wallets, _hashtag, _my_wallets, _daoMembers, _reserve, _allbalance, _totalsupply, _versions, _paidMembership);
+        TvmCell a = abi.encode(_allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _wallets, _hashtag, _my_wallets, _daoMembers, _reserve, _allbalance, _totalsupply, _versions, _paidMembership, _daoMembersTag, _daoTagData, _allbalanceTags);
         GoshDao(msg.sender).getPreviousInfoVersion{value: 0.1 ton, flag: 1}(version, a);
     }
     
@@ -226,10 +229,18 @@ contract GoshDao is Modifiers, TokenRootOwner {
             uint256 zero;
             this.returnWalletsVersionv4{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
         }
-        if ((ver == "5.0.0") || (ver == "5.1.0") || (ver == "6.0.0") || (ver == "6.1.0") || (ver == "6.2.0")) {
+        if ((ver == "5.0.0") || (ver == "5.1.0") || (ver == "6.0.0") || (ver == "6.1.0")) {
             mapping(uint256 => MemberToken) wallets;
             mapping(uint256 => string) hashtag;
             ( _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, wallets, hashtag, _my_wallets, _daoMembers, _reserve, , _totalsupply , _versions, _paidMembership) = abi.decode(a, (bool, bool, bool, bool, mapping(uint256 => MemberToken), mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string), mapping(uint8 => PaidMember)));
+            _versions[tvm.hash(version)] = version;
+            uint256 zero;
+            this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
+        } 
+        if (ver == "6.2.0") {
+            mapping(uint256 => MemberToken) wallets;
+            mapping(uint256 => string) hashtag;
+            ( _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, wallets, hashtag, _my_wallets, _daoMembers, _reserve, , _totalsupply , _versions, _paidMembership, _daoMembersTag, _daoTagData, _allbalanceTags) = abi.decode(a, (bool, bool, bool, bool, mapping(uint256 => MemberToken), mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string), mapping(uint8 => PaidMember), mapping(uint256 => string), mapping(uint256 => uint128), uint128));
             _versions[tvm.hash(version)] = version;
             uint256 zero;
             this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
@@ -395,7 +406,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function asktotalSupply() public view minValue(0.2 ton) accept {
-        SMVProposalBase(msg.sender).onContinueAction{value: 0.1 ton, flag: 1}(math.min(_allbalance, _totalsupply - _reserve));
+        SMVProposalBase(msg.sender).onContinueAction{value: 0.1 ton, flag: 1}(math.min(_allbalance, _totalsupply - _reserve), _allbalanceTags, _daoMembersTag, _daoTagData);
     }
     
     function volunteersnap(address[] volunteer, uint128 index) public senderIs(address(this)) accept {
@@ -519,6 +530,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
             require(_reserve >= token, ERR_LOW_TOKEN_RESERVE);
             _wallets[keyaddr].count += token; 
             _allbalance += token;
+            _allbalanceTags += token;
+            if (_daoMembersTag.exists(keyaddr)) {
+                if (_daoTagData.exists(tvm.hash(_daoMembersTag[keyaddr]))) {
+                    _allbalanceTags += token * (_daoTagData[tvm.hash(_daoMembersTag[keyaddr])] - 100) / 100;
+                }
+                else { delete _daoMembersTag[keyaddr]; }
+            }
             _reserve -= token;
             GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pub, 0)).addVoteToken{value:0.2 ton, flag: 1}(token);
             return; 
@@ -575,7 +593,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     function daoVote (address pub, uint128 index, address wallet, uint256 platform_id, bool choice, uint128 amount, uint128 num_clients_base, string note) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pub, index))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
-        GoshWallet(wallet).voteForIn{value:0.2 ton, flag: 1}(platform_id, choice, amount, num_clients_base, note);   	
+        GoshWallet(wallet).voteForIn{value:0.2 ton, flag: 1}(platform_id, choice, amount, num_clients_base, note, false);   	
     }
     
     function daoSendToken (address pub, uint128 index, address wallet, optional(address)  pubaddr, uint128 grant) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pub, index))  accept {
@@ -782,6 +800,72 @@ contract GoshDao is Modifiers, TokenRootOwner {
     {
         _isCheck = true;
     }
+
+    function setNewTags (address pubaddrs, uint128 index, string[] tags, uint128[] multiples) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddrs, index))  accept
+    {
+        this.setNewTagsIn{value:0.1 ton, flag: 1}(tags, multiples, 0);
+    }
+
+    function setNewTagsIn (string[] tags, uint128[] multiples, uint128 index) public senderIs(address(this))  accept
+    {
+        if (index >= tags.length) { return; }
+        _daoTagData[tvm.hash(tags[index])] = multiples[index];
+        this.setNewTagsIn{value: 0.2 ton, flag: 1}(tags, multiples, index + 1);
+    }
+
+    function setNewMembersTags (address pubaddrs, uint128 index, address[] pubaddr, string[] tags) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddrs, index))  accept
+    {
+        this.setNewMembersTagsIn{value:0.1 ton, flag: 1}(pubaddr, tags, 0);
+    }
+
+    function setNewMembersTagsIn (address[] pubaddr, string[] tags, uint128 index) public senderIs(address(this))  accept
+    {
+        if (index >= tags.length) { return; }
+        (, uint256 keyaddr) = pubaddr[index].unpack();
+        if (_wallets.exists(keyaddr)) {
+            if (_daoMembersTag.exists(keyaddr)) {
+                if (_daoTagData.exists(tvm.hash(_daoMembersTag[keyaddr]))){
+                    _allbalanceTags -= _wallets[keyaddr].count * (_daoTagData[tvm.hash(_daoMembersTag[keyaddr])]) / 100;
+                }
+                else { delete _daoMembersTag[keyaddr]; }
+            }
+            _daoMembersTag[keyaddr] = tags[index];
+            _allbalanceTags += _wallets[keyaddr].count * (_daoTagData[tvm.hash(_daoMembersTag[keyaddr])]) / 100;
+        }
+        this.setNewMembersTagsIn{value: 0.2 ton, flag: 1}(pubaddr, tags, index + 1);
+    }
+
+    function destroyTagsForMembers (address pubaddrs, uint128 index, address[] pubaddr) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddrs, index))  accept
+    {
+        this.destroyTagsForMembersIn{value:0.1 ton, flag: 1}(pubaddr, 0);
+    }
+
+    function destroyTagsForMembersIn (address[] pubaddr, uint128 index) public senderIs(address(this))  accept
+    {
+        if (index >= pubaddr.length) { return; }
+        (, uint256 keyaddr) = pubaddr[index].unpack();
+        if (_wallets.exists(keyaddr)) {
+            if (_daoMembersTag.exists(keyaddr)) {
+                if (_daoTagData.exists(tvm.hash(_daoMembersTag[keyaddr]))){
+                    _allbalanceTags -= _wallets[keyaddr].count * (_daoTagData[tvm.hash(_daoMembersTag[keyaddr])] - 100) / 100;
+                }
+                delete _daoMembersTag[keyaddr];
+            }
+        }
+        this.destroyTagsForMembersIn{value: 0.2 ton, flag: 1}(pubaddr, index + 1);
+    }
+
+    function destroyTags (address pubaddrs, uint128 index, string[] tags) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddrs, index))  accept
+    {
+        this.destroyTagsIn{value:0.1 ton, flag: 1}(tags, 0);
+    }
+
+    function destroyTagsIn (string[] tags, uint128 index) public senderIs(address(this))  accept
+    {
+        if (index >= tags.length) { return; }
+        delete _daoTagData[tvm.hash(tags[index])];
+        this.destroyTagsIn{value: 0.2 ton, flag: 1}(tags, index + 1);
+    }
     
     function changeAllowance (address pubaddrs, uint128 index, address[] pubaddr, bool[] increase, uint128[] grant) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddrs, index))  accept
     {
@@ -796,6 +880,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
             require(_wallets.exists(keyaddr), ERR_WALLET_NOT_EXIST);
             _wallets[keyaddr].count += grant[index];
             _allbalance += grant[index];
+            _allbalanceTags += grant[index];
+            if (_daoMembersTag.exists(keyaddr)) {
+                if (_daoTagData.exists(tvm.hash(_daoMembersTag[keyaddr]))) {
+                    _allbalanceTags += grant[index] * (_daoTagData[tvm.hash(_daoMembersTag[keyaddr])] - 100) / 100;
+                }
+                else { delete _daoMembersTag[keyaddr]; }
+            }
             GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr[index], 0)).addAllowanceC{value: 0.2 ton, flag: 1}(grant[index]);
         } else {
             (, uint256 keyaddr) = pubaddr[index].unpack();
@@ -803,6 +894,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
             require(grant[index] <= _wallets[keyaddr].count, ERR_LOW_TOKEN);
             _wallets[keyaddr].count -= grant[index];
             _allbalance -= grant[index];
+            _allbalanceTags -= grant[index];
+            if (_daoMembersTag.exists(keyaddr)) {
+                if (_daoTagData.exists(tvm.hash(_daoMembersTag[keyaddr]))) {
+                    _allbalanceTags -= grant[index] * (_daoTagData[tvm.hash(_daoMembersTag[keyaddr])] - 100) / 100;
+                }
+                else { delete _daoMembersTag[keyaddr]; }
+            }
             GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr[index], 0)).addDoubt{value: 0.1 ton, flag: 1}(grant[index]);
         }
         this.changeAllowanceIn{value: 0.2 ton, flag: 1}(pubaddr, increase, grant, index + 1);
@@ -816,6 +914,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
             require(_wallets.exists(keyaddr), ERR_WALLET_NOT_EXIST);
             _wallets[keyaddr].count += grant[index];
             _allbalance += grant[index];
+            _allbalanceTags += grant[index];
+            if (_daoMembersTag.exists(keyaddr)) {
+                if (_daoTagData.exists(tvm.hash(_daoMembersTag[keyaddr]))) {
+                    _allbalanceTags += grant[index] * (_daoTagData[tvm.hash(_daoMembersTag[keyaddr])] - 100) / 100;
+                }
+                else { delete _daoMembersTag[keyaddr]; }
+            }
             GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr[index], 0)).addAllowance{value: 0.2 ton, flag: 1}(grant[index]);
         } else {
             (, uint256 keyaddr) = pubaddr[index].unpack();
@@ -823,6 +928,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
             require(grant[index] <= _wallets[keyaddr].count, ERR_LOW_TOKEN);
             _wallets[keyaddr].count -= grant[index];
             _allbalance -= grant[index];
+            _allbalanceTags -= grant[index];
+            if (_daoMembersTag.exists(keyaddr)) {
+                if (_daoTagData.exists(tvm.hash(_daoMembersTag[keyaddr]))) {
+                    _allbalanceTags -= grant[index] * (_daoTagData[tvm.hash(_daoMembersTag[keyaddr])] - 100) / 100;
+                }
+                else { delete _daoMembersTag[keyaddr]; }
+            }
             GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr[index], 0)).addDoubt{value: 0.1 ton, flag: 1}(grant[index]);
         }
         this.changeAllowanceIn2{value: 0.2 ton, flag: 1}(pubaddr, increase, grant, index + 1);
@@ -834,11 +946,25 @@ contract GoshDao is Modifiers, TokenRootOwner {
          require(_wallets.exists(keyaddr), ERR_WALLET_NOT_EXIST);
          if (grant > _wallets[keyaddr].count) {
              _allbalance -= _wallets[keyaddr].count;
-             _wallets[keyaddr].count = 0;
-             return;
+            _allbalanceTags -= _wallets[keyaddr].count;
+            if (_daoMembersTag.exists(keyaddr)) {
+                if (_daoTagData.exists(tvm.hash(_daoMembersTag[keyaddr]))) {
+                    _allbalanceTags -= _wallets[keyaddr].count * (_daoTagData[tvm.hash(_daoMembersTag[keyaddr])] - 100) / 100;
+                }
+                else { delete _daoMembersTag[keyaddr]; }
+            }
+            _wallets[keyaddr].count = 0;
+            return;
          }
         _wallets[keyaddr].count -= grant;
         _allbalance -= grant;
+        _allbalanceTags -= grant;
+        if (_daoMembersTag.exists(keyaddr)) {
+            if (_daoTagData.exists(tvm.hash(_daoMembersTag[keyaddr]))) {
+                _allbalanceTags -= grant * (_daoTagData[tvm.hash(_daoMembersTag[keyaddr])] - 100) / 100;
+            }
+            else { delete _daoMembersTag[keyaddr]; }
+        }
     }
     
     function addVoteTokenTask (address pubaddr, uint128 index, uint128 grant) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index))  accept
@@ -850,6 +976,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }
         _wallets[keyaddr].count += grant;
         _allbalance += grant;
+        _allbalanceTags += grant;
+        if (_daoMembersTag.exists(keyaddr)) {
+            if (_daoTagData.exists(tvm.hash(_daoMembersTag[keyaddr]))) {
+                _allbalanceTags += grant * (_daoTagData[tvm.hash(_daoMembersTag[keyaddr])] - 100) / 100;
+            }
+            else { delete _daoMembersTag[keyaddr]; }
+        }
     }
 
     function startCheckPaidMembershipWallet(address pubaddr, uint128 index) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index))  accept
@@ -876,6 +1009,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
         require(_wallets.exists(key) == true, ERR_WALLET_NOT_EXIST); 
         GoshWallet(_wallets[key].member).setLimitedWallet{value: 0.2 ton, flag: 1}(true, _limit_wallets);
         _allbalance -= _wallets[key].count;
+        _allbalanceTags -= _wallets[key].count;
+        if (_daoMembersTag.exists(key)) {
+            if (_daoTagData.exists(tvm.hash(_daoMembersTag[key]))) {
+                _allbalanceTags -= _wallets[key].count * (_daoTagData[tvm.hash(_daoMembersTag[key])] - 100) / 100;
+            }
+            else { delete _daoMembersTag[key]; }
+        }
         delete _wallets[key];
         getMoney();
     }
@@ -946,6 +1086,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _wallets[keyaddr].count += grant;
         _paidMembership[Programindex].paidMembershipValue -= grant;
         _allbalance += grant;
+        _allbalanceTags += grant;
+        if (_daoMembersTag.exists(keyaddr)) {
+            if (_daoTagData.exists(tvm.hash(_daoMembersTag[keyaddr]))) {
+                _allbalanceTags += grant * (_daoTagData[tvm.hash(_daoMembersTag[keyaddr])] - 100) / 100;
+            }
+            else { delete _daoMembersTag[keyaddr]; }
+        }
     }
     
  
@@ -967,6 +1114,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _wallets[keyaddr].count += grant;
         _reserve -= grant;
         _allbalance += grant;
+        _allbalanceTags += grant;
+        if (_daoMembersTag.exists(keyaddr)) {
+            if (_daoTagData.exists(tvm.hash(_daoMembersTag[keyaddr]))) {
+                _allbalanceTags += grant * (_daoTagData[tvm.hash(_daoMembersTag[keyaddr])] - 100) / 100;
+            }
+            else { delete _daoMembersTag[keyaddr]; }
+        }
     }
     
     function addRegularTokenPub (address pub, address pubaddr, uint128 index, uint128 grant) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index))  accept
@@ -1001,6 +1155,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
             m_SMVClientCode, m_SMVProposalCode, _tokenforperson, _rootTokenRoot);
         GoshWallet(_lastAccountAddress).setLimitedWallet{value: 0.2 ton, flag: 1}(false, _limit_wallets);
         _allbalance += _tokenforperson;
+        _allbalanceTags += _tokenforperson;
+        if (_daoMembersTag.exists(keyaddr)) {
+            if (_daoTagData.exists(tvm.hash(_daoMembersTag[keyaddr]))) {
+                _allbalanceTags += _tokenforperson * (_daoTagData[tvm.hash(_daoMembersTag[keyaddr])] - 100) / 100;
+            }
+            else { delete _daoMembersTag[keyaddr]; }
+        }
         _totalsupply += _tokenforperson;
         getMoney();
     }
@@ -1035,6 +1196,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
         require(_wallets.exists(keyaddr) == false, ERR_WALLET_EXIST);
         _reserve -= pubaddr.count;
         _allbalance += pubaddr.count;
+        _allbalanceTags += pubaddr.count;
+        if (_daoMembersTag.exists(keyaddr)) {
+            if (_daoTagData.exists(tvm.hash(_daoMembersTag[keyaddr]))) {
+                _allbalanceTags += pubaddr.count * (_daoTagData[tvm.hash(_daoMembersTag[keyaddr])] - 100) / 100;
+            }
+            else { delete _daoMembersTag[keyaddr]; }
+        }
         TvmCell s1 = GoshLib.composeWalletStateInit(_code[m_WalletCode], _systemcontract, address(this), pubaddr.member, 0);
         _lastAccountAddress = address.makeAddrStd(0, tvm.hash(s1));
         _wallets[keyaddr] = MemberToken(_lastAccountAddress, pubaddr.count, pubaddr.expired);
@@ -1079,6 +1247,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
         require(_wallets.exists(keyaddr) == true, ERR_WALLET_NOT_EXIST); 
         GoshWallet(_lastAccountAddress).setLimitedWallet{value: 0.2 ton, flag: 1}(true, _limit_wallets);
         _allbalance -= _wallets[keyaddr].count;
+        _allbalanceTags -= _wallets[keyaddr].count;
+        if (_daoMembersTag.exists(keyaddr)) {
+            if (_daoTagData.exists(tvm.hash(_daoMembersTag[keyaddr]))) {
+                _allbalanceTags -= _wallets[keyaddr].count * (_daoTagData[tvm.hash(_daoMembersTag[keyaddr])] - 100) / 100;
+            }
+            else { delete _daoMembersTag[keyaddr]; }
+        }
         delete _wallets[keyaddr];
         getMoney();
     }

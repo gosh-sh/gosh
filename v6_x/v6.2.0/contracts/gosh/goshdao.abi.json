@@ -615,6 +615,86 @@
 			]
 		},
 		{
+			"name": "setNewTags",
+			"inputs": [
+				{"name":"pubaddrs","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"tags","type":"string[]"},
+				{"name":"multiples","type":"uint128[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setNewTagsIn",
+			"inputs": [
+				{"name":"tags","type":"string[]"},
+				{"name":"multiples","type":"uint128[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setNewMembersTags",
+			"inputs": [
+				{"name":"pubaddrs","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"tags","type":"string[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setNewMembersTagsIn",
+			"inputs": [
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"tags","type":"string[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyTagsForMembers",
+			"inputs": [
+				{"name":"pubaddrs","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"pubaddr","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyTagsForMembersIn",
+			"inputs": [
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyTags",
+			"inputs": [
+				{"name":"pubaddrs","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"tags","type":"string[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyTagsIn",
+			"inputs": [
+				{"name":"tags","type":"string[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "changeAllowance",
 			"inputs": [
 				{"name":"pubaddrs","type":"address"},
@@ -1488,6 +1568,8 @@
 		{"name":"_previous","type":"optional(address)"},
 		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"_wallets","type":"map(uint256,tuple)"},
 		{"name":"_daoMembers","type":"map(uint256,string)"},
+		{"name":"_daoMembersTag","type":"map(uint256,string)"},
+		{"name":"_daoTagData","type":"map(uint256,uint128)"},
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_hashtag","type":"map(uint256,string)"},
 		{"name":"_versions","type":"map(uint256,string)"},
@@ -1512,6 +1594,7 @@
 		{"name":"saveind","type":"optional(uint128)"},
 		{"name":"_reserve","type":"uint128"},
 		{"name":"_allbalance","type":"uint128"},
+		{"name":"_allbalanceTags","type":"uint128"},
 		{"name":"_totalsupply","type":"uint128"},
 		{"name":"_isRepoUpgraded","type":"bool"},
 		{"name":"_abilityInvite","type":"bool"},

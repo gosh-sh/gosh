@@ -22,6 +22,8 @@ address public tokenRoot;
 
 TvmCell public propData;
 mapping (address => bool) public reviewers;
+mapping(uint256 => string) _daoMembersTag;
+mapping(uint256 => uint128) _daoTagData;
 uint32 public startTime;
 uint32 public finishTime;
 uint32 public deltaStartTime;
@@ -96,7 +98,9 @@ function rejectReviewer() external override
     address(msg.sender).transfer(0, false, 64);
 } 
 
-function onCodeUpgrade (address goshdao,
+function onCodeUpgrade (bool isTag,
+                        address pubaddr,
+                        address goshdao,
                 		uint256 _platform_id,
                         uint128 amountToLock,
                         uint128 /* totalVotes */,
@@ -104,7 +108,8 @@ function onCodeUpgrade (address goshdao,
                         TvmCell inputCell) internal override
 {
     tvm.resetStorage();
-
+    _isTag = isTag;
+    _pubaddr = pubaddr;
     _goshdao = goshdao;
     initialized = true;
     delete votingResult;
@@ -160,9 +165,12 @@ function onCodeUpgrade (address goshdao,
     }
 }
 
-function onContinueAction(uint128 t) external senderIs(_goshdao) accept
+function onContinueAction(uint128 t, uint128 ttag, mapping(uint256 => string) daoMembersTag, mapping(uint256 => uint128) daoTagData) external senderIs(_goshdao) accept
 {
-    totalSupply = t;
+    _daoMembersTag = daoMembersTag;
+    _daoTagData = daoTagData;
+    if (_isTag == false) { totalSupply = t; }
+    else { totalSupply = ttag; }
 
     delete leftBro;
     delete rightBro;
@@ -218,12 +226,17 @@ function getInitialize(address _tokenLocker, uint256 _platform_id) external over
     }
 }
 
-function vote (address _locker, uint256 _platform_id, bool choice, uint128 amount) external override check_external_client(_locker,_platform_id)
+function vote (address _locker, uint256 _platform_id, bool choice, uint128 amount, address pubaddr) external override check_external_client(_locker,_platform_id)
 {
     require(msg.value >= SMVConstants.PROPOSAL_VOTING_FEE, SMVErrors.error_balance_too_low);
     
     tvm.accept();
-
+    (, uint256 keyaddr) = pubaddr.unpack();
+    if (_daoMembersTag.exists(keyaddr)) {
+        if (_daoTagData.exists(tvm.hash(_daoMembersTag[keyaddr]))){
+            amount = amount * _daoTagData[tvm.hash(_daoMembersTag[keyaddr])] / 100;
+        }
+    }
     if (/* (proposalBusy) || */ (block.timestamp < startTime) || (block.timestamp >= finishTime) || (votingResult.hasValue()) )
         //return {value:0, flag: 64} false;
         ISMVClient(msg.sender).onProposalVoted {value:0, flag: 64} (false);
@@ -496,6 +509,54 @@ function getBigTaskParamsData (TvmCell Data) external pure
          returns(uint proposalKind, string taskname, string repoName) 
 {
         (proposalKind, taskname, repoName,) = abi.decode(Data,(uint256, string, string, uint32));
+}
+
+function getCreateDaoMembersTagParams () external view
+         returns(uint proposalKind, string[] tags, uint128[] multiples) 
+{
+        (proposalKind, tags, multiples,,) = abi.decode(propData,(uint256, string[], uint128[], string, uint32));
+}
+
+function getCreateDaoMembersTagParamsData (TvmCell Data) external pure
+         returns(uint proposalKind, string[] tags, uint128[] multiples) 
+{
+        (proposalKind, tags, multiples,,) = abi.decode(Data,(uint256, string[], uint128[], string, uint32));
+}
+
+function getDestroyDaoMembersTagParams () external view
+         returns(uint proposalKind, string[] tags) 
+{
+        (proposalKind, tags,,) = abi.decode(propData,(uint256, string[], string, uint32));
+}
+
+function getDestroyDaoMembersTagParamsData (TvmCell Data) external pure
+         returns(uint proposalKind, string[] tags) 
+{
+        (proposalKind, tags,,) = abi.decode(Data,(uint256, string[], string, uint32));
+}
+
+function getSetDaoMembersTagParams () external view
+         returns(uint proposalKind, address[] pubaddr, string[] tags) 
+{
+        (proposalKind, pubaddr, tags,,) = abi.decode(propData,(uint256, address[], string[], string, uint32));
+}
+
+function getSetDaoMembersTagParamsData (TvmCell Data) external pure
+         returns(uint proposalKind, address[] pubaddr, string[] tags) 
+{
+        (proposalKind, pubaddr, tags,,) = abi.decode(Data,(uint256, address[], string[], string, uint32));
+}
+
+function getDeleteDaoMembersTagParams () external view
+         returns(uint proposalKind, address[] pubaddr) 
+{
+        (proposalKind, pubaddr,,) = abi.decode(propData,(uint256, address[], string, uint32));
+}
+
+function getDeleteDaoMembersTagParamsData (TvmCell Data) external pure
+         returns(uint proposalKind, address[] pubaddr) 
+{
+        (proposalKind, pubaddr,,) = abi.decode(Data,(uint256, address[], string, uint32));
 }
 
 function getBigTaskDeployProposalParams () external view

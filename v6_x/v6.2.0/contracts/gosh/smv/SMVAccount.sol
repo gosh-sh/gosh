@@ -298,7 +298,7 @@ function rejectReviewer (address propAddress) external  onlyOwnerPubkey(_access.
 
 
 function startProposal (/* TvmCell platformCode, TvmCell proposalCode, */ uint256 propId, TvmCell propData,
-                        uint32 startTime, uint32 finishTime, uint128 num_clients) internal view /* public check_owner */
+                        uint32 startTime, uint32 finishTime, uint128 num_clients, bool isTag) internal view /* public check_owner */
 {
 /*     require(initialized, SMVErrors.error_not_initialized);
     require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
@@ -342,7 +342,7 @@ function startProposal (/* TvmCell platformCode, TvmCell proposalCode, */ uint25
                     {value:  SMVConstants.PROPOSAL_INIT_VALUE + num_clients*SMVConstants.CLIENT_LIST_FEE +
                              8*SMVConstants.ACTION_FEE, flag: 1 }
                     (m_SMVPlatformCode, m_SMVProposalCode, amount, staticBuilder.toCell(), inputBuilder.toCell(),
-                             SMVConstants.PROPOSAL_INIT_VALUE + 5*SMVConstants.ACTION_FEE, _goshdao);
+                             SMVConstants.PROPOSAL_INIT_VALUE + 5*SMVConstants.ACTION_FEE, _goshdao, isTag, _goshdao);
 
 }
 

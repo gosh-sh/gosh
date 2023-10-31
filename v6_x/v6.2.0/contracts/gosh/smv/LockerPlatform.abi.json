@@ -11,7 +11,9 @@
 				{"name":"amountToLock","type":"uint128"},
 				{"name":"totalVotes","type":"uint128"},
 				{"name":"staticCell","type":"cell"},
-				{"name":"inputCell","type":"cell"}
+				{"name":"inputCell","type":"cell"},
+				{"name":"isTag","type":"bool"},
+				{"name":"pubaddr","type":"address"}
 			],
 			"outputs": [
 			]

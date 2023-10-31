@@ -1399,6 +1399,52 @@
 			]
 		},
 		{
+			"name": "getCellCreateTagForDaoMembers",
+			"inputs": [
+				{"name":"tags","type":"string[]"},
+				{"name":"multiples","type":"uint128[]"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellDestroyTagForDaoMembers",
+			"inputs": [
+				{"name":"tags","type":"string[]"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellDeployTagForDaoMembers",
+			"inputs": [
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"tags","type":"string[]"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCelldeleteTagForDaoMembers",
+			"inputs": [
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "getCellTaskDestroy",
 			"inputs": [
 				{"name":"taskName","type":"string"},
@@ -1423,6 +1469,16 @@
 		},
 		{
 			"name": "startOneProposal",
+			"inputs": [
+				{"name":"proposal","type":"cell"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startOneProposalTag",
 			"inputs": [
 				{"name":"proposal","type":"cell"},
 				{"name":"num_clients","type":"uint128"},
@@ -1567,7 +1623,8 @@
 				{"name":"choice","type":"bool"},
 				{"name":"amount","type":"uint128"},
 				{"name":"num_clients","type":"uint128"},
-				{"name":"note","type":"string"}
+				{"name":"note","type":"string"},
+				{"name":"isTag","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -1579,7 +1636,8 @@
 				{"name":"choice","type":"bool"},
 				{"name":"amount","type":"uint128"},
 				{"name":"num_clients","type":"uint128"},
-				{"name":"note","type":"string"}
+				{"name":"note","type":"string"},
+				{"name":"isTag","type":"bool"}
 			],
 			"outputs": [
 			]

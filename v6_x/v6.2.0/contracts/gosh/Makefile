@@ -16,7 +16,6 @@ build-contracts:
 	done
 	for i in $(tvcs); do \
 		../compiler/sold --tvm-version gosh $$i.sol || exit $$@; \
-		../compiler/tvm_linker compile $$i.code -o $$i.tvc --lib ../compiler/stdlib_sol.tvm || exit $$@; \
 		if [ "${target-dir}" != "" ] ; then cp $$i.* ${target-dir}/ ; fi; \
 	done
 	rm *.debug.json;
