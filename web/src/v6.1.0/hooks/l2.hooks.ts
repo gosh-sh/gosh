@@ -1035,7 +1035,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                 data.web3.instance?.eth.clearSubscriptions()
             }
         }
-    }, [initialize, web3SubscribeCallback])
+    }, [initialize, web3ChainChangedCallback, web3SubscribeCallback])
     // /Subscribe web3 account/provider
 
     // Subscribe (periodic update) for web3 comission
