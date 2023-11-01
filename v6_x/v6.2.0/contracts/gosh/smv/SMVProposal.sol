@@ -232,9 +232,11 @@ function vote (address _locker, uint256 _platform_id, bool choice, uint128 amoun
     
     tvm.accept();
     (, uint256 keyaddr) = pubaddr.unpack();
-    if (_daoMembersTag.exists(keyaddr)) {
-        if (_daoTagData.exists(tvm.hash(_daoMembersTag[keyaddr]))){
-            amount = amount * _daoTagData[tvm.hash(_daoMembersTag[keyaddr])] / 100;
+    if (_isTag == true) {
+        if (_daoMembersTag.exists(keyaddr)) {
+            if (_daoTagData.exists(tvm.hash(_daoMembersTag[keyaddr]))){
+                amount = amount * _daoTagData[tvm.hash(_daoMembersTag[keyaddr])] / 100;
+            }
         }
     }
     if (/* (proposalBusy) || */ (block.timestamp < startTime) || (block.timestamp >= finishTime) || (votingResult.hasValue()) )
@@ -551,6 +553,42 @@ function getDeleteDaoMembersTagParams () external view
          returns(uint proposalKind, address[] pubaddr) 
 {
         (proposalKind, pubaddr,,) = abi.decode(propData,(uint256, address[], string, uint32));
+}
+
+function getDeployGrantParamsData (TvmCell Data) external pure
+         returns(uint proposalKind, string name, uint128[] grant, address tip3) 
+{
+        (proposalKind, name, grant, tip3,,) = abi.decode(Data,(uint256, string, uint128[], address, string, uint32));
+}
+
+function getDeployGrantParams () external view
+         returns(uint proposalKind, string name, uint128[] grant, address tip3) 
+{
+        (proposalKind, name, grant, tip3,,) = abi.decode(propData,(uint256, string, uint128[], address, string, uint32));
+}
+
+function getDestroyGrantParamsData (TvmCell Data) external pure
+         returns(uint proposalKind, string name) 
+{
+        (proposalKind, name,,) = abi.decode(Data,(uint256, string, string, uint32));
+}
+
+function getDestroyGrantParams () external view
+         returns(uint proposalKind, string name) 
+{
+        (proposalKind, name,,) = abi.decode(propData,(uint256, string, string, uint32));
+}
+
+function getSetGrantPubkeysParamsData (TvmCell Data) external pure
+         returns(uint proposalKind, string name, uint256[] pubkeys) 
+{
+        (proposalKind, name, pubkeys,,) = abi.decode(Data,(uint256, string, uint256[], string, uint32));
+}
+
+function getSetGrantPubkeysParams () external view
+         returns(uint proposalKind, string name, uint256[] pubkeys) 
+{
+        (proposalKind, name, pubkeys,,) = abi.decode(propData,(uint256, string, uint256[], string, uint32));
 }
 
 function getDeleteDaoMembersTagParamsData (TvmCell Data) external pure

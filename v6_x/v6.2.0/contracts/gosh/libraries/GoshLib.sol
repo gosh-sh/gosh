@@ -19,6 +19,7 @@ import "../goshdao.sol";
 import "../tag.sol";
 import "../profile.sol";
 import "../profiledao.sol";
+import "../grant.sol";
 
 contract IRootToken {
     bool static __uninitialized;
@@ -225,6 +226,12 @@ library GoshLib {
         return address.makeAddrStd(0, tvm.hash(deployCode));
     }
 
+
+    function calculateGrantAddress(TvmCell code, address dao, string name) public returns(address) {
+        TvmCell s1 = composeGrantStateInit(code, dao, name);
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
+
     function composeProfileStateInit(TvmCell code, address versionController, string name) public returns(TvmCell) {
         TvmCell s1 = tvm.buildStateInit({
             code: code,
@@ -290,6 +297,17 @@ library GoshLib {
             code: deployCode,
             contr: Repository,
             varInit: {_name: name}
+        });
+    }
+
+    function composeGrantStateInit(TvmCell code, address goshdao, string name) public returns(TvmCell) {
+        TvmCell deployCode = buildGrantsCode(
+            code, goshdao, versionLib
+        );
+        return tvm.buildStateInit({
+            code: deployCode,
+            contr: Grant,
+            varInit: {_name: name, _goshdao: goshdao}
         });
     }
 
@@ -651,6 +669,21 @@ library GoshLib {
         b.store(file);
         b.store(commit);
         b.store(name);
+        b.store(versionc);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        return tvm.setCodeSalt(originalCode, b.toCell());
+    }
+
+    function buildGrantsCode(
+        TvmCell originalCode,
+        address dao,
+        string versionc
+    ) public returns (TvmCell) {
+        TvmBuilder b;
+        b.store("GRANT");
+        b.store(dao);
         b.store(versionc);
         uint256 hash = tvm.hash(b.toCell());
         delete b;

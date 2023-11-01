@@ -67,4 +67,7 @@ abstract contract SMVConfiguration is ReplayProtection {
     uint256 constant DESTROY_TAG_KIND = 48;
     uint256 constant SET_TAG_KIND = 49;
     uint256 constant DELETE_TAG_KIND = 50;
+    uint256 constant DEPLOY_GRANT_KIND = 51;
+    uint256 constant DESTROY_GRANT_KIND = 52;
+    uint256 constant SET_GRANT_PUBKEYS_KIND = 53;
 }

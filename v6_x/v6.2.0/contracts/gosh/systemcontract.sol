@@ -197,7 +197,7 @@ contract SystemContract is Modifiers {
             _code[m_DaoTagCode],
             _code[m_RepoTagCode],
             _code[m_TopicCode],
-            _code[m_KeyBlockCode],
+            _code[m_GrantCode],
             _code[m_WrapperCode],
             m_TokenLockerCode,
             m_SMVPlatformCode,
@@ -357,11 +357,6 @@ contract SystemContract is Modifiers {
         _code[m_TaskCode] = code;
     }
 
-    function setKeyBlock(TvmCell code) public  onlyOwner accept {
-        require(_flag == true, ERR_GOSH_UPDATE);
-        _code[m_KeyBlockCode] = code;
-    }
-
     function setBigTask(TvmCell code) public  onlyOwner accept {
         require(_flag == true, ERR_GOSH_UPDATE);
         _code[m_BigTaskCode] = code;
@@ -405,6 +400,10 @@ contract SystemContract is Modifiers {
     function setTopic(TvmCell code) public  onlyOwner accept {
         require(_flag == true, ERR_GOSH_UPDATE);
         _code[m_TopicCode] = code;
+    }
+
+    function setGrant(TvmCell code) public onlyOwner accept {
+        _code[m_GrantCode] = code;
     }
 
     function setTrusted(address trusted) public onlyOwner accept {

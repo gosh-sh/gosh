@@ -109,7 +109,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         TvmCell codedaotag,
         TvmCell coderepotag,
         TvmCell codetopic,
-        TvmCell codekeyblock,
+        TvmCell codegrant,
         TvmCell codewrapper,
         /////////////////////
         TvmCell TokenLockerCode,
@@ -140,7 +140,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         _code[m_DaoTagCode] = codedaotag;
         _code[m_RepoTagCode] = coderepotag;
         _code[m_TopicCode] = codetopic;
-        _code[m_KeyBlockCode] = codekeyblock;
+        _code[m_GrantCode] = codegrant;
         _code[m_WrapperCode] = codewrapper;
         /////
         m_TokenLockerCode = TokenLockerCode;
@@ -1060,7 +1060,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }(  _versionController, _pubaddr, pubaddr, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _code[m_KeyBlockCode], _versions, _limit_wallets, null,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _code[m_GrantCode], _versions, _limit_wallets, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, 0, _rootTokenRoot);
         this.addVoteTokenPubSub{value: 0.2 ton, flag: 1}(pubaddr, valuePerSubs, block.timestamp + timeForSubs, Programindex);
@@ -1150,7 +1150,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }(  _versionController, _pubaddr, pubaddr, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _code[m_KeyBlockCode], _versions, _limit_wallets, null,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _code[m_GrantCode], _versions, _limit_wallets, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, _tokenforperson, _rootTokenRoot);
         GoshWallet(_lastAccountAddress).setLimitedWallet{value: 0.2 ton, flag: 1}(false, _limit_wallets);
@@ -1211,7 +1211,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }(  _versionController, _pubaddr, pubaddr.member, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _code[m_KeyBlockCode], _versions, _limit_wallets, null,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _code[m_GrantCode], _versions, _limit_wallets, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, pubaddr.count, _rootTokenRoot);
         GoshWallet(_lastAccountAddress).setLimitedWallet{value: 0.2 ton, flag: 1}(false, _limit_wallets);
@@ -1236,7 +1236,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         }(  _versionController, _pubaddr, pubaddr, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _code[m_KeyBlockCode], _versions, 1, null,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _code[m_GrantCode], _versions, 1, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, 0, _rootTokenRoot);
         getMoney();

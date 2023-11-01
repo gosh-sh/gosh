@@ -20,6 +20,7 @@ import "./tree.sol";
 import "./goshwallet.sol";
 import "./profile.sol";
 import "./taggosh.sol";
+import "./grant.sol";
 import "./content-signature.sol";
 import "./topic.sol";
 import "./libraries/GoshLib.sol";
@@ -81,7 +82,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         TvmCell codedaotag,
         TvmCell coderepotag,
         TvmCell topiccode,
-        TvmCell codekeyblock,
+        TvmCell grantCode,
         mapping(uint256 => string) versions,
         uint128 limit_wallets,
         optional(uint256) access,
@@ -106,7 +107,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         if (_index == 0) { require(msg.sender == _goshdao, ERR_SENDER_NO_ALLOWED); }
         if (_index != 0) { require(msg.sender == GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, 0), ERR_SENDER_NO_ALLOWED); }
         _code[m_CommitCode] = commitCode;
-        _code[m_KeyBlockCode] = codekeyblock;
         _code[m_RepositoryCode] = repositoryCode;
         _code[m_TagCode] = TagCode;
         _code[m_SnapshotCode] = SnapshotCode;
@@ -118,6 +118,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _code[m_DaoTagCode] = codedaotag;
         _code[m_RepoTagCode] = coderepotag;
         _code[m_TopicCode] = topiccode;
+        _code[m_GrantCode] = grantCode;
         _access = access;
         _limit_wallets = limit_wallets;
         ///////////////////
@@ -196,7 +197,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             _code[m_CommitCode],
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _code[m_KeyBlockCode], _versions, _limit_wallets, _access,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _code[m_GrantCode], _versions, _limit_wallets, _access,
             m_lockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, DEFAULT_DAO_BALANCE, m_tokenRoot);
         GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, _walletcounter - 1)).askForLimitedBasic{value : 0.1 ton, flag: 1}(_limited, 0);
@@ -644,7 +645,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             _code[m_CommitCode],
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode],  _code[m_DaoTagCode], _code[m_RepoTagCode],  _code[m_TopicCode], _code[m_KeyBlockCode], _versions, _limit_wallets, _access,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode],  _code[m_DaoTagCode], _code[m_RepoTagCode],  _code[m_TopicCode], _code[m_GrantCode], _versions, _limit_wallets, _access,
             m_lockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, DEFAULT_DAO_BALANCE, m_tokenRoot);
         this.deployWalletIn{value: 0.1 ton, flag: 1}();
@@ -1959,6 +1960,53 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         
     }
 
+    function getCellDeployGrants(
+        string name,
+        uint128[] grants,
+        address tip3wallet,
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
+        uint256 proposalKind = DEPLOY_GRANT_KIND;
+        if (time.hasValue() == false) { time = block.timestamp; }
+        return abi.encode(proposalKind, name, grants, tip3wallet, comment, time.get());
+    }
+
+    function _deployGrants(string name, uint128[] grants, address tip3wallet) private {
+        TvmCell s1 = GoshLib.composeGrantStateInit(_code[m_GrantCode], _goshdao, name);
+        new Grant {
+            stateInit: s1, value: 70 ton, wid: 0, flag: 1
+        }(_pubaddr, _systemcontract, grants, tip3wallet, _code[m_WalletCode], _index);
+        getMoney();
+    }
+
+    function getCellDestroyGrants(
+        string name,
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
+        uint256 proposalKind = DESTROY_GRANT_KIND;
+        if (time.hasValue() == false) { time = block.timestamp; }
+        return abi.encode(proposalKind, name, comment, time.get());
+    }
+
+    function _destroyGrants(string name) private {
+        address addr = GoshLib.calculateGrantAddress(_code[m_GrantCode], _goshdao, name);
+        Grant(addr).destroy{value: 0.1 ton, flag: 1}(_pubaddr, _index);
+        getMoney();
+    }
+
+    function getCellSetGrantPubkey(
+        string name,
+        uint256[] pubkeys,
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
+        uint256 proposalKind = SET_GRANT_PUBKEYS_KIND;
+        if (time.hasValue() == false) { time = block.timestamp; }
+        return abi.encode(proposalKind, name, pubkeys, comment, time.get());
+    }
+
+    function _setGrantPubkeys(string name, uint256[] pubkeys) private {
+        address addr = GoshLib.calculateGrantAddress(_code[m_GrantCode], _goshdao, name);
+        Grant(addr).setResult{value: 0.1 ton, flag: 1}(_pubaddr, _index, pubkeys);
+        getMoney();
+    }
+
     function getCellCreateTagForDaoMembers(
         string[] tags,
         uint128[] multiples,
@@ -2421,6 +2469,18 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == DELETE_TAG_KIND) {
                 (,address[] pubaddr,,) = abi.decode(propData,(uint256, address[], string, uint32));
                 _deleteTagsForMembers(pubaddr);
+            } else 
+            if (kind == DEPLOY_GRANT_KIND) {
+                (,string name, uint128[] grants, address tip3,,) = abi.decode(propData,(uint256, string, uint128[], address, string, uint32));
+                _deployGrants(name, grants, tip3);
+            } else 
+            if (kind == DESTROY_GRANT_KIND) {
+                (,string name,,) = abi.decode(propData,(uint256, string, string, uint32));
+                _destroyGrants(name);
+            } else 
+            if (kind == SET_GRANT_PUBKEYS_KIND) {
+                (,string name,uint256[] pubkeys,,) = abi.decode(propData,(uint256, string, uint256[], string, uint32));
+                _setGrantPubkeys(name, pubkeys);
             }
         }
     }
@@ -2591,6 +2651,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function getWalletAddr(uint128 index) external view returns(address) {
         return GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, index);
+    }
+
+    function getGrantAddr(string name) external view returns(address) {
+        return GoshLib.calculateGrantAddress(_code[m_GrantCode], _goshdao, name);
     }
 
     function getWalletsCount() external view returns(uint128) {

@@ -24,7 +24,7 @@
 				{"name":"codedaotag","type":"cell"},
 				{"name":"coderepotag","type":"cell"},
 				{"name":"topiccode","type":"cell"},
-				{"name":"codekeyblock","type":"cell"},
+				{"name":"grantCode","type":"cell"},
 				{"name":"versions","type":"map(uint256,string)"},
 				{"name":"limit_wallets","type":"uint128"},
 				{"name":"access","type":"optional(uint256)"},
@@ -1399,6 +1399,42 @@
 			]
 		},
 		{
+			"name": "getCellDeployGrants",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"grants","type":"uint128[]"},
+				{"name":"tip3wallet","type":"address"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellDestroyGrants",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellSetGrantPubkey",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "getCellCreateTagForDaoMembers",
 			"inputs": [
 				{"name":"tags","type":"string[]"},
@@ -1747,6 +1783,15 @@
 			"name": "getWalletAddr",
 			"inputs": [
 				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getGrantAddr",
+			"inputs": [
+				{"name":"name","type":"string"}
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}

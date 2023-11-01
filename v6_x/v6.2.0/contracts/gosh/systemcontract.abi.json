@@ -527,14 +527,6 @@
 			]
 		},
 		{
-			"name": "setKeyBlock",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "setBigTask",
 			"inputs": [
 				{"name":"code","type":"cell"}
@@ -600,6 +592,14 @@
 		},
 		{
 			"name": "setTopic",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setGrant",
 			"inputs": [
 				{"name":"code","type":"cell"}
 			],

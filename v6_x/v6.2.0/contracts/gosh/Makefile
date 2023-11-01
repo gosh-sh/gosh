@@ -1,10 +1,10 @@
-tvcs = tree tag snapshot repository goshwallet goshdao systemcontract diff commit content-signature profile versioncontroller profiledao profileindex bigtask task daotag taggosh topic trusted 
+tvcs = grant tree tag snapshot repository goshwallet goshdao systemcontract diff commit content-signature profile versioncontroller profiledao profileindex bigtask task daotag taggosh topic trusted 
 cpfl = profile profiledao profileindex trusted
 KEYS_PATH = ${CURDIR}
 EXTRA_DOCKER_ARGS = --network=host --add-host localnode:127.0.0.1
 
 clean:
-	rm -f *.tvc *.abi.json *.code
+	rm -f *.tvc *.abi.json *.code *.debug.json
 	rm -rf .solc_imports
 	rm -rf .sold_imports
 
