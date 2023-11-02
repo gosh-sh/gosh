@@ -16,7 +16,7 @@ uint256 public static platform_id;
 }
  */
 //(clientCode, amountToLock, total_votes, staticCell, _inputCell)
-constructor ( address goshdao, TvmCell clientCode, uint128 amountToLock, uint128 totalVotes, TvmCell staticCell, TvmCell inputCell, bool isTag, address pubaddr) /* check_locker */
+constructor ( address goshdao, TvmCell clientCode, uint128 amountToLock, uint128 totalVotes, TvmCell staticCell, TvmCell inputCell, string[] isTag, address pubaddr) /* check_locker */
 {
     require(platform_id == tvm.hash(staticCell));
     tvm.accept();
@@ -27,7 +27,7 @@ constructor ( address goshdao, TvmCell clientCode, uint128 amountToLock, uint128
 }
 
 
-function onCodeUpgrade(bool /* isTag */,
+function onCodeUpgrade(string[] /* isTag */,
                        address /* pubaddr */,
                        address /* goshdao */,
                        uint256 /* _platform_id */, 

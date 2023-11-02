@@ -23,7 +23,7 @@ uint256 public static platform_id;
 
 
 //LockableBase data
-bool _isTag;
+string[] _isTag;
 address _goshdao;
 address _pubaddr;
 uint256 platformCodeHash;
@@ -231,7 +231,7 @@ function _reserve(uint128 min, uint128 def) internal pure returns(uint128)
 
 function amount_locked () virtual public view returns(uint128);
 function performAction (uint128 amountToLock, uint128 total_votes, TvmCell inputCell, address goshdao) virtual external;
-function onCodeUpgrade (bool isTag,
+function onCodeUpgrade (string[] isTag,
                         address pubaddr,
                         address goshdao,
                         uint256 _platform_id, 

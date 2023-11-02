@@ -28,6 +28,7 @@
 				{"name":"codetopic","type":"cell"},
 				{"name":"codegrant","type":"cell"},
 				{"name":"codewrapper","type":"cell"},
+				{"name":"codetagsupply","type":"cell"},
 				{"name":"TokenLockerCode","type":"cell"},
 				{"name":"SMVPlatformCode","type":"cell"},
 				{"name":"SMVClientCode","type":"cell"},
@@ -189,6 +190,25 @@
 			]
 		},
 		{
+			"name": "calculateTagSupply",
+			"inputs": [
+				{"name":"tag","type":"string[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "continueCalculateTagSupply",
+			"inputs": [
+				{"name":"proposal","type":"address"},
+				{"name":"tag","type":"string[]"},
+				{"name":"index","type":"uint128"},
+				{"name":"sum","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "volunteersnap",
 			"inputs": [
 				{"name":"volunteer","type":"address[]"},
@@ -305,6 +325,17 @@
 				{"name":"comment","type":"string"},
 				{"name":"num_clients","type":"uint128"},
 				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "changeTag",
+			"inputs": [
+				{"name":"mem","type":"uint256"},
+				{"name":"token","type":"uint128"},
+				{"name":"increase","type":"bool"},
+				{"name":"key","type":"uint256"}
 			],
 			"outputs": [
 			]
@@ -661,7 +692,8 @@
 			"inputs": [
 				{"name":"pubaddrs","type":"address"},
 				{"name":"index","type":"uint128"},
-				{"name":"pubaddr","type":"address[]"}
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"tag","type":"string"}
 			],
 			"outputs": [
 			]
@@ -670,6 +702,7 @@
 			"name": "destroyTagsForMembersIn",
 			"inputs": [
 				{"name":"pubaddr","type":"address[]"},
+				{"name":"tag","type":"string"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -690,6 +723,15 @@
 			"inputs": [
 				{"name":"tags","type":"string[]"},
 				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "clearTags",
+			"inputs": [
+				{"name":"tags","type":"string[]"},
+				{"name":"key","type":"uint256"}
 			],
 			"outputs": [
 			]
@@ -1568,7 +1610,7 @@
 		{"name":"_previous","type":"optional(address)"},
 		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"_wallets","type":"map(uint256,tuple)"},
 		{"name":"_daoMembers","type":"map(uint256,string)"},
-		{"name":"_daoMembersTag","type":"map(uint256,string)"},
+		{"name":"_daoMembersTag","type":"map(uint256,map(uint256,bool))"},
 		{"name":"_daoTagData","type":"map(uint256,uint128)"},
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_hashtag","type":"map(uint256,string)"},
@@ -1594,7 +1636,6 @@
 		{"name":"saveind","type":"optional(uint128)"},
 		{"name":"_reserve","type":"uint128"},
 		{"name":"_allbalance","type":"uint128"},
-		{"name":"_allbalanceTags","type":"uint128"},
 		{"name":"_totalsupply","type":"uint128"},
 		{"name":"_isRepoUpgraded","type":"bool"},
 		{"name":"_abilityInvite","type":"bool"},

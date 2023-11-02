@@ -29,8 +29,17 @@
 			"name": "onContinueAction",
 			"inputs": [
 				{"name":"t","type":"uint128"},
-				{"name":"ttag","type":"uint128"},
-				{"name":"daoMembersTag","type":"map(uint256,string)"},
+				{"name":"daoMembersTag","type":"map(uint256,map(uint256,bool))"},
+				{"name":"daoTagData","type":"map(uint256,uint128)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onContinueActionAgain",
+			"inputs": [
+				{"name":"t","type":"uint128"},
+				{"name":"daoMembersTag","type":"map(uint256,map(uint256,bool))"},
 				{"name":"daoTagData","type":"map(uint256,uint128)"}
 			],
 			"outputs": [
@@ -64,6 +73,31 @@
 				{"name":"choice","type":"bool"},
 				{"name":"amount","type":"uint128"},
 				{"name":"pubaddr","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "calculateVotePower",
+			"inputs": [
+				{"name":"_locker","type":"address"},
+				{"name":"_platform_id","type":"uint256"},
+				{"name":"choice","type":"bool"},
+				{"name":"amount","type":"uint128"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"sum","type":"uint128"},
+				{"name":"key","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "continueVote",
+			"inputs": [
+				{"name":"_locker","type":"address"},
+				{"name":"_platform_id","type":"uint256"},
+				{"name":"choice","type":"bool"},
+				{"name":"amount","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -540,7 +574,7 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"pubaddr","type":"address[]"},
-				{"name":"tags","type":"string[]"}
+				{"name":"tag","type":"string"}
 			]
 		},
 		{
@@ -549,7 +583,8 @@
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
-				{"name":"pubaddr","type":"address[]"}
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"tag","type":"string"}
 			]
 		},
 		{
@@ -1550,7 +1585,7 @@
 		{"name":"__value","type":"uint256"},
 		{"name":"tokenLocker","type":"address"},
 		{"name":"platform_id","type":"uint256"},
-		{"name":"_isTag","type":"bool"},
+		{"name":"_isTag","type":"string[]"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_pubaddr","type":"address"},
 		{"name":"platformCodeHash","type":"uint256"},
@@ -1566,7 +1601,7 @@
 		{"name":"tokenRoot","type":"address"},
 		{"name":"propData","type":"cell"},
 		{"name":"reviewers","type":"map(address,bool)"},
-		{"name":"_daoMembersTag","type":"map(uint256,string)"},
+		{"name":"_daoMembersTag","type":"map(uint256,map(uint256,bool))"},
 		{"name":"_daoTagData","type":"map(uint256,uint128)"},
 		{"name":"startTime","type":"uint32"},
 		{"name":"finishTime","type":"uint32"},

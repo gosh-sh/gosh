@@ -1473,6 +1473,7 @@
 			"name": "getCelldeleteTagForDaoMembers",
 			"inputs": [
 				{"name":"pubaddr","type":"address[]"},
+				{"name":"tag","type":"string"},
 				{"name":"comment","type":"string"},
 				{"name":"time","type":"optional(uint32)"}
 			],
@@ -1660,7 +1661,7 @@
 				{"name":"amount","type":"uint128"},
 				{"name":"num_clients","type":"uint128"},
 				{"name":"note","type":"string"},
-				{"name":"isTag","type":"bool"}
+				{"name":"isTag","type":"string[]"}
 			],
 			"outputs": [
 			]
@@ -1673,7 +1674,7 @@
 				{"name":"amount","type":"uint128"},
 				{"name":"num_clients","type":"uint128"},
 				{"name":"note","type":"string"},
-				{"name":"isTag","type":"bool"}
+				{"name":"isTag","type":"string[]"}
 			],
 			"outputs": [
 			]

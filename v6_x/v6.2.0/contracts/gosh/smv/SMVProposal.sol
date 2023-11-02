@@ -22,7 +22,7 @@ address public tokenRoot;
 
 TvmCell public propData;
 mapping (address => bool) public reviewers;
-mapping(uint256 => string) _daoMembersTag;
+mapping(uint256 => mapping(uint256 => bool)) _daoMembersTag;
 mapping(uint256 => uint128) _daoTagData;
 uint32 public startTime;
 uint32 public finishTime;
@@ -98,7 +98,7 @@ function rejectReviewer() external override
     address(msg.sender).transfer(0, false, 64);
 } 
 
-function onCodeUpgrade (bool isTag,
+function onCodeUpgrade (string[] isTag,
                         address pubaddr,
                         address goshdao,
                 		uint256 _platform_id,
@@ -165,13 +165,17 @@ function onCodeUpgrade (bool isTag,
     }
 }
 
-function onContinueAction(uint128 t, uint128 ttag, mapping(uint256 => string) daoMembersTag, mapping(uint256 => uint128) daoTagData) external senderIs(_goshdao) accept
+function onContinueAction(uint128 t, mapping(uint256 => mapping(uint256 => bool)) daoMembersTag, mapping(uint256 => uint128) daoTagData) external view senderIs(_goshdao) accept
 {
+    if (_isTag.length == 0) { this.onContinueActionAgain{value: 0.1 ton, flag: 1}(t, daoMembersTag, daoTagData); }
+    else { IGoshDao(_goshdao).calculateTagSupply{value: 0.1 ton, flag: 1}(_isTag); }
+}
+
+function onContinueActionAgain(uint128 t, mapping(uint256 => mapping(uint256 => bool)) daoMembersTag, mapping(uint256 => uint128) daoTagData) external accept {
+    if (msg.sender != this) { require(msg.sender == _goshdao, ERR_SENDER_NOT_DAO); }
+    totalSupply = t;
     _daoMembersTag = daoMembersTag;
     _daoTagData = daoTagData;
-    if (_isTag == false) { totalSupply = t; }
-    else { totalSupply = ttag; }
-
     delete leftBro;
     delete rightBro;
     delete rightAmount;
@@ -232,13 +236,31 @@ function vote (address _locker, uint256 _platform_id, bool choice, uint128 amoun
     
     tvm.accept();
     (, uint256 keyaddr) = pubaddr.unpack();
-    if (_isTag == true) {
+    if (_isTag.length != 0) {
         if (_daoMembersTag.exists(keyaddr)) {
-            if (_daoTagData.exists(tvm.hash(_daoMembersTag[keyaddr]))){
-                amount = amount * _daoTagData[tvm.hash(_daoMembersTag[keyaddr])] / 100;
-            }
+            this.calculateVotePower{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, amount, pubaddr, uint128(0), uint256(0)); 
         }
+        return;
     }
+    this.continueVote{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, amount);
+}
+
+function calculateVotePower(address _locker, uint256 _platform_id, bool choice, uint128 amount, address pubaddr, uint128 sum, uint256 key) public view senderIs(this) accept {
+    (, uint256 keyaddr) = pubaddr.unpack();
+    for (uint128 i = 0; i <= BATCH_SIZE_TAG; i++) {
+        optional(uint256, bool) res = _daoMembersTag[keyaddr].next(key);
+        if (res.hasValue() == false) { 
+            this.continueVote{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, sum);
+        }
+        (uint256 newkey,bool worker) = res.get();
+        worker;
+        key = newkey;
+        sum += amount * _daoTagData[key] / 100;
+    }
+}
+
+function continueVote(address _locker, uint256 _platform_id, bool choice, uint128 amount) public senderIs(this) accept {
+    _platform_id; _locker;
     if (/* (proposalBusy) || */ (block.timestamp < startTime) || (block.timestamp >= finishTime) || (votingResult.hasValue()) )
         //return {value:0, flag: 64} false;
         ISMVClient(msg.sender).onProposalVoted {value:0, flag: 64} (false);
@@ -544,15 +566,15 @@ function getSetDaoMembersTagParams () external view
 }
 
 function getSetDaoMembersTagParamsData (TvmCell Data) external pure
-         returns(uint proposalKind, address[] pubaddr, string[] tags) 
+         returns(uint proposalKind, address[] pubaddr, string tag) 
 {
-        (proposalKind, pubaddr, tags,,) = abi.decode(Data,(uint256, address[], string[], string, uint32));
+        (proposalKind, pubaddr, tag,,) = abi.decode(Data,(uint256, address[], string, string, uint32));
 }
 
 function getDeleteDaoMembersTagParams () external view
-         returns(uint proposalKind, address[] pubaddr) 
+         returns(uint proposalKind, address[] pubaddr, string tag) 
 {
-        (proposalKind, pubaddr,,) = abi.decode(propData,(uint256, address[], string, uint32));
+        (proposalKind, pubaddr, tag,,) = abi.decode(propData,(uint256, address[], string, string, uint32));
 }
 
 function getDeployGrantParamsData (TvmCell Data) external pure

@@ -29,7 +29,7 @@ modifier check_proposal {
   _ ;
 }
 
-function onCodeUpgrade (bool isTag, 
+function onCodeUpgrade (string[] isTag, 
                         address pubaddr,
                         address goshdao,
                         uint256 _platform_id, 

@@ -12,7 +12,7 @@
 				{"name":"totalVotes","type":"uint128"},
 				{"name":"staticCell","type":"cell"},
 				{"name":"inputCell","type":"cell"},
-				{"name":"isTag","type":"bool"},
+				{"name":"isTag","type":"string[]"},
 				{"name":"pubaddr","type":"address"}
 			],
 			"outputs": [

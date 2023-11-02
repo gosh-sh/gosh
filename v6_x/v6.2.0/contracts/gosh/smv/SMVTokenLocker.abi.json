@@ -34,7 +34,7 @@
 				{"name":"inputCell","type":"cell"},
 				{"name":"deployFee","type":"uint128"},
 				{"name":"goshdao","type":"address"},
-				{"name":"isTag","type":"bool"},
+				{"name":"isTag","type":"string[]"},
 				{"name":"pubaddr","type":"address"}
 			],
 			"outputs": [

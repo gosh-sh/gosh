@@ -199,6 +199,7 @@ contract SystemContract is Modifiers {
             _code[m_TopicCode],
             _code[m_GrantCode],
             _code[m_WrapperCode],
+            _code[m_TagSupplyCode],
             m_TokenLockerCode,
             m_SMVPlatformCode,
             m_SMVClientCode,
@@ -362,6 +363,11 @@ contract SystemContract is Modifiers {
         _code[m_BigTaskCode] = code;
     }
 
+    function setTagSupplyTask(TvmCell code) public  onlyOwner accept {
+        require(_flag == true, ERR_GOSH_UPDATE);
+        _code[m_TagSupplyCode] = code;
+    }
+
     function setSnapshot(TvmCell code) public  onlyOwner accept {
         require(_flag == true, ERR_GOSH_UPDATE);
         _code[m_SnapshotCode] = code;
@@ -488,6 +494,18 @@ contract SystemContract is Modifiers {
         return GoshLib.buildRepositoryCode(
             _code[m_RepositoryCode], address(this), dao, version
         );
+    }
+
+    function getCommitAddr(address repo_addr, string commit_name) public view returns(address)  {
+        return GoshLib.calculateCommitAddress(_code[m_CommitCode], repo_addr, commit_name);
+    }
+
+    function getTreeAddr(address repo_addr, uint256 tree_hash) public view returns(address)  {
+        return GoshLib.calculateTreeAddress(_code[m_TreeCode], tree_hash, repo_addr);
+    }
+
+    function getSnapshotAddr(address repo_addr, string commit_name, string name) external view returns(address) {
+        return GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], repo_addr, commit_name, name);
     }
 
     function getProfileAddr(string name) external view returns(address) {

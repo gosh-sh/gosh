@@ -298,7 +298,7 @@ function rejectReviewer (address propAddress) external  onlyOwnerPubkey(_access.
 
 
 function startProposal (/* TvmCell platformCode, TvmCell proposalCode, */ uint256 propId, TvmCell propData,
-                        uint32 startTime, uint32 finishTime, uint128 num_clients, bool isTag) internal view /* public check_owner */
+                        uint32 startTime, uint32 finishTime, uint128 num_clients, string[] isTag) internal view /* public check_owner */
 {
 /*     require(initialized, SMVErrors.error_not_initialized);
     require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +

@@ -57,6 +57,7 @@ abstract contract Modifiers is ReplayProtection {
     uint8 constant m_WrapperCode = 20;
     uint8 constant m_FactoryCode = 21;
     uint8 constant m_GrantCode = 22;
+    uint8 constant m_TagSupplyCode = 23;
     
     //Deploy constants
     uint128 constant FEE_DEPLOY_DAO = 100000 ton;
@@ -83,6 +84,7 @@ abstract contract Modifiers is ReplayProtection {
     uint128 constant FEE_DEPLOY_TOPIC = 4.8 ton;
     uint128 constant FEE_DEPLOY_KEYBLOCK = 25.5 ton;
     uint128 constant FEE_DEPLOY_WRAPPER = 28 ton;
+    uint128 constant FEE_DEPLOY_TAG_SUPPLY = 11 ton;
 
     uint128 constant TYPE_DESTROY_BRANCH = 0;
     uint128 constant TYPE_INITUPGRADE = 1;
@@ -105,6 +107,7 @@ abstract contract Modifiers is ReplayProtection {
     uint128 constant BATCH_SIZE_COMMIT = 5;
     uint128 constant BATCH_SIZE_TREE_DIFF = 5;
     uint128 constant BATCH_SIZE_TREE = 5;
+    uint128 constant BATCH_SIZE_TAG = 5;
     
     modifier onlyOwnerPubkeyOptional(optional(uint256) rootpubkey) {
         require(rootpubkey.hasValue() == true, ERR_NOT_OWNER);

@@ -593,7 +593,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public senderIs(_goshdao) accept saveMsg {
         uint256 proposalKind = DEPLOY_WALLET_DAO_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, pubaddr, dao, comment, block.timestamp);
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers, false);
+        string[] data;
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers, data);
         getMoney();
     }
     
@@ -857,7 +858,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         uint256 proposalKind = UPGRADE_CODE_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, UpgradeCode, cell, comment, block.timestamp);
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers, false);
+        string[] data;
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers, data);
 
         getMoney();
     }
@@ -1843,7 +1845,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         updateHeadIn();
     }
 
-    function _startProposalForOperation(TvmCell dataCell, uint32 startTimeAfter, uint32 durationTime, uint128 num_clients, address[] reviewers, bool isTag) internal view
+    function _startProposalForOperation(TvmCell dataCell, uint32 startTimeAfter, uint32 durationTime, uint128 num_clients, address[] reviewers, string[] isTag) internal view
     {
         uint256 prop_id = tvm.hash(dataCell);
         /* uint32 startTime = block.timestamp + startTimeAfter;
@@ -1882,7 +1884,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = SETCOMMIT_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, repoName, branchName, commit, numberChangedFiles, numberCommits, task, comment, block.timestamp);
 
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers, false);
+        string[] data;
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers, data);
 
         getMoney();
     }
@@ -2021,6 +2024,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint128[] multiples
     ) private view {
         if (tags.length != multiples.length) { return; }
+        if (tags.length >= 8) { return; }
         GoshDao(_goshdao).setNewTags{value: 0.1 ton, flag: 1}(_pubaddr, _index, tags, multiples);
     }
 
@@ -2057,16 +2061,18 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function getCelldeleteTagForDaoMembers(
         address[] pubaddr,
+        string tag,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = DELETE_TAG_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
-        return abi.encode(proposalKind, pubaddr, comment, time.get());
+        return abi.encode(proposalKind, pubaddr, tag, comment, time.get());
     }
 
     function _deleteTagsForMembers(
-        address[] pubaddr
+        address[] pubaddr,
+        string tag
     ) private view {
-        GoshDao(_goshdao).destroyTagsForMembers{value: 0.1 ton, flag: 1}(_pubaddr, _index, pubaddr);
+        GoshDao(_goshdao).destroyTagsForMembers{value: 0.1 ton, flag: 1}(_pubaddr, _index, pubaddr, tag);
     }
     
     function getCellTaskDestroy(
@@ -2094,7 +2100,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         uint256 proposalKind = MULTI_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, number, proposals, block.timestamp);
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers, false);
+        string[] data;
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers, data);
         getMoney();
     }
 
@@ -2107,7 +2114,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_limited == false, ERR_WALLET_LIMITED);
         tvm.accept();
         _saveMsg();
-        _startProposalForOperation(proposal, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers, false);
+        string[] data;
+        _startProposalForOperation(proposal, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers, data);
         getMoney();
     }
 
@@ -2120,7 +2128,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_limited == false, ERR_WALLET_LIMITED);
         tvm.accept();
         _saveMsg();
-        _startProposalForOperation(proposal, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers, true);
+        string[] data;
+        _startProposalForOperation(proposal, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers, data);
         getMoney();
     }
     
@@ -2139,7 +2148,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         uint256 proposalKind = MULTI_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, number, proposals, block.timestamp);
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers, false);
+        string[] data;
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers, data);
         getMoney();
     }
     
@@ -2172,8 +2182,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         tvm.accept();
         _saveMsg();
         uint256 proposalKind = MULTI_AS_DAO_PROPOSAL_KIND;
+        string[] data;
         TvmCell c = abi.encode(proposalKind, wallet, number, proposals, num_clients_base, reviewers_base, block.timestamp);
-        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers, false);
+        _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers, data);
         getMoney();
     }
     
@@ -2467,8 +2478,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 _setMembersTags(pubaddr, tags);
             } else 
             if (kind == DELETE_TAG_KIND) {
-                (,address[] pubaddr,,) = abi.decode(propData,(uint256, address[], string, uint32));
-                _deleteTagsForMembers(pubaddr);
+                (,address[] pubaddr, string tag,,) = abi.decode(propData,(uint256, address[], string, string, uint32));
+                _deleteTagsForMembers(pubaddr, tag);
             } else 
             if (kind == DEPLOY_GRANT_KIND) {
                 (,string name, uint128[] grants, address tip3,,) = abi.decode(propData,(uint256, string, uint128[], address, string, uint32));
@@ -2516,8 +2527,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshDao(_goshdao).redeployedTask{value: 0.2 ton, flag: 1}(_pubaddr, _index);  
     }
     
-    function voteFor (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platform_id, bool choice, uint128 amount, uint128 num_clients, string note, bool isTag) external  onlyOwnerPubkey(_access.get())
+    function voteFor (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platform_id, bool choice, uint128 amount, uint128 num_clients, string note, string[] isTag) external  onlyOwnerPubkey(_access.get())
     {
+        require(isTag.length <= 8, ERR_WRONG_NUMBER_MEMBER);
         require(initialized, SMVErrors.error_not_initialized);
         require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
                                     2*SMVConstants.VOTING_FEE + num_clients*SMVConstants.CLIENT_LIST_FEE +
@@ -2544,8 +2556,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                                     SMVConstants.PROP_INITIALIZE_FEE + 5*SMVConstants.ACTION_FEE, _goshdao, isTag, _pubaddr);
     }
 
-    function voteForIn (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platform_id, bool choice, uint128 amount, uint128 num_clients, string note, bool isTag) external  onlyOwnerAddress(_pubaddr)
+    function voteForIn (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platform_id, bool choice, uint128 amount, uint128 num_clients, string note, string[] isTag) external  onlyOwnerAddress(_pubaddr)
     {
+        require(isTag.length <= 8, ERR_WRONG_NUMBER_MEMBER);
         require(initialized, SMVErrors.error_not_initialized);
         require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
                                     2*SMVConstants.VOTING_FEE + num_clients*SMVConstants.CLIENT_LIST_FEE +

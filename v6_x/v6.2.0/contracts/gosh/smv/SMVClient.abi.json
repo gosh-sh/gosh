@@ -224,7 +224,7 @@
 		{"name":"_constructorFlag","type":"bool"},
 		{"name":"tokenLocker","type":"address"},
 		{"name":"platform_id","type":"uint256"},
-		{"name":"_isTag","type":"bool"},
+		{"name":"_isTag","type":"string[]"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_pubaddr","type":"address"},
 		{"name":"platformCodeHash","type":"uint256"},
