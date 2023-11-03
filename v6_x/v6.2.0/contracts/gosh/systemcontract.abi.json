@@ -397,6 +397,15 @@
 			]
 		},
 		{
+			"name": "getCode",
+			"inputs": [
+				{"name":"id","type":"uint8"},
+				{"name":"hash","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "updateCode",
 			"inputs": [
 				{"name":"newcode","type":"cell"},

@@ -1936,6 +1936,39 @@
 			]
 		},
 		{
+			"name": "updateGoshWalletCode",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCode",
+			"inputs": [
+				{"name":"id","type":"uint8"},
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateCodeWallet",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateCode",
+			"inputs": [
+				{"name":"newcode","type":"cell"},
+				{"name":"cell","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "proposalIsCompleted",
 			"inputs": [
 				{"name":"proposal","type":"address"}
