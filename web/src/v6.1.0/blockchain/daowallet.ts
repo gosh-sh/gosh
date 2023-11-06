@@ -1075,6 +1075,33 @@ export class DaoWallet extends BaseContract {
         }
     }
 
+    async lockRepositoryBranch(params: {
+        repo_name: string
+        branch_name: string
+        comment?: string
+        reviewers?: string[]
+        cell?: boolean | undefined
+    }) {
+        const { comment = '', reviewers = [], cell } = params
+
+        const cellParams = {
+            repoName: params.repo_name,
+            branchName: params.branch_name,
+            comment,
+        }
+
+        if (cell) {
+            const { value0 } = await this.runLocal(
+                'getCellAddProtectedBranch',
+                cellParams,
+            )
+            return value0 as string
+        } else {
+            const cell: any = await this.lockRepositoryBranch({ ...params, cell: true })
+            return await this.createSingleEvent({ cell, reviewers })
+        }
+    }
+
     async createSingleEvent(params: { cell: string; reviewers?: string[] }) {
         const { cell, reviewers = [] } = params
 
@@ -1249,6 +1276,9 @@ export class DaoWallet extends BaseContract {
                 }
                 if (type === EDaoEventType.PULL_REQUEST) {
                     return await this.setCommit({ ...params, cell: true })
+                }
+                if (type === EDaoEventType.BRANCH_LOCK) {
+                    return await this.lockRepositoryBranch({ ...params, cell: true })
                 }
                 return null
             },

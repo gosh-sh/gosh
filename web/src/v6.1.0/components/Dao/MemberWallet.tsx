@@ -72,7 +72,7 @@ const DaoMemberWallet = (props: TDaoWalletSideProps) => {
                         <div className="text-xl font-medium">
                             {member.allowance?.toLocaleString()}
                         </div>
-                        <div className="mt-3 flex flex-wrap items-center justify-start gap-2">
+                        {/* <div className="mt-3 flex flex-wrap items-center justify-start gap-2">
                             {['ai', 'web3', 'python', 'rust'].map((tag, index) => (
                                 <BadgeTag
                                     key={index}
@@ -96,7 +96,7 @@ const DaoMemberWallet = (props: TDaoWalletSideProps) => {
                             <Button variant="outline-secondary" className="w-full">
                                 Setup tags
                             </Button>
-                        </div>
+                        </div> */}
                     </div>
                 </>
             )}

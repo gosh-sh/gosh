@@ -115,6 +115,17 @@ export class SystemContract extends BaseContract {
         return hash
     }
 
+    async getDaoRepositoryTagCodeHash(daoaddr: string, tag: string): Promise<string> {
+        const { value0 } = await this.runLocal(
+            'getRepoTagDaoCode',
+            { dao: daoaddr, repotag: tag },
+            undefined,
+            { useCachedBoc: true },
+        )
+        const { hash } = await this.client.boc.get_boc_hash({ boc: value0 })
+        return hash
+    }
+
     async getTask(options: {
         address?: string
         data?: {

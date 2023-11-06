@@ -534,6 +534,51 @@ class GoshAdapter_6_1_0 implements IGoshAdapter {
         return profile
     }
 
+    async getCommitAddress(params: {
+        repo_addr: string
+        commit_name: string
+    }): Promise<string> {
+        const { repo_addr, commit_name } = params
+        const { value0 } = await this.gosh.runLocal(
+            'getCommitAddr',
+            { repo_addr, commit_name },
+            undefined,
+            { useCachedBoc: true },
+        )
+        return value0
+    }
+
+    async getSnapshotAddress(params: {
+        repo_addr: string
+        commit_name: string
+        tree_path: string
+    }): Promise<string> {
+        const { repo_addr, commit_name, tree_path } = params
+
+        const { value0 } = await this.gosh.runLocal(
+            'getSnapshotAddr',
+            { repo_addr, commit_name, name: tree_path },
+            undefined,
+            { useCachedBoc: true },
+        )
+        return value0
+    }
+
+    async getTreeAddress(params: {
+        repo_addr: string
+        tree_hash: string
+    }): Promise<string> {
+        const { repo_addr, tree_hash } = params
+
+        const { value0 } = await this.gosh.runLocal(
+            'getTreeAddr',
+            { repo_addr, tree_hash },
+            undefined,
+            { useCachedBoc: true },
+        )
+        return value0
+    }
+
     private _isValidName(name: string, field?: string): TValidationResult {
         field = field || 'Name'
 
@@ -2881,9 +2926,9 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     private gosh: IGoshAdapter
     private client: TonClient
-    private name?: string
     private subwallets: IGoshWallet[] = []
 
+    name?: string
     repo: IGoshRepository
     auth?: { username: string; wallet0: IGoshWallet }
     config?: { maxWalletsWrite: number }
@@ -2915,10 +2960,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
     async getName(): Promise<string> {
         if (!this.name) {
-            const { value0 } = await this.repo.runLocal('getName', {}, undefined, {
-                useCachedBoc: true,
-            })
-            this.name = value0
+            this.name = await this.repo.getName()
         }
         return this.name!
     }
@@ -3045,16 +3087,17 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const patched =
             temporaryCommit === commitName ? temporarySnapData : approvedSnapData
         const ipfscid = temporaryCommit === commitName ? temporaryIpfs : approvedIpfs
+        result.onchain = {
+            commit: temporaryCommit === commitName ? temporaryCommit : approvedCommit,
+            content: '',
+            tmpcommit: temporaryCommit,
+        }
 
         // Read onchain snapshot content
         if (patched) {
             const compressed = Buffer.from(patched, 'hex').toString('base64')
             const content = await zstd.decompress(compressed, true)
-            result.onchain = {
-                commit: temporaryCommit === commitName ? temporaryCommit : approvedCommit,
-                content: content,
-                tmpcommit: temporaryCommit,
-            }
+            result.onchain.content = content
             result.content = content
             result.ipfs = false
         }
@@ -4626,12 +4669,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             throw new GoshError('Commit name is undefined')
         }
 
-        const { value0 } = await this.repo.runLocal(
-            'getCommitAddr',
-            { nameCommit: name },
-            undefined,
-            { useCachedBoc: true },
-        )
+        const value0 = await this.gosh.getCommitAddress({
+            repo_addr: this.getAddress(),
+            commit_name: name,
+        })
         return new GoshCommit(this.client, value0)
     }
 
@@ -4647,12 +4688,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         if (!sha256) {
             throw new GoshError('Tree sha256 is undefined')
         }
-        const { value0 } = await this.repo.runLocal(
-            'getTreeAddr',
-            { shainnertree: sha256 },
-            undefined,
-            { useCachedBoc: true },
-        )
+        const value0 = await this.gosh.getTreeAddress({
+            repo_addr: this.getAddress(),
+            tree_hash: sha256,
+        })
         return new GoshTree(this.client, value0)
     }
 
@@ -4736,15 +4775,11 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         commit: string,
         treepath: string,
     ): Promise<TAddress> {
-        const { value0 } = await this.repo.runLocal(
-            'getSnapshotAddr',
-            {
-                commitsha: commit,
-                name: treepath,
-            },
-            undefined,
-            { useCachedBoc: true },
-        )
+        const value0 = await this.gosh.getSnapshotAddress({
+            repo_addr: this.getAddress(),
+            commit_name: commit,
+            tree_path: treepath,
+        })
         return value0
     }
 
@@ -4923,9 +4958,12 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         // Check if deployed
-        const diffContract = await this._getDiff(commit, index1, 0)
-        if (await diffContract.isDeployed()) {
-            return
+        let diffContract: IGoshDiff | null = null
+        if (await this.repo.isDeployed()) {
+            diffContract = await this._getDiff(commit, index1, 0)
+            if (await diffContract.isDeployed()) {
+                return
+            }
         }
 
         // Deploy diff
@@ -4961,21 +4999,23 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         })
 
         // Wait for ready (_isCorrect)
-        const wait = await whileFinite(async () => {
-            let isCorrect = false
-            const isDeployed = await diffContract.isDeployed()
-            if (isDeployed) {
-                const { value0 } = await diffContract.runLocal('getStatus', {})
-                isCorrect = value0
-            }
-            return isDeployed && isCorrect
-        })
-        if (!wait) {
-            throw new GoshError('Diff check timeout reached', {
-                branch,
-                index1,
-                address: diffContract.address,
+        if (diffContract) {
+            const wait = await whileFinite(async () => {
+                let isCorrect = false
+                const isDeployed = await diffContract!.isDeployed()
+                if (isDeployed) {
+                    const { value0 } = await diffContract!.runLocal('getStatus', {})
+                    isCorrect = value0
+                }
+                return isDeployed && isCorrect
             })
+            if (!wait) {
+                throw new GoshError('Diff check timeout reached', {
+                    branch,
+                    index1,
+                    address: diffContract.address,
+                })
+            }
         }
     }
 
@@ -4999,7 +5039,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Deploy commit
         await this.auth.wallet0.run('deployCommit', {
-            repoName: await this.repo.getName(),
+            repoName: await this.getName(),
             branchName: branch,
             commitName: commit,
             fullCommit: content,
@@ -5448,6 +5488,108 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const smv = await dao.getSmv()
         await smv.validateProposalStart(min)
         return await smv.getClientsCount()
+    }
+
+    async getBlobPushDataOut(
+        tree: TTreeItem[],
+        blob: {
+            treepath: string[]
+            original: string | Buffer
+            modified: string | Buffer
+        },
+    ): Promise<TPushBlobData[]> {
+        return await this._getBlobPushData(tree, blob)
+    }
+
+    async getTreePushDataOut(
+        treeitems: TTreeItem[],
+        blobsData: TPushBlobData[],
+    ): Promise<{ tree: TTree; updated: string[]; sha1: string; sha256: string }> {
+        return await this._getTreePushData(treeitems, blobsData)
+    }
+
+    async generateCommitOut(
+        branch: TBranch,
+        treeHash: string,
+        message: string,
+        branchParent?: string,
+    ): Promise<{
+        commitHash: string
+        commitContent: string
+        commitParents: { address: TAddress; version: string }[]
+    }> {
+        return await this._generateCommit(branch, treeHash, message, branchParent)
+    }
+
+    async updateSubtreesHashOut(tree: TTree): Promise<TTree> {
+        return await this._updateSubtreesHash(tree)
+    }
+
+    async getTreeSha256Out(params: {
+        mapping?: any
+        items?: TTreeItem[]
+    }): Promise<string> {
+        return await this._getTreeSha256(params)
+    }
+
+    async deployCommitOut(
+        branch: string,
+        commit: string,
+        content: string,
+        parents: { address: TAddress; version: string }[],
+        treesha256: string,
+        upgrade: boolean,
+    ): Promise<void> {
+        return await this._deployCommit(
+            branch,
+            commit,
+            content,
+            parents,
+            treesha256,
+            upgrade,
+        )
+    }
+
+    async deployTreeOut(items: TTreeItem[], wallet?: IGoshWallet): Promise<void> {
+        return await this._deployTree(items, wallet)
+    }
+
+    async deploySnapshotOut(
+        commit: string,
+        treepath: string,
+        content?: string | Buffer,
+        wallet?: IGoshWallet,
+        forceDelete?: boolean,
+        isPin?: boolean,
+    ): Promise<IGoshSnapshot> {
+        return await this._deploySnapshot(
+            commit,
+            treepath,
+            content,
+            wallet,
+            forceDelete,
+            isPin,
+        )
+    }
+
+    async deployDiffOut(
+        branch: string,
+        commit: string,
+        data: {
+            snapshot: string
+            treepath: string
+            treeItem?: TTreeItem | undefined
+            compressed: string
+            patch: string | null
+            flags: number
+            hashes: { sha1: string; sha256: string }
+            isGoingOnchain: boolean
+            isGoingIpfs: boolean
+        },
+        index1: number,
+        wallet?: IGoshWallet | undefined,
+    ): Promise<void> {
+        return await this._deployDiff(branch, commit, data, index1, wallet)
     }
 }
 

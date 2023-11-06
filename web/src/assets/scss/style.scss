@@ -196,4 +196,15 @@ body,
     .rmdp-day-picker > div {
         @apply w-full;
     }
+
+    .rmdp-time-picker input {
+        @apply w-[1.625rem];
+    }
+}
+
+/**
+ * Customize sun-editor
+ */
+.sun-editor--noborder .sun-editor {
+    @apply border-none;
 }
