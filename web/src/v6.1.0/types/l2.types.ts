@@ -11,6 +11,7 @@ export type TL2TransferStatusItem = {
     type: string
     status: 'disabled' | 'awaiting' | 'pending' | 'completed'
     message: string
+    help?: string
 }
 
 export type TL2User = {
@@ -25,7 +26,8 @@ export type TL2Token = {
     decimals: number
     iconpath: string
     rootaddr: string | null
-    pair: string[]
+    pair_name: string
+    pair_with: string[]
 }
 
 export type TL2Withdrawal = {

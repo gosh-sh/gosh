@@ -1,10 +1,10 @@
-import Select from 'react-select'
 import { Field } from 'formik'
+import Select from 'react-select'
 import { BaseField } from '../../../../../components/Formik'
-import { useL2Transfer } from '../../../../hooks/l2.hooks'
 import { Select2ClassNames } from '../../../../../helpers'
-import { TL2Token } from '../../../../types/l2.types'
+import { useL2Transfer } from '../../../../hooks/l2.hooks'
 import { l2Tokens } from '../../../../store/l2.state'
+import { TL2Token } from '../../../../types/l2.types'
 
 type TTokenFieldProps = {
     prefix: string
@@ -16,26 +16,26 @@ const TokenField = (props: TTokenFieldProps) => {
     const { prefix, label, onTokenFieldChange } = props
     const { summary } = useL2Transfer()
 
-    const getSelectedOption = (symbol: string) => {
-        const found = l2Tokens.find((token) => token.symbol === symbol)
+    const getSelectedOption = (pair_name: string) => {
+        const found = l2Tokens.find((token) => token.pair_name === pair_name)
         return found
-            ? { value: found.symbol, data: found, disabled: false }
+            ? { value: found.pair_name, data: found, disabled: false }
             : { value: '', data: null, disabled: false }
     }
 
     const getOptions = () => {
-        const from = getSelectedOption(summary.from.token.symbol)
+        const from = getSelectedOption(summary.from.token.pair_name)
         return l2Tokens.map((token) => ({
-            value: token.symbol,
+            value: token.pair_name,
             data: token,
-            disabled: prefix === 'to' && token.pair.indexOf(from.value) < 0,
+            disabled: prefix === 'to' && token.pair_with.indexOf(from.value) < 0,
         }))
     }
 
     return (
         <Field label={label} type="select" name={`${prefix}_token`} component={BaseField}>
             {(params: any) => {
-                const selected = getSelectedOption(params.field.value.symbol)
+                const selected = getSelectedOption(params.field.value.pair_name)
 
                 return (
                     <Select

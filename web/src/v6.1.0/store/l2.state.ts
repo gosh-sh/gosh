@@ -1,5 +1,5 @@
 import { atom } from 'recoil'
-import L2Tokens from '../../l2.tokens.dev.json'
+import L2Tokens from '../../l2.tokens.json'
 import { contextVersion } from '../constants'
 import { EL2Network, TL2Token, TL2TransferData } from '../types/l2.types'
 
@@ -30,30 +30,17 @@ export const l2TransferAtom = atom<TL2TransferData>({
         },
         summary: {
             from: {
-                token: {
-                    network: EL2Network.ETH,
-                    name: 'Ethereum',
-                    symbol: 'ETH',
-                    decimals: 18,
-                    iconpath: '/images/tokens/ethereum.webp',
-                    rootaddr: null,
-                    pair: ['WETH'],
-                },
+                token: l2Tokens.find((item) => {
+                    return item.network === EL2Network.ETH && item.pair_name === 'eth'
+                })!,
                 user: null,
                 wallet: '',
                 amount: '0',
             },
             to: {
-                token: {
-                    network: EL2Network.GOSH,
-                    name: 'Ethereum',
-                    symbol: 'WETH',
-                    decimals: 18,
-                    iconpath: '/images/tokens/gosh.webp',
-                    rootaddr:
-                        '0:8cec263b47253fff2fdd289721d7f71565bfcc6aecf3e7a17d1d5785861169c3',
-                    pair: ['ETH', 'WETH'],
-                },
+                token: l2Tokens.find((item) => {
+                    return item.network === EL2Network.GOSH && item.pair_name === 'weth'
+                })!,
                 user: null,
                 wallet: '',
                 amount: '0',

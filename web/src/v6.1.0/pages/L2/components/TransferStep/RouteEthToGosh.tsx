@@ -13,8 +13,11 @@ const RouteEthToGosh = () => {
                     <div className="basis-3/12">
                         <StatusBadge type={item.status} />
                     </div>
-                    <div className="grow text-sm font-medium">
-                        {item.message}
+                    <div className="grow text-sm">
+                        <h3 className="font-medium">{item.message}</h3>
+
+                        {item.help && <div className="text-xs">{item.help}</div>}
+
                         <div className="mt-1">
                             {item.status !== 'completed' &&
                                 item.type === 'approve_erc20' && (

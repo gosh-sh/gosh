@@ -28,7 +28,10 @@ const RouteGoshToEth = () => {
                         <StatusBadge type={item.status} />
                     </div>
                     <div className="grow text-sm font-medium">
-                        {item.message}
+                        <h3 className="font-medium">{item.message}</h3>
+
+                        {item.help && <div className="text-xs">{item.help}</div>}
+
                         <div className="mt-1">
                             {item.status !== 'completed' &&
                                 item.type === 'withdraw_gosh' && (

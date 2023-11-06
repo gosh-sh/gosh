@@ -1,18 +1,18 @@
+import { KeyPair } from '@eversdk/core'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useRecoilState, useResetRecoilState } from 'recoil'
 import Web3 from 'web3'
+import { AppConfig } from '../../appconfig'
 import ELockAbi from '../../blockchain/abi/elock.abi.json'
 import ERC20Abi from '../../blockchain/abi/erc20.abi.json'
-import { l2Tokens, l2TransferAtom } from '../store/l2.state'
-import { useCallback, useEffect, useMemo } from 'react'
-import { AppConfig } from '../../appconfig'
-import { appToastStatusSelector } from '../../store/app.state'
-import { GoshError } from '../../errors'
-import { useUser } from './user.hooks'
-import { fromBigint, setLockableInterval, toBigint, whileFinite } from '../../utils'
-import { EL2Network, TL2Token, TL2TransferStatusItem, TL2User } from '../types/l2.types'
 import { L2_COMISSION } from '../../constants'
+import { GoshError } from '../../errors'
+import { appToastStatusSelector } from '../../store/app.state'
 import { supabase } from '../../supabase'
-import { KeyPair } from '@eversdk/core'
+import { fromBigint, setLockableInterval, toBigint, whileFinite } from '../../utils'
+import { l2Tokens, l2TransferAtom } from '../store/l2.state'
+import { EL2Network, TL2Token, TL2TransferStatusItem, TL2User } from '../types/l2.types'
+import { useUser } from './user.hooks'
 
 export function useL2Transfer(options: { initialize?: boolean } = {}) {
     const { initialize } = options
@@ -106,7 +106,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
             return
         }
 
-        const default_token = l2Tokens.find((token) => token.symbol === 'WETH')
+        const default_token = l2Tokens.find((token) => token.pair_name === 'weth')
         if (!default_token || !default_token.rootaddr) {
             return
         }
@@ -143,7 +143,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                     address,
                     chain_id,
                     chain_supported: isWeb3ChainSupported(chain_id),
-                    token: l2Tokens.find((token) => token.symbol === 'ETH'),
+                    token: l2Tokens.find((token) => token.pair_name === 'eth'),
                     balance,
                 },
             }))
@@ -171,7 +171,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
 
             if (dir === 'from') {
                 const token_to = l2Tokens.filter((item) => {
-                    return token.pair.indexOf(item.symbol) >= 0
+                    return token.pair_with.indexOf(item.pair_name) >= 0
                 })[0]
                 summary.to = { ...summary.to, token: token_to }
             }
@@ -258,7 +258,12 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                 })
             }
 
-            steps.push({ type: 'receive', status: 'awaiting', message: 'Receive tokens' })
+            steps.push({
+                type: 'receive',
+                status: 'awaiting',
+                message: 'Receive tokens',
+                help: 'Tokens should arrive within 15 minutes after deposit',
+            })
         } else if (route === `${EL2Network.GOSH}:${EL2Network.ETH}`) {
             steps = [
                 {
@@ -267,11 +272,12 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                     message: 'Withdraw from GOSH',
                 },
             ]
-            if (data.summary.from.token.symbol !== 'WETH') {
+            if (data.summary.from.token.pair_name !== 'weth') {
                 steps.push({
                     type: 'withdraw_erc20',
                     status: 'disabled',
                     message: 'Withdraw from ELock',
+                    help: 'It can take up to 3 hours, you can close this tab and complete withdrawal later',
                 })
             }
 
@@ -379,12 +385,13 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                 ERC20Abi,
                 data.summary.from.token.rootaddr,
             )
+            const amount = toBigint(
+                data.summary.from.amount,
+                data.summary.from.token.decimals,
+            )
             const edata = token_root.methods
-                .approve(
-                    // @ts-ignore
-                    AppConfig.elockaddr,
-                    data.web3.instance.utils.toWei(data.summary.from.amount, 'ether'),
-                )
+                // @ts-ignore
+                .approve(AppConfig.elockaddr, amount)
                 .encodeABI()
             const receipt = await data.web3.instance.eth.sendTransaction({
                 from: data.web3.address,
@@ -424,11 +431,15 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                 ELockAbi.abi,
                 AppConfig.elockaddr,
             )
+            const amount = toBigint(
+                data.summary.from.amount,
+                data.summary.from.token.decimals,
+            )
             const edata = elock.methods
                 .depositERC20(
                     // @ts-ignore
                     data.summary.from.token.rootaddr,
-                    data.web3.instance.utils.toWei(data.summary.from.amount, 'ether'),
+                    amount,
                     data.summary.to.user.value.pubkey,
                 )
                 .encodeABI()
@@ -815,7 +826,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                 },
             }))
         }
-    }, [data.summary.from.token.symbol, data.web3.address, goshUser?.value.address])
+    }, [data.summary.from.token.pair_name, data.web3.address, goshUser?.value.address])
 
     useEffect(() => {
         if (initialize) {
@@ -839,7 +850,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                 },
             },
         }))
-    }, [data.summary.to.token.symbol, data.web3.address, goshUser?.value.address])
+    }, [data.summary.to.token.pair_name, data.web3.address, goshUser?.value.address])
 
     useEffect(() => {
         if (initialize) {
@@ -910,7 +921,15 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
         console.debug('onSetAmountFromCallback')
         const { summary, comissions } = data
         const route = `${summary.from.token.network}:${summary.to.token.network}`
-        const comission = comissions[route]
+
+        let comission = comissions[route]
+        if (
+            route.indexOf(`:${EL2Network.ETH}`) >= 0 &&
+            summary.from.token.pair_name !== 'weth'
+        ) {
+            comission = 0n
+        }
+
         const from_amount = toBigint(summary.from.amount, summary.from.token.decimals)
         const to_amount = from_amount - comission
 
@@ -1041,7 +1060,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
         } catch (e: any) {
             console.error(e.message)
         }
-    }, [!!data.web3.instance, data.web3.token?.symbol])
+    }, [!!data.web3.instance, data.web3.token?.pair_name])
 
     useEffect(() => {
         if (!initialize) {
@@ -1072,6 +1091,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                 .from('l2_state')
                 .select()
                 .order('created_at', { ascending: false })
+                .limit(1)
             if (error) {
                 throw new GoshError('Get web3 comission', error.message)
             }

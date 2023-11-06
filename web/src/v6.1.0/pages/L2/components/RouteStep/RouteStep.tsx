@@ -1,16 +1,16 @@
 import { Form, Formik } from 'formik'
-import { Button } from '../../../../../components/Form'
-import { useL2Transfer } from '../../../../hooks/l2.hooks'
-import yup from '../../../../yup-extended'
-import { EL2Network, TL2Token, TL2User } from '../../../../types/l2.types'
 import { useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
+import { Button } from '../../../../../components/Form'
 import { ToastError } from '../../../../../components/Toast'
-import UserField from './UserField'
-import Web3Connect from './Web3Connect'
+import { fromBigint } from '../../../../../utils'
+import { useL2Transfer } from '../../../../hooks/l2.hooks'
+import { EL2Network, TL2Token, TL2User } from '../../../../types/l2.types'
+import yup from '../../../../yup-extended'
 import AmountField from './AmountField'
 import TokenField from './TokenField'
-import { fromBigint } from '../../../../../utils'
+import UserField from './UserField'
+import Web3Connect from './Web3Connect'
 
 const RouteStep = () => {
     const {
@@ -88,7 +88,7 @@ const RouteStep = () => {
                 from_wallet: yup.string().required(),
                 from_amount: yup
                     .number()
-                    .min(0.01)
+                    .min(0.011)
                     .max(parseFloat(maxBalance))
                     .required(),
                 to_token: yup.object().shape({
@@ -100,7 +100,7 @@ const RouteStep = () => {
             onSubmit={onFormSubmit}
             enableReinitialize
         >
-            {({ values, setFieldValue }) => (
+            {({ values }) => (
                 <Form>
                     <div
                         className="flex flex-wrap lg:flex-nowrap gap-x-12 gap-y-6

@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
-import { useL2Transfer } from '../../../hooks/l2.hooks'
 import moment from 'moment'
+import { useEffect, useState } from 'react'
 import CopyClipboard from '../../../../components/CopyClipboard'
 import { fromBigint, getDurationDelta, shortString } from '../../../../utils'
-import { EL2Network } from '../../../types/l2.types'
+import { useL2Transfer } from '../../../hooks/l2.hooks'
+import { l2Tokens } from '../../../store/l2.state'
+import { EL2Network, TL2Token } from '../../../types/l2.types'
 
 const getPayoutTime = () => {
     const hours = [0, 3, 6, 9, 12, 15, 18, 21]
@@ -20,7 +21,16 @@ const Summary = () => {
     const { comissions, summary, reset } = useL2Transfer()
 
     const [payout, setPayout] = useState<any>(getPayoutTime())
+    const [commission, setCommission] = useState<{ token: TL2Token; value: bigint }>()
     const route = `${summary.from?.token.network}:${summary.to?.token.network}`
+
+    useEffect(() => {
+        let commission_token = summary.to.token
+        if (route.indexOf(`:${EL2Network.ETH}`) >= 0) {
+            commission_token = l2Tokens.find((item) => (item.pair_name = 'eth'))!
+        }
+        setCommission({ token: commission_token, value: comissions[route] })
+    }, [comissions[route], summary.to.token.pair_name])
 
     useEffect(() => {
         const interval = setInterval(() => setPayout(getPayoutTime()), 1000)
@@ -95,15 +105,17 @@ const Summary = () => {
             </div>
 
             <div className="mt-6 pt-5 border-t border-t-gray-e6edff">
-                <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
-                    <div className="grow text-sm">Estimate comission</div>
-                    <div className="text-sm font-medium whitespace-nowrap">
-                        {fromBigint(comissions[route], summary.to.token.decimals)}{' '}
-                        <span className="text-gray-7c8db5 font-light text-sm">
-                            {summary.to.token.symbol}
-                        </span>
+                {commission && (
+                    <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+                        <div className="grow text-sm">Estimate commission</div>
+                        <div className="text-sm font-medium whitespace-nowrap">
+                            {fromBigint(commission.value, commission.token.decimals)}{' '}
+                            <span className="text-gray-7c8db5 font-light text-sm">
+                                {commission.token.symbol}
+                            </span>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {route === `${EL2Network.GOSH}:${EL2Network.ETH}` && (
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-4">

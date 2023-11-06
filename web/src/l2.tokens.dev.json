@@ -6,16 +6,18 @@
         "decimals": 18,
         "iconpath": "/images/tokens/ethereum.webp",
         "rootaddr": null,
-        "pair": ["WETH"]
+        "pair_name": "eth",
+        "pair_with": ["weth"]
     },
     {
         "network": "gosh",
         "name": "Ethereum",
-        "symbol": "WETH",
+        "symbol": "ETH",
         "decimals": 18,
         "iconpath": "/images/tokens/gosh.webp",
-        "rootaddr": "0:d00dfe58faa74e3e257fa720cbd6408d2d624585117a4f1821a210446c4d6adf",
-        "pair": ["ETH", "WETH"]
+        "rootaddr": "0:9d50747c09058812c38a7c38390ab6f12d10bb2474f287566270090228700d55",
+        "pair_name": "weth",
+        "pair_with": ["eth", "weth"]
     },
     {
         "network": "eth",
@@ -24,16 +26,18 @@
         "decimals": 18,
         "iconpath": "/images/tokens/ethereum.webp",
         "rootaddr": "0x7439E9Bb6D8a84dd3A23fe621A30F95403F87fB9",
-        "pair": ["WWEENUS"]
+        "pair_name": "weenus",
+        "pair_with": ["wweenus"]
     },
     {
         "network": "gosh",
         "name": "Weenus",
-        "symbol": "WWEENUS",
+        "symbol": "WEENUS",
         "decimals": 18,
         "iconpath": "/images/tokens/gosh.webp",
-        "rootaddr": "0:1ee6d908a0dfc3d446a75f69cfc7a4fdfd2aaf01423ea54bf3b55a3b725985c9",
-        "pair": ["WEENUS", "WWEENUS"]
+        "rootaddr": "0:551818387d7c29699af896e20ccfd64dc51b879ca36da02f4f76c06cda48d15e",
+        "pair_name": "wweenus",
+        "pair_with": ["weenus", "wweenus"]
     },
     {
         "network": "eth",
@@ -42,15 +46,17 @@
         "decimals": 18,
         "iconpath": "/images/tokens/ethereum.webp",
         "rootaddr": "0xc21d97673B9E0B3AA53a06439F71fDc1facE393B",
-        "pair": ["WXEENUS"]
+        "pair_name": "xeenus",
+        "pair_with": ["wxeenus"]
     },
     {
         "network": "gosh",
         "name": "Xeenus",
-        "symbol": "WXEENUS",
+        "symbol": "XEENUS",
         "decimals": 18,
         "iconpath": "/images/tokens/gosh.webp",
-        "rootaddr": "0:a58d1da25512e375195dadc579d66a6e1bd8d99b9834a971299a558eee7af24a",
-        "pair": ["XEENUS", "WXEENUS"]
+        "rootaddr": "0:32e8f79e92bf7117dba9436d86a49e5d025eaba109619e74a18f54a4ce7f40f9",
+        "pair_name": "wxeenus",
+        "pair_with": ["xeenus", "wxeenus"]
     }
 ]
