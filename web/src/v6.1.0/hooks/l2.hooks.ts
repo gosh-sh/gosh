@@ -916,7 +916,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
     }, [initialize, onSetUserToCallback])
     // /React on `user_to` change
 
-    // React on `amount_from` change
+    // React on `amount_from` change (update `amount_to`)
     const onSetAmountFromCallback = useCallback(() => {
         console.debug('onSetAmountFromCallback')
         const { summary, comissions } = data
