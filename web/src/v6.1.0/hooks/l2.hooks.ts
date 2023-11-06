@@ -209,29 +209,14 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
     }
 
     const setSummaryAmount = async (amount: string) => {
-        setData((state) => {
-            // Cast from_amount to BigInt
-            const from_amount = toBigint(amount, state.summary.from.token.decimals)
-
-            // Calculate comission
-            const route = `${state.summary.from.token.network}:${state.summary.to.token.network}`
-            let comission = 0n
-            if (route === `${EL2Network.ETH}:${EL2Network.GOSH}`) {
-                comission = from_amount / BigInt(L2_COMISSION)
-            } else if (route === `${EL2Network.GOSH}:${EL2Network.ETH}`) {
-                comission = data.comissions[route]
-            }
-
-            // to.amount is calculated by useCallback with deps
-            return {
-                ...state,
-                comissions: { ...state.comissions, [route]: comission },
-                summary: {
-                    ...state.summary,
-                    from: { ...state.summary.from, amount },
-                },
-            }
-        })
+        // to.amount is calculated by useCallback with deps
+        setData((state) => ({
+            ...state,
+            summary: {
+                ...state.summary,
+                from: { ...state.summary.from, amount },
+            },
+        }))
     }
 
     const submitRouteStep = () => {
@@ -916,22 +901,20 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
     }, [initialize, onSetUserToCallback])
     // /React on `user_to` change
 
-    // React on `amount_from` change (update `amount_to`)
-    const onSetAmountFromCallback = useCallback(() => {
-        console.debug('onSetAmountFromCallback')
+    // React on commissions change (update `amount_to`)
+    const onSetCommissionsCallback = useCallback(() => {
+        console.debug('onSetCommissionsCallback')
         const { summary, comissions } = data
+
         const route = `${summary.from.token.network}:${summary.to.token.network}`
 
-        let comission = comissions[route]
-        if (
-            route.indexOf(`:${EL2Network.ETH}`) >= 0 &&
-            summary.from.token.pair_name !== 'weth'
-        ) {
-            comission = 0n
+        let commission = comissions[route]
+        if (summary.to.token.network !== EL2Network.GOSH && summary.to.token.rootaddr) {
+            commission = 0n
         }
 
         const from_amount = toBigint(summary.from.amount, summary.from.token.decimals)
-        const to_amount = from_amount - comission
+        const to_amount = from_amount > commission ? from_amount - commission : 0n
 
         setData((state) => ({
             ...state,
@@ -939,26 +922,45 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                 ...state.summary,
                 to: {
                     ...state.summary.to,
-                    amount: fromBigint(
-                        to_amount > 0 ? to_amount : 0n,
-                        summary.to.token.decimals,
-                    ),
+                    amount: fromBigint(to_amount, summary.to.token.decimals),
                 },
             },
         }))
-    }, [
-        data.summary.from.token.network,
-        data.summary.to.token.network,
-        data.summary.from.amount,
-        data.comissions,
-    ])
+    }, [data.comissions])
 
     useEffect(() => {
         if (initialize) {
-            onSetAmountFromCallback()
+            onSetCommissionsCallback()
         }
-    }, [initialize, onSetAmountFromCallback])
-    // /React on `amount_from` change
+    }, [initialize, onSetCommissionsCallback])
+    // /React on commissions change (update `amount_to`)
+
+    // Recalculate commissions by deps
+    useEffect(() => {
+        console.debug('onRecalculateCommissions')
+        const { summary, comissions } = data
+        const route = `${summary.from.token.network}:${summary.to.token.network}`
+
+        // Cast from_amount to BigInt
+        const from_amount = toBigint(summary.from.amount, summary.from.token.decimals)
+
+        // Calculate comission
+        let comission = 0n
+        if (route === `${EL2Network.ETH}:${EL2Network.GOSH}`) {
+            comission = from_amount / BigInt(L2_COMISSION)
+        } else if (route === `${EL2Network.GOSH}:${EL2Network.ETH}`) {
+            comission = comissions[route]
+        }
+
+        setData((state) => ({
+            ...state,
+            comissions: { ...state.comissions, [route]: comission },
+        }))
+    }, [
+        data.summary.from.token.pair_name,
+        data.summary.to.token.pair_name,
+        data.summary.from.amount,
+    ])
 
     // Connect GOSH account
     useEffect(() => {
