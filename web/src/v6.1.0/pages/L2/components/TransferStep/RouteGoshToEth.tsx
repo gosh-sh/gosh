@@ -23,8 +23,8 @@ const RouteGoshToEth = () => {
     return (
         <>
             {summary.progress.steps.map((item, index) => (
-                <div key={index} className="flex items-center gap-x-11">
-                    <div className="basis-3/12">
+                <div key={index} className="flex flex-wrap items-center gap-x-11 gap-y-3">
+                    <div className="basis-full md:basis-3/12 shrink-0">
                         <StatusBadge type={item.status} />
                     </div>
                     <div className="grow text-sm font-medium">
