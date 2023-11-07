@@ -148,7 +148,6 @@
                                     style="
                                         display: flex;
                                         align-items: center;
-                                        gap: 2rem;
                                         margin-top: 1.5rem;
                                         padding: 1.25rem 1rem;
                                         border: 1px solid #ebebeb;
@@ -158,9 +157,9 @@
                                         text-decoration: none;
                                     "
                                 >
-                                    <div style="width: 2.5rem">
+                                    <div style="width: 2.5rem; padding-right: 2rem">
                                         <img
-                                            src="https://gosh.sh/email/v3-0-5/youtube-gray.svg"
+                                            src="https://gosh.sh/email/v3-0-5/youtube-gray.png"
                                             style="width: 100%"
                                         />
                                     </div>
@@ -176,7 +175,6 @@
                                     style="
                                         display: flex;
                                         align-items: center;
-                                        gap: 2rem;
                                         margin-top: 1rem;
                                         padding: 1.25rem 1rem;
                                         border: 1px solid #ebebeb;
@@ -186,7 +184,7 @@
                                         text-decoration: none;
                                     "
                                 >
-                                    <div style="width: 2.5rem">
+                                    <div style="width: 2.5rem; padding-right: 2rem">
                                         <img
                                             src="https://gosh.sh/email/v3-0-5/book-gray.png"
                                             style="width: 100%"
