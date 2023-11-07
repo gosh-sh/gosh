@@ -62,15 +62,14 @@
                                     font-size: 1rem;
                                     line-height: 1.6;
                                     color: #53596d;
+                                    padding: 2.5rem 3rem 0;
                                 "
                             >
                                 <h1
                                     style="
-                                        font-weight: 700;
-                                        font-size: 2rem;
+                                        font-weight: 600;
+                                        font-size: 1.5rem;
                                         line-height: 1.2;
-                                        margin-top: 2rem;
-                                        margin-bottom: 1rem;
                                         color: #050a15;
                                     "
                                 >
@@ -80,39 +79,132 @@
                                     </span>
                                     has invited you to join their DAO
                                 </h1>
-                                <p style="max-width: 21.875rem">
-                                    Become a member of the
-                                    <b style="color: #40b3ff">{{ dao_name }}</b> DAO on
-                                    GOSH
-                                </p>
-                                <p style="max-width: 21.875rem">
-                                    Vote, contribute, and earn tokens — with security and
-                                    decentralization guaranteed
-                                </p>
-                                <p style="max-width: 21.875rem">
-                                    Join now to start building
-                                </p>
+                                <div
+                                    style="
+                                        margin-top: 1.5rem;
+                                        padding: 2rem;
+                                        border: 1px solid #ebebeb;
+                                        border-radius: 1rem;
+                                        overflow: hidden;
+                                        background-color: #f8f8f8;
+                                    "
+                                >
+                                    <p
+                                        style="
+                                            margin: 0;
+                                            color: #050a15;
+                                            font-size: 0.875rem;
+                                        "
+                                    >
+                                        Become a member of the
+                                        <b style="color: #40b3ff">{{ dao_name }}</b> DAO
+                                        on GOSH
+                                    </p>
+                                    <p
+                                        style="
+                                            margin: 1.5rem 0 0;
+                                            color: #050a15;
+                                            font-size: 0.875rem;
+                                        "
+                                    >
+                                        Vote, contribute, and earn tokens — with security
+                                        and decentralization guaranteed
+                                    </p>
+                                    <p
+                                        style="
+                                            margin: 1.5rem 0 0;
+                                            color: #050a15;
+                                            font-size: 0.875rem;
+                                        "
+                                    >
+                                        Join now to start building
+                                    </p>
+
+                                    <a
+                                        href="https://app.gosh.sh/o/{{ dao_name }}/onboarding?token={{ token }}"
+                                        target="_blank"
+                                        style="
+                                            display: block;
+                                            padding: 0.75rem 1.5rem;
+                                            background: #288bff;
+                                            border-radius: 0.75rem;
+                                            text-align: center;
+                                            text-decoration: none;
+                                            font-size: 0.875rem;
+                                            font-weight: 500;
+                                            line-height: 1.5;
+                                            color: #ffffff;
+                                            margin-top: 1.5rem;
+                                            max-width: 10.625rem;
+                                        "
+                                    >
+                                        Start building
+                                    </a>
+                                </div>
+
                                 <a
-                                    href="https://app.gosh.sh/o/{{ dao_name }}/onboarding?token={{ token }}"
+                                    href="https://youtu.be/Tw4YwVShRMU"
                                     target="_blank"
                                     style="
-                                        display: block;
-                                        padding-top: 0.75rem;
-                                        padding-bottom: 0.75rem;
-                                        background: #050a15;
-                                        border-radius: 0.3125rem;
-                                        text-align: center;
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 1rem;
+                                        margin-top: 1.5rem;
+                                        padding: 1.25rem 1rem;
+                                        border: 1px solid #ebebeb;
+                                        border-radius: 1rem;
+                                        overflow: hidden;
+                                        background-color: #ffffff;
                                         text-decoration: none;
-                                        font-size: 1rem;
-                                        font-weight: 600;
-                                        line-height: 1.5;
-                                        color: #ffffff;
-                                        margin-top: 2.5rem;
-                                        margin-bottom: 5.625rem;
-                                        max-width: 21.875rem;
                                     "
-                                    >Start building</a
                                 >
+                                    <div style="width: 2.5rem">
+                                        <img
+                                            src="https://gosh.sh/email/v3-0-5/youtube-gray.svg"
+                                            style="width: 100%"
+                                        />
+                                    </div>
+                                    <div style="color: #53596d">
+                                        Watch a quick start tutorial
+                                    </div>
+                                </a>
+
+                                <a
+                                    href="https://docs.gosh.sh/working-with-gosh/gosh-web/"
+                                    target="_blank"
+                                    style="
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 1rem;
+                                        margin-top: 1rem;
+                                        padding: 1.25rem 1rem;
+                                        border: 1px solid #ebebeb;
+                                        border-radius: 1rem;
+                                        overflow: hidden;
+                                        background-color: #ffffff;
+                                        text-decoration: none;
+                                    "
+                                >
+                                    <div style="width: 2.5rem">
+                                        <img
+                                            src="https://gosh.sh/email/v3-0-5/book-gray.png"
+                                            style="width: 100%"
+                                        />
+                                    </div>
+                                    <div style="color: #53596d">
+                                        Or learn how to register on GOSH
+                                    </div>
+                                </a>
+
+                                <hr
+                                    style="
+                                        color: #ebebeb;
+                                        background-color: #ebebeb;
+                                        border: 0;
+                                        height: 1px;
+                                        margin: 2.5rem 0;
+                                    "
+                                />
                             </td>
                         </tr>
                         <tr>
@@ -121,9 +213,13 @@
                                 style="
                                     background-image: url('https://gosh.sh/email/v3-0-5/footer.png');
                                     background-position: 30% 50%;
+                                    padding: 3.5rem 0 0;
                                 "
                             >
-                                <table width="100%" style="min-height: 14rem">
+                                <table
+                                    width="100%"
+                                    style="min-height: 14rem; padding: 0 3rem"
+                                >
                                     <tr valign="top" height="40">
                                         <td width="1%" style="padding-right: 0.625rem">
                                             <a
@@ -213,8 +309,9 @@
                                                         font-size: 1rem;
                                                         font-weight: 400;
                                                     "
-                                                    >Blog</span
                                                 >
+                                                    Blog
+                                                </span>
                                             </a>
                                         </td>
                                     </tr>
