@@ -148,7 +148,7 @@
                                     style="
                                         display: flex;
                                         align-items: center;
-                                        gap: 1rem;
+                                        gap: 2rem;
                                         margin-top: 1.5rem;
                                         padding: 1.25rem 1rem;
                                         border: 1px solid #ebebeb;
@@ -165,7 +165,8 @@
                                         />
                                     </div>
                                     <div style="color: #53596d">
-                                        Watch a quick start tutorial
+                                        Watch a quick tutorial<br />
+                                        How to register on GOSH
                                     </div>
                                 </a>
 
@@ -175,7 +176,7 @@
                                     style="
                                         display: flex;
                                         align-items: center;
-                                        gap: 1rem;
+                                        gap: 2rem;
                                         margin-top: 1rem;
                                         padding: 1.25rem 1rem;
                                         border: 1px solid #ebebeb;
@@ -192,7 +193,9 @@
                                         />
                                     </div>
                                     <div style="color: #53596d">
-                                        Or learn how to register on GOSH
+                                        Or learn how to
+                                        <br />
+                                        register on GOSH
                                     </div>
                                 </a>
 
