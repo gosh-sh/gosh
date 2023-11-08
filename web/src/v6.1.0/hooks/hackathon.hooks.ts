@@ -614,9 +614,9 @@ export function useHackathon(
     const updateFlags = useCallback(() => {
         console.debug('updateFlags')
         const now = moment().unix()
-        const start = hackathon?.metadata.dates.start || 0
-        const voting = hackathon?.metadata.dates.voting || 0
-        const finish = hackathon?.metadata.dates.finish || 0
+        const start = hackathon?.metadata.dates.start || now + 1
+        const voting = hackathon?.metadata.dates.voting || now + 1
+        const finish = hackathon?.metadata.dates.finish || now + 1
 
         setHakathons((state) => ({
             ...state,
@@ -691,7 +691,7 @@ export function useUpdateHackathonDetails() {
         // TODO: repo_name should be used after git part refactor
         const { repo_name, filename, content } = params
         const now = moment().unix()
-        const finish = hackathon?.metadata.dates.finish ?? 0
+        const finish = hackathon?.metadata.dates.finish || now + 1
 
         try {
             if (now >= finish) {
