@@ -321,7 +321,14 @@ export function useDaoHackathonList(
                         const found = intersect.find((_item) => {
                             return _item.address === item.address
                         })
-                        return found ? { ...item, ...found } : item
+                        return found
+                            ? {
+                                  ...item,
+                                  ...found,
+                                  metadata: item.metadata,
+                                  participants: item.participants,
+                              }
+                            : item
                     }),
                     cursor: blockchain.cursor,
                     has_next: blockchain.has_next,
