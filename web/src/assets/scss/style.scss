@@ -179,6 +179,12 @@ body,
     table {
         @apply w-full;
     }
+    ol {
+        @apply list-decimal;
+    }
+    ul {
+        @apply list-disc;
+    }
 }
 
 /**

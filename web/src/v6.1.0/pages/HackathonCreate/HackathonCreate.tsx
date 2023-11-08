@@ -1,0 +1,296 @@
+import { faPlus } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import classNames from 'classnames'
+import { Field, Form, Formik, FormikHelpers } from 'formik'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useSetRecoilState } from 'recoil'
+import 'suneditor/dist/css/suneditor.min.css'
+import { Button } from '../../../components/Form'
+import { FormikTextarea } from '../../../components/Formik'
+import { html2markdown } from '../../../helpers'
+import { appModalStateAtom } from '../../../store/app.state'
+import {
+    HackathonPrizePoolModal,
+    HackathonPrizePoolPlaces,
+    HackathonTypeBadge,
+} from '../../components/Hackathon'
+import { withPin, withRouteAnimation } from '../../hocs'
+import { useDao } from '../../hooks/dao.hooks'
+import { useCreateHackathon } from '../../hooks/hackathon.hooks'
+import { DatesOverview, DescriptionFileField } from './components'
+
+type TFormValues = {
+    description: {
+        short: string
+        readme: string
+        rules: string
+        prize: string
+    }
+    prize: {
+        total: string
+        places: string[]
+    }
+    dates: {
+        start: number
+        voting: number
+        finish: number
+    }
+}
+
+const HackathonCreatePage = () => {
+    const { daoname } = useParams()
+    const location = useLocation()
+    const navigate = useNavigate()
+    const setModal = useSetRecoilState(appModalStateAtom)
+    const dao = useDao({ initialize: true, subscribe: true })
+    const { create } = useCreateHackathon()
+
+    const onUpdatePrizePoolClick = (
+        value: TFormValues['prize'],
+        setValue: FormikHelpers<TFormValues>['setFieldValue'],
+    ) => {
+        setModal({
+            static: false,
+            isOpen: true,
+            element: (
+                <HackathonPrizePoolModal
+                    initial_values={value}
+                    onSubmit={async (values) => {
+                        await setValue('prize', values)
+                        setModal((state) => ({ ...state, isOpen: false }))
+                    }}
+                />
+            ),
+        })
+    }
+
+    const onUpdateDatesSubmit = async (
+        values: { [k: string]: number },
+        setValue: FormikHelpers<TFormValues>['setFieldValue'],
+    ) => {
+        await setValue('dates', values)
+    }
+
+    const onFormSubmit = async (values: TFormValues) => {
+        try {
+            const remarked = {
+                readme: await html2markdown(values.description.readme),
+                prize: await html2markdown(values.description.prize),
+                rules: await html2markdown(values.description.rules),
+            }
+            const updated = {
+                ...values,
+                description: { ...values.description, ...remarked },
+            }
+            console.debug('updated', updated)
+
+            const { eventaddr } = await create({
+                title: location.state.name,
+                type: location.state.type,
+                ...updated,
+            })
+            if (eventaddr) {
+                navigate(`/o/${dao.details.name}/events/${eventaddr}`)
+            }
+        } catch (e: any) {
+            console.error(e)
+        }
+    }
+
+    return (
+        <div className="container py-10">
+            <h1 className="mb-5 text-xl flex flex-wrap items-center gap-x-3">
+                <div>
+                    <Link
+                        to={`/o/${daoname}`}
+                        className="font-medium capitalize text-blue-2b89ff"
+                    >
+                        {daoname}
+                    </Link>
+                    <span className="mx-1">/</span>
+                    <span className="font-medium">{location.state.name}</span>
+                </div>
+
+                <HackathonTypeBadge type={location.state.type} />
+            </h1>
+            <Formik
+                initialValues={{
+                    description: {
+                        short: '',
+                        readme: '',
+                        rules: '',
+                        prize: '',
+                    },
+                    prize: {
+                        total: '',
+                        places: [],
+                    },
+                    dates: {
+                        start: 0,
+                        voting: 0,
+                        finish: 0,
+                    },
+                }}
+                onSubmit={onFormSubmit}
+            >
+                {({ isSubmitting, values, setFieldValue }) => (
+                    <Form>
+                        <div className="row flex-wrap">
+                            <div className="col !basis-full lg:!basis-7/12">
+                                <DescriptionFileField
+                                    type="readme"
+                                    value={values.description.readme}
+                                    onChange={(content) => {
+                                        setFieldValue('description.readme', content)
+                                    }}
+                                />
+                                <DescriptionFileField
+                                    className="mt-14"
+                                    type="rules"
+                                    value={values.description.rules}
+                                    onChange={(content) => {
+                                        setFieldValue('description.rules', content)
+                                    }}
+                                />
+                                <DescriptionFileField
+                                    className="mt-14"
+                                    type="prize"
+                                    value={values.description.prize}
+                                    onChange={(content) => {
+                                        setFieldValue('description.prize', content)
+                                    }}
+                                />
+                            </div>
+                            <div className="col !basis-full lg:!basis-5/12">
+                                <div className="flex flex-col gap-y-5">
+                                    <div className="border border-gray-e6edff rounded-xl overflow-hidden px-5">
+                                        <div className="border-b border-b-gray-e6edff overflow-hidden">
+                                            <div className="py-4 flex items-center justify-between">
+                                                <div className="text-xl font-medium">
+                                                    Prize pool
+                                                </div>
+                                                <Button
+                                                    type="button"
+                                                    variant="custom"
+                                                    size="sm"
+                                                    className="block border !border-blue-2b89ff text-blue-2b89ff !rounded-[2rem]"
+                                                    onClick={() =>
+                                                        onUpdatePrizePoolClick(
+                                                            values.prize,
+                                                            setFieldValue,
+                                                        )
+                                                    }
+                                                >
+                                                    {values.prize.places.length > 0
+                                                        ? 'Update prize pool'
+                                                        : 'Add prize pool'}
+                                                    <FontAwesomeIcon
+                                                        icon={faPlus}
+                                                        className="ml-2"
+                                                    />
+                                                </Button>
+                                            </div>
+
+                                            <HackathonPrizePoolPlaces
+                                                places={values.prize.places}
+                                                className={classNames(
+                                                    values.prize.places.length
+                                                        ? 'mb-4'
+                                                        : null,
+                                                )}
+                                            />
+                                        </div>
+
+                                        <DatesOverview
+                                            initial_values={[
+                                                {
+                                                    key: 'start',
+                                                    title: 'Start',
+                                                    time: values.dates.start,
+                                                },
+                                                {
+                                                    key: 'voting',
+                                                    title: 'Voting',
+                                                    time: values.dates.voting,
+                                                },
+                                                {
+                                                    key: 'finish',
+                                                    title: 'Finish',
+                                                    time: values.dates.finish,
+                                                },
+                                            ]}
+                                            onSubmit={async (values) => {
+                                                await onUpdateDatesSubmit(
+                                                    values,
+                                                    setFieldValue,
+                                                )
+                                            }}
+                                        />
+
+                                        <div className="py-5">
+                                            <Button
+                                                type="submit"
+                                                className="w-full"
+                                                disabled={isSubmitting}
+                                                isLoading={isSubmitting}
+                                            >
+                                                Create proposal to publish
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div className="mb-4 text-lg font-medium">
+                                            Short description
+                                        </div>
+                                        <Field
+                                            name="description.short"
+                                            component={FormikTextarea}
+                                            autoComplete="off"
+                                            minRows={5}
+                                            maxRows={10}
+                                            placeholder="Put short description here"
+                                            disabled={isSubmitting}
+                                        />
+                                    </div>
+
+                                    {/* <div>
+                        <div className="pb-5 flex items-center gap-2">
+                            <div className="text-lg font-medium">0 Experts in</div>
+                            <div className="grow flex items-center gap-2">
+                                <Button
+                                    variant="custom"
+                                    size="sm"
+                                    className="block border !border-blue-2b89ff text-blue-2b89ff !rounded-[2rem]"
+                                >
+                                    Add tag
+                                    <FontAwesomeIcon icon={faPlus} className="ml-2" />
+                                </Button>
+                            </div>
+                        </div>
+                        <div className="border border-gray-e6edff rounded-xl overflow-hidden px-5">
+                            <div
+                                className="py-4 w-full flex items-center justify-between
+                                border-b border-b-gray-e6edff"
+                            >
+                                <div className="font-medium">Top 5 by total karma</div>
+                            </div>
+
+                            <div className="py-5 divide-y divide-gray-e6edff">
+                                <p className="text-center">
+                                    Add tags to see experts here
+                                </p>
+                            </div>
+                        </div>
+                    </div> */}
+                                </div>
+                            </div>
+                        </div>
+                    </Form>
+                )}
+            </Formik>
+        </div>
+    )
+}
+
+export default withRouteAnimation(withPin(HackathonCreatePage, { redirect: true }))

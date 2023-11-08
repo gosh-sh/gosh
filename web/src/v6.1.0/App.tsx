@@ -1,64 +1,64 @@
-import { createPortal } from 'react-dom'
-import { ToastContainer } from 'react-toastify'
-import Header from './components/Header'
-import { ToastOptionsShortcuts } from '../helpers'
-import BaseModal from '../components/Modal/BaseModal'
-import { Navigate, Route, Routes } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
+import { createPortal } from 'react-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { ToastContainer } from 'react-toastify'
+import BaseModal from '../components/Modal/BaseModal'
+import { ToastStatus } from '../components/Toast'
+import Containers from '../docker-extension/pages/Containers'
+import { ToastOptionsShortcuts } from '../helpers'
+import NotFoundPage from '../pages/404'
+import HomePage from '../pages/Home'
+import Header from './components/Header'
 import {
     useUserNotificationList,
     useUserNotificationSettings,
 } from './hooks/notification.hooks'
-import HomePage from '../pages/Home'
-import AccountLayout from './pages/AccountLayout'
-import AccountSettingsLayout from './pages/AccountSettingsLayout'
-import AccountSecurityPage from './pages/AccountSecurity'
+import AccountDetailsPage from './pages/AccountDetails'
 import AccountGitRemotePage from './pages/AccountGitRemote'
+import AccountLayout from './pages/AccountLayout'
 import AccountNotificationsPage from './pages/AccountNotifications'
+import AccountSecurityPage from './pages/AccountSecurity'
+import AccountSettingsLayout from './pages/AccountSettingsLayout'
+import DaoPage from './pages/Dao'
+import DaoCreatePage from './pages/DaoCreate'
+import DaoEventListPage from './pages/DaoEventList'
+import DaoHackathonListPage from './pages/DaoHackathonList'
 import DaoLayout from './pages/DaoLayout'
-import NotFoundPage from '../pages/404'
+import DaoMemberListPage from './pages/DaoMemberList'
+import DaoNotificationsPage from './pages/DaoNotifications'
+import DaoRepositoryListPage from './pages/DaoRepositoryList'
+import DaoSettingsLayout from './pages/DaoSettingsLayout'
+import DaoSetupPage from './pages/DaoSetup'
+import DaoTaskListPage from './pages/DaoTaskList'
+import DaoTokenL2Page from './pages/DaoTokenL2'
+import DaoUpgradePage from './pages/DaoUpgrade'
+import HackathonCreatePage from './pages/HackathonCreate'
+import HackathonLayout from './pages/HackathonLayout'
+import HackathonOverviewPage from './pages/HackathonOverview'
+import HackathonParticipantListPage from './pages/HackathonParticipantList'
+import HackathonRewardPage from './pages/HackathonReward'
+import L2Page from './pages/L2'
+import OnboardingPage from './pages/Onboarding'
+import OnboardingDaoPage from './pages/OnboardingDao'
+import OnboardingStatusPage from './pages/OnboardingStatus'
 import SigninPage from './pages/Signin'
 import SignupPage from './pages/Signup'
-import DaoCreatePage from './pages/DaoCreate'
-import OnboardingPage from './pages/Onboarding'
-import OnboardingStatusPage from './pages/OnboardingStatus'
-import UserDaoListPage from './pages/UserDaoList'
-import DaoPage from './pages/Dao'
-import DaoRepositoryListPage from './pages/DaoRepositoryList'
-import DaoMemberListPage from './pages/DaoMemberList'
-import DaoEventListPage from './pages/DaoEventList'
-import Containers from '../docker-extension/pages/Containers'
-import DaoSettingsLayout from './pages/DaoSettingsLayout'
-import DaoUpgradePage from './pages/DaoUpgrade'
-import DaoSetupPage from './pages/DaoSetup'
-import DaoNotificationsPage from './pages/DaoNotifications'
-import DaoTokenL2Page from './pages/DaoTokenL2'
-import OnboardingDaoPage from './pages/OnboardingDao'
-import DaoTaskListPage from './pages/DaoTaskList'
 import TaskCreatePage from './pages/TaskCreate'
-import L2Page from './pages/L2'
-import AccountDetailsPage from './pages/AccountDetails'
-import DaoHackatonListPage from './pages/DaoHackatonList'
-import HackatonLayout from './pages/HackatonLayout'
-import HackatonOverviewPage from './pages/HackatonOverview'
-import HackatonParticipantListPage from './pages/HackatonParticipantList'
-import HackatonRewardPage from './pages/HackatonReward'
-import HackatonCreatePage from './pages/HackatonCreate'
-import { ToastStatus } from '../components/Toast'
+import UserDaoListPage from './pages/UserDaoList'
 
 // TODO: Update after full refactor
-import RepoLayout from '../pages/RepoLayout'
-import RepoPage from '../pages/Repo'
-import BranchesPage from '../pages/Branches'
-import BlobCreatePage from '../pages/BlobCreate'
-import BlobUpdatePage from '../pages/BlobUpdate'
-import BlobDeletePage from '../pages/BlobDelete'
-import BlobPage from '../pages/Blob'
-import CommitsPage from '../pages/Commits'
-import CommitPage from '../pages/Commit'
-import MergeCreatePage from '../pages/MergeCreate'
 import BuildPage from '../docker-extension/pages/Build'
+import BlobPage from '../pages/Blob'
+import BlobCreatePage from '../pages/BlobCreate'
+import BlobDeletePage from '../pages/BlobDelete'
+import BlobUpdatePage from '../pages/BlobUpdate'
+import BranchesPage from '../pages/Branches'
+import CommitPage from '../pages/Commit'
+import CommitsPage from '../pages/Commits'
 import GotoPage from '../pages/Goto'
+import MergeCreatePage from '../pages/MergeCreate'
+import RepoPage from '../pages/Repo'
+import RepoLayout from '../pages/RepoLayout'
 // TODO: /Update after full refactor
 
 const App = () => {
@@ -135,21 +135,24 @@ const App = () => {
                                 />
                             </Route>
                             <Route path="l2" element={<DaoTokenL2Page />} />
-                            <Route path="hacksgrants" element={<DaoHackatonListPage />} />
+                            <Route
+                                path="hacksgrants"
+                                element={<DaoHackathonListPage />}
+                            />
                         </Route>
                         <Route
                             path="/o/:daoname/hacksgrants/create"
-                            element={<HackatonCreatePage />}
+                            element={<HackathonCreatePage />}
                         />
                         <Route
                             path="/o/:daoname/hacksgrants/:reponame"
-                            element={<HackatonLayout />}
+                            element={<HackathonLayout />}
                         >
-                            <Route index element={<HackatonOverviewPage />} />
-                            <Route path="rewards" element={<HackatonRewardPage />} />
+                            <Route index element={<HackathonOverviewPage />} />
+                            <Route path="rewards" element={<HackathonRewardPage />} />
                             <Route
                                 path="participants"
-                                element={<HackatonParticipantListPage />}
+                                element={<HackathonParticipantListPage />}
                             />
                         </Route>
                         <Route path="/o/:daoName/r/:repoName" element={<RepoLayout />}>
