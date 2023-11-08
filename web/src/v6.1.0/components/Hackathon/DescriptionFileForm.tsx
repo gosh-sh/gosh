@@ -60,7 +60,6 @@ const HackathonDescriptionFileForm = (props: DescriptionFileFormProps) => {
     }
 
     const onSaveClick = () => {
-        console.debug(formRef.current)
         formRef.current?.submitForm()
     }
 
