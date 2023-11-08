@@ -607,6 +607,7 @@ export function useHackathon(
     const updateFlags = useCallback(() => {
         console.debug('updateFlags')
         const now = moment().unix()
+        const start = hackathon?.metadata.dates.start || 0
         const voting = hackathon?.metadata.dates.voting || 0
         const finish = hackathon?.metadata.dates.finish || 0
 
@@ -616,7 +617,7 @@ export function useHackathon(
                 if (item.address === hackathon?.address) {
                     return {
                         ...item,
-                        participate_enabled: now < voting,
+                        participate_enabled: now >= start && now < voting,
                         update_enabled: now < finish,
                     }
                 }
