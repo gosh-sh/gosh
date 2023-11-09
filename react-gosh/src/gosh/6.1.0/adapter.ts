@@ -1,208 +1,203 @@
-import {
-    KeyPair,
-    ResultOfProcessMessage,
-    SignerKeysVariant,
-    TonClient,
-} from '@eversdk/core'
+import { KeyPair, ResultOfProcessMessage, TonClient } from '@eversdk/core'
 import { Buffer } from 'buffer'
+import * as Diff from 'diff'
 import isUtf8 from 'isutf8'
+import { NotificationsAPI } from '../../apis/notifications'
+import { AppConfig } from '../../appconfig'
+import {
+    BIGTASK_TAG,
+    MAX_ONCHAIN_SIZE,
+    MAX_PARALLEL_READ,
+    MAX_PARALLEL_WRITE,
+    SYSTEM_TAG,
+    SmvEventTypes,
+    ZERO_BLOB_SHA1,
+    ZERO_COMMIT,
+} from '../../constants'
 import { EGoshError, GoshError } from '../../errors'
 import {
-    TAddress,
-    TDao,
-    TSmvDetails,
-    ESmvEventType,
-    TValidationResult,
+    executeByChunk,
+    getAllAccounts,
+    getMessages,
+    getTreeItemFullPath,
+    goshipfs,
+    sha1,
+    sha1Tree,
+    sha256,
+    splitByChunk,
+    splitByPath,
+    unixtimeWithTz,
+    zstd,
+} from '../../helpers'
+import ABI from '../../resources/contracts/abi.json'
+import {
     EBlobFlag,
+    ESmvEventType,
     IPushCallback,
     ITBranchOperateCallback,
+    TAddress,
+    TBigTaskApproveParams,
+    TBigTaskApproveResult,
+    TBigTaskCreateParams,
+    TBigTaskCreateResult,
+    TBigTaskDeleteParams,
+    TBigTaskDeleteResult,
+    TBigTaskDetails,
+    TBigTaskUpgradeParams,
+    TBigTaskUpgradeResult,
     TBranch,
-    TCommit,
-    TDiff,
-    TRepository,
-    TCommitTag,
-    TTree,
-    TTreeItem,
-    TUpgradeData,
-    TSmvEvent,
-    TSmvEventMinimal,
-    TPushBlobData,
-    TTaskCommitConfig,
-    TDaoMember,
-    TTaskDetails,
-    TRepositoryCreateParams,
-    TRepositoryCreateResult,
-    TEventMultipleCreateProposalParams,
-    TSmvEventVotes,
-    TSmvEventStatus,
-    TSmvEventTime,
-    TRepositoryUpdateDescriptionParams,
-    TRepositoryChangeBranchProtectionParams,
-    TDaoMemberCreateParams,
-    TDaoMemberDeleteParams,
-    TDaoUpgradeParams,
-    TTaskDeleteParams,
-    TTaskCreateParams,
-    TDaoVotingTokenAddParams,
-    TDaoRegularTokenAddParams,
-    TDaoMintTokenParams,
-    TDaoTagCreateParams,
-    TDaoTagDeleteParams,
-    TDaoMintDisableParams,
-    TDaoMemberAllowanceUpdateParams,
-    TRepositoryTagCreateParams,
-    TRepositoryTagDeleteParams,
-    TDaoEventAllowDiscussionParams,
-    TDaoEventShowProgressParams,
-    TTaskReceiveBountyParams,
-    TDaoEventSendReviewParams,
-    TDaoAskMembershipAllowanceParams,
-    TTopic,
-    TTopicCreateParams,
-    TTopicMessageCreateParams,
-    TRepositoryChangeBranchProtectionResult,
-    TDaoMemberCreateResult,
-    TDaoMemberDeleteResult,
-    TDaoUpgradeResult,
-    TTaskCreateResult,
-    TTaskDeleteResult,
-    TDaoVotingTokenAddResult,
-    TDaoRegularTokenAddResult,
-    TDaoMintTokenResult,
-    TDaoMintDisableResult,
-    TDaoTagCreateResult,
-    TDaoTagDeleteResult,
-    TDaoMemberAllowanceUpdateResult,
-    TRepositoryTagCreateResult,
-    TRepositoryTagDeleteResult,
-    TRepositoryUpdateDescriptionResult,
-    TDaoEventAllowDiscussionResult,
-    TDaoEventShowProgressResult,
-    TDaoAskMembershipAllowanceResult,
-    TRepositoryCreateCommitTagParams,
-    TIsMemberParams,
-    TIsMemberResult,
-    TEventMultipleCreateProposalAsDaoParams,
-    TDaoTokenDaoSendParams,
-    TUserParam,
-    TTaskTransferParams,
-    TTaskTransferResult,
-    TTaskUpgradeCompleteParams,
-    TTaskUpgradeCompleteResult,
-    TDaoVoteParams,
-    TDaoVoteResult,
-    TDaoReviewParams,
-    TDaoReviewResult,
-    TTaskReceiveBountyDaoParams,
-    TTaskReceiveBountyDaoResult,
-    TDaoTokenDaoLockParams,
-    TDaoTokenDaoLockResult,
-    TTaskUpgradeParams,
-    TTaskUpgradeResult,
-    TDaoTokenDaoTransferParams,
-    TUpgradeVersionControllerParams,
-    TDaoStartPaidMembershipParams,
-    TDaoStartPaidMembershipResult,
-    TDaoStopPaidMembershipParams,
-    TDaoStopPaidMembershipResult,
+    TCodeCommentCreateParams,
+    TCodeCommentCreateResult,
     TCodeCommentThreadCreateParams,
     TCodeCommentThreadCreateResult,
     TCodeCommentThreadGetCodeParams,
     TCodeCommentThreadGetCodeResult,
     TCodeCommentThreadGetParams,
     TCodeCommentThreadGetResult,
-    TCodeCommentCreateParams,
-    TCodeCommentCreateResult,
-    TBigTaskCreateParams,
-    TBigTaskCreateResult,
+    TCodeCommentThreadResdolveParams,
+    TCommit,
+    TCommitTag,
+    TDao,
+    TDaoAskMembershipAllowanceParams,
+    TDaoAskMembershipAllowanceResult,
+    TDaoEventAllowDiscussionParams,
+    TDaoEventAllowDiscussionResult,
+    TDaoEventSendReviewParams,
+    TDaoEventShowProgressParams,
+    TDaoEventShowProgressResult,
+    TDaoMember,
+    TDaoMemberAllowanceUpdateParams,
+    TDaoMemberAllowanceUpdateResult,
+    TDaoMemberCreateParams,
+    TDaoMemberCreateResult,
+    TDaoMemberDeleteParams,
+    TDaoMemberDeleteResult,
+    TDaoMintDisableParams,
+    TDaoMintDisableResult,
+    TDaoMintTokenParams,
+    TDaoMintTokenResult,
+    TDaoRegularTokenAddParams,
+    TDaoRegularTokenAddResult,
+    TDaoReviewParams,
+    TDaoReviewResult,
+    TDaoStartPaidMembershipParams,
+    TDaoStartPaidMembershipResult,
+    TDaoStopPaidMembershipParams,
+    TDaoStopPaidMembershipResult,
+    TDaoTagCreateParams,
+    TDaoTagCreateResult,
+    TDaoTagDeleteParams,
+    TDaoTagDeleteResult,
+    TDaoTokenDaoLockParams,
+    TDaoTokenDaoLockResult,
+    TDaoTokenDaoSendParams,
+    TDaoTokenDaoTransferParams,
+    TDaoUpgradeParams,
+    TDaoUpgradeResult,
+    TDaoVoteParams,
+    TDaoVoteResult,
+    TDaoVotingTokenAddParams,
+    TDaoVotingTokenAddResult,
+    TDiff,
+    TEventMultipleCreateProposalAsDaoParams,
+    TEventMultipleCreateProposalParams,
+    TEventSignleCreateProposalParams,
+    TIsMemberParams,
+    TIsMemberResult,
+    TPushBlobData,
+    TRepository,
+    TRepositoryChangeBranchProtectionParams,
+    TRepositoryChangeBranchProtectionResult,
+    TRepositoryCreateCommitTagParams,
+    TRepositoryCreateParams,
+    TRepositoryCreateResult,
+    TRepositoryTagCreateParams,
+    TRepositoryTagCreateResult,
+    TRepositoryTagDeleteParams,
+    TRepositoryTagDeleteResult,
+    TRepositoryUpdateDescriptionParams,
+    TRepositoryUpdateDescriptionResult,
+    TSmvDetails,
+    TSmvEvent,
+    TSmvEventMinimal,
+    TSmvEventStatus,
+    TSmvEventTime,
+    TSmvEventVotes,
     TSubTaskCreateParams,
     TSubTaskDeleteParams,
     TSubTaskDeleteResult,
-    TBigTaskApproveParams,
-    TBigTaskApproveResult,
-    TBigTaskDeleteParams,
-    TBigTaskDeleteResult,
-    TBigTaskUpgradeParams,
-    TBigTaskUpgradeResult,
-    TCodeCommentThreadResdolveParams,
-    TBigTaskDetails,
-    TEventSignleCreateProposalParams,
+    TTaskCommitConfig,
+    TTaskCreateParams,
+    TTaskCreateResult,
+    TTaskDeleteParams,
+    TTaskDeleteResult,
+    TTaskDetails,
+    TTaskReceiveBountyDaoParams,
+    TTaskReceiveBountyDaoResult,
+    TTaskReceiveBountyParams,
+    TTaskTransferParams,
+    TTaskTransferResult,
+    TTaskUpgradeCompleteParams,
+    TTaskUpgradeCompleteResult,
+    TTaskUpgradeParams,
+    TTaskUpgradeResult,
+    TTopic,
+    TTopicCreateParams,
+    TTopicMessageCreateParams,
+    TTree,
+    TTreeItem,
+    TUpgradeData,
+    TUpgradeVersionControllerParams,
+    TUserParam,
+    TValidationResult,
 } from '../../types'
 import { sleep, whileFinite } from '../../utils'
+import { GoshAdapterFactory } from '../factories'
+import { GoshProfile } from '../goshprofile'
+import { GoshProfileDao } from '../goshprofiledao'
+import { GoshRoot } from '../goshroot'
 import {
+    IGosh,
     IGoshAdapter,
+    IGoshBigTask,
+    IGoshCommit,
+    IGoshCommitTag,
+    IGoshDao,
+    IGoshDaoAdapter,
+    IGoshDiff,
+    IGoshHelperTag,
+    IGoshProfile,
+    IGoshProfileDao,
+    IGoshRepository,
     IGoshRepositoryAdapter,
     IGoshRoot,
-    IGoshProfile,
-    IGosh,
-    IGoshDao,
-    IGoshRepository,
-    IGoshWallet,
-    IGoshCommit,
-    IGoshSnapshot,
-    IGoshTree,
-    IGoshDiff,
-    IGoshDaoAdapter,
     IGoshSmvAdapter,
     IGoshSmvLocker,
     IGoshSmvProposal,
+    IGoshSnapshot,
     IGoshTask,
-    IGoshHelperTag,
     IGoshTopic,
-    IGoshProfileDao,
-    IGoshBigTask,
-    IGoshCommitTag,
+    IGoshTree,
+    IGoshWallet,
 } from '../interfaces'
 import { Gosh } from './gosh'
-import { GoshDao } from './goshdao'
-import { GoshProfile } from '../goshprofile'
-import { GoshRepository } from './goshrepository'
-import { GoshWallet } from './goshwallet'
-import { GoshSnapshot } from './goshsnapshot'
-import {
-    getAllAccounts,
-    getTreeItemFullPath,
-    sha1,
-    sha1Tree,
-    sha256,
-    splitByPath,
-    unixtimeWithTz,
-    zstd,
-    goshipfs,
-    executeByChunk,
-    splitByChunk,
-    getMessages,
-} from '../../helpers'
+import { GoshBigTask } from './goshbigtask'
 import { GoshCommit } from './goshcommit'
-import { GoshTree } from './goshtree'
 import { GoshCommitTag } from './goshcommittag'
-import * as Diff from 'diff'
-import { GoshDiff } from './goshdiff'
-import {
-    BIGTASK_TAG,
-    MAX_ONCHAIN_SIZE,
-    MAX_PARALLEL_READ,
-    MAX_PARALLEL_WRITE,
-    SmvEventTypes,
-    SYSTEM_TAG,
-    ZERO_BLOB_SHA1,
-    ZERO_COMMIT,
-} from '../../constants'
-import { GoshSmvTokenRoot } from './goshsmvtokenroot'
 import { GoshContentSignature } from './goshcontentsignature'
+import { GoshDao } from './goshdao'
+import { GoshDiff } from './goshdiff'
+import { GoshHelperTag } from './goshhelpertag'
+import { GoshRepository } from './goshrepository'
+import { GoshSmvClient } from './goshsmvclient'
 import { GoshSmvLocker } from './goshsmvlocker'
 import { GoshSmvProposal } from './goshsmvproposal'
-import { GoshSmvClient } from './goshsmvclient'
+import { GoshSmvTokenRoot } from './goshsmvtokenroot'
+import { GoshSnapshot } from './goshsnapshot'
 import { GoshTask } from './goshtask'
-import { GoshHelperTag } from './goshhelpertag'
 import { GoshTopic } from './goshtopic'
-import { GoshAdapterFactory } from '../factories'
-import { GoshProfileDao } from '../goshprofiledao'
-import { GoshRoot } from '../goshroot'
-import { GoshBigTask } from './goshbigtask'
-import ABI from '../../resources/contracts/abi.json'
-import { AppConfig } from '../../appconfig'
-import { NotificationsAPI } from '../../apis/notifications'
+import { GoshTree } from './goshtree'
+import { GoshWallet } from './goshwallet'
 
 class GoshAdapter_6_1_0 implements IGoshAdapter {
     private static instance: GoshAdapter_6_1_0
@@ -3938,7 +3933,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     if ((commit.time ?? 0) > (branchto_commit.time ?? 0)) {
                         console.debug('Deploy new snapshot with content')
                         treeitem.commit = commitHash
-                        blob.patch = ''
+                        blob.patch = null
                         blob.commitname = commitHash
                     } else {
                         console.debug('Update snapshot with patch')
@@ -3950,7 +3945,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     console.debug('Blob does not exist')
                     treeitem.commit = commitHash
                     blob.snapshot = await this._getSnapshotAddress(commitHash, path)
-                    blob.patch = ''
+                    blob.patch = null
                     blob.commitname = commitHash
                 }
 
@@ -4018,7 +4013,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         // Deploy diffs
         let diffCounter = 0
         await this._runMultiwallet(blobsData, async (wallet, { data }, index) => {
-            if (data.patch) {
+            if (data.patch || data.isGoingIpfs || data.isGoingOnchain) {
                 await this._deployDiff(branch, commitHash, data, index, wallet)
             }
             cb({ diffsDeploy: { count: ++diffCounter } })
@@ -4038,7 +4033,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Set commit or start PR proposal
         const signer = this.auth.wallet0.account.signer as any
-        const patched = blobsData.filter(({ data }) => !!data.patch)
+        const patched = blobsData.filter(({ data }) => {
+            return !!data.patch || data.isGoingIpfs || data.isGoingOnchain
+        })
         if (!isPullRequest) {
             await this._setCommit(branch, commitHash, patched.length, false, task)
             const wait = await whileFinite(async () => {
