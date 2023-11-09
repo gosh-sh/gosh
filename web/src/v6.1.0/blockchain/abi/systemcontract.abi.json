@@ -715,6 +715,37 @@
 			]
 		},
 		{
+			"name": "getCommitAddr",
+			"inputs": [
+				{"name":"repo_addr","type":"address"},
+				{"name":"commit_name","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getTreeAddr",
+			"inputs": [
+				{"name":"repo_addr","type":"address"},
+				{"name":"tree_hash","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getSnapshotAddr",
+			"inputs": [
+				{"name":"repo_addr","type":"address"},
+				{"name":"commit_name","type":"string"},
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "getBigTaskAddr",
 			"inputs": [
 				{"name":"nametask","type":"string"},
@@ -960,37 +991,6 @@
 			"outputs": [
 				{"name":"value0","type":"string"},
 				{"name":"value1","type":"string"}
-			]
-		},
-		{
-			"name": "getCommitAddr",
-			"inputs": [
-				{"name":"repo_addr","type":"address"},
-				{"name":"commit_name","type":"string"}
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "getTreeAddr",
-			"inputs": [
-				{"name":"repo_addr","type":"address"},
-				{"name":"tree_hash","type":"uint256"}
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "getSnapshotAddr",
-			"inputs": [
-				{"name":"repo_addr","type":"address"},
-				{"name":"commit_name","type":"string"},
-				{"name":"name","type":"string"}
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
 			]
 		},
 		{
