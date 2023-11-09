@@ -479,6 +479,18 @@ contract SystemContract is Modifiers {
         return taskaddr;
     }
 
+    function getCommitAddr(address repo_addr, string commit_name) public view returns(address)  {
+        return GoshLib.calculateCommitAddress(_code[m_CommitCode], repo_addr, commit_name);
+    }
+
+    function getTreeAddr(address repo_addr, uint256 tree_hash) public view returns(address)  {
+        return GoshLib.calculateTreeAddress(_code[m_TreeCode], tree_hash, repo_addr);
+    }
+
+    function getSnapshotAddr(address repo_addr, string commit_name, string name) external view returns(address) {
+        return GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], repo_addr, commit_name, name);
+    }
+
     function getBigTaskAddr(string nametask, string dao, string repoName) external view returns(address) {
         address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), dao);
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, repoName);
