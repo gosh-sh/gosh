@@ -176,6 +176,8 @@ body,
  * Markdown renderer table fix
  */
 .markdown-body {
+    @apply break-words;
+
     table {
         @apply w-full;
     }
