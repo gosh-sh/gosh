@@ -35,7 +35,7 @@ const HackathonParticipantsOverview = () => {
 
     const onAddParticipantsModal = () => {
         setModal({
-            static: false,
+            static: true,
             isOpen: true,
             element: <HackathonParticipantsModal onSubmit={onAddParticipantsSubmit} />,
         })

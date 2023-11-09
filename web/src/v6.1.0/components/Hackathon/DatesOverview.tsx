@@ -40,7 +40,7 @@ const HackathonDatesOverview = () => {
 
     const onUpdateDatesModal = (tab_index?: number) => {
         setModal({
-            static: false,
+            static: true,
             isOpen: true,
             element: (
                 <HackathonDatesModal

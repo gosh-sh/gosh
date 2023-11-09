@@ -60,7 +60,7 @@ const HackathonPrizePoolOverview = () => {
         }
 
         setModal({
-            static: false,
+            static: true,
             isOpen: true,
             element: (
                 <HackathonPrizePoolModal

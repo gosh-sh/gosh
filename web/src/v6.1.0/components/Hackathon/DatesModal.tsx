@@ -75,7 +75,7 @@ const HackathonDatesModal = (props: DatePickerModalProps) => {
             <Formik initialValues={initial_values} onSubmit={onFormSubmit}>
                 {({ isSubmitting, values, setFieldValue }) => (
                     <Form>
-                        <ModalCloseButton />
+                        <ModalCloseButton disabled={isSubmitting} />
 
                         <Tab.Group
                             as="div"
