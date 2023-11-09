@@ -12,8 +12,8 @@ const HackathonParticipantListPage = (props: { count?: number }) => {
     }
 
     return (
-        <div className="row flex-wrap">
-            <div className="col !basis-full lg:!basis-7/12">
+        <div className="row flex-wrap lg:flex-nowrap">
+            <div className="col !basis-full lg:!basis-8/12 xl:!basis-9/12">
                 <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
                     <Input
                         className="grow"
@@ -33,8 +33,8 @@ const HackathonParticipantListPage = (props: { count?: number }) => {
                 <ListBoundary search={search} />
             </div>
 
-            <div className="col !basis-full lg:!basis-3/12">
-                {/* <div className="flex flex-col gap-y-5">
+            {/* <div className="col !basis-full lg:!basis-4/12 xl:!basis-3/12">
+                <div className="flex flex-col gap-y-5">
                     <div className="border border-gray-e6edff rounded-xl overflow-hidden px-5">
                         <div
                             className="py-4 w-full flex items-center justify-between
@@ -43,6 +43,7 @@ const HackathonParticipantListPage = (props: { count?: number }) => {
                             <div className="grow">Selected applications</div>
                             <div>5</div>
                         </div>
+
                         <div className="py-5">
                             <Button className="w-full">
                                 Create proposal to remove selected
@@ -85,8 +86,8 @@ const HackathonParticipantListPage = (props: { count?: number }) => {
                             </div>
                         </div>
                     </div>
-                </div> */}
-            </div>
+                </div>
+            </div> */}
         </div>
     )
 }

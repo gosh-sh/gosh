@@ -104,7 +104,7 @@ const HackathonDatesOverview = () => {
     return (
         <div>
             <div className="py-5 border-b border-b-gray-e6edff">
-                <div className="flex items-center justify-between gap-6">
+                <div className="flex flex-wrap items-center justify-between gap-6">
                     <div
                         className="px-3 py-1.5 border border-[#2B89FF]/25 rounded-2xl
                         bg-[#2B89FF]/15 text-blue-2b89ff font-medium text-sm"
@@ -112,7 +112,7 @@ const HackathonDatesOverview = () => {
                         <FontAwesomeIcon icon={faClock} className="mr-2.5" />
                         <HackathonStatus dates={hackathon.metadata.dates} />
                     </div>
-                    <div className="grow text-sm text-end">
+                    <div className="grow text-sm md:text-end">
                         {hackathon?.participants.items.length.toLocaleString()}{' '}
                         Participants
                     </div>

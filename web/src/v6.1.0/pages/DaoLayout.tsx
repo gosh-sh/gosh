@@ -1,16 +1,16 @@
-import { useEffect } from 'react'
-import { Link, NavLink, useParams } from 'react-router-dom'
-import CopyClipboard from '../../components/CopyClipboard'
-import { Tooltip } from 'react-tooltip'
-import { getIdenticonAvatar } from '../../helpers'
-import { DaoSummary, DaoUpgradeNotification } from '../components/Dao'
 import classNames from 'classnames'
-import { withRouteAnimation, withPin } from '../hocs'
-import { useDao, useDaoMember } from '../hooks/dao.hooks'
+import { useEffect } from 'react'
 import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
+import { Link, NavLink, useParams } from 'react-router-dom'
+import { Tooltip } from 'react-tooltip'
 import Alert from '../../components/Alert'
+import CopyClipboard from '../../components/CopyClipboard'
+import { getIdenticonAvatar } from '../../helpers'
 import { shortString } from '../../utils'
+import { DaoSummary, DaoUpgradeNotification } from '../components/Dao'
 import { AnimatedOutlet } from '../components/Outlet'
+import { withPin, withRouteAnimation } from '../hocs'
+import { useDao, useDaoMember } from '../hooks/dao.hooks'
 
 const DaoLayout = () => {
     const { daoname } = useParams()
@@ -121,7 +121,7 @@ const DaoLayout = () => {
                         className={({ isActive }) =>
                             classNames(
                                 'text-gray-7c8db5 pt-1.5 pb-4',
-                                'border-b-4 border-b-transparent',
+                                'border-b-4 border-b-transparent whitespace-nowrap',
                                 'hover:text-black hover:border-b-black',
                                 isActive ? '!text-black !border-b-black' : null,
                             )
