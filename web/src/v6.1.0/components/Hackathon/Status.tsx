@@ -26,6 +26,9 @@ const HackathonStatus = (props: THackathonStatusProps) => {
         if (now_unix >= dates.finish) {
             prefix = 'Finished'
         }
+        if (Object.values(dates).some((v) => v === 0)) {
+            prefix = 'Draft'
+        }
 
         const filtered_now = Object.values(dates).filter((n) => n >= now_unix)
         if (filtered_now.length > 0) {

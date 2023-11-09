@@ -183,7 +183,7 @@ export function useCreateHackathon() {
                     params: {
                         name: reponame,
                         description: description.short,
-                        comment: `Create ${type} repository`,
+                        comment: `Create ${title} ${type} repository`,
                     },
                 },
                 {
