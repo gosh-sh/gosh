@@ -56,7 +56,10 @@ const HackathonDatesModal = (props: DatePickerModalProps) => {
 
         try {
             if (start > Math.min(voting, finish)) {
-                helpers.setFieldError('start', 'Start date is greater than other dates')
+                helpers.setFieldError(
+                    'start',
+                    'Start date is ahead, fill of check voting/finish dates',
+                )
                 return
             }
             if (voting > finish) {
