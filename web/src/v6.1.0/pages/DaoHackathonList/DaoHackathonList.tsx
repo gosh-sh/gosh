@@ -1,13 +1,13 @@
 import { faComment } from '@fortawesome/free-regular-svg-icons'
 import { faChevronDown, faTrophy } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Menu } from '@headlessui/react'
 import classNames from 'classnames'
-import { motion } from 'framer-motion'
-import React, { useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import React, { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, Input } from '../../../components/Form'
+import { Button, Textarea } from '../../../components/Form'
 import Loader from '../../../components/Loader'
+import { useClickOutside } from '../../../hooks/common.hooks'
 import { DaoMemberWallet, DaoMembers, DaoSupply } from '../../components/Dao'
 import { useDao, useDaoMember } from '../../hooks/dao.hooks'
 import { useDaoHackathonList } from '../../hooks/hackathon.hooks'
@@ -20,14 +20,21 @@ const DaoHackathonListPage = (props: { count?: number }) => {
     const dao = useDao()
     const member = useDaoMember()
     const hackathons = useDaoHackathonList()
-    const [createName, setCreateName] = useState<string>('')
+    const [create_name, setCreateName] = useState<string>('')
+    const [create_open, setCreateOpen] = useState<boolean>(false)
+    const create_ref = useRef<HTMLDivElement>(null)
+    useClickOutside(create_ref.current, () => setCreateOpen(false))
 
-    const onCreateNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setCreateName(e.target.value)
+    const onCreateOpen = () => {
+        setCreateOpen(true)
+    }
+
+    const onCreateNameChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setCreateName(e.target.value.trim())
     }
 
     const onCreateClick = (type: EHackathonType) => {
-        const state = { type, name: createName }
+        const state = { type, name: create_name }
         navigate(`/o/${dao.details.name}/hacksgrants/create`, { state })
     }
 
@@ -42,73 +49,85 @@ const DaoHackathonListPage = (props: { count?: number }) => {
                 </div>
 
                 {member.isMember && (
-                    <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
-                        <Input
-                            className="grow"
-                            type="text"
-                            placeholder="Add name to create..."
-                            autoComplete="off"
-                            value={createName}
-                            onChange={onCreateNameChange}
-                        />
+                    <div
+                        ref={create_ref}
+                        className={classNames(
+                            'mb-6 p-3 border rounded-xl transition-colors duration-200',
+                            create_open ? 'bg-white' : 'bg-gray-fafafd',
+                        )}
+                    >
+                        <div className="flex flex-nowrap items-center gap-x-4">
+                            <Textarea
+                                className="grow border-0"
+                                placeholder="Add name to create..."
+                                autoComplete="off"
+                                value={create_name}
+                                maxRows={5}
+                                onClick={onCreateOpen}
+                                onChange={onCreateNameChange}
+                            />
 
-                        <Menu as="div" className="relative">
-                            <Menu.Button as={Button} disabled={!createName}>
-                                {({ open }) => (
-                                    <>
-                                        Create new
-                                        <FontAwesomeIcon
-                                            icon={faChevronDown}
-                                            size="sm"
-                                            className={classNames(
-                                                'ml-2 transition-transform duration-200',
-                                                open ? 'rotate-180' : 'rotate-0',
-                                            )}
-                                        />
-                                    </>
+                            <AnimatePresence>
+                                {!create_open && (
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                    >
+                                        <Button onClick={onCreateOpen}>
+                                            Create new
+                                            <FontAwesomeIcon
+                                                icon={faChevronDown}
+                                                size="sm"
+                                                className="ml-2"
+                                            />
+                                        </Button>
+                                    </motion.div>
                                 )}
-                            </Menu.Button>
+                            </AnimatePresence>
+                        </div>
 
-                            <Menu.Items
-                                as={motion.div}
-                                className="absolute origin-top-right right-0 bg-white border border-gray-e6edff rounded-lg mt-2 z-50 py-2"
-                                initial={{ opacity: 0, translateY: '0.25rem' }}
-                                animate={{ opacity: 1, translateY: 0 }}
-                                exit={{ opacity: 0, translateY: '0.25rem' }}
-                                transition={{ duration: 0.2 }}
-                            >
-                                <Menu.Item
-                                    as={Button}
-                                    variant="custom"
-                                    className="block px-4 py-2 whitespace-nowrap
-                                    text-sm text-blue-2b89ff/80 hover:text-blue-2b89ff"
-                                    onClick={() =>
-                                        onCreateClick(EHackathonType.HACKATHON)
-                                    }
+                        <AnimatePresence>
+                            {create_open && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="mt-4 flex items-center justify-end gap-x-4"
                                 >
-                                    <FontAwesomeIcon
-                                        icon={faComment}
-                                        fixedWidth
-                                        className="mr-2"
-                                    />
-                                    New hackathon
-                                </Menu.Item>
-                                <Menu.Item
-                                    as={Button}
-                                    variant="custom"
-                                    className="block px-4 py-2 whitespace-nowrap
-                                    text-sm text-red-ff6c4d/80 hover:text-red-ff6c4d"
-                                    onClick={() => onCreateClick(EHackathonType.GRANT)}
-                                >
-                                    <FontAwesomeIcon
-                                        icon={faTrophy}
-                                        fixedWidth
-                                        className="mr-2"
-                                    />
-                                    New grant
-                                </Menu.Item>
-                            </Menu.Items>
-                        </Menu>
+                                    <Button
+                                        variant="custom"
+                                        className="block whitespace-nowrap disabled:opacity-50
+                                        text-white bg-blue-2b89ff hover:bg-opacity-90"
+                                        disabled={!create_name.trim().length}
+                                        onClick={() =>
+                                            onCreateClick(EHackathonType.HACKATHON)
+                                        }
+                                    >
+                                        <FontAwesomeIcon
+                                            icon={faComment}
+                                            className="mr-2"
+                                        />
+                                        New hackathon
+                                    </Button>
+                                    <Button
+                                        variant="custom"
+                                        className="block whitespace-nowrap disabled:opacity-50
+                                        text-white bg-red-ff6c4d hover:bg-opacity-90"
+                                        disabled
+                                        onClick={() =>
+                                            onCreateClick(EHackathonType.GRANT)
+                                        }
+                                    >
+                                        <FontAwesomeIcon
+                                            icon={faTrophy}
+                                            className="mr-2"
+                                        />
+                                        New grant (soon)
+                                    </Button>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 )}
 
