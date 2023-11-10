@@ -41,7 +41,7 @@ const HackathonPrizePoolOverview = () => {
     const { update } = useUpdateHackathonDetails()
     const [pool_opened, setPoolOpened] = useState<boolean>(false)
 
-    const show_skeleton =
+    const is_fetching =
         !hackathon?._rg_fetched ||
         (!hackathon?.metadata.is_fetched && hackathon?.metadata.is_fetching)
 
@@ -108,7 +108,7 @@ const HackathonPrizePoolOverview = () => {
             >
                 <div className="text-xl font-medium">Prize pool</div>
                 <div className="text-xl font-medium flex flex-nowrap items-center">
-                    {show_skeleton ? (
+                    {is_fetching ? (
                         <SkeletonTotal />
                     ) : (
                         hackathon?.metadata.prize?.total.toLocaleString()
@@ -135,7 +135,9 @@ const HackathonPrizePoolOverview = () => {
                             <Button
                                 variant="custom"
                                 size="sm"
-                                className="block mb-2 ml-auto opacity-70 hover:opacity-100 transition-opacity duration-200"
+                                className="block mb-2 ml-auto opacity-70 transition-opacity duration-200
+                                hover:opacity-100 disabled:opacity-30"
+                                disabled={is_fetching}
                                 onClick={onUpdatePrizePoolModal}
                             >
                                 <FontAwesomeIcon icon={faPencil} className="mr-2" />
@@ -143,7 +145,7 @@ const HackathonPrizePoolOverview = () => {
                             </Button>
                         )}
 
-                        {show_skeleton && <SkeletonPlaces />}
+                        {is_fetching && <SkeletonPlaces />}
 
                         <HackathonPrizePoolPlaces
                             places={hackathon?.metadata.prize.places || []}

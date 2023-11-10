@@ -152,7 +152,9 @@ const HackathonDatesOverview = () => {
                                     type="button"
                                     variant="custom"
                                     size="sm"
-                                    className="block border !border-blue-2b89ff text-blue-2b89ff !rounded-[2rem]"
+                                    className="block border !border-blue-2b89ff text-blue-2b89ff !rounded-[2rem]
+                                    opacity-70 hover:opacity-100 disabled:opacity-30 transition-opacity duration-200"
+                                    disabled={!hackathon.metadata.is_fetched}
                                     onClick={() => onUpdateDatesModal(index)}
                                 >
                                     {time > 0 ? 'Edit' : 'Add date'}

@@ -72,7 +72,7 @@ const HackathonParticipantsOverview = () => {
 
                 {!show_skeleton && !hackathon?.participants.items.length && (
                     <div className="text-sm text-gray-7c8db5">
-                        There are no participants where you are member of
+                        There are no participants where you are a member of
                     </div>
                 )}
 

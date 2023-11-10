@@ -672,6 +672,7 @@ export function useHackathon(
 }
 
 export function useUpdateHackathonDetails() {
+    const member = useDaoMember()
     const { hackathon } = useHackathon()
     const { push } = usePush(
         hackathon?._rg_dao_details!,
@@ -683,58 +684,61 @@ export function useUpdateHackathonDetails() {
         appToastStatusSelector('__updatehackathondetails'),
     )
 
-    const update = async (params: {
-        repo_name: string
-        filename: string
-        content: { original: string; modified: string }
-    }) => {
-        // TODO: repo_name should be used after git part refactor
-        const { repo_name, filename, content } = params
-        const now = moment().unix()
-        const finish = hackathon?.metadata.dates.finish || now + 1
+    const update = useCallback(
+        async (params: {
+            repo_name: string
+            filename: string
+            content: { original: string; modified: string }
+        }) => {
+            // TODO: repo_name should be used after git part refactor
+            const { repo_name, filename, content } = params
+            const now = moment().unix()
+            const finish = hackathon?.metadata.dates.finish || now + 1
 
-        try {
-            if (now >= finish) {
-                throw new GoshError('Value error', 'Update details time expired')
-            }
+            try {
+                if (now >= finish) {
+                    throw new GoshError('Value error', 'Update details time expired')
+                }
 
-            await beforeCreateEvent(20, { onPendingCallback: setStatus })
+                await beforeCreateEvent(20, { onPendingCallback: setStatus })
 
-            setStatus((state) => ({
-                ...state,
-                type: 'pending',
-                data: `Updating ${filename}`,
-            }))
+                setStatus((state) => ({
+                    ...state,
+                    type: 'pending',
+                    data: `Updating ${filename}`,
+                }))
 
-            // TODO: Remove after git refactor
-            const _tbranch = await hackathon?._rg_repo_adapter?.getBranch('main')
-            const event_address = await push(
-                `Update details for ${hackathon?.metadata.title} ${hackathon?.type}`,
-                [
-                    {
-                        treepath: [filename, filename],
-                        original: content.original,
-                        modified: content.modified,
+                // TODO: Remove after git refactor
+                const _tbranch = await hackathon?._rg_repo_adapter?.getBranch('main')
+                const event_address = await push(
+                    `Update details for ${hackathon?.metadata.title} ${hackathon?.type}`,
+                    [
+                        {
+                            treepath: [filename, filename],
+                            original: content.original,
+                            modified: content.modified,
+                        },
+                    ],
+                    { isPullRequest: true, tbranch: _tbranch },
+                )
+
+                setStatus((state) => ({
+                    ...state,
+                    type: 'success',
+                    data: {
+                        title: 'Create event',
+                        content: `Update ${filename} event created`,
                     },
-                ],
-                { isPullRequest: true, tbranch: _tbranch },
-            )
+                }))
 
-            setStatus((state) => ({
-                ...state,
-                type: 'success',
-                data: {
-                    title: 'Create event',
-                    content: `Update ${filename} event created`,
-                },
-            }))
-
-            return { event_address }
-        } catch (e) {
-            setStatus((state) => ({ ...state, type: 'error', data: e }))
-            throw e
-        }
-    }
+                return { event_address }
+            } catch (e) {
+                setStatus((state) => ({ ...state, type: 'error', data: e }))
+                throw e
+            }
+        },
+        [member.isReady, hackathon?._rg_repo_adapter?.auth?.username],
+    )
 
     return { update, status }
 }
