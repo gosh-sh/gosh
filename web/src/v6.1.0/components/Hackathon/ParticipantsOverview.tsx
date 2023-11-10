@@ -1,6 +1,5 @@
 import { faPlus } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useSetRecoilState } from 'recoil'
 import { Button } from '../../../components/Form'
@@ -27,7 +26,6 @@ const HackathonParticipantsOverview = () => {
     const { user } = useUser()
     const { hackathon } = useHackathon()
     const { addParticipants } = useAddHackathonParticipants()
-    const [can_add_app, setCanAddApp] = useState<boolean>(false)
 
     const show_skeleton =
         !hackathon?._rg_fetched ||

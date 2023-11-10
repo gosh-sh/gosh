@@ -15,7 +15,7 @@ const ListBoundaryInner = (props: { count: number }) => {
     const hackathons = useDaoHackathonList({ initialize: true, count })
     const { showBoundary } = useErrorBoundary()
 
-    const is_fetching = dao.isFetching || dao.isFetchingData || hackathons.is_fetching
+    const is_fetching = dao.isFetching || hackathons.is_fetching
 
     const onGetNext = async () => {
         try {
@@ -37,8 +37,15 @@ const ListBoundaryInner = (props: { count: number }) => {
             {is_fetching && !hackathons.items.length && <ListItemSkeleton />}
 
             {!is_fetching && hackathons.is_empty && (
-                <div className="text-sm text-gray-7c8db5 text-center p-4">
-                    There are no hackathons yet
+                <div className="px-5 py-10">
+                    <div className="mb-4 w-20 mx-auto">
+                        <img src="/images/box-empty.svg" alt="Empty" />
+                    </div>
+                    <div className="text-sm text-gray-7c8db5 text-center">
+                        Your organization does not
+                        <br />
+                        have Hacks or Grants there
+                    </div>
                 </div>
             )}
 

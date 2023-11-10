@@ -7,10 +7,10 @@ type THackathonStatusProps = {
 
 const HackathonStatus = (props: THackathonStatusProps) => {
     const { dates } = props
-    const [duration, setDuration] = useState<{
+    const [{ prefix, duration }, setDuration] = useState<{
         prefix: string
         duration: moment.Duration | null
-    }>()
+    }>({ prefix: '', duration: null })
 
     const getDuration = useCallback(() => {
         const now = moment()
@@ -52,9 +52,14 @@ const HackathonStatus = (props: THackathonStatusProps) => {
 
     return (
         <>
-            {duration?.prefix}
-            {duration?.duration &&
-                ` ${duration?.duration.days()} days ${duration?.duration.hours()} hours left`}
+            {prefix}
+            {duration && (
+                <>
+                    {duration.days() > 0 && ` ${duration.days()} days`}
+                    {` ${duration.hours()} hours`}
+                    {` ${duration.minutes()} minutes left`}
+                </>
+            )}
         </>
     )
 }

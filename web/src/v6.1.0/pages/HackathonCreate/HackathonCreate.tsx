@@ -1,4 +1,5 @@
-import { faPlus } from '@fortawesome/free-solid-svg-icons'
+import { faClock, faHand } from '@fortawesome/free-regular-svg-icons'
+import { faFlagCheckered, faPlus } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import classNames from 'classnames'
 import { Field, Form, Formik, FormikHelpers } from 'formik'
@@ -206,16 +207,19 @@ const HackathonCreatePage = () => {
                                                 {
                                                     key: 'start',
                                                     title: 'Start',
+                                                    icon: faClock,
                                                     time: values.dates.start,
                                                 },
                                                 {
                                                     key: 'voting',
                                                     title: 'Voting',
+                                                    icon: faHand,
                                                     time: values.dates.voting,
                                                 },
                                                 {
                                                     key: 'finish',
                                                     title: 'Finish',
+                                                    icon: faFlagCheckered,
                                                     time: values.dates.finish,
                                                 },
                                             ]}

@@ -23,7 +23,10 @@ const DaoHackathonListPage = (props: { count?: number }) => {
     const [create_name, setCreateName] = useState<string>('')
     const [create_open, setCreateOpen] = useState<boolean>(false)
     const create_ref = useRef<HTMLDivElement>(null)
-    useClickOutside(create_ref.current, () => setCreateOpen(false))
+
+    useClickOutside(create_ref, () => {
+        setCreateOpen(false)
+    })
 
     const onCreateOpen = () => {
         setCreateOpen(true)
@@ -98,7 +101,7 @@ const DaoHackathonListPage = (props: { count?: number }) => {
                                     <Button
                                         variant="custom"
                                         className="block whitespace-nowrap disabled:opacity-50
-                                        text-white bg-blue-2b89ff hover:bg-opacity-90"
+                                            text-white bg-blue-2b89ff hover:bg-opacity-90"
                                         disabled={!create_name.trim().length}
                                         onClick={() =>
                                             onCreateClick(EHackathonType.HACKATHON)
@@ -113,7 +116,7 @@ const DaoHackathonListPage = (props: { count?: number }) => {
                                     <Button
                                         variant="custom"
                                         className="block whitespace-nowrap disabled:opacity-50
-                                        text-white bg-red-ff6c4d hover:bg-opacity-90"
+                                            text-white bg-red-ff6c4d hover:bg-opacity-90"
                                         disabled
                                         onClick={() =>
                                             onCreateClick(EHackathonType.GRANT)

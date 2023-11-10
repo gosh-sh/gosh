@@ -1,4 +1,10 @@
-import { faCalendarAlt, faClock } from '@fortawesome/free-regular-svg-icons'
+import {
+    IconDefinition,
+    faCalendarAlt,
+    faClock,
+    faHand,
+} from '@fortawesome/free-regular-svg-icons'
+import { faFlagCheckered } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import moment from 'moment'
 import { useEffect, useState } from 'react'
@@ -13,10 +19,17 @@ import { useHackathon, useUpdateHackathonDetails } from '../../hooks/hackathon.h
 import { HackathonDatesModal } from './DatesModal'
 import { HackathonStatus } from './Status'
 
-const titles: { [k: string]: string } = {
-    start: 'Start',
-    voting: 'Voting',
-    finish: 'Finish',
+type TDateState = {
+    key: string
+    title: string
+    icon: IconDefinition
+    time: number
+}
+
+const dates_data: { [k: string]: { title: string; icon: IconDefinition } } = {
+    start: { title: 'Start', icon: faClock },
+    voting: { title: 'Voting', icon: faHand },
+    finish: { title: 'Finish', icon: faFlagCheckered },
 }
 
 const SkeletonOverview = () => {
@@ -36,7 +49,7 @@ const HackathonDatesOverview = () => {
     const member = useDaoMember()
     const { hackathon } = useHackathon()
     const { update } = useUpdateHackathonDetails()
-    const [dates, setDates] = useState<{ key: string; title: string; time: number }[]>([])
+    const [dates, setDates] = useState<TDateState[]>([])
 
     const onUpdateDatesModal = (tab_index?: number) => {
         setModal({
@@ -87,7 +100,8 @@ const HackathonDatesOverview = () => {
             const casted: { [k: string]: number } = { ...hackathon.metadata.dates }
             const listed = Object.keys(casted).map((key) => ({
                 key,
-                title: titles[key],
+                title: dates_data[key].title,
+                icon: dates_data[key].icon,
                 time: casted[key],
             }))
             setDates(listed)
@@ -120,9 +134,12 @@ const HackathonDatesOverview = () => {
             </div>
 
             <div className="flex flex-col gap-y-4 py-5 border-b border-b-gray-e6edff">
-                {dates.map(({ key, title, time }, index) => (
+                {dates.map(({ key, title, icon, time }, index) => (
                     <div key={key} className="flex items-center justify-between gap-x-5">
-                        <div className="grow font-medium">{title}</div>
+                        <div className="grow font-medium whitespace-nowrap">
+                            <FontAwesomeIcon icon={icon} fixedWidth className="mr-2" />
+                            {title}
+                        </div>
                         <div className="flex items-center justify-end gap-x-3">
                             {time > 0 && (
                                 <div className="text-xs">
@@ -138,7 +155,7 @@ const HackathonDatesOverview = () => {
                                     className="block border !border-blue-2b89ff text-blue-2b89ff !rounded-[2rem]"
                                     onClick={() => onUpdateDatesModal(index)}
                                 >
-                                    {time > 0 ? 'Change date' : 'Add date'}
+                                    {time > 0 ? 'Edit' : 'Add date'}
                                     <FontAwesomeIcon
                                         icon={faCalendarAlt}
                                         className="ml-2"
