@@ -150,7 +150,7 @@ const HackathonPrizePoolModal = (props: TPrizePoolModalProps) => {
                                         <button
                                             className={classNames(
                                                 'px-5 py-2 text-gray-53596d rounded-t-lg border-x border-t',
-                                                'border-b lg:border-b-0 rounded-b-lg lg:rounded-b-0',
+                                                'border-b lg:border-b-0 rounded-b-lg lg:rounded-b-none',
                                                 selected
                                                     ? 'border-gray-e6edff bg-white'
                                                     : 'border-transparent bg-transparent',
