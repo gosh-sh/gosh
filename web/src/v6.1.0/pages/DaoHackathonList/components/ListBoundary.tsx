@@ -44,7 +44,7 @@ const ListBoundaryInner = (props: { count: number }) => {
                     <div className="text-sm text-gray-7c8db5 text-center">
                         Your organization does not
                         <br />
-                        have Hacks or Grants there
+                        have Hacks or Grants yet
                     </div>
                 </div>
             )}
