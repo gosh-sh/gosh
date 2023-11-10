@@ -15,7 +15,7 @@ BATCH_SIZE=200
 # 2. Create dev branch and push a big amount of files to one commit
 # 3. Clone the repo and check dev branch to have an appropriate number of files
 
-REPO_NAME="repo19_$(date +%s)"
+REPO_NAME="repo09_1_$(date +%s)"
 
 [ -d $REPO_NAME ] && rm -rf $REPO_NAME
 [ -d $REPO_NAME"-clone" ] && rm -rf $REPO_NAME"-clone"
