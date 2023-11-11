@@ -1,8 +1,8 @@
 import { Form, Formik } from 'formik'
 import { Button } from '../../../../components/Form'
+import { fromBigint, roundNumber } from '../../../../utils'
 import { useL2Transfer } from '../../../hooks/l2.hooks'
 import { TL2Withdrawal } from '../../../types/l2.types'
-import { fromBigint, roundNumber } from '../../../../utils'
 
 const Withdrawals = () => {
     const { web3, withdrawals, withdrawErc20 } = useL2Transfer()
@@ -14,11 +14,15 @@ const Withdrawals = () => {
     }
 
     const onWithdrawErc20 = async (values: { rootaddr: string }) => {
-        await withdrawErc20({
-            rootaddr: values.rootaddr,
-            walletaddr: web3.address,
-            alone: true,
-        })
+        try {
+            await withdrawErc20({
+                rootaddr: values.rootaddr,
+                walletaddr: web3.address,
+                alone: true,
+            })
+        } catch (e) {
+            console.error(e)
+        }
     }
 
     return (

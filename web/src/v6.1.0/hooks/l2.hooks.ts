@@ -378,14 +378,13 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                 // @ts-ignore
                 .approve(AppConfig.elockaddr, amount)
                 .encodeABI()
-            const receipt = await data.web3.instance.eth.sendTransaction({
+            await data.web3.instance.eth.sendTransaction({
                 from: data.web3.address,
                 to: data.summary.from.token.rootaddr,
                 data: edata,
                 gasLimit: 200000,
                 maxPriorityFeePerGas: 25000,
             })
-            console.debug('approveErc20', receipt)
 
             setSummaryProgress('approve_erc20', 'completed')
             setSummaryProgress('deposit_erc20', 'awaiting')
@@ -428,14 +427,13 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                     data.summary.to.user.value.pubkey,
                 )
                 .encodeABI()
-            const receipt = await data.web3.instance.eth.sendTransaction({
+            await data.web3.instance.eth.sendTransaction({
                 from: data.web3.address,
                 to: AppConfig.elockaddr,
                 data: edata,
                 gasLimit: 200000,
                 maxPriorityFeePerGas: 25000,
             })
-            console.debug('depositErc20', receipt)
 
             setSummaryProgress('deposit_erc20', 'completed')
             await receiveGosh()
@@ -467,7 +465,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                 // @ts-ignore
                 .deposit(data.summary.to.user.value.pubkey)
                 .encodeABI()
-            const receipt = await data.web3.instance.eth.sendTransaction({
+            await data.web3.instance.eth.sendTransaction({
                 from: data.web3.address,
                 to: AppConfig.elockaddr,
                 value: data.web3.instance.utils.toWei(data.summary.from.amount, 'ether'),
@@ -475,7 +473,6 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                 gasLimit: 200000,
                 maxPriorityFeePerGas: 25000,
             })
-            console.debug('depositEth', receipt)
 
             setSummaryProgress('deposit_eth', 'completed')
             await receiveGosh()
@@ -614,7 +611,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
             // Withdraw
             // @ts-ignore
             const edata = elock.methods.withdrawERC20(rootaddr).encodeABI()
-            const receipt = await data.web3.instance.eth.sendTransaction({
+            await data.web3.instance.eth.sendTransaction({
                 from: data.web3.address,
                 to: AppConfig.elockaddr,
                 value: commission,
@@ -622,7 +619,6 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                 gasLimit: 200000,
                 maxPriorityFeePerGas: 25000,
             })
-            console.debug('withdrawErc20', receipt)
 
             setSummaryProgress('withdraw_erc20', 'completed')
             await receiveErc20({ rootaddr, walletaddr, start_balance: balance, alone })
@@ -678,11 +674,9 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                 setSummaryProgress('receive', 'pending')
             }
 
-            console.debug('start_balance', start_balance)
             const wait_erc20 = await whileFinite(
                 async () => {
                     const curr_balance = await getWeb3Balance(walletaddr, rootaddr)
-                    console.debug('curr_balance', curr_balance)
                     return curr_balance > start_balance
                 },
                 10000,
@@ -698,7 +692,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
             setData((state) => ({
                 ...state,
                 withdrawals: state.withdrawals.map((item) => {
-                    if (item.token.rootaddr !== rootaddr) {
+                    if (item.token?.rootaddr !== rootaddr) {
                         return item
                     }
                     return { ...item, value: 0n, commission: 0n }
@@ -708,6 +702,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
         } catch (e) {
             setStatus((state) => ({ ...state, type: 'error', data: e }))
             setSummaryProgress('receive', 'awaiting')
+            throw e
         }
     }
 
@@ -735,7 +730,6 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                     return { token, ...result }
                 }),
             )
-            console.debug('W', withdrawals)
             setData((state) => ({ ...state, withdrawals }))
         } catch (e) {
             console.error('Get eth withrawals', e)
@@ -758,7 +752,6 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
 
     // React on `token_from` change
     const onSetTokenFromCallback = useCallback(async () => {
-        console.debug('onSetTokenFromCallback')
         const token = data.summary.from.token
 
         if (token.network === EL2Network.ETH) {
@@ -822,7 +815,6 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
 
     // React on `token_to` change
     const onSetTokenToCallback = useCallback(() => {
-        console.debug('onSetTokenToCallback')
         const token = data.summary.to.token
 
         setData((state) => ({
@@ -846,7 +838,6 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
 
     // React on `user_to` change
     const onSetUserToCallback = useCallback(async () => {
-        console.debug('onSetUserToCallback')
         const user_to = data.summary.to.user
         const network_to = data.summary.to.token.network
 
@@ -903,7 +894,6 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
 
     // React on commissions change (update `amount_to`)
     const onSetCommissionsCallback = useCallback(() => {
-        console.debug('onSetCommissionsCallback')
         const { summary, comissions } = data
 
         const route = `${summary.from.token.network}:${summary.to.token.network}`
@@ -937,7 +927,6 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
 
     // Recalculate commissions by deps
     useEffect(() => {
-        console.debug('onRecalculateCommissions')
         const { summary, comissions } = data
         const route = `${summary.from.token.network}:${summary.to.token.network}`
 
