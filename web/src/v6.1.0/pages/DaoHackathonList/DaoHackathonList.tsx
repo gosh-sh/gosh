@@ -59,7 +59,7 @@ const DaoHackathonListPage = (props: { count?: number }) => {
                             create_open ? 'bg-white' : 'bg-gray-fafafd',
                         )}
                     >
-                        <div className="flex flex-nowrap items-center gap-x-4">
+                        <div className="flex flex-wrap sm:flex-nowrap items-center gap-4">
                             <Textarea
                                 className="grow border-0"
                                 placeholder="Add name to create..."
@@ -76,8 +76,9 @@ const DaoHackathonListPage = (props: { count?: number }) => {
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
                                         exit={{ opacity: 0 }}
+                                        className="basis-full sm:basis-0"
                                     >
-                                        <Button onClick={onCreateOpen}>
+                                        <Button className="w-full" onClick={onCreateOpen}>
                                             Create new
                                             <FontAwesomeIcon
                                                 icon={faChevronDown}
@@ -96,12 +97,14 @@ const DaoHackathonListPage = (props: { count?: number }) => {
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
-                                    className="mt-4 flex items-center justify-end gap-x-4"
+                                    className="mt-4 flex items-center justify-end gap-x-4 gap-y-2
+                                    flex-wrap sm:flex-nowrap"
                                 >
                                     <Button
                                         variant="custom"
                                         className="block whitespace-nowrap disabled:opacity-50
-                                            text-white bg-blue-2b89ff hover:bg-opacity-90"
+                                        text-white bg-blue-2b89ff hover:bg-opacity-90
+                                        w-full sm:w-auto"
                                         disabled={!create_name.trim().length}
                                         onClick={() =>
                                             onCreateClick(EHackathonType.HACKATHON)
@@ -116,7 +119,8 @@ const DaoHackathonListPage = (props: { count?: number }) => {
                                     <Button
                                         variant="custom"
                                         className="block whitespace-nowrap disabled:opacity-50
-                                            text-white bg-red-ff6c4d hover:bg-opacity-90"
+                                        text-white bg-red-ff6c4d hover:bg-opacity-90
+                                        w-full sm:w-auto"
                                         disabled
                                         onClick={() =>
                                             onCreateClick(EHackathonType.GRANT)
