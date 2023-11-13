@@ -215,7 +215,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
                 ...state,
                 summary: {
                     ...state.summary,
-                    from: { ...state.summary.from, amount },
+                    from: { ...state.summary.from, amount: amount.trim() },
                 },
             }))
         }
