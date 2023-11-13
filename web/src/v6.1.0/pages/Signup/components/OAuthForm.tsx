@@ -1,11 +1,12 @@
+import { Provider } from '@supabase/supabase-js'
 import { Button } from '../../../../components/Form'
 import { useOauth } from '../../../hooks/oauth.hooks'
 
 const OAuthForm = () => {
     const { oauth, signin } = useOauth()
 
-    const onOAuthSigninClick = async () => {
-        signin('github', { redirectTo: `${document.location.origin}/a/signup` })
+    const onOAuthSigninClick = async (provider: Provider) => {
+        signin(provider, { redirectTo: `${document.location.origin}/a/signup` })
     }
 
     return (
@@ -19,16 +20,26 @@ const OAuthForm = () => {
                 <div className="border border-gray-e6edff rounded-xl p-8">
                     <h2 className="text-lg text-center mb-6">Sign in with</h2>
 
-                    <div>
+                    <div className="flex flex-col gap-y-4">
                         <Button
                             type="button"
                             size="xl"
                             className="w-full"
                             disabled={oauth.isLoading || !!oauth.session}
                             isLoading={oauth.isLoading || !!oauth.session}
-                            onClick={onOAuthSigninClick}
+                            onClick={() => onOAuthSigninClick('github')}
                         >
                             Sign in with GitHub
+                        </Button>
+                        <Button
+                            type="button"
+                            size="xl"
+                            className="w-full"
+                            disabled={oauth.isLoading || !!oauth.session}
+                            isLoading={oauth.isLoading || !!oauth.session}
+                            onClick={() => onOAuthSigninClick('google')}
+                        >
+                            Sign in with Google
                         </Button>
                     </div>
                 </div>
