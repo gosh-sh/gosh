@@ -41,6 +41,7 @@ const HackathonPrizePoolModal = (props: TPrizePoolModalProps) => {
     const formik_ref = useRef<FormikProps<TFormValues>>(null)
     const [close_dirty, setCloseDirty] = useState<boolean>(false)
     const [close_force, setCloseForce] = useState<boolean>(false)
+    const [submitting, setSubmitting] = useState<boolean>(false)
 
     const initial_form = {
         ...initial_values,
@@ -62,6 +63,10 @@ const HackathonPrizePoolModal = (props: TPrizePoolModalProps) => {
 
     const onFormSubmit = async (values: TFormValues, helpers: FormikHelpers<any>) => {
         try {
+            // Use local state for submitting flag,
+            // because formik_ref.isSubmitting update takes much time
+            setSubmitting(true)
+
             // Validate prizes pool
             const total = parseInt(values.total) || 0
             const places = values.places.map((item) => parseInt(item.value) || 0)
@@ -73,6 +78,8 @@ const HackathonPrizePoolModal = (props: TPrizePoolModalProps) => {
             await onSubmit({ total, places })
         } catch (e: any) {
             console.error(e.message)
+        } finally {
+            setSubmitting(false)
         }
     }
 
@@ -114,7 +121,7 @@ const HackathonPrizePoolModal = (props: TPrizePoolModalProps) => {
                 <div className="order-2 lg:order-3">
                     <ModalCloseButton
                         two_factor={close_dirty && !close_force}
-                        disabled={formik_ref.current?.isSubmitting}
+                        disabled={submitting}
                         className="relative !top-0 !right-0"
                         twoFactorCallback={() => setCloseForce(true)}
                     />
