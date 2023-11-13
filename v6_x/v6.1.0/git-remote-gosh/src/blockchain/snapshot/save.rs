@@ -233,6 +233,17 @@ pub trait DeployNewSnapshot {
         content: String,
         ipfs: Option<String>,
     ) -> anyhow::Result<()>;
+
+    async fn construct_deploy_snapshot_message(
+        &self,
+        wallet: &UserWallet,
+        repo_address: BlockchainContractAddress,
+        commit_id: String,
+        file_path: String,
+        content: String,
+        ipfs: Option<String>,
+        expire: u32,
+    ) -> anyhow::Result<String>;
 }
 
 #[async_trait]
@@ -272,6 +283,41 @@ impl DeployNewSnapshot for Everscale {
             tracing::trace!("deploy_branch_error: {}", e);
         }
         result
+    }
+
+    #[instrument(level = "info", skip_all)]
+    async fn construct_deploy_snapshot_message(
+        &self,
+        wallet: &UserWallet,
+        repo_address: BlockchainContractAddress,
+        commit_id: String,
+        file_path: String,
+        content: String,
+        ipfs: Option<String>,
+        expire: u32,
+    ) -> anyhow::Result<String> {
+        tracing::trace!("deploy_new_snapshot: repo_address={repo_address}, commit_id={commit_id}, file_path={file_path}");
+        let args = DeploySnapshotParams {
+            repo_address,
+            commit_sha: commit_id,
+            file_path,
+            content,
+            ipfs,
+            is_pin: false,
+        };
+        let wallet_contract = wallet.take_one().await?;
+        tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
+        let (message_id, boc) = self
+            .construct_boc(
+                wallet_contract.deref(),
+                "deployNewSnapshot",
+                Some(serde_json::to_value(args)?),
+                Some(expire),
+            )
+            .await?;
+        drop(wallet_contract);
+        tracing::trace!("construct_deploy_snapshot_message done: {message_id}");
+        Ok(boc)
     }
 }
 

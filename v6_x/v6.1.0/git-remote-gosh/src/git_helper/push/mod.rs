@@ -1,27 +1,35 @@
-use super::GitHelper;
 use crate::{
     blockchain::{
+        get_commit_address,
         branch::DeleteBranch,
         contract::{ContractRead, GoshContract},
-        get_commit_address, gosh_abi, AddrVersion, BlockchainContractAddress, BlockchainService,
-        GetNameCommitResult, MAX_ACCOUNTS_ADDRESSES_PER_QUERY, ZERO_SHA,
+        gosh_abi,
+        AddrVersion, BlockchainContractAddress, BlockchainService, GetNameCommitResult,
+        MAX_ACCOUNTS_ADDRESSES_PER_QUERY, ZERO_SHA,
     },
-    git_helper::push::create_branch::CreateBranchOperation,
+    git_helper::{
+        push::create_branch::CreateBranchOperation,
+        GitHelper,
+    },
 };
 use git_hash::{self, ObjectId};
 use git_odb::Find;
-use std::collections::VecDeque;
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{HashMap, HashSet, VecDeque},
     str::FromStr,
     sync::Arc,
+    time::{SystemTime, Duration, Instant},
     vec::Vec,
 };
-use ton_client::net::ParamsOfQuery;
-
+use ton_client::{
+    net::ParamsOfQuery,
+    processing::{
+        fetch_next_monitor_results,
+        ParamsOfFetchNextMonitorResults, MessageMonitoringResult, MessageMonitoringStatus,
+    },
+    utils::compress_zstd,
+};
 use tokio::sync::Semaphore;
-
-use ton_client::utils::compress_zstd;
 
 pub mod create_branch;
 pub(crate) mod parallel_diffs_upload_support;
@@ -34,7 +42,7 @@ use push_tag::push_tag;
 mod delete_tag;
 pub(crate) mod parallel_snapshot_upload_support;
 
-use crate::blockchain::{branch_list, get_commit_by_addr, Snapshot, Tree, tree};
+use crate::blockchain::{branch_list, get_commit_by_addr, Snapshot, Tree};
 use crate::git_helper::push::parallel_snapshot_upload_support::{
     ParallelCommit, ParallelCommitUploadSupport, ParallelSnapshot, ParallelSnapshotUploadSupport,
     ParallelTreeUploadSupport,
@@ -1196,7 +1204,7 @@ where
         }
 
         let files_cnt = parallel_snapshot_uploads.get_expected().len();
-        parallel_snapshot_uploads.start_push(self).await?;
+        parallel_snapshot_uploads.push_snapshots_in_chunks(self).await?;
 
         let stored_snapshot_addresses = parallel_snapshot_uploads.get_expected().clone();
         let db = self.get_db()?;
@@ -1609,7 +1617,7 @@ where
 
         // After we have all commits and trees deployed, start push of diffs
         parallel_diffs_upload_support.push_diffs_in_chunks(self).await?;
-        parallel_snapshot_uploads.start_push(self).await?;
+        parallel_snapshot_uploads.push_snapshots_in_chunks(self).await?;
 
         // clear database after all objects were deployed
         self.delete_db()?;
@@ -1873,6 +1881,94 @@ fn get_list_of_commit_objects(
     Ok(res)
 }
 
+#[instrument(level = "debug", skip_all)]
+pub async fn wait_chunk_until_send(
+    blockchain: &impl BlockchainService,
+    chunk: &mut Vec<BlockchainContractAddress>,
+    queue: String,
+) -> anyhow::Result<()> {
+    #[derive(Debug, Deserialize)]
+    struct UserData {
+        expected_address: String,
+    }
+
+    let start = Instant::now();
+    let timeout = Duration::from_secs(300); // todo remove magic num
+
+    let expected_receipts_count = chunk.len();
+    let mut receipts_count = 0;
+    loop {
+        let sent_messages = fetch_next_monitor_results(
+            blockchain.client().clone(),
+            ParamsOfFetchNextMonitorResults {
+                queue: queue.clone(),
+                wait_mode: None,
+            }
+        ).await?;
+        tracing::trace!("got {} receipts", sent_messages.results.len());
+
+        for sent_result in sent_messages.results {
+            receipts_count += 1;
+
+            let MessageMonitoringResult {
+                hash,
+                status,
+                error,
+                user_data,
+                ..
+            } = sent_result;
+
+            match status {
+                MessageMonitoringStatus::Finalized => {
+                    let target_addr = match user_data {
+                        Some(payload) => {
+                            let UserData { expected_address } = serde_json::from_value(payload)?;
+                            BlockchainContractAddress::new(expected_address)
+                        },
+                        None => unreachable!(),
+                    };
+                    chunk.remove(
+                        chunk.iter().position(|x| x == &target_addr)
+                        .expect("unexpected: element must exists")
+                    );
+                    tracing::trace!("msg {} ok", hash);
+                },
+                MessageMonitoringStatus::Timeout => {
+                    let reason = match error {
+                        Some(err) => format!("error: {err}"),
+                        None => "message expired".to_owned()
+                    };
+                    tracing::debug!(
+                        "batched message failed: message id={}, expected address={:?}, reason={}",
+                        hash,
+                        user_data,
+                        reason
+                    );
+                },
+                MessageMonitoringStatus::Reserved => unreachable!()
+            }
+        }
+
+        if receipts_count >= expected_receipts_count {
+            tracing::debug!("{} receipts processed", expected_receipts_count);
+            break;
+        } else if start.elapsed() > timeout {
+            tracing::debug!("batched messages ({}) failed: time is up", expected_receipts_count - receipts_count);
+            let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
+            tracing::debug!("current timestamp {:?}", now.as_secs());
+            break;
+        }
+        tracing::trace!(
+            "{}/{} receipts. falling asleep for 10 sec...",
+            receipts_count,
+            expected_receipts_count
+        );
+        tokio::time::sleep(Duration::from_secs(10)).await; // todo remove magic num
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2071,9 +2167,9 @@ mod tests {
     }
 }
 
-pub fn get_redeploy_attempts() -> i32 {
+pub fn get_redeploy_attempts() -> u32 {
     std::env::var(GOSH_DEPLOY_RETRIES)
         .ok()
         .and_then(|num| i32::from_str_radix(&num, 10).ok())
-        .unwrap_or(MAX_REDEPLOY_ATTEMPTS)
+        .unwrap_or(MAX_REDEPLOY_ATTEMPTS) as u32
 }

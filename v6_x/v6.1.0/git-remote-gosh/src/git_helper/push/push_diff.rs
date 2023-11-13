@@ -1,11 +1,5 @@
-use crate::blockchain::user_wallet::{UserWallet, WalletError};
-use crate::ipfs::{build_ipfs, IpfsError};
-use std::sync::Arc;
-use std::time::Duration;
-use tokio::time::sleep;
-
-use crate::database::GoshDB;
 use crate::{
+    database::GoshDB,
     blockchain::{
         contract::{ContractRead, GoshContract},
         gosh_abi,
@@ -13,11 +7,15 @@ use crate::{
             save::{Diff, GetDiffAddrResult, GetVersionResult},
             PushDiffCoordinate,
         },
-        tvm_hash, BlockchainContractAddress, BlockchainService, EverClient, EMPTY_BLOB_SHA1,
-        EMPTY_BLOB_SHA256,
+        tvm_hash,
+        user_wallet::{UserWallet, WalletError},
+        BlockchainContractAddress, BlockchainService, EverClient,
+        EMPTY_BLOB_SHA1, EMPTY_BLOB_SHA256,
     },
-    ipfs::{service::FileSave, IpfsService},
+    ipfs::{build_ipfs, service::FileSave, IpfsError, IpfsService},
 };
+use std::{sync::Arc, time::Duration};
+use tokio::time::sleep;
 use tokio_retry::RetryIf;
 use ton_client::utils::compress_zstd;
 
@@ -219,14 +217,15 @@ pub async fn prepush_diff<B>(
     wallet: &UserWallet,
     ipfs_endpoint: &str,
     last_commit_id: &git_hash::ObjectId,
-    diff_address: &str,
+    diff_address: &BlockchainContractAddress,
     database: Arc<GoshDB>,
     expire: u32,
-) -> anyhow::Result<String>
+) -> anyhow::Result<(String, Option<BlockchainContractAddress>)>
 where
     B: BlockchainService,
 {
-    let (parallel_diff, diff_coordinate, is_last) = database.get_diff(diff_address)?;
+    let (parallel_diff, diff_coordinate, is_last) =
+        database.get_diff(&String::from(diff_address))?;
 
     let commit_id = parallel_diff.commit_id.to_string();
     let branch_name = parallel_diff.branch_name;
@@ -330,7 +329,7 @@ where
 
     let boc = blockchain
         .construct_deploy_diff_message(
-            &wallet,
+            wallet,
             repo_name.to_owned(),
             branch_name.to_string(),
             last_commit_id.to_string(),
@@ -342,7 +341,7 @@ where
         )
         .await?;
 
-    Ok(boc)
+    Ok((boc, Some(diff_address.clone())))
 }
 
 #[instrument(level = "info", skip_all)]
@@ -509,4 +508,41 @@ where
         condition,
     )
     .await
+}
+
+#[instrument(level = "info", skip_all)]
+pub async fn prepush_initial_snapshot<B>(
+    blockchain: &B,
+    repo_addr: &BlockchainContractAddress,
+    wallet: &UserWallet,
+    snapshot_address: &BlockchainContractAddress,
+    database: Arc<GoshDB>,
+    expire: u32,
+) -> anyhow::Result<(String, Option<BlockchainContractAddress>)>
+where
+    B: BlockchainService,
+{
+    let snapshot = database.get_snapshot(&String::from(snapshot_address))?;
+
+    let file_path = snapshot.file_path;
+    let upgrade = snapshot.upgrade;
+    let commit_id = snapshot.commit_id;
+    let content = snapshot.content;
+    let ipfs = snapshot.ipfs;
+
+    tracing::trace!("push_initial_snapshot: snapshot_address={snapshot_address}, repo_addr={repo_addr}, file_path={file_path}");
+
+    let boc = blockchain
+        .construct_deploy_snapshot_message(
+            &wallet,
+            repo_addr.clone(),
+            commit_id.clone(),
+            file_path.clone(),
+            content.clone(),
+            ipfs.clone(),
+            expire,
+        )
+        .await?;
+
+    Ok((boc, Some(snapshot_address.clone())))
 }

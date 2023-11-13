@@ -1,21 +1,20 @@
-use crate::blockchain::{
-    snapshot::{diffs::wait_diffs_ready::wait_diffs_until_ready, PushDiffCoordinate},
-    BlockchainContractAddress, BlockchainService
+use crate::{
+    blockchain::{
+        snapshot::{diffs::wait_diffs_ready::wait_diffs_until_ready, PushDiffCoordinate},
+        BlockchainContractAddress, BlockchainService
+    },
+    database::GoshDB,
+    git_helper::{
+        push::{
+            get_redeploy_attempts, wait_chunk_until_send,
+            parallel_snapshot_upload_support::get_push_chunk,
+            push_diff::{diff_address, prepush_diff},
+        },
+        GitHelper,
+    },
 };
-use crate::database::GoshDB;
-use crate::git_helper::push::{
-    get_redeploy_attempts,
-    parallel_snapshot_upload_support::get_push_chunk,
-    push_diff::{diff_address, push_diff, prepush_diff}
-};
-use crate::git_helper::GitHelper;
 
-use anyhow::bail;
-use ton_client::processing::{fetch_next_monitor_results, ParamsOfFetchNextMonitorResults, MessageMonitoringResult, MessageMonitoringStatus};
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::time::{SystemTime, Duration, Instant};
-use std::vec::Vec;
+use std::{collections::HashMap, sync::Arc, time::SystemTime, vec::Vec};
 use tokio::task::JoinSet;
 use tracing::Instrument;
 
@@ -28,7 +27,6 @@ pub struct ParallelDiffsUploadSupport {
     next_parallel_index: u32,
     last_commit_id: git_hash::ObjectId,
     expecting_deployed_contacts_addresses: Vec<String>,
-    pushed_blobs: JoinSet<anyhow::Result<()>>,
 }
 
 #[derive(Clone, Debug)]
@@ -81,57 +79,11 @@ impl ParallelDiffsUploadSupport {
             next_parallel_index: 0,
             last_commit_id: *last_commit_id,
             expecting_deployed_contacts_addresses: vec![],
-            pushed_blobs: JoinSet::new(),
         }
     }
-
-    /* pub fn get_expected(&self) -> &Vec<String> {
-        &self.expecting_deployed_contacts_addresses
-    } */
 
     pub fn push_expected(&mut self, value: String) {
         self.expecting_deployed_contacts_addresses.push(value);
-    }
-
-    pub async fn start_push(
-        &mut self,
-        context: &mut GitHelper<impl BlockchainService + 'static>,
-    ) -> anyhow::Result<()> {
-        let chunk_size = get_push_chunk();
-        let max_attempts = get_redeploy_attempts();
-        tracing::trace!("Start push of diffs, chunk_size={chunk_size}, max_attempts={max_attempts}");
-        let mut exp: Vec<BlockchainContractAddress> = self
-            .expecting_deployed_contacts_addresses
-            .iter()
-            .map(|addr| BlockchainContractAddress::new(addr))
-            .collect();
-        let mut attempt = 0;
-        let mut last_rest_cnt = 0;
-        loop {
-            if attempt == max_attempts {
-                anyhow::bail!("Failed to deploy diffs. Undeployed diffs: {exp:?}");
-            }
-            let mut rest = vec![];
-            for chunk in exp.chunks(chunk_size) {
-                for addr in chunk {
-                    self.add_to_push_list(context, &String::from(addr)).await?;
-                }
-                self.finish_push().await?;
-                let mut tmp_rest = wait_diffs_until_ready(&context.blockchain, chunk).await?;
-                rest.append(&mut tmp_rest);
-            }
-            exp = rest;
-            if exp.is_empty() {
-                break;
-            }
-            if exp.len() != last_rest_cnt {
-                attempt = 0;
-            }
-            last_rest_cnt = exp.len();
-
-            attempt += 1;
-        }
-        Ok(())
     }
 
     #[instrument(level = "info", skip_all)]
@@ -140,16 +92,14 @@ impl ParallelDiffsUploadSupport {
         context: &mut GitHelper<impl BlockchainService + 'static>,
     ) -> anyhow::Result<()> {
         let chunk_size = get_push_chunk();
-        let max_attempts = 5u32 /* get_redeploy_attempts() */;
+        let max_attempts = get_redeploy_attempts();
 
+        tracing::trace!("Start push of diffs, chunk_size={chunk_size}, max_attempts={max_attempts}");
         let mut exp: Vec<BlockchainContractAddress> = self
             .expecting_deployed_contacts_addresses
             .iter()
             .map(|addr| BlockchainContractAddress::new(addr))
             .collect();
-
-        let blockchain = context.blockchain.clone();
-        let wallet = blockchain.user_wallet(&context.dao_addr,&context.remote.network).await?;
 
         let mut attempt = 0u32;
         loop {
@@ -169,11 +119,11 @@ impl ParallelDiffsUploadSupport {
 
                 let mut unsent = push_chunk(
                     &blockchain,
-                    &repo_name,
+                    repo_name,
                     &dao_address,
                     &remote_network,
-                    &ipfs_http_endpoint,
-                    &last_commit_id,
+                    ipfs_http_endpoint,
+                    last_commit_id,
                     database,
                     chunk,
                 ).await?;
@@ -214,44 +164,6 @@ impl ParallelDiffsUploadSupport {
     }
 
     #[instrument(level = "info", skip_all)]
-    pub async fn add_to_push_list(
-        &mut self,
-        context: &mut GitHelper<impl BlockchainService + 'static>,
-        diff_address: &String,
-    ) -> anyhow::Result<()> {
-        let diff_address = diff_address.to_owned();
-        let blockchain = context.blockchain.clone();
-        let dao_address: BlockchainContractAddress = context.dao_addr.clone();
-        let remote_network: String = context.remote.network.clone();
-        let last_commit_id = self.last_commit_id.clone();
-        let repo_name: String = context.remote.repo.clone();
-        let ipfs_http_endpoint: String = context.config.ipfs_http_endpoint().to_string();
-        tracing::trace!("start push of diff: {}", diff_address);
-
-        let database = context.get_db()?.clone();
-
-        // self.expecting_deployed_contacts_addresses
-        //     .push(diff_address.clone());
-        self.pushed_blobs.spawn(
-            async move {
-                push_diff(
-                    &blockchain,
-                    &repo_name,
-                    &dao_address,
-                    &remote_network,
-                    &ipfs_http_endpoint,
-                    &last_commit_id,
-                    diff_address,
-                    database,
-                )
-                .await
-            }
-            .instrument(debug_span!("tokio::spawn::push_diff").or_current()),
-        );
-        Ok(())
-    }
-
-    #[instrument(level = "info", skip_all)]
     pub async fn push_dangling(
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
@@ -274,28 +186,8 @@ impl ParallelDiffsUploadSupport {
                         (&parallel_diff, diff_coordinates, true),
                         diff_contract_address.clone(),
                     )?;
-
-                    // self.add_to_push_list(context, diff_contract_address)
-                    //     .await?;
-                    // } else {
-                    //     self.push_expected(diff_contract_address);
                 }
                 self.push_expected(diff_contract_address);
-            }
-        }
-        Ok(())
-    }
-
-    async fn finish_push(&mut self) -> anyhow::Result<()> {
-        while let Some(finished_task) = self.pushed_blobs.join_next().await {
-            match finished_task {
-                Err(e) => {
-                    bail!("diffs join-handler: {}", e);
-                }
-                Ok(Err(e)) => {
-                    bail!("diffs inner: {}", e);
-                }
-                Ok(Ok(_)) => {}
             }
         }
         Ok(())
@@ -338,11 +230,6 @@ impl ParallelDiffsUploadSupport {
                         (&parallel_diff, diff_coordinates, false),
                         diff_contract_address.clone(),
                     )?;
-
-                    // self.add_to_push_list(context, diff_contract_address)
-                    //     .await?;
-                    // } else {
-                    //     self.push_expected(diff_contract_address);
                 }
                 self.push_expected(diff_contract_address);
             }
@@ -373,138 +260,77 @@ impl ParallelDiffsUploadSupport {
     }
 }
 
-
 #[instrument(level = "info", skip_all)]
-async fn push_chunk<'a, B>(
+pub async fn push_chunk<B>(
     blockchain: &B,
-    repo_name: &str,
+    repo_name: String,
     dao_address: &BlockchainContractAddress,
     remote_network: &str,
-    ipfs_endpoint: &str,
-    last_commit_id: &'a git_hash::ObjectId,
+    ipfs_endpoint: String,
+    last_commit_id: git_hash::ObjectId,
     database: Arc<GoshDB>,
     chunk: &[BlockchainContractAddress],
 ) -> anyhow::Result<Vec<BlockchainContractAddress>>
 where
-    B: BlockchainService,
+    B: BlockchainService + 'static,
 {
     let wallet = blockchain.user_wallet(dao_address, remote_network).await?;
 
-    let mut diffs = chunk.to_vec();
+    let mut chunk = chunk.to_vec();
     let mut message_bocs: Vec<(String, Option<BlockchainContractAddress>)> = vec![];
 
     let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
     let expire = now.as_secs() as u32 + 120; // todo remove magic num
 
-    for addr in &diffs {
-        let wallet_contract = wallet.take_one().await?;
-        let diff_address = &String::from(addr.clone());
-        let boc = prepush_diff(
-            blockchain,
-            repo_name,
-            &wallet,
-            &ipfs_endpoint,
-            &last_commit_id,
-            &diff_address,
-            database.clone(),
-            expire,
-        ).await?;
-        message_bocs.push((boc, Some(addr.clone())));
+    let mut bocs: JoinSet<anyhow::Result<(String, Option<BlockchainContractAddress>)>> = JoinSet::new();
+    for addr in &chunk {
+        let blockchain = blockchain.clone();
+        let repo_name = repo_name.clone();
+        let wallet = wallet.clone();
+        let ipfs_endpoint = ipfs_endpoint.clone();
+        let last_commit = last_commit_id.clone();
+        let diff_address = addr.clone();
+        let database = database.clone();
+
+        bocs.spawn(
+            async move {
+                let boc_pair = prepush_diff(
+                        &blockchain,
+                        &repo_name,
+                        &wallet,
+                        &ipfs_endpoint,
+                        &last_commit_id,
+                        &diff_address,
+                        database,
+                        expire,
+                    ).await;
+                boc_pair
+            }
+            .instrument(info_span!("tokio::spawn::prepush_diff").or_current())
+        );
+    }
+
+    while let Some(finished_task) = bocs.join_next().await {
+        match finished_task {
+            Err(e) => {
+                anyhow::bail!("prepush objects join-handler: {}", e);
+            }
+            Ok(Err(e)) => {
+                anyhow::bail!("prepush objects inner: {}", e);
+            }
+            Ok(Ok(boc_pair)) => message_bocs.push(boc_pair)
+        }
     }
 
     let wait_until = expire + 5;
+    tracing::trace!("msg expire={}, wait_until={}", expire, wait_until);
     let queue_name = blockchain.send_messages(&message_bocs, wait_until).await?;
 
-    wait_chunk_until_send(blockchain, &mut diffs, queue_name).await?;
+    wait_chunk_until_send(blockchain, &mut chunk, queue_name).await?;
 
-    if diffs.len() > 0 {
-        tracing::trace!("failed to send {} messages", diffs.len());
+    if chunk.len() > 0 {
+        tracing::trace!("failed to send {} messages", chunk.len());
     }
 
-    Ok(diffs)
-}
-
-#[instrument(level = "info", skip_all)]
-pub async fn wait_chunk_until_send(
-    blockchain: &impl BlockchainService,
-    chunk: &mut Vec<BlockchainContractAddress>,
-    queue: String,
-) -> anyhow::Result<()> {
-    #[derive(Debug, Deserialize)]
-    struct UserData {
-        expected_address: String,
-    }
-
-    let start = Instant::now();
-    let timeout = Duration::from_secs(130); // todo remove magic num
-
-    let expected_receipts_count = chunk.len();
-    let mut receipts_count = 0;
-    loop {
-        let sent_messages = fetch_next_monitor_results(
-            blockchain.client().clone(),
-            ParamsOfFetchNextMonitorResults {
-                queue: queue.clone(),
-                wait_mode: None,
-            }
-        ).await?;
-        tracing::trace!("got {} receipts", sent_messages.results.len());
-
-        for sent_result in sent_messages.results {
-            receipts_count += 1;
-
-            let MessageMonitoringResult {
-                hash,
-                status,
-                error,
-                user_data,
-                ..
-            } = sent_result;
-
-            match status {
-                MessageMonitoringStatus::Finalized => {
-                    let diff_addr = match user_data {
-                        Some(payload) => {
-                            let UserData { expected_address } = serde_json::from_value(payload)?;
-                            BlockchainContractAddress::new(expected_address)
-                        },
-                        None => unreachable!(),
-                    };
-                    chunk.remove(
-                        chunk.iter().position(|x| x == &diff_addr)
-                        .expect("unexpected: element must exists")
-                    );
-                },
-                MessageMonitoringStatus::Timeout => {
-                    let reason = match error {
-                        Some(err) => format!("error: {err}"),
-                        None => "message expired".to_owned()
-                    };
-                    tracing::debug!(
-                        "deploy diff was failed: message id={}, expected address={:?}, reason={}",
-                        hash,
-                        user_data,
-                        reason
-                    );
-                },
-                MessageMonitoringStatus::Reserved => unreachable!()
-            }
-        }
-
-        if receipts_count >= expected_receipts_count {
-            tracing::debug!("{} receipts processed", expected_receipts_count);
-            break;
-        } else if start.elapsed() > timeout {
-            tracing::debug!("deploy diff messages ({}) failed: time is up", expected_receipts_count - receipts_count);
-            break;
-        }
-        tracing::trace!(
-            "{}/{} receipts. falling asleep for 10 sec...",
-            receipts_count,
-            expected_receipts_count
-        );
-        tokio::time::sleep(Duration::from_secs(10)).await; // todo remove magic num
-    }
-
-    Ok(())
+    Ok(chunk)
 }
