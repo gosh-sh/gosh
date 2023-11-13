@@ -12,28 +12,34 @@ import {
 } from 'formik'
 import { AnimatePresence, motion } from 'framer-motion'
 import AsyncSelect from 'react-select/async'
+import { AppConfig } from '../../../appconfig'
 import { Button } from '../../../components/Form'
 import { BaseField } from '../../../components/Formik'
 import { ModalCloseButton } from '../../../components/Modal'
 import { Select2ClassNames } from '../../../helpers'
-import { getSystemContract } from '../../blockchain/helpers'
 import yup from '../../yup-extended'
 import { UserSelect } from '../UserSelect'
 
+type TFormParticipant = { dao_name: string; dao_version: string; repo_names: string[] }
+
 type TFormValues = {
-    participants: { dao_name: string; repo_names: string[] }[]
+    participants: TFormParticipant[]
 }
 
-type TPrizePoolModalProps = {
+type TParticipantsModalProps = {
     onSubmit(values: { dao_name: string; repo_name: string }[]): Promise<void>
 }
 
-const getRepositoryOptions = async (dao_name: string, input: string) => {
-    input = input.toLowerCase()
+const getRepositoryOptions = async (params: {
+    participant: TFormParticipant
+    input: string
+}) => {
+    const { participant } = params
+    const input = params.input.toLowerCase()
     const options: any[] = []
 
-    const sc = getSystemContract()
-    const query = await sc.getRepository({ path: `${dao_name}/${input}` })
+    const sc = AppConfig.goshroot.getSystemContract(participant.dao_version)
+    const query = await sc.getRepository({ path: `${participant.dao_name}/${input}` })
     if (await query.isDeployed()) {
         options.push({
             label: input,
@@ -47,7 +53,7 @@ const getRepositoryOptions = async (dao_name: string, input: string) => {
     return options
 }
 
-const HackathonParticipantsModal = (props: TPrizePoolModalProps) => {
+const HackathonParticipantsModal = (props: TParticipantsModalProps) => {
     const { onSubmit } = props
 
     const onFormSubmit = async (values: TFormValues) => {
@@ -123,7 +129,9 @@ const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
 
     const onDaoNameChange = (option: any, index: number) => {
         const name = option?.value.name || ''
+        const version = option?.value.version || ''
         form.setFieldValue(`participants.${index}.dao_name`, name, true)
+        form.setFieldValue(`participants.${index}.dao_version`, version, true)
         form.setFieldValue(`participants.${index}.repo_names`, [], true)
     }
 
@@ -158,7 +166,7 @@ const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
                                             placeholder="DAO name"
                                             isDisabled={form.isSubmitting}
                                             searchUser={false}
-                                            searchDao
+                                            searchDaoGlobal
                                             onChange={(option) => {
                                                 onDaoNameChange(option, index)
                                             }}
@@ -186,10 +194,11 @@ const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
                                             cacheOptions={false}
                                             defaultOptions={false}
                                             loadOptions={(input) => {
-                                                return getRepositoryOptions(
-                                                    values.participants[index].dao_name,
+                                                return getRepositoryOptions({
+                                                    participant:
+                                                        values.participants[index],
                                                     input,
-                                                )
+                                                })
                                             }}
                                             formatOptionLabel={(data) => (
                                                 <div>{data.label}</div>
