@@ -210,13 +210,15 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
 
     const setSummaryAmount = async (amount: string) => {
         // to.amount is calculated by useCallback with deps
-        setData((state) => ({
-            ...state,
-            summary: {
-                ...state.summary,
-                from: { ...state.summary.from, amount },
-            },
-        }))
+        if (!isNaN(Number(amount))) {
+            setData((state) => ({
+                ...state,
+                summary: {
+                    ...state.summary,
+                    from: { ...state.summary.from, amount },
+                },
+            }))
+        }
     }
 
     const submitRouteStep = () => {
