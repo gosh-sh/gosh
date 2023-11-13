@@ -192,6 +192,12 @@ body,
 /**
  * Customize react-multi-date-picker
  */
+.rmdp-calendar {
+    .rmdp-day.rmdp-today span {
+        @apply bg-gray-f6f6f9 text-black;
+    }
+}
+
 .date-picker-fw {
     &.rmdp-wrapper {
         @apply w-full;
