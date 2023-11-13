@@ -41,6 +41,16 @@ const OAuthForm = () => {
                         >
                             Sign in with Google
                         </Button>
+                        <Button
+                            type="button"
+                            size="xl"
+                            className="w-full"
+                            disabled={oauth.isLoading || !!oauth.session}
+                            isLoading={oauth.isLoading || !!oauth.session}
+                            onClick={() => onOAuthSigninClick('linkedin_oidc')}
+                        >
+                            Sign in with LinkedIn
+                        </Button>
                     </div>
                 </div>
             </div>

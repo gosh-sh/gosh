@@ -5,7 +5,11 @@ import { GoshError } from './errors'
 export const supabase = {
     client: AppConfig.supabase,
     singinOAuth: async (provider: Provider, options?: { redirectTo?: string }) => {
-        const scopes = 'read:user read:org'
+        const scopes: { [key: string]: string } = {
+            github: 'read:user read:org',
+            google: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
+            linkedin_oidc: '',
+        }
         const { redirectTo } = options || {}
 
         if (AppConfig.dockerclient) {
@@ -17,7 +21,7 @@ export const supabase = {
                     redirectTo:
                         redirectTo ||
                         `https://open.docker.com/dashboard/extension-tab?extensionId=teamgosh/docker-extension&nounce=${nounce}`,
-                    scopes,
+                    scopes: scopes[provider],
                     skipBrowserRedirect: true,
                 },
             })
@@ -33,7 +37,7 @@ export const supabase = {
                 provider,
                 options: {
                     redirectTo: redirectTo || document.location.href,
-                    scopes,
+                    scopes: scopes[provider],
                 },
             })
             if (error) {
