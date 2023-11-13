@@ -1,10 +1,10 @@
 import { TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
-import RepositoryABI from './abi/repository.abi.json'
-import { TGoshBranch } from '../types/repository.types'
-import { GoshCommitTag } from './committag'
 import { GoshError } from '../../errors'
+import { TGoshBranch } from '../types/repository.types'
+import RepositoryABI from './abi/repository.abi.json'
 import { GoshCommit } from './commit'
+import { GoshCommitTag } from './committag'
 import { GoshShapshot } from './snapshot'
 
 export class GoshRepository extends BaseContract {
@@ -17,6 +17,20 @@ export class GoshRepository extends BaseContract {
             useCachedBoc: true,
         })
         return value0
+    }
+
+    async getDetails() {
+        const { value0: head } = await this.runLocal('getHEAD', {})
+        const { value0: ready } = await this.runLocal('getReady', {})
+
+        return {
+            name: await this.getName(),
+            branches: await this.getBranches(),
+            description: '',
+            head,
+            tags: [],
+            isReady: ready,
+        }
     }
 
     async getBranches(): Promise<TGoshBranch[]> {

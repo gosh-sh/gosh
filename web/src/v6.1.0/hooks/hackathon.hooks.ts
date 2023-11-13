@@ -4,12 +4,14 @@ import { useCallback, useEffect, useState } from 'react'
 import { GoshAdapterFactory, sha1, unixtimeWithTz, usePush } from 'react-gosh'
 import { useParams } from 'react-router-dom'
 import { useRecoilState, useRecoilValue } from 'recoil'
+import { AppConfig } from '../../appconfig'
 import { getAllAccounts, getPaginatedAccounts } from '../../blockchain/utils'
 import { HACKATHON_TAG, MAX_PARALLEL_READ, ZERO_COMMIT } from '../../constants'
 import { GoshError } from '../../errors'
 import { appToastStatusSelector } from '../../store/app.state'
 import { EDaoEventType } from '../../types/common.types'
 import { executeByChunk, setLockableInterval } from '../../utils'
+import { Dao } from '../blockchain/dao'
 import { getSystemContract } from '../blockchain/helpers'
 import { GoshRepository } from '../blockchain/repository'
 import {
@@ -567,7 +569,6 @@ export function useHackathon(
                 }),
             }))
 
-            const sc = getSystemContract()
             const code_hash = await repo_account.getCommitTagCodeHash()
             const accounts = await getAllAccounts({
                 filters: [`code_hash: {eq:"${code_hash}"}`],
@@ -580,14 +581,14 @@ export function useHackathon(
                 const details = await tag.getDetails()
                 const parsed = JSON.parse(details.content)
 
-                const pdao_account = await sc.getDao({ name: parsed.dao_name })
+                const { sc, dao_account } = await getParticipantVersion(parsed.dao_name)
                 const is_member = user.profile
-                    ? await pdao_account.isMember(user.profile)
+                    ? await dao_account.isMember(user.profile)
                     : false
 
-                const prepo_account = await sc.getRepository({
+                const prepo_account = (await sc.getRepository({
                     path: `${parsed.dao_name}/${parsed.repo_name}`,
-                })
+                })) as unknown as GoshRepository
                 const repo_details = await prepo_account.getDetails()
 
                 return { ...parsed, is_member, description: repo_details.description }
@@ -609,6 +610,23 @@ export function useHackathon(
         } catch (e: any) {
             setError(e)
         }
+    }
+
+    const getParticipantVersion = async (dao_name: string) => {
+        const versions = AppConfig.getVersions({ reverse: true })
+        const query = await Promise.all(
+            Object.keys(versions).map(async (key) => {
+                const sc = AppConfig.goshroot.getSystemContract(key)
+                const dao_account = await sc.getDao({ name: dao_name })
+                return {
+                    sc,
+                    dao_account,
+                    deployed: await dao_account.isDeployed(),
+                }
+            }),
+        )
+        const latest = query.filter(({ deployed }) => !!deployed)[0]
+        return { sc: latest.sc, dao_account: latest.dao_account as Dao }
     }
 
     const updateFlags = useCallback(() => {

@@ -5,7 +5,7 @@ import { clearBodyLocks, lock } from 'tua-body-scroll-lock'
 export function useClickOutside(ref: RefObject<any>, onClickOutside: () => void) {
     useEffect(() => {
         const onClick = ({ target }: any) => {
-            if (ref && !ref.current.contains(target)) {
+            if (ref && !ref.current?.contains(target)) {
                 onClickOutside()
             }
         }
