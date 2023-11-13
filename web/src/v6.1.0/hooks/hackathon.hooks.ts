@@ -437,7 +437,6 @@ export function useHackathon(
                         items: !exists ? [...state.items, found!] : state.items,
                     }
                 })
-                console.debug('Found', found)
             }
 
             ////
@@ -465,7 +464,6 @@ export function useHackathon(
 
             // Fetch hackathon metadata if not fetching
             if (!found.metadata.is_fetching) {
-                console.debug('getHackathonData')
                 getHackathonData(found.account)
                 getHackathonParticipants(found.account)
             }
@@ -630,7 +628,6 @@ export function useHackathon(
     }
 
     const updateFlags = useCallback(() => {
-        console.debug('updateFlags')
         const now = moment().unix()
         const start = hackathon?.metadata.dates.start || now + 1
         const voting = hackathon?.metadata.dates.voting || now + 1
@@ -675,7 +672,6 @@ export function useHackathon(
 
         if (subscribe && hackathon?.account) {
             interval = setLockableInterval(async () => {
-                console.debug('Update hackathon details')
                 await getHackathonData(hackathon.account)
                 await getHackathonParticipants(hackathon.account)
             }, 60000)
@@ -755,7 +751,11 @@ export function useUpdateHackathonDetails() {
                 throw e
             }
         },
-        [member.isReady, hackathon?._rg_repo_adapter?.auth?.username],
+        [
+            member.isReady,
+            hackathon?._rg_dao_details?.isAuthMember,
+            hackathon?._rg_repo_adapter?.auth?.username,
+        ],
     )
 
     return { update, status }
