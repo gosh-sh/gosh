@@ -1,4 +1,4 @@
-import { faComment } from '@fortawesome/free-regular-svg-icons'
+import { faStar } from '@fortawesome/free-regular-svg-icons'
 import { faChevronDown, faTrophy } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import classNames from 'classnames'
@@ -110,10 +110,7 @@ const DaoHackathonListPage = (props: { count?: number }) => {
                                             onCreateClick(EHackathonType.HACKATHON)
                                         }
                                     >
-                                        <FontAwesomeIcon
-                                            icon={faComment}
-                                            className="mr-2"
-                                        />
+                                        <FontAwesomeIcon icon={faStar} className="mr-2" />
                                         New hackathon
                                     </Button>
                                     <Button

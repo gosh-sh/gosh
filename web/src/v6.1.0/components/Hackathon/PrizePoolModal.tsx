@@ -45,10 +45,13 @@ const HackathonPrizePoolModal = (props: TPrizePoolModalProps) => {
 
     const initial_form = {
         ...initial_values,
-        places: initial_values.places.map((value) => ({
-            _motion_id: Math.random(),
-            value,
-        })),
+        places:
+            initial_values.places.length > 0
+                ? initial_values.places.map((value) => ({
+                      _motion_id: Math.random(),
+                      value,
+                  }))
+                : [{ _motion_id: Math.random(), value: '0' }],
     }
 
     const onAmountChange = (values: TFormValues) => {
@@ -56,7 +59,7 @@ const HackathonPrizePoolModal = (props: TPrizePoolModalProps) => {
         const i_places = values.places.map((item) => parseInt(item.value) || 0)
         const sum_places = _.sum(i_places)
         const sum_percent = _.sum(
-            i_places.map((value) => Math.round((value / i_total) * 100)),
+            i_places.map((value) => Math.round((value / (i_total || 1)) * 100)),
         )
         setDistribution({ remains: i_total - sum_places, percent: sum_percent })
     }
@@ -134,24 +137,29 @@ const HackathonPrizePoolModal = (props: TPrizePoolModalProps) => {
                 validationSchema={yup.object().shape({
                     total: yup
                         .number()
-                        .integer()
+                        .typeError('is not a valid number')
+                        .integer('is not a valid integer')
                         .max(dao.details.supply?.reserve || 0)
                         .required(),
                     places: yup
                         .array()
                         .of(
                             yup.object().shape({
-                                value: yup.number().integer().required(),
+                                value: yup
+                                    .number()
+                                    .typeError('is not a valid number')
+                                    .integer('is not a valid integer')
+                                    .required(),
                             }),
                         )
                         .min(1),
                 })}
                 onSubmit={onFormSubmit}
             >
-                {({ isSubmitting, values, errors }) => (
+                {({ isSubmitting, values, errors, dirty }) => (
                     <Form>
                         <Tab.Group>
-                            <Tab.List className="px-6 lg:px-0 pb-4 lg:pb-0">
+                            <Tab.List className="px-6 lg:px-2 pb-4 lg:pb-0">
                                 <Tab as={Fragment}>
                                     {({ selected }) => (
                                         <button
@@ -189,7 +197,12 @@ const HackathonPrizePoolModal = (props: TPrizePoolModalProps) => {
                                         />
                                     </div>
 
-                                    <div className="mt-10">
+                                    <div
+                                        className={classNames(
+                                            'mt-10 transition-opacity duration-200',
+                                            values.total ? 'opacity-100' : 'opacity-20',
+                                        )}
+                                    >
                                         <h2 className="mb-4 text-xl font-medium">
                                             Prize places
                                         </h2>
@@ -239,7 +252,7 @@ const HackathonPrizePoolModal = (props: TPrizePoolModalProps) => {
                                                         type="submit"
                                                         className="w-full lg:w-auto"
                                                         isLoading={isSubmitting}
-                                                        disabled={isSubmitting}
+                                                        disabled={isSubmitting || !dirty}
                                                     >
                                                         Save distribution
                                                     </Button>
@@ -264,9 +277,10 @@ type TFieldArrayFormProps = FieldArrayRenderProps & {
 const FieldArrayForm = (props: TFieldArrayFormProps) => {
     const { form, remove, push, onAmountChange } = props
     const values = form.values as TFormValues
-    const total = parseInt(values.total)
+    const total = parseInt(values.total) || 1
     const ref = useRef<HTMLDivElement>(null)
     const ref_count = useRef<number>(values.places.length)
+    const disabled = !values.total || form.isSubmitting
 
     const onPlaceAdd = () => {
         push({ _motion_id: Date.now(), value: '0' })
@@ -315,7 +329,7 @@ const FieldArrayForm = (props: TFieldArrayFormProps) => {
                                         component={FormikInput}
                                         placeholder="Amount"
                                         autoComplete="off"
-                                        disabled={form.isSubmitting}
+                                        disabled={disabled}
                                         onKeyUp={() => onAmountChange(values)}
                                     />
                                     {Array.isArray(form.errors.places) && (
@@ -334,7 +348,7 @@ const FieldArrayForm = (props: TFieldArrayFormProps) => {
                                         type="button"
                                         variant="custom"
                                         className="!p-1 text-gray-53596d"
-                                        disabled={form.isSubmitting}
+                                        disabled={disabled}
                                         onClick={() => onPlaceRemove(index)}
                                     >
                                         <FontAwesomeIcon icon={faTimes} size="lg" />
@@ -346,12 +360,12 @@ const FieldArrayForm = (props: TFieldArrayFormProps) => {
                 </AnimatePresence>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-6 px-6">
                 <Button
                     type="button"
                     variant="custom"
-                    className="block mx-auto border !border-blue-2b89ff text-blue-2b89ff !rounded-[2rem]"
-                    disabled={form.isSubmitting}
+                    className="block w-full border !border-blue-2b89ff text-blue-2b89ff !rounded-[2rem]"
+                    disabled={disabled}
                     onClick={onPlaceAdd}
                 >
                     <FontAwesomeIcon icon={faPlus} className="mr-2" />
