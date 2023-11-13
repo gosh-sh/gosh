@@ -156,7 +156,7 @@ const HackathonPrizePoolModal = (props: TPrizePoolModalProps) => {
                 })}
                 onSubmit={onFormSubmit}
             >
-                {({ isSubmitting, values, errors, dirty }) => (
+                {({ isSubmitting, values, errors, dirty, isValid }) => (
                     <Form>
                         <Tab.Group>
                             <Tab.List className="px-6 lg:px-2 pb-4 lg:pb-0">
@@ -252,7 +252,11 @@ const HackathonPrizePoolModal = (props: TPrizePoolModalProps) => {
                                                         type="submit"
                                                         className="w-full lg:w-auto"
                                                         isLoading={isSubmitting}
-                                                        disabled={isSubmitting || !dirty}
+                                                        disabled={
+                                                            isSubmitting ||
+                                                            !dirty ||
+                                                            !isValid
+                                                        }
                                                     >
                                                         Save distribution
                                                     </Button>
