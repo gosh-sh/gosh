@@ -33,11 +33,11 @@ const DaoHackathonListPage = (props: { count?: number }) => {
     }
 
     const onCreateNameChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setCreateName(e.target.value.trim())
+        setCreateName(e.target.value)
     }
 
     const onCreateClick = (type: EHackathonType) => {
-        const state = { type, name: create_name }
+        const state = { type, name: create_name.trim() }
         navigate(`/o/${dao.details.name}/hacksgrants/create`, { state })
     }
 
