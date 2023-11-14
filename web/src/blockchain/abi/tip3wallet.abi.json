@@ -23,6 +23,17 @@
             "id": "0x3ec"
         },
         {
+            "name": "burnTokensToDao",
+            "inputs": [
+                { "name": "_answer_id", "type": "uint32" },
+                { "name": "systemcontract", "type": "address" },
+                { "name": "pubaddr", "type": "address" },
+                { "name": "tokens", "type": "uint128" }
+            ],
+            "outputs": [],
+            "id": "0x3ed"
+        },
+        {
             "name": "lock",
             "inputs": [
                 { "name": "_answer_id", "type": "uint32" },
@@ -235,6 +246,7 @@
         { "name": "wallet_pubkey_", "type": "uint256" },
         { "name": "owner_address_", "type": "optional(address)" },
         { "name": "flag_", "type": "bool" },
+        { "name": "flagindex_", "type": "bool" },
         { "name": "money_timestamp_", "type": "uint32" },
         { "name": "code_hash_", "type": "uint256" },
         { "name": "code_depth_", "type": "uint16" },

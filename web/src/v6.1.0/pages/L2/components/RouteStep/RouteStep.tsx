@@ -1,71 +1,64 @@
-import { Form, Formik, FormikHelpers } from 'formik'
-import { Button } from '../../../../../components/Form'
-import { useL2Transfer } from '../../../../hooks/l2.hooks'
-import yup from '../../../../yup-extended'
-import { TL2User } from '../../../../types/l2.types'
-import { useState } from 'react'
+import { Form, Formik } from 'formik'
+import { useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
+import { Button } from '../../../../../components/Form'
 import { ToastError } from '../../../../../components/Toast'
-import { AppConfig } from '../../../../../appconfig'
-import { GoshError } from '../../../../../errors'
+import { fromBigint } from '../../../../../utils'
+import { useL2Transfer } from '../../../../hooks/l2.hooks'
+import { EL2Network, TL2Token, TL2User } from '../../../../types/l2.types'
+import yup from '../../../../yup-extended'
+import AmountField from './AmountField'
+import TokenField from './TokenField'
 import UserField from './UserField'
 import Web3Connect from './Web3Connect'
-import AmountField from './AmountField'
-import NetworkField from './NetworkField'
-import { fromBigint } from '../../../../../utils'
 
 const RouteStep = () => {
-    const { networks, summary, setSummaryFormValues, submitRouteStep } = useL2Transfer()
+    const {
+        web3,
+        gosh,
+        summary,
+        setSummaryToken,
+        setSummaryUser,
+        setSummaryWallet,
+        setSummaryAmount,
+        submitRouteStep,
+    } = useL2Transfer()
     const [userFetching, setUserFetching] = useState<boolean>(false)
 
-    const onFieldChange = (
-        e: any,
-        setFieldValue: FormikHelpers<any>['setFieldValue'],
-    ) => {
-        const name = e.target.getAttribute('name')
-        const value = e.target.value
+    const maxBalance = useMemo(() => {
+        const balance =
+            summary.from.token.network === EL2Network.GOSH ? gosh.balance : web3.balance
+        return fromBigint(balance, summary.from.token.decimals)
+    }, [summary.from.token.network, gosh.balance, web3.balance])
 
-        setFieldValue(name, value)
-        setSummaryFormValues({ [name]: value })
+    const onTokenFieldChange = async (dir: 'from' | 'to', option: TL2Token) => {
+        try {
+            await setSummaryToken(dir, option)
+        } catch (e: any) {
+            toast.error(<ToastError error={e.message} />)
+            console.error(e.message)
+        } finally {
+        }
     }
 
-    const onUserFieldChange = async (
-        option: TL2User,
-        setFieldValue: FormikHelpers<any>['setFieldValue'],
-    ) => {
+    const onUserFieldChange = async (option: TL2User) => {
         try {
             setUserFetching(true)
-
-            if (!AppConfig.tip3root) {
-                throw new GoshError('Value error', 'TIP3 root undefined')
-            }
-
-            let walletaddr = ''
-            let pubkey = ''
-            if (option?.value.address) {
-                const profile = await AppConfig.goshroot.getUserProfile({
-                    address: option.value.address,
-                })
-                pubkey = (await profile.getPubkeys())[0]
-                const wallet = await AppConfig.tip3root.getWallet({
-                    data: { pubkey },
-                })
-                walletaddr = wallet.address
-            }
-
-            setFieldValue('to_wallet', walletaddr)
-            setSummaryFormValues({
-                to_user: {
-                    user: { ...option, value: { ...option.value, pubkey } },
-                    wallet: walletaddr,
-                },
-            })
+            await setSummaryUser(option)
         } catch (e: any) {
             toast.error(<ToastError error={e.message} />)
             console.error(e.message)
         } finally {
             setUserFetching(false)
         }
+    }
+
+    const onWalletFieldChange = async (e: any) => {
+        await setSummaryWallet(e.target.value)
+    }
+
+    const onAmountFieldChange = async (e: any) => {
+        await setSummaryAmount(e.target.value)
     }
 
     const onFormSubmit = () => {
@@ -79,38 +72,35 @@ const RouteStep = () => {
     return (
         <Formik
             initialValues={{
-                from_network: summary.from.network,
+                from_token: summary.from.token,
                 from_user: summary.from.user,
                 from_wallet: summary.from.wallet,
                 from_amount: summary.from.amount,
-                to_network: summary.to.network,
+                to_token: summary.to.token,
                 to_user: summary.to.user,
                 to_wallet: summary.to.wallet,
                 to_amount: summary.to.amount,
             }}
             validationSchema={yup.object().shape({
-                from_network: yup.string().required(),
+                from_token: yup.object().shape({
+                    symbol: yup.string().required(),
+                }),
                 from_wallet: yup.string().required(),
                 from_amount: yup
                     .number()
-                    .min(0.01)
-                    .max(
-                        parseFloat(
-                            fromBigint(
-                                networks[summary.from.network].balance,
-                                networks[summary.from.network].decimals,
-                            ),
-                        ),
-                    )
+                    .min(0.011)
+                    .max(parseFloat(maxBalance))
                     .required(),
-                to_network: yup.string().required(),
+                to_token: yup.object().shape({
+                    symbol: yup.string().required(),
+                }),
                 to_wallet: yup.string().required(),
                 to_amount: yup.number().positive().required(),
             })}
             onSubmit={onFormSubmit}
             enableReinitialize
         >
-            {({ values, setFieldValue }) => (
+            {({ values }) => (
                 <Form>
                     <div
                         className="flex flex-wrap lg:flex-nowrap gap-x-12 gap-y-6
@@ -122,39 +112,35 @@ const RouteStep = () => {
                         <div className="grow">
                             <div className="flex items-end flex-nowrap gap-x-5">
                                 <div className="grow">
-                                    <NetworkField
+                                    <TokenField
                                         prefix="from"
-                                        label="Blockchain"
-                                        onChange={(e: any) => {
-                                            onFieldChange(e, setFieldValue)
+                                        label="Token"
+                                        onTokenFieldChange={(option) => {
+                                            onTokenFieldChange('from', option)
                                         }}
                                     />
                                 </div>
-                                <Web3Connect network={values.from_network} />
+                                <Web3Connect network={values.from_token.network} />
                             </div>
                             <div className="mt-5">
                                 <UserField
-                                    network={values.from_network}
+                                    network={values.from_token?.network}
                                     user={values.from_user}
                                     wallet={values.from_wallet}
                                     prefix="from"
                                     label="Sender"
                                     disabled
                                     isUserFetching={userFetching}
-                                    onFieldChange={(e) => onFieldChange(e, setFieldValue)}
-                                    onUserFieldChange={(option) => {
-                                        onUserFieldChange(option, setFieldValue)
-                                    }}
+                                    onFieldChange={onWalletFieldChange}
+                                    onUserFieldChange={onUserFieldChange}
                                 />
                             </div>
                             <div className="mt-5">
                                 <AmountField
-                                    network={values.from_network}
+                                    token={values.from_token}
                                     prefix="from"
                                     label="Amount"
-                                    onChange={(e: any) => {
-                                        onFieldChange(e, setFieldValue)
-                                    }}
+                                    onChange={onAmountFieldChange}
                                 />
                             </div>
                         </div>
@@ -178,33 +164,31 @@ const RouteStep = () => {
                         <div className="grow">
                             <div className="flex items-end flex-nowrap gap-x-5">
                                 <div className="grow">
-                                    <NetworkField
+                                    <TokenField
                                         prefix="to"
-                                        label="Blockchain"
-                                        onChange={(e: any) => {
-                                            onFieldChange(e, setFieldValue)
+                                        label="Token"
+                                        onTokenFieldChange={(option) => {
+                                            onTokenFieldChange('to', option)
                                         }}
                                     />
                                 </div>
-                                <Web3Connect network={values.to_network} />
+                                <Web3Connect network={values.to_token.network} />
                             </div>
                             <div className="mt-5">
                                 <UserField
-                                    network={values.to_network}
+                                    network={values.to_token?.network}
                                     user={values.to_user}
                                     wallet={values.to_wallet}
                                     prefix="to"
                                     label="Receiver"
                                     isUserFetching={userFetching}
-                                    onFieldChange={(e) => onFieldChange(e, setFieldValue)}
-                                    onUserFieldChange={(option) => {
-                                        onUserFieldChange(option, setFieldValue)
-                                    }}
+                                    onFieldChange={onWalletFieldChange}
+                                    onUserFieldChange={onUserFieldChange}
                                 />
                             </div>
                             <div className="mt-5">
                                 <AmountField
-                                    network={values.to_network}
+                                    token={values.to_token}
                                     prefix="to"
                                     label="Amount"
                                     disabled

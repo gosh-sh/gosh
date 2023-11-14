@@ -768,7 +768,7 @@ function useCommit(
 }
 
 function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branchName?: string) {
-    const { branch, updateBranch } = useBranches(repo, branchName)
+    const { branch: _branch, updateBranch } = useBranches(repo, branchName)
     const [progress, setProgress] = useState<TPushProgress>({})
 
     const push = async (
@@ -784,12 +784,13 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branchName?: string) {
             tags?: string
             parent?: string
             task?: TTaskCommitConfig
+            tbranch?: TBranch
         },
     ) => {
         if (!repo.auth) {
             throw new GoshError('Auth error', 'DAO wallet undefined')
         }
-        if (!branch) {
+        if (!_branch && !options.tbranch) {
             throw new GoshError(EGoshError.NO_BRANCH)
         }
         if (!dao.isAuthMember) {
@@ -797,6 +798,7 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branchName?: string) {
         }
 
         const { message, tags, parent, task, isPullRequest = false } = options
+        const branch = (_branch || options.tbranch) as TBranch
         const { name, version } = branch.commit
 
         /**
@@ -959,7 +961,7 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branchName?: string) {
         })
     }
 
-    return { branch, push, pushUpgrade, progress }
+    return { branch: _branch, push, pushUpgrade, progress }
 }
 
 function _useMergeRequest(

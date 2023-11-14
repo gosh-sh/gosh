@@ -1,0 +1,62 @@
+[
+    {
+        "network": "eth",
+        "name": "Ethereum",
+        "symbol": "ETH",
+        "decimals": 18,
+        "iconpath": "/images/tokens/ethereum.webp",
+        "rootaddr": null,
+        "pair_name": "eth",
+        "pair_with": ["weth"]
+    },
+    {
+        "network": "gosh",
+        "name": "Ethereum",
+        "symbol": "ETH",
+        "decimals": 18,
+        "iconpath": "/images/tokens/gosh.webp",
+        "rootaddr": "0:9d50747c09058812c38a7c38390ab6f12d10bb2474f287566270090228700d55",
+        "pair_name": "weth",
+        "pair_with": ["eth", "weth"]
+    },
+    {
+        "network": "eth",
+        "name": "Weenus",
+        "symbol": "WEENUS",
+        "decimals": 18,
+        "iconpath": "/images/tokens/ethereum.webp",
+        "rootaddr": "0x7439E9Bb6D8a84dd3A23fe621A30F95403F87fB9",
+        "pair_name": "weenus",
+        "pair_with": ["wweenus"]
+    },
+    {
+        "network": "gosh",
+        "name": "Weenus",
+        "symbol": "WEENUS",
+        "decimals": 18,
+        "iconpath": "/images/tokens/gosh.webp",
+        "rootaddr": "0:551818387d7c29699af896e20ccfd64dc51b879ca36da02f4f76c06cda48d15e",
+        "pair_name": "wweenus",
+        "pair_with": ["weenus", "wweenus"]
+    },
+    {
+        "network": "eth",
+        "name": "Xeenus",
+        "symbol": "XEENUS",
+        "decimals": 18,
+        "iconpath": "/images/tokens/ethereum.webp",
+        "rootaddr": "0xc21d97673B9E0B3AA53a06439F71fDc1facE393B",
+        "pair_name": "xeenus",
+        "pair_with": ["wxeenus"]
+    },
+    {
+        "network": "gosh",
+        "name": "Xeenus",
+        "symbol": "XEENUS",
+        "decimals": 18,
+        "iconpath": "/images/tokens/gosh.webp",
+        "rootaddr": "0:32e8f79e92bf7117dba9436d86a49e5d025eaba109619e74a18f54a4ce7f40f9",
+        "pair_name": "wxeenus",
+        "pair_with": ["xeenus", "wxeenus"]
+    }
+]

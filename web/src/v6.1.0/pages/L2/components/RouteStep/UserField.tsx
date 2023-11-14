@@ -1,11 +1,11 @@
 import { ErrorMessage, Field } from 'formik'
-import { EL2Network, TL2User } from '../../../../types/l2.types'
 import { BaseField, FormikInput } from '../../../../../components/Formik'
 import { shortString } from '../../../../../utils'
 import { UserSelect } from '../../../../components/UserSelect'
+import { EL2Network, TL2User } from '../../../../types/l2.types'
 
 type TUserFieldProps = {
-    network: string
+    network?: string
     user: TL2User | null
     wallet: string
     prefix: string
@@ -46,7 +46,7 @@ const UserField = (props: TUserFieldProps) => {
 
     return (
         <>
-            <Field type="hidden" name="to_wallet" />
+            <Field type="hidden" name={`${prefix}_wallet`} />
             <Field
                 label={label}
                 name={`${prefix}_user`}
@@ -56,7 +56,15 @@ const UserField = (props: TUserFieldProps) => {
                 <UserSelect
                     placeholder="Username"
                     value={user}
+                    isClearable={false}
                     isDisabled={disabled || isUserFetching}
+                    noOptionsMessage={({ inputValue }) => (
+                        <span className="text-gray-7c8db5">
+                            {!inputValue.length
+                                ? 'Input GOSH username'
+                                : 'Username not found'}
+                        </span>
+                    )}
                     onChange={onUserFieldChange}
                 />
             </Field>

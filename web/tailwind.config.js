@@ -41,12 +41,16 @@ export default {
                 'red-dd3a3a': '#dd3a3a',
                 'red-ff3b30': '#ff3b30',
                 'red-ff624d40': '#ff624d40',
+                'red-ff6c4d': '#ff6c4d',
                 'yellow-faedcc': '#faedcc',
                 'yellow-eecf29': '#eecf29',
             },
             spacing: {
                 '30px': '1.875rem',
                 '34px': '2.125rem',
+            },
+            opacity: {
+                15: '0.15',
             },
             zIndex: {
                 1: '1',

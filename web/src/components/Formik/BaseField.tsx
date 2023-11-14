@@ -45,7 +45,7 @@ const BaseField = (props: IBaseFieldProps) => {
             {help && (
                 <div
                     className={classNames(
-                        'text-xs text-gray-7c8db5 mt-0.5 px-1',
+                        'text-xs text-gray-7c8db5 mt-2 px-1',
                         helpClassName,
                     )}
                 >
