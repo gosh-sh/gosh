@@ -1,13 +1,20 @@
 import { IconDefinition, faCalendarAlt } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import moment from 'moment'
+import { Tooltip } from 'react-tooltip'
 import { useSetRecoilState } from 'recoil'
 import { Button } from '../../../../components/Form'
 import { appModalStateAtom } from '../../../../store/app.state'
 import { HackathonDatesModal } from '../../../components/Hackathon'
 
 type TDatesOverviewProps = {
-    initial_values: { key: string; title: string; icon: IconDefinition; time: number }[]
+    initial_values: {
+        key: string
+        title: string
+        hint?: string
+        icon: IconDefinition
+        time: number
+    }[]
     onSubmit(values: { [k: string]: number }): Promise<void>
 }
 
@@ -38,9 +45,13 @@ const DatesOverview = (props: TDatesOverviewProps) => {
 
     return (
         <div className="flex flex-col gap-y-4 py-5 border-b border-b-gray-e6edff">
-            {initial_values.map(({ key, title, icon, time }, index) => (
+            {initial_values.map(({ key, title, hint, icon, time }, index) => (
                 <div key={key} className="flex items-center justify-between gap-x-5">
-                    <div className="grow font-medium whitespace-nowrap">
+                    <div
+                        className="grow font-medium whitespace-nowrap"
+                        data-tooltip-id="common-tip"
+                        data-tooltip-content={hint}
+                    >
                         <FontAwesomeIcon icon={icon} fixedWidth className="mr-2" />
                         {title}
                     </div>
@@ -64,6 +75,8 @@ const DatesOverview = (props: TDatesOverviewProps) => {
                     </div>
                 </div>
             ))}
+
+            <Tooltip id="common-tip" positionStrategy="fixed" className="z-10" />
         </div>
     )
 }

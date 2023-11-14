@@ -4,6 +4,7 @@ import classNames from 'classnames'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Tooltip } from 'react-tooltip'
 import { useSetRecoilState } from 'recoil'
 import { Button } from '../../../components/Form'
 import Skeleton from '../../../components/Skeleton'
@@ -106,7 +107,14 @@ const HackathonPrizePoolOverview = () => {
                 className="!px-0 !py-4 w-full flex items-center justify-between"
                 onClick={onPoolToggle}
             >
-                <div className="text-xl font-medium">Prize pool</div>
+                <div
+                    className="text-xl font-medium"
+                    data-tooltip-id="common-tip"
+                    data-tooltip-content="Outline how much winners get rewarded and what for"
+                >
+                    Prize pool
+                </div>
+
                 <div className="text-xl font-medium flex flex-nowrap items-center">
                     {is_fetching ? (
                         <SkeletonTotal />
@@ -153,6 +161,8 @@ const HackathonPrizePoolOverview = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <Tooltip id="common-tip" positionStrategy="fixed" className="z-10" />
         </div>
     )
 }

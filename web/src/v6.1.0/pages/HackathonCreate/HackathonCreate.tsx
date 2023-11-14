@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import classNames from 'classnames'
 import { Field, Form, Formik, FormikHelpers } from 'formik'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Tooltip } from 'react-tooltip'
 import { useSetRecoilState } from 'recoil'
 import 'suneditor/dist/css/suneditor.min.css'
 import { Button } from '../../../components/Form'
@@ -167,9 +168,14 @@ const HackathonCreatePage = () => {
                                     <div className="border border-gray-e6edff rounded-xl overflow-hidden px-5">
                                         <div className="border-b border-b-gray-e6edff overflow-hidden">
                                             <div className="py-4 flex items-center justify-between">
-                                                <div className="text-xl font-medium">
+                                                <div
+                                                    className="text-xl font-medium"
+                                                    data-tooltip-id="common-tip"
+                                                    data-tooltip-content="Outline how much winners get rewarded and what for"
+                                                >
                                                     Prize pool
                                                 </div>
+
                                                 <Button
                                                     type="button"
                                                     variant="custom"
@@ -209,18 +215,21 @@ const HackathonCreatePage = () => {
                                                     title: 'Start',
                                                     icon: faClock,
                                                     time: values.dates.start,
+                                                    hint: 'Select the time and day your program starts',
                                                 },
                                                 {
                                                     key: 'voting',
                                                     title: 'Voting',
                                                     icon: faHand,
                                                     time: values.dates.voting,
+                                                    hint: 'Select the time and day when voting begins',
                                                 },
                                                 {
                                                     key: 'finish',
                                                     title: 'Finish',
                                                     icon: faFlagCheckered,
                                                     time: values.dates.finish,
+                                                    hint: 'Select the time and day when winners are revealed',
                                                 },
                                             ]}
                                             onSubmit={async (values) => {
@@ -293,6 +302,8 @@ const HackathonCreatePage = () => {
                     </Form>
                 )}
             </Formik>
+
+            <Tooltip id="common-tip" positionStrategy="fixed" className="z-10" />
         </div>
     )
 }

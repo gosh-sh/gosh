@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import moment from 'moment'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Tooltip } from 'react-tooltip'
 import { useSetRecoilState } from 'recoil'
 import { Button } from '../../../components/Form'
 import Skeleton from '../../../components/Skeleton'
@@ -24,12 +25,19 @@ type TDateState = {
     title: string
     icon: IconDefinition
     time: number
+    hint?: string
 }
 
-const dates_data: { [k: string]: { title: string; icon: IconDefinition } } = {
-    start: { title: 'Start', icon: faClock },
-    voting: { title: 'Voting', icon: faHand },
-    finish: { title: 'Finish', icon: faFlagCheckered },
+const dates_data: {
+    [k: string]: { title: string; icon: IconDefinition; hint?: string }
+} = {
+    start: { title: 'Start', icon: faClock, hint: 'Time and day your program starts' },
+    voting: { title: 'Voting', icon: faHand, hint: 'Time and day when voting begins' },
+    finish: {
+        title: 'Finish',
+        icon: faFlagCheckered,
+        hint: 'Time and day when winners are revealed',
+    },
 }
 
 const SkeletonOverview = () => {
@@ -103,6 +111,7 @@ const HackathonDatesOverview = () => {
                 title: dates_data[key].title,
                 icon: dates_data[key].icon,
                 time: casted[key],
+                hint: dates_data[key].hint,
             }))
             setDates(listed)
         }
@@ -134,9 +143,13 @@ const HackathonDatesOverview = () => {
             </div>
 
             <div className="flex flex-col gap-y-4 py-5 border-b border-b-gray-e6edff">
-                {dates.map(({ key, title, icon, time }, index) => (
+                {dates.map(({ key, title, icon, time, hint }, index) => (
                     <div key={key} className="flex items-center justify-between gap-x-5">
-                        <div className="grow font-medium whitespace-nowrap">
+                        <div
+                            className="grow font-medium whitespace-nowrap"
+                            data-tooltip-id="common-tip"
+                            data-tooltip-content={hint}
+                        >
                             <FontAwesomeIcon icon={icon} fixedWidth className="mr-2" />
                             {title}
                         </div>
@@ -168,6 +181,8 @@ const HackathonDatesOverview = () => {
                     </div>
                 ))}
             </div>
+
+            <Tooltip id="common-tip" positionStrategy="fixed" className="z-10" />
         </div>
     )
 }

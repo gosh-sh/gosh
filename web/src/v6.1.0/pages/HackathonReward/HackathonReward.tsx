@@ -1,3 +1,4 @@
+import { faAward } from '@fortawesome/free-solid-svg-icons'
 import {
     HackathonDatesOverview,
     HackathonDescriptionFileForm,
@@ -9,7 +10,7 @@ const HackathonRewardPage = () => {
     return (
         <div className="row flex-wrap lg:flex-nowrap">
             <div className="col !basis-full lg:!basis-7/12 xl:!basis-8/12">
-                <HackathonDescriptionFileForm filename="PRIZE.md" />
+                <HackathonDescriptionFileForm filename="PRIZE.md" icon={faAward} />
             </div>
             <div className="col !basis-full lg:!basis-5/12 xl:!basis-4/12">
                 <div className="flex flex-col gap-y-5">

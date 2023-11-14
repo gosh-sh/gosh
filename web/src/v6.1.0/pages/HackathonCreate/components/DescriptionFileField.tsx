@@ -1,5 +1,11 @@
 import { faBookmark } from '@fortawesome/free-regular-svg-icons'
-import { IconDefinition, faChevronUp, faList } from '@fortawesome/free-solid-svg-icons'
+import {
+    IconDefinition,
+    faAward,
+    faBook,
+    faChevronUp,
+    faList,
+} from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import classNames from 'classnames'
 import { Field } from 'formik'
@@ -8,12 +14,28 @@ import { useState } from 'react'
 import { BaseField } from '../../../../components/Formik'
 import { Editor } from '../../../components/Hackathon'
 
-const data: { [k: string]: { title: string; field_name: string; icon: IconDefinition } } =
-    {
-        readme: { title: 'README.md', field_name: 'description.readme', icon: faList },
-        rules: { title: 'RULES.md', field_name: 'description.rules', icon: faBookmark },
-        prize: { title: 'PRIZES.md', field_name: 'description.prize', icon: faList },
-    }
+const data: {
+    [k: string]: { title: string; field_name: string; icon: IconDefinition; hint: string }
+} = {
+    readme: {
+        title: 'README.md',
+        field_name: 'description.readme',
+        icon: faList,
+        hint: 'Tell the world about your Hacks & Grants program. What are its aims? Who should participate? How will it work?',
+    },
+    rules: {
+        title: 'RULES.md',
+        field_name: 'description.rules',
+        icon: faBookmark,
+        hint: 'You are the lawgiver for your program. What are the rules participants must follow? What is expected, allowed, and strictly forbidden?',
+    },
+    prize: {
+        title: 'PRIZES.md',
+        field_name: 'description.prize',
+        icon: faAward,
+        hint: 'Hackathons and Grant Programs can be lucrative. So how are the prizes for yours going to be distributed? What are the criteria for success?',
+    },
+}
 
 type TDescriptionFileFieldProps = React.HTMLAttributes<HTMLDivElement> & {
     type: 'readme' | 'rules' | 'prize'
@@ -77,6 +99,12 @@ const DescriptionFileField = (props: TDescriptionFileFieldProps) => {
                     </motion.div>
                 )}
             </AnimatePresence>
+            <div className="flex items-start gap-x-4 p-5 bg-gray-fafafd border-t border-gray-e6edff">
+                <div className="text-gray-7c8db5">
+                    <FontAwesomeIcon icon={faBook} />
+                </div>
+                <div>{data[type].hint}</div>
+            </div>
         </div>
     )
 }
