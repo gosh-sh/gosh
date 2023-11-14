@@ -98,6 +98,7 @@ const HackathonParticipantsOverview = () => {
                                 <span className="mx-1">/</span>
                                 <Link
                                     to={`/o/${dao_name}/r/${repo_name}`}
+                                    target="_blank"
                                     className="text-blue-2b89ff"
                                 >
                                     {repo_name}

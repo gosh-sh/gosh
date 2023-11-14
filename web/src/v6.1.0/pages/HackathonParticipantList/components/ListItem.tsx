@@ -40,6 +40,7 @@ const ListItem = (props: TRepositoryListItemProps) => {
                             <Link
                                 className="font-medium text-blue-2b89ff"
                                 to={`/o/${item.dao_name}/r/${item.repo_name}`}
+                                target="_blank"
                             >
                                 {item.repo_name}
                             </Link>
