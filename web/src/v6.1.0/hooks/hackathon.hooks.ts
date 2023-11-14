@@ -719,7 +719,7 @@ export function useUpdateHackathonDetails() {
                     throw new GoshError('Value error', 'Update details time expired')
                 }
 
-                await beforeCreateEvent(20, { onPendingCallback: setStatus })
+                await beforeCreateEvent(0, { onPendingCallback: setStatus })
 
                 setStatus((state) => ({
                     ...state,
