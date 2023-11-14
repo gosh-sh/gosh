@@ -70,3 +70,18 @@ export const NotificationType: { [key: string]: string } = {
     [ENotificationType.DAO_EVENT_CREATED]: 'New proposal',
     [ENotificationType.REPO_COMMIT_PUSHED]: 'New commit',
 }
+
+export const L2Web3Chains: { [key: string]: { name: string; iconpath: string } } = {
+    '': {
+        name: '',
+        iconpath: '/images/tokens/ethereum.webp',
+    },
+    '0x1': {
+        name: 'Ethereum',
+        iconpath: '/images/tokens/ethereum.webp',
+    },
+    '0xaa36a7': {
+        name: 'Ethereum (Sepolia)',
+        iconpath: '/images/tokens/ethereum.webp',
+    },
+}
