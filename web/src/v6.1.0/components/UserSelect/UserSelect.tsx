@@ -9,6 +9,7 @@ type TUserSelectProps = AsyncProps<any, any, any> & {
     searchUser?: boolean
     searchDao?: boolean
     searchDaoGlobal?: boolean // Search for DAO of any version
+    searchDaoIsMember?: string // Search for DAO where searchDaoMember (address) is member
 }
 
 const UserSelect = (props: TUserSelectProps) => {
@@ -16,6 +17,7 @@ const UserSelect = (props: TUserSelectProps) => {
         searchUser = true,
         searchDao = false,
         searchDaoGlobal = false,
+        searchDaoIsMember,
         ...rest
     } = props
 
@@ -41,15 +43,17 @@ const UserSelect = (props: TUserSelectProps) => {
 
         if (searchDao) {
             const query = await getSystemContract().getDao({ name: input })
+            const option = {
+                label: input,
+                value: { name: input, address: query.address, type: EDaoMemberType.Dao },
+            }
+
             if (await query.isDeployed()) {
-                options.push({
-                    label: input,
-                    value: {
-                        name: input,
-                        address: query.address,
-                        type: EDaoMemberType.Dao,
-                    },
-                })
+                if (!searchDaoIsMember) {
+                    options.push(option)
+                } else if (await query.isMember(searchDaoIsMember)) {
+                    options.push(option)
+                }
             }
         }
 
@@ -61,22 +65,26 @@ const UserSelect = (props: TUserSelectProps) => {
                     const dao_account = await sc.getDao({ name: input })
                     return {
                         version: key,
+                        account: dao_account,
                         address: dao_account.address,
                         deployed: await dao_account.isDeployed(),
                     }
                 }),
             )
-            const found = query.filter(({ deployed }) => !!deployed)
-            if (found.length > 0) {
-                options.push({
+
+            const found = query.find(({ deployed }) => !!deployed)
+            if (found) {
+                const { account, address, version } = found
+                const option = {
                     label: input,
-                    value: {
-                        name: input,
-                        address: found[0].address,
-                        version: found[0].version,
-                        type: EDaoMemberType.Dao,
-                    },
-                })
+                    value: { name: input, address, version, type: EDaoMemberType.Dao },
+                }
+
+                if (!searchDaoIsMember) {
+                    options.push(option)
+                } else if (await account.isMember(searchDaoIsMember)) {
+                    options.push(option)
+                }
             }
         }
 

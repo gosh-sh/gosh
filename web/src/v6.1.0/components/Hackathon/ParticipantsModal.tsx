@@ -17,6 +17,7 @@ import { Button } from '../../../components/Form'
 import { BaseField } from '../../../components/Formik'
 import { ModalCloseButton } from '../../../components/Modal'
 import { Select2ClassNames } from '../../../helpers'
+import { useUser } from '../../hooks/user.hooks'
 import yup from '../../yup-extended'
 import { UserSelect } from '../UserSelect'
 
@@ -126,6 +127,7 @@ const HackathonParticipantsModal = (props: TParticipantsModalProps) => {
 const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
     const { form, remove, push } = props as FieldArrayRenderProps
     const values = form.values as TFormValues
+    const { user } = useUser()
 
     const onDaoNameChange = (option: any, index: number) => {
         const name = option?.value.name || ''
@@ -167,6 +169,7 @@ const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
                                             isDisabled={form.isSubmitting}
                                             searchUser={false}
                                             searchDaoGlobal
+                                            searchDaoIsMember={user.profile}
                                             onChange={(option) => {
                                                 onDaoNameChange(option, index)
                                             }}
