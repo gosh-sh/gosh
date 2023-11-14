@@ -12,6 +12,29 @@
 			]
 		},
 		{
+			"name": "getCellTagHack",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"nametag","type":"string"},
+				{"name":"namecommit","type":"string"},
+				{"name":"commit","type":"address"},
+				{"name":"content","type":"string"},
+				{"name":"reponame","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getTagHackCode",
+			"inputs": [
+				{"name":"repo","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "deployIndex",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
@@ -649,6 +672,14 @@
 		},
 		{
 			"name": "setTopic",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setTagHack",
 			"inputs": [
 				{"name":"code","type":"cell"}
 			],

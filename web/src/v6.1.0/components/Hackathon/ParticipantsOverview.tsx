@@ -29,7 +29,7 @@ const HackathonParticipantsOverview = () => {
 
     const show_skeleton =
         !hackathon?._rg_fetched ||
-        (!hackathon?.participants.items.length && hackathon?.participants.is_fetching)
+        (!hackathon?.participants.is_fetched && hackathon?.participants.is_fetching)
 
     const onAddParticipantsModal = () => {
         setModal({

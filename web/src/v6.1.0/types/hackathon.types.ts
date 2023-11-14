@@ -26,6 +26,7 @@ export type THackathonDetails = {
     tags_raw: string[]
     participants: {
         is_fetching: boolean
+        is_fetched: boolean
         items: THackathonParticipant[]
     }
     metadata: {
@@ -47,4 +48,14 @@ export type TDaoHackathonList = {
     cursor?: string
     has_next?: boolean
     error?: any
+}
+
+export type THackathonAppIndex = {
+    repo_name: string
+    name: string
+    content: string
+    commit: {
+        address: string
+        name: string
+    }
 }

@@ -1,20 +1,22 @@
 import { KeyPair, ResultOfProcessMessage, TonClient } from '@eversdk/core'
+import { AppConfig } from '../../appconfig'
 import { BaseContract } from '../../blockchain/contract'
-import WalletABI from './abi/daowallet.abi.json'
-import { SmvLocker } from './smvlocker'
-import { SmvClient } from './smvclient'
-import { TGoshCommitTag } from '../types/repository.types'
-import { executeByChunk, sleep } from '../../utils'
-import { EDaoEventType } from '../../types/common.types'
+import { UserProfile } from '../../blockchain/userprofile'
 import {
     MAX_PARALLEL_READ,
     MILESTONE_TAG,
     MILESTONE_TASK_TAG,
     SYSTEM_TAG,
 } from '../../constants'
+import { EDaoEventType } from '../../types/common.types'
+import { executeByChunk, sleep } from '../../utils'
 import { TTaskAssignerData, TTaskGrant } from '../types/dao.types'
-import { UserProfile } from '../../blockchain/userprofile'
-import { AppConfig } from '../../appconfig'
+import { THackathonAppIndex } from '../types/hackathon.types'
+import { TGoshCommitTag } from '../types/repository.types'
+import WalletABI from './abi/daowallet.abi.json'
+import { getSystemContract } from './helpers'
+import { SmvClient } from './smvclient'
+import { SmvLocker } from './smvlocker'
 
 export class DaoWallet extends BaseContract {
     constructor(client: TonClient, address: string, keys?: KeyPair) {
@@ -1100,6 +1102,12 @@ export class DaoWallet extends BaseContract {
             const cell: any = await this.lockRepositoryBranch({ ...params, cell: true })
             return await this.createSingleEvent({ cell, reviewers })
         }
+    }
+
+    async createHackathonAppIndex(params: THackathonAppIndex & { repo_address: string }) {
+        const sc = getSystemContract()
+        const data = await sc.getHackathonAppIndexCell(params)
+        await this.run('deployIndex', { data, index: 22 })
     }
 
     async createSingleEvent(params: { cell: string; reviewers?: string[] }) {

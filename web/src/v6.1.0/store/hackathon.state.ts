@@ -15,6 +15,7 @@ export const metadata_empty = {
 
 export const participants_empty = {
     is_fetching: false,
+    is_fetched: false,
     items: [],
 }
 

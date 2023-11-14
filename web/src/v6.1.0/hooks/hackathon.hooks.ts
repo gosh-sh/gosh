@@ -567,7 +567,8 @@ export function useHackathon(
                 }),
             }))
 
-            const code_hash = await repo_account.getCommitTagCodeHash()
+            const sc = getSystemContract()
+            const code_hash = await sc.getHackathonAppIndexCodeHash(repo_account.address)
             const accounts = await getAllAccounts({
                 filters: [`code_hash: {eq:"${code_hash}"}`],
             })
@@ -599,7 +600,11 @@ export function useHackathon(
                     if (item.address === repo_account.address) {
                         return {
                             ...item,
-                            participants: { items: participants, is_fetching: false },
+                            participants: {
+                                items: participants,
+                                is_fetching: false,
+                                is_fetched: true,
+                            },
                         }
                     }
                     return item
@@ -795,8 +800,9 @@ export function useAddHackathonParticipants() {
                 items.map(async (item) => {
                     const repo_path = `${item.dao_name}/${item.repo_name}`
                     const tag_name = `${HACKATHON_TAG.participant}:${repo_path}`
-                    await member.wallet!.createCommitTag({
-                        reponame: hackathon!.name,
+                    await member.wallet!.createHackathonAppIndex({
+                        repo_address: hackathon!.address,
+                        repo_name: hackathon!.name,
                         name: tag_name,
                         content: JSON.stringify(item),
                         commit: {
