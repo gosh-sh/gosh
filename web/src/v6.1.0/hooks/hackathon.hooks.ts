@@ -71,7 +71,7 @@ export function useCreateHackathon() {
             setStatus((state) => ({
                 ...state,
                 type: 'pending',
-                data: `Prepare ${type} repository`,
+                data: `Preparing ${type} repository`,
             }))
             const reponame = `_${type}_${Date.now()}`
             const branch = 'main'
@@ -177,7 +177,7 @@ export function useCreateHackathon() {
             setStatus((state) => ({
                 ...state,
                 type: 'pending',
-                data: 'Create event',
+                data: 'Creating DAO event',
             }))
             const cells = [
                 {
@@ -227,7 +227,7 @@ export function useCreateHackathon() {
                 ...state,
                 type: 'success',
                 data: {
-                    title: 'Create event',
+                    title: 'Create DAO event',
                     content: `Create ${type} event created`,
                 },
             }))
@@ -719,7 +719,7 @@ export function useUpdateHackathonDetails() {
                 setStatus((state) => ({
                     ...state,
                     type: 'pending',
-                    data: `Updating ${filename}`,
+                    data: `Updating ${hackathon?.type} details`,
                 }))
 
                 // TODO: Remove after git refactor
@@ -740,8 +740,8 @@ export function useUpdateHackathonDetails() {
                     ...state,
                     type: 'success',
                     data: {
-                        title: 'Create event',
-                        content: `Update ${filename} event created`,
+                        title: 'Create DAO event',
+                        content: `Update ${hackathon?.type} details event created`,
                     },
                 }))
 
