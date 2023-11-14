@@ -54,7 +54,7 @@
         "@mui/material": "^5.9.1",
         "@mui/utils": "^5.11.13",
         "@octokit/core": "^4.1.0",
-        "@supabase/supabase-js": "^2.31.0",
+        "@supabase/supabase-js": "^2.38.4",
         "@wysimark/react": "^2.2.15",
         "apexcharts": "^3.37.0",
         "buffer": "^6.0.3",
