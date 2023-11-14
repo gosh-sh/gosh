@@ -1,3 +1,5 @@
+import { faGithub, faGoogle } from '@fortawesome/free-brands-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Provider } from '@supabase/supabase-js'
 import { Button } from '../../../../components/Form'
 import { useOauth } from '../../../hooks/oauth.hooks'
@@ -24,24 +26,38 @@ const OAuthForm = () => {
                         <Button
                             type="button"
                             size="xl"
+                            variant="outline-secondary"
                             className="w-full"
                             disabled={oauth.isLoading || !!oauth.session}
                             isLoading={oauth.isLoading || !!oauth.session}
                             onClick={() => onOAuthSigninClick('github')}
                         >
+                            <FontAwesomeIcon
+                                icon={faGithub}
+                                fixedWidth
+                                size="lg"
+                                className="mr-2"
+                            />
                             Sign in with GitHub
                         </Button>
                         <Button
                             type="button"
                             size="xl"
+                            variant="outline-secondary"
                             className="w-full"
                             disabled={oauth.isLoading || !!oauth.session}
                             isLoading={oauth.isLoading || !!oauth.session}
                             onClick={() => onOAuthSigninClick('google')}
                         >
+                            <FontAwesomeIcon
+                                icon={faGoogle}
+                                fixedWidth
+                                size="lg"
+                                className="mr-2"
+                            />
                             Sign in with Google
                         </Button>
-                        <Button
+                        {/* <Button
                             type="button"
                             size="xl"
                             className="w-full"
@@ -50,7 +66,7 @@ const OAuthForm = () => {
                             onClick={() => onOAuthSigninClick('linkedin_oidc')}
                         >
                             Sign in with LinkedIn
-                        </Button>
+                        </Button> */}
                     </div>
                 </div>
             </div>
