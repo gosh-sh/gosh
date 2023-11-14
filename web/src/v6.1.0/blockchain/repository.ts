@@ -6,6 +6,7 @@ import { GoshCommitTag } from './committag'
 import { GoshError } from '../../errors'
 import { GoshCommit } from './commit'
 import { GoshShapshot } from './snapshot'
+import { GoshTree } from './tree'
 
 export class GoshRepository extends BaseContract {
     constructor(client: TonClient, address: string) {
@@ -26,7 +27,7 @@ export class GoshRepository extends BaseContract {
             branches: await this.getBranches(data.alladress),
             description: data.description,
             head: data.head,
-            tags: Object.values(data.hashtag),
+            tags: Object.values(data.hashtag) as string[],
             isReady: data.ready,
         }
     }
@@ -89,6 +90,26 @@ export class GoshRepository extends BaseContract {
         }
 
         return new GoshCommit(this.client, _address!)
+    }
+
+    async getTree(params: { name?: string; address?: string }) {
+        const { name, address } = params
+
+        if (!name && !address) {
+            throw new GoshError('Value error', 'Incorrect tree name or address')
+        }
+
+        if (address) {
+            return new GoshTree(this.client, address)
+        }
+
+        const { value0 } = await this.runLocal(
+            'getTreeAddr',
+            { shainnertree: name },
+            undefined,
+            { useCachedBoc: true },
+        )
+        return new GoshTree(this.client, value0)
     }
 
     async getSnapshot(params: {

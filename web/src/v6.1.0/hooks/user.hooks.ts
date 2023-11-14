@@ -1,4 +1,7 @@
 import { KeyPair } from '@eversdk/core'
+import { useCallback, useEffect } from 'react'
+import { userAtom as _userAtom, userPersistAtom as _userPersistAtom } from 'react-gosh'
+import { useNavigate } from 'react-router-dom'
 import {
     snapshot_UNSTABLE,
     useGotoRecoilSnapshot,
@@ -9,21 +12,18 @@ import {
     useSetRecoilState,
 } from 'recoil'
 import { AppConfig } from '../../appconfig'
+import { EGoshError, GoshError } from '../../errors'
+import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
 import { userAtom, userPersistAtom, userProfileSelector } from '../../store/user.state'
+import { supabase } from '../../supabase'
 import { TUserPersist } from '../../types/user.types'
 import { validatePhrase } from '../../validators'
-import { EGoshError, GoshError } from '../../errors'
-import { validateOnboardingDao, validateUsername } from '../validators'
 import { getSystemContract } from '../blockchain/helpers'
-import { userPersistAtom as _userPersistAtom, userAtom as _userAtom } from 'react-gosh'
-import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
 import { userSignupAtom } from '../store/signup.state'
-import { useOauth } from './oauth.hooks'
-import { useCreateDao } from './dao.hooks'
-import { supabase } from '../../supabase'
 import { EDaoInviteStatus } from '../types/dao.types'
-import { useCallback, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { validateOnboardingDao, validateUsername } from '../validators'
+import { useCreateDao } from './dao.hooks'
+import { useOauth } from './oauth.hooks'
 
 export function useUser() {
     const [userPersist, setUserPersist] = useRecoilState(userPersistAtom)

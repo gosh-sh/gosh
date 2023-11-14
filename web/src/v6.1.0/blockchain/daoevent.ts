@@ -414,6 +414,8 @@ export class DaoEvent extends BaseContract {
             fn = 'getBigTaskParamsData'
         } else if (type === EDaoEventType.MILESTONE_UPGRADE) {
             fn = 'getBigTaskUpgradeProposalParamsData'
+        } else if (type === EDaoEventType.PULL_REQUEST) {
+            fn = 'getGoshSetCommitProposalParamsData'
         } else if (type === EDaoEventType.DELAY) {
             return { type, label: DaoEventType[type], data: {} }
         } else {

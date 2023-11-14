@@ -1,14 +1,19 @@
 import { KeyPair, TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
-import DaoABI from './abi/dao.abi.json'
-import { TDaoDetailsMemberItem } from '../types/dao.types'
 import { UserProfile } from '../../blockchain/userprofile'
-import { DaoWallet } from './daowallet'
+import { TDaoDetailsMemberItem } from '../types/dao.types'
+import DaoABI from './abi/dao.abi.json'
 import { DaoEvent } from './daoevent'
+import { DaoWallet } from './daowallet'
 
 export class Dao extends BaseContract {
     constructor(client: TonClient, address: string) {
         super(client, DaoABI, address)
+    }
+
+    async isMember(profile: string): Promise<boolean> {
+        const { value0 } = await this.runLocal('isMember', { pubaddr: profile })
+        return value0
     }
 
     async getName(): Promise<string> {

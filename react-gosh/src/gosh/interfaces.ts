@@ -126,6 +126,7 @@ import {
     TCodeCommentThreadResolveResult,
     TBigTaskDetails,
     TEventSignleCreateProposalParams,
+    TPushBlobData,
 } from '../types'
 
 interface IGoshAdapter {
@@ -181,6 +182,13 @@ interface IGoshAdapter {
     }): Promise<IGoshCommitTag>
 
     deployProfile(username: string, pubkey: string): Promise<IGoshProfile>
+    getCommitAddress(params: { repo_addr: string; commit_name: string }): Promise<string>
+    getSnapshotAddress(params: {
+        repo_addr: string
+        commit_name: string
+        tree_path: string
+    }): Promise<string>
+    getTreeAddress(params: { repo_addr: string; tree_hash: string }): Promise<string>
 }
 
 interface IGoshDaoAdapter {
@@ -341,6 +349,7 @@ interface IGoshDaoAdapter {
 interface IGoshRepositoryAdapter {
     auth?: any
     repo: IGoshRepository
+    name?: string
 
     isDeployed(): Promise<boolean>
 
@@ -451,6 +460,65 @@ interface IGoshRepositoryAdapter {
     updateDescription(
         params: TRepositoryUpdateDescriptionParams,
     ): Promise<TRepositoryUpdateDescriptionResult>
+
+    getBlobPushDataOut(
+        tree: TTreeItem[],
+        blob: {
+            treepath: string[]
+            original: string | Buffer
+            modified: string | Buffer
+        },
+    ): Promise<TPushBlobData[]>
+    getTreePushDataOut(
+        treeitems: TTreeItem[],
+        blobsData: TPushBlobData[],
+    ): Promise<{ tree: TTree; updated: string[]; sha1: string; sha256: string }>
+    generateCommitOut(
+        branch: TBranch,
+        treeHash: string,
+        message: string,
+        branchParent?: string,
+    ): Promise<{
+        commitHash: string
+        commitContent: string
+        commitParents: { address: TAddress; version: string }[]
+    }>
+    updateSubtreesHashOut(tree: TTree): Promise<TTree>
+    getTreeSha256Out(params: { mapping?: any; items?: TTreeItem[] }): Promise<string>
+    deployCommitOut(
+        branch: string,
+        commit: string,
+        content: string,
+        parents: { address: TAddress; version: string }[],
+        treesha256: string,
+        upgrade: boolean,
+    ): Promise<void>
+    deployTreeOut(items: TTreeItem[], wallet?: IGoshWallet): Promise<void>
+    deploySnapshotOut(
+        commit: string,
+        treepath: string,
+        content?: string | Buffer,
+        wallet?: IGoshWallet,
+        forceDelete?: boolean,
+        isPin?: boolean,
+    ): Promise<IGoshSnapshot>
+    deployDiffOut(
+        branch: string,
+        commit: string,
+        data: {
+            snapshot: TAddress
+            treepath: string
+            treeItem?: TTreeItem
+            compressed: string
+            patch: string | null
+            flags: number
+            hashes: { sha1: string; sha256: string }
+            isGoingOnchain: boolean
+            isGoingIpfs: boolean
+        },
+        index1: number,
+        wallet?: IGoshWallet,
+    ): Promise<void>
 }
 
 interface IGoshSmvAdapter {

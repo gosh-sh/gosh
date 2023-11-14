@@ -21,6 +21,7 @@ import "topic.sol";
 import "keyblock.sol";
 import "versioncontroller.sol";
 import "content-signature.sol";
+import "taghack.sol";
 import "./libraries/GoshLib.sol";
 
 /* System contract of Gosh version*/
@@ -54,8 +55,26 @@ contract SystemContract is Modifiers {
         _versionController = msg.sender;
     }
 
+    function getCellTagHack(address repo, string nametag, string namecommit, address commit, string content, string reponame) external pure returns(TvmCell) {
+        return abi.encode(repo, nametag, namecommit, commit, content, reponame);
+    }
+
+    function getTagHackCode(address repo) external view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagHackCode], repo, version);
+        return deployCode;
+    }
+
     function deployIndex(address pubaddr, uint128 indexw, string namedao, TvmCell data, uint128 index, bool isProposal) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), pubaddr, indexw))  accept {
         data; index; isProposal;
+        if (index == m_TagHackCode) {
+            (address repo, string nametag, string namecommit,  address commit, string content, string reponame) = abi.decode(data,(address, string, string, address, string, string));
+            TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagHackCode], repo, version);
+            TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag}});
+            address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao);
+            new TagHack{
+                stateInit: s1, value: FEE_DEPLOY_TAG, wid: 0, bounce: true, flag: 1
+            }(pubaddr, namecommit, commit, content, this, addr, reponame, namedao);
+        }
         return;
     }
 
@@ -449,6 +468,10 @@ contract SystemContract is Modifiers {
     function setTopic(TvmCell code) public  onlyOwner accept {
         require(_flag == true, ERR_GOSH_UPDATE);
         _code[m_TopicCode] = code;
+    }
+
+    function setTagHack(TvmCell code) public onlyOwner accept {
+        _code[m_TagHackCode] = code;
     }
 
     //Getters

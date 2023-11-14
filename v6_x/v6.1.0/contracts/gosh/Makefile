@@ -1,4 +1,4 @@
-tvcs = tree tag snapshot repository goshwallet goshdao systemcontract diff commit content-signature profile versioncontroller profiledao profileindex bigtask task daotag taggosh topic keyblock
+tvcs = taghack tree tag snapshot repository goshwallet goshdao systemcontract diff commit content-signature profile versioncontroller profiledao profileindex bigtask task daotag taggosh topic keyblock
 cpfl = profile profiledao profileindex
 KEYS_PATH = ${CURDIR}
 EXTRA_DOCKER_ARGS = --network=host --add-host localnode:127.0.0.1

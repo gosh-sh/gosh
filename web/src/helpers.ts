@@ -1,9 +1,18 @@
-import { AppConfig } from './appconfig'
-import { toast } from 'react-toastify'
-import { createAvatar } from '@dicebear/core'
 import { identicon } from '@dicebear/collection'
-import { supabase } from './supabase'
+import { createAvatar } from '@dicebear/core'
 import classNames from 'classnames'
+import { toast } from 'react-toastify'
+import rehypeFormat from 'rehype-format'
+import rehypeParse from 'rehype-parse'
+import rehypeRemark from 'rehype-remark'
+import rehypeStringify from 'rehype-stringify'
+import remarkGfm from 'remark-gfm'
+import remarkParse from 'remark-parse'
+import remarkRehype from 'remark-rehype'
+import remarkStringify from 'remark-stringify'
+import { unified } from 'unified'
+import { AppConfig } from './appconfig'
+import { supabase } from './supabase'
 
 export const getClipboardData = async (event?: any): Promise<string | null> => {
     if (event?.clipboardData && event.clipboardData.getData) {
@@ -50,6 +59,26 @@ export const getUsernameByEmail = async (email: string): Promise<string[] | null
         return null
     }
     return data.length ? data.map(({ gosh_username }) => gosh_username) : null
+}
+
+export const html2markdown = async (value: string) => {
+    const remarked = await unified()
+        .use(rehypeParse)
+        .use(rehypeRemark)
+        .use([remarkGfm, remarkStringify])
+        .process(value)
+    return remarked.value.toString()
+}
+
+export const markdown2html = async (value: string) => {
+    const rehyped = await unified()
+        .use(remarkParse)
+        .use(remarkGfm)
+        .use(remarkRehype)
+        .use(rehypeFormat)
+        .use(rehypeStringify)
+        .process(value)
+    return rehyped.value.toString()
 }
 
 /**

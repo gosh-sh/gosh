@@ -1,11 +1,11 @@
-import { useEffect } from 'react'
 import mobile from 'is-mobile'
+import { RefObject, useEffect } from 'react'
 import { clearBodyLocks, lock } from 'tua-body-scroll-lock'
 
-export function useClickOutside(ref: any, onClickOutside: () => void) {
+export function useClickOutside(ref: RefObject<any>, onClickOutside: () => void) {
     useEffect(() => {
         const onClick = ({ target }: any) => {
-            if (ref && !ref.contains(target)) {
+            if (ref && !ref.current?.contains(target)) {
                 onClickOutside()
             }
         }

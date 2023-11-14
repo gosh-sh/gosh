@@ -42,11 +42,11 @@ body,
 }
 
 .row {
-    @apply flex flex-wrap gap-y-4 -mx-2;
+    @apply flex flex-wrap gap-y-4 -mx-3;
 }
 
 .col {
-    @apply px-2 w-full grow basis-0;
+    @apply px-3 w-full grow basis-0;
 }
 
 .col-n {
@@ -176,7 +176,49 @@ body,
  * Markdown renderer table fix
  */
 .markdown-body {
+    @apply break-words;
+
     table {
         @apply w-full;
     }
+    ol {
+        @apply list-decimal;
+    }
+    ul {
+        @apply list-disc;
+    }
+}
+
+/**
+ * Customize react-multi-date-picker
+ */
+.rmdp-calendar {
+    .rmdp-day.rmdp-today span {
+        @apply bg-gray-f6f6f9 text-black;
+    }
+}
+
+.date-picker-fw {
+    &.rmdp-wrapper {
+        @apply w-full;
+    }
+
+    .rmdp-calendar {
+        @apply w-full;
+    }
+
+    .rmdp-day-picker > div {
+        @apply w-full;
+    }
+
+    .rmdp-time-picker input {
+        @apply w-[1.625rem];
+    }
+}
+
+/**
+ * Customize sun-editor
+ */
+.sun-editor--noborder .sun-editor {
+    @apply border-none;
 }

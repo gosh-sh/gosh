@@ -11,8 +11,14 @@ export class GoshTag extends BaseContract {
         const { _task } = await this.runLocal('_task', {}, undefined, {
             useCachedBoc: true,
         })
+        const details0 = await this.runLocal('getOwner', {}, undefined, {
+            useCachedBoc: true,
+        })
         return {
             task: _task,
+            tag: details0.value0,
+            dao_address: details0.value1,
+            repo_address: details0.value2,
         }
     }
 }

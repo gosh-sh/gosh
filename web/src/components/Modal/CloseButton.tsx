@@ -1,25 +1,32 @@
-import { useSetRecoilState } from 'recoil'
-import { Button } from '../Form'
-import { appModalStateAtom } from '../../store/app.state'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import classNames from 'classnames'
+import { useSetRecoilState } from 'recoil'
+import { appModalStateAtom } from '../../store/app.state'
+import { Button } from '../Form'
 
-type TModalCloseButtonProps = {
+type TModalCloseButtonProps = React.HTMLAttributes<HTMLDivElement> & {
     disabled?: boolean
+    two_factor?: boolean // Used for 2-factor closing
     onClose?: () => Promise<void>
+    twoFactorCallback?: () => void
 }
 
 const ModalCloseButton = (props: TModalCloseButtonProps) => {
-    const { disabled, onClose } = props
+    const { className, disabled, two_factor = false, onClose, twoFactorCallback } = props
     const setModal = useSetRecoilState(appModalStateAtom)
 
     const onModalReset = async () => {
-        setModal((state) => ({ ...state, isOpen: false }))
-        onClose && (await onClose())
+        if (two_factor && twoFactorCallback) {
+            twoFactorCallback()
+        } else {
+            setModal((state) => ({ ...state, isOpen: false }))
+            onClose && (await onClose())
+        }
     }
 
     return (
-        <div className="absolute right-2 top-2">
+        <div className={classNames('absolute right-2 top-2', className)}>
             <Button
                 type="button"
                 variant="custom"
