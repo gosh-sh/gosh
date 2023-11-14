@@ -10,6 +10,11 @@ export const DAO_TOKEN_TRANSFER_TAG = '___!daotokentransfer!___'
 export const VESTING_BALANCE_TAG = '___!vestingbalance!___'
 export const MILESTONE_TAG = '___!milestone!___'
 export const MILESTONE_TASK_TAG = '___!milestonetask!___'
+export const HACKATHON_TAG = {
+    hackathon: '___!hackathon:hack!___',
+    grant: '___!hackathon:grant!___',
+    participant: '___!hackathon:participant!___',
+}
 export const DISABLED_VERSIONS = ['5.0.0', '6.0.0']
 export const L2_COMISSION = 1000 // 0.1% 0.001
 

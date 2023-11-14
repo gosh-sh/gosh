@@ -5,6 +5,8 @@ import { useSetRecoilState } from 'recoil'
 import { appModalStateAtom } from '../../../store/app.state'
 import { Button } from '../../../components/Form'
 import { MemberTokenSendModal } from '../Modal'
+import randomColor from 'randomcolor'
+import { BadgeTag } from '../Badge'
 
 type TDaoWalletSideProps = React.HTMLAttributes<HTMLDivElement>
 
@@ -66,10 +68,35 @@ const DaoMemberWallet = (props: TDaoWalletSideProps) => {
                 <>
                     <hr className="my-4 bg-gray-e6edff" />
                     <div>
-                        <div className="mb-1 text-gray-7c8db5 text-sm">Karma</div>
+                        <div className="mb-1 text-gray-7c8db5 text-sm">Your karma</div>
                         <div className="text-xl font-medium">
                             {member.allowance?.toLocaleString()}
                         </div>
+                        {/* <div className="mt-3 flex flex-wrap items-center justify-start gap-2">
+                            {['ai', 'web3', 'python', 'rust'].map((tag, index) => (
+                                <BadgeTag
+                                    key={index}
+                                    content={`90% ${tag}`}
+                                    style={{
+                                        color: randomColor({
+                                            seed: tag,
+                                            luminosity: 'dark',
+                                        }),
+                                        backgroundColor: randomColor({
+                                            seed: tag,
+                                            luminosity: 'light',
+                                            format: 'rgba',
+                                            alpha: 0.35,
+                                        }),
+                                    }}
+                                />
+                            ))}
+                        </div>
+                        <div className="mt-4">
+                            <Button variant="outline-secondary" className="w-full">
+                                Setup tags
+                            </Button>
+                        </div> */}
                     </div>
                 </>
             )}

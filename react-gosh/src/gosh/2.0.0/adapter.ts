@@ -459,6 +459,28 @@ class GoshAdapter_2_0_0 implements IGoshAdapter {
         return profile
     }
 
+    async getCommitAddress(params: {
+        repo_addr: string
+        commit_name: string
+    }): Promise<string> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async getSnapshotAddress(params: {
+        repo_addr: string
+        commit_name: string
+        tree_path: string
+    }): Promise<string> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async getTreeAddress(params: {
+        repo_addr: string
+        tree_hash: string
+    }): Promise<string> {
+        throw new Error('Method is unavailable in current version')
+    }
+
     private _isValidName(name: string, field?: string): TValidationResult {
         field = field || 'Name'
 
@@ -1901,7 +1923,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
 class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     private gosh: IGoshAdapter
     private client: TonClient
-    private name?: string
+    name?: string
     private subwallets: IGoshWallet[] = []
 
     repo: IGoshRepository
@@ -4041,6 +4063,94 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         const smv = await dao.getSmv()
         await smv.validateProposalStart(min)
         return await smv.getClientsCount()
+    }
+
+    async getBlobPushDataOut(
+        tree: TTreeItem[],
+        blob: {
+            treepath: string[]
+            original: string | Buffer
+            modified: string | Buffer
+        },
+    ): Promise<TPushBlobData[]> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async getTreePushDataOut(
+        treeitems: TTreeItem[],
+        blobsData: TPushBlobData[],
+    ): Promise<{ tree: TTree; updated: string[]; sha1: string; sha256: string }> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async generateCommitOut(
+        branch: TBranch,
+        treeHash: string,
+        message: string,
+        branchParent?: string,
+    ): Promise<{
+        commitHash: string
+        commitContent: string
+        commitParents: { address: TAddress; version: string }[]
+    }> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async updateSubtreesHashOut(tree: TTree): Promise<TTree> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async getTreeSha256Out(params: {
+        mapping?: any
+        items?: TTreeItem[]
+    }): Promise<string> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async deployCommitOut(
+        branch: string,
+        commit: string,
+        content: string,
+        parents: { address: TAddress; version: string }[],
+        treesha256: string,
+        upgrade: boolean,
+    ): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async deployTreeOut(items: TTreeItem[], wallet?: IGoshWallet): Promise<void> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async deploySnapshotOut(
+        commit: string,
+        treepath: string,
+        content?: string | Buffer,
+        wallet?: IGoshWallet,
+        forceDelete?: boolean,
+        isPin?: boolean,
+    ): Promise<IGoshSnapshot> {
+        throw new Error('Method is unavailable in current version')
+    }
+
+    async deployDiffOut(
+        branch: string,
+        commit: string,
+        data: {
+            snapshot: string
+            treepath: string
+            treeItem?: TTreeItem | undefined
+            compressed: string
+            patch: string | null
+            flags: number
+            hashes: { sha1: string; sha256: string }
+            isGoingOnchain: boolean
+            isGoingIpfs: boolean
+        },
+        index1: number,
+        wallet?: IGoshWallet | undefined,
+    ): Promise<void> {
+        throw new Error('Method is unavailable in current version')
     }
 }
 

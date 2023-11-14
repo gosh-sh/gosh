@@ -66,6 +66,7 @@ TOPIC_CODE=$(tonos-cli -j decode stateinit --tvc $GOSH_PATH/topic.tvc | tr -d ' 
 BIGTASK_CODE=$(tonos-cli -j decode stateinit --tvc $GOSH_PATH/bigtask.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 WRAPPER_CODE=$(tonos-cli -j decode stateinit --tvc $GOSH_PATH/keyblock.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 KEYBLOCK_CODE=$(tonos-cli -j decode stateinit --tvc $GOSH_PATH/keyblock.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+TAGHACK_CODE=$(tonos-cli -j decode stateinit --tvc $GOSH_PATH/taghack.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 
 # Echo VersionController address
 echo "========== VersionController address: $VERSIONCONTROLLER_ADDR"
@@ -148,6 +149,8 @@ echo "     ====> Run setWrapper"
 everdev contract run $SYSTEMCONTRACT_ABI setWrapper --input "{\"code\":\"$WRAPPER_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 echo "     ====> Run setKeyBlock"
 everdev contract run $SYSTEMCONTRACT_ABI setKeyBlock --input "{\"code\":\"$KEYBLOCK_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setTagHack"
+everdev contract run $SYSTEMCONTRACT_ABI setTagHack --input "{\"code\":\"$TAGHACK_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 
 # Set flag to false (disable code setters)
 echo "========== Run SystemContract setFlag (false)"

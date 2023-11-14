@@ -1,23 +1,23 @@
-import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import { TRepoLayoutOutletContext } from '../RepoLayout'
-import { useBlob, useBranches } from 'react-gosh'
-import BlobPreview from '../../components/Blob/Preview'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
+    faFloppyDisk,
     faMagnifyingGlass,
     faPencil,
-    faFloppyDisk,
     faTrash,
 } from '@fortawesome/free-solid-svg-icons'
-import CopyClipboard from '../../components/CopyClipboard'
-import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Buffer } from 'buffer'
-import FileDownload from '../../components/FileDownload'
+import { useBlob, useBranches } from 'react-gosh'
+import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
+import AiReview from '../../components/AiReview'
+import { CodeComments } from '../../components/Blob/Comments'
+import BlobPreview from '../../components/Blob/Preview'
 import { BranchSelect } from '../../components/Branches'
+import CopyClipboard from '../../components/CopyClipboard'
+import FileDownload from '../../components/FileDownload'
 import { ButtonLink } from '../../components/Form'
 import Loader from '../../components/Loader'
-import { CodeComments } from '../../components/Blob/Comments'
-import AiReview from '../../components/AiReview'
+import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
+import { TRepoLayoutOutletContext } from '../RepoLayout'
 
 const BlobPage = () => {
     const treepath = useParams()['*']

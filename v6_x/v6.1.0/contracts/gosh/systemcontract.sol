@@ -21,6 +21,7 @@ import "topic.sol";
 import "keyblock.sol";
 import "versioncontroller.sol";
 import "content-signature.sol";
+import "taghack.sol";
 import "./libraries/GoshLib.sol";
 
 /* System contract of Gosh version*/
@@ -54,11 +55,29 @@ contract SystemContract is Modifiers {
         _versionController = msg.sender;
     }
 
+    function getCellTagHack(address repo, string nametag, string namecommit, address commit, string content, string reponame) external pure returns(TvmCell) {
+        return abi.encode(repo, nametag, namecommit, commit, content, reponame);
+    }
+
+    function getTagHackCode(address repo) external view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagHackCode], repo, version);
+        return deployCode;
+    }
+
     function deployIndex(address pubaddr, uint128 indexw, string namedao, TvmCell data, uint128 index, bool isProposal) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), pubaddr, indexw))  accept {
         data; index; isProposal;
+        if (index == m_TagHackCode) {
+            (address repo, string nametag, string namecommit,  address commit, string content, string reponame) = abi.decode(data,(address, string, string, address, string, string));
+            TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagHackCode], repo, version);
+            TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag}});
+            address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao);
+            new TagHack{
+                stateInit: s1, value: FEE_DEPLOY_TAG, wid: 0, bounce: true, flag: 1
+            }(pubaddr, namecommit, commit, content, this, addr, reponame, namedao);
+        }
         return;
     }
-    
+
     function updateIndex(address pubaddr, uint128 indexw, string namedao, TvmCell data, uint128 index, bool isProposal) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), pubaddr, indexw))  accept {
         data; index; isProposal;
         return;
@@ -265,7 +284,7 @@ contract SystemContract is Modifiers {
     function checkKeyBlock2(address goshdao, address repo, uint128 seqno, uint256[] pubkeys, uint256 blockhash, string prev, string ver) public view {
         bytes empt;
         address addr = GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, address(this), goshdao, repo, seqno);
-        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);        
+        require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (version == prev) {
             KeyBlock(GoshLib.calculateKeyBlockAddress(_code[m_KeyBlockCode], empt, address(this), goshdao, repo, seqno + 1)).checkSignature{value:0.4 ton, flag: 1}(blockhash, pubkeys);
@@ -451,6 +470,10 @@ contract SystemContract is Modifiers {
         _code[m_TopicCode] = code;
     }
 
+    function setTagHack(TvmCell code) public onlyOwner accept {
+        _code[m_TagHackCode] = code;
+    }
+
     //Getters
     function getTopicCode(address dao) external view returns(TvmCell) {
         return GoshLib.buildTopicCode(
@@ -477,6 +500,18 @@ contract SystemContract is Modifiers {
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, repoName);
         address taskaddr = GoshLib.calculateTaskAddress(_code[m_TaskCode], addr, repo, nametask);
         return taskaddr;
+    }
+
+    function getCommitAddr(address repo_addr, string commit_name) public view returns(address)  {
+        return GoshLib.calculateCommitAddress(_code[m_CommitCode], repo_addr, commit_name);
+    }
+
+    function getTreeAddr(address repo_addr, uint256 tree_hash) public view returns(address)  {
+        return GoshLib.calculateTreeAddress(_code[m_TreeCode], tree_hash, repo_addr);
+    }
+
+    function getSnapshotAddr(address repo_addr, string commit_name, string name) external view returns(address) {
+        return GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], repo_addr, commit_name, name);
     }
 
     function getBigTaskAddr(string nametask, string dao, string repoName) external view returns(address) {

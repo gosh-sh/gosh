@@ -1,11 +1,30 @@
-import { useCallback, useEffect, useState } from 'react'
-import _, { sum } from 'lodash'
-import { useProfile, useUser } from './user.hooks'
-import { EGoshError, GoshError } from '../../errors'
-import { AppConfig } from '../../appconfig'
-import { getSystemContract } from '../blockchain/helpers'
-import { supabase } from '../../supabase'
+import { AggregationFn } from '@eversdk/core'
 import { Buffer } from 'buffer'
+import _, { sum } from 'lodash'
+import { useCallback, useEffect, useState } from 'react'
+import { GoshAdapterFactory } from 'react-gosh'
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
+import { NotificationsAPI } from '../../apis/notifications'
+import { AppConfig } from '../../appconfig'
+import { UserProfile } from '../../blockchain/userprofile'
+import { getAllAccounts, getPaginatedAccounts } from '../../blockchain/utils'
+import {
+    DAO_TOKEN_TRANSFER_TAG,
+    DISABLED_VERSIONS,
+    DaoEventType,
+    MAX_PARALLEL_READ,
+    MAX_PARALLEL_WRITE,
+    MILESTONE_TAG,
+    MILESTONE_TASK_TAG,
+    PARTNER_DAO_NAMES,
+    SYSTEM_TAG,
+} from '../../constants'
+import { EGoshError, GoshError } from '../../errors'
+import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
+import { supabase } from '../../supabase'
+import { TSystemContract } from '../../types/blockchain.types'
+import { EDaoEventType, TToastStatus } from '../../types/common.types'
+import { ENotificationType } from '../../types/notification.types'
 import {
     executeByChunk,
     setLockableInterval,
@@ -13,18 +32,15 @@ import {
     splitByChunk,
     whileFinite,
 } from '../../utils'
-import {
-    DAO_TOKEN_TRANSFER_TAG,
-    DISABLED_VERSIONS,
-    MAX_PARALLEL_READ,
-    MAX_PARALLEL_WRITE,
-    PARTNER_DAO_NAMES,
-    MILESTONE_TAG,
-    MILESTONE_TASK_TAG,
-    SYSTEM_TAG,
-    DaoEventType,
-} from '../../constants'
-import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
+import { Dao } from '../blockchain/dao'
+import { DaoEvent } from '../blockchain/daoevent'
+import { DaoWallet } from '../blockchain/daowallet'
+import { getSystemContract } from '../blockchain/helpers'
+import { Milestone } from '../blockchain/milestone'
+import { GoshRepository } from '../blockchain/repository'
+import { SystemContract } from '../blockchain/systemcontract'
+import { Task } from '../blockchain/task'
+import { getGrantMapping } from '../components/Task'
 import {
     daoDetailsSelector,
     daoEventListSelector,
@@ -38,8 +54,8 @@ import {
     userDaoListAtom,
 } from '../store/dao.state'
 import {
-    EDaoMemberType,
     EDaoInviteStatus,
+    EDaoMemberType,
     TDaoDetailsMemberItem,
     TDaoEventDetails,
     TDaoInviteListItem,
@@ -49,24 +65,8 @@ import {
     TTaskGrant,
     TTaskGrantPair,
 } from '../types/dao.types'
-import { Dao } from '../blockchain/dao'
-import { UserProfile } from '../../blockchain/userprofile'
-import { DaoWallet } from '../blockchain/daowallet'
-import { EDaoEventType, TToastStatus } from '../../types/common.types'
-import { getAllAccounts, getPaginatedAccounts } from '../../blockchain/utils'
-import { DaoEvent } from '../blockchain/daoevent'
-import { GoshAdapterFactory } from 'react-gosh'
-import { TSystemContract } from '../../types/blockchain.types'
 import { TGoshCommitTag } from '../types/repository.types'
-import { GoshRepository } from '../blockchain/repository'
-import { Task } from '../blockchain/task'
-import { AggregationFn } from '@eversdk/core'
-import { SystemContract } from '../blockchain/systemcontract'
-import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
-import { Milestone } from '../blockchain/milestone'
-import { getGrantMapping } from '../components/Task'
-import { ENotificationType } from '../../types/notification.types'
-import { NotificationsAPI } from '../../apis/notifications'
+import { useProfile, useUser } from './user.hooks'
 
 export function usePartnerDaoList(params: { initialize?: boolean } = {}) {
     const { initialize } = params
@@ -626,10 +626,11 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
         const { commit } = await repository.getBranch('main')
         const repover = await repository.getVersion()
         if (commit.version !== repover) {
+            const sc = AppConfig.goshroot.getSystemContract(commit.version)
             const reponame = await repository.getName()
-            repository = (await AppConfig.goshroot
-                .getSystemContract(commit.version)
-                .getRepository({ path: `${daoname}/${reponame}` })) as GoshRepository
+            repository = (await sc.getRepository({
+                path: `${daoname}/${reponame}`,
+            })) as unknown as GoshRepository
         }
 
         // TODO: Remove/refactor this after git part refactored
@@ -661,9 +662,9 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
                     })
 
                     if (await snapshot.isDeployed()) {
-                        const result = await snapshot.getContent()
-                        if (!Buffer.isBuffer(result.content)) {
-                            return result.content
+                        const { approved } = await snapshot.getContent()
+                        if (!approved.is_binary && approved.content !== null) {
+                            return approved.content as string
                         }
                     }
                 } else if (treeitem.commit) {
@@ -2218,7 +2219,7 @@ export function useDaoEvent(
     const [error, setError] = useState<any>()
 
     const getEvent = useCallback(async () => {
-        if (!dao.account || !address || !member.isFetched) {
+        if (!dao.account || !member.isFetched) {
             return
         }
 

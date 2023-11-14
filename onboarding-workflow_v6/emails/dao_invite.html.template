@@ -148,7 +148,6 @@
                                     style="
                                         display: flex;
                                         align-items: center;
-                                        gap: 1rem;
                                         margin-top: 1.5rem;
                                         padding: 1.25rem 1rem;
                                         border: 1px solid #ebebeb;
@@ -158,14 +157,15 @@
                                         text-decoration: none;
                                     "
                                 >
-                                    <div style="width: 2.5rem">
+                                    <div style="width: 2.5rem; padding-right: 2rem">
                                         <img
-                                            src="https://gosh.sh/email/v3-0-5/youtube-gray.svg"
+                                            src="https://gosh.sh/email/v3-0-5/youtube-gray.png"
                                             style="width: 100%"
                                         />
                                     </div>
                                     <div style="color: #53596d">
-                                        Watch a quick start tutorial
+                                        Watch a quick tutorial<br />
+                                        How to register on GOSH
                                     </div>
                                 </a>
 
@@ -175,7 +175,6 @@
                                     style="
                                         display: flex;
                                         align-items: center;
-                                        gap: 1rem;
                                         margin-top: 1rem;
                                         padding: 1.25rem 1rem;
                                         border: 1px solid #ebebeb;
@@ -185,14 +184,16 @@
                                         text-decoration: none;
                                     "
                                 >
-                                    <div style="width: 2.5rem">
+                                    <div style="width: 2.5rem; padding-right: 2rem">
                                         <img
                                             src="https://gosh.sh/email/v3-0-5/book-gray.png"
                                             style="width: 100%"
                                         />
                                     </div>
                                     <div style="color: #53596d">
-                                        Or learn how to register on GOSH
+                                        Or learn how to
+                                        <br />
+                                        register on GOSH
                                     </div>
                                 </a>
 

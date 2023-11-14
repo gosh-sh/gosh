@@ -1,11 +1,11 @@
-import Loader from '../../../components/Loader'
-import { ListBoundary } from './components'
-import { DaoMemberWallet, DaoMembers, DaoSupply } from '../../components/Dao'
 import classNames from 'classnames'
-import DaoEventPage from '../DaoEvent/DaoEvent'
 import { useEffect, useState } from 'react'
 import { matchPath } from 'react-router-dom'
+import Loader from '../../../components/Loader'
+import { DaoMemberWallet, DaoMembers, DaoSupply } from '../../components/Dao'
 import { useDaoEventList, useDaoMember } from '../../hooks/dao.hooks'
+import DaoEventPage from '../DaoEvent/DaoEvent'
+import { ListBoundary } from './components'
 
 const DaoEventListPage = () => {
     const member = useDaoMember()
@@ -54,7 +54,7 @@ const DaoEventListPage = () => {
                     eventOpened ? 'translate-x-0' : 'translate-x-full',
                 )}
             >
-                <DaoEventPage address={eventOpened || ''} />
+                {eventOpened && <DaoEventPage address={eventOpened} />}
             </div>
         </>
     )

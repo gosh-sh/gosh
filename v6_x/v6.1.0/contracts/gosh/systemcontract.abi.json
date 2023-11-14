@@ -12,6 +12,29 @@
 			]
 		},
 		{
+			"name": "getCellTagHack",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"nametag","type":"string"},
+				{"name":"namecommit","type":"string"},
+				{"name":"commit","type":"address"},
+				{"name":"content","type":"string"},
+				{"name":"reponame","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getTagHackCode",
+			"inputs": [
+				{"name":"repo","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "deployIndex",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
@@ -656,6 +679,14 @@
 			]
 		},
 		{
+			"name": "setTagHack",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getTopicCode",
 			"inputs": [
 				{"name":"dao","type":"address"}
@@ -709,6 +740,37 @@
 				{"name":"nametask","type":"string"},
 				{"name":"dao","type":"string"},
 				{"name":"repoName","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getCommitAddr",
+			"inputs": [
+				{"name":"repo_addr","type":"address"},
+				{"name":"commit_name","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getTreeAddr",
+			"inputs": [
+				{"name":"repo_addr","type":"address"},
+				{"name":"tree_hash","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getSnapshotAddr",
+			"inputs": [
+				{"name":"repo_addr","type":"address"},
+				{"name":"commit_name","type":"string"},
+				{"name":"name","type":"string"}
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}
