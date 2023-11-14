@@ -56,6 +56,7 @@ abstract contract Modifiers is ReplayProtection {
     uint8 constant m_KeyBlockCode = 19;
     uint8 constant m_WrapperCode = 20;
     uint8 constant m_FactoryCode = 21;
+    uint8 constant m_TagHackCode = 22;
     
     //Deploy constants
     uint128 constant FEE_DEPLOY_DAO = 100000 ton;

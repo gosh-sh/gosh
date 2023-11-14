@@ -20,6 +20,7 @@ import "topic.sol";
 import "versioncontroller.sol";
 import "content-signature.sol";
 import "trusted.sol";
+import "taghack.sol";
 import "./libraries/GoshLib.sol";
 
 /* System contract of Gosh version*/
@@ -65,8 +66,25 @@ contract SystemContract is Modifiers {
         Trusted(_trusted).sendTokenToRoot{flag: 1, value: 0.1 ton}(pubkey, value, root);
     }
 
+    function getCellRepo(address repo) external view returns(TvmCell) {
+        return abi.encode(repo);
+    }
+
+    function getTagHackCode(address repo) external view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagHackCode], repo, version);
+        return deployCode;
+    }
+
     function deployIndex(address pubaddr, uint128 indexw, string namedao, TvmCell data, uint128 index, bool isProposal) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), pubaddr, indexw))  accept {
         data; index; isProposal;
+        if (indexw == m_TagHack) {
+            (address repo) = abi.decode(data,(address));
+            TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagHackCode], repo, version);
+            TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag}});
+            new TagHack{
+                stateInit: s1, value: FEE_DEPLOY_TAG, wid: 0, bounce: true, flag: 1
+            }(_pubaddr, nameCommit, commit, content, _systemcontract, _goshdao, repoName, _nameDao); 
+        }
         return;
     }
     
@@ -415,6 +433,10 @@ contract SystemContract is Modifiers {
 
     function setGrant(TvmCell code) public onlyOwner accept {
         _code[m_GrantCode] = code;
+    }
+
+    function setTagHack(TvmCell code) public onlyOwner accept {
+        _code[m_TagHack] = code;
     }
 
     function setTrusted(address trusted) public onlyOwner accept {
