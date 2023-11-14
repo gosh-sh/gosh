@@ -228,7 +228,7 @@ export function useCreateHackathon() {
                 type: 'success',
                 data: {
                     title: 'Create DAO event',
-                    content: `Create ${type} event created`,
+                    content: `Publish ${type} proposal created`,
                 },
             }))
 
