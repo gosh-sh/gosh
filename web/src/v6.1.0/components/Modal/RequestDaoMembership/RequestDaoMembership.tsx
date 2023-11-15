@@ -2,14 +2,15 @@ import { Dialog } from '@headlessui/react'
 import { Field, Form, Formik } from 'formik'
 import { useNavigate } from 'react-router-dom'
 import { useSetRecoilState } from 'recoil'
-import { appModalStateAtom } from '../../../../store/app.state'
-import yup from '../../../yup-extended'
-import { ModalCloseButton } from '../../../../components/Modal'
-import { FormikTextarea } from '../../../../components/Formik'
+import Alert from '../../../../components/Alert'
 import { Button } from '../../../../components/Form'
-import { useDao, useCreateDaoMember } from '../../../hooks/dao.hooks'
-import { EDaoMemberType } from '../../../types/dao.types'
+import { FormikTextarea } from '../../../../components/Formik'
+import { ModalCloseButton } from '../../../../components/Modal'
+import { appModalStateAtom } from '../../../../store/app.state'
+import { useCreateDaoMember, useDao, useDaoMember } from '../../../hooks/dao.hooks'
 import { useUser } from '../../../hooks/user.hooks'
+import { EDaoMemberType } from '../../../types/dao.types'
+import yup from '../../../yup-extended'
 
 type TFormValues = {
     comment: string
@@ -20,7 +21,11 @@ const RequestDaoMembershipModal = () => {
     const setModal = useSetRecoilState(appModalStateAtom)
     const { user } = useUser()
     const dao = useDao()
+    const member = useDaoMember()
     const { createMember } = useCreateDaoMember()
+
+    const disabled = !dao.details.isAskMembershipOn || !member.isReady || member.isMember
+    const is_fetching = dao.isFetching || !member.isReady
 
     const onModalReset = () => {
         setModal((state) => ({ ...state, isOpen: false }))
@@ -64,11 +69,32 @@ const RequestDaoMembershipModal = () => {
                             Request membership
                         </Dialog.Title>
 
+                        {!is_fetching && !dao.details.isAskMembershipOn && (
+                            <Alert variant="danger" className="mb-4">
+                                <h1 className="font-medium">
+                                    Request membership is disabled
+                                </h1>
+                                <p className="mt-1 text-xs">
+                                    DAO has disabled request membership, you should
+                                    contact one of the DAO members to ask to invite you
+                                </p>
+                            </Alert>
+                        )}
+
+                        {!is_fetching && member.isMember && (
+                            <Alert variant="danger" className="mb-4">
+                                <h1 className="font-medium">Already a DAO member</h1>
+                                <p className="mt-1 text-xs">
+                                    You are already a member of this DAO
+                                </p>
+                            </Alert>
+                        )}
+
                         <div>
                             <Field
                                 name="comment"
                                 component={FormikTextarea}
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || disabled}
                                 autoComplete="off"
                                 placeholder="Write description of your request to DAO membership"
                                 maxRows={5}
@@ -78,10 +104,10 @@ const RequestDaoMembershipModal = () => {
                             <Button
                                 type="submit"
                                 className="w-full"
-                                isLoading={isSubmitting}
-                                disabled={isSubmitting}
+                                isLoading={isSubmitting || is_fetching}
+                                disabled={isSubmitting || disabled}
                             >
-                                Create event
+                                {is_fetching ? 'Fetching data' : 'Create proposal'}
                             </Button>
                         </div>
                     </Form>
