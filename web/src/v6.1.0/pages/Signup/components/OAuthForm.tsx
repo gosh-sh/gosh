@@ -1,4 +1,4 @@
-import { faGithub, faGoogle } from '@fortawesome/free-brands-svg-icons'
+import { faGithub, faGoogle, faLinkedinIn } from '@fortawesome/free-brands-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Provider } from '@supabase/supabase-js'
 import { Button } from '../../../../components/Form'
@@ -57,16 +57,23 @@ const OAuthForm = () => {
                             />
                             Sign in with Google
                         </Button>
-                        {/* <Button
+                        <Button
                             type="button"
                             size="xl"
+                            variant="outline-secondary"
                             className="w-full"
                             disabled={oauth.isLoading || !!oauth.session}
                             isLoading={oauth.isLoading || !!oauth.session}
                             onClick={() => onOAuthSigninClick('linkedin_oidc')}
                         >
+                            <FontAwesomeIcon
+                                icon={faLinkedinIn}
+                                fixedWidth
+                                size="lg"
+                                className="mr-2"
+                            />
                             Sign in with LinkedIn
-                        </Button> */}
+                        </Button>
                     </div>
                 </div>
             </div>
