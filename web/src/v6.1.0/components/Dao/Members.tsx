@@ -1,9 +1,11 @@
+import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { faPlus } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import classNames from 'classnames'
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useSetRecoilState } from 'recoil'
+import CopyClipboard from '../../../components/CopyClipboard'
 import { Button } from '../../../components/Form'
 import { getIdenticonAvatar } from '../../../helpers'
 import { appModalStateAtom } from '../../../store/app.state'
@@ -20,10 +22,7 @@ const DaoMembers = (props: TDaoMembersProps) => {
     const { user } = useUser()
     const dao = useDao()
     const member = useDaoMember()
-    const [deeplink, setDeeplink] = useState<{ relative: string; absolute: string }>({
-        relative: '',
-        absolute: '',
-    })
+    const [deeplink, setDeeplink] = useState<string>('')
 
     const onRequestDaoMembership = () => {
         setModal({
@@ -34,15 +33,15 @@ const DaoMembers = (props: TDaoMembersProps) => {
     }
 
     useEffect(() => {
-        if (location.hash === '#request-membership' && user.profile) {
+        if (location.hash === '#request-membership') {
             onRequestDaoMembership()
         }
         document.location.hash = ''
-    }, [location.hash, user.profile])
+    }, [location.hash])
 
     useEffect(() => {
         const relative = `/o/${dao.details.name}#request-membership`
-        setDeeplink({ relative, absolute: `${document.location.origin}${relative}` })
+        setDeeplink(`${document.location.origin}${relative}`)
     }, [document.location.origin, dao.details.name])
 
     return (
@@ -85,58 +84,50 @@ const DaoMembers = (props: TDaoMembersProps) => {
                             />
                             Invite members
                         </Link>
+                        <CopyClipboard
+                            label={
+                                <>
+                                    <FontAwesomeIcon
+                                        icon={faCopy}
+                                        size="sm"
+                                        fixedWidth
+                                        className="mr-2"
+                                    />
+                                    Copy invite link
+                                </>
+                            }
+                            componentProps={{ text: deeplink }}
+                            className="text-blue-348eff text-sm"
+                            iconContainerClassName="hidden"
+                        />
                     </div>
                 )}
             </div>
 
-            <div>
-                {!member.isMember && (
-                    <>
-                        <hr className="my-5 bg-gray-e6edff" />
-                        {!dao.details.isAskMembershipOn && (
-                            <div>
-                                <h3 className="mb-4 text-lg font-medium">
-                                    This is a private organization
-                                </h3>
-                                <div className="text-sm text-gray-7c8db5">
-                                    Please contact one of the DAO members to ask to invite
-                                    you
-                                </div>
-                            </div>
-                        )}
-                    </>
-                )}
-
-                {dao.details.isAskMembershipOn && !user.profile && (
-                    <div>
-                        <h3 className="mb-4 text-xl font-medium">Request membership</h3>
-                        <div className="text-sm">
-                            <Link
-                                to={`/a/signin?redirect_to=${deeplink.relative}`}
-                                className="text-blue-2b89ff"
-                            >
-                                Sign in
-                            </Link>{' '}
-                            to request membership
-                        </div>
+            {!member.isMember && !dao.details.isAskMembershipOn && (
+                <div className="border-t border-gray-e6edff pt-5">
+                    <h3 className="mb-4 text-lg font-medium">
+                        This is a private organization
+                    </h3>
+                    <div className="text-sm text-gray-7c8db5">
+                        Please contact one of the DAO members to ask to invite you
                     </div>
-                )}
-
-                {dao.details.isAskMembershipOn && member.profile && !member.isMember && (
+                </div>
+            )}
+            {!member.isMember && dao.details.isAskMembershipOn && (
+                <div className="border-t border-gray-e6edff pt-5">
+                    <h3 className="mb-4 text-xl font-medium">You are not a member</h3>
                     <div>
-                        <h3 className="mb-4 text-xl font-medium">You are not a member</h3>
-                        <div>
-                            <Button
-                                className="w-full !border-gray-e6edff bg-gray-fafafd hover:!border-gray-53596d"
-                                variant="outline-secondary"
-                                onClick={onRequestDaoMembership}
-                            >
-                                Request membership
-                            </Button>
-                        </div>
+                        <Button
+                            className="w-full !border-gray-e6edff bg-gray-fafafd hover:!border-gray-53596d"
+                            variant="outline-secondary"
+                            onClick={onRequestDaoMembership}
+                        >
+                            Request membership
+                        </Button>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     )
 }

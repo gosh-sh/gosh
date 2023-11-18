@@ -13,12 +13,12 @@ const OAuthForm = () => {
 
     return (
         <div className="flex flex-wrap items-center justify-center gap-14">
-            <div className="basis-full lg:basis-4/12 text-center lg:text-start">
+            <div className="basis-full md:basis-6/12 lg:basis-4/12 text-center lg:text-start">
                 <div className="mb-4 text-3xl font-medium">Welcome to Gosh</div>
                 <div className="text-gray-53596d">Please authorize</div>
             </div>
 
-            <div className="basis-full md:basis-8/12 lg:basis-5/12 xl:basis-4/12">
+            <div className="basis-full md:basis-6/12 lg:basis-5/12 xl:basis-4/12">
                 <div className="border border-gray-e6edff rounded-xl p-8">
                     <h2 className="text-lg text-center mb-6">Sign in with</h2>
 

@@ -1,18 +1,17 @@
 import { faRotateRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Field, Form, Formik } from 'formik'
 import { useEffect } from 'react'
+import { toast } from 'react-toastify'
+import { Button } from '../../../../../components/Form'
+import { FormikInput } from '../../../../../components/Formik'
 import Spinner from '../../../../../components/Spinner'
+import { ToastError } from '../../../../../components/Toast'
+import { useOnboardingData } from '../../../../hooks/onboarding.hooks'
+import { TOAuthSession } from '../../../../types/oauth.types'
+import yup from '../../../../yup-extended'
 import ListEmpty from '../ListEmpty'
 import OAuthProfile from '../OAuthProfile'
-import PreviousStep from '../PreviousStep'
-import { Formik, Form, Field } from 'formik'
-import { FormikInput } from '../../../../../components/Formik'
-import yup from '../../../../yup-extended'
-import { TOAuthSession } from '../../../../types/oauth.types'
-import { useOnboardingData } from '../../../../hooks/onboarding.hooks'
-import { Button } from '../../../../../components/Form'
-import { toast } from 'react-toastify'
-import { ToastError } from '../../../../../components/Toast'
 import OrganizationListItem from './ListItem'
 
 type TGithubOrganizationsProps = {
@@ -22,12 +21,8 @@ type TGithubOrganizationsProps = {
 
 const GithubOrganizations = (props: TGithubOrganizationsProps) => {
     const { oauth, signoutOAuth } = props
-    const { data, organizations, repositories, updateData, getOrganizations, upload } =
+    const { data, organizations, repositories, getOrganizations, upload } =
         useOnboardingData(oauth)
-
-    const onBackClick = () => {
-        updateData({ step: 'invites' })
-    }
 
     const onFormSubmit = async (values: { email_other: string }) => {
         try {

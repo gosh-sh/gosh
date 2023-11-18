@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-route
 import { toast } from 'react-toastify'
 import { useSetRecoilState } from 'recoil'
 import { ToastError } from '../../../components/Toast'
+import { PERSIST_REDIRECT_KEY } from '../../../constants'
 import { appModalStateAtom } from '../../../store/app.state'
 import { PinCodeModal } from '../../components/Modal'
 import { withRouteAnimation } from '../../hocs'
@@ -64,6 +65,7 @@ const SigninPage = () => {
     }, [setupPin, setModal, navigate, searchParams])
 
     if (persist.pin) {
+        localStorage.removeItem(PERSIST_REDIRECT_KEY)
         const to = searchParams.get('redirect_to') || '/a/orgs'
         return <Navigate to={`${to}${location.hash}`} />
     }
