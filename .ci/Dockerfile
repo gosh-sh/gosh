@@ -22,8 +22,8 @@ RUN	apt update -y &&\
         usermod -aG docker jenkins &&\
         chown -R jenkins: /home/jenkins &&\
         chown -R jenkins: /usr/local/lib/nodejs &&\
-        wget http://nz2.archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.19_amd64.deb &&\
-        dpkg -i libssl1.1_1.1.1f-1ubuntu2.19_amd64.deb &&\
+        wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_amd64.deb &&\
+        dpkg -i libssl1.1_1.1.1f-1ubuntu2_amd64.deb &&\
         apt -y clean
 
 RUN 	apt install openssl

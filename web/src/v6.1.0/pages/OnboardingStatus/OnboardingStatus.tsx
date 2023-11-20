@@ -1,18 +1,19 @@
 import { faRotateRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useCallback, useEffect } from 'react'
-import { toast } from 'react-toastify'
-import { ToastError } from '../../../components/Toast'
-import Spinner from '../../../components/Spinner'
-import ListEmpty from '../Onboarding/components/ListEmpty'
-import Profile from './components/Profile'
-import DaoListItem from './components/DaoListItem'
-import RepoListItem from './components/RepoListItem'
 import { useNavigate } from 'react-router-dom'
-import Loader from '../../../components/Loader/Loader'
-import { useOnboardingStatus } from '../../hooks/onboarding.hooks'
+import { toast } from 'react-toastify'
 import { Button } from '../../../components/Form'
+import Loader from '../../../components/Loader/Loader'
+import Spinner from '../../../components/Spinner'
+import { ToastError } from '../../../components/Toast'
+import { PERSIST_REDIRECT_KEY } from '../../../constants'
 import { useOauth } from '../../hooks/oauth.hooks'
+import { useOnboardingStatus } from '../../hooks/onboarding.hooks'
+import ListEmpty from '../Onboarding/components/ListEmpty'
+import DaoListItem from './components/DaoListItem'
+import Profile from './components/Profile'
+import RepoListItem from './components/RepoListItem'
 
 const OnboardingStatusPage = () => {
     const navigate = useNavigate()
@@ -63,7 +64,10 @@ const OnboardingStatusPage = () => {
         try {
             await submit()
             await signoutOAuth()
-            navigate('/a/orgs', { replace: true })
+
+            const redirect = localStorage.getItem(PERSIST_REDIRECT_KEY)
+            localStorage.removeItem(PERSIST_REDIRECT_KEY)
+            navigate(redirect || '/a/orgs', { replace: true })
         } catch (e: any) {
             console.error(e.message)
             toast.error(<ToastError error={e} />)

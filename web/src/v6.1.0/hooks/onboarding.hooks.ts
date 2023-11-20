@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { useCallback, useEffect } from 'react'
 import {
     useRecoilState,
@@ -5,7 +6,11 @@ import {
     useResetRecoilState,
     useSetRecoilState,
 } from 'recoil'
-import _ from 'lodash'
+import { AppConfig } from '../../appconfig'
+import { PERSIST_REDIRECT_KEY } from '../../constants'
+import { GoshError } from '../../errors'
+import { appToastStatusSelector } from '../../store/app.state'
+import { supabase } from '../../supabase'
 import {
     octokitSelector,
     onboardingDataAtom,
@@ -14,19 +19,15 @@ import {
     repositoriesCheckedSelector,
     repositoriesSelector,
 } from '../store/onboarding.state'
-import { supabase } from '../../supabase'
 import { TOAuthSession } from '../types/oauth.types'
 import {
     TOnboardingOrganization,
     TOnboardingRepository,
     TOnboardingStatusDao,
 } from '../types/onboarding.types'
-import { GoshError } from '../../errors'
-import { AppConfig } from '../../appconfig'
-import { useUser } from './user.hooks'
 import { validateOnboardingDao, validateOnboardingRepo } from '../validators'
 import { useOauth } from './oauth.hooks'
-import { appToastStatusSelector } from '../../store/app.state'
+import { useUser } from './user.hooks'
 
 export function useOnboardingData(
     oauth?: TOAuthSession,
@@ -162,7 +163,12 @@ export function useOnboardingData(
             }))
             const valid = validated.every((r) => !!r)
             if (valid) {
-                setData((state) => ({ ...state, redirectTo: '/a/orgs' }))
+                const redirect = localStorage.getItem(PERSIST_REDIRECT_KEY)
+                localStorage.removeItem(PERSIST_REDIRECT_KEY)
+                setData((state) => ({
+                    ...state,
+                    redirectTo: redirect || '/a/orgs',
+                }))
                 await signout()
             } else {
                 setData((state) => ({ ...state, redirectTo: '/onboarding/status' }))

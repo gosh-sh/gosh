@@ -2,6 +2,7 @@ import { Form, Formik } from 'formik'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../../../../components/Form'
+import { PERSIST_REDIRECT_KEY } from '../../../../constants'
 import { useOauth } from '../../../hooks/oauth.hooks'
 import { useUserSignup } from '../../../hooks/user.hooks'
 
@@ -31,7 +32,10 @@ const CompleteForm = () => {
         try {
             setIsAnySubmitting(true)
             await submitCompleteStep({ provider: false })
-            navigate('/a/orgs')
+
+            const redirect = localStorage.getItem(PERSIST_REDIRECT_KEY)
+            localStorage.removeItem(PERSIST_REDIRECT_KEY)
+            navigate(redirect || '/a/orgs')
         } catch (e: any) {
             console.error(e.message)
         } finally {

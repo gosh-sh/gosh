@@ -1,18 +1,20 @@
+import { useEffect, useState } from 'react'
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import { useSetRecoilState } from 'recoil'
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
+import { ToastError } from '../../../components/Toast'
+import { PERSIST_REDIRECT_KEY } from '../../../constants'
 import { appModalStateAtom } from '../../../store/app.state'
 import { PinCodeModal } from '../../components/Modal'
-import { toast } from 'react-toastify'
-import { ToastError } from '../../../components/Toast'
-import { useEffect, useState } from 'react'
+import { withRouteAnimation } from '../../hocs'
+import { useUser } from '../../hooks/user.hooks'
 import SigninPhraseForm from './PhraseForm'
 import SigninProfileForm from './ProfileForm'
-import { useUser } from '../../hooks/user.hooks'
-import { withRouteAnimation } from '../../hocs'
 
 const SigninPage = () => {
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
+    const location = useLocation()
     const { persist, getProfiles, signin } = useUser()
     const setModal = useSetRecoilState(appModalStateAtom)
     const [step, setStep] = useState<{ name: string; data: any }>()
@@ -63,8 +65,9 @@ const SigninPage = () => {
     }, [setupPin, setModal, navigate, searchParams])
 
     if (persist.pin) {
+        localStorage.removeItem(PERSIST_REDIRECT_KEY)
         const to = searchParams.get('redirect_to') || '/a/orgs'
-        return <Navigate to={to} />
+        return <Navigate to={`${to}${location.hash}`} />
     }
     return (
         <div className="max-w-2xl mx-auto border border-gray-e8eefd rounded-xl px-6 md:px-16 py-12 my-16">
