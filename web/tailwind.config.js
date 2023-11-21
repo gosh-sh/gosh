@@ -25,6 +25,11 @@ export default {
                 extblue: '#61a3ff',
 
                 // refactor
+                'black-1': '#3D464C',
+                'black-2': '#5E6974',
+                'gray-1': '#EDEFF1',
+                'gray-2': '#F5F7F9',
+                'blue-1': '#288BFF',
                 'gray-7c8db5': '#7c8db5',
                 'gray-fafafd': '#fafafd',
                 'gray-f6f6f9': '#f6f6f9',

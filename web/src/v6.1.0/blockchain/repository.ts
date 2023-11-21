@@ -1,16 +1,21 @@
 import { TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
-import RepositoryABI from './abi/repository.abi.json'
-import { TGoshBranch } from '../types/repository.types'
-import { GoshCommitTag } from './committag'
 import { GoshError } from '../../errors'
+import { TGoshBranch } from '../types/repository.types'
+import RepositoryABI from './abi/repository.abi.json'
 import { GoshCommit } from './commit'
+import { GoshCommitTag } from './committag'
 import { GoshShapshot } from './snapshot'
 import { GoshTree } from './tree'
 
 export class GoshRepository extends BaseContract {
     constructor(client: TonClient, address: string) {
         super(client, RepositoryABI, address)
+    }
+
+    async isBranchProtected(name: string) {
+        const { value0 } = await this.runLocal('isBranchProtected', { branch: name })
+        return value0 as boolean
     }
 
     async getName(): Promise<string> {
@@ -38,13 +43,16 @@ export class GoshRepository extends BaseContract {
             parse = value0
         }
 
-        return parse.map((item: any) => ({
-            name: item.branchname,
-            commit: {
-                address: item.commitaddr,
-                version: item.commitversion,
-            },
-        }))
+        return await Promise.all(
+            parse.map(async (item: any) => ({
+                name: item.branchname,
+                commit: {
+                    address: item.commitaddr,
+                    version: item.commitversion,
+                },
+                protected: await this.isBranchProtected(item.branchname),
+            })),
+        )
     }
 
     async getBranch(name: string): Promise<TGoshBranch> {
@@ -55,6 +63,7 @@ export class GoshRepository extends BaseContract {
                 address: value0.commitaddr,
                 version: value0.commitversion,
             },
+            protected: await this.isBranchProtected(name),
         }
     }
 

@@ -24,6 +24,7 @@ export type TGoshBranch = {
         address: string
         version: string
     }
+    protected: boolean
 }
 
 export type TGoshCommit = {

@@ -48,17 +48,15 @@ import UserDaoListPage from './pages/UserDaoList'
 
 // TODO: Update after full refactor
 import BuildPage from '../docker-extension/pages/Build'
-import BlobPage from '../pages/Blob'
-import BlobCreatePage from '../pages/BlobCreate'
-import BlobDeletePage from '../pages/BlobDelete'
-import BlobUpdatePage from '../pages/BlobUpdate'
-import BranchesPage from '../pages/Branches'
 import CommitPage from '../pages/Commit'
 import CommitsPage from '../pages/Commits'
-import GotoPage from '../pages/Goto'
 import MergeCreatePage from '../pages/MergeCreate'
-import RepoPage from '../pages/Repo'
-import RepoLayout from '../pages/RepoLayout'
+import BlobCreatePage from './pages/BlobCreate'
+import BlobDeletePage from './pages/BlobDelete'
+import BlobUpdatePage from './pages/BlobUpdate'
+import BlobViewPage from './pages/BlobView'
+import RepositoryPage from './pages/Repository'
+import RepositoryLayout from './pages/RepositoryLayout'
 // TODO: /Update after full refactor
 
 const App = () => {
@@ -107,7 +105,7 @@ const App = () => {
                         <Route path="/o/:daoname" element={<DaoLayout />}>
                             <Route index element={<DaoPage />} />
                             <Route path="onboarding" element={<OnboardingDaoPage />} />
-                            <Route path="repos" element={<DaoRepositoryListPage />} />
+                            <Route path="r" element={<DaoRepositoryListPage />} />
                             <Route
                                 path="events/:address?"
                                 element={<DaoEventListPage />}
@@ -139,6 +137,40 @@ const App = () => {
                                 path="hacksgrants"
                                 element={<DaoHackathonListPage />}
                             />
+                            <Route path="r/:reponame" element={<RepositoryLayout />}>
+                                <Route index element={<RepositoryPage />} />
+                                <Route
+                                    path="tree/:branch/*"
+                                    element={<RepositoryPage />}
+                                />
+                                <Route path="blobs">
+                                    <Route
+                                        path="create/:branch/*"
+                                        element={<BlobCreatePage />}
+                                    />
+                                    <Route
+                                        path="update/:branch/*"
+                                        element={<BlobUpdatePage />}
+                                    />
+                                    <Route
+                                        path="delete/:branch/*"
+                                        element={<BlobDeletePage />}
+                                    />
+                                    <Route
+                                        path="view/:branch/*"
+                                        element={<BlobViewPage />}
+                                    />
+                                </Route>
+                                <Route path="commits">
+                                    <Route path=":branchName" element={<CommitsPage />} />
+                                    <Route
+                                        path=":branchName/:commitName"
+                                        element={<CommitPage />}
+                                    />
+                                </Route>
+                                <Route path="merge" element={<MergeCreatePage />} />
+                                <Route path="build/:branchName" element={<BuildPage />} />
+                            </Route>
                         </Route>
                         <Route
                             path="/o/:daoname/hacksgrants/create"
@@ -154,36 +186,6 @@ const App = () => {
                                 path="participants"
                                 element={<HackathonParticipantListPage />}
                             />
-                        </Route>
-                        <Route path="/o/:daoName/r/:repoName" element={<RepoLayout />}>
-                            <Route index element={<RepoPage />} />
-                            <Route path="tree/:branchName/*" element={<RepoPage />} />
-                            <Route path="branches" element={<BranchesPage />} />
-                            <Route path="blobs">
-                                <Route
-                                    path="create/:branchName/*"
-                                    element={<BlobCreatePage />}
-                                />
-                                <Route
-                                    path="update/:branchName/*"
-                                    element={<BlobUpdatePage />}
-                                />
-                                <Route
-                                    path="delete/:branchName/*"
-                                    element={<BlobDeletePage />}
-                                />
-                                <Route path="view/:branchName/*" element={<BlobPage />} />
-                            </Route>
-                            <Route path="commits">
-                                <Route path=":branchName" element={<CommitsPage />} />
-                                <Route
-                                    path=":branchName/:commitName"
-                                    element={<CommitPage />}
-                                />
-                            </Route>
-                            <Route path="merge" element={<MergeCreatePage />} />
-                            <Route path="build/:branchName" element={<BuildPage />} />
-                            <Route path="find/:branchName" element={<GotoPage />} />
                         </Route>
                         <Route path="*" element={<NotFoundPage />} />
                     </Routes>

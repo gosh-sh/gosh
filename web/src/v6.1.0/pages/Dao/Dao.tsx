@@ -1,5 +1,4 @@
 import { DaoMemberWallet, DaoMembers, DaoSupply } from '../../components/Dao'
-import DaoRepositoryListPage from '../DaoRepositoryList'
 import { useDaoMember } from '../../hooks/dao.hooks'
 import { DaoDescription, DaoEventsRecent } from './components'
 
@@ -11,7 +10,6 @@ const DaoPage = () => {
             <div className="col !basis-full md:!basis-0">
                 <DaoEventsRecent className="mb-5" />
                 <DaoDescription className="mb-10" />
-                <DaoRepositoryListPage count={5} />
             </div>
             <div className="col !max-w-full md:!max-w-side-right-md lg:!max-w-side-right">
                 <div className="flex flex-col gap-y-5">

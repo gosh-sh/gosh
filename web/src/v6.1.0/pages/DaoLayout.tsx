@@ -22,7 +22,7 @@ const DaoLayout = () => {
         const tabs = [
             { to: `/o/${daoname}`, title: 'Overview', order: 0 },
             { to: `/o/${daoname}/events`, title: 'DAO', order: 1 },
-            { to: `/o/${daoname}/repos`, title: 'Repositories', order: 2 },
+            { to: `/o/${daoname}/r`, title: 'Files', order: 2 },
             { to: `/o/${daoname}/members`, title: 'Members', order: 3 },
             { to: `/o/${daoname}/hacksgrants`, title: 'Hacks & Grants', order: 4 },
             { to: `/o/${daoname}/tasks`, title: 'Tasks', order: 5 },

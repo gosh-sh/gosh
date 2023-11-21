@@ -4,6 +4,7 @@ import { Link, LinkProps } from 'react-router-dom'
 type TButtonLinkProps = LinkProps & {
     variant?: 'default' | 'custom' | 'outline-danger' | 'outline-secondary'
     size?: 'default' | 'sm' | 'lg' | 'xl'
+    disabled?: boolean
 }
 
 const styles: { [key: string]: string[] } = {
@@ -36,7 +37,14 @@ const sizes: { [key: string]: string[] } = {
 }
 
 const ButtonLink = (props: TButtonLinkProps) => {
-    const { className, children, variant = 'default', size = 'default', ...rest } = props
+    const {
+        className,
+        children,
+        variant = 'default',
+        size = 'default',
+        disabled,
+        ...rest
+    } = props
 
     return (
         <Link
@@ -44,6 +52,7 @@ const ButtonLink = (props: TButtonLinkProps) => {
                 ...styles.base,
                 ...styles[variant],
                 ...sizes[size],
+                disabled ? 'opacity-50 pointer-events-none' : null,
                 className,
             )}
             {...rest}
