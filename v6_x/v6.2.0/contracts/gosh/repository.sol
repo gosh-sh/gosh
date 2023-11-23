@@ -75,11 +75,11 @@ contract Repository is Modifiers{
         _code[m_DiffCode] = codeDiff;
         _code[m_contentSignature] = contentSignature;
         _previousversion = previousversion;
+        _creator = msg.sender;
         if (_previousversion.hasValue()) { SystemContract(_systemcontract).checkUpdateRepo1{value: 0.3 ton, bounce: true, flag: 1}(_name, _nameDao, _previousversion.get(), address(this)); return; }
         _ready = true;
         _Branches[tvm.hash("main")] = Item("main", GoshLib.calculateCommitAddress(_code[m_CommitCode], address(this), "0000000000000000000000000000000000000000"), version);
         _head = "main";
-        _creator = msg.sender;
     }
 
     function checkUpdateRepo4(AddrVersion prev, address answer) public view senderIs(_systemcontract) accept {
