@@ -104,6 +104,15 @@
 			]
 		},
 		{
+			"name": "askCommit",
+			"inputs": [
+				{"name":"namecommit","type":"string"},
+				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "isCorrectCommit",
 			"inputs": [
 				{"name":"namecommit","type":"string"},
@@ -168,10 +177,18 @@
 			]
 		},
 		{
-			"name": "destroy",
+			"name": "destroyRepo",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyBranches",
+			"inputs": [
+				{"name":"index","type":"uint256"}
 			],
 			"outputs": [
 			]
@@ -184,7 +201,8 @@
 				{"name":"namecommit","type":"string"},
 				{"name":"number","type":"uint128"},
 				{"name":"number_commit","type":"uint128"},
-				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"task","type":"optional(tuple)"}
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"task","type":"optional(tuple)"},
+				{"name":"force","type":"bool"}
 			],
 			"outputs": [
 			]

@@ -11,10 +11,8 @@ import {
 import { EDaoEventType } from '../../types/common.types'
 import { executeByChunk, sleep } from '../../utils'
 import { TTaskAssignerData, TTaskGrant } from '../types/dao.types'
-import { THackathonAppIndex } from '../types/hackathon.types'
 import { TGoshCommitTag } from '../types/repository.types'
 import WalletABI from './abi/daowallet.abi.json'
-import { getSystemContract } from './helpers'
 import { SmvClient } from './smvclient'
 import { SmvLocker } from './smvlocker'
 
@@ -345,6 +343,7 @@ export class DaoWallet extends BaseContract {
             nameCommit: tag.commit.name,
             content: tag.content,
             commit: tag.commit.address,
+            isHack: tag.is_hack,
         })
     }
 
@@ -1102,12 +1101,6 @@ export class DaoWallet extends BaseContract {
             const cell: any = await this.lockRepositoryBranch({ ...params, cell: true })
             return await this.createSingleEvent({ cell, reviewers })
         }
-    }
-
-    async createHackathonAppIndex(params: THackathonAppIndex & { repo_address: string }) {
-        const sc = getSystemContract()
-        const data = await sc.getHackathonAppIndexCell(params)
-        await this.run('deployIndex', { data, index: 22 })
     }
 
     async createSingleEvent(params: { cell: string; reviewers?: string[] }) {

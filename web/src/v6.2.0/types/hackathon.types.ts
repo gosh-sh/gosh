@@ -49,13 +49,3 @@ export type TDaoHackathonList = {
     has_next?: boolean
     error?: any
 }
-
-export type THackathonAppIndex = {
-    repo_name: string
-    name: string
-    content: string
-    commit: {
-        address: string
-        name: string
-    }
-}

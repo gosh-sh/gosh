@@ -5,7 +5,6 @@ import { DaoProfile } from '../../blockchain/daoprofile'
 import { VersionController } from '../../blockchain/versioncontroller'
 import { GoshError } from '../../errors'
 import { whileFinite } from '../../utils'
-import { THackathonAppIndex } from '../types/hackathon.types'
 import GoshABI from './abi/systemcontract.abi.json'
 import { GoshCommitTag } from './committag'
 import { Dao } from './dao'
@@ -197,27 +196,6 @@ export class SystemContract extends BaseContract {
             throw new GoshError('Deploy profile timeout reached')
         }
         return profile
-    }
-
-    async getHackathonAppIndexCell(
-        params: THackathonAppIndex & { repo_address: string },
-    ) {
-        const { value0 } = await this.runLocal(
-            'getCellTagHack',
-            {
-                repo: params.repo_address,
-                nametag: params.name,
-                namecommit: params.commit.name,
-                commit: params.commit.address,
-                content: params.content,
-                reponame: params.repo_name,
-            },
-            undefined,
-            {
-                useCachedBoc: true,
-            },
-        )
-        return value0 as string
     }
 
     async getHackathonAppIndexCodeHash(repo_address: string) {

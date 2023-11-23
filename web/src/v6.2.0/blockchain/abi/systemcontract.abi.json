@@ -12,26 +12,24 @@
 			]
 		},
 		{
-			"name": "getCellTagHack",
+			"name": "returnTokenToDao",
 			"inputs": [
-				{"name":"repo","type":"address"},
-				{"name":"nametag","type":"string"},
-				{"name":"namecommit","type":"string"},
-				{"name":"commit","type":"address"},
-				{"name":"content","type":"string"},
-				{"name":"reponame","type":"string"}
+				{"name":"nameDao","type":"string"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"value","type":"uint128"}
 			],
 			"outputs": [
-				{"name":"value0","type":"cell"}
 			]
 		},
 		{
-			"name": "getTagHackCode",
+			"name": "sendTokenToRoot",
 			"inputs": [
-				{"name":"repo","type":"address"}
+				{"name":"namedao","type":"string"},
+				{"name":"pubkey","type":"uint256"},
+				{"name":"value","type":"uint128"},
+				{"components":[{"name":"name","type":"string"},{"name":"symbol","type":"string"},{"name":"decimals","type":"uint8"},{"name":"ethroot","type":"uint256"}],"name":"root","type":"tuple"}
 			],
 			"outputs": [
-				{"name":"value0","type":"cell"}
 			]
 		},
 		{
@@ -309,76 +307,6 @@
 			]
 		},
 		{
-			"name": "checkKeyBlock",
-			"inputs": [
-				{"name":"goshdao","type":"address"},
-				{"name":"repo","type":"address"},
-				{"name":"seqno","type":"uint128"},
-				{"name":"prev","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setNewBlock",
-			"inputs": [
-				{"name":"goshdao","type":"address"},
-				{"name":"repo","type":"address"},
-				{"name":"seqno","type":"uint128"},
-				{"name":"prev","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "checkKeyBlock5",
-			"inputs": [
-				{"name":"goshdao","type":"address"},
-				{"name":"repo","type":"address"},
-				{"name":"seqno","type":"uint128"},
-				{"name":"ver","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setNewBlock5",
-			"inputs": [
-				{"name":"goshdao","type":"address"},
-				{"name":"repo","type":"address"},
-				{"name":"seqno","type":"uint128"},
-				{"name":"ver","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "checkKeyBlock6",
-			"inputs": [
-				{"name":"goshdao","type":"address"},
-				{"name":"repo","type":"address"},
-				{"name":"seqno","type":"uint128"},
-				{"name":"pubkeys","type":"uint256[]"},
-				{"name":"blockhash","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "checkKeyBlock2",
-			"inputs": [
-				{"name":"goshdao","type":"address"},
-				{"name":"repo","type":"address"},
-				{"name":"seqno","type":"uint128"},
-				{"name":"pubkeys","type":"uint256[]"},
-				{"name":"blockhash","type":"uint256"},
-				{"name":"prev","type":"string"},
-				{"name":"ver","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "checkOldTaskVersion2",
 			"inputs": [
 				{"name":"name","type":"string"},
@@ -464,6 +392,15 @@
 				{"name":"newwallet","type":"address"},
 				{"name":"grant","type":"uint128"},
 				{"name":"newversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCode",
+			"inputs": [
+				{"name":"id","type":"uint8"},
+				{"name":"hash","type":"uint256"}
 			],
 			"outputs": [
 			]
@@ -599,7 +536,7 @@
 			]
 		},
 		{
-			"name": "setKeyBlock",
+			"name": "setBigTask",
 			"inputs": [
 				{"name":"code","type":"cell"}
 			],
@@ -607,7 +544,7 @@
 			]
 		},
 		{
-			"name": "setBigTask",
+			"name": "setTagSupplyTask",
 			"inputs": [
 				{"name":"code","type":"cell"}
 			],
@@ -679,9 +616,17 @@
 			]
 		},
 		{
-			"name": "setTagHack",
+			"name": "setGrant",
 			"inputs": [
 				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setTrusted",
+			"inputs": [
+				{"name":"trusted","type":"address"}
 			],
 			"outputs": [
 			]
@@ -690,6 +635,15 @@
 			"name": "getTopicCode",
 			"inputs": [
 				{"name":"dao","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getTagHackCode",
+			"inputs": [
+				{"name":"repo","type":"address"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -740,37 +694,6 @@
 				{"name":"nametask","type":"string"},
 				{"name":"dao","type":"string"},
 				{"name":"repoName","type":"string"}
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "getCommitAddr",
-			"inputs": [
-				{"name":"repo_addr","type":"address"},
-				{"name":"commit_name","type":"string"}
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "getTreeAddr",
-			"inputs": [
-				{"name":"repo_addr","type":"address"},
-				{"name":"tree_hash","type":"uint256"}
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "getSnapshotAddr",
-			"inputs": [
-				{"name":"repo_addr","type":"address"},
-				{"name":"commit_name","type":"string"},
-				{"name":"name","type":"string"}
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}
@@ -847,6 +770,37 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCommitAddr",
+			"inputs": [
+				{"name":"repo_addr","type":"address"},
+				{"name":"commit_name","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getTreeAddr",
+			"inputs": [
+				{"name":"repo_addr","type":"address"},
+				{"name":"tree_hash","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getSnapshotAddr",
+			"inputs": [
+				{"name":"repo_addr","type":"address"},
+				{"name":"commit_name","type":"string"},
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
 			]
 		},
 		{
@@ -1052,6 +1006,7 @@
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
 		{"name":"__value","type":"uint256"},
 		{"name":"_versionController","type":"address"},
+		{"name":"_trusted","type":"address"},
 		{"name":"_flag","type":"bool"},
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_indexesCode","type":"map(uint128,cell)"},

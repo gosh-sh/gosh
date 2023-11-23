@@ -800,15 +800,15 @@ export function useAddHackathonParticipants() {
                 items.map(async (item) => {
                     const repo_path = `${item.dao_name}/${item.repo_name}`
                     const tag_name = `${HACKATHON_TAG.participant}:${repo_path}`
-                    await member.wallet!.createHackathonAppIndex({
-                        repo_address: hackathon!.address,
-                        repo_name: hackathon!.name,
+                    await member.wallet!.createCommitTag({
+                        reponame: hackathon!.name,
                         name: tag_name,
                         content: JSON.stringify(item),
                         commit: {
                             address: `0:${new Array(64).fill(0).join('')}`,
                             name: ZERO_COMMIT,
                         },
+                        is_hack: true,
                     })
                 }),
             )

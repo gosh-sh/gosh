@@ -24,7 +24,7 @@
 				{"name":"codedaotag","type":"cell"},
 				{"name":"coderepotag","type":"cell"},
 				{"name":"topiccode","type":"cell"},
-				{"name":"codekeyblock","type":"cell"},
+				{"name":"grantCode","type":"cell"},
 				{"name":"versions","type":"map(uint256,string)"},
 				{"name":"limit_wallets","type":"uint128"},
 				{"name":"access","type":"optional(uint256)"},
@@ -604,6 +604,17 @@
 			]
 		},
 		{
+			"name": "getCellForDestroyRepository",
+			"inputs": [
+				{"name":"nameRepo","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "getCellForTaskUpgrade",
 			"inputs": [
 				{"name":"nametask","type":"string"},
@@ -794,79 +805,14 @@
 			]
 		},
 		{
-			"name": "deployKeyBlock",
-			"inputs": [
-				{"name":"repo","type":"address"},
-				{"name":"seqno","type":"uint128"},
-				{"name":"iszero","type":"bool"},
-				{"name":"data","type":"bytes"},
-				{"name":"signatures","type":"bytes[]"},
-				{"name":"newsignatures","type":"bytes[]"},
-				{"name":"newpubkeys","type":"uint256[]"},
-				{"name":"blockhash","type":"uint256"},
-				{"name":"previousversion","type":"optional(string)"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "destroyKeyBlock",
-			"inputs": [
-				{"name":"repo","type":"address"},
-				{"name":"seqno","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "emptyhashKeyBlock",
-			"inputs": [
-				{"name":"repo","type":"address"},
-				{"name":"seqno","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "pushhashKeyBlock",
-			"inputs": [
-				{"name":"repo","type":"address"},
-				{"name":"seqno","type":"uint128"},
-				{"name":"hashes","type":"uint256[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "getCheckMasterKeyBlock",
-			"inputs": [
-				{"name":"repo","type":"address"},
-				{"name":"seqno","type":"uint128"},
-				{"name":"data","type":"bytes"},
-				{"name":"signatures","type":"bytes[]"},
-				{"name":"lastsession","type":"bool"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "getCheckObject",
-			"inputs": [
-				{"name":"repo","type":"address"},
-				{"name":"seqno","type":"uint128"},
-				{"name":"data","type":"bytes"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "deployTag",
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"nametag","type":"string"},
 				{"name":"nameCommit","type":"string"},
 				{"name":"content","type":"string"},
-				{"name":"commit","type":"address"}
+				{"name":"commit","type":"address"},
+				{"name":"isHack","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -1114,7 +1060,8 @@
 		{
 			"name": "sendTokenToDaoWrapper",
 			"inputs": [
-				{"name":"grant","type":"uint128"}
+				{"name":"grant","type":"uint128"},
+				{"name":"pubkey","type":"uint256"}
 			],
 			"outputs": [
 			]
@@ -1206,6 +1153,14 @@
 			"name": "sendTokenToNewVersionAutoTree",
 			"inputs": [
 				{"name":"key","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "returnTokenToDao",
+			"inputs": [
+				{"name":"value","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -1445,6 +1400,89 @@
 			]
 		},
 		{
+			"name": "getCellDeployGrants",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"grants","type":"uint128[]"},
+				{"name":"tip3wallet","type":"address"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellDestroyGrants",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellSetGrantPubkey",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellCreateTagForDaoMembers",
+			"inputs": [
+				{"name":"tags","type":"string[]"},
+				{"name":"multiples","type":"uint128[]"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellDestroyTagForDaoMembers",
+			"inputs": [
+				{"name":"tags","type":"string[]"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellDeployTagForDaoMembers",
+			"inputs": [
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"tags","type":"string[]"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCelldeleteTagForDaoMembers",
+			"inputs": [
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"tag","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "getCellTaskDestroy",
 			"inputs": [
 				{"name":"taskName","type":"string"},
@@ -1469,6 +1507,16 @@
 		},
 		{
 			"name": "startOneProposal",
+			"inputs": [
+				{"name":"proposal","type":"cell"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startOneProposalTag",
 			"inputs": [
 				{"name":"proposal","type":"cell"},
 				{"name":"num_clients","type":"uint128"},
@@ -1613,7 +1661,8 @@
 				{"name":"choice","type":"bool"},
 				{"name":"amount","type":"uint128"},
 				{"name":"num_clients","type":"uint128"},
-				{"name":"note","type":"string"}
+				{"name":"note","type":"string"},
+				{"name":"isTag","type":"string[]"}
 			],
 			"outputs": [
 			]
@@ -1625,7 +1674,8 @@
 				{"name":"choice","type":"bool"},
 				{"name":"amount","type":"uint128"},
 				{"name":"num_clients","type":"uint128"},
-				{"name":"note","type":"string"}
+				{"name":"note","type":"string"},
+				{"name":"isTag","type":"string[]"}
 			],
 			"outputs": [
 			]
@@ -1735,6 +1785,15 @@
 			"name": "getWalletAddr",
 			"inputs": [
 				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getGrantAddr",
+			"inputs": [
+				{"name":"name","type":"string"}
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}
@@ -1875,6 +1934,48 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
+			"name": "updateGoshWalletCode",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCode",
+			"inputs": [
+				{"name":"id","type":"uint8"},
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getTagHackCode",
+			"inputs": [
+				{"name":"repo","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "updateCodeWallet",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateCode",
+			"inputs": [
+				{"name":"newcode","type":"cell"},
+				{"name":"cell","type":"cell"}
+			],
+			"outputs": [
 			]
 		},
 		{

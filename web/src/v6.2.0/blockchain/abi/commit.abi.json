@@ -52,7 +52,8 @@
 			"name": "allCorrect",
 			"inputs": [
 				{"name":"number","type":"uint128"},
-				{"name":"branch","type":"string"}
+				{"name":"branch","type":"string"},
+				{"name":"force","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -88,6 +89,15 @@
 			"name": "continueUpgrade",
 			"inputs": [
 				{"name":"res","type":"bool"},
+				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "answerCommit",
+			"inputs": [
+				{"name":"commit","type":"address"},
 				{"name":"branch","type":"string"}
 			],
 			"outputs": [

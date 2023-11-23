@@ -1021,6 +1021,7 @@ export function useDaoMember(params: { initialize?: boolean; subscribe?: boolean
                 name: tagname,
                 content: '',
                 commit: { address: user.profile, name: user.username! },
+                is_hack: false,
             })
         }
 
@@ -2656,7 +2657,7 @@ export function useUpgradeDaoComplete() {
             data: 'Transfer repositories commit tags',
         }))
         await executeByChunk(tags, MAX_PARALLEL_WRITE, async (item) => {
-            await wallet.createCommitTag(item)
+            await wallet.createCommitTag({ ...item, is_hack: false })
         })
 
         // Deploy repositories or create multi event
