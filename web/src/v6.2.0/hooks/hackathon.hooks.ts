@@ -497,6 +497,18 @@ export function useHackathon(
                 address: commit_data.treeaddr,
             })
             const tree_items = await tree_account.getDetails()
+
+            const commit_version = await commit_account.getVersion()
+            const repo_address = repo_account.address
+            const repo_version = await repo_account.getVersion()
+            if (commit_version !== repo_version) {
+                const sc = AppConfig.goshroot.getSystemContract(commit_version)
+                const repo_name = await repo_account.getName()
+                repo_account = (await sc.getRepository({
+                    path: `${dao.name}/${repo_name}`,
+                })) as unknown as GoshRepository
+            }
+
             const snap_data = await Promise.all(
                 tree_items.map(async (item) => {
                     const snap_account = await repo_account.getSnapshot({
@@ -541,7 +553,7 @@ export function useHackathon(
             setHakathons((state) => ({
                 ...state,
                 items: state.items.map((item) => {
-                    if (item.address === repo_account.address) {
+                    if (item.address === repo_address) {
                         return { ...item, metadata }
                     }
                     return item

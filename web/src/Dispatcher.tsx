@@ -1,12 +1,12 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
+import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
 import { useMatch } from 'react-router-dom'
-import { withErrorBoundary, useErrorBoundary } from 'react-error-boundary'
-import Loader from './components/Loader/Loader'
-import Alert from './components/Alert/Alert'
 import { useRecoilState } from 'recoil'
-import { appContextAtom } from './store/app.state'
 import { AppConfig } from './appconfig'
 import MaintenenceImg from './assets/images/maintenance.png'
+import Alert from './components/Alert/Alert'
+import Loader from './components/Loader/Loader'
+import { appContextAtom } from './store/app.state'
 
 const App_v1 = lazy(() => import('./v1.0.0/App'))
 const App_v2 = lazy(() => import('./v2.0.0/App'))

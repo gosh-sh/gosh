@@ -2618,6 +2618,33 @@ export function useUpgradeDaoComplete() {
         return tags
     }
 
+    const getHackathonAppIndexes = async (repositories: any[]) => {
+        const indexes = []
+        for (const item of repositories) {
+            if (item.version < '6.1.0') {
+                continue
+            }
+
+            const sc = AppConfig.goshroot.getSystemContract(
+                item.version,
+            ) as SystemContract
+            const code = await sc.getHackathonAppIndexCodeHash(item.address)
+            const accounts = await getAllAccounts({
+                filters: [`code_hash: {eq:"${code}"}`],
+            })
+            const tags = await executeByChunk<any, TGoshCommitTag>(
+                accounts,
+                MAX_PARALLEL_READ,
+                async ({ id }) => {
+                    const tag = await item.account.getCommitTag({ address: id })
+                    return await tag.getDetails()
+                },
+            )
+            indexes.push(...tags)
+        }
+        return indexes
+    }
+
     const upgradeRepositories = async (params: {
         wallet: DaoWallet
         repositories: any[]
@@ -2658,6 +2685,24 @@ export function useUpgradeDaoComplete() {
         }))
         await executeByChunk(tags, MAX_PARALLEL_WRITE, async (item) => {
             await wallet.createCommitTag({ ...item, is_hack: false })
+        })
+
+        // Get hackathon app indexes
+        setStatus((state) => ({
+            ...state,
+            type: 'pending',
+            data: 'Fetching hackathons participants',
+        }))
+        const hackathon_apps = await getHackathonAppIndexes(repositories)
+
+        // Deploy hackathon app indexes
+        setStatus((state) => ({
+            ...state,
+            type: 'pending',
+            data: 'Transfer hackathons participants',
+        }))
+        await executeByChunk(hackathon_apps, MAX_PARALLEL_WRITE, async (item) => {
+            await wallet.createCommitTag({ ...item, is_hack: true })
         })
 
         // Deploy repositories or create multi event
