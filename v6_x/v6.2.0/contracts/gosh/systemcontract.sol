@@ -428,6 +428,11 @@ contract SystemContract is Modifiers {
         );
     }
 
+    function getTagHackCode(address repo) external view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildTagHackCode(_code[m_TagCode], repo, version);
+        return deployCode;
+    }
+
     function getCommentCode(address dao, address object, optional(string) commit, optional(string) nameoffile) external view returns(TvmCell) {
         return GoshLib.buildCommentCode(
             _code[m_TopicCode], dao, object, commit, nameoffile, version

@@ -2781,7 +2781,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     function getTagHackCode(address repo) external view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version);
+        TvmCell deployCode = GoshLib.buildTagHackCode(_code[m_TagCode], repo, version);
         return deployCode;
     }
 
