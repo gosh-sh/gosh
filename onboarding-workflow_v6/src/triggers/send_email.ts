@@ -26,6 +26,7 @@ async function sendEmails() {
                 subject: email.subject,
                 content: email.content,
                 html: email.html,
+                attachments: email.attachments,
             })
 
             await getDb()

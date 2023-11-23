@@ -1,11 +1,11 @@
 import { Field } from 'formik'
-import { FormikCheckbox } from '../../../../components/Formik'
-import Alert from '../../../../components/Alert/Alert'
-import yup from '../../../yup-extended'
-import PhraseForm from '../../../../components/PhraseForm'
-import { PreviousStep } from './PreviousStep'
-import { useUserSignup } from '../../../hooks/user.hooks'
 import { useState } from 'react'
+import Alert from '../../../../components/Alert/Alert'
+import { FormikCheckbox } from '../../../../components/Formik'
+import PhraseForm from '../../../../components/PhraseForm'
+import { useUserSignup } from '../../../hooks/user.hooks'
+import yup from '../../../yup-extended'
+import { PreviousStep } from './PreviousStep'
 
 const PhraseCreateForm = () => {
     const { data, setPhrase, submitPhraseCreateStep } = useUserSignup()
@@ -24,7 +24,7 @@ const PhraseCreateForm = () => {
 
     return (
         <div className="flex flex-wrap items-center justify-center gap-14">
-            <div className="basis-full lg:basis-4/12 text-center lg:text-start">
+            <div className="basis-full md:basis-6/12 lg:basis-4/12 text-center lg:text-start">
                 <div className="mb-6">
                     <PreviousStep
                         step={!!data.daoinvites.length ? 'daoinvite' : 'username'}
@@ -40,7 +40,7 @@ const PhraseCreateForm = () => {
                 </div>
             </div>
 
-            <div className="basis-full md:basis-8/12 lg:basis-5/12 xl:basis-4/12">
+            <div className="basis-full md:basis-6/12 lg:basis-5/12 xl:basis-4/12">
                 <div className="border border-gray-e6edff rounded-xl p-8">
                     <PhraseForm
                         initialValues={{

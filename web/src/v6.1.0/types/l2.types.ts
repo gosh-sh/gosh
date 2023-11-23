@@ -8,8 +8,10 @@ export enum EL2Network {
 }
 
 export type TL2TransferStatusItem = {
-    type: 'awaiting' | 'pending' | 'completed'
+    type: string
+    status: 'disabled' | 'awaiting' | 'pending' | 'completed'
     message: string
+    help?: string
 }
 
 export type TL2User = {
@@ -17,39 +19,57 @@ export type TL2User = {
     value: { name: string; address: string; type: string; pubkey: string }
 }
 
+export type TL2Token = {
+    network: EL2Network
+    name: string
+    symbol: string
+    decimals: number
+    iconpath: string
+    rootaddr: string | null
+    pair_name: string
+    pair_with: string[]
+}
+
+export type TL2Withdrawal = {
+    token: TL2Token
+    commission: bigint
+    value: bigint
+}
+
 export type TL2TransferData = {
     web3: {
         instance: Web3<RegisteredSubscription> | null
+        chain_id: string
+        chain_supported: boolean
         address: string
+        token?: TL2Token | null
+        balance: bigint
     }
     gosh: {
         instance: TIP3Wallet | null
         address: string
+        token?: TL2Token | null
+        balance: bigint
     }
+    withdrawals: TL2Withdrawal[]
     comissions: { [route: string]: bigint }
-    networks: {
-        [key: string]: {
-            label: string
-            token: string
-            balance: bigint
-            iconpath: string
-            decimals: number
-        }
-    }
     summary: {
         from: {
-            network: string
+            token: TL2Token
             user: TL2User | null
             wallet: string
             amount: string
         }
         to: {
-            network: string
+            token: TL2Token
             user: TL2User | null
             wallet: string
             amount: string
         }
-        progress: TL2TransferStatusItem[]
+        progress: {
+            route: string
+            steps: TL2TransferStatusItem[]
+        }
     }
     step: 'route' | 'transfer' | 'complete'
     error?: any

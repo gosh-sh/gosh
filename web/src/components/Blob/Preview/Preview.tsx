@@ -1,18 +1,18 @@
-import ReactMarkdown from 'react-markdown'
+import { Buffer } from 'buffer'
+import { FormikHelpers } from 'formik'
 import hljs from 'highlight.js'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { GoshError, classNames } from 'react-gosh'
+import ReactMarkdown from 'react-markdown'
+import { useOutletContext } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import rehypeRaw from 'rehype-raw'
 import remarkGfm from 'remark-gfm'
-import { GoshError, classNames } from 'react-gosh'
-import { Buffer } from 'buffer'
-import { useEffect, useMemo, useRef, useState } from 'react'
 import { useBlobComments } from '../../../hooks/codecomment.hooks'
-import { toast } from 'react-toastify'
-import { ToastError } from '../../Toast'
-import LineNumber from './LineNumber'
-import LineContent from './LineContent'
-import { useOutletContext } from 'react-router-dom'
 import { TDaoLayoutOutletContext } from '../../../pages/DaoLayout'
-import { FormikHelpers } from 'formik'
+import { ToastError } from '../../Toast'
+import LineContent from './LineContent'
+import LineNumber from './LineNumber'
 
 type TBlobPreviewProps = {
     address?: string
@@ -138,7 +138,11 @@ const BlobPreview = (props: TBlobPreviewProps) => {
     if (filename.split('.').splice(-1)[0] === 'md') {
         return (
             <div className={classNames('markdown-body px-4 py-4', className)}>
-                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
+                    urlTransform={(value) => value}
+                >
                     {value || ''}
                 </ReactMarkdown>
             </div>

@@ -134,7 +134,7 @@ const Dispatcher = () => {
                 <div className="container mt-3">
                     <Alert variant="warning">
                         <h1 className="font-medium">Sorry, we have temporary problems</h1>
-                        <div>Write operations don't not work due to maintanance</div>
+                        <div>Write operations don't work due to maintanance</div>
                     </Alert>
                 </div>
             )}

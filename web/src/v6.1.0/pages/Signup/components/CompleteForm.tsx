@@ -1,13 +1,21 @@
 import { Form, Formik } from 'formik'
-import { Button } from '../../../../components/Form'
-import { useUserSignup } from '../../../hooks/user.hooks'
-import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Button } from '../../../../components/Form'
+import { PERSIST_REDIRECT_KEY } from '../../../../constants'
+import { useOauth } from '../../../hooks/oauth.hooks'
+import { useUserSignup } from '../../../hooks/user.hooks'
 
 const CompleteForm = () => {
     const navigate = useNavigate()
+    const { oauth } = useOauth()
     const { submitCompleteStep } = useUserSignup()
     const [isAnySubmitting, setIsAnySubmitting] = useState<boolean>(false)
+
+    const is_github =
+        oauth.session?.user.identities?.find(({ id }) => {
+            return id === oauth.session?.user.user_metadata.provider_id
+        })?.provider === 'github'
 
     const onGithubSubmit = async () => {
         try {
@@ -24,7 +32,10 @@ const CompleteForm = () => {
         try {
             setIsAnySubmitting(true)
             await submitCompleteStep({ provider: false })
-            navigate('/a/orgs')
+
+            const redirect = localStorage.getItem(PERSIST_REDIRECT_KEY)
+            localStorage.removeItem(PERSIST_REDIRECT_KEY)
+            navigate(redirect || '/a/orgs')
         } catch (e: any) {
             console.error(e.message)
         } finally {
@@ -35,30 +46,38 @@ const CompleteForm = () => {
     return (
         <div className="max-w-lg mx-auto">
             <div className="w-32 mx-auto">
-                <img src="/images/github.webp" alt="Github" />
+                <img
+                    src={is_github ? '/images/github.webp' : '/images/success-green.webp'}
+                    alt="Almost there"
+                />
             </div>
             <div className="mt-7 text-3xl font-medium leading-10 text-center">
-                Do you want to upload your repository from GitHub
+                {is_github
+                    ? 'Do you want to upload your repository from GitHub'
+                    : 'Almost there'}
             </div>
-            <div className="mt-10 w-full max-w-xs mx-auto">
+            <div className="mt-10 w-full max-w-xs mx-auto flex flex-col gap-y-4">
+                {is_github && (
+                    <div>
+                        <Formik initialValues={{}} onSubmit={onGithubSubmit}>
+                            {({ isSubmitting }) => (
+                                <Form>
+                                    <Button
+                                        type="submit"
+                                        size="xl"
+                                        className="w-full"
+                                        disabled={isSubmitting || isAnySubmitting}
+                                        isLoading={isSubmitting}
+                                    >
+                                        Upload repository from GitHub
+                                    </Button>
+                                </Form>
+                            )}
+                        </Formik>
+                    </div>
+                )}
+
                 <div>
-                    <Formik initialValues={{}} onSubmit={onGithubSubmit}>
-                        {({ isSubmitting }) => (
-                            <Form>
-                                <Button
-                                    type="submit"
-                                    size="xl"
-                                    className="w-full"
-                                    disabled={isSubmitting || isAnySubmitting}
-                                    isLoading={isSubmitting}
-                                >
-                                    Upload repository from GitHub
-                                </Button>
-                            </Form>
-                        )}
-                    </Formik>
-                </div>
-                <div className="mt-4">
                     <Formik initialValues={{}} onSubmit={onSkipSubmit}>
                         {({ isSubmitting }) => (
                             <Form>
@@ -70,7 +89,7 @@ const CompleteForm = () => {
                                     disabled={isSubmitting || isAnySubmitting}
                                     isLoading={isSubmitting}
                                 >
-                                    No, thanks
+                                    {is_github ? 'No, thanks' : 'Create DAO and complete'}
                                 </Button>
                             </Form>
                         )}

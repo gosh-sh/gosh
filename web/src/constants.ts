@@ -10,8 +10,14 @@ export const DAO_TOKEN_TRANSFER_TAG = '___!daotokentransfer!___'
 export const VESTING_BALANCE_TAG = '___!vestingbalance!___'
 export const MILESTONE_TAG = '___!milestone!___'
 export const MILESTONE_TASK_TAG = '___!milestonetask!___'
+export const HACKATHON_TAG = {
+    hackathon: '___!hackathon:hack!___',
+    grant: '___!hackathon:grant!___',
+    participant: '___!hackathon:participant!___',
+}
 export const DISABLED_VERSIONS = ['5.0.0', '6.0.0']
 export const L2_COMISSION = 1000 // 0.1% 0.001
+export const PERSIST_REDIRECT_KEY = 'gosh-redirect'
 
 export const PARTNER_DAO_NAMES: string[] = JSON.parse(
     import.meta.env.REACT_APP_DAO_PARTNER || '[]',
@@ -65,4 +71,19 @@ export const DaoEventType: { [key: number]: string } = {
 export const NotificationType: { [key: string]: string } = {
     [ENotificationType.DAO_EVENT_CREATED]: 'New proposal',
     [ENotificationType.REPO_COMMIT_PUSHED]: 'New commit',
+}
+
+export const L2Web3Chains: { [key: string]: { name: string; iconpath: string } } = {
+    '': {
+        name: '',
+        iconpath: '/images/tokens/ethereum.webp',
+    },
+    '0x1': {
+        name: 'Ethereum',
+        iconpath: '/images/tokens/ethereum.webp',
+    },
+    '0xaa36a7': {
+        name: 'Ethereum (Sepolia)',
+        iconpath: '/images/tokens/ethereum.webp',
+    },
 }

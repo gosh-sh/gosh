@@ -16,7 +16,6 @@ export class AppConfig {
     static dockerclient?: any
     static supabase: SupabaseClient<any, 'public', any>
     static maintenance: number
-    static tip3root: TIP3Root | null
     static elockaddr: string
 
     static setup() {
@@ -69,9 +68,6 @@ export class AppConfig {
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkaHNrdnN6dGVwYnlpc2Jxc2pqIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzA0MTMwNTEsImV4cCI6MTk4NTk4OTA1MX0._6KcFBYmSUfJqTJsKkWcMoIQBv3tuInic9hvEHuFpJg',
         )
         AppConfig.maintenance = parseInt(import.meta.env.REACT_APP_MAINTENANCE || '0')
-        AppConfig.tip3root = tip3RootAddress
-            ? new TIP3Root(AppConfig.goshclient, tip3RootAddress)
-            : null
         AppConfig.elockaddr = import.meta.env.REACT_APP_ELOCKADDR
 
         // TODO: Remove this after git part refactor
@@ -96,6 +92,10 @@ export class AppConfig {
         return Object.keys(AppConfig.versions)
             .reverse()
             .filter((v) => DISABLED_VERSIONS.indexOf(v) < 0)[0]
+    }
+
+    static getTIP3Root(address: string) {
+        return new TIP3Root(AppConfig.goshclient, address)
     }
 
     /**

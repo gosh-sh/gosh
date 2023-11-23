@@ -1,17 +1,18 @@
 import { TonClient } from '@eversdk/core'
-import { BaseContract } from '../../blockchain/contract'
-import GoshABI from './abi/systemcontract.abi.json'
-import { GoshError } from '../../errors'
-import { Dao } from './dao'
-import { GoshRepository } from './repository'
 import { AppConfig } from '../../appconfig'
-import { VersionController } from '../../blockchain/versioncontroller'
-import { whileFinite } from '../../utils'
-import { GoshTag } from './goshtag'
-import { Task } from './task'
-import { GoshCommitTag } from './committag'
+import { BaseContract } from '../../blockchain/contract'
 import { DaoProfile } from '../../blockchain/daoprofile'
+import { VersionController } from '../../blockchain/versioncontroller'
+import { GoshError } from '../../errors'
+import { whileFinite } from '../../utils'
+import { THackathonAppIndex } from '../types/hackathon.types'
+import GoshABI from './abi/systemcontract.abi.json'
+import { GoshCommitTag } from './committag'
+import { Dao } from './dao'
+import { GoshTag } from './goshtag'
 import { Milestone } from './milestone'
+import { GoshRepository } from './repository'
+import { Task } from './task'
 
 export class SystemContract extends BaseContract {
     versionController: VersionController
@@ -115,6 +116,17 @@ export class SystemContract extends BaseContract {
         return hash
     }
 
+    async getDaoRepositoryTagCodeHash(daoaddr: string, tag: string): Promise<string> {
+        const { value0 } = await this.runLocal(
+            'getRepoTagDaoCode',
+            { dao: daoaddr, repotag: tag },
+            undefined,
+            { useCachedBoc: true },
+        )
+        const { hash } = await this.client.boc.get_boc_hash({ boc: value0 })
+        return hash
+    }
+
     async getTask(options: {
         address?: string
         data?: {
@@ -185,5 +197,37 @@ export class SystemContract extends BaseContract {
             throw new GoshError('Deploy profile timeout reached')
         }
         return profile
+    }
+
+    async getHackathonAppIndexCell(
+        params: THackathonAppIndex & { repo_address: string },
+    ) {
+        const { value0 } = await this.runLocal(
+            'getCellTagHack',
+            {
+                repo: params.repo_address,
+                nametag: params.name,
+                namecommit: params.commit.name,
+                commit: params.commit.address,
+                content: params.content,
+                reponame: params.repo_name,
+            },
+            undefined,
+            {
+                useCachedBoc: true,
+            },
+        )
+        return value0 as string
+    }
+
+    async getHackathonAppIndexCodeHash(repo_address: string) {
+        const { value0 } = await this.runLocal(
+            'getTagHackCode',
+            { repo: repo_address },
+            undefined,
+            { useCachedBoc: true },
+        )
+        const { hash } = await this.client.boc.get_boc_hash({ boc: value0 })
+        return hash
     }
 }

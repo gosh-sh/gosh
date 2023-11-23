@@ -1,9 +1,9 @@
+import { Form, Formik } from 'formik'
 import { useState } from 'react'
 import { Button } from '../../../../../components/Form'
-import DaoInviteListItem from './ListItem'
 import { useUserSignup } from '../../../../hooks/user.hooks'
-import { Form, Formik } from 'formik'
 import { PreviousStep } from '../PreviousStep'
+import DaoInviteListItem from './ListItem'
 
 const DaoInvitesForm = () => {
     const { data, submitDaoInvitesStep } = useUserSignup()
@@ -22,7 +22,7 @@ const DaoInvitesForm = () => {
 
     return (
         <div className="flex flex-wrap items-center justify-center gap-14">
-            <div className="basis-full lg:basis-4/12 text-center lg:text-start">
+            <div className="basis-full md:basis-6/12 lg:basis-4/12 text-center lg:text-start">
                 <div className="mb-6">
                     <PreviousStep step="username" disabled={isSubmitting} />
                 </div>
@@ -46,7 +46,7 @@ const DaoInvitesForm = () => {
                     )}
                 </Formik>
             </div>
-            <div className="basis-full md:basis-8/12 lg:basis-5/12">
+            <div className="basis-full md:basis-6/12 lg:basis-5/12">
                 <div className="flex flex-col gap-6">
                     {data.daoinvites.map((item, index) => (
                         <DaoInviteListItem

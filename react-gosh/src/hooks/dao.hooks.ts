@@ -201,38 +201,38 @@ function useDao(name: string) {
         _getDao()
     }, [name])
 
-    useEffect(() => {
-        let _intervalLock = false
-        const interval = setInterval(async () => {
-            if (!_intervalLock) {
-                _intervalLock = true
-                await updateDetails()
-                _intervalLock = false
-            }
-        }, 10000)
+    // useEffect(() => {
+    //     let _intervalLock = false
+    //     const interval = setInterval(async () => {
+    //         if (!_intervalLock) {
+    //             _intervalLock = true
+    //             await updateDetails()
+    //             _intervalLock = false
+    //         }
+    //     }, 10000)
 
-        return () => {
-            clearInterval(interval)
-        }
-    }, [updateDetails])
+    //     return () => {
+    //         clearInterval(interval)
+    //     }
+    // }, [updateDetails])
 
-    useEffect(() => {
-        const _checkPaidMembership = async () => {
-            if (!adapter?.wallet || !details?.members.length) {
-                return
-            }
+    // useEffect(() => {
+    //     const _checkPaidMembership = async () => {
+    //         if (!adapter?.wallet || !details?.members.length) {
+    //             return
+    //         }
 
-            const now = Math.round(Date.now() / 1000)
-            const anyExpired = details.members.filter(({ expired = 0 }) => {
-                return expired > 0 && now > expired
-            })
-            if (anyExpired.length) {
-                adapter.wallet.run('startCheckPaidMembership', {})
-            }
-        }
+    //         const now = Math.round(Date.now() / 1000)
+    //         const anyExpired = details.members.filter(({ expired = 0 }) => {
+    //             return expired > 0 && now > expired
+    //         })
+    //         if (anyExpired.length) {
+    //             adapter.wallet.run('startCheckPaidMembership', {})
+    //         }
+    //     }
 
-        _checkPaidMembership()
-    }, [details?.members, adapter?.wallet])
+    //     _checkPaidMembership()
+    // }, [details?.members, adapter?.wallet])
 
     return {
         adapter,

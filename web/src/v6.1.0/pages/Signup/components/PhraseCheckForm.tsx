@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import PhraseForm from '../../../../components/PhraseForm'
-import { PreviousStep } from './PreviousStep'
-import { useUserSignup } from '../../../hooks/user.hooks'
 import { useSetRecoilState } from 'recoil'
+import PhraseForm from '../../../../components/PhraseForm'
 import { appModalStateAtom } from '../../../../store/app.state'
 import { PinCodeModal } from '../../../components/Modal'
+import { useUserSignup } from '../../../hooks/user.hooks'
+import { PreviousStep } from './PreviousStep'
 
 const generateRandomWordNumbers = () => {
     const min = 0
@@ -55,7 +55,7 @@ const PhraseCheckForm = () => {
 
     return (
         <div className="flex flex-wrap items-center justify-center gap-14">
-            <div className="basis-full lg:basis-4/12 text-center lg:text-start">
+            <div className="basis-full md:basis-6/12 lg:basis-4/12 text-center lg:text-start">
                 <div className="mb-6">
                     <PreviousStep step="phrase" disabled={isSubmitting} />
                 </div>
@@ -68,7 +68,7 @@ const PhraseCheckForm = () => {
                 </div>
             </div>
 
-            <div className="basis-full md:basis-8/12 lg:basis-5/12 xl:basis-4/12">
+            <div className="basis-full md:basis-6/12 lg:basis-5/12 xl:basis-4/12">
                 <div className="border border-gray-e6edff rounded-xl p-8">
                     <h3 className="mb-2">
                         Input words{' '}
