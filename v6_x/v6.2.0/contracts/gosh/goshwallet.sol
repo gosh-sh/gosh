@@ -2064,7 +2064,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshDao(_goshdao).setNewMembersTags{value: 0.1 ton, flag: 1}(_pubaddr, _index, pubaddr, tags);
     }
 
-    function getCelldeleteTagForDaoMembers(
+    function getCellDeleteTagForDaoMembers(
         address[] pubaddr,
         string tag,
         string comment, optional(uint32) time) external pure returns(TvmCell) {

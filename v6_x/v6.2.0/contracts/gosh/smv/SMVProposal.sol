@@ -23,7 +23,7 @@ address public tokenRoot;
 TvmCell public propData;
 mapping (address => bool) public reviewers;
 mapping(uint256 => mapping(uint256 => bool)) _daoMembersTag;
-mapping(uint256 => uint128) _daoTagData;
+mapping(uint256 => Multiples) _daoTagData;
 uint32 public startTime;
 uint32 public finishTime;
 uint32 public deltaStartTime;
@@ -165,13 +165,13 @@ function onCodeUpgrade (string[] isTag,
     }
 }
 
-function onContinueAction(uint128 t, mapping(uint256 => mapping(uint256 => bool)) daoMembersTag, mapping(uint256 => uint128) daoTagData) external view senderIs(_goshdao) accept
+function onContinueAction(uint128 t, mapping(uint256 => mapping(uint256 => bool)) daoMembersTag, mapping(uint256 => Multiples) daoTagData) external view senderIs(_goshdao) accept
 {
     if (_isTag.length == 0) { this.onContinueActionAgain{value: 0.1 ton, flag: 1}(t, daoMembersTag, daoTagData); }
     else { IGoshDao(_goshdao).calculateTagSupply{value: 0.1 ton, flag: 1}(_isTag); }
 }
 
-function onContinueActionAgain(uint128 t, mapping(uint256 => mapping(uint256 => bool)) daoMembersTag, mapping(uint256 => uint128) daoTagData) external accept {
+function onContinueActionAgain(uint128 t, mapping(uint256 => mapping(uint256 => bool)) daoMembersTag, mapping(uint256 => Multiples) daoTagData) external accept {
     if (msg.sender != this) { require(msg.sender == _goshdao, ERR_SENDER_NOT_DAO); }
     totalSupply = t;
     _daoMembersTag = daoMembersTag;
@@ -255,7 +255,7 @@ function calculateVotePower(address _locker, uint256 _platform_id, bool choice, 
         (uint256 newkey,bool worker) = res.get();
         worker;
         key = newkey;
-        sum += amount * _daoTagData[key] / 100;
+        sum += amount * _daoTagData[key].value / 100;
     }
 }
 

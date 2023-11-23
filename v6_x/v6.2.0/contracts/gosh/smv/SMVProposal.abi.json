@@ -30,7 +30,7 @@
 			"inputs": [
 				{"name":"t","type":"uint128"},
 				{"name":"daoMembersTag","type":"map(uint256,map(uint256,bool))"},
-				{"name":"daoTagData","type":"map(uint256,uint128)"}
+				{"components":[{"name":"value","type":"uint128"},{"name":"name","type":"string"}],"name":"daoTagData","type":"map(uint256,tuple)"}
 			],
 			"outputs": [
 			]
@@ -40,7 +40,7 @@
 			"inputs": [
 				{"name":"t","type":"uint128"},
 				{"name":"daoMembersTag","type":"map(uint256,map(uint256,bool))"},
-				{"name":"daoTagData","type":"map(uint256,uint128)"}
+				{"components":[{"name":"value","type":"uint128"},{"name":"name","type":"string"}],"name":"daoTagData","type":"map(uint256,tuple)"}
 			],
 			"outputs": [
 			]
@@ -1602,7 +1602,7 @@
 		{"name":"propData","type":"cell"},
 		{"name":"reviewers","type":"map(address,bool)"},
 		{"name":"_daoMembersTag","type":"map(uint256,map(uint256,bool))"},
-		{"name":"_daoTagData","type":"map(uint256,uint128)"},
+		{"components":[{"name":"value","type":"uint128"},{"name":"name","type":"string"}],"name":"_daoTagData","type":"map(uint256,tuple)"},
 		{"name":"startTime","type":"uint32"},
 		{"name":"finishTime","type":"uint32"},
 		{"name":"deltaStartTime","type":"uint32"},

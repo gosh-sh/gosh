@@ -46,7 +46,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     mapping(uint256 => MemberToken) _wallets;
     mapping(uint256 => string) _daoMembers;
     mapping(uint256 => mapping(uint256 => bool)) _daoMembersTag;
-    mapping(uint256 => uint128) _daoTagData;
+    mapping(uint256 => Multiples) _daoTagData;
     mapping(uint8 => TvmCell) _code;
     mapping(uint256 => string) _hashtag;
     mapping(uint256 => string) _versions;
@@ -242,7 +242,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (ver == "6.2.0") {
             mapping(uint256 => MemberToken) wallets;
             mapping(uint256 => string) hashtag;
-            ( _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, wallets, hashtag, _my_wallets, _daoMembers, _reserve, , _totalsupply , _versions, _paidMembership, _daoMembersTag, _daoTagData) = abi.decode(a, (bool, bool, bool, bool, mapping(uint256 => MemberToken), mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string), mapping(uint8 => PaidMember), mapping(uint256 => mapping(uint256 => bool)), mapping(uint256 => uint128)));
+            ( _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, wallets, hashtag, _my_wallets, _daoMembers, _reserve, , _totalsupply , _versions, _paidMembership, _daoMembersTag, _daoTagData) = abi.decode(a, (bool, bool, bool, bool, mapping(uint256 => MemberToken), mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string), mapping(uint8 => PaidMember), mapping(uint256 => mapping(uint256 => bool)), mapping(uint256 => Multiples)));
             _versions[tvm.hash(version)] = version;
             uint256 zero;
             this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
@@ -843,7 +843,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             TvmCell s1 = GoshLib.composeTagSupplyStateInit(_code[m_TagSupplyCode], address(this), tvm.hash(tags[index]));
             new TagSupply {stateInit: s1, value: FEE_DEPLOY_TAG_SUPPLY, wid: 0, flag: 1}(multiples[index]);
         }
-        _daoTagData[tvm.hash(tags[index])] = multiples[index];
+        _daoTagData[tvm.hash(tags[index])] = Multiples(multiples[index], tags[index]);
         this.setNewTagsIn{value: 0.2 ton, flag: 1}(tags, multiples, index + 1);
     }
 
@@ -1613,8 +1613,8 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
     
     function getDetails() external view returns(address pubaddr, bool allowMint, bool hide_voting_results, bool allow_discussion_on_proposals, bool abilityInvite, bool isRepoUpgraded, string nameDao,
-    mapping(uint256 => MemberToken) wallets, uint128 reserve, uint128 allbalance, uint128 totalsupply, mapping(uint256 => string) hashtag, mapping(uint256 => address) my_wallets, mapping(uint256 => string) daoMembers, bool isCheck, mapping(uint8 => PaidMember) paidMembership, bool isUpgraded) {
-    return (_pubaddr, _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _isRepoUpgraded, _nameDao, _wallets, _reserve, _allbalance, _totalsupply, _hashtag, _my_wallets, _daoMembers, _isCheck, _paidMembership, _isUpgraded);
+    mapping(uint256 => MemberToken) wallets, uint128 reserve, uint128 allbalance, uint128 totalsupply, mapping(uint256 => string) hashtag, mapping(uint256 => address) my_wallets, mapping(uint256 => string) daoMembers, bool isCheck, mapping(uint8 => PaidMember) paidMembership, bool isUpgraded, mapping(uint256 => Multiples) daoTagData, mapping(uint256 => mapping(uint256 => bool)) daoMembersTag) {
+    return (_pubaddr, _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _isRepoUpgraded, _nameDao, _wallets, _reserve, _allbalance, _totalsupply, _hashtag, _my_wallets, _daoMembers, _isCheck, _paidMembership, _isUpgraded, _daoTagData, _daoMembersTag);
     }
     
     function getDaoIn() public view minValue(0.5 ton) {

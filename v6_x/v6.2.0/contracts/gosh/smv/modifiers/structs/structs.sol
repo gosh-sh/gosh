@@ -7,6 +7,12 @@
 pragma ever-solidity >=0.66.0;
 
 //Structs
+
+struct Multiples {
+    uint128 value;
+    string name;
+}
+
 struct RootData {
     string name;
     string symbol;
