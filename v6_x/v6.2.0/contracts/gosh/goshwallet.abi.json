@@ -1500,7 +1500,8 @@
 				{"name":"number","type":"uint128"},
 				{"name":"proposals","type":"cell"},
 				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
+				{"name":"reviewers","type":"address[]"},
+				{"name":"data","type":"string[]"}
 			],
 			"outputs": [
 			]

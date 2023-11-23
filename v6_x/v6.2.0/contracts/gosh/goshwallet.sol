@@ -2094,7 +2094,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint128 number,
         TvmCell proposals,
         uint128 num_clients, 
-        address[] reviewers
+        address[] reviewers,
+        string[] data
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
@@ -2105,7 +2106,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         uint256 proposalKind = MULTI_PROPOSAL_KIND;
         TvmCell c = abi.encode(proposalKind, number, proposals, block.timestamp);
-        string[] data;
         _startProposalForOperation(c, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers, data);
         getMoney();
     }
