@@ -641,6 +641,15 @@
 			]
 		},
 		{
+			"name": "getTagHackCode",
+			"inputs": [
+				{"name":"repo","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "getCommentCode",
 			"inputs": [
 				{"name":"dao","type":"address"},
