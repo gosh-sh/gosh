@@ -25,7 +25,6 @@ import { RepositoryTagAddEvent } from '../RepositoryTagAddEvent/RepositoryTagAdd
 import { RepositoryTagDeleteEvent } from '../RepositoryTagDeleteEvent/RepositoryTagDeleteEvent'
 import { ShowDaoEventProgressEvent } from '../ShowDaoEventProgressEvent/ShowDaoEventProgressEvent'
 import { UpgradeTaskEvent } from '../UpgradeTaskEvent/UpgradeTaskEvent'
-import { RepositoryDeleteEvent } from '../RepositoryDeleteEvent/RepositoryDeleteEvent'
 
 type TMultiEventProps = {
     event: TDaoEventDetails
@@ -123,13 +122,6 @@ const MultiEvent = (props: TMultiEventProps) => {
                         )}
                         {item.type === EDaoEventType.MILESTONE_UPGRADE && (
                             <MilestoneUpgradeEvent key={index} data={item.data} />
-                        )}
-                        {item.type === EDaoEventType.REPO_DELETE && (
-                            <RepositoryDeleteEvent
-                                key={index}
-                                data={item.data}
-                                isCompleted={event.status.completed}
-                            />
                         )}
                     </div>
                 ))}

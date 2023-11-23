@@ -22,7 +22,7 @@ export function useCreateRepository() {
         appToastStatusSelector('__createrepository'),
     )
 
-    const createRepository = useCallback(
+    const create = useCallback(
         async (name: string, description?: string) => {
             try {
                 setStatus((state) => ({
@@ -127,83 +127,7 @@ export function useCreateRepository() {
         [dao.name, dao.members?.length, member.isMember, member.isReady],
     )
 
-    return { createRepository, status }
-}
-
-export function useDeleteRepository() {
-    const { details: dao } = useDao()
-    const member = useDaoMember()
-    const { beforeCreateEvent, afterCreateEvent } = useDaoHelpers()
-    const [status, setStatus] = useRecoilState(
-        appToastStatusSelector('__deleterepository'),
-    )
-
-    const deleteRepository = useCallback(
-        async (name: string, comment?: string) => {
-            try {
-                setStatus((state) => ({
-                    ...state,
-                    type: 'pending',
-                    data: 'Deleting repository',
-                }))
-
-                name = name.toLowerCase()
-                if (!dao.name) {
-                    throw new GoshError('Value error', 'DAO name undefined')
-                }
-                if (!member.isMember) {
-                    throw new GoshError('Access error', 'Not a DAO member')
-                }
-                if (!member.isReady || !member.wallet) {
-                    throw new GoshError(
-                        'Access error',
-                        'Wallet is missing or is not activated',
-                    )
-                }
-
-                // Check if repository exists
-                const repo = await getSystemContract().getRepository({
-                    path: `${dao.name}/${name}`,
-                })
-                const account = repo as GoshRepository
-                if (!(await account.isDeployed())) {
-                    throw new GoshError('Value error', 'Repository does not exist')
-                }
-
-                // Prepare balance for create event
-                await beforeCreateEvent(20, { onPendingCallback: setStatus })
-
-                setStatus((state) => ({
-                    ...state,
-                    type: 'pending',
-                    data: 'Delete repository',
-                }))
-                comment = comment || `Delete repository ${name}`
-                const eventaddr = await member.wallet.deleteRepository({ name, comment })
-
-                await afterCreateEvent(
-                    { label: 'Update DAO members', comment, eventaddr },
-                    { onPendingCallback: setStatus },
-                )
-                setStatus((state) => ({
-                    ...state,
-                    type: 'success',
-                    data: {
-                        title: 'Delete repository',
-                        content: 'Delete repository event created',
-                    },
-                }))
-
-                return { eventaddr }
-            } catch (e: any) {
-                setStatus((state) => ({ ...state, type: 'error', data: e }))
-                throw e
-            }
-        },
-        [dao.name, dao.members?.length, member.isMember, member.isReady],
-    )
-
-    return { deleteRepository, status }
+    return { create, status }
 }
 
 export function useDaoRepositoryList(

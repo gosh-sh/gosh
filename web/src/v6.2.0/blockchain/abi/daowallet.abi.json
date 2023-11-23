@@ -604,17 +604,6 @@
 			]
 		},
 		{
-			"name": "getCellForDestroyRepository",
-			"inputs": [
-				{"name":"nameRepo","type":"string"},
-				{"name":"comment","type":"string"},
-				{"name":"time","type":"optional(uint32)"}
-			],
-			"outputs": [
-				{"name":"value0","type":"cell"}
-			]
-		},
-		{
 			"name": "getCellForTaskUpgrade",
 			"inputs": [
 				{"name":"nametask","type":"string"},
@@ -800,6 +789,72 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployKeyBlock",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"iszero","type":"bool"},
+				{"name":"data","type":"bytes"},
+				{"name":"signatures","type":"bytes[]"},
+				{"name":"newsignatures","type":"bytes[]"},
+				{"name":"newpubkeys","type":"uint256[]"},
+				{"name":"blockhash","type":"uint256"},
+				{"name":"previousversion","type":"optional(string)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyKeyBlock",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "emptyhashKeyBlock",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "pushhashKeyBlock",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"hashes","type":"uint256[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCheckMasterKeyBlock",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"data","type":"bytes"},
+				{"name":"signatures","type":"bytes[]"},
+				{"name":"lastsession","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCheckObject",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"seqno","type":"uint128"},
+				{"name":"data","type":"bytes"}
 			],
 			"outputs": [
 			]
@@ -1059,8 +1114,7 @@
 		{
 			"name": "sendTokenToDaoWrapper",
 			"inputs": [
-				{"name":"grant","type":"uint128"},
-				{"name":"pubkey","type":"uint256"}
+				{"name":"grant","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -1152,14 +1206,6 @@
 			"name": "sendTokenToNewVersionAutoTree",
 			"inputs": [
 				{"name":"key","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "returnTokenToDao",
-			"inputs": [
-				{"name":"value","type":"uint128"}
 			],
 			"outputs": [
 			]

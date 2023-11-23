@@ -1,20 +1,22 @@
 import { KeyPair, ResultOfProcessMessage, TonClient } from '@eversdk/core'
+import { AppConfig } from '../../appconfig'
 import { BaseContract } from '../../blockchain/contract'
-import WalletABI from './abi/daowallet.abi.json'
-import { SmvLocker } from './smvlocker'
-import { SmvClient } from './smvclient'
-import { TGoshCommitTag } from '../types/repository.types'
-import { executeByChunk, sleep } from '../../utils'
-import { EDaoEventType } from '../../types/common.types'
+import { UserProfile } from '../../blockchain/userprofile'
 import {
     MAX_PARALLEL_READ,
     MILESTONE_TAG,
     MILESTONE_TASK_TAG,
     SYSTEM_TAG,
 } from '../../constants'
+import { EDaoEventType } from '../../types/common.types'
+import { executeByChunk, sleep } from '../../utils'
 import { TTaskAssignerData, TTaskGrant } from '../types/dao.types'
-import { UserProfile } from '../../blockchain/userprofile'
-import { AppConfig } from '../../appconfig'
+import { THackathonAppIndex } from '../types/hackathon.types'
+import { TGoshCommitTag } from '../types/repository.types'
+import WalletABI from './abi/daowallet.abi.json'
+import { getSystemContract } from './helpers'
+import { SmvClient } from './smvclient'
+import { SmvLocker } from './smvlocker'
 
 export class DaoWallet extends BaseContract {
     constructor(client: TonClient, address: string, keys?: KeyPair) {
@@ -332,27 +334,6 @@ export class DaoWallet extends BaseContract {
             return null
         } else {
             const cell: any = await this.createRepository({ ...params, cell: true })
-            return await this.createSingleEvent({ cell, reviewers })
-        }
-    }
-
-    async deleteRepository(params: {
-        name: string
-        comment?: string
-        reviewers?: string[]
-        cell?: boolean
-    }) {
-        const { name, comment = '', reviewers = [], cell } = params
-        const cellParams = { nameRepo: name.toLowerCase(), comment }
-
-        if (cell) {
-            const { value0 } = await this.runLocal(
-                'getCellForDestroyRepository',
-                cellParams,
-            )
-            return value0 as string
-        } else {
-            const cell: any = await this.deleteRepository({ ...params, cell: true })
             return await this.createSingleEvent({ cell, reviewers })
         }
     }
@@ -1060,6 +1041,75 @@ export class DaoWallet extends BaseContract {
         return await this.getEventAddress(result)
     }
 
+    async setCommit(params: {
+        repo_name: string
+        branch_name: string
+        commit_name: string
+        num_files: number
+        num_commits: number
+        task?: any
+        comment?: string
+        reviewers?: string[]
+        cell?: boolean | undefined
+    }) {
+        const { comment = '', reviewers = [], cell } = params
+
+        const cellParams = {
+            repoName: params.repo_name,
+            branchName: params.branch_name,
+            commit: params.commit_name,
+            numberChangedFiles: params.num_files,
+            numberCommits: params.num_commits,
+            task: params.task,
+            comment,
+        }
+
+        if (cell) {
+            const { value0 } = await this.runLocal('getCellSetCommit', cellParams)
+            return value0 as string
+        } else {
+            const result = await this.run('startProposalForSetCommit', {
+                ...cellParams,
+                reviewers,
+                num_clients: await this.smvClientsCount(),
+            })
+            return await this.getEventAddress(result)
+        }
+    }
+
+    async lockRepositoryBranch(params: {
+        repo_name: string
+        branch_name: string
+        comment?: string
+        reviewers?: string[]
+        cell?: boolean | undefined
+    }) {
+        const { comment = '', reviewers = [], cell } = params
+
+        const cellParams = {
+            repoName: params.repo_name,
+            branchName: params.branch_name,
+            comment,
+        }
+
+        if (cell) {
+            const { value0 } = await this.runLocal(
+                'getCellAddProtectedBranch',
+                cellParams,
+            )
+            return value0 as string
+        } else {
+            const cell: any = await this.lockRepositoryBranch({ ...params, cell: true })
+            return await this.createSingleEvent({ cell, reviewers })
+        }
+    }
+
+    async createHackathonAppIndex(params: THackathonAppIndex & { repo_address: string }) {
+        const sc = getSystemContract()
+        const data = await sc.getHackathonAppIndexCell(params)
+        await this.run('deployIndex', { data, index: 22 })
+    }
+
     async createSingleEvent(params: { cell: string; reviewers?: string[] }) {
         const { cell, reviewers = [] } = params
 
@@ -1232,8 +1282,11 @@ export class DaoWallet extends BaseContract {
                 if (type === EDaoEventType.MILESTONE_UPGRADE) {
                     return await this.upgradeMilestone({ ...params, cell: true })
                 }
-                if (type === EDaoEventType.REPO_DELETE) {
-                    return await this.deleteRepository({ ...params, cell: true })
+                if (type === EDaoEventType.PULL_REQUEST) {
+                    return await this.setCommit({ ...params, cell: true })
+                }
+                if (type === EDaoEventType.BRANCH_LOCK) {
+                    return await this.lockRepositoryBranch({ ...params, cell: true })
                 }
                 return null
             },

@@ -1,52 +1,51 @@
+import { faTimes } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { useCallback, useEffect, useRef } from 'react'
+import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
+import { Tooltip } from 'react-tooltip'
+import Alert from '../../../components/Alert'
+import CopyClipboard from '../../../components/CopyClipboard'
+import { MemberIcon } from '../../../components/Dao'
+import { Button } from '../../../components/Form'
+import Skeleton from '../../../components/Skeleton'
+import { useBodyScrollLock } from '../../../hooks/common.hooks'
+import { EDaoEventType } from '../../../types/common.types'
+import { getDurationDelta, shortString } from '../../../utils'
+import { DaoEventProgressBar, DaoEventStatusBadge } from '../../components/DaoEvent'
+import { useDao, useDaoEvent, useDaoEventList, useDaoMember } from '../../hooks/dao.hooks'
+import { useUser } from '../../hooks/user.hooks'
 import {
-    DaoEventVotingForm,
-    DaoEventReviewForm,
-    MemberAddEvent,
-    MemberDeleteEvent,
-    BranchProtectEvent,
-    BranchUnprotectEvent,
-    PullRequestEvent,
-    DaoUpgradeEvent,
-    RepositoryCreateEvent,
-    MultiEvent,
-    MintTokensEvent,
     AddRegularTokensEvent,
     AddVotingTokensEvent,
-    CreateDaoTagEvent,
-    DeleteDaoTagEvent,
-    ShowDaoEventProgressEvent,
     AllowDaoEventDiscussionEvent,
     AskDaoMembershipEvent,
-    DisableMintTokensEvent,
-    MemberUpdateEvent,
+    BranchProtectEvent,
+    BranchUnprotectEvent,
+    CreateDaoTagEvent,
     CreateTaskEvent,
+    DaoEventReviewForm,
+    DaoEventVotingForm,
+    DaoUpgradeEvent,
+    DeleteDaoTagEvent,
     DeleteTaskEvent,
+    DisableMintTokensEvent,
+    MemberAddEvent,
+    MemberDeleteEvent,
+    MemberUpdateEvent,
+    MilestoneCompleteEvent,
+    MilestoneCreateEvent,
+    MilestoneDeleteEvent,
+    MilestoneUpgradeEvent,
+    MintTokensEvent,
+    MultiEvent,
+    PullRequestEvent,
+    RepositoryCreateEvent,
     RepositoryDescriptionEvent,
     RepositoryTagAddEvent,
     RepositoryTagDeleteEvent,
+    ShowDaoEventProgressEvent,
     UpgradeTaskEvent,
-    MilestoneCreateEvent,
-    MilestoneDeleteEvent,
-    MilestoneCompleteEvent,
-    MilestoneUpgradeEvent,
-    RepositoryDeleteEvent,
 } from './components'
-import { Tooltip } from 'react-tooltip'
-import { useCallback, useEffect, useRef } from 'react'
-import { useDao, useDaoEvent, useDaoEventList, useDaoMember } from '../../hooks/dao.hooks'
-import CopyClipboard from '../../../components/CopyClipboard'
-import { getDurationDelta, shortString } from '../../../utils'
-import { Button } from '../../../components/Form'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTimes } from '@fortawesome/free-solid-svg-icons'
-import { EDaoEventType } from '../../../types/common.types'
-import Skeleton from '../../../components/Skeleton'
-import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
-import Alert from '../../../components/Alert'
-import { DaoEventProgressBar, DaoEventStatusBadge } from '../../components/DaoEvent'
-import { MemberIcon } from '../../../components/Dao'
-import { useUser } from '../../hooks/user.hooks'
-import { useBodyScrollLock } from '../../../hooks/common.hooks'
 
 const DaoEventPageInner = (props: { address: string }) => {
     const { address } = props
@@ -267,12 +266,6 @@ const DaoEventPageInner = (props: { address: string }) => {
                             )}
                             {event.type === EDaoEventType.MILESTONE_UPGRADE && (
                                 <MilestoneUpgradeEvent data={event.data} />
-                            )}
-                            {event.type === EDaoEventType.REPO_DELETE && (
-                                <RepositoryDeleteEvent
-                                    data={event.data}
-                                    isCompleted={event.status.completed}
-                                />
                             )}
                             {event.type === EDaoEventType.MULTI_PROPOSAL && (
                                 <MultiEvent event={event} />

@@ -94,15 +94,6 @@
 			]
 		},
 		{
-			"name": "answerCommit",
-			"inputs": [
-				{"name":"commit","type":"address"},
-				{"name":"branch","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "stopUpgrade",
 			"inputs": [
 			],

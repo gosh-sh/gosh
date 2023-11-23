@@ -104,15 +104,6 @@
 			]
 		},
 		{
-			"name": "askCommit",
-			"inputs": [
-				{"name":"namecommit","type":"string"},
-				{"name":"branch","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "isCorrectCommit",
 			"inputs": [
 				{"name":"namecommit","type":"string"},
@@ -177,18 +168,10 @@
 			]
 		},
 		{
-			"name": "destroyRepo",
+			"name": "destroy",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "destroyBranches",
-			"inputs": [
-				{"name":"index","type":"uint256"}
 			],
 			"outputs": [
 			]

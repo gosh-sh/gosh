@@ -33,6 +33,17 @@ export class Dao extends BaseContract {
     async getDetails() {
         const details = await this.runLocal('getDetails', {})
         const { _isTaskRedeployed } = await this.runLocal('_isTaskRedeployed', {})
+
+        // Fix contracts bug with `isUpgraded` flag
+        const prev_addr = await this.getPrevious()
+        if (prev_addr) {
+            const prev_dao = new Dao(this.client, prev_addr)
+            const prev_ver = await prev_dao.getVersion()
+            if (prev_ver === '1.0.0') {
+                details.isUpgraded = true
+            }
+        }
+
         return { ...details, isTaskUpgraded: _isTaskRedeployed }
     }
 
