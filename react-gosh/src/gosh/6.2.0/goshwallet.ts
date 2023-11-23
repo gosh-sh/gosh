@@ -1,7 +1,7 @@
 import { KeyPair, TonClient } from '@eversdk/core'
+import { TAddress } from '../../types'
 import { BaseContract } from '../base'
 import { IGoshWallet } from '../interfaces'
-import { TAddress } from '../../types'
 
 class GoshWallet extends BaseContract implements IGoshWallet {
     static key: string = 'goshwallet'
