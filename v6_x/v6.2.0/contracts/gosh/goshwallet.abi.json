@@ -811,7 +811,8 @@
 				{"name":"nametag","type":"string"},
 				{"name":"nameCommit","type":"string"},
 				{"name":"content","type":"string"},
-				{"name":"commit","type":"address"}
+				{"name":"commit","type":"address"},
+				{"name":"isHack","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -1949,6 +1950,15 @@
 				{"name":"code","type":"cell"}
 			],
 			"outputs": [
+			]
+		},
+		{
+			"name": "getTagHackCode",
+			"inputs": [
+				{"name":"repo","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
 			]
 		},
 		{

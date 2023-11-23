@@ -238,6 +238,16 @@ library GoshLib {
         return address.makeAddrStd(0, tvm.hash(s1));
     }
 
+    function calculateTagHackAddress(TvmCell code, address repo, string nametag) public returns(address){        
+        TvmCell deployCode = composeTagStateInit(code, repo, nametag);
+        return address.makeAddrStd(0, tvm.hash(deployCode));
+    } 
+
+    function composeTagHackStateInit(TvmCell code, address repo, string nametag) public returns(TvmCell) {
+        TvmCell deployCode = buildTagHackCode(code, repo, versionLib);
+        return tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag}});
+    }
+
     function composeProfileStateInit(TvmCell code, address versionController, string name) public returns(TvmCell) {
         TvmCell s1 = tvm.buildStateInit({
             code: code,
@@ -541,6 +551,21 @@ library GoshLib {
         TvmBuilder b;
         b.store(repo);
         b.store(version);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        return tvm.setCodeSalt(originalCode, b.toCell());
+    }
+
+    function buildTagHackCode(
+        TvmCell originalCode,
+        address repo,
+        string version
+    ) public returns (TvmCell) {
+        TvmBuilder b;
+        b.store(repo);
+        b.store(version);
+        b.store("hack");
         uint256 hash = tvm.hash(b.toCell());
         delete b;
         b.store(hash);

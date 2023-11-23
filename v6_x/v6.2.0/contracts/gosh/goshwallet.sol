@@ -1057,16 +1057,21 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string nametag,
         string nameCommit,
         string content,
-        address commit
+        address commit,
+        bool isHack
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        require(_limited == false, ERR_WALLET_LIMITED);
+        if (isHack == false) { 
+            require(_limited == false, ERR_WALLET_LIMITED); 
+        }
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
-        TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version);
+        TvmCell deployCode;
+        if (isHack == false) { deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version); }
+        else { deployCode = GoshLib.buildTagHackCode(_code[m_TagCode], repo, version); }
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag}});
         new Tag{
-            stateInit: s1, value: FEE_DEPLOY_TAG, wid: 0, bounce: true, flag: 1
+                stateInit: s1, value: FEE_DEPLOY_TAG, wid: 0, bounce: true, flag: 1
         }(_pubaddr, nameCommit, commit, content, _systemcontract, _goshdao, repoName, _nameDao, _code[m_WalletCode], _index);
         getMoney();
     }
@@ -2773,6 +2778,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, _index + 1)).updateCodeWallet{value: 0.1 ton, flag: 1}(code);
             this.updateCode{value: 0.1 ton, flag: 1}(code, code1);
         }
+    }
+
+    function getTagHackCode(address repo) external view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version);
+        return deployCode;
     }
 
     function updateCodeWallet(TvmCell code) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, _index - 1)) accept {
