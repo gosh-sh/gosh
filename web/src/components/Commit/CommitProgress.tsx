@@ -1,7 +1,9 @@
 import { TPushProgress } from 'react-gosh/dist/types/repo.types'
 import { UILog, UILogItem } from '../../components/UILog'
 
-const CommitProgress = (props: TPushProgress) => {
+type TCommitProgressProps = React.HTMLAttributes<HTMLDivElement> & TPushProgress
+
+const CommitProgress = (props: TCommitProgressProps) => {
     const {
         isUpgrade,
         treesBuild,
@@ -11,6 +13,7 @@ const CommitProgress = (props: TPushProgress) => {
         tagsDeploy,
         commitDeploy,
         completed,
+        className,
     } = props
 
     const getCountersFlag = (counter?: {
@@ -26,7 +29,7 @@ const CommitProgress = (props: TPushProgress) => {
     }
 
     return (
-        <UILog>
+        <UILog className={className}>
             <div>
                 {isUpgrade === true && '[Pushing upgrade commit]'}
                 {isUpgrade === false && '[Pushing common commit]'}

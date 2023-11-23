@@ -9,6 +9,7 @@ import { appToastStatusSelector } from '../../store/app.state'
 import { executeByChunk, whileFinite } from '../../utils'
 import { getSystemContract } from '../blockchain/helpers'
 import { GoshRepository } from '../blockchain/repository'
+import { GoshShapshot } from '../blockchain/snapshot'
 import {
     daoRepositoryListSelector,
     daoRepositorySelector,
@@ -335,6 +336,78 @@ export function useBranch() {
     }, [getCurrentBranch, url_params.branch])
 
     return { branch }
+}
+
+export function useFileHistory(params: { snapshot_path?: string }) {
+    const { snapshot_path } = params
+    const { details: repository } = useRepository()
+    const [snapshot, setSnapshot] = useState<GoshShapshot>()
+    const [page, setPage] = useState<{ cursor?: string; has_next: boolean }>({
+        has_next: false,
+    })
+    const [history, setHistory] = useState<any[]>([])
+    const [is_fetching, setIsFetching] = useState<boolean>(false)
+
+    const getSnapshotHistory = async (params: {
+        snapshot: GoshShapshot
+        cursor?: string
+    }) => {
+        const { snapshot } = params
+
+        setIsFetching(true)
+        const { messages, cursor, hasNext } = await snapshot.getMessages(
+            {
+                msgType: ['IntIn'],
+                node: ['created_at'],
+                cursor: params.cursor,
+                allow_latest_inconsistent_data: true,
+            },
+            true,
+            false,
+        )
+
+        const changes = messages
+            .filter(({ decoded }) => {
+                return !!decoded && decoded.name === 'approve'
+            })
+            .map(({ message, decoded }) => ({
+                created_at: message.created_at,
+                commit_name: decoded.value.diff.commit,
+                snapshot_address: decoded.value.diff.snap,
+                snapshot_name: decoded.value.diff.nameSnap,
+            }))
+
+        setHistory((state) => [...state, ...changes])
+        setPage((state) => ({ ...state, cursor, has_next: !!hasNext }))
+        setIsFetching(false)
+    }
+
+    const getFileHistory = useCallback(async () => {
+        if (!repository?.account || !snapshot_path) {
+            return
+        }
+
+        setIsFetching(true)
+        setHistory([])
+        const [branch, commit_name, ...rest] = snapshot_path.split('/')
+        const snapshot = await repository.account.getSnapshot({
+            data: { commitname: commit_name, filename: rest.join('/'), branch },
+        })
+        setSnapshot(snapshot)
+        await getSnapshotHistory({ snapshot })
+    }, [snapshot_path])
+
+    const getNext = useCallback(async () => {
+        if (snapshot) {
+            await getSnapshotHistory({ snapshot, cursor: page.cursor })
+        }
+    }, [snapshot?.address, page.cursor])
+
+    useEffect(() => {
+        getFileHistory()
+    }, [getFileHistory])
+
+    return { history, is_fetching, has_next: page.has_next, getNext }
 }
 
 export function useCreateRepositoryTag() {

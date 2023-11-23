@@ -76,6 +76,7 @@
         "react-content-loader": "^6.2.1",
         "react-copy-to-clipboard": "^5.1.0",
         "react-dom": "^18.2.0",
+        "react-dropzone": "^14.2.3",
         "react-error-boundary": "^4.0.11",
         "react-gosh": "file:../react-gosh/react-gosh-1.0.0.tgz",
         "react-markdown": "^9.0.1",

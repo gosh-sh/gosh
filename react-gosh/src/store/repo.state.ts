@@ -46,8 +46,9 @@ const treeSelector = selectorFamily({
             const { tree, items } = treeObject
             const path = params.path || ''
             if (params.type === 'tree') {
+                const list = tree[path] || []
                 return (
-                    [...tree[path]]
+                    [...list]
                         //@ts-ignore
                         .sort((a: any, b: any) => (a.name > b.name) - (a.name < b.name))
                         .sort((a, b) => (a.type > b.type ? -1 : 1))
@@ -66,4 +67,4 @@ const treeSelector = selectorFamily({
         },
 })
 
-export { repositoryAtom, branchesAtom, branchSelector, treeAtom, treeSelector }
+export { branchSelector, branchesAtom, repositoryAtom, treeAtom, treeSelector }

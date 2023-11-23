@@ -1,26 +1,26 @@
-import { Field, Form, Formik } from 'formik'
+import { faCode, faEye } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Tab } from '@headlessui/react'
+import { useMonaco } from '@monaco-editor/react'
+import { Field, Form, Formik } from 'formik'
+import { useEffect, useState } from 'react'
 import {
+    TDao,
+    TUserParam,
     classNames,
     getCodeLanguageFromFilename,
     splitByPath,
-    TDao,
-    TUserParam,
 } from 'react-gosh'
+import { IGoshDaoAdapter, IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { TPushProgress, TRepository } from 'react-gosh/dist/types/repo.types'
-import RepoBreadcrumbs from '../Repo/Breadcrumbs'
-import { FormikInput } from '../Formik'
-import { useMonaco } from '@monaco-editor/react'
-import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCode, faEye } from '@fortawesome/free-solid-svg-icons'
+import yup from '../../v1.0.0/yup-extended'
 import BlobEditor from '../Blob/Editor'
 import BlobPreview from '../Blob/Preview'
 import { Button } from '../Form'
+import { FormikInput } from '../Formik'
+import RepoBreadcrumbs from '../Repo/Breadcrumbs'
 import { CommitFields } from './CommitFields/CommitFields'
-import { IGoshDaoAdapter, IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
-import yup from '../../v1.0.0/yup-extended'
 
 export type TBlobCommitFormValues = {
     name: string
@@ -228,6 +228,7 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                                     }
                                     isBlob={false}
                                 />
+                                <div className="mx-2">/</div>
                                 <div>
                                     <Field
                                         name="name"

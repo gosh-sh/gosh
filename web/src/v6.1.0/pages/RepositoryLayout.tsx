@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
-import { GoshAdapterFactory, splitByPath, useBranches, useRepo } from 'react-gosh'
+import { GoshAdapterFactory, useBranches, useRepo } from 'react-gosh'
 import { Outlet, useParams } from 'react-router-dom'
 import { AppConfig } from '../../appconfig'
 import Alert from '../../components/Alert'
@@ -10,7 +10,6 @@ import { useUser } from '../hooks/user.hooks'
 
 const RepoLayout = () => {
     const { daoname, reponame, branch } = useParams()
-    const treepath = splitByPath(useParams()['*'] || '')
     const { showBoundary } = useErrorBoundary()
     const { user, persist } = useUser()
     const { error } = useRepository({ initialize: true })
@@ -19,7 +18,7 @@ const RepoLayout = () => {
         repository: _rg_repo,
         isFetching,
     } = useRepo(daoname!, reponame!)
-    const { updateBranches } = useBranches(_rg_repo.adapter)
+    const { updateBranches } = useBranches(_rg_repo.adapter, branch)
 
     useEffect(() => {
         if (error) {
