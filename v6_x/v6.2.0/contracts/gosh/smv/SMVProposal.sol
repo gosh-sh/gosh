@@ -238,19 +238,19 @@ function vote (address _locker, uint256 _platform_id, bool choice, uint128 amoun
     (, uint256 keyaddr) = pubaddr.unpack();
     if (_isTag.length != 0) {
         if (_daoMembersTag.exists(keyaddr)) {
-            this.calculateVotePower{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, amount, pubaddr, uint128(0), uint256(0)); 
+            this.calculateVotePower{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, amount, pubaddr, uint128(0), uint256(0), msg.sender); 
         }
         return;
     }
-    this.continueVote{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, amount);
+    this.continueVote{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, amount, msg.sender);
 }
 
-function calculateVotePower(address _locker, uint256 _platform_id, bool choice, uint128 amount, address pubaddr, uint128 sum, uint256 key) public view senderIs(this) accept {
+function calculateVotePower(address _locker, uint256 _platform_id, bool choice, uint128 amount, address pubaddr, uint128 sum, uint256 key, address sender) public view senderIs(this) accept {
     (, uint256 keyaddr) = pubaddr.unpack();
     for (uint128 i = 0; i <= BATCH_SIZE_TAG; i++) {
         optional(uint256, bool) res = _daoMembersTag[keyaddr].next(key);
         if (res.hasValue() == false) { 
-            this.continueVote{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, sum);
+            this.continueVote{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, sum, sender);
         }
         (uint256 newkey,bool worker) = res.get();
         worker;
@@ -259,16 +259,16 @@ function calculateVotePower(address _locker, uint256 _platform_id, bool choice, 
     }
 }
 
-function continueVote(address _locker, uint256 _platform_id, bool choice, uint128 amount) public senderIs(this) accept {
+function continueVote(address _locker, uint256 _platform_id, bool choice, uint128 amount, address sender) public senderIs(this) accept {
     _platform_id; _locker;
     if (/* (proposalBusy) || */ (block.timestamp < startTime) || (block.timestamp >= finishTime) || (votingResult.hasValue()) )
         //return {value:0, flag: 64} false;
-        ISMVClient(msg.sender).onProposalVoted {value:0, flag: 64} (false);
+        ISMVClient(sender).onProposalVoted {value:0, flag: 64} (false);
     else {
 //        tryEarlyComplete(totalSupply);
 
         if (votingResult.hasValue())
-            ISMVClient(msg.sender).onProposalVoted {value:0, flag: 64} (false);
+            ISMVClient(sender).onProposalVoted {value:0, flag: 64} (false);
         else
         {
             if (choice)
@@ -280,7 +280,7 @@ function continueVote(address _locker, uint256 _platform_id, bool choice, uint12
             {
                 IVotingResultRecipient(ownerAddress).isCompletedCallback {value:SMVConstants.EPSILON_FEE, flag: 1} (platform_id, votingResult, propData);
             }
-            ISMVClient(msg.sender).onProposalVoted {value:0, flag: 64} (true);
+            ISMVClient(sender).onProposalVoted {value:0, flag: 64} (true);
         }
     }
 }

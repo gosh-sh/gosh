@@ -86,7 +86,8 @@
 				{"name":"amount","type":"uint128"},
 				{"name":"pubaddr","type":"address"},
 				{"name":"sum","type":"uint128"},
-				{"name":"key","type":"uint256"}
+				{"name":"key","type":"uint256"},
+				{"name":"sender","type":"address"}
 			],
 			"outputs": [
 			]
@@ -97,7 +98,8 @@
 				{"name":"_locker","type":"address"},
 				{"name":"_platform_id","type":"uint256"},
 				{"name":"choice","type":"bool"},
-				{"name":"amount","type":"uint128"}
+				{"name":"amount","type":"uint128"},
+				{"name":"sender","type":"address"}
 			],
 			"outputs": [
 			]
