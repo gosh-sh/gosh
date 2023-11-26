@@ -16,7 +16,7 @@ import { useDao, useUpdateDaoExpertTags } from '../../hooks/dao.hooks'
 import yup from '../../yup-extended'
 
 type TFormValues = {
-    tags: { _motion_id: string; name: string; multiplier: string }[]
+    tags: { _motion_id: string; _disabled: boolean; name: string; multiplier: string }[]
     comment: string
 }
 
@@ -28,9 +28,10 @@ const DaoExpertTagListPage = () => {
 
     const initial_expert_tags = dao.details.expert_tags?.map((item) => ({
         _motion_id: item.name,
+        _disabled: true,
         name: item.name,
         multiplier: item.multiplier.toString(),
-    })) || [{ _motion_id: '0', name: '', multiplier: '100' }]
+    })) || [{ _motion_id: '0', _disabled: false, name: '', multiplier: '100' }]
 
     const onFormSubmit = async (values: TFormValues) => {
         try {
@@ -120,7 +121,12 @@ const FieldArrayForm = (props: FieldArrayRenderProps) => {
     const values = form.values as TFormValues
 
     const onItemAdd = () => {
-        push({ _motion_id: Date.now().toString(), name: '', multiplier: '100' })
+        push({
+            _motion_id: Date.now().toString(),
+            _disabled: false,
+            name: '',
+            multiplier: '100',
+        })
     }
 
     const onItemRemove = (index: number) => {
@@ -147,7 +153,7 @@ const FieldArrayForm = (props: FieldArrayRenderProps) => {
                                         component={FormikInput}
                                         placeholder="Tag name"
                                         autoComplete="off"
-                                        disabled={form.isSubmitting}
+                                        disabled={item._disabled || form.isSubmitting}
                                         className="bg-white"
                                     />
                                     {Array.isArray(form.errors.tags) && (

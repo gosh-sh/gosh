@@ -140,7 +140,7 @@ export class DaoEvent extends BaseContract {
             fn = 'getBigTaskUpgradeProposalParams'
         } else if (type === EDaoEventType.DAO_EXPERT_TAG_CREATE) {
             fn = 'getCreateDaoMembersTagParams'
-        } else if (type === EDaoEventType.DAO_EXPERT_TAG_CREATE) {
+        } else if (type === EDaoEventType.DAO_EXPERT_TAG_DELETE) {
             fn = 'getDestroyDaoMembersTagParams'
         } else if (type === EDaoEventType.MULTI_PROPOSAL) {
             const { num, data0 } = await this.runLocal('getDataFirst', {}, undefined, {

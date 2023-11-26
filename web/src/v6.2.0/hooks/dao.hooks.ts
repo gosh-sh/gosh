@@ -3250,16 +3250,24 @@ export function useUpdateDaoExpertTags() {
                 const events = []
 
                 // Prepare tags
-                if (params.tags.length > 0) {
+                const tags_current = dao.expert_tags || []
+                const tags_updated = []
+                for (const tag_param of params.tags) {
+                    const found = tags_current.find(({ name }) => name === tag_param.name)
+                    if (!found || found.multiplier !== tag_param.multiplier) {
+                        tags_updated.push(tag_param)
+                    }
+                }
+                if (tags_updated.length > 0) {
                     events.push({
                         type: EDaoEventType.DAO_EXPERT_TAG_CREATE,
-                        params: { tags: params.tags, comment: 'Create DAO expert tags' },
+                        params: { tags: tags_updated, comment: 'Update DAO expert tags' },
                         fn: 'createDaoExpertTag',
                     })
                 }
 
                 const tags_removed = _.differenceWith(
-                    dao.expert_tags?.map(({ name }) => name) || [],
+                    tags_current.map(({ name }) => name) || [],
                     params.tags.map(({ name }) => name),
                 )
                 if (tags_removed.length > 0) {
@@ -3275,7 +3283,9 @@ export function useUpdateDaoExpertTags() {
                 await beforeCreateEvent(20, { onPendingCallback: setStatus })
 
                 // Create event/multievent
-                if (events.length === 1) {
+                if (events.length === 0) {
+                    throw new GoshError('Value error', 'Nothing was changed')
+                } else if (events.length === 1) {
                     // TODO: Think how to make better
                     // @ts-ignore
                     eventaddr = await member.wallet[events[0].fn](events[0].params)
