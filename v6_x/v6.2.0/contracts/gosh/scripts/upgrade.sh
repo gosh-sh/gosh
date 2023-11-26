@@ -65,6 +65,7 @@ HELP_TAG_CODE=$(tonos-cli -j decode stateinit --tvc $GOSH_PATH/taggosh.tvc | tr 
 TOPIC_CODE=$(tonos-cli -j decode stateinit --tvc $GOSH_PATH/topic.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 BIGTASK_CODE=$(tonos-cli -j decode stateinit --tvc $GOSH_PATH/bigtask.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 GRANT_CODE=$(tonos-cli -j decode stateinit --tvc $GOSH_PATH/grant.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+TAG_SUPPLY_CODE=$(tonos-cli -j decode stateinit --tvc $GOSH_PATH/tagsupply.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 
 # Echo VersionController address
 echo "========== VersionController address: $VERSIONCONTROLLER_ADDR"
@@ -145,6 +146,8 @@ echo "     ====> Run setBigTask"
 everdev contract run $SYSTEMCONTRACT_ABI setBigTask --input "{\"code\":\"$BIGTASK_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 echo "     ====> Run setGrant"
 everdev contract run $SYSTEMCONTRACT_ABI setGrant --input "{\"code\":\"$GRANT_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "     ====> Run setTagSupplyTask"
+everdev contract run $SYSTEMCONTRACT_ABI setTagSupplyTask --input "{\"code\":\"$TAG_SUPPLY_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 
 # Set flag to false (disable code setters)
 echo "========== Run SystemContract setFlag (false)"
