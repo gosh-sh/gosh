@@ -1,4 +1,4 @@
-tvcs = grant tree tag snapshot repository goshwallet goshdao systemcontract diff commit content-signature profile versioncontroller profiledao profileindex bigtask task daotag taggosh topic trusted 
+tvcs = grant tree tag tagsupply snapshot repository goshwallet goshdao systemcontract diff commit content-signature profile versioncontroller profiledao profileindex bigtask task daotag taggosh topic trusted 
 cpfl = profile profiledao profileindex trusted
 KEYS_PATH = ${CURDIR}
 EXTRA_DOCKER_ARGS = --network=host --add-host localnode:127.0.0.1
