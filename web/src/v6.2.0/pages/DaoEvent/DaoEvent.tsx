@@ -25,6 +25,8 @@ import {
     CreateTaskEvent,
     DaoEventReviewForm,
     DaoEventVotingForm,
+    DaoExpertTagCreateEvent,
+    DaoExpertTagDeleteEvent,
     DaoUpgradeEvent,
     DeleteDaoTagEvent,
     DeleteTaskEvent,
@@ -266,6 +268,12 @@ const DaoEventPageInner = (props: { address: string }) => {
                             )}
                             {event.type === EDaoEventType.MILESTONE_UPGRADE && (
                                 <MilestoneUpgradeEvent data={event.data} />
+                            )}
+                            {event.type === EDaoEventType.DAO_EXPERT_TAG_CREATE && (
+                                <DaoExpertTagCreateEvent data={event.data} />
+                            )}
+                            {event.type === EDaoEventType.DAO_EXPERT_TAG_DELETE && (
+                                <DaoExpertTagDeleteEvent data={event.data} />
                             )}
                             {event.type === EDaoEventType.MULTI_PROPOSAL && (
                                 <MultiEvent event={event} />

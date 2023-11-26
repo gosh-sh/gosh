@@ -6,6 +6,8 @@ import { AllowDaoEventDiscussionEvent } from '../AllowDaoEventDiscussionEvent/Al
 import { AskDaoMembershipEvent } from '../AskDaoMembershipEvent/AskDaoMembershipEvent'
 import { CreateDaoTagEvent } from '../CreateDaoTagEvent/CreateDaoTagEvent'
 import { CreateTaskEvent } from '../CreateTaskEvent/CreateTaskEvent'
+import { DaoExpertTagCreateEvent } from '../DaoExpertTagCreateEvent/DaoExpertTagCreateEvent'
+import { DaoExpertTagDeleteEvent } from '../DaoExpertTagDeleteEvent/DaoExpertTagDeleteEvent'
 import { DeleteDaoTagEvent } from '../DeleteDaoTagEvent/DeleteDaoTagEvent'
 import { DeleteTaskEvent } from '../DeleteTaskEvent/DeleteTaskEvent'
 import { DisableMintTokensEvent } from '../DisableMintTokensEvent/DisableMintTokensEvent'
@@ -122,6 +124,12 @@ const MultiEvent = (props: TMultiEventProps) => {
                         )}
                         {item.type === EDaoEventType.MILESTONE_UPGRADE && (
                             <MilestoneUpgradeEvent key={index} data={item.data} />
+                        )}
+                        {item.type === EDaoEventType.DAO_EXPERT_TAG_CREATE && (
+                            <DaoExpertTagCreateEvent key={index} data={item.data} />
+                        )}
+                        {item.type === EDaoEventType.DAO_EXPERT_TAG_DELETE && (
+                            <DaoExpertTagDeleteEvent key={index} data={item.data} />
                         )}
                     </div>
                 ))}

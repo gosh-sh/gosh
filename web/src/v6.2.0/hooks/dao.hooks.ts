@@ -574,6 +574,12 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
                         },
                         owner: details.pubaddr,
                         tags: Object.values(details.hashtag),
+                        expert_tags: Object.values(details.daoTagData).map(
+                            (item: any) => ({
+                                name: item.name,
+                                multiplier: parseInt(item.value),
+                            }),
+                        ),
                         isMemberOf,
                         isMintOn: details.allowMint,
                         isAskMembershipOn: details.abilityInvite,
@@ -797,6 +803,7 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
             'smvdeploytagin',
             'smvdestroytag',
             'smvnotallowmint',
+            'setNewTags',
         ]
         data.details.account?.account.subscribeMessages(
             'msg_type body',
@@ -3213,6 +3220,94 @@ export function useUpdateDaoSettings() {
             member.isMember,
             member.isReady,
         ],
+    )
+
+    return { update, status }
+}
+
+export function useUpdateDaoExpertTags() {
+    const { details: dao } = useDao()
+    const member = useDaoMember()
+    const { beforeCreateEvent, afterCreateEvent } = useDaoHelpers()
+    const [status, setStatus] = useRecoilState(
+        appToastStatusSelector('__updatedaoexperttags'),
+    )
+
+    const update = useCallback(
+        async (params: {
+            tags: { name: string; multiplier: number }[]
+            comment?: string
+        }) => {
+            try {
+                if (!member.wallet || !member.isReady) {
+                    throw new GoshError(
+                        'Access error',
+                        'Wallet does not exist or not activated',
+                    )
+                }
+
+                // Future events params
+                const events = []
+
+                // Prepare tags
+                if (params.tags.length > 0) {
+                    events.push({
+                        type: EDaoEventType.DAO_EXPERT_TAG_CREATE,
+                        params: { tags: params.tags, comment: 'Create DAO expert tags' },
+                        fn: 'createDaoExpertTag',
+                    })
+                }
+
+                const tags_removed = _.differenceWith(
+                    dao.expert_tags?.map(({ name }) => name) || [],
+                    params.tags.map(({ name }) => name),
+                )
+                if (tags_removed.length > 0) {
+                    events.push({
+                        type: EDaoEventType.DAO_EXPERT_TAG_DELETE,
+                        params: { tags: tags_removed, comment: 'Delete DAO expert tags' },
+                        fn: 'deleteDaoExpertTag',
+                    })
+                }
+
+                // Prepare balance for create event
+                let eventaddr: string | null = null
+                await beforeCreateEvent(20, { onPendingCallback: setStatus })
+
+                // Create event/multievent
+                if (events.length === 1) {
+                    // TODO: Think how to make better
+                    // @ts-ignore
+                    eventaddr = await member.wallet[events[0].fn](events[0].params)
+                } else {
+                    eventaddr = await member.wallet.createMultiEvent({
+                        proposals: events,
+                        comment: params.comment || 'Update DAO expert tags',
+                    })
+                }
+
+                // Event post create
+                await afterCreateEvent(
+                    { label: 'Update DAO expert tags', eventaddr },
+                    { onPendingCallback: setStatus },
+                )
+
+                setStatus((state) => ({
+                    ...state,
+                    type: 'success',
+                    data: {
+                        title: 'Update DAO expert tags',
+                        content: 'Update DAO expert tags event created',
+                    },
+                }))
+
+                return { eventaddr }
+            } catch (e: any) {
+                setStatus((state) => ({ ...state, type: 'error', data: e }))
+                throw e
+            }
+        },
+        [dao.expert_tags, member.isMember, member.isReady],
     )
 
     return { update, status }

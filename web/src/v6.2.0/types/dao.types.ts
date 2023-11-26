@@ -3,10 +3,10 @@ import { UserProfile } from '../../blockchain/userprofile'
 import { Dao } from '../blockchain/dao'
 import { DaoEvent } from '../blockchain/daoevent'
 import { DaoWallet } from '../blockchain/daowallet'
+import { Milestone } from '../blockchain/milestone'
+import { GoshRepository } from '../blockchain/repository'
 import { Task } from '../blockchain/task'
 import { TGoshCommit } from './repository.types'
-import { GoshRepository } from '../blockchain/repository'
-import { Milestone } from '../blockchain/milestone'
 
 export enum EDaoMemberType {
     Dao = 'dao',
@@ -47,6 +47,11 @@ export type TDaoDetailsMemberItem = {
     vesting?: number
 }
 
+export type TDaoExpertTag = {
+    name: string
+    multiplier: number
+}
+
 export type TDaoDetails = {
     isFetching: boolean
     isFetchingData: boolean
@@ -69,6 +74,7 @@ export type TDaoDetails = {
         owner?: string
         tags?: string[]
         tasks?: number
+        expert_tags?: TDaoExpertTag[]
         isMemberOf?: TDaoDetailsMemberItem[]
         isMintOn?: boolean
         isAskMembershipOn?: boolean

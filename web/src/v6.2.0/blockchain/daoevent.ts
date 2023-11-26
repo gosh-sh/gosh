@@ -1,20 +1,20 @@
 import { TonClient } from '@eversdk/core'
+import _ from 'lodash'
+import { AppConfig } from '../../appconfig'
 import { BaseContract } from '../../blockchain/contract'
-import SmvEventABI from './abi/smvproposal.abi.json'
 import {
     DaoEventType,
     MAX_PARALLEL_READ,
     MILESTONE_TAG,
     SYSTEM_TAG,
 } from '../../constants'
-import { DaoWallet } from './daowallet'
-import { EDaoEventType } from '../../types/common.types'
 import { GoshError } from '../../errors'
+import { EDaoEventType } from '../../types/common.types'
 import { executeByChunk, sleep } from '../../utils'
-import _ from 'lodash'
 import { EDaoMemberType, TDaoEventReviewer, TTaskGrantPair } from '../types/dao.types'
-import { getDaoOrProfile, getSystemContract } from './helpers'
-import { AppConfig } from '../../appconfig'
+import SmvEventABI from './abi/smvproposal.abi.json'
+import { DaoWallet } from './daowallet'
+import { getDaoOrProfile } from './helpers'
 
 export class DaoEvent extends BaseContract {
     constructor(client: TonClient, address: string) {
@@ -138,6 +138,10 @@ export class DaoEvent extends BaseContract {
             fn = 'getBigTaskProposalParams'
         } else if (type === EDaoEventType.MILESTONE_UPGRADE) {
             fn = 'getBigTaskUpgradeProposalParams'
+        } else if (type === EDaoEventType.DAO_EXPERT_TAG_CREATE) {
+            fn = 'getCreateDaoMembersTagParams'
+        } else if (type === EDaoEventType.DAO_EXPERT_TAG_CREATE) {
+            fn = 'getDestroyDaoMembersTagParams'
         } else if (type === EDaoEventType.MULTI_PROPOSAL) {
             const { num, data0 } = await this.runLocal('getDataFirst', {}, undefined, {
                 useCachedBoc: true,
@@ -416,6 +420,10 @@ export class DaoEvent extends BaseContract {
             fn = 'getBigTaskUpgradeProposalParamsData'
         } else if (type === EDaoEventType.PULL_REQUEST) {
             fn = 'getGoshSetCommitProposalParamsData'
+        } else if (type === EDaoEventType.DAO_EXPERT_TAG_CREATE) {
+            fn = 'getCreateDaoMembersTagParamsData'
+        } else if (type === EDaoEventType.DAO_EXPERT_TAG_DELETE) {
+            fn = 'getDestroyDaoMembersTagParamsData'
         } else if (type === EDaoEventType.DELAY) {
             return { type, label: DaoEventType[type], data: {} }
         } else {

@@ -30,7 +30,7 @@
 			"inputs": [
 				{"name":"t","type":"uint128"},
 				{"name":"daoMembersTag","type":"map(uint256,map(uint256,bool))"},
-				{"name":"daoTagData","type":"map(uint256,uint128)"}
+				{"components":[{"name":"value","type":"uint128"},{"name":"name","type":"string"}],"name":"daoTagData","type":"map(uint256,tuple)"}
 			],
 			"outputs": [
 			]
@@ -40,7 +40,7 @@
 			"inputs": [
 				{"name":"t","type":"uint128"},
 				{"name":"daoMembersTag","type":"map(uint256,map(uint256,bool))"},
-				{"name":"daoTagData","type":"map(uint256,uint128)"}
+				{"components":[{"name":"value","type":"uint128"},{"name":"name","type":"string"}],"name":"daoTagData","type":"map(uint256,tuple)"}
 			],
 			"outputs": [
 			]
@@ -86,7 +86,8 @@
 				{"name":"amount","type":"uint128"},
 				{"name":"pubaddr","type":"address"},
 				{"name":"sum","type":"uint128"},
-				{"name":"key","type":"uint256"}
+				{"name":"key","type":"uint256"},
+				{"name":"sender","type":"address"}
 			],
 			"outputs": [
 			]
@@ -97,7 +98,8 @@
 				{"name":"_locker","type":"address"},
 				{"name":"_platform_id","type":"uint256"},
 				{"name":"choice","type":"bool"},
-				{"name":"amount","type":"uint128"}
+				{"name":"amount","type":"uint128"},
+				{"name":"sender","type":"address"}
 			],
 			"outputs": [
 			]
@@ -1602,7 +1604,7 @@
 		{"name":"propData","type":"cell"},
 		{"name":"reviewers","type":"map(address,bool)"},
 		{"name":"_daoMembersTag","type":"map(uint256,map(uint256,bool))"},
-		{"name":"_daoTagData","type":"map(uint256,uint128)"},
+		{"components":[{"name":"value","type":"uint128"},{"name":"name","type":"string"}],"name":"_daoTagData","type":"map(uint256,tuple)"},
 		{"name":"startTime","type":"uint32"},
 		{"name":"finishTime","type":"uint32"},
 		{"name":"deltaStartTime","type":"uint32"},

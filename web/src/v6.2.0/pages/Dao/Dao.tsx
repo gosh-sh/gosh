@@ -1,6 +1,6 @@
 import { DaoMemberWallet, DaoMembers, DaoSupply } from '../../components/Dao'
-import DaoRepositoryListPage from '../DaoRepositoryList'
 import { useDaoMember } from '../../hooks/dao.hooks'
+import DaoRepositoryListPage from '../DaoRepositoryList'
 import { DaoDescription, DaoEventsRecent } from './components'
 
 const DaoPage = () => {

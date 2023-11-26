@@ -48,4 +48,6 @@ export enum EDaoEventType {
     MILESTONE_CREATE = 43,
     MILESTONE_UPGRADE = 44,
     REPO_DELETE = 46,
+    DAO_EXPERT_TAG_CREATE = 47,
+    DAO_EXPERT_TAG_DELETE = 48,
 }

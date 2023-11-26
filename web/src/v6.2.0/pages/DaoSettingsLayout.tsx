@@ -1,12 +1,12 @@
-import { NavLink, useParams } from 'react-router-dom'
-import { withErrorBoundary } from 'react-error-boundary'
-import { withPin, withRouteAnimation } from '../hocs'
-import Alert from '../../components/Alert'
-import { AnimatedOutlet } from '../components/Outlet'
-import { faGear, faWrench } from '@fortawesome/free-solid-svg-icons'
 import { faBell } from '@fortawesome/free-regular-svg-icons'
+import { faGear, faTag, faWrench } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import classNames from 'classnames'
+import { withErrorBoundary } from 'react-error-boundary'
+import { NavLink, useParams } from 'react-router-dom'
+import Alert from '../../components/Alert'
+import { AnimatedOutlet } from '../components/Outlet'
+import { withPin, withRouteAnimation } from '../hocs'
 
 const DaoSettingsLayout = () => {
     const { daoname } = useParams()
@@ -14,6 +14,11 @@ const DaoSettingsLayout = () => {
     const getTabs = () => {
         const tabs = []
         tabs.push({ to: `/o/${daoname}/settings/setup`, title: 'Setup', icon: faGear })
+        tabs.push({
+            to: `/o/${daoname}/settings/expert-tags`,
+            title: 'Expert tags',
+            icon: faTag,
+        })
         tabs.push({
             to: `/o/${daoname}/settings/notifications`,
             title: 'Notifications',
@@ -47,7 +52,9 @@ const DaoSettingsLayout = () => {
                 ))}
             </div>
             <div className="basis-full md:basis-4/5 overflow-hidden">
-                <AnimatedOutlet />
+                <div className="border border-gray-e6edff rounded-xl p-5">
+                    <AnimatedOutlet />
+                </div>
             </div>
         </div>
     )

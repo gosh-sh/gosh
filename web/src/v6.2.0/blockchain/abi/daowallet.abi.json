@@ -1471,7 +1471,7 @@
 			]
 		},
 		{
-			"name": "getCelldeleteTagForDaoMembers",
+			"name": "getCellDeleteTagForDaoMembers",
 			"inputs": [
 				{"name":"pubaddr","type":"address[]"},
 				{"name":"tag","type":"string"},
@@ -1500,7 +1500,8 @@
 				{"name":"number","type":"uint128"},
 				{"name":"proposals","type":"cell"},
 				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
+				{"name":"reviewers","type":"address[]"},
+				{"name":"data","type":"string[]"}
 			],
 			"outputs": [
 			]

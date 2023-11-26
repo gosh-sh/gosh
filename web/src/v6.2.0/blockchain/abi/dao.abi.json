@@ -1412,7 +1412,9 @@
 				{"name":"daoMembers","type":"map(uint256,string)"},
 				{"name":"isCheck","type":"bool"},
 				{"components":[{"name":"fiatValue","type":"uint128"},{"name":"decimals","type":"uint128"},{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"details","type":"string"},{"name":"accessKey","type":"uint256"}],"name":"paidMembership","type":"map(uint8,tuple)"},
-				{"name":"isUpgraded","type":"bool"}
+				{"name":"isUpgraded","type":"bool"},
+				{"components":[{"name":"value","type":"uint128"},{"name":"name","type":"string"}],"name":"daoTagData","type":"map(uint256,tuple)"},
+				{"name":"daoMembersTag","type":"map(uint256,map(uint256,bool))"}
 			]
 		},
 		{
@@ -1611,7 +1613,7 @@
 		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"_wallets","type":"map(uint256,tuple)"},
 		{"name":"_daoMembers","type":"map(uint256,string)"},
 		{"name":"_daoMembersTag","type":"map(uint256,map(uint256,bool))"},
-		{"name":"_daoTagData","type":"map(uint256,uint128)"},
+		{"components":[{"name":"value","type":"uint128"},{"name":"name","type":"string"}],"name":"_daoTagData","type":"map(uint256,tuple)"},
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_hashtag","type":"map(uint256,string)"},
 		{"name":"_versions","type":"map(uint256,string)"},

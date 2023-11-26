@@ -187,14 +187,20 @@ export class DaoWallet extends BaseContract {
         return parseInt(locked)
     }
 
-    async smvVote(params: { platformId: string; choice: boolean; amount: number }) {
-        const { platformId, choice, amount } = params
+    async smvVote(params: {
+        platformId: string
+        choice: boolean
+        amount: number
+        expert_tags?: string[]
+    }) {
+        const { platformId, choice, amount, expert_tags = [] } = params
         await this.run('voteFor', {
             platform_id: platformId,
             choice,
             amount,
             note: '',
             num_clients: await this.smvClientsCount(),
+            isTag: expert_tags,
         })
     }
 
@@ -1103,6 +1109,60 @@ export class DaoWallet extends BaseContract {
         }
     }
 
+    async createDaoExpertTag(params: {
+        tags: { name: string; multiplier: number }[]
+        comment?: string
+        reviewers?: string[]
+        cell?: boolean | undefined
+    }) {
+        const { tags, comment, reviewers, cell } = params
+
+        const cell_params = {
+            tags: tags.map(({ name }) => name),
+            multiples: tags.map(({ multiplier }) => multiplier),
+            comment,
+        }
+
+        if (cell) {
+            const { value0 } = await this.runLocal(
+                'getCellCreateTagForDaoMembers',
+                cell_params,
+            )
+            return value0 as string
+        } else {
+            const cell_data: any = await this.createDaoExpertTag({
+                ...params,
+                cell: true,
+            })
+            return await this.createSingleEvent({ cell: cell_data, reviewers })
+        }
+    }
+
+    async deleteDaoExpertTag(params: {
+        tags: string[]
+        comment?: string
+        reviewers?: string[]
+        cell?: boolean | undefined
+    }) {
+        const { tags, comment, reviewers, cell } = params
+
+        const cell_params = { tags, comment }
+
+        if (cell) {
+            const { value0 } = await this.runLocal(
+                'getCellDestroyTagForDaoMembers',
+                cell_params,
+            )
+            return value0 as string
+        } else {
+            const cell_data: any = await this.deleteDaoExpertTag({
+                ...params,
+                cell: true,
+            })
+            return await this.createSingleEvent({ cell: cell_data, reviewers })
+        }
+    }
+
     async createSingleEvent(params: { cell: string; reviewers?: string[] }) {
         const { cell, reviewers = [] } = params
 
@@ -1118,8 +1178,9 @@ export class DaoWallet extends BaseContract {
         proposals: { type: EDaoEventType; params: any }[]
         comment?: string
         reviewers?: string[]
+        expert_tags?: string[]
     }) {
-        const { proposals, comment, reviewers = [] } = params
+        const { proposals, comment, reviewers = [], expert_tags = [] } = params
 
         // Prepare cells
         const { cell, count } = await this.createMultiEventData(proposals)
@@ -1131,6 +1192,7 @@ export class DaoWallet extends BaseContract {
             reviewers,
             comment,
             num_clients: await this.smvClientsCount(),
+            data: expert_tags,
         })
         return await this.getEventAddress(result)
     }
@@ -1280,6 +1342,12 @@ export class DaoWallet extends BaseContract {
                 }
                 if (type === EDaoEventType.BRANCH_LOCK) {
                     return await this.lockRepositoryBranch({ ...params, cell: true })
+                }
+                if (type === EDaoEventType.DAO_EXPERT_TAG_CREATE) {
+                    return await this.createDaoExpertTag({ ...params, cell: true })
+                }
+                if (type === EDaoEventType.DAO_EXPERT_TAG_DELETE) {
+                    return await this.deleteDaoExpertTag({ ...params, cell: true })
                 }
                 return null
             },

@@ -22,6 +22,7 @@ import AccountSettingsLayout from './pages/AccountSettingsLayout'
 import DaoPage from './pages/Dao'
 import DaoCreatePage from './pages/DaoCreate'
 import DaoEventListPage from './pages/DaoEventList'
+import DaoExpertTagListPage from './pages/DaoExpertTagList'
 import DaoHackathonListPage from './pages/DaoHackathonList'
 import DaoLayout from './pages/DaoLayout'
 import DaoMemberListPage from './pages/DaoMemberList'
@@ -126,6 +127,10 @@ const App = () => {
                                 <Route
                                     index
                                     element={<Navigate to="setup" replace={true} />}
+                                />
+                                <Route
+                                    path="expert-tags"
+                                    element={<DaoExpertTagListPage />}
                                 />
                                 <Route path="upgrade" element={<DaoUpgradePage />} />
                                 <Route path="setup" element={<DaoSetupPage />} />
