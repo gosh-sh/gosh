@@ -98,12 +98,11 @@ function startPlatform (TvmCell platformCode, TvmCell clientCode, uint128 amount
     uint128 actionValue = (msg.value - deployFee - SMVConstants.ACTION_FEE)/2;
     address platform = address.makeAddrStd(address(this).wid, tvm.hash(_stateInit));
 
-    LockableBase(platform).performAction{value: actionValue, flag:1}(amountToLock, m_tokenBalance, _inputCell, goshdao);
-
     new LockerPlatform {/* bounce: false, */
                         value: deployFee + actionValue,
                         stateInit: _stateInit } (_goshdao, clientCode, amountToLock, m_tokenBalance, staticCell, _inputCell, isTag, pubaddr);
     m_num_clients ++;
+    LockableBase(platform).performAction{value: actionValue, flag:1}(amountToLock, m_tokenBalance, _inputCell, goshdao);
 }
 
 constructor(uint256 _platformCodeHash, uint16 _platformCodeDepth, TvmCell _m_walletCode, address _m_tokenRoot, address goshdao) check_account
