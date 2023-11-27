@@ -251,6 +251,7 @@ function calculateVotePower(address _locker, uint256 _platform_id, bool choice, 
         optional(uint256, bool) res = _daoMembersTag[keyaddr].next(key);
         if (res.hasValue() == false) {
             this.continueVote{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, sum, sender);
+            return;
         }
         (uint256 newkey,bool worker) = res.get();
         worker;
