@@ -240,6 +240,9 @@ function vote (address _locker, uint256 _platform_id, bool choice, uint128 amoun
         if (_daoMembersTag.exists(keyaddr)) {
             this.calculateVotePower{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, amount, pubaddr, uint128(0), uint256(0), msg.sender);
         }
+        else  {
+            this.continueVote{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, 0, msg.sender);
+        }
         return;
     }
     this.continueVote{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, amount, msg.sender);
