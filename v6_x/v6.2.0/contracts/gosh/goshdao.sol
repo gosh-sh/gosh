@@ -416,7 +416,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         TagSupply(tagaddr).getSupply{value: 0.25 ton, flag: 1}(msg.sender, tag, uint128(0), uint128(0));
     }
 
-    function continueCalculateTagSupply(address proposal, string[] tag, uint128 index, uint128 sum) public view minValue(0.2 ton) accept {
+    function continueCalculateTagSupply(address proposal, string[] tag, uint128 index, uint128 sum) public view minValue(0.12 ton) accept {
         index += 1;
         if (index == tag.length) {
             SMVProposalBase(proposal).onContinueAction{value: 0.1 ton, flag: 1}(sum, _daoMembersTag, _daoTagData);
