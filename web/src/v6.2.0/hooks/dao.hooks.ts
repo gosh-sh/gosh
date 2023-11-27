@@ -816,6 +816,7 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
             'smvdestroytag',
             'smvnotallowmint',
             'setNewTags',
+            'destroyTags',
             'setNewMembersTags',
             'destroyTagsForMembers',
         ]
