@@ -168,7 +168,7 @@ function onCodeUpgrade (string[] isTag,
 function onContinueAction(uint128 t, mapping(uint256 => mapping(uint256 => bool)) daoMembersTag, mapping(uint256 => Multiples) daoTagData) external view senderIs(_goshdao) accept
 {
     if (_isTag.length == 0) { this.onContinueActionAgain{value: 0.1 ton, flag: 1}(t, daoMembersTag, daoTagData); }
-    else { IGoshDao(_goshdao).calculateTagSupply{value: 0.1 ton, flag: 1}(_isTag); }
+    else { IGoshDao(_goshdao).calculateTagSupply{value: 0.25 ton, flag: 1}(_isTag); }
 }
 
 function onContinueActionAgain(uint128 t, mapping(uint256 => mapping(uint256 => bool)) daoMembersTag, mapping(uint256 => Multiples) daoTagData) external accept {
