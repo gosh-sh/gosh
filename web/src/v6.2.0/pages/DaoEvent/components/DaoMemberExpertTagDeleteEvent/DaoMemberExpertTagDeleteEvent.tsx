@@ -1,4 +1,4 @@
-import { BadgeTag } from '../../../../components/Badge';
+import { BadgeExpertTag } from '../../../../components/Badge'
 
 type TDaoMemberExpertTagDeleteEventProps = {
     data: { tag: string; pubaddr: { username: string; profile: string }[] }
@@ -14,12 +14,11 @@ const DaoMemberExpertTagDeleteEvent = (props: TDaoMemberExpertTagDeleteEventProp
                     {data.pubaddr[0].username}
                 </div>
                 <div className="text-sm">
-                    <BadgeTag content={data.tag} />
+                    <BadgeExpertTag content={data.tag} className="py-2 px-3" />
                 </div>
             </div>
         </div>
     )
 }
 
-export { DaoMemberExpertTagDeleteEvent };
-
+export { DaoMemberExpertTagDeleteEvent }

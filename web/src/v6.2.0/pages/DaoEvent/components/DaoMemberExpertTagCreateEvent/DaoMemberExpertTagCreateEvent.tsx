@@ -1,4 +1,4 @@
-import { BadgeTag } from '../../../../components/Badge'
+import { BadgeExpertTag } from '../../../../components/Badge'
 
 type TDaoMemberExpertTagCreateEventProps = {
     data: { tags: string[]; pubaddr: { username: string; profile: string }[] }
@@ -15,7 +15,7 @@ const DaoMemberExpertTagCreateEvent = (props: TDaoMemberExpertTagCreateEventProp
                         {data.pubaddr[index].username}
                     </div>
                     <div>
-                        <BadgeTag content={name} />
+                        <BadgeExpertTag content={name} className="py-2 px-3" />
                     </div>
                 </div>
             ))}

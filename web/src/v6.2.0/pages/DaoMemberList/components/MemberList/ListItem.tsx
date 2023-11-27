@@ -3,6 +3,7 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import classNames from 'classnames'
 import { ErrorMessage, Field, useFormikContext } from 'formik'
+import randomColor from 'randomcolor'
 import { useNavigate } from 'react-router-dom'
 import Select from 'react-select'
 import { Tooltip } from 'react-tooltip'
@@ -113,7 +114,40 @@ const ListItem = (props: TListItemProps) => {
                             isMulti
                             isClearable={false}
                             placeholder="Expert tags"
-                            classNames={Select2ClassNames}
+                            classNames={{
+                                ...Select2ClassNames,
+                                valueContainer: () => '!p-1',
+                                multiValueRemove: () => '!p-0.5',
+                            }}
+                            styles={{
+                                multiValue: (base, props) => ({
+                                    ...base,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    flexWrap: 'nowrap',
+                                    fontSize: '0.875rem !important',
+                                    padding: '0 0.5rem',
+                                    borderRadius: '2.25rem',
+                                    margin: '0 0.125rem',
+                                    color: randomColor({
+                                        seed: props.data.label,
+                                        luminosity: 'dark',
+                                    }),
+                                    backgroundColor: randomColor({
+                                        seed: props.data.label,
+                                        luminosity: 'light',
+                                        format: 'rgba',
+                                        alpha: 0.35,
+                                    }),
+                                }),
+                                multiValueLabel: (base, props) => ({
+                                    ...base,
+                                    color: randomColor({
+                                        seed: props.data.label,
+                                        luminosity: 'dark',
+                                    }),
+                                }),
+                            }}
                             onChange={(option) => {
                                 formik.setFieldValue(`items.${index}.expert_tags`, option)
                             }}

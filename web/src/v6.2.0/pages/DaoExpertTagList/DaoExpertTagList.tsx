@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '../../../components/Form'
 import { FormikInput, FormikTextarea } from '../../../components/Formik'
+import { BadgeExpertTag } from '../../components/Badge'
 import { useDao, useUpdateDaoExpertTags } from '../../hooks/dao.hooks'
 import yup from '../../yup-extended'
 
@@ -159,14 +160,22 @@ const FieldArrayForm = (props: FieldArrayRenderProps) => {
                                 className="flex flex-wrap items-baseline gap-x-6 gap-y-2.5"
                             >
                                 <div className="basis-full lg:basis-3/12">
-                                    <Field
-                                        name={`tags.${index}.name`}
-                                        component={FormikInput}
-                                        placeholder="Tag name"
-                                        autoComplete="off"
-                                        disabled={item._disabled || form.isSubmitting}
-                                        className="bg-white"
-                                    />
+                                    {item._disabled ? (
+                                        <BadgeExpertTag
+                                            content={item.name}
+                                            className="inline-flex items-center py-2 px-4"
+                                        />
+                                    ) : (
+                                        <Field
+                                            name={`tags.${index}.name`}
+                                            component={FormikInput}
+                                            placeholder="Tag name"
+                                            autoComplete="off"
+                                            disabled={item._disabled || form.isSubmitting}
+                                            className="bg-white"
+                                        />
+                                    )}
+
                                     {Array.isArray(form.errors.tags) && (
                                         <ErrorMessage
                                             className="text-xs text-red-ff3b30 mt-1"
