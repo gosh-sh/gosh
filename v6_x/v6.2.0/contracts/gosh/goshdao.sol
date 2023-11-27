@@ -871,7 +871,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         this.destroyTagsForMembersIn{value:0.1 ton, flag: 1}(pubaddr, tag, 0);
     }
 
-    function destroyTagsForMembersIn (address[] pubaddr, string tag, uint128 index) public view senderIs(address(this))  accept
+    function destroyTagsForMembersIn (address[] pubaddr, string tag, uint128 index) public senderIs(address(this))  accept
     {
         if (index >= pubaddr.length) { return; }
         (, uint256 keyaddr) = pubaddr[index].unpack();
@@ -879,6 +879,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             if (_daoMembersTag.exists(keyaddr)) {
                 address tagaddr = GoshLib.calculateTagSupplyAddress(_code[m_TagSupplyCode], this, tvm.hash(tag));
                 TagSupply(tagaddr).deleteMember{value: 0.1 ton, flag: 1}(_wallets[keyaddr].count);
+                delete _daoMembersTag[keyaddr][tvm.hash(tag)];
             }
         }
         this.destroyTagsForMembersIn{value: 0.2 ton, flag: 1}(pubaddr, tag, index + 1);
