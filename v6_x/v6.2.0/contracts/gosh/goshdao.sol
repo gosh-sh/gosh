@@ -857,7 +857,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (index >= tags.length) { return; }
         (, uint256 keyaddr) = pubaddr[index].unpack();
         if (_wallets.exists(keyaddr)) {
-            if (_daoMembersTag.exists(keyaddr)) {
+            if (_daoMembersTag[keyaddr][tvm.hash(tags[index])] != true) {
                 address tag = GoshLib.calculateTagSupplyAddress(_code[m_TagSupplyCode], this, tvm.hash(tags[index]));
                 TagSupply(tag).addMember{value: 0.1 ton, flag: 1}(_wallets[keyaddr].count);
             }
