@@ -9,6 +9,7 @@ import {
     Formik,
 } from 'formik'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '../../../components/Form'
 import { FormikInput, FormikTextarea } from '../../../components/Formik'
@@ -25,13 +26,7 @@ const DaoExpertTagListPage = () => {
     const navigate = useNavigate()
     const dao = useDao()
     const { update } = useUpdateDaoExpertTags()
-
-    const initial_expert_tags = dao.details.expert_tags?.map((item) => ({
-        _motion_id: item.name,
-        _disabled: true,
-        name: item.name,
-        multiplier: item.multiplier.toString(),
-    })) || [{ _motion_id: '0', _disabled: false, name: '', multiplier: '100' }]
+    const [expert_tags, setExpertTags] = useState<TFormValues['tags']>([])
 
     const onFormSubmit = async (values: TFormValues) => {
         try {
@@ -53,10 +48,26 @@ const DaoExpertTagListPage = () => {
         }
     }
 
+    useEffect(() => {
+        const empty = { _motion_id: '0', _disabled: false, name: '', multiplier: '100' }
+        const expert_tags =
+            dao.details.expert_tags?.map((item) => ({
+                _motion_id: item.name,
+                _disabled: true,
+                name: item.name,
+                multiplier: item.multiplier.toString(),
+            })) || []
+        if (expert_tags.length === 0) {
+            expert_tags.push(empty)
+        }
+
+        setExpertTags(expert_tags)
+    }, [dao.details.expert_tags?.length])
+
     return (
         <Formik
             initialValues={{
-                tags: initial_expert_tags,
+                tags: expert_tags,
                 comment: '',
             }}
             onSubmit={onFormSubmit}

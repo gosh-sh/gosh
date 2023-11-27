@@ -1,3 +1,5 @@
+import { BadgeTag } from '../../../../components/Badge'
+
 type TDaoExpertTagCreateEventProps = {
     data: { tags: string[]; multiples: string[] }
 }
@@ -11,7 +13,9 @@ const DaoExpertTagCreateEvent = (props: TDaoExpertTagCreateEventProps) => {
             <div className="mt-2 flex flex-col gap-2 py-1">
                 {data.tags.map((name, index) => (
                     <div key={index} className="flex items-center gap-6 text-sm">
-                        <div className="basis-5/12 xl:basis-3/12">{name}</div>
+                        <div className="basis-5/12 xl:basis-3/12">
+                            <BadgeTag content={name} className="inline-block" />
+                        </div>
                         <div>{data.multiples[index]}%</div>
                     </div>
                 ))}

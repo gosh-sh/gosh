@@ -58,18 +58,30 @@ export class Dao extends BaseContract {
         parse?: {
             wallets: { [pubaddr: string]: any }
             daomembers: { [address: string]: string }
+            expert_tags: {
+                dao: { [hash: string]: { name: string; value: string } }
+                members: { [phash: string]: { [thash: string]: boolean } }
+            }
         }
         isDaoMemberOf?: boolean
     }): Promise<TDaoDetailsMemberItem[]> {
         const { parse, isDaoMemberOf } = options
 
-        const toparse = parse || { wallets: {}, daomembers: {} }
+        const toparse = parse || {
+            wallets: {},
+            daomembers: {},
+            expert_tags: { dao: {}, members: {} },
+        }
         if (!parse) {
             const details = await this.runLocal('getDetails', {}, undefined, {
                 retries: 1,
             })
             toparse.wallets = details.wallets
             toparse.daomembers = details.daoMembers
+            toparse.expert_tags = {
+                dao: details.daoTagData,
+                members: details.daoMembersTag,
+            }
         }
 
         // Update daomembers key
@@ -102,12 +114,27 @@ export class Dao extends BaseContract {
                             ? new Dao(this.client, testaddr)
                             : new UserProfile(this.client, testaddr)
                 }
+
+                // Parse DAO member expert tags
+                const expert_tags = []
+                const entries = Object.entries(toparse.expert_tags.members[key] || {})
+                for (const [key_hash, enabled] of entries) {
+                    const dao_expert_tag = toparse.expert_tags.dao[key_hash]
+                    if (dao_expert_tag && enabled) {
+                        expert_tags.push({
+                            name: dao_expert_tag.name,
+                            multiplier: parseInt(dao_expert_tag.value),
+                        })
+                    }
+                }
+
                 return {
                     usertype: resolved.type,
                     profile: resolved.account,
                     wallet: new DaoWallet(this.client, toparse.wallets[key].member),
                     allowance: parseInt(toparse.wallets[key].count),
                     daomembers: toparse.daomembers,
+                    expert_tags,
                 }
             }),
         )

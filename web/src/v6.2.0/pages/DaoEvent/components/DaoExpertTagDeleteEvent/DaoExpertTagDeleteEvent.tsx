@@ -1,3 +1,5 @@
+import { BadgeTag } from '../../../../components/Badge'
+
 type TDaoExpertTagDeleteEventProps = {
     data: { tags: string[] }
 }
@@ -11,7 +13,11 @@ const DaoExpertTagDeleteEvent = (props: TDaoExpertTagDeleteEventProps) => {
                 <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
                     Expert tags
                 </div>
-                <div className="text-sm">{data.tags.join(' ')}</div>
+                <div className="text-sm">
+                    {data.tags.map((tag, index) => (
+                        <BadgeTag key={index} content={tag} className="mx-2" />
+                    ))}
+                </div>
             </div>
         </div>
     )

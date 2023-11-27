@@ -576,7 +576,7 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"pubaddr","type":"address[]"},
-				{"name":"tag","type":"string"}
+				{"name":"tags","type":"string[]"}
 			]
 		},
 		{
@@ -659,7 +659,8 @@
 			],
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
-				{"name":"pubaddr","type":"address[]"}
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"tag","type":"string"}
 			]
 		},
 		{

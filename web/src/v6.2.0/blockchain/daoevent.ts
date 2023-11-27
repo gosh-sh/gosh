@@ -142,6 +142,12 @@ export class DaoEvent extends BaseContract {
             fn = 'getCreateDaoMembersTagParams'
         } else if (type === EDaoEventType.DAO_EXPERT_TAG_DELETE) {
             fn = 'getDestroyDaoMembersTagParams'
+        } else if (type === EDaoEventType.DAO_MEMBER_EXPERT_TAG_CREATE) {
+            fn = 'getSetDaoMembersTagParams'
+            parser = this.parseCreateDaoMemberExpertTagEventParams
+        } else if (type === EDaoEventType.DAO_MEMBER_EXPERT_TAG_DELETE) {
+            fn = 'getDeleteDaoMembersTagParams'
+            parser = this.parseDeleteDaoMemberExpertTagEventParams
         } else if (type === EDaoEventType.MULTI_PROPOSAL) {
             const { num, data0 } = await this.runLocal('getDataFirst', {}, undefined, {
                 useCachedBoc: true,
@@ -235,6 +241,34 @@ export class DaoEvent extends BaseContract {
             ...data,
             pubaddr: { username: await account.getName(), profile: account.address },
             grant: parseInt(data.grant),
+        }
+    }
+
+    async parseCreateDaoMemberExpertTagEventParams(data: any) {
+        const accounts = await Promise.all(
+            data.pubaddr.map(async (address: string) => {
+                const { account } = await getDaoOrProfile(address)
+                return { username: await account.getName(), profile: account.address }
+            }),
+        )
+
+        return {
+            ...data,
+            pubaddr: accounts,
+        }
+    }
+
+    async parseDeleteDaoMemberExpertTagEventParams(data: any) {
+        const accounts = await Promise.all(
+            data.pubaddr.map(async (address: string) => {
+                const { account } = await getDaoOrProfile(address)
+                return { username: await account.getName(), profile: account.address }
+            }),
+        )
+
+        return {
+            ...data,
+            pubaddr: accounts,
         }
     }
 
@@ -424,6 +458,12 @@ export class DaoEvent extends BaseContract {
             fn = 'getCreateDaoMembersTagParamsData'
         } else if (type === EDaoEventType.DAO_EXPERT_TAG_DELETE) {
             fn = 'getDestroyDaoMembersTagParamsData'
+        } else if (type === EDaoEventType.DAO_MEMBER_EXPERT_TAG_CREATE) {
+            fn = 'getSetDaoMembersTagParamsData'
+            parser = this.parseCreateDaoMemberExpertTagEventParams
+        } else if (type === EDaoEventType.DAO_MEMBER_EXPERT_TAG_DELETE) {
+            fn = 'getDeleteDaoMembersTagParamsData'
+            parser = this.parseDeleteDaoMemberExpertTagEventParams
         } else if (type === EDaoEventType.DELAY) {
             return { type, label: DaoEventType[type], data: {} }
         } else {

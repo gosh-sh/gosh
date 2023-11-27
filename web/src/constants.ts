@@ -68,6 +68,8 @@ export const DaoEventType: { [key: number]: string } = {
     46: 'Delete repository',
     47: 'Update DAO expert tag',
     48: 'Delete DAO expert tag',
+    49: 'Add expert tag for DAO member',
+    50: 'Delete expert tag for DAO member',
 }
 
 export const NotificationType: { [key: string]: string } = {

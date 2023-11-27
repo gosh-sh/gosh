@@ -1,28 +1,27 @@
-import CopyClipboard from '../../../../../components/CopyClipboard'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTimes } from '@fortawesome/free-solid-svg-icons'
-import { EDaoMemberType, TDaoMemberListItem } from '../../../../types/dao.types'
-import { shortString } from '../../../../../utils'
-import Skeleton from '../../../../../components/Skeleton'
-import { useDao, useDeleteDaoMember, useDaoMember } from '../../../../hooks/dao.hooks'
-import { useNavigate } from 'react-router-dom'
-import { ErrorMessage, Field } from 'formik'
-import { FormikInput } from '../../../../../components/Formik'
-import classNames from 'classnames'
-import { Button } from '../../../../../components/Form'
-import { MemberIcon } from '../../../../../components/Dao'
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons'
+import { faTimes } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import classNames from 'classnames'
+import { ErrorMessage, Field, useFormikContext } from 'formik'
+import { useNavigate } from 'react-router-dom'
+import Select from 'react-select'
 import { Tooltip } from 'react-tooltip'
+import { MemberIcon } from '../../../../../components/Dao'
+import { Button } from '../../../../../components/Form'
+import { BaseField, FormikInput } from '../../../../../components/Formik'
+import Skeleton from '../../../../../components/Skeleton'
+import { Select2ClassNames } from '../../../../../helpers'
+import { useDao, useDaoMember, useDeleteDaoMember } from '../../../../hooks/dao.hooks'
+import { EDaoMemberType, TDaoMemberListItem } from '../../../../types/dao.types'
 
 const basis = {
     contaner: 'flex items-center flex-wrap xl:flex-nowrap px-3 py-2 gap-x-6 gap-y-2',
     name: 'basis-full lg:basis-full xl:!basis-2/12',
-    profile: 'basis-5/12 md:basis-5/12 lg:!basis-[11.7%]',
-    wallet: 'basis-5/12 md:basis-5/12 lg:!basis-[11.7%]',
+    expert_tags: 'basis-full lg:basis-4/12',
     allowance: 'basis-full md:basis-5/12 lg:!basis-2/12',
     balance: 'basis-full md:basis-5/12 lg:!basis-2/12',
     vesting: 'basis-full md:basis-5/12 lg:!basis-2/12 xl:!basis-1/12',
-    buttons: 'basis-full md:basis-5/12 lg:!basis-0 grow',
+    buttons: 'basis-full md:basis-5/12 lg:!basis-1/12',
 }
 
 const ListItemSkeleton = () => {
@@ -51,8 +50,7 @@ const ListItemHeader = (props: React.HTMLAttributes<HTMLDivElement>) => {
             )}
         >
             <div className={basis.name}>name</div>
-            <div className={basis.profile}>profile</div>
-            <div className={basis.wallet}>wallet</div>
+            <div className={basis.expert_tags}>expert tags</div>
             <div className={basis.allowance}>karma</div>
             <div className={classNames(basis.balance, 'whitespace-nowrap')}>
                 token balance
@@ -71,6 +69,7 @@ type TListItemProps = {
 const ListItem = (props: TListItemProps) => {
     const { item, index } = props
     const navigate = useNavigate()
+    const formik = useFormikContext<any>()
     const dao = useDao()
     const member = useDaoMember()
     const { deleteMember } = useDeleteDaoMember()
@@ -97,33 +96,32 @@ const ListItem = (props: TListItemProps) => {
                 <MemberIcon type={item.usertype} className="mr-2" size="sm" fixedWidth />
                 {item.username}
             </div>
-            <div className={basis.profile}>
-                <CopyClipboard
-                    className="font-light text-sm"
-                    componentProps={{ text: item.profile.address }}
-                    label={
-                        <>
-                            <span className="mr-2 lg:hidden">Profile:</span>
-                            <span className="font-mono text-xs">
-                                {shortString(item.profile.address, 5, 4)}
-                            </span>
-                        </>
-                    }
-                />
-            </div>
-            <div className={basis.wallet}>
-                <CopyClipboard
-                    className="font-light text-sm"
-                    componentProps={{ text: item.wallet.address }}
-                    label={
-                        <>
-                            <span className="mr-2 lg:hidden">Wallet:</span>
-                            <span className="font-mono text-xs">
-                                {shortString(item.wallet.address, 5, 4)}
-                            </span>
-                        </>
-                    }
-                />
+            <div className={basis.expert_tags}>
+                {member.isMember ? (
+                    <Field name={`items.${index}.expert_tags`} component={BaseField}>
+                        <Select
+                            value={item.expert_tags.map((item: any) => ({
+                                label: item.name,
+                                value: item.name,
+                                ...item,
+                            }))}
+                            options={dao.details.expert_tags?.map((item) => ({
+                                label: item.name,
+                                value: item.name,
+                                ...item,
+                            }))}
+                            isMulti
+                            isClearable={false}
+                            placeholder="Expert tags"
+                            classNames={Select2ClassNames}
+                            onChange={(option) => {
+                                formik.setFieldValue(`items.${index}.expert_tags`, option)
+                            }}
+                        />
+                    </Field>
+                ) : (
+                    'todo'
+                )}
             </div>
             <div className={classNames(basis.allowance, 'font-light')}>
                 {member.isMember ? (
@@ -242,4 +240,4 @@ const ListItem = (props: TListItemProps) => {
     )
 }
 
-export { ListItem, ListItemSkeleton, ListItemHeader }
+export { ListItem, ListItemHeader, ListItemSkeleton }

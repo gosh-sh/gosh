@@ -58,6 +58,7 @@ import {
     EDaoMemberType,
     TDaoDetailsMemberItem,
     TDaoEventDetails,
+    TDaoExpertTag,
     TDaoInviteListItem,
     TDaoListItem,
     TDaoMemberListItem,
@@ -537,10 +538,21 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
 
             const details = await dao.getDetails()
             const members = await dao.getMembers({
-                parse: { wallets: details.wallets, daomembers: details.daoMembers },
+                parse: {
+                    wallets: details.wallets,
+                    daomembers: details.daoMembers,
+                    expert_tags: {
+                        dao: details.daoTagData,
+                        members: details.daoMembersTag,
+                    },
+                },
             })
             const isMemberOf = await dao.getMembers({
-                parse: { wallets: details.my_wallets, daomembers: {} },
+                parse: {
+                    wallets: details.my_wallets,
+                    daomembers: {},
+                    expert_tags: { dao: {}, members: {} },
+                },
                 isDaoMemberOf: true,
             })
 
@@ -804,6 +816,8 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
             'smvdestroytag',
             'smvnotallowmint',
             'setNewTags',
+            'setNewMembersTags',
+            'destroyTagsForMembers',
         ]
         data.details.account?.account.subscribeMessages(
             'msg_type body',
@@ -1156,10 +1170,11 @@ export function useDaoMemberList(
                 setData((state) => ({ ...state, isFetching: true }))
 
                 to = to || from + count
+                const members_slice = dao.members?.slice(from, to) || []
                 const items = await executeByChunk<
                     TDaoDetailsMemberItem,
                     TDaoMemberListItem
-                >(dao.members?.slice(from, to) || [], MAX_PARALLEL_READ, async (item) => {
+                >(members_slice, MAX_PARALLEL_READ, async (item) => {
                     const { profile, daomembers } = item
 
                     const name = daomembers[profile.address] || (await profile.getName())
@@ -1187,10 +1202,10 @@ export function useDaoMemberList(
                     return {
                         ...state,
                         items: [...different, ...state.items].map((item) => {
-                            const found = intersect.find(
-                                (_item) => _item.profile.address === item.profile.address,
-                            )
-                            return { ...item, ...found } || item
+                            const found = intersect.find((_item) => {
+                                return _item.profile.address === item.profile.address
+                            })
+                            return found ? { ...item, ...found } : item
                         }),
                     }
                 })
@@ -1205,6 +1220,7 @@ export function useDaoMemberList(
             dao.members?.length,
             count,
             sum(dao.members?.map((item) => item.vesting)),
+            sum(dao.members?.map((item) => item.expert_tags.length)),
         ],
     )
 
@@ -1903,6 +1919,8 @@ export function useUpdateDaoMember() {
                 _allowance: number
                 balance: number
                 _balance: number
+                expert_tags: TDaoExpertTag[]
+                _expert_tags: TDaoExpertTag[]
             }[],
             comment?: string,
         ) => {
@@ -2016,6 +2034,39 @@ export function useUpdateDaoMember() {
                                 comment: _comment,
                             },
                             fn: 'updateDaoMemberAllowance',
+                        })
+                        comments.push(_comment)
+                    }
+
+                    // Expert tags change
+                    const expert_tags_added = _.differenceWith(
+                        item.expert_tags,
+                        item._expert_tags,
+                        (a, b) => a.name === b.name,
+                    )
+                    for (const { name } of expert_tags_added) {
+                        const _comment = `Add expert tag ${name} for ${item.username}`
+                        const _item = { profile_addr: item.profile, tag: name }
+                        events.push({
+                            type: EDaoEventType.DAO_MEMBER_EXPERT_TAG_CREATE,
+                            params: { items: [_item], comment: _comment },
+                            fn: 'createDaoMemberExpertTag',
+                        })
+                        comments.push(_comment)
+                    }
+
+                    const expert_tags_deleted = _.differenceWith(
+                        item._expert_tags,
+                        item.expert_tags,
+                        (a, b) => a.name === b.name,
+                    )
+                    for (const { name } of expert_tags_deleted) {
+                        const _comment = `Delete expert tag ${name} for ${item.username}`
+                        const _item = { profile_addr: item.profile, tag: name }
+                        events.push({
+                            type: EDaoEventType.DAO_MEMBER_EXPERT_TAG_DELETE,
+                            params: { item: _item, comment: _comment },
+                            fn: 'deleteDaoMemberExpertTag',
                         })
                         comments.push(_comment)
                     }

@@ -1,23 +1,27 @@
-import Alert from '../../../../../components/Alert'
-import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
 import classNames from 'classnames'
-import { useEffect } from 'react'
-import { ListItem, ListItemHeader, ListItemSkeleton } from './ListItem'
-import { TDaoMemberListItem } from '../../../../types/dao.types'
 import { Field, Form, Formik } from 'formik'
-import yup from '../../../../yup-extended'
+import { useEffect } from 'react'
+import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
+import { useNavigate } from 'react-router-dom'
+import Alert from '../../../../../components/Alert'
+import { Button } from '../../../../../components/Form'
+import { FormikTextarea } from '../../../../../components/Formik'
 import {
     useDao,
     useDaoMember,
     useDaoMemberList,
     useUpdateDaoMember,
 } from '../../../../hooks/dao.hooks'
-import { FormikTextarea } from '../../../../../components/Formik'
-import { Button } from '../../../../../components/Form'
-import { useNavigate } from 'react-router-dom'
+import { TDaoExpertTag, TDaoMemberListItem } from '../../../../types/dao.types'
+import yup from '../../../../yup-extended'
+import { ListItem, ListItemHeader, ListItemSkeleton } from './ListItem'
 
 type TUpdateFormValues = {
-    items: (TDaoMemberListItem & { _allowance: string; _balance: string })[]
+    items: (TDaoMemberListItem & {
+        _allowance: string
+        _balance: string
+        _expert_tags: TDaoExpertTag[]
+    })[]
     comment?: string
 }
 
@@ -43,6 +47,8 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
                 _balance: parseInt(item._balance),
                 allowance: parseInt(item.allowance.toString()),
                 _allowance: parseInt(item._allowance),
+                expert_tags: item.expert_tags,
+                _expert_tags: item._expert_tags,
             }))
             const { eventaddr } = await updateMember(items, values.comment)
             navigate(`/o/${dao.details.name}/events/${eventaddr || ''}`)
@@ -72,6 +78,7 @@ const ListBoundaryInner = (props: TListBoundaryInnerProps) => {
                         ...item,
                         _allowance: item.allowance.toString(),
                         _balance: item.balance.toString(),
+                        _expert_tags: item.expert_tags,
                     })),
                     comment: '',
                 }}

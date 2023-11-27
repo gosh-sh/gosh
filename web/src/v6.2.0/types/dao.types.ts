@@ -44,6 +44,7 @@ export type TDaoDetailsMemberItem = {
     wallet: DaoWallet
     allowance: number
     daomembers: { [address: string]: string }
+    expert_tags: TDaoExpertTag[]
     vesting?: number
 }
 

@@ -1163,6 +1163,60 @@ export class DaoWallet extends BaseContract {
         }
     }
 
+    async createDaoMemberExpertTag(params: {
+        items: { profile_addr: string; tag: string }[]
+        comment?: string
+        reviewers?: string[]
+        cell?: boolean | undefined
+    }) {
+        const { items, comment, reviewers, cell } = params
+
+        const cell_params = {
+            pubaddr: items.map(({ profile_addr }) => profile_addr),
+            tags: items.map(({ tag }) => tag),
+            comment,
+        }
+
+        if (cell) {
+            const { value0 } = await this.runLocal(
+                'getCellDeployTagForDaoMembers',
+                cell_params,
+            )
+            return value0 as string
+        } else {
+            const cell_data: any = await this.createDaoMemberExpertTag({
+                ...params,
+                cell: true,
+            })
+            return await this.createSingleEvent({ cell: cell_data, reviewers })
+        }
+    }
+
+    async deleteDaoMemberExpertTag(params: {
+        item: { profile_addr: string; tag: string }
+        comment?: string
+        reviewers?: string[]
+        cell?: boolean | undefined
+    }) {
+        const { item, comment, reviewers, cell } = params
+
+        const cell_params = { pubaddr: [item.profile_addr], tag: item.tag, comment }
+
+        if (cell) {
+            const { value0 } = await this.runLocal(
+                'getCellDeleteTagForDaoMembers',
+                cell_params,
+            )
+            return value0 as string
+        } else {
+            const cell_data: any = await this.deleteDaoMemberExpertTag({
+                ...params,
+                cell: true,
+            })
+            return await this.createSingleEvent({ cell: cell_data, reviewers })
+        }
+    }
+
     async createSingleEvent(params: { cell: string; reviewers?: string[] }) {
         const { cell, reviewers = [] } = params
 
@@ -1348,6 +1402,12 @@ export class DaoWallet extends BaseContract {
                 }
                 if (type === EDaoEventType.DAO_EXPERT_TAG_DELETE) {
                     return await this.deleteDaoExpertTag({ ...params, cell: true })
+                }
+                if (type === EDaoEventType.DAO_MEMBER_EXPERT_TAG_CREATE) {
+                    return await this.createDaoMemberExpertTag({ ...params, cell: true })
+                }
+                if (type === EDaoEventType.DAO_MEMBER_EXPERT_TAG_DELETE) {
+                    return await this.deleteDaoMemberExpertTag({ ...params, cell: true })
                 }
                 return null
             },
