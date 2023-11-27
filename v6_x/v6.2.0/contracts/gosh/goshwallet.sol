@@ -2101,6 +2101,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_limited == false, ERR_WALLET_LIMITED);
         require(number <= 50, ERR_TOO_MANY_PROPOSALS);
         require(number > 1, ERR_TOO_FEW_PROPOSALS);
+        require(data.length <= 5, ERR_TOO_MANY_PROPOSALS);
         tvm.accept();
         _saveMsg();
 
