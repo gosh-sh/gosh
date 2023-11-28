@@ -259,7 +259,7 @@ function calculateVotePower(address _locker, uint256 _platform_id, bool choice, 
         (uint256 newkey,bool worker) = res.get();
         worker;
         key = newkey;
-        for (uint128 j = 0; i <= _isTag.length; j++) {
+        for (uint128 j = 0; j < _isTag.length; j++) {
             if (key == tvm.hash(_isTag[j])) { sum += amount * _daoTagData[key].value / 100; break; }
         }
     }
