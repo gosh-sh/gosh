@@ -159,7 +159,7 @@ const FieldArrayForm = (props: FieldArrayRenderProps) => {
                                 exit={{ opacity: 0, transition: { duration: 0.4 } }}
                                 className="flex flex-wrap items-baseline gap-x-6 gap-y-2.5"
                             >
-                                <div className="basis-auto grow lg:basis-3/12 order-1">
+                                <div className="basis-auto grow lg:basis-3/12 lg:grow-0 order-1">
                                     {item._disabled ? (
                                         <BadgeExpertTag
                                             content={item.name}

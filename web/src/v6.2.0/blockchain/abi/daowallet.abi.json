@@ -1500,8 +1500,7 @@
 				{"name":"number","type":"uint128"},
 				{"name":"proposals","type":"cell"},
 				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"},
-				{"name":"data","type":"string[]"}
+				{"name":"reviewers","type":"address[]"}
 			],
 			"outputs": [
 			]
@@ -1511,7 +1510,8 @@
 			"inputs": [
 				{"name":"proposal","type":"cell"},
 				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
+				{"name":"reviewers","type":"address[]"},
+				{"name":"data","type":"string[]"}
 			],
 			"outputs": [
 			]
@@ -1662,8 +1662,7 @@
 				{"name":"choice","type":"bool"},
 				{"name":"amount","type":"uint128"},
 				{"name":"num_clients","type":"uint128"},
-				{"name":"note","type":"string"},
-				{"name":"isTag","type":"string[]"}
+				{"name":"note","type":"string"}
 			],
 			"outputs": [
 			]
@@ -1675,8 +1674,7 @@
 				{"name":"choice","type":"bool"},
 				{"name":"amount","type":"uint128"},
 				{"name":"num_clients","type":"uint128"},
-				{"name":"note","type":"string"},
-				{"name":"isTag","type":"string[]"}
+				{"name":"note","type":"string"}
 			],
 			"outputs": [
 			]

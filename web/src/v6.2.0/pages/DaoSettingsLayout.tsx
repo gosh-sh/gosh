@@ -61,7 +61,7 @@ const DaoSettingsLayout = () => {
 }
 
 export default withErrorBoundary(
-    withRouteAnimation(withPin(DaoSettingsLayout, { redirect: false })),
+    withRouteAnimation(withPin(DaoSettingsLayout, { redirect: true })),
     {
         fallbackRender: ({ error }) => (
             <div className="container py-10">

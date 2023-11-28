@@ -187,20 +187,14 @@ export class DaoWallet extends BaseContract {
         return parseInt(locked)
     }
 
-    async smvVote(params: {
-        platformId: string
-        choice: boolean
-        amount: number
-        expert_tags?: string[]
-    }) {
-        const { platformId, choice, amount, expert_tags = [] } = params
+    async smvVote(params: { platformId: string; choice: boolean; amount: number }) {
+        const { platformId, choice, amount } = params
         await this.run('voteFor', {
             platform_id: platformId,
             choice,
             amount,
             note: '',
             num_clients: await this.smvClientsCount(),
-            isTag: expert_tags,
         })
     }
 
@@ -1217,13 +1211,18 @@ export class DaoWallet extends BaseContract {
         }
     }
 
-    async createSingleEvent(params: { cell: string; reviewers?: string[] }) {
-        const { cell, reviewers = [] } = params
+    async createSingleEvent(params: {
+        cell: string
+        reviewers?: string[]
+        expert_tags?: string[]
+    }) {
+        const { cell, reviewers = [], expert_tags = [] } = params
 
         const result = await this.run('startOneProposal', {
             proposal: cell,
             reviewers,
             num_clients: await this.smvClientsCount(),
+            data: expert_tags,
         })
         return await this.getEventAddress(result)
     }
@@ -1232,9 +1231,8 @@ export class DaoWallet extends BaseContract {
         proposals: { type: EDaoEventType; params: any }[]
         comment?: string
         reviewers?: string[]
-        expert_tags?: string[]
     }) {
-        const { proposals, comment, reviewers = [], expert_tags = [] } = params
+        const { proposals, comment, reviewers = [] } = params
 
         // Prepare cells
         const { cell, count } = await this.createMultiEventData(proposals)
@@ -1246,7 +1244,6 @@ export class DaoWallet extends BaseContract {
             reviewers,
             comment,
             num_clients: await this.smvClientsCount(),
-            data: expert_tags,
         })
         return await this.getEventAddress(result)
     }
