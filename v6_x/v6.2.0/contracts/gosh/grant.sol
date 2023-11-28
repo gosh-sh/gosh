@@ -21,6 +21,7 @@ contract Grant is Modifiers {
     uint256[] _pubkeys;
     uint128[] _votes;
     uint128[] _grants;
+    uint256 _size;
     uint128 _balance;
     address _systemcontract;
     address _tip3wallet;
@@ -29,6 +30,8 @@ contract Grant is Modifiers {
     mapping(uint8 => TvmCell) _code;
     mapping(uint256 => MemberToken) _wallets;
     uint128 _timeofend;
+    bool _inprocess = false;
+    mapping (uint128 => mapping (uint256 => bool)) public _SortedForGrants;
 
     constructor(
         address pubaddr,
@@ -42,6 +45,7 @@ contract Grant is Modifiers {
         _systemcontract = systemcontract;
         _tip3wallet = tip3wallet;
         _grants = grants;
+        _size = _grants.length;
         require(_grants.length <= 10, ERR_WRONG_NUMBER_MEMBER);
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
     }
@@ -72,6 +76,7 @@ contract Grant is Modifiers {
 
     function sendTokens(address pubaddr, uint128 index) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
         require(_ready == true, ERR_ALREADY_CONFIRMED);
+        require(_timeofend > block.timestamp, ERR_ALREADY_CONFIRMED);
     	AFlexWallet(_tip3wallet).details{value: 1 ton}(uint32(100));
     }
 
@@ -88,15 +93,28 @@ contract Grant is Modifiers {
             int8 workchain_id) public senderIs(_tip3wallet) accept functionID(100) {
         name; symbol; decimals; root_public_key; root_address; wallet_pubkey; owner_address; lend_pubkey; lend_owners; lend_balance; binding; code_hash; code_depth; workchain_id;
         _balance = balance;
-        this.sendTokensIn{value: 0.1 ton, flag: 1}(0);
+        this.sortPubkeys{value: 0.1 ton, flag: 1}(0);
     } 
+
+    function sortPubkeys(uint128 index) public senderIs(address(this)) accept {
+        for (uint i = 0; i < BATCH_SIZE_TAG; i++){
+            if (index + i >= _pubkeys.length) { 
+                optional(uint128, mapping(uint256 => bool)) res = _SortedForGrants.max();
+                (uint128 key, mapping(uint256 => bool) data) = res.get();
+                data;
+                this.sendTokensIn{value: 0.1 ton, flag: 1}(key); 
+            }
+            _SortedForGrants[_votes[i]][_pubkeys[i]] = true; 
+        }
+        this.sortPubkeys{value: 0.1 ton, flag: 1}(index + BATCH_SIZE_TAG);
+    }
 
     function sendTokensIn(uint128 index) public view senderIs(address(this)) accept {
         require(_ready == true, ERR_ALREADY_CONFIRMED);
-        if (index >= _grants.length) { return; }
-        Tip3Creds cred = Tip3Creds(_pubkeys[index], null);
-    	AFlexWallet(_tip3wallet).transferToRecipient{value: 1 ton, flag: 1}(uint32(0), null, cred, _balance / 100 * _grants[index], 4.5 ton, 1 ton, true, uint128(0), null);
-        this.sendTokensIn{value: 0.1 ton, flag: 1}(index + 1);
+        //if (index >= _grants.length) { return; }
+        //Tip3Creds cred = Tip3Creds(_pubkeys[index], null);
+    	//AFlexWallet(_tip3wallet).transferToRecipient{value: 1 ton, flag: 1}(uint32(0), null, cred, _balance / 100 * _grants[index], 4.5 ton, 1 ton, true, uint128(0), null);
+        //this.sendTokensIn{value: 0.1 ton, flag: 1}(index + 1);
     }
     
     //Selfdestruct

@@ -80,6 +80,14 @@
 			]
 		},
 		{
+			"name": "sortPubkeys",
+			"inputs": [
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "sendTokensIn",
 			"inputs": [
 				{"name":"index","type":"uint128"}
@@ -115,6 +123,14 @@
 				{"name":"value0","type":"string"},
 				{"name":"value1","type":"string"}
 			]
+		},
+		{
+			"name": "_SortedForGrants",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_SortedForGrants","type":"map(uint128,map(uint256,bool))"}
+			]
 		}
 	],
 	"data": [
@@ -134,6 +150,7 @@
 		{"name":"_pubkeys","type":"uint256[]"},
 		{"name":"_votes","type":"uint128[]"},
 		{"name":"_grants","type":"uint128[]"},
+		{"name":"_size","type":"uint256"},
 		{"name":"_balance","type":"uint128"},
 		{"name":"_systemcontract","type":"address"},
 		{"name":"_tip3wallet","type":"address"},
@@ -141,6 +158,8 @@
 		{"name":"_ready","type":"bool"},
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"_wallets","type":"map(uint256,tuple)"},
-		{"name":"_timeofend","type":"uint128"}
+		{"name":"_timeofend","type":"uint128"},
+		{"name":"_inprocess","type":"bool"},
+		{"name":"_SortedForGrants","type":"map(uint128,map(uint256,bool))"}
 	]
 }
