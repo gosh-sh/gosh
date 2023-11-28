@@ -159,7 +159,7 @@ const FieldArrayForm = (props: FieldArrayRenderProps) => {
                                 exit={{ opacity: 0, transition: { duration: 0.4 } }}
                                 className="flex flex-wrap items-baseline gap-x-6 gap-y-2.5"
                             >
-                                <div className="basis-full lg:basis-3/12">
+                                <div className="basis-auto grow lg:basis-3/12 order-1">
                                     {item._disabled ? (
                                         <BadgeExpertTag
                                             content={item.name}
@@ -184,7 +184,7 @@ const FieldArrayForm = (props: FieldArrayRenderProps) => {
                                         />
                                     )}
                                 </div>
-                                <div className="basis-full lg:basis-2/12">
+                                <div className="basis-full lg:basis-2/12 order-3 lg:order-2">
                                     <Field
                                         name={`tags.${index}.multiplier`}
                                         component={FormikInput}
@@ -208,7 +208,7 @@ const FieldArrayForm = (props: FieldArrayRenderProps) => {
                                         />
                                     )}
                                 </div>
-                                <div className="text-right order-2 lg:order-4">
+                                <div className="text-right order-2 lg:order-3">
                                     <Button
                                         type="button"
                                         variant="custom"
