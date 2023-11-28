@@ -25,7 +25,7 @@ use tracing::Instrument;
 
 const WAIT_TREE_READY_MAX_ATTEMPTS: i32 = 4;
 const GOSH_PUSH_CHUNK: &str = "GOSH_PUSH_CHUNK";
-const DEFAULT_PUSH_CHUNK_SIZE: usize = 3000;
+const DEFAULT_PUSH_CHUNK_SIZE: usize = 150;
 const WAIT_CONTRACT_CHUNK_SIZE: usize = 50;
 
 pub fn get_push_chunk() -> usize {
