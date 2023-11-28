@@ -610,15 +610,15 @@ function getDestroyGrantParams () external view
 }
 
 function getSetGrantPubkeysParamsData (TvmCell Data) external pure
-         returns(uint proposalKind, string name, uint256[] pubkeys)
+         returns(uint proposalKind, string name, uint256[] pubkeys, uint128 timeofend)
 {
-        (proposalKind, name, pubkeys,,) = abi.decode(Data,(uint256, string, uint256[], string, uint32));
+        (proposalKind, name, pubkeys, timeofend,,) = abi.decode(Data,(uint256, string, uint256[], uint128, string, uint32));
 }
 
 function getSetGrantPubkeysParams () external view
-         returns(uint proposalKind, string name, uint256[] pubkeys)
+         returns(uint proposalKind, string name, uint256[] pubkeys, uint128 timeofend)
 {
-        (proposalKind, name, pubkeys,,) = abi.decode(propData,(uint256, string, uint256[], string, uint32));
+        (proposalKind, name, pubkeys, timeofend,,) = abi.decode(propData,(uint256, string, uint256[], uint128, string, uint32));
 }
 
 function getDeleteDaoMembersTagParamsData (TvmCell Data) external pure

@@ -639,7 +639,8 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"name","type":"string"},
-				{"name":"pubkeys","type":"uint256[]"}
+				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"timeofend","type":"uint128"}
 			]
 		},
 		{
@@ -649,7 +650,8 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"name","type":"string"},
-				{"name":"pubkeys","type":"uint256[]"}
+				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"timeofend","type":"uint128"}
 			]
 		},
 		{

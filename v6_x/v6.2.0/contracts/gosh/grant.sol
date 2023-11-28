@@ -28,6 +28,7 @@ contract Grant is Modifiers {
     bool _ready = false;
     mapping(uint8 => TvmCell) _code;
     mapping(uint256 => MemberToken) _wallets;
+    uint128 _timeofend;
 
     constructor(
         address pubaddr,
@@ -45,7 +46,7 @@ contract Grant is Modifiers {
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
     }
 
-    function setCandidates(address pubaddr, uint128 index, uint256[] pubkeys) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
+    function setCandidates(address pubaddr, uint128 index, uint256[] pubkeys, uint128 timeofend) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
         require(_ready == false, ERR_ALREADY_CONFIRMED);
         require(_readytovote == false, ERR_ALREADY_CONFIRMED);
         require(_votes.length == 0, ERR_ALREADY_CONFIRMED);
@@ -53,10 +54,20 @@ contract Grant is Modifiers {
         _votes = new uint128[](pubkeys.length);
         GoshDao(_goshdao).askWallets{value: 0.3 ton, flag: 1}();
         _readytovote = true;
+        _timeofend = timeofend;
     }
 
     function setWallets(mapping(uint256 => MemberToken) wallets) public senderIs(_goshdao) accept {
         _wallets = wallets;
+    }
+
+    function voteFromWallet(uint128 amount, uint128 indexCandidate, address pubaddr, uint128 index, string comment) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
+        if (_timeofend > block.timestamp) { return; }
+        comment;
+        (, uint256 keyaddr) = pubaddr.unpack();
+        if (_wallets[keyaddr].count < amount) { return; }
+        _wallets[keyaddr].count -= amount;
+        _votes[indexCandidate] += amount;
     }
 
     function sendTokens(address pubaddr, uint128 index) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
@@ -90,6 +101,8 @@ contract Grant is Modifiers {
     
     //Selfdestruct
     function destroy(address pubaddr, uint128 index) public {
+        require(_ready == false, ERR_ALREADY_CONFIRMED);
+        require(_readytovote == false, ERR_ALREADY_CONFIRMED);
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         selfdestruct(_systemcontract);
     }

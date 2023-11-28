@@ -21,7 +21,8 @@
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"},
-				{"name":"pubkeys","type":"uint256[]"}
+				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"timeofend","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -30,6 +31,18 @@
 			"name": "setWallets",
 			"inputs": [
 				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "voteFromWallet",
+			"inputs": [
+				{"name":"amount","type":"uint128"},
+				{"name":"indexCandidate","type":"uint128"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"comment","type":"string"}
 			],
 			"outputs": [
 			]
@@ -127,6 +140,7 @@
 		{"name":"_readytovote","type":"bool"},
 		{"name":"_ready","type":"bool"},
 		{"name":"_code","type":"map(uint8,cell)"},
-		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"_wallets","type":"map(uint256,tuple)"}
+		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"_wallets","type":"map(uint256,tuple)"},
+		{"name":"_timeofend","type":"uint128"}
 	]
 }

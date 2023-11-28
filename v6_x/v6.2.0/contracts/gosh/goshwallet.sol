@@ -2000,18 +2000,29 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
+    function voteForHacks(
+        uint128 amount,
+        uint128 index,
+        string name,
+        string comment
+    ) public view onlyOwnerPubkeyOptional(_access) {
+        address addr = GoshLib.calculateGrantAddress(_code[m_GrantCode], _goshdao, name);
+        Grant(addr).voteFromWallet{value: 0.1 ton, flag: 1}(amount, index, _pubaddr, _index, comment);
+    }
+
     function getCellSetGrantPubkey(
         string name,
         uint256[] pubkeys,
+        uint128 timeofend,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = SET_GRANT_PUBKEYS_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
-        return abi.encode(proposalKind, name, pubkeys, comment, time.get());
+        return abi.encode(proposalKind, name, pubkeys, timeofend, comment, time.get());
     }
 
-    function _setGrantPubkeys(string name, uint256[] pubkeys) private {
+    function _setGrantPubkeys(string name, uint256[] pubkeys, uint128 timeofend) private {
         address addr = GoshLib.calculateGrantAddress(_code[m_GrantCode], _goshdao, name);
-        Grant(addr).setCandidates{value: 0.1 ton, flag: 1}(_pubaddr, _index, pubkeys);
+        Grant(addr).setCandidates{value: 0.1 ton, flag: 1}(_pubaddr, _index, pubkeys, timeofend);
         getMoney();
     }
 
@@ -2495,8 +2506,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 _destroyGrants(name);
             } else 
             if (kind == SET_GRANT_PUBKEYS_KIND) {
-                (,string name,uint256[] pubkeys,,) = abi.decode(propData,(uint256, string, uint256[], string, uint32));
-                _setGrantPubkeys(name, pubkeys);
+                (,string name,uint256[] pubkeys, uint128 timeofend,,) = abi.decode(propData,(uint256, string, uint256[], uint128, string, uint32));
+                _setGrantPubkeys(name, pubkeys, timeofend);
             }
         }
     }
