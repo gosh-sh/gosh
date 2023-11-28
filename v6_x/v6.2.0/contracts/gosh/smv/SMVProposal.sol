@@ -238,7 +238,7 @@ function vote (address _locker, uint256 _platform_id, bool choice, uint128 amoun
     (, uint256 keyaddr) = pubaddr.unpack();
     if (_isTag.length != 0) {
         if (_daoMembersTag.exists(keyaddr)) {
-            this.calculateVotePower{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, amount, pubaddr, uint128(0), uint256(0), msg.sender);
+            this.calculateVotePower{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, amount, pubaddr, uint128(100), uint256(0), msg.sender);
         }
         else  {
             this.continueVote{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, amount, msg.sender);
@@ -253,7 +253,7 @@ function calculateVotePower(address _locker, uint256 _platform_id, bool choice, 
     for (uint128 i = 0; i <= BATCH_SIZE_TAG; i++) {
         optional(uint256, bool) res = _daoMembersTag[keyaddr].next(key);
         if (res.hasValue() == false) {
-            sum = sum * amount;
+            sum = sum / 100 * amount;
             this.continueVote{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, sum, sender);
             return;
         }
