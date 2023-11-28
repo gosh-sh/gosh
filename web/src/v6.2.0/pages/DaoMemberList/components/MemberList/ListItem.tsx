@@ -51,7 +51,7 @@ const ListItemHeader = (props: React.HTMLAttributes<HTMLDivElement>) => {
             )}
         >
             <div className={basis.name}>name</div>
-            <div className={basis.expert_tags}>expert tags</div>
+            <div className={basis.expert_tags}>karma tags</div>
             <div className={basis.allowance}>karma</div>
             <div className={classNames(basis.balance, 'whitespace-nowrap')}>
                 token balance

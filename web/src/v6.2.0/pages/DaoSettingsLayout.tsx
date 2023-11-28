@@ -15,8 +15,8 @@ const DaoSettingsLayout = () => {
         const tabs = []
         tabs.push({ to: `/o/${daoname}/settings/setup`, title: 'Setup', icon: faGear })
         tabs.push({
-            to: `/o/${daoname}/settings/expert-tags`,
-            title: 'Expert tags',
+            to: `/o/${daoname}/settings/karma-tags`,
+            title: 'Karma tags',
             icon: faTag,
         })
         tabs.push({

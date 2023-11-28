@@ -129,7 +129,7 @@ const App = () => {
                                     element={<Navigate to="setup" replace={true} />}
                                 />
                                 <Route
-                                    path="expert-tags"
+                                    path="karma-tags"
                                     element={<DaoExpertTagListPage />}
                                 />
                                 <Route path="upgrade" element={<DaoUpgradePage />} />

@@ -86,7 +86,7 @@ const DaoExpertTagListPage = () => {
             {({ isSubmitting }) => (
                 <Form>
                     <div>
-                        <h3 className="text-xl font-medium">DAO expert tags</h3>
+                        <h3 className="text-xl font-medium">DAO karma tags</h3>
                         <p className="mt-2.5 mb-6">
                             This works as a proof of specialization for the members' karma
                             in this DAO!
