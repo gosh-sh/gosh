@@ -413,7 +413,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
 
     function calculateTagSupply(string[] tag) public view minValue(0.2 ton) accept {
         address tagaddr = GoshLib.calculateTagSupplyAddress(_code[m_TagSupplyCode], this, tvm.hash(tag[0]));
-        TagSupply(tagaddr).getSupply{value: 0.25 ton, flag: 1}(msg.sender, tag, uint128(0), uint128(0));
+        TagSupply(tagaddr).getSupply{value: 0.25 ton, flag: 1}(msg.sender, tag, uint128(0), _allbalance);
     }
 
     function continueCalculateTagSupply(address proposal, string[] tag, uint128 index, uint128 sum) public view minValue(0.12 ton) accept {
@@ -618,8 +618,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     function daoVote (address pub, uint128 index, address wallet, uint256 platform_id, bool choice, uint128 amount, uint128 num_clients_base, string note) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pub, index))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
-        string[] data;
-        GoshWallet(wallet).voteForIn{value:0.2 ton, flag: 1}(platform_id, choice, amount, num_clients_base, note, data);   	
+        GoshWallet(wallet).voteForIn{value:0.2 ton, flag: 1}(platform_id, choice, amount, num_clients_base, note);   	
     }
     
     function daoSendToken (address pub, uint128 index, address wallet, optional(address)  pubaddr, uint128 grant) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pub, index))  accept {

@@ -241,7 +241,7 @@ function vote (address _locker, uint256 _platform_id, bool choice, uint128 amoun
             this.calculateVotePower{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, amount, pubaddr, uint128(0), uint256(0), msg.sender);
         }
         else  {
-            this.continueVote{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, 0, msg.sender);
+            this.continueVote{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, amount, msg.sender);
         }
         return;
     }
@@ -253,6 +253,7 @@ function calculateVotePower(address _locker, uint256 _platform_id, bool choice, 
     for (uint128 i = 0; i <= BATCH_SIZE_TAG; i++) {
         optional(uint256, bool) res = _daoMembersTag[keyaddr].next(key);
         if (res.hasValue() == false) {
+            sum = sum * amount;
             this.continueVote{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, sum, sender);
             return;
         }
@@ -260,8 +261,9 @@ function calculateVotePower(address _locker, uint256 _platform_id, bool choice, 
         worker;
         key = newkey;
         for (uint128 j = 0; j < _isTag.length; j++) {
-            if (key == tvm.hash(_isTag[j])) { sum += amount * _daoTagData[key].value / 100; break; }
+            if (key == tvm.hash(_isTag[j])) { sum += _daoTagData[key].value - 100; break; }
         }
+
     }
 }
 

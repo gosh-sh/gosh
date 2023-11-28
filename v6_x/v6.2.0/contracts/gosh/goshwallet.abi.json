@@ -1662,8 +1662,7 @@
 				{"name":"choice","type":"bool"},
 				{"name":"amount","type":"uint128"},
 				{"name":"num_clients","type":"uint128"},
-				{"name":"note","type":"string"},
-				{"name":"isTag","type":"string[]"}
+				{"name":"note","type":"string"}
 			],
 			"outputs": [
 			]
@@ -1675,8 +1674,7 @@
 				{"name":"choice","type":"bool"},
 				{"name":"amount","type":"uint128"},
 				{"name":"num_clients","type":"uint128"},
-				{"name":"note","type":"string"},
-				{"name":"isTag","type":"string[]"}
+				{"name":"note","type":"string"}
 			],
 			"outputs": [
 			]

@@ -2533,9 +2533,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshDao(_goshdao).redeployedTask{value: 0.2 ton, flag: 1}(_pubaddr, _index);  
     }
     
-    function voteFor (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platform_id, bool choice, uint128 amount, uint128 num_clients, string note, string[] isTag) external  onlyOwnerPubkey(_access.get())
+    function voteFor (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platform_id, bool choice, uint128 amount, uint128 num_clients, string note) external  onlyOwnerPubkey(_access.get())
     {
-        require(isTag.length <= 8, ERR_WRONG_NUMBER_MEMBER);
         require(initialized, SMVErrors.error_not_initialized);
         require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
                                     2*SMVConstants.VOTING_FEE + num_clients*SMVConstants.CLIENT_LIST_FEE +
@@ -2551,6 +2550,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
         TvmBuilder inputBuilder;
         inputBuilder.store(choice);
+        string[] isTag;
 
         ISMVTokenLocker(tip3VotingLocker).startPlatform
                     {value:  2*SMVConstants.VOTING_FEE  + num_clients*SMVConstants.CLIENT_LIST_FEE +
@@ -2562,9 +2562,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                                     SMVConstants.PROP_INITIALIZE_FEE + 5*SMVConstants.ACTION_FEE, _goshdao, isTag, _pubaddr);
     }
 
-    function voteForIn (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platform_id, bool choice, uint128 amount, uint128 num_clients, string note, string[] isTag) external  onlyOwnerAddress(_pubaddr)
-    {
-        require(isTag.length <= 8, ERR_WRONG_NUMBER_MEMBER);
+    function voteForIn (/* TvmCell platformCode, TvmCell clientCode, */ uint256 platform_id, bool choice, uint128 amount, uint128 num_clients, string note) external  onlyOwnerAddress(_pubaddr)
+    {   
+        string[] isTag;
         require(initialized, SMVErrors.error_not_initialized);
         require(address(this).balance > SMVConstants.ACCOUNT_MIN_BALANCE +
                                     2*SMVConstants.VOTING_FEE + num_clients*SMVConstants.CLIENT_LIST_FEE +
