@@ -2011,7 +2011,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function _setGrantPubkeys(string name, uint256[] pubkeys) private {
         address addr = GoshLib.calculateGrantAddress(_code[m_GrantCode], _goshdao, name);
-        Grant(addr).setResult{value: 0.1 ton, flag: 1}(_pubaddr, _index, pubkeys);
+        Grant(addr).setCandidates{value: 0.1 ton, flag: 1}(_pubaddr, _index, pubkeys);
         getMoney();
     }
 
@@ -2094,14 +2094,13 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint128 number,
         TvmCell proposals,
         uint128 num_clients, 
-        address[] reviewers,
-        string[] data
+        address[] reviewers
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
         require(number <= 50, ERR_TOO_MANY_PROPOSALS);
         require(number > 1, ERR_TOO_FEW_PROPOSALS);
-        require(data.length <= 5, ERR_TOO_MANY_PROPOSALS);
+        string[] data;
         tvm.accept();
         _saveMsg();
 
@@ -2114,13 +2113,13 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function startOneProposal(
         TvmCell proposal,
         uint128 num_clients, 
-        address[] reviewers
+        address[] reviewers,
+        string[] data
     ) public onlyOwnerPubkeyOptional(_access)  {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
         tvm.accept();
         _saveMsg();
-        string[] data;
         _startProposalForOperation(proposal, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers, data);
         getMoney();
     }

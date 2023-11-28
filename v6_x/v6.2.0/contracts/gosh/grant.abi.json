@@ -17,11 +17,19 @@
 			]
 		},
 		{
-			"name": "setResult",
+			"name": "setCandidates",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"},
 				{"name":"pubkeys","type":"uint256[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setWallets",
+			"inputs": [
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"}
 			],
 			"outputs": [
 			]
@@ -111,11 +119,14 @@
 		{"name":"_name","type":"string"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_pubkeys","type":"uint256[]"},
+		{"name":"_votes","type":"uint128[]"},
 		{"name":"_grants","type":"uint128[]"},
 		{"name":"_balance","type":"uint128"},
 		{"name":"_systemcontract","type":"address"},
 		{"name":"_tip3wallet","type":"address"},
+		{"name":"_readytovote","type":"bool"},
 		{"name":"_ready","type":"bool"},
-		{"name":"_code","type":"map(uint8,cell)"}
+		{"name":"_code","type":"map(uint8,cell)"},
+		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"_wallets","type":"map(uint256,tuple)"}
 	]
 }

@@ -41,6 +41,13 @@
 			]
 		},
 		{
+			"name": "askWallets",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployedWallet",
 			"inputs": [
 				{"name":"systemcontract","type":"address"},
@@ -1389,6 +1396,15 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"optional(address)"}
+			]
+		},
+		{
+			"name": "getTagSupplyAddr",
+			"inputs": [
+				{"name":"tag","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
 			]
 		},
 		{

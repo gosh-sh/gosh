@@ -21,6 +21,7 @@ import "taggosh.sol";
 import "task.sol";
 import "bigtask.sol";
 import "tagsupply.sol";
+import "grant.sol";
 import "./libraries/GoshLib.sol";
 import "../smv/TokenRootOwner.sol";
 import "../smv/SMVProposal.sol";
@@ -172,6 +173,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
 //        TvmCell payload = tvm.encodeBody(Wrapper); 
 //		_wrapper = address.makeAddrStd(0, tvm.hash(_contract));
 //		_wrapper.transfer({stateInit: _contract, body: payload, value: FEE_DEPLOY_WRAPPER});
+    }
+
+    function askWallets() public view minValue(0.2 ton) {
+        Grant(msg.sender).setWallets{value: 0.1 ton, flag: 1}(_wallets);
     }
     
     function deployedWallet(address systemcontract, address goshdao, uint128 index, string ver) public   {
@@ -1610,6 +1615,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
     
     function getPreviousDaoAddr() external view returns(optional(address)) {
         return _previous;
+    }
+
+    function getTagSupplyAddr(string tag) external view returns(address) {
+        return GoshLib.calculateTagSupplyAddress(_code[m_TagSupplyCode], this, tvm.hash(tag));
     }
     
     function getDetails() external view returns(address pubaddr, bool allowMint, bool hide_voting_results, bool allow_discussion_on_proposals, bool abilityInvite, bool isRepoUpgraded, string nameDao,

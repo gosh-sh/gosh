@@ -11,6 +11,7 @@ pragma AbiHeader pubkey;
 import "./smv/modifiers/modifiers.sol";
 import "./libraries/GoshLib.sol";
 import "./smv/Interfaces/IFlexWallet.sol";
+import "goshdao.sol";
 
 contract Grant is Modifiers {
     string constant version = "6.2.0";
@@ -18,12 +19,15 @@ contract Grant is Modifiers {
     string static _name;
     address static _goshdao;
     uint256[] _pubkeys;
+    uint128[] _votes;
     uint128[] _grants;
     uint128 _balance;
     address _systemcontract;
     address _tip3wallet;
+    bool _readytovote = false;
     bool _ready = false;
     mapping(uint8 => TvmCell) _code;
+    mapping(uint256 => MemberToken) _wallets;
 
     constructor(
         address pubaddr,
@@ -41,11 +45,18 @@ contract Grant is Modifiers {
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
     }
 
-    function setResult(address pubaddr, uint128 index, uint256[] pubkeys) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
+    function setCandidates(address pubaddr, uint128 index, uint256[] pubkeys) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
         require(_ready == false, ERR_ALREADY_CONFIRMED);
-        if (pubkeys.length != _grants.length) { return; }
+        require(_readytovote == false, ERR_ALREADY_CONFIRMED);
+        require(_votes.length == 0, ERR_ALREADY_CONFIRMED);
         _pubkeys = pubkeys;
-        _ready = true;
+        _votes = new uint128[](pubkeys.length);
+        GoshDao(_goshdao).askWallets{value: 0.3 ton, flag: 1}();
+        _readytovote = true;
+    }
+
+    function setWallets(mapping(uint256 => MemberToken) wallets) public senderIs(_goshdao) accept {
+        _wallets = wallets;
     }
 
     function sendTokens(address pubaddr, uint128 index) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {

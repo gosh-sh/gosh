@@ -47,7 +47,7 @@ contract TagSupply is Modifiers {
     }
 
     function getSupply(address proposal, string[] tag, uint128 index, uint128 sum) public view senderIs(_goshdao) accept {
-        sum += _supply / _multiples * (_multiples - 100);
+        sum += _supply / _multiples * (_multiples - 100) / 100;
         GoshDao(_goshdao).continueCalculateTagSupply{value: 0.15 ton, flag: 1}(proposal, tag, index, sum);
     }
     
