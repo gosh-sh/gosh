@@ -423,7 +423,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
             return;
         }
         address tagaddr = GoshLib.calculateTagSupplyAddress(_code[m_TagSupplyCode], this, tvm.hash(tag[index]));
-        TagSupply(tagaddr).getSupply{value: 0.1 ton, flag: 1}(proposal, tag, sum, index);
+        TagSupply(tagaddr).getSupply{value: 0.1 ton, flag: 1}(proposal, tag, index, sum);
     }
     
     function volunteersnap(address[] volunteer, uint128 index) public senderIs(address(this)) accept {
