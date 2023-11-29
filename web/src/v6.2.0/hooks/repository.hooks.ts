@@ -1,17 +1,22 @@
-import { useRecoilState, useSetRecoilState } from 'recoil'
-import { daoRepositoryListSelector } from '../store/repository.state'
-import { TGoshRepositoryListItem } from '../types/repository.types'
-import { getPaginatedAccounts } from '../../blockchain/utils'
-import { getSystemContract } from '../blockchain/helpers'
-import { validateRepoName } from '../validators'
-import { EGoshError, GoshError } from '../../errors'
-import { executeByChunk, whileFinite } from '../../utils'
-import { MAX_PARALLEL_READ } from '../../constants'
 import _ from 'lodash'
-import { useCallback, useEffect } from 'react'
-import { GoshRepository } from '../blockchain/repository'
-import { useDao, useDaoHelpers, useDaoMember } from './dao.hooks'
+import { useCallback, useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
+import { getPaginatedAccounts } from '../../blockchain/utils'
+import { MAX_PARALLEL_READ } from '../../constants'
+import { EGoshError, GoshError } from '../../errors'
 import { appToastStatusSelector } from '../../store/app.state'
+import { executeByChunk, whileFinite } from '../../utils'
+import { getSystemContract } from '../blockchain/helpers'
+import { GoshRepository } from '../blockchain/repository'
+import { GoshShapshot } from '../blockchain/snapshot'
+import {
+    daoRepositoryListSelector,
+    daoRepositorySelector,
+} from '../store/repository.state'
+import { TGoshBranch, TGoshRepositoryListItem } from '../types/repository.types'
+import { validateRepoName } from '../validators'
+import { useDao, useDaoHelpers, useDaoMember } from './dao.hooks'
 
 export function useCreateRepository() {
     const { details: dao } = useDao()
@@ -242,6 +247,167 @@ export function useDaoRepositoryList(
         getNext,
         isEmpty: !data.isFetching && !data.items.length,
     }
+}
+
+export function useRepository(params: { initialize?: boolean } = {}) {
+    const { initialize } = params
+    const { reponame } = useParams()
+    const dao = useDao()
+    const [repositories, setRepositories] = useRecoilState(
+        daoRepositoryListSelector(dao.details.name),
+    )
+    const repository = useRecoilValue(
+        daoRepositorySelector({ dao_name: dao.details.name, repo_name: reponame }),
+    )
+    const [error, setError] = useState<any>()
+    const [is_fetching, setIsFetching] = useState<boolean>(false)
+
+    const getRepository = useCallback(async () => {
+        try {
+            if (!dao.details.name || !reponame) {
+                return
+            }
+
+            // Search for repository in repository list state atom
+            let found = repositories.items.find((item) => item.name === reponame)
+
+            // Fetch repository details from blockchain
+            if (!found) {
+                setIsFetching(true)
+                const sc = getSystemContract()
+                const account = await sc.getRepository({
+                    path: `${dao.details.name}/${reponame}`,
+                })
+                const details = await account.getDetails()
+                found = {
+                    ...details,
+                    account,
+                    version: dao.details.version!,
+                }
+
+                setRepositories((state) => {
+                    const updated = [...state.items]
+                    if (!updated.find(({ name }) => name === found?.name)) {
+                        updated.push(found!)
+                    }
+
+                    return {
+                        ...state,
+                        items: updated.map((item) => {
+                            return item.name === reponame ? { ...item, ...found } : item
+                        }),
+                    }
+                })
+            }
+        } catch (e: any) {
+            console.error(e.message)
+            setError(e)
+        } finally {
+            setIsFetching(false)
+        }
+    }, [dao.details.address, reponame])
+
+    useEffect(() => {
+        if (initialize) {
+            getRepository()
+        }
+    }, [initialize, getRepository])
+
+    return { details: repository, is_fetching: dao.isFetching || is_fetching, error }
+}
+
+export function useBranch() {
+    const url_params = useParams()
+    const repository = useRepository()
+    const [branch, setBranch] = useState<TGoshBranch>()
+
+    const getCurrentBranch = useCallback(() => {
+        if (!repository.is_fetching && repository.details) {
+            const match = url_params.branch || 'main'
+            const found = repository.details.branches.find(({ name }) => {
+                return name === match
+            })
+            setBranch(found)
+        }
+    }, [repository.is_fetching])
+
+    useEffect(() => {
+        getCurrentBranch()
+    }, [getCurrentBranch, url_params.branch])
+
+    return { branch }
+}
+
+export function useFileHistory(params: { snapshot_path?: string }) {
+    const { snapshot_path } = params
+    const { details: repository } = useRepository()
+    const [snapshot, setSnapshot] = useState<GoshShapshot>()
+    const [page, setPage] = useState<{ cursor?: string; has_next: boolean }>({
+        has_next: false,
+    })
+    const [history, setHistory] = useState<any[]>([])
+    const [is_fetching, setIsFetching] = useState<boolean>(false)
+
+    const getSnapshotHistory = async (params: {
+        snapshot: GoshShapshot
+        cursor?: string
+    }) => {
+        const { snapshot } = params
+
+        setIsFetching(true)
+        const { messages, cursor, hasNext } = await snapshot.getMessages(
+            {
+                msgType: ['IntIn'],
+                node: ['created_at'],
+                cursor: params.cursor,
+                allow_latest_inconsistent_data: true,
+            },
+            true,
+            false,
+        )
+
+        const changes = messages
+            .filter(({ decoded }) => {
+                return !!decoded && decoded.name === 'approve'
+            })
+            .map(({ message, decoded }) => ({
+                created_at: message.created_at,
+                commit_name: decoded.value.diff.commit,
+                snapshot_address: decoded.value.diff.snap,
+                snapshot_name: decoded.value.diff.nameSnap,
+            }))
+
+        setHistory((state) => [...state, ...changes])
+        setPage((state) => ({ ...state, cursor, has_next: !!hasNext }))
+        setIsFetching(false)
+    }
+
+    const getFileHistory = useCallback(async () => {
+        if (!repository?.account || !snapshot_path) {
+            return
+        }
+
+        setIsFetching(true)
+        setHistory([])
+        const [branch, commit_name, ...rest] = snapshot_path.split('/')
+        const snapshot = await repository.account.getSnapshot({
+            data: { commitname: commit_name, filename: rest.join('/'), branch },
+        })
+        setSnapshot(snapshot)
+        await getSnapshotHistory({ snapshot })
+    }, [snapshot_path])
+
+    const getNext = useCallback(async () => {
+        if (snapshot) {
+            await getSnapshotHistory({ snapshot, cursor: page.cursor })
+        }
+    }, [snapshot?.address, page.cursor])
+
+    useEffect(() => {
+        getFileHistory()
+    }, [getFileHistory])
+
+    return { history, is_fetching, has_next: page.has_next, getNext }
 }
 
 export function useCreateRepositoryTag() {

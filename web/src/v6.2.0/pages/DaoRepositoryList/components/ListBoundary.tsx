@@ -1,13 +1,13 @@
-import { useDaoRepositoryList } from '../../../hooks/repository.hooks'
-import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
-import { ListItem, ListItemSkeleton } from './ListItem'
-import { toast } from 'react-toastify'
-import { ToastError } from '../../../../components/Toast'
-import { Button } from '../../../../components/Form'
 import classNames from 'classnames'
 import { useEffect } from 'react'
+import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
+import { toast } from 'react-toastify'
 import Alert from '../../../../components/Alert'
+import { Button } from '../../../../components/Form'
+import { ToastError } from '../../../../components/Toast'
 import { useDao } from '../../../hooks/dao.hooks'
+import { useDaoRepositoryList } from '../../../hooks/repository.hooks'
+import { ListItem, ListItemSkeleton } from './ListItem'
 
 const ListBoundaryInner = (props: { count: number }) => {
     const { count } = props
@@ -31,7 +31,7 @@ const ListBoundaryInner = (props: { count: number }) => {
     }, [repositories.error])
 
     return (
-        <div className="border border-gray-e6edff rounded-xl overflow-hidden">
+        <div>
             {repositories.isFetching && !repositories.items.length && (
                 <ListItemSkeleton />
             )}
@@ -46,9 +46,9 @@ const ListBoundaryInner = (props: { count: number }) => {
                 </div>
             )}
 
-            <div className="divide-y divide-gray-e6edff">
+            <div className="grid grid-flow-col auto-cols-min gap-7">
                 {repositories.items.map((item, index) => (
-                    <ListItem key={index} daoName={dao.details.name!} item={item} />
+                    <ListItem key={index} dao_name={dao.details.name!} item={item} />
                 ))}
             </div>
 

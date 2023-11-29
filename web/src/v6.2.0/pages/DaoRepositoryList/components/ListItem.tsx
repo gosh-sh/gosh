@@ -1,75 +1,58 @@
-import { faCodeFork } from '@fortawesome/free-solid-svg-icons'
+import { faFolder } from '@fortawesome/free-regular-svg-icons'
+import { faDatabase } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Link } from 'react-router-dom'
-import { Tooltip } from 'react-tooltip'
-import CopyClipboard from '../../../../components/CopyClipboard'
+import { useNavigate } from 'react-router-dom'
 import Skeleton from '../../../../components/Skeleton'
-import { shortString } from '../../../../utils'
 import { TGoshRepositoryListItem } from '../../../types/repository.types'
 
 const ListItemSkeleton = () => {
     return (
-        <Skeleton className="p-4" skeleton={{ height: 40 }}>
-            <rect x="0" y="0" rx="6" ry="6" width="30%" height="20" />
-            <rect x="0" y="30" rx="4" ry="4" width="180" height="10" />
-        </Skeleton>
+        <div className="grid grid-flow-col auto-cols-min gap-7">
+            {Array.from(new Array(3)).map((_, index) => (
+                <div key={index} className="w-28">
+                    <div className="p-5 text-center text-black-2/50 rounded-2xl overflow-hidden">
+                        <FontAwesomeIcon icon={faFolder} size="4x" />
+                    </div>
+                    <div className="px-2 py-1 text-sm text-center">
+                        <Skeleton skeleton={{ height: 8 }}>
+                            <rect x="0" y="0" rx="6" ry="6" width="100%" height="8" />
+                        </Skeleton>
+                    </div>
+                </div>
+            ))}
+        </div>
     )
 }
 
 type TRepositoryListItemProps = {
-    daoName: string
-    daoLink?: boolean
+    dao_name: string
     item: TGoshRepositoryListItem
 }
 
 const ListItem = (props: TRepositoryListItemProps) => {
-    const { daoName, item, daoLink = false } = props
+    const { item, dao_name } = props
+    const navigate = useNavigate()
+
+    const onDoubleClick = () => {
+        navigate(`/o/${dao_name}/r/${item.name}`)
+    }
 
     return (
-        <div className="p-4">
-            <div className="flex flex-wrap mb-1">
-                {daoLink && (
-                    <>
-                        <Link className="text-xl font-medium" to={`/o/${daoName}`}>
-                            {daoName}
-                        </Link>
-                        <span className="mx-1">/</span>
-                    </>
-                )}
-                <Link className="text-xl font-medium" to={`/o/${daoName}/r/${item.name}`}>
-                    {item.name}
-                </Link>
-                <span className="ml-2 align-super text-xs text-gray-7c8db5">
-                    {item.version}
-                </span>
+        <button className="group block w-28 self-start" onDoubleClick={onDoubleClick}>
+            <div
+                className="p-5 text-center text-black-2 rounded-2xl overflow-hidden
+                group-hover:bg-gray-1/50 group-focus:bg-gray-2 transition-colors duration-200"
+            >
+                <FontAwesomeIcon icon={faDatabase} size="4x" />
             </div>
-
-            {item.description && <div className="mt-2 text-xs">{item.description}</div>}
-
-            <div className="flex gap-4 mt-3 text-sm text-gray-7c8db5 justify-between">
-                <div className="flex gap-4">
-                    <div data-tooltip-id="common-tip" data-tooltip-content="Branches">
-                        <FontAwesomeIcon icon={faCodeFork} className="mr-1" />
-                        {item.branches?.length}
-                    </div>
-                </div>
-                <CopyClipboard
-                    className="text-xs"
-                    componentProps={{
-                        text: item.account?.address || '',
-                    }}
-                    label={
-                        <span
-                            data-tooltip-id="common-tip"
-                            data-tooltip-content="Repository address"
-                        >
-                            {shortString(item.account?.address || '')}
-                        </span>
-                    }
-                />
+            <div
+                className="mt-2 px-2 py-1 text-sm text-center overflow-hidden text-ellipsis
+                rounded-lg text-black-2 group-focus:bg-blue-1 group-focus:text-white
+                group-focus:break-words"
+            >
+                {item.name}
             </div>
-            <Tooltip id="common-tip" clickable />
-        </div>
+        </button>
     )
 }
 
