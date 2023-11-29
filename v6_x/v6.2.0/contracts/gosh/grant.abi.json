@@ -9,7 +9,7 @@
 				{"name":"pubaddr","type":"address"},
 				{"name":"systemcontract","type":"address"},
 				{"name":"grants","type":"uint128[]"},
-				{"name":"tip3wallet","type":"address"},
+				{"name":"tip3wallet","type":"address[]"},
 				{"name":"WalletCode","type":"cell"},
 				{"name":"index","type":"uint128"}
 			],
@@ -22,6 +22,7 @@
 				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"},
 				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"details","type":"string[]"},
 				{"name":"timeofend","type":"uint128"}
 			],
 			"outputs": [
@@ -90,6 +91,18 @@
 		{
 			"name": "sendTokensIn",
 			"inputs": [
+				{"name":"key","type":"uint128"},
+				{"name":"keyspub","type":"uint256[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokensFinal",
+			"inputs": [
+				{"name":"sum","type":"uint128"},
+				{"name":"keyspub","type":"uint256[]"},
+				{"name":"indexwallet","type":"uint128"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -125,6 +138,30 @@
 			]
 		},
 		{
+			"name": "_details",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_details","type":"string[]"}
+			]
+		},
+		{
+			"name": "_tip3wallet",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_tip3wallet","type":"address[]"}
+			]
+		},
+		{
+			"name": "_balance",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_balance","type":"uint128[]"}
+			]
+		},
+		{
 			"name": "_SortedForGrants",
 			"inputs": [
 			],
@@ -149,11 +186,13 @@
 		{"name":"_goshdao","type":"address"},
 		{"name":"_pubkeys","type":"uint256[]"},
 		{"name":"_votes","type":"uint128[]"},
-		{"name":"_grants","type":"uint128[]"},
-		{"name":"_size","type":"uint256"},
-		{"name":"_balance","type":"uint128"},
+		{"name":"_grant","type":"uint128[]"},
+		{"name":"_indexwallet","type":"uint128"},
+		{"name":"_indexGrant","type":"uint128"},
 		{"name":"_systemcontract","type":"address"},
-		{"name":"_tip3wallet","type":"address"},
+		{"name":"_details","type":"string[]"},
+		{"name":"_tip3wallet","type":"address[]"},
+		{"name":"_balance","type":"uint128[]"},
 		{"name":"_readytovote","type":"bool"},
 		{"name":"_ready","type":"bool"},
 		{"name":"_code","type":"map(uint8,cell)"},

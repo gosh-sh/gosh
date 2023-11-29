@@ -598,7 +598,7 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"name","type":"string"},
 				{"name":"grant","type":"uint128[]"},
-				{"name":"tip3","type":"address"}
+				{"name":"tip3","type":"address[]"}
 			]
 		},
 		{
@@ -609,7 +609,7 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"name","type":"string"},
 				{"name":"grant","type":"uint128[]"},
-				{"name":"tip3","type":"address"}
+				{"name":"tip3","type":"address[]"}
 			]
 		},
 		{
@@ -640,6 +640,7 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"name","type":"string"},
 				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"details","type":"string[]"},
 				{"name":"timeofend","type":"uint128"}
 			]
 		},
@@ -651,6 +652,7 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"name","type":"string"},
 				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"details","type":"string[]"},
 				{"name":"timeofend","type":"uint128"}
 			]
 		},
