@@ -1,4 +1,4 @@
-import { SmtpClient } from 'https://deno.land/x/smtp@v0.7.0/mod.ts'
+import { SMTPClient } from 'https://deno.land/x/denomailer/mod.ts'
 
 const emailUsername = () => Deno.env.get('EMAIL_USERNAME') ?? ''
 const emailPassword = () => Deno.env.get('EMAIL_PASSWORD') ?? ''
@@ -9,16 +9,25 @@ type Email = {
     subject: string
     content: string
     html?: string
+    attachments?: {
+        content: any
+        filename: string
+        encoding: string
+        contentType: string
+    }[]
 }
 
 export const sendEmail = async (email: Email) => {
-    const smtpClient = new SmtpClient()
-
-    await smtpClient.connectTLS({
-        hostname: 'smtp.gmail.com',
-        port: 465,
-        username: emailUsername(),
-        password: emailPassword(),
+    const smtpClient = new SMTPClient({
+        connection: {
+            hostname: 'smtp.gmail.com',
+            port: 465,
+            tls: true,
+            auth: {
+                username: emailUsername(),
+                password: emailPassword(),
+            },
+        },
     })
 
     await smtpClient.send({
@@ -27,6 +36,7 @@ export const sendEmail = async (email: Email) => {
         subject: email.subject,
         content: email.content,
         html: email.html,
+        attachments: email.attachments,
     })
 
     await smtpClient.close()
