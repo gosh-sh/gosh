@@ -56,6 +56,7 @@ import BlobCreatePage from './pages/BlobCreate'
 import BlobDeletePage from './pages/BlobDelete'
 import BlobUpdatePage from './pages/BlobUpdate'
 import BlobViewPage from './pages/BlobView'
+import BranchesPage from './pages/Branches'
 import RepositoryPage from './pages/Repository'
 import RepositoryLayout from './pages/RepositoryLayout'
 // TODO: /Update after full refactor
@@ -144,6 +145,7 @@ const App = () => {
                             />
                             <Route path="r/:reponame" element={<RepositoryLayout />}>
                                 <Route index element={<RepositoryPage />} />
+                                <Route path="branches" element={<BranchesPage />} />
                                 <Route
                                     path="tree/:branch/*"
                                     element={<RepositoryPage />}

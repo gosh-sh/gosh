@@ -2,6 +2,7 @@ import { faFile, faFolder } from '@fortawesome/free-regular-svg-icons'
 import {
     faChevronDown,
     faCode,
+    faCodeBranch,
     faFileCirclePlus,
     faTerminal,
 } from '@fortawesome/free-solid-svg-icons'
@@ -155,10 +156,13 @@ const RepositoryPage = () => {
                 }
             })
             console.debug('push_blobs', push_blobs)
-            const eventaddr = await push('Upload files', push_blobs, {
+            const comment = `Upload files to repository "${repository.details?.name}" branch "${_rg_branch?.name}"`
+            const eventaddr = await push(comment, push_blobs, {
                 isPullRequest: _rg_branch?.isProtected,
             })
-            console.debug('eventaddr', eventaddr)
+            if (eventaddr) {
+                navigate(`/o/${dao.details.name}/events/${eventaddr}`)
+            }
         } catch (e: any) {
             console.error(e)
             toast.error(<ToastError error={e} />)
@@ -192,7 +196,17 @@ const RepositoryPage = () => {
 
             <div className="mt-4">
                 <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-4 mb-4">
-                    <div className="flex grow gap-3 justify-end">
+                    <div className="flex items-center grow gap-3 justify-end">
+                        <ButtonLink
+                            to={`/o/${dao.details.name}/r/${repository.details?.name}/branches`}
+                            className="bg-transparent text-gray-7c8db5 hover:text-black mr-8
+                            transition-colors duration-150"
+                            variant="custom"
+                        >
+                            <FontAwesomeIcon icon={faCodeBranch} className="mr-2" />
+                            Branches
+                        </ButtonLink>
+
                         {member.isMember && (
                             <ButtonLink
                                 to={`/o/${dao.details.name}/r/${repository.details?.name}/blobs/create/${_rg_branch?.name}/${treepath}`}

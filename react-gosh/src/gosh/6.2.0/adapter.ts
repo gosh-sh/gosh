@@ -1743,6 +1743,7 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             proposal: cell,
             reviewers: _reviewers.map(({ wallet }) => wallet),
             num_clients: await smv.getClientsCount(),
+            data: [],
         })
         return await this.getEventAddress(result)
     }
