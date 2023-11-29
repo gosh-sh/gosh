@@ -174,6 +174,27 @@ CONTRACTS = {
         'gosh/smv/SMVTokenLocker',
         'gosh/smv/SMVClient',
         'gosh/smv/TokenRoot'
+    ],
+    '6.2.0': [
+        'gosh/systemcontract',
+        'gosh/goshdao',
+        'gosh/goshwallet',
+        'gosh/repository',
+        'gosh/commit',
+        'gosh/snapshot',
+        'gosh/tag',
+        'gosh/bigtask',
+        'gosh/task',
+        'gosh/diff',
+        'gosh/tree',
+        'gosh/content-signature',
+        'gosh/daotag',
+        'gosh/taggosh',
+        'gosh/topic',
+        'gosh/smv/SMVProposal',
+        'gosh/smv/SMVTokenLocker',
+        'gosh/smv/SMVClient',
+        'gosh/smv/TokenRoot'
     ]
 }
 
@@ -202,8 +223,10 @@ def main():
             SRC_CONTRACTS_PATH = 'v6_x/v6.0.0'
         elif version == '6.1.0':
             SRC_CONTRACTS_PATH = 'v6_x/v6.1.0'
+        elif version == '6.2.0':
+            SRC_CONTRACTS_PATH = 'v6_x/v6.2.0'
         else:
-            SRC_CONTRACTS_PATH = 'v6_x/v6.1.0'
+            SRC_CONTRACTS_PATH = 'v6_x/v6.2.0'
 
         SRC_CONTRACTS_PATH = Path('../') / SRC_CONTRACTS_PATH / 'contracts'
         for contract in contracts:
