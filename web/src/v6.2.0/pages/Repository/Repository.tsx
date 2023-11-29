@@ -296,10 +296,10 @@ const RepositoryPage = () => {
                     </div>
                 </div>
 
-                <div className="mt-10 flex flex-nowrap gap-x-2">
+                <div className="mt-10 flex flex-wrap lg:flex-nowrap gap-x-2 gap-y-10">
                     <div
                         className={classNames(
-                            'grow transition-colors duration-200',
+                            'basis-full lg:basis-0 grow transition-colors duration-200',
                             isDragActive ? 'bg-gray-2/50' : null,
                         )}
                         {...getRootProps()}
@@ -370,7 +370,7 @@ const RepositoryPage = () => {
                     <AnimatePresence>
                         {!!file_item && (
                             <motion.div
-                                className="max-w-xs grow basis-4/12 xl:basis-2/12"
+                                className="lg:max-w-xs grow basis-full lg:basis-4/12 xl:basis-2/12"
                                 initial={{ opacity: 0, translateX: '100%' }}
                                 animate={{ opacity: 1, translateX: 0 }}
                                 exit={{ opacity: 0, translateX: '100%' }}
