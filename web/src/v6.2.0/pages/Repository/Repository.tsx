@@ -196,17 +196,17 @@ const RepositoryPage = () => {
 
             <div className="mt-4">
                 <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-4 mb-4">
-                    <div className="flex items-center grow gap-3 justify-end">
-                        <ButtonLink
-                            to={`/o/${dao.details.name}/r/${repository.details?.name}/branches`}
-                            className="bg-transparent text-gray-7c8db5 hover:text-black mr-8
-                            transition-colors duration-150"
-                            variant="custom"
-                        >
-                            <FontAwesomeIcon icon={faCodeBranch} className="mr-2" />
-                            Branches
-                        </ButtonLink>
+                    <ButtonLink
+                        to={`/o/${dao.details.name}/r/${repository.details?.name}/branches`}
+                        className="bg-transparent text-gray-7c8db5 hover:text-black mr-8
+                            transition-colors duration-150 !px-0"
+                        variant="custom"
+                    >
+                        <FontAwesomeIcon icon={faCodeBranch} className="mr-2" />
+                        Branches
+                    </ButtonLink>
 
+                    <div className="flex items-center grow gap-3 justify-end">
                         {member.isMember && (
                             <ButtonLink
                                 to={`/o/${dao.details.name}/r/${repository.details?.name}/blobs/create/${_rg_branch?.name}/${treepath}`}
