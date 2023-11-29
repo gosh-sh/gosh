@@ -4,7 +4,6 @@ import _, { sum } from 'lodash'
 import { useCallback, useEffect, useState } from 'react'
 import { GoshAdapterFactory } from 'react-gosh'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
-import { NotificationsAPI } from '../../apis/notifications'
 import { AppConfig } from '../../appconfig'
 import { UserProfile } from '../../blockchain/userprofile'
 import { getAllAccounts, getPaginatedAccounts } from '../../blockchain/utils'
@@ -24,7 +23,6 @@ import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
 import { supabase } from '../../supabase'
 import { TSystemContract } from '../../types/blockchain.types'
 import { EDaoEventType, TToastStatus } from '../../types/common.types'
-import { ENotificationType } from '../../types/notification.types'
 import {
     executeByChunk,
     setLockableInterval,
@@ -1507,17 +1505,17 @@ export function useDaoHelpers() {
             }
 
             onPendingCallback({ type: 'pending', data: 'Finalizing' })
-            await NotificationsAPI.notifications.createNotificaton({
-                data: {
-                    username: user.username,
-                    payload: {
-                        daoname: dao.name,
-                        type: ENotificationType.DAO_EVENT_CREATED,
-                        meta,
-                    },
-                },
-                keys: user.keys,
-            })
+            // await NotificationsAPI.notifications.createNotificaton({
+            //     data: {
+            //         username: user.username,
+            //         payload: {
+            //             daoname: dao.name,
+            //             type: ENotificationType.DAO_EVENT_CREATED,
+            //             meta,
+            //         },
+            //     },
+            //     keys: user.keys,
+            // })
             onSuccessCallback({ type: 'success', data: 'Completed' })
         } catch (e: any) {
             onErrorCallback({ type: 'error', data: e })
@@ -2046,7 +2044,7 @@ export function useUpdateDaoMember() {
                         (a, b) => a.name === b.name,
                     )
                     for (const { name } of expert_tags_added) {
-                        const _comment = `Add expert tag ${name} for ${item.username}`
+                        const _comment = `Add karma tag ${name} for ${item.username}`
                         const _item = { profile_addr: item.profile, tag: name }
                         events.push({
                             type: EDaoEventType.DAO_MEMBER_EXPERT_TAG_CREATE,
@@ -2062,7 +2060,7 @@ export function useUpdateDaoMember() {
                         (a, b) => a.name === b.name,
                     )
                     for (const { name } of expert_tags_deleted) {
-                        const _comment = `Delete expert tag ${name} for ${item.username}`
+                        const _comment = `Delete karma tag ${name} for ${item.username}`
                         const _item = { profile_addr: item.profile, tag: name }
                         events.push({
                             type: EDaoEventType.DAO_MEMBER_EXPERT_TAG_DELETE,
@@ -3313,7 +3311,7 @@ export function useUpdateDaoExpertTags() {
                 if (tags_updated.length > 0) {
                     events.push({
                         type: EDaoEventType.DAO_EXPERT_TAG_CREATE,
-                        params: { tags: tags_updated, comment: 'Update DAO expert tags' },
+                        params: { tags: tags_updated, comment: 'Update DAO karma tags' },
                         fn: 'createDaoExpertTag',
                     })
                 }
@@ -3325,7 +3323,7 @@ export function useUpdateDaoExpertTags() {
                 if (tags_removed.length > 0) {
                     events.push({
                         type: EDaoEventType.DAO_EXPERT_TAG_DELETE,
-                        params: { tags: tags_removed, comment: 'Delete DAO expert tags' },
+                        params: { tags: tags_removed, comment: 'Delete DAO karma tags' },
                         fn: 'deleteDaoExpertTag',
                     })
                 }
@@ -3344,13 +3342,13 @@ export function useUpdateDaoExpertTags() {
                 } else {
                     eventaddr = await member.wallet.createMultiEvent({
                         proposals: events,
-                        comment: params.comment || 'Update DAO expert tags',
+                        comment: params.comment || 'Update DAO karma tags',
                     })
                 }
 
                 // Event post create
                 await afterCreateEvent(
-                    { label: 'Update DAO expert tags', eventaddr },
+                    { label: 'Update DAO karma tags', eventaddr },
                     { onPendingCallback: setStatus },
                 )
 
@@ -3358,8 +3356,8 @@ export function useUpdateDaoExpertTags() {
                     ...state,
                     type: 'success',
                     data: {
-                        title: 'Update DAO expert tags',
-                        content: 'Update DAO expert tags event created',
+                        title: 'Update DAO karma tags',
+                        content: 'Update DAO karma tags event created',
                     },
                 }))
 
@@ -3382,8 +3380,8 @@ export function useMintDaoTokens() {
     const [status, setStatus] = useRecoilState(appToastStatusSelector('__mintdaotokens'))
 
     const mint = useCallback(
-        async (params: { amount: number; comment?: string }) => {
-            const { amount } = params
+        async (params: { amount: number; comment?: string; expert_tags?: string[] }) => {
+            const { amount, expert_tags } = params
             const comment = params.comment || `Mint ${amount.toLocaleString()} tokens`
 
             try {
@@ -3425,6 +3423,7 @@ export function useMintDaoTokens() {
                     amount,
                     comment,
                     alone,
+                    expert_tags,
                 })
 
                 // Event post create

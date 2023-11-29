@@ -300,7 +300,7 @@ export function useUserSignup(options: { initialize?: boolean } = {}) {
             }
 
             // Check if OAuth user still does not exist
-            await checkOAuthExists()
+            // await checkOAuthExists()
 
             // Create GOSH account
             setStatus((state) => ({
@@ -313,21 +313,21 @@ export function useUserSignup(options: { initialize?: boolean } = {}) {
                 username: data.username,
             })
 
-            // Create DB record for user
-            setStatus((state) => ({
-                ...state,
-                type: 'pending',
-                data: 'Update database',
-            }))
-            const dbUser = await getDbUser(oauth.session.user.id)
-            if (!dbUser) {
-                await createDbUser({
-                    auth_id: oauth.session.user.id,
-                    username: data.username,
-                    pubkey: keys.public,
-                    email: data.email,
-                })
-            }
+            // // Create DB record for user
+            // setStatus((state) => ({
+            //     ...state,
+            //     type: 'pending',
+            //     data: 'Update database',
+            // }))
+            // const dbUser = await getDbUser(oauth.session.user.id)
+            // if (!dbUser) {
+            //     await createDbUser({
+            //         auth_id: oauth.session.user.id,
+            //         username: data.username,
+            //         pubkey: keys.public,
+            //         email: data.email,
+            //     })
+            // }
 
             setStatus((state) => ({ ...state, type: 'dismiss', data: null }))
         } catch (e: any) {
@@ -443,7 +443,7 @@ export function useUserSignup(options: { initialize?: boolean } = {}) {
             }
 
             if (data.step === 'oauth') {
-                await checkOAuthExists()
+                // await checkOAuthExists()
                 setStep('username')
             } else {
                 setStep(data.step as any)

@@ -66,10 +66,10 @@ export const DaoEventType: { [key: number]: string } = {
     43: 'Create milestone',
     44: 'Upgrade milestone',
     46: 'Delete repository',
-    47: 'Update DAO expert tag',
-    48: 'Delete DAO expert tag',
-    49: 'Add expert tag for DAO member',
-    50: 'Delete expert tag for DAO member',
+    47: 'Update DAO karma tag',
+    48: 'Delete DAO karma tag',
+    49: 'Add karma tag for DAO member',
+    50: 'Delete karma tag for DAO member',
 }
 
 export const NotificationType: { [key: string]: string } = {
