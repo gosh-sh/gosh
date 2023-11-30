@@ -14,5 +14,5 @@ esac
 
 echo "Version=$VERSION"
 
-./node_se_scripts/deploy.sh $VERSION $2
-. set-vars.sh $VERSION $2
+./node_se_scripts/deploy.sh $VERSION $NETWORK
+. set-vars.sh $VERSION $NETWORK
