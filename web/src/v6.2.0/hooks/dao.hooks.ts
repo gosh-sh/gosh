@@ -1944,13 +1944,12 @@ export function useUpdateDaoMember() {
 
                 // Check total balance against DAO reserve
                 const balance = _.sum(items.map(({ balance }) => balance))
-                const reserve = dao.supply?.reserve || 0
-                if (balance > reserve) {
-                    throw new GoshError('DAO reserve error', {
+                if (balance > supply) {
+                    throw new GoshError('DAO supply error', {
                         balance,
-                        reserve,
+                        supply,
                         message:
-                            'Members total balance can not be greater than DAO reserve',
+                            'Members total balance can not be greater than DAO total supply',
                     })
                 }
 
