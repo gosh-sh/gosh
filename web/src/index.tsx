@@ -1,11 +1,11 @@
+import { BinaryLibrary, TonClient } from '@eversdk/core'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, HashRouter } from 'react-router-dom'
-import reportWebVitals from './reportWebVitals'
-import { TonClient, BinaryLibrary } from '@eversdk/core'
-import { libWeb, libWebSetup } from '@eversdk/lib-web'
-import Dispatcher from './Dispatcher'
 import { RecoilRoot } from 'recoil'
+import Dispatcher from './Dispatcher'
 import './assets/scss/style.scss'
+import { libWeb, libWebSetup } from './eversdk-libweb'
+import reportWebVitals from './reportWebVitals'
 
 // Check for docker extension flag
 let ConditionedRouter = BrowserRouter
