@@ -40,6 +40,9 @@ contract Grant is Modifiers {
         address systemcontract,
         uint128[] grants,
         address[] tip3wallet,
+        uint256[] pubkeys, 
+        string[] details, 
+        uint128 timeofend,
         TvmCell WalletCode,
         uint128 index) onlyOwner {
         tvm.accept();
@@ -49,14 +52,7 @@ contract Grant is Modifiers {
         _grant = grants;
         require(_tip3wallet.length <= 10, ERR_WRONG_NUMBER_MEMBER);
         require(_grant.length <= 10, ERR_WRONG_NUMBER_MEMBER);
-        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
-    }
-
-    function setCandidates(address pubaddr, uint128 index, uint256[] pubkeys, string[] details, uint128 timeofend) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
-        require(_ready == false, ERR_ALREADY_CONFIRMED);
-        require(_readytovote == false, ERR_ALREADY_CONFIRMED);
-        require(_votes.length == 0, ERR_ALREADY_CONFIRMED);
-        _pubkeys = pubkeys;
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);_pubkeys = pubkeys;
         _votes = new uint128[](pubkeys.length);
         _details = details;
         GoshDao(_goshdao).askWallets{value: 0.3 ton, flag: 1}();

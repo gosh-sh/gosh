@@ -10,20 +10,11 @@
 				{"name":"systemcontract","type":"address"},
 				{"name":"grants","type":"uint128[]"},
 				{"name":"tip3wallet","type":"address[]"},
-				{"name":"WalletCode","type":"cell"},
-				{"name":"index","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setCandidates",
-			"inputs": [
-				{"name":"pubaddr","type":"address"},
-				{"name":"index","type":"uint128"},
 				{"name":"pubkeys","type":"uint256[]"},
 				{"name":"details","type":"string[]"},
-				{"name":"timeofend","type":"uint128"}
+				{"name":"timeofend","type":"uint128"},
+				{"name":"WalletCode","type":"cell"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]

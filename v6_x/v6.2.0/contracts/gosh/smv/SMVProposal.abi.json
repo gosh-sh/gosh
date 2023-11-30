@@ -598,7 +598,10 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"name","type":"string"},
 				{"name":"grant","type":"uint128[]"},
-				{"name":"tip3","type":"address[]"}
+				{"name":"tip3","type":"address[]"},
+				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"details","type":"string[]"},
+				{"name":"timeofend","type":"uint128"}
 			]
 		},
 		{
@@ -609,7 +612,10 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"name","type":"string"},
 				{"name":"grant","type":"uint128[]"},
-				{"name":"tip3","type":"address[]"}
+				{"name":"tip3","type":"address[]"},
+				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"details","type":"string[]"},
+				{"name":"timeofend","type":"uint128"}
 			]
 		},
 		{
@@ -629,31 +635,6 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"name","type":"string"}
-			]
-		},
-		{
-			"name": "getSetGrantPubkeysParamsData",
-			"inputs": [
-				{"name":"Data","type":"cell"}
-			],
-			"outputs": [
-				{"name":"proposalKind","type":"uint256"},
-				{"name":"name","type":"string"},
-				{"name":"pubkeys","type":"uint256[]"},
-				{"name":"details","type":"string[]"},
-				{"name":"timeofend","type":"uint128"}
-			]
-		},
-		{
-			"name": "getSetGrantPubkeysParams",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"proposalKind","type":"uint256"},
-				{"name":"name","type":"string"},
-				{"name":"pubkeys","type":"uint256[]"},
-				{"name":"details","type":"string[]"},
-				{"name":"timeofend","type":"uint128"}
 			]
 		},
 		{
