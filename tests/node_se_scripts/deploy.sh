@@ -2,6 +2,8 @@
 set -e
 set -x
 
+export RUST_LOG=debug
+
 VERSION=$1
 
 export NETWORK="${NETWORK:-http://192.168.31.227}"
@@ -35,10 +37,15 @@ make generate-docker
 export GIVER_ADDR=`cat Giver.addr`
 echo "GIVER_ADDR = $GIVER_ADDR"
 
-gosh-cli config -e localhost
+tonos-cli config --url $NETWORK
+# gosh-cli config -e $NETWORK
+# gosh-cli config --async_call true
 gosh-cli callx --abi $SE_GIVER_ABI --addr $SE_GIVER_ADDRESS --keys $SE_GIVER_KEYS -m sendTransaction --value $GIVER_VALUE --bounce false --dest $GIVER_ADDR
 
-make deploy-docker
+# make deploy-docker
+cd scripts
+./deploy.sh
+cd ..
 
 #cd ../smv
 #make build-contracts
@@ -70,4 +77,7 @@ else
 fi
 
 #make build
-make deploy-docker
+# make deploy-docker
+export VERSIONCONTROLLER_SEED_FILE_OUT=gosh.seed
+cd scripts
+./deploy.sh
