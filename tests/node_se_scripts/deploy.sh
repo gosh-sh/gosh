@@ -40,7 +40,7 @@ echo "GIVER_ADDR = $GIVER_ADDR"
 tonos-cli config --url $NETWORK
 # gosh-cli config -e $NETWORK
 # gosh-cli config --async_call true
-gosh-cli callx --abi $SE_GIVER_ABI --addr $SE_GIVER_ADDRESS --keys $SE_GIVER_KEYS -m sendTransaction --value $GIVER_VALUE --bounce false --dest $GIVER_ADDR
+tonos-cli callx --abi $SE_GIVER_ABI --addr $SE_GIVER_ADDRESS --keys $SE_GIVER_KEYS -m sendTransaction --value $GIVER_VALUE --bounce false --dest $GIVER_ADDR
 
 # make deploy-docker
 cd scripts
@@ -72,6 +72,8 @@ elif [ "$VERSION" = "v6_x/v6.0.0" ]; then
   echo "" > SystemContract-6.0.0.addr
 elif [ "$VERSION" = "v6_x/v6.1.0" ]; then
   echo "" > SystemContract-6.1.0.addr
+elif [ "$VERSION" = "v6_x/v6.2.0" ]; then
+  echo "" > SystemContract-6.2.0.addr
 else
  exit 1
 fi

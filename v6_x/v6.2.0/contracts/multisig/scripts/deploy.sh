@@ -20,9 +20,9 @@ GIVER_TVC="$GIVER_PATH/MultisigWallet.tvc"
 # PUBLIC_KEY=`everdev signer info $SIGNER | tr -d ' ",' | sed -n '/public:/s/public://p'`
 #everdev contract deploy $GIVER_ABI -n $NETWORK_NAME -s $SIGNER -i "{\"owners\": [\"0x${PUBLIC_KEY}\"], \"reqConfirms\": 1}"
 
-gosh-cli getkeypair -p "$GIVER_SEED" -o Giver.keys
+tonos-cli getkeypair -p "$GIVER_SEED" -o Giver.keys
 
 PUBLIC_KEY=$(cat Giver.keys | jq .public | tr -d '"')
-gosh-cli config -e $NETWORK
+tonos-cli config --url $NETWORK
 # gosh-cli config --async_call true
-gosh-cli deploy --abi $GIVER_ABI --sign "$GIVER_SEED" $GIVER_TVC "{\"owners\": [\"0x${PUBLIC_KEY}\"], \"reqConfirms\": 1}"
+tonos-cli deploy --abi $GIVER_ABI --sign "$GIVER_SEED" $GIVER_TVC "{\"owners\": [\"0x${PUBLIC_KEY}\"], \"reqConfirms\": 1}"

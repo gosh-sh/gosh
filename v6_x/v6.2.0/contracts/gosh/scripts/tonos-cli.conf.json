@@ -1,0 +1,43 @@
+{
+  "config": {
+    "url": "http://127.0.0.1:80",
+    "wc": 0,
+    "addr": null,
+    "method": null,
+    "parameters": null,
+    "wallet": null,
+    "pubkey": null,
+    "abi_path": null,
+    "keys_path": null,
+    "retries": 5,
+    "timeout": 40000,
+    "message_processing_timeout": 40000,
+    "out_of_sync_threshold": 15,
+    "is_json": false,
+    "depool_fee": 0.5,
+    "lifetime": 60,
+    "no_answer": true,
+    "balance_in_tons": false,
+    "local_run": false,
+    "async_call": false,
+    "debug_fail": "None",
+    "project_id": null,
+    "access_key": null,
+    "endpoints": []
+  },
+  "endpoints_map": {
+    "http://127.0.0.1/": [
+      "http://0.0.0.0",
+      "http://127.0.0.1",
+      "http://localhost"
+    ],
+    "main.evercloud.dev": [
+      "https://mainnet.evercloud.dev"
+    ],
+    "net.evercloud.dev": [
+      "https://devnet.evercloud.dev"
+    ]
+  },
+  "aliases": {},
+  "path": "/home/user/GOSH/gosh/v6_x/v6.2.0/contracts/gosh/scripts/tonos-cli.conf.json"
+}
