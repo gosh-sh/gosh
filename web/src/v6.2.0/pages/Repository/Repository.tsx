@@ -26,6 +26,7 @@ import { Button, ButtonLink } from '../../../components/Form'
 import Loader from '../../../components/Loader'
 import RepoBreadcrumbs from '../../../components/Repo/Breadcrumbs'
 import { ToastError } from '../../../components/Toast'
+import { GoshError } from '../../../errors'
 import { onExternalLinkClick } from '../../../helpers'
 import { appModalStateAtom } from '../../../store/app.state'
 import { shortString } from '../../../utils'
@@ -45,6 +46,12 @@ const readFileAsBuffer = async (file: any) => {
     })
 
     return content as Buffer
+}
+
+const buildPath = (dir: string, name: string) => {
+    let path = `${dir}/${name}`
+    path = path.replace(/^\//, '').replace('//', '/')
+    return path
 }
 
 const RepositoryPage = () => {
@@ -77,7 +84,6 @@ const RepositoryPage = () => {
     const [snapshot_path, setSnapshotPath] = useState<string>()
     const file_history = useFileHistory({ snapshot_path })
     const setModal = useSetRecoilState(appModalStateAtom)
-    const [file_view, setFileView] = useState<string>('tiles')
 
     const onFilesDrop = useCallback((files: any) => {
         setDropped(files)
@@ -106,8 +112,7 @@ const RepositoryPage = () => {
             const branch = _rg_branch?.name || 'main'
             setFileItem(item)
 
-            let path = `${branch}/${item.commit}/${item.path}/${item.name}`
-            path = path.replace(/^\//, '').replace('//', '/')
+            const path = buildPath(`${branch}/${item.commit}/${item.path}`, item.name)
             setSnapshotPath(path)
         } else {
             setFileItem(undefined)
@@ -135,6 +140,12 @@ const RepositoryPage = () => {
         }
 
         try {
+            if (!repository.details?.account || !_rg_repo.adapter) {
+                throw new GoshError('Value error', 'Repository is undefined')
+            }
+
+            setFileItem(undefined)
+            setSnapshotPath(undefined)
             const files: { path: string; content: string | Buffer }[] = []
             await Promise.all(
                 dropped.map(async (file) => {
@@ -146,15 +157,41 @@ const RepositoryPage = () => {
                 }),
             )
 
-            const push_blobs = files.map((item) => {
-                let path = (treepath ? `${treepath}/` : treepath) + item.path
-                path = path.replace(/^\//, '').replace('//', '/')
-                return {
-                    treepath: ['', path],
-                    original: '',
-                    modified: item.content,
-                }
-            })
+            const push_blobs = await Promise.all(
+                files.map(async (item) => {
+                    const external_path = buildPath(treepath, item.path)
+                    const tree_item = subtree?.find((v) => {
+                        let path = (v.path ? `${v.path}/` : v.path) + v.name
+                        path = path.replace(/^\//, '').replace('//', '/')
+                        return path === external_path
+                    })
+                    const exists_path = tree_item
+                        ? buildPath(tree_item.path, tree_item.name)
+                        : ''
+
+                    let original = ''
+                    if (tree_item && exists_path) {
+                        const snapshot = await repository.details!.account!.getSnapshot({
+                            data: {
+                                commitname: tree_item.commit!,
+                                filename: exists_path,
+                            },
+                        })
+                        const { current } = await _rg_repo.adapter.getCommitBlob(
+                            snapshot.address,
+                            exists_path,
+                            _rg_branch?.commit.name,
+                        )
+                        original = current
+                    }
+
+                    return {
+                        treepath: [exists_path, external_path],
+                        original,
+                        modified: item.content,
+                    }
+                }),
+            )
             console.debug('push_blobs', push_blobs)
             const comment = `Upload files to repository "${repository.details?.name}" branch "${_rg_branch?.name}"`
             const eventaddr = await push(comment, push_blobs, {
