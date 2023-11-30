@@ -50,7 +50,7 @@ const readFileAsBuffer = async (file: any) => {
 
 const buildPath = (dir: string, name: string) => {
     let path = `${dir}/${name}`
-    path = path.replace(/^\//, '').replace('//', '/')
+    path = path.replace('//', '/').replace(/^\//, '')
     return path
 }
 
@@ -161,8 +161,7 @@ const RepositoryPage = () => {
                 files.map(async (item) => {
                     const external_path = buildPath(treepath, item.path)
                     const tree_item = subtree?.find((v) => {
-                        let path = (v.path ? `${v.path}/` : v.path) + v.name
-                        path = path.replace(/^\//, '').replace('//', '/')
+                        const path = buildPath(v.path, v.name)
                         return path === external_path
                     })
                     const exists_path = tree_item
