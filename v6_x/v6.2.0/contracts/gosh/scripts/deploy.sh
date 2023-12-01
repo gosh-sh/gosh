@@ -241,6 +241,10 @@ echo "     ====> Run setTagSupplyTask"
 # everdev contract run $SYSTEMCONTRACT_ABI setTagSupplyTask --input "{\"code\":\"$TAG_SUPPLY_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 /opt/gosh/contracts/tonos-cli callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setTagSupplyTask "{\"code\":\"$TAG_SUPPLY_CODE\"}"  || exit 1
 
+# Set setLimitWallets
+echo "========== Run setLimitWallets"
+/opt/gosh/contracts/tonos-cli callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setLimitWallets "{\"limit_wallets\": 1}"  || exit 1
+
 # Set flag to false (disable code setters)
 echo "========== Run SystemContract setFlag (false)"
 # everdev contract run $SYSTEMCONTRACT_ABI setFlag --input "{\"flag\":\"false\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
