@@ -19,6 +19,7 @@ Cargo.lock
 *.addr
 *.network
 SafeMultisigWallet.abi.json
+Giver.keys
 
 package-lock.json
 deno.lock
@@ -29,6 +30,7 @@ pnpm-lock.yaml
 !tests/node_se_scripts/local_giver.keys.json
 
 gosh-cli.conf.json
+tonos-cli.conf.json
 
 !GiverV2.keys.json
 
