@@ -19,7 +19,7 @@ build: clean build-contracts
 	if [ "${target-dir}" != "" ] ; then tar -cf goshmultisig.tar ${target-dir}; fi;
 
 prepare-docker:
-	docker build -t everdev:latest ../../.ci/
+	docker build -t everdev:latest ../../../../.ci/
 
 build-contracts-docker:
 	docker run --rm \
