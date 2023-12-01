@@ -390,8 +390,7 @@ pub async fn load_messages_to(
                 is_internal: true,
                 ..Default::default()
             },
-        )
-        .await;
+        );
 
         if let Err(ref e) = decoding_result {
             tracing::trace!("decode_message_body error: {:#?}", e);
@@ -481,8 +480,7 @@ pub async fn load_constructor(
                 is_internal: true,
                 ..Default::default()
             },
-        )
-        .await;
+        );
 
         if let Err(ref e) = decoding_result {
             tracing::trace!("decode_message_body error: {:#?}", e);
