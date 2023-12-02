@@ -84,7 +84,7 @@ echo "export WALLET_ABI=$WALLET_ABI" >> env.env
 tonos-cli call --abi $USER_PROFILE_ABI $USER_PROFILE_ADDR --sign $WALLET_KEYS turnOn \
   "{\"pubkey\":\"$WALLET_PUBKEY\",\"wallet\":\"$WALLET_ADDR\"}"
 
-sleep 10
+sleep 1
 
 # GRANTED_PUBKEY=$(tonos-cli -j run --abi $WALLET_ABI $WALLET_ADDR getAccess {} | jq -r .value0)
 

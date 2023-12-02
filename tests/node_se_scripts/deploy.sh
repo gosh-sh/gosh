@@ -37,7 +37,7 @@ make generate-docker
 export GIVER_ADDR=`cat Giver.addr`
 echo "GIVER_ADDR = $GIVER_ADDR"
 
-tonos-cli config --url $NETWORK
+tonos-cli config --url $NETWORK  --lifetime 3 --timeout 1000
 # gosh-cli config -e $NETWORK
 # gosh-cli config --async_call true
 tonos-cli callx --abi $SE_GIVER_ABI --addr $SE_GIVER_ADDRESS --keys $SE_GIVER_KEYS -m sendTransaction --value $GIVER_VALUE --bounce false --dest $GIVER_ADDR
