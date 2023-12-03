@@ -2767,7 +2767,6 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     function getCode(uint8 id, TvmCell code) public onlyOwner accept saveMsg {
         if (id == m_WalletCode) {
-            _code[m_WalletCode] = code;
             TvmCell code1;
             GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, _index + 1)).updateCodeWallet{value: 0.1 ton, flag: 1}(code);
             this.updateCode{value: 0.1 ton, flag: 1}(code, code1);
