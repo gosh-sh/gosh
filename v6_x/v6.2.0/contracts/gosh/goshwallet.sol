@@ -9,25 +9,9 @@ pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 
 import "./repository.sol";
-import "./commit.sol";
-import "./diff.sol";
-import "./daotag.sol";
-import "./tag.sol";
 import "./systemcontract.sol";
-import "./task.sol";
-import "./bigtask.sol";
-import "./tree.sol";
 import "./goshwallet.sol";
-import "./profile.sol";
-import "./taggosh.sol";
-import "./grant.sol";
-import "./content-signature.sol";
-import "./topic.sol";
-import "./libraries/GoshLib.sol";
 import "./smv/SMVAccount.sol";
-import "./smv/Libraries/SMVConstants.sol";
-import "./smv/LockerPlatform.sol";
-import "./smv/modifiers/SMVconfiguration.sol";
 
 abstract contract Object {
     function destroy(address pubaddr, uint128 index) external {}
@@ -1680,22 +1664,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address taskaddr = GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, repo, nametask);
         return taskaddr;
     }
-/*
-    function setTaskConfig(
-        string repoName,
-        string nametask,
-        ConfigGrant grant
-    ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
-        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
-        require(_tombstone == false, ERR_TOMBSTONE);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
-        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
-        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
-        address taskaddr = address.makeAddrStd(0, tvm.hash(s1));
-        Task(taskaddr).setConfig{value:0.3 ton}(grant, _index);
-        getMoney();
-    }
-*/
+
     //Tree part
     function deployTree(
         string repoName,
