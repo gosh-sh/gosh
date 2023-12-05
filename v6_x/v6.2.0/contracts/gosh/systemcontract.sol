@@ -54,6 +54,11 @@ contract SystemContract is Modifiers {
         _versionController = msg.sender;
     }
 
+    function deployNewDaoWallet(string nameDao) public pure {
+        nameDao; //m_DaoWalletCode;
+        return;
+    }
+
     function returnTokenToDao(string nameDao, address pubaddr, uint128 value) public view senderIs(_trusted) accept {
         GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), nameDao), pubaddr, 0)).returnTokenToDao{value: 0.1 ton, flag: 1}(value);
     }
@@ -419,6 +424,10 @@ contract SystemContract is Modifiers {
 
     function setTrusted(address trusted) public onlyOwner accept {
         _trusted = trusted;
+    }
+
+    function setDaoWaller(TvmCell code) public onlyOwner accept {
+        _code[m_DaoWalletCode] = code;
     }
 
     //Getters

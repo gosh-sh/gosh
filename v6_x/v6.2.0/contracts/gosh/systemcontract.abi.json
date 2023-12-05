@@ -12,6 +12,14 @@
 			]
 		},
 		{
+			"name": "deployNewDaoWallet",
+			"inputs": [
+				{"name":"nameDao","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "returnTokenToDao",
 			"inputs": [
 				{"name":"nameDao","type":"string"},
@@ -627,6 +635,14 @@
 			"name": "setTrusted",
 			"inputs": [
 				{"name":"trusted","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setDaoWaller",
+			"inputs": [
+				{"name":"code","type":"cell"}
 			],
 			"outputs": [
 			]
