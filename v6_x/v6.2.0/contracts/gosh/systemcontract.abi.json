@@ -736,6 +736,15 @@
 			]
 		},
 		{
+			"name": "getGrantCode",
+			"inputs": [
+				{"name":"daoName","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "getTagAddress",
 			"inputs": [
 				{"name":"daoName","type":"string"},

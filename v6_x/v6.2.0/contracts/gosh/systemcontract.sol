@@ -485,6 +485,13 @@ contract SystemContract is Modifiers {
         return GoshLib.calculateTagAddress(_code[m_TagCode], repo, nametag);
     }
 
+    function getGrantCode(string daoName) external view returns(TvmCell) {
+        address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), daoName);
+        return GoshLib.buildGrantsCode(
+            _code[m_GrantCode], addr, version
+        );
+    }
+
     function getTagAddress(
         string daoName,
         string repoName,
