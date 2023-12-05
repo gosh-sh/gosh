@@ -1419,6 +1419,7 @@
 				{"name":"name","type":"string"},
 				{"name":"grant","type":"optional(uint128[])"},
 				{"name":"tip3wallet","type":"optional(address[])"},
+				{"name":"metadata","type":"optional(string)"},
 				{"name":"comment","type":"string"},
 				{"name":"time","type":"optional(uint32)"}
 			],
@@ -1430,7 +1431,7 @@
 			"name": "getCellDeployGrants",
 			"inputs": [
 				{"name":"name","type":"string"},
-				{"name":"reponame","type":"string"},
+				{"name":"metadata","type":"string"},
 				{"name":"grants","type":"uint128[]"},
 				{"name":"tip3wallet","type":"address[]"},
 				{"name":"comment","type":"string"},

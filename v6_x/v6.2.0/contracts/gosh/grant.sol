@@ -16,7 +16,7 @@ import "goshdao.sol";
 contract Grant is Modifiers {
     string constant version = "6.2.0";
     
-    string _repoName;
+    string _metadata;
     string static _name;
     address static _goshdao;
     address[] _owner;
@@ -40,13 +40,13 @@ contract Grant is Modifiers {
     constructor(
         address pubaddr,
         address systemcontract,
-        string reponame,
+        string metadata,
         uint128[] grants,
         address[] tip3wallet,
         TvmCell WalletCode,
         uint128 index) onlyOwner {
         tvm.accept();
-        _repoName = reponame;
+        _metadata = metadata;
         _code[m_WalletCode] = WalletCode;
         _systemcontract = systemcontract;
         _tip3wallet = tip3wallet;
@@ -56,10 +56,11 @@ contract Grant is Modifiers {
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
     }
 
-    function addCurrencies(optional(uint128[]) grant, optional(address[]) tip3wallet, address pubaddr, uint128 index) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
+    function addCurrencies(optional(uint128[]) grant, optional(address[]) tip3wallet, optional(string) metadata, address pubaddr, uint128 index) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
         require(_ready == false, ERR_ALREADY_CONFIRMED);
         require(_readytovote == false, ERR_ALREADY_CONFIRMED);
         require(_votes.length == 0, ERR_ALREADY_CONFIRMED);
+        if (metadata.hasValue()) { _metadata = metadata.get(); }
         if (grant.hasValue()) { _grant = grant.get(); }
         if (tip3wallet.hasValue() == false) { return; }
         this.addCurrenciesIn{value: 0.1 ton, flag: 1}(tip3wallet.get(), 0);
@@ -179,7 +180,7 @@ contract Grant is Modifiers {
     
     //Getters    
     function getDetails() external view returns(address[], uint128[], string, bool, string) {
-        return (_owner, _grant, _name, _ready, _repoName);
+        return (_owner, _grant, _name, _ready, _metadata);
     }
 
     function getVersion() external pure returns(string, string) {

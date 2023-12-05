@@ -8,7 +8,7 @@
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
 				{"name":"systemcontract","type":"address"},
-				{"name":"reponame","type":"string"},
+				{"name":"metadata","type":"string"},
 				{"name":"grants","type":"uint128[]"},
 				{"name":"tip3wallet","type":"address[]"},
 				{"name":"WalletCode","type":"cell"},
@@ -22,6 +22,7 @@
 			"inputs": [
 				{"name":"grant","type":"optional(uint128[])"},
 				{"name":"tip3wallet","type":"optional(address[])"},
+				{"name":"metadata","type":"optional(string)"},
 				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"}
 			],
@@ -204,7 +205,7 @@
 		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
 		{"name":"__value","type":"uint256"},
-		{"name":"_repoName","type":"string"},
+		{"name":"_metadata","type":"string"},
 		{"name":"_name","type":"string"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_owner","type":"address[]"},

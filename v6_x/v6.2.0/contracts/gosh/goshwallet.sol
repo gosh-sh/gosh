@@ -1954,34 +1954,35 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string name,
         optional(uint128[]) grant,
         optional(address[]) tip3wallet,
+        optional(string) metadata,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = ADD_CURRENCIES_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
-        return abi.encode(proposalKind, name, grant, tip3wallet, comment, time.get());
+        return abi.encode(proposalKind, name, grant, tip3wallet, metadata, comment, time.get());
     }
 
     function getCellDeployGrants(
         string name,
-        string reponame,
+        string metadata,
         uint128[] grants,
         address[] tip3wallet,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = DEPLOY_GRANT_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
-        return abi.encode(proposalKind, name, reponame, grants, tip3wallet, comment, time.get());
+        return abi.encode(proposalKind, name, metadata, grants, tip3wallet, comment, time.get());
     }
 
-    function _deployGrants(string name, string reponame, uint128[] grants, address[] tip3wallet) private {
+    function _deployGrants(string name, string metadata, uint128[] grants, address[] tip3wallet) private {
         TvmCell s1 = GoshLib.composeGrantStateInit(_code[m_GrantCode], _goshdao, name);
         new Grant {
             stateInit: s1, value: 70 ton, wid: 0, flag: 1
-        }(_pubaddr, _systemcontract, reponame, grants, tip3wallet, _code[m_WalletCode], _index);
+        }(_pubaddr, _systemcontract, metadata, grants, tip3wallet, _code[m_WalletCode], _index);
         getMoney();
     }
 
-    function _deployCurrencies(string name, optional(uint128[]) grant, optional(address[]) tip3wallet) private {
+    function _deployCurrencies(string name, optional(uint128[]) grant, optional(address[]) tip3wallet, optional(string) metadata) private {
         address addr = GoshLib.calculateGrantAddress(_code[m_GrantCode], _goshdao, name);
-        Grant(addr).addCurrencies{value: 0.1 ton, flag: 1}(grant, tip3wallet, _pubaddr, _index);
+        Grant(addr).addCurrencies{value: 0.1 ton, flag: 1}(grant, tip3wallet, metadata, _pubaddr, _index);
         getMoney();
     }
 
@@ -2498,8 +2499,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 _deleteTagsForMembers(pubaddr, tag);
             } else 
             if (kind == DEPLOY_GRANT_KIND) {
-                (,string name, string reponame, uint128[] grants, address[] tip3,,) = abi.decode(propData,(uint256, string, string, uint128[], address[], string, uint32));
-                _deployGrants(name, reponame, grants, tip3);
+                (,string name, string metadata, uint128[] grants, address[] tip3,,) = abi.decode(propData,(uint256, string, string, uint128[], address[], string, uint32));
+                _deployGrants(name, metadata, grants, tip3);
             } else 
             if (kind == DESTROY_GRANT_KIND) {
                 (,string name,,) = abi.decode(propData,(uint256, string, string, uint32));
@@ -2510,8 +2511,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 _setGrantPubkeys(name, owners, details, timeofend);
             } else 
             if (kind == ADD_CURRENCIES_KIND) {
-                (,string name, optional(uint128[]) grant, optional(address[]) tip3,,) = abi.decode(propData,(uint256, string, optional(uint128[]), optional(address[]), string, uint32));
-                _deployCurrencies(name, grant, tip3);
+                (,string name, optional(uint128[]) grant, optional(address[]) tip3, optional(string) metadata,,) = abi.decode(propData,(uint256, string, optional(uint128[]), optional(address[]), optional(string), string, uint32));
+                _deployCurrencies(name, grant, tip3, metadata);
             }
         }
     }

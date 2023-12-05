@@ -623,7 +623,8 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"name","type":"string"},
 				{"name":"grant","type":"optional(uint128[])"},
-				{"name":"tip3","type":"optional(address[])"}
+				{"name":"tip3","type":"optional(address[])"},
+				{"name":"metadata","type":"optional(string)"}
 			]
 		},
 		{
@@ -634,7 +635,8 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"name","type":"string"},
 				{"name":"grant","type":"optional(uint128[])"},
-				{"name":"tip3","type":"optional(address[])"}
+				{"name":"tip3","type":"optional(address[])"},
+				{"name":"metadata","type":"optional(string)"}
 			]
 		},
 		{

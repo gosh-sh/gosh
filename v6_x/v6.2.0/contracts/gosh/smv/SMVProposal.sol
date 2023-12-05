@@ -598,15 +598,15 @@ function getDeployGrantParams () external view
 }
 
 function getAddCurrenciesParamsData (TvmCell Data) external pure
-         returns(uint proposalKind, string name, optional(uint128[]) grant, optional(address[]) tip3)
+         returns(uint proposalKind, string name, optional(uint128[]) grant, optional(address[]) tip3, optional(string) metadata)
 {
-        (proposalKind, name, grant, tip3,,) = abi.decode(Data,(uint256, string, optional(uint128[]), optional(address[]), string, uint32));
+        (proposalKind, name, grant, tip3, metadata,,) = abi.decode(Data,(uint256, string, optional(uint128[]), optional(address[]), optional(string), string, uint32));
 }
 
 function getAddCurrenciesParams () external view
-         returns(uint proposalKind, string name, optional(uint128[]) grant, optional(address[]) tip3)
+         returns(uint proposalKind, string name, optional(uint128[]) grant, optional(address[]) tip3, optional(string) metadata)
 {
-        (proposalKind, name, grant, tip3,,) = abi.decode(propData,(uint256, string, optional(uint128[]), optional(address[]), string, uint32));
+        (proposalKind, name, grant, tip3, metadata,,) = abi.decode(propData,(uint256, string, optional(uint128[]), optional(address[]), optional(string), string, uint32));
 }
 
 function getDestroyGrantParamsData (TvmCell Data) external pure
