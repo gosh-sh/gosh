@@ -1430,6 +1430,7 @@
 			"name": "getCellDeployGrants",
 			"inputs": [
 				{"name":"name","type":"string"},
+				{"name":"reponame","type":"string"},
 				{"name":"grants","type":"uint128[]"},
 				{"name":"tip3wallet","type":"address[]"},
 				{"name":"comment","type":"string"},
@@ -1989,6 +1990,14 @@
 				{"name":"code","type":"cell"}
 			],
 			"outputs": [
+			]
+		},
+		{
+			"name": "getGrantCode",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
 			]
 		},
 		{

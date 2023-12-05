@@ -586,15 +586,15 @@ function getDeleteDaoMembersTagParams () external view
 }
 
 function getDeployGrantParamsData (TvmCell Data) external pure
-         returns(uint proposalKind, string name, uint128[] grant, address[] tip3)
+         returns(uint proposalKind, string name, string reponame, uint128[] grant, address[] tip3)
 {
-        (proposalKind, name, grant, tip3,,) = abi.decode(Data,(uint256, string, uint128[], address[], string, uint32));
+        (proposalKind, name, reponame, grant, tip3,,) = abi.decode(Data,(uint256, string, string, uint128[], address[], string, uint32));
 }
 
 function getDeployGrantParams () external view
-         returns(uint proposalKind, string name, uint128[] grant, address[] tip3)
+         returns(uint proposalKind, string name, string reponame, uint128[] grant, address[] tip3)
 {
-        (proposalKind, name, grant, tip3,,) = abi.decode(propData,(uint256, string, uint128[], address[], string, uint32));
+        (proposalKind, name, reponame, grant, tip3,,) = abi.decode(propData,(uint256, string, string, uint128[], address[], string, uint32));
 }
 
 function getAddCurrenciesParamsData (TvmCell Data) external pure

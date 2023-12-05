@@ -16,6 +16,7 @@ import "goshdao.sol";
 contract Grant is Modifiers {
     string constant version = "6.2.0";
     
+    string _repoName;
     string static _name;
     address static _goshdao;
     address[] _owner;
@@ -39,11 +40,13 @@ contract Grant is Modifiers {
     constructor(
         address pubaddr,
         address systemcontract,
+        string reponame,
         uint128[] grants,
         address[] tip3wallet,
         TvmCell WalletCode,
         uint128 index) onlyOwner {
         tvm.accept();
+        _repoName = reponame;
         _code[m_WalletCode] = WalletCode;
         _systemcontract = systemcontract;
         _tip3wallet = tip3wallet;
@@ -175,8 +178,8 @@ contract Grant is Modifiers {
     }
     
     //Getters    
-    function getDetails() external view returns(address[], uint128[], string, bool) {
-        return (_owner, _grant, _name, _ready);
+    function getDetails() external view returns(address[], uint128[], string, bool, string) {
+        return (_owner, _grant, _name, _ready, _repoName);
     }
 
     function getVersion() external pure returns(string, string) {

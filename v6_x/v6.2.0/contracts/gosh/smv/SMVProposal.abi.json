@@ -597,6 +597,7 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"name","type":"string"},
+				{"name":"reponame","type":"string"},
 				{"name":"grant","type":"uint128[]"},
 				{"name":"tip3","type":"address[]"}
 			]
@@ -608,6 +609,7 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"name","type":"string"},
+				{"name":"reponame","type":"string"},
 				{"name":"grant","type":"uint128[]"},
 				{"name":"tip3","type":"address[]"}
 			]

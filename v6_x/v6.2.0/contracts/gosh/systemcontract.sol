@@ -470,7 +470,8 @@ contract SystemContract is Modifiers {
         return taskaddr;
     }
 
-    function getDaoWalletAddr(string nameDao) external view returns(address){
+    function getDaoWalletAddr(string nameDao) external pure returns(address){
+        nameDao;
         return this;
     }
 
