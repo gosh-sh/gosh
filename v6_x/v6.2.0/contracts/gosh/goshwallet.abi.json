@@ -1405,9 +1405,6 @@
 				{"name":"name","type":"string"},
 				{"name":"grants","type":"uint128[]"},
 				{"name":"tip3wallet","type":"address[]"},
-				{"name":"pubkeys","type":"uint256[]"},
-				{"name":"details","type":"string[]"},
-				{"name":"timeofend","type":"uint128"},
 				{"name":"comment","type":"string"},
 				{"name":"time","type":"optional(uint32)"}
 			],
@@ -1435,6 +1432,20 @@
 				{"name":"comment","type":"string"}
 			],
 			"outputs": [
+			]
+		},
+		{
+			"name": "getCellSetGrantPubkey",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"details","type":"string[]"},
+				{"name":"timeofend","type":"uint128"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
 			]
 		},
 		{
