@@ -67,6 +67,19 @@
 			]
 		},
 		{
+			"name": "getCellForTransferTip3",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"owner","type":"optional(address)"},
+				{"name":"daowallet","type":"address"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "getCellForIndex",
 			"inputs": [
 				{"name":"data","type":"cell"},
