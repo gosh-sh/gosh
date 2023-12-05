@@ -161,12 +161,13 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 pubkey,
         optional(address) owner,
         address daowallet,
+        uint128 tokens,
         string comment, 
         optional(uint32) time
     ) external pure returns(TvmCell) {
         uint256 proposalKind =  TRANSFER_DAO_TIP3_KIND;        
         if (time.hasValue() == false) { time = block.timestamp; }
-        return abi.encode(proposalKind, pubkey, owner, daowallet, comment, time.get());
+        return abi.encode(proposalKind, pubkey, owner, daowallet, tokens, comment, time.get());
     }
 
     function getCellForIndex(

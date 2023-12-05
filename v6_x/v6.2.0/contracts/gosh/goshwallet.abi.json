@@ -72,6 +72,7 @@
 				{"name":"pubkey","type":"uint256"},
 				{"name":"owner","type":"optional(address)"},
 				{"name":"daowallet","type":"address"},
+				{"name":"tokens","type":"uint128"},
 				{"name":"comment","type":"string"},
 				{"name":"time","type":"optional(uint32)"}
 			],
