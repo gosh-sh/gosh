@@ -1400,6 +1400,18 @@
 			]
 		},
 		{
+			"name": "getCellAddCurrencies",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"tip3wallet","type":"address[]"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "getCellDeployGrants",
 			"inputs": [
 				{"name":"name","type":"string"},

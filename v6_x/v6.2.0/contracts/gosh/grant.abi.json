@@ -17,6 +17,25 @@
 			]
 		},
 		{
+			"name": "addCurrencies",
+			"inputs": [
+				{"name":"tip3wallet","type":"address[]"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addCurrenciesIn",
+			"inputs": [
+				{"name":"tip3wallet","type":"address[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setCandidates",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
@@ -199,6 +218,7 @@
 		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"_wallets","type":"map(uint256,tuple)"},
 		{"name":"_timeofend","type":"uint128"},
 		{"name":"_inprocess","type":"bool"},
-		{"name":"_SortedForGrants","type":"map(uint128,map(uint256,bool))"}
+		{"name":"_SortedForGrants","type":"map(uint128,map(uint256,bool))"},
+		{"name":"_used","type":"map(address,bool)"}
 	]
 }

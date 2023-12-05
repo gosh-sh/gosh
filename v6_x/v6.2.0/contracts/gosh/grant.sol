@@ -34,6 +34,7 @@ contract Grant is Modifiers {
     uint128 _timeofend;
     bool _inprocess = false;
     mapping (uint128 => mapping (uint256 => bool)) public _SortedForGrants;
+    mapping (address => bool) _used;
 
     constructor(
         address pubaddr,
@@ -50,6 +51,19 @@ contract Grant is Modifiers {
         require(_tip3wallet.length <= 10, ERR_WRONG_NUMBER_MEMBER);
         require(_grant.length <= 10, ERR_WRONG_NUMBER_MEMBER);
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
+    }
+
+    function addCurrencies(address[] tip3wallet, address pubaddr, uint128 index) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
+        require(_ready == false, ERR_ALREADY_CONFIRMED);
+        require(_readytovote == false, ERR_ALREADY_CONFIRMED);
+        require(_votes.length == 0, ERR_ALREADY_CONFIRMED);
+        this.addCurrenciesIn{value: 0.1 ton, flag: 1}(tip3wallet, 0);
+    }
+
+    function addCurrenciesIn(address[] tip3wallet, uint128 index) public senderIs(this) {
+        if (index >= tip3wallet.length) { return; }
+        _tip3wallet.push(tip3wallet[index]);
+        this.addCurrenciesIn{value: 0.1 ton, flag: 1}(tip3wallet, index);
     }
 
     function setCandidates(address pubaddr, uint128 index, uint256[] pubkeys, string[] details, uint128 timeofend) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
@@ -98,9 +112,12 @@ contract Grant is Modifiers {
         name; symbol; decimals; root_public_key; root_address; wallet_pubkey; owner_address; lend_pubkey; lend_owners; lend_balance; binding; code_hash; code_depth; workchain_id;
         _balance[_indexwallet - 1] = balance;
     	if (_indexwallet < _tip3wallet.length) { 
-            AFlexWallet(_tip3wallet[_indexwallet]).details{value: 1 ton}(uint32(100));
-            _indexwallet += 1;
-            return;
+            if (_used[_tip3wallet[_indexwallet]] == false) {
+                AFlexWallet(_tip3wallet[_indexwallet]).details{value: 1 ton}(uint32(100));
+                _indexwallet += 1;
+                _used[_tip3wallet[_indexwallet]] = true;
+                return;
+            }
         }
         this.sortPubkeys{value: 0.1 ton, flag: 1}(0);
     } 

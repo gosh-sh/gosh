@@ -1937,6 +1937,15 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         
     }
 
+    function getCellAddCurrencies(
+        string name,
+        address[] tip3wallet,
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
+        uint256 proposalKind = DEPLOY_GRANT_KIND;
+        if (time.hasValue() == false) { time = block.timestamp; }
+        return abi.encode(proposalKind, name, tip3wallet, comment, time.get());
+    }
+
     function getCellDeployGrants(
         string name,
         uint128[] grants,
@@ -1952,6 +1961,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         new Grant {
             stateInit: s1, value: 70 ton, wid: 0, flag: 1
         }(_pubaddr, _systemcontract, grants, tip3wallet, _code[m_WalletCode], _index);
+        getMoney();
+    }
+
+    function _deployCurrencies(string name, address[] tip3wallet) private {
+        address addr = GoshLib.calculateGrantAddress(_code[m_GrantCode], _goshdao, name);
+        Grant(addr).addCurrencies{value: 0.1 ton, flag: 1}(tip3wallet, _pubaddr, _index);
         getMoney();
     }
 
@@ -2478,6 +2493,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == SET_GRANT_PUBKEYS_KIND) {
                 (,string name,uint256[] pubkeys, string[] details, uint128 timeofend,,) = abi.decode(propData,(uint256, string, uint256[], string[], uint128, string, uint32));
                 _setGrantPubkeys(name, pubkeys, details, timeofend);
+            } else 
+            if (kind == ADD_CURRENCIES_KIND) {
+                (,string name, address[] tip3,,) = abi.decode(propData,(uint256, string, address[], string, uint32));
+                _deployCurrencies(name, tip3);
             }
         }
     }

@@ -613,6 +613,27 @@
 			]
 		},
 		{
+			"name": "getAddCurrenciesParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"name","type":"string"},
+				{"name":"tip3","type":"address[]"}
+			]
+		},
+		{
+			"name": "getAddCurrenciesParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"name","type":"string"},
+				{"name":"tip3","type":"address[]"}
+			]
+		},
+		{
 			"name": "getDestroyGrantParamsData",
 			"inputs": [
 				{"name":"Data","type":"cell"}
