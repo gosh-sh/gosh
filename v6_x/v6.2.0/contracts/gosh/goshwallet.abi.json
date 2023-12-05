@@ -1403,7 +1403,8 @@
 			"name": "getCellAddCurrencies",
 			"inputs": [
 				{"name":"name","type":"string"},
-				{"name":"tip3wallet","type":"address[]"},
+				{"name":"grant","type":"optional(uint128[])"},
+				{"name":"tip3wallet","type":"optional(address[])"},
 				{"name":"comment","type":"string"},
 				{"name":"time","type":"optional(uint32)"}
 			],
@@ -1447,10 +1448,10 @@
 			]
 		},
 		{
-			"name": "getCellSetGrantPubkey",
+			"name": "getCellSetGrantOwners",
 			"inputs": [
 				{"name":"name","type":"string"},
-				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"owners","type":"address[]"},
 				{"name":"details","type":"string[]"},
 				{"name":"timeofend","type":"uint128"},
 				{"name":"comment","type":"string"},

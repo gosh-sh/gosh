@@ -19,7 +19,8 @@
 		{
 			"name": "addCurrencies",
 			"inputs": [
-				{"name":"tip3wallet","type":"address[]"},
+				{"name":"grant","type":"optional(uint128[])"},
+				{"name":"tip3wallet","type":"optional(address[])"},
 				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"}
 			],
@@ -40,7 +41,7 @@
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
 				{"name":"index","type":"uint128"},
-				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"owner","type":"address[]"},
 				{"name":"details","type":"string[]"},
 				{"name":"timeofend","type":"uint128"}
 			],
@@ -100,7 +101,7 @@
 			]
 		},
 		{
-			"name": "sortPubkeys",
+			"name": "sortowner",
 			"inputs": [
 				{"name":"index","type":"uint128"}
 			],
@@ -141,7 +142,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"uint256[]"},
+				{"name":"value0","type":"address[]"},
 				{"name":"value1","type":"uint128[]"},
 				{"name":"value2","type":"string"},
 				{"name":"value3","type":"bool"}
@@ -203,7 +204,7 @@
 		{"name":"__value","type":"uint256"},
 		{"name":"_name","type":"string"},
 		{"name":"_goshdao","type":"address"},
-		{"name":"_pubkeys","type":"uint256[]"},
+		{"name":"_owner","type":"address[]"},
 		{"name":"_votes","type":"uint128[]"},
 		{"name":"_grant","type":"uint128[]"},
 		{"name":"_indexwallet","type":"uint128"},

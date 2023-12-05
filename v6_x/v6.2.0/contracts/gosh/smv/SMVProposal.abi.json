@@ -620,7 +620,8 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"name","type":"string"},
-				{"name":"tip3","type":"address[]"}
+				{"name":"grant","type":"optional(uint128[])"},
+				{"name":"tip3","type":"optional(address[])"}
 			]
 		},
 		{
@@ -630,7 +631,8 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"name","type":"string"},
-				{"name":"tip3","type":"address[]"}
+				{"name":"grant","type":"optional(uint128[])"},
+				{"name":"tip3","type":"optional(address[])"}
 			]
 		},
 		{
@@ -660,7 +662,7 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"name","type":"string"},
-				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"owners","type":"address[]"},
 				{"name":"details","type":"string[]"},
 				{"name":"timeofend","type":"uint128"}
 			]
@@ -672,7 +674,7 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"name","type":"string"},
-				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"owners","type":"address[]"},
 				{"name":"details","type":"string[]"},
 				{"name":"timeofend","type":"uint128"}
 			]

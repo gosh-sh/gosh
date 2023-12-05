@@ -18,7 +18,7 @@ contract Grant is Modifiers {
     
     string static _name;
     address static _goshdao;
-    uint256[] _pubkeys;
+    address[] _owner;
     uint128[] _votes;
     uint128[] _grant;
     uint128 _indexwallet = 0;
@@ -53,11 +53,13 @@ contract Grant is Modifiers {
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
     }
 
-    function addCurrencies(address[] tip3wallet, address pubaddr, uint128 index) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
+    function addCurrencies(optional(uint128[]) grant, optional(address[]) tip3wallet, address pubaddr, uint128 index) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
         require(_ready == false, ERR_ALREADY_CONFIRMED);
         require(_readytovote == false, ERR_ALREADY_CONFIRMED);
         require(_votes.length == 0, ERR_ALREADY_CONFIRMED);
-        this.addCurrenciesIn{value: 0.1 ton, flag: 1}(tip3wallet, 0);
+        if (grant.hasValue()) { _grant = grant.get(); }
+        if (tip3wallet.hasValue() == false) { return; }
+        this.addCurrenciesIn{value: 0.1 ton, flag: 1}(tip3wallet.get(), 0);
     }
 
     function addCurrenciesIn(address[] tip3wallet, uint128 index) public senderIs(this) {
@@ -66,12 +68,12 @@ contract Grant is Modifiers {
         this.addCurrenciesIn{value: 0.1 ton, flag: 1}(tip3wallet, index);
     }
 
-    function setCandidates(address pubaddr, uint128 index, uint256[] pubkeys, string[] details, uint128 timeofend) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
+    function setCandidates(address pubaddr, uint128 index, address[] owner, string[] details, uint128 timeofend) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
         require(_ready == false, ERR_ALREADY_CONFIRMED);
         require(_readytovote == false, ERR_ALREADY_CONFIRMED);
         require(_votes.length == 0, ERR_ALREADY_CONFIRMED);
-        _pubkeys = pubkeys;
-        _votes = new uint128[](pubkeys.length);
+        _owner = owner;
+        _votes = new uint128[](owner.length);
         _details = details;
         GoshDao(_goshdao).askWallets{value: 0.3 ton, flag: 1}();
         _readytovote = true;
@@ -119,19 +121,19 @@ contract Grant is Modifiers {
                 return;
             }
         }
-        this.sortPubkeys{value: 0.1 ton, flag: 1}(0);
+        this.sortowner{value: 0.1 ton, flag: 1}(0);
     } 
 
-    function sortPubkeys(uint128 index) public senderIs(address(this)) accept {
+    function sortowner(uint128 index) public senderIs(address(this)) accept {
         for (uint i = 0; i < BATCH_SIZE_TAG; i++){
-            if (index + i >= _pubkeys.length) { 
+            if (index + i >= _owner.length) { 
                 optional(uint128, mapping(uint256 => bool)) res = _SortedForGrants.max();
                 (uint128 key, mapping(uint256 => bool) data) = res.get();
                 this.sendTokensIn{value: 0.1 ton, flag: 1}(key, data.keys()); 
             }
-            _SortedForGrants[_votes[i]][_pubkeys[i]] = true; 
+            _SortedForGrants[_votes[i]][_owner[i].value] = true; 
         }
-        this.sortPubkeys{value: 0.1 ton, flag: 1}(index + BATCH_SIZE_TAG);
+        this.sortowner{value: 0.1 ton, flag: 1}(index + BATCH_SIZE_TAG);
     }
 
     function sendTokensIn(uint128 key, uint256[] keyspub) public senderIs(address(this)) accept {
@@ -154,7 +156,8 @@ contract Grant is Modifiers {
         if (indexwallet >= _tip3wallet.length) { return; }
         for (uint128 j = 0; j < 3; j++){
             if (index + j >= keyspub.length) { break; }
-            Tip3Creds cred = Tip3Creds(keyspub[index + j], null);
+            address addrStd = address.makeAddrStd(0, keyspub[index + j]);
+            Tip3Creds cred = Tip3Creds(0, addrStd);
     	    AFlexWallet(_tip3wallet[indexwallet]).transferToRecipient{value: 1 ton, flag: 1}(uint32(0), null, cred, _balance[indexwallet] / 100 * sum / uint128(keyspub.length), 4.5 ton, 1 ton, true, uint128(0), null);
             if (j == 2) { 
                 this.sendTokensFinal{value: 0.1 ton, flag: 1}(sum, keyspub, indexwallet, index + j + 1);
@@ -172,8 +175,8 @@ contract Grant is Modifiers {
     }
     
     //Getters    
-    function getDetails() external view returns(uint256[], uint128[], string, bool) {
-        return (_pubkeys, _grant, _name, _ready);
+    function getDetails() external view returns(address[], uint128[], string, bool) {
+        return (_owner, _grant, _name, _ready);
     }
 
     function getVersion() external pure returns(string, string) {

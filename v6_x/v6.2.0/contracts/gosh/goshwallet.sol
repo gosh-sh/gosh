@@ -1939,11 +1939,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function getCellAddCurrencies(
         string name,
-        address[] tip3wallet,
+        optional(uint128[]) grant,
+        optional(address[]) tip3wallet,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
-        uint256 proposalKind = DEPLOY_GRANT_KIND;
+        uint256 proposalKind = ADD_CURRENCIES_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
-        return abi.encode(proposalKind, name, tip3wallet, comment, time.get());
+        return abi.encode(proposalKind, name, grant, tip3wallet, comment, time.get());
     }
 
     function getCellDeployGrants(
@@ -1964,9 +1965,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
-    function _deployCurrencies(string name, address[] tip3wallet) private {
+    function _deployCurrencies(string name, optional(uint128[]) grant, optional(address[]) tip3wallet) private {
         address addr = GoshLib.calculateGrantAddress(_code[m_GrantCode], _goshdao, name);
-        Grant(addr).addCurrencies{value: 0.1 ton, flag: 1}(tip3wallet, _pubaddr, _index);
+        Grant(addr).addCurrencies{value: 0.1 ton, flag: 1}(grant, tip3wallet, _pubaddr, _index);
         getMoney();
     }
 
@@ -1994,20 +1995,20 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         Grant(addr).voteFromWallet{value: 0.1 ton, flag: 1}(amount, index, _pubaddr, _index, comment);
     }
 
-    function getCellSetGrantPubkey(
+    function getCellSetGrantOwners(
         string name,
-        uint256[] pubkeys,
+        address[] owners,
         string[] details,
         uint128 timeofend,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = SET_GRANT_PUBKEYS_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
-        return abi.encode(proposalKind, name, pubkeys, details, timeofend, comment, time.get());
+        return abi.encode(proposalKind, name, owners, details, timeofend, comment, time.get());
     }
 
-    function _setGrantPubkeys(string name, uint256[] pubkeys, string[] details, uint128 timeofend) private {
+    function _setGrantPubkeys(string name, address[] owners, string[] details, uint128 timeofend) private {
         address addr = GoshLib.calculateGrantAddress(_code[m_GrantCode], _goshdao, name);
-        Grant(addr).setCandidates{value: 0.1 ton, flag: 1}(_pubaddr, _index, pubkeys, details, timeofend);
+        Grant(addr).setCandidates{value: 0.1 ton, flag: 1}(_pubaddr, _index, owners, details, timeofend);
         getMoney();
     }
 
@@ -2491,12 +2492,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 _destroyGrants(name);
             } else 
             if (kind == SET_GRANT_PUBKEYS_KIND) {
-                (,string name,uint256[] pubkeys, string[] details, uint128 timeofend,,) = abi.decode(propData,(uint256, string, uint256[], string[], uint128, string, uint32));
-                _setGrantPubkeys(name, pubkeys, details, timeofend);
+                (,string name,address[] owners, string[] details, uint128 timeofend,,) = abi.decode(propData,(uint256, string, address[], string[], uint128, string, uint32));
+                _setGrantPubkeys(name, owners, details, timeofend);
             } else 
             if (kind == ADD_CURRENCIES_KIND) {
-                (,string name, address[] tip3,,) = abi.decode(propData,(uint256, string, address[], string, uint32));
-                _deployCurrencies(name, tip3);
+                (,string name, optional(uint128[]) grant, optional(address[]) tip3,,) = abi.decode(propData,(uint256, string, optional(uint128[]), optional(address[]), string, uint32));
+                _deployCurrencies(name, grant, tip3);
             }
         }
     }
