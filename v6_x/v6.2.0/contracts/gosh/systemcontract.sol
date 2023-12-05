@@ -470,6 +470,10 @@ contract SystemContract is Modifiers {
         return taskaddr;
     }
 
+    function getDaoWalletAddr(string nameDao) external view returns(address){
+        return this;
+    }
+
     function getTagAddr(
         string daoName,
         string repoName,
