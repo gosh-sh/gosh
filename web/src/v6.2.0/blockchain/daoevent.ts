@@ -148,6 +148,15 @@ export class DaoEvent extends BaseContract {
         } else if (type === EDaoEventType.DAO_MEMBER_EXPERT_TAG_DELETE) {
             fn = 'getDeleteDaoMembersTagParams'
             parser = this.parseDeleteDaoMemberExpertTagEventParams
+        } else if (type === EDaoEventType.HACKATHON_CREATE) {
+            fn = 'getDeployGrantParams'
+            parser = this.parseCreateHackathonEventParams
+        } else if (type === EDaoEventType.HACKATHON_UPDATE) {
+            fn = 'getAddCurrenciesParams'
+            parser = this.parseUpdateHackathonEventParams
+        } else if (type === EDaoEventType.BRANCH_CREATE) {
+            fn = 'getDeployBranchParams'
+            parser = this.parseUpdateHackathonEventParams
         } else if (type === EDaoEventType.MULTI_PROPOSAL) {
             const { num, data0 } = await this.runLocal('getDataFirst', {}, undefined, {
                 useCachedBoc: true,
@@ -335,6 +344,16 @@ export class DaoEvent extends BaseContract {
         }
     }
 
+    async parseCreateHackathonEventParams(data: any) {
+        const metadata = JSON.parse(data.reponame)
+        return { ...data, metadata }
+    }
+
+    async parseUpdateHackathonEventParams(data: any) {
+        const metadata = data.metadata ? JSON.parse(data.metadata) : null
+        return { ...data, metadata }
+    }
+
     private async parseMultiEventCell(params: {
         count: number
         cell: string
@@ -464,6 +483,14 @@ export class DaoEvent extends BaseContract {
         } else if (type === EDaoEventType.DAO_MEMBER_EXPERT_TAG_DELETE) {
             fn = 'getDeleteDaoMembersTagParamsData'
             parser = this.parseDeleteDaoMemberExpertTagEventParams
+        } else if (type === EDaoEventType.HACKATHON_CREATE) {
+            fn = 'getDeployGrantParamsData'
+            parser = this.parseCreateHackathonEventParams
+        } else if (type === EDaoEventType.HACKATHON_UPDATE) {
+            fn = 'getAddCurrenciesParamsData'
+            parser = this.parseUpdateHackathonEventParams
+        } else if (type === EDaoEventType.BRANCH_CREATE) {
+            fn = 'getDeployBranchParamsData'
         } else if (type === EDaoEventType.DELAY) {
             return { type, label: DaoEventType[type], data: {} }
         } else {

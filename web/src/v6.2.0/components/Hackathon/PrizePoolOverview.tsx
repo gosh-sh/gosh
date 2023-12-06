@@ -8,10 +8,9 @@ import { Tooltip } from 'react-tooltip'
 import { useSetRecoilState } from 'recoil'
 import { Button } from '../../../components/Form'
 import Skeleton from '../../../components/Skeleton'
-import { GoshError } from '../../../errors'
 import { appModalStateAtom } from '../../../store/app.state'
 import { useDao, useDaoMember } from '../../hooks/dao.hooks'
-import { useHackathon, useUpdateHackathonDetails } from '../../hooks/hackathon.hooks'
+import { useHackathon } from '../../hooks/hackathon.hooks'
 import { HackathonPrizePoolModal } from './PrizePoolModal'
 import { HackathonPrizePoolPlaces } from './PrizePoolPlaces'
 
@@ -39,25 +38,25 @@ const HackathonPrizePoolOverview = () => {
     const dao = useDao()
     const member = useDaoMember()
     const { hackathon } = useHackathon()
-    const { update } = useUpdateHackathonDetails()
+    // const { update } = useUpdateHackathonDetails()
     const [pool_opened, setPoolOpened] = useState<boolean>(false)
 
     const is_fetching =
         !hackathon?._rg_fetched ||
-        (!hackathon?.metadata.is_fetched && hackathon?.metadata.is_fetching)
+        (!hackathon?.storagedata.is_fetched && hackathon?.storagedata.is_fetching)
 
     const onPoolToggle = () => {
         setPoolOpened(!pool_opened)
     }
 
     const onUpdatePrizePoolModal = () => {
-        if (!hackathon?.metadata.prize) {
+        if (!hackathon?.storagedata.prize) {
             return
         }
 
         const initial_values = {
-            total: hackathon.metadata.prize.total.toString(),
-            places: hackathon.metadata.prize.places.map((amount) => amount.toString()),
+            total: hackathon.storagedata.prize.total.toString(),
+            places: hackathon.storagedata.prize.places.map((amount) => amount.toString()),
         }
 
         setModal({
@@ -77,24 +76,23 @@ const HackathonPrizePoolOverview = () => {
         places: number[]
     }) => {
         try {
-            if (!hackathon?.metadata.raw) {
-                throw new GoshError('Value error', 'Hackathon metadata is not loaded yet')
-            }
-
-            const original = JSON.parse(hackathon.metadata.raw)
-            const modified = { ...original, prize: values }
-            const { event_address } = await update({
-                repo_name: hackathon.name,
-                filename: 'metadata.json',
-                content: {
-                    original: hackathon.metadata.raw,
-                    modified: JSON.stringify(modified, undefined, 2),
-                },
-            })
-            setModal((state) => ({ ...state, isOpen: false }))
-            if (event_address) {
-                navigate(`/o/${dao.details.name}/events/${event_address}`)
-            }
+            // if (!hackathon?.metadata.raw) {
+            //     throw new GoshError('Value error', 'Hackathon metadata is not loaded yet')
+            // }
+            // const original = JSON.parse(hackathon.metadata.raw)
+            // const modified = { ...original, prize: values }
+            // const { event_address } = await update({
+            //     repo_name: hackathon.name,
+            //     filename: 'metadata.json',
+            //     content: {
+            //         original: hackathon.metadata.raw,
+            //         modified: JSON.stringify(modified, undefined, 2),
+            //     },
+            // })
+            // setModal((state) => ({ ...state, isOpen: false }))
+            // if (event_address) {
+            //     navigate(`/o/${dao.details.name}/events/${event_address}`)
+            // }
         } catch (e: any) {
             console.error(e.message)
         }
@@ -119,7 +117,7 @@ const HackathonPrizePoolOverview = () => {
                     {is_fetching ? (
                         <SkeletonTotal />
                     ) : (
-                        hackathon?.metadata.prize?.total.toLocaleString()
+                        hackathon?.storagedata.prize?.total.toLocaleString()
                     )}
                     <FontAwesomeIcon
                         icon={faChevronDown}
@@ -156,7 +154,7 @@ const HackathonPrizePoolOverview = () => {
                         {is_fetching && <SkeletonPlaces />}
 
                         <HackathonPrizePoolPlaces
-                            places={hackathon?.metadata.prize.places || []}
+                            places={hackathon?.storagedata.prize.places || []}
                         />
                     </motion.div>
                 )}

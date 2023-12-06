@@ -28,8 +28,7 @@ const HackathonParticipantsOverview = () => {
     const { addParticipants } = useAddHackathonParticipants()
 
     const show_skeleton =
-        !hackathon?._rg_fetched ||
-        (!hackathon?.participants.is_fetched && hackathon?.participants.is_fetching)
+        !hackathon?.participants.is_fetched && hackathon?.participants.is_fetching
 
     const onAddParticipantsModal = () => {
         setModal({
@@ -64,19 +63,23 @@ const HackathonParticipantsOverview = () => {
         )
     }
 
+    if (!hackathon) {
+        return null
+    }
+
     return (
         <div className="py-5">
             <h3 className="mb-2.5 text-sm font-medium">Your applications</h3>
             <div className="flex flex-col gap-2">
                 {show_skeleton && <SkeletonParticipants />}
 
-                {!show_skeleton && !hackathon?.participants.items.length && (
+                {!show_skeleton && !hackathon.participants.items.length && (
                     <div className="text-sm text-gray-7c8db5">
                         There are no participants where you are a member of
                     </div>
                 )}
 
-                {hackathon?.participants.items
+                {hackathon.participants.items
                     .filter(({ is_member }) => !!is_member)
                     .map(({ dao_name, repo_name }, index) => (
                         <div

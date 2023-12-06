@@ -4,6 +4,7 @@ import { AddRegularTokensEvent } from '../AddRegularTokensEvent/AddRegularTokens
 import { AddVotingTokensEvent } from '../AddVotingTokensEvent/AddVotingTokensEvent'
 import { AllowDaoEventDiscussionEvent } from '../AllowDaoEventDiscussionEvent/AllowDaoEventDiscussionEvent'
 import { AskDaoMembershipEvent } from '../AskDaoMembershipEvent/AskDaoMembershipEvent'
+import { BranchCreateEvent } from '../BranchCreateEvent/BranchCreateEvent'
 import { CreateDaoTagEvent } from '../CreateDaoTagEvent/CreateDaoTagEvent'
 import { CreateTaskEvent } from '../CreateTaskEvent/CreateTaskEvent'
 import { DaoExpertTagCreateEvent } from '../DaoExpertTagCreateEvent/DaoExpertTagCreateEvent'
@@ -13,6 +14,8 @@ import { DaoMemberExpertTagDeleteEvent } from '../DaoMemberExpertTagDeleteEvent/
 import { DeleteDaoTagEvent } from '../DeleteDaoTagEvent/DeleteDaoTagEvent'
 import { DeleteTaskEvent } from '../DeleteTaskEvent/DeleteTaskEvent'
 import { DisableMintTokensEvent } from '../DisableMintTokensEvent/DisableMintTokensEvent'
+import { HackathonCreateEvent } from '../HackathonCreateEvent/HackathonCreateEvent'
+import { HackathonUpdateEvent } from '../HackathonUpdateEvent/HackathonUpdateEvent'
 import { MemberAddEvent } from '../MemberAddEvent/MemberAddEvent'
 import { MemberDeleteEvent } from '../MemberDeleteEvent/MemberDeleteEvent'
 import { MemberUpdateEvent } from '../MemberUpdateEvent/MemberUpdateEvent'
@@ -138,6 +141,15 @@ const MultiEvent = (props: TMultiEventProps) => {
                         )}
                         {item.type === EDaoEventType.DAO_MEMBER_EXPERT_TAG_DELETE && (
                             <DaoMemberExpertTagDeleteEvent key={index} data={item.data} />
+                        )}
+                        {item.type === EDaoEventType.HACKATHON_CREATE && (
+                            <HackathonCreateEvent key={index} data={item.data} />
+                        )}
+                        {item.type === EDaoEventType.HACKATHON_UPDATE && (
+                            <HackathonUpdateEvent key={index} data={item.data} />
+                        )}
+                        {item.type === EDaoEventType.BRANCH_CREATE && (
+                            <BranchCreateEvent key={index} data={item.data} />
                         )}
                     </div>
                 ))}

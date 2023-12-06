@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
 import { Link, NavLink, useParams } from 'react-router-dom'
 import Alert from '../../components/Alert'
+import Skeleton from '../../components/Skeleton'
 import { HackathonTypeBadge } from '../components/Hackathon'
 import { AnimatedOutlet } from '../components/Outlet'
 import { withPin, withRouteAnimation } from '../hocs'
@@ -10,7 +11,7 @@ import { useDao, useDaoMember } from '../hooks/dao.hooks'
 import { useHackathon } from '../hooks/hackathon.hooks'
 
 const HackathonLayout = () => {
-    const { daoname, reponame } = useParams()
+    const { daoname, address } = useParams()
     const { showBoundary } = useErrorBoundary()
     const dao = useDao({ initialize: true, subscribe: true })
     const { hackathon, error: hackathon_error } = useHackathon({
@@ -21,14 +22,14 @@ const HackathonLayout = () => {
 
     const getTabs = () => {
         const tabs = [
-            { to: `/o/${daoname}/hacksgrants/${reponame}`, title: 'Overview', order: 0 },
+            { to: `/o/${daoname}/hacksgrants/${address}`, title: 'Overview', order: 0 },
             {
-                to: `/o/${daoname}/hacksgrants/${reponame}/rewards`,
+                to: `/o/${daoname}/hacksgrants/${address}/rewards`,
                 title: 'Rewards',
                 order: 1,
             },
             {
-                to: `/o/${daoname}/hacksgrants/${reponame}/participants`,
+                to: `/o/${daoname}/hacksgrants/${address}/participants`,
                 title: 'Participants',
                 order: 2,
             },
@@ -46,6 +47,18 @@ const HackathonLayout = () => {
         }
     }, [dao.error, hackathon_error])
 
+    if (!hackathon) {
+        return (
+            <div className="container py-10">
+                <Skeleton skeleton={{ height: 48 }} className="py-5">
+                    <rect x="0" y="0" rx="4" ry="4" width="100%" height="12" />
+                    <rect x="0" y="18" rx="4" ry="4" width="100%" height="12" />
+                    <rect x="0" y="36" rx="4" ry="4" width="100%" height="12" />
+                </Skeleton>
+            </div>
+        )
+    }
+
     return (
         <div className="container py-10">
             <h1 className="mb-5 text-xl flex flex-wrap items-center gap-x-3">
@@ -57,9 +70,7 @@ const HackathonLayout = () => {
                         {daoname}
                     </Link>
                     <span className="mx-1">/</span>
-                    <span className="font-medium">
-                        {hackathon?.metadata.title || reponame}
-                    </span>
+                    <span className="font-medium">{hackathon.name}</span>
                 </div>
 
                 {hackathon && <HackathonTypeBadge type={hackathon.type} />}

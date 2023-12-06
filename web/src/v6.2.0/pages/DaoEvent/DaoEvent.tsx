@@ -19,6 +19,7 @@ import {
     AddVotingTokensEvent,
     AllowDaoEventDiscussionEvent,
     AskDaoMembershipEvent,
+    BranchCreateEvent,
     BranchProtectEvent,
     BranchUnprotectEvent,
     CreateDaoTagEvent,
@@ -33,6 +34,8 @@ import {
     DeleteDaoTagEvent,
     DeleteTaskEvent,
     DisableMintTokensEvent,
+    HackathonCreateEvent,
+    HackathonUpdateEvent,
     MemberAddEvent,
     MemberDeleteEvent,
     MemberUpdateEvent,
@@ -284,6 +287,15 @@ const DaoEventPageInner = (props: { address: string }) => {
                             {event.type ===
                                 EDaoEventType.DAO_MEMBER_EXPERT_TAG_DELETE && (
                                 <DaoMemberExpertTagDeleteEvent data={event.data} />
+                            )}
+                            {event.type === EDaoEventType.HACKATHON_CREATE && (
+                                <HackathonCreateEvent data={event.data} />
+                            )}
+                            {event.type === EDaoEventType.HACKATHON_UPDATE && (
+                                <HackathonUpdateEvent data={event.data} />
+                            )}
+                            {event.type === EDaoEventType.BRANCH_CREATE && (
+                                <BranchCreateEvent data={event.data} />
                             )}
                             {event.type === EDaoEventType.MULTI_PROPOSAL && (
                                 <MultiEvent event={event} />

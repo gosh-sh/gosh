@@ -1,0 +1,248 @@
+{
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"systemcontract","type":"address"},
+				{"name":"metadata","type":"string"},
+				{"name":"grants","type":"uint128[]"},
+				{"name":"tip3wallet","type":"address[]"},
+				{"name":"tags","type":"string[]"},
+				{"name":"WalletCode","type":"cell"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addCurrencies",
+			"inputs": [
+				{"name":"tags","type":"optional(string[])"},
+				{"name":"grant","type":"optional(uint128[])"},
+				{"name":"tip3wallet","type":"optional(address[])"},
+				{"name":"metadata","type":"optional(string)"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addCurrenciesIn",
+			"inputs": [
+				{"name":"tip3wallet","type":"address[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setCandidates",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"owner","type":"address[]"},
+				{"name":"details","type":"string[]"},
+				{"name":"timeofend","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setWallets",
+			"inputs": [
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
+				{"name":"daoMembersTag","type":"map(uint256,map(uint256,bool))"},
+				{"components":[{"name":"value","type":"uint128"},{"name":"name","type":"string"}],"name":"daoTagData","type":"map(uint256,tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "voteFromWallet",
+			"inputs": [
+				{"name":"amount","type":"uint128"},
+				{"name":"indexCandidate","type":"uint128"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"comment","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "calculateVotePower",
+			"inputs": [
+				{"name":"amount","type":"uint128"},
+				{"name":"keyaddr","type":"uint256"},
+				{"name":"sum","type":"uint128"},
+				{"name":"key","type":"uint256"},
+				{"name":"indexCandidate","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokens",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setBalance",
+			"id": "0x64",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"symbol","type":"string"},
+				{"name":"decimals","type":"uint8"},
+				{"name":"balance","type":"uint128"},
+				{"name":"root_public_key","type":"uint256"},
+				{"name":"root_address","type":"address"},
+				{"name":"wallet_pubkey","type":"uint256"},
+				{"name":"owner_address","type":"optional(address)"},
+				{"name":"lend_pubkey","type":"optional(uint256)"},
+				{"components":[{"components":[{"components":[{"name":"workchain_id","type":"int8"},{"name":"addr","type":"uint256"}],"name":"dest","type":"tuple"}],"name":"lend_key","type":"tuple"},{"name":"lend_balance","type":"uint128"},{"name":"lend_finish_time","type":"uint32"}],"name":"lend_owners","type":"tuple[]"},
+				{"name":"lend_balance","type":"uint128"},
+				{"components":[{"name":"flex","type":"address"},{"name":"unsalted_price_code_hash","type":"uint256"}],"name":"binding","type":"optional(tuple)"},
+				{"name":"code_hash","type":"uint256"},
+				{"name":"code_depth","type":"uint16"},
+				{"name":"workchain_id","type":"int8"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sortowner",
+			"inputs": [
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokensIn",
+			"inputs": [
+				{"name":"key","type":"uint128"},
+				{"name":"keyspub","type":"uint256[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokensFinal",
+			"inputs": [
+				{"name":"sum","type":"uint128"},
+				{"name":"keyspub","type":"uint256[]"},
+				{"name":"indexwallet","type":"uint128"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroy",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getDetails",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address[]"},
+				{"name":"value1","type":"uint128[]"},
+				{"name":"value2","type":"string"},
+				{"name":"value3","type":"bool"},
+				{"name":"value4","type":"string"}
+			]
+		},
+		{
+			"name": "getVersion",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
+			]
+		},
+		{
+			"name": "_details",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_details","type":"string[]"}
+			]
+		},
+		{
+			"name": "_tip3wallet",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_tip3wallet","type":"address[]"}
+			]
+		},
+		{
+			"name": "_balance",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_balance","type":"uint128[]"}
+			]
+		},
+		{
+			"name": "_SortedForGrants",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_SortedForGrants","type":"map(uint128,map(uint256,bool))"}
+			]
+		}
+	],
+	"data": [
+		{"key":1,"name":"_name","type":"string"},
+		{"key":2,"name":"_goshdao","type":"address"}
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
+		{"name":"_metadata","type":"string"},
+		{"name":"_name","type":"string"},
+		{"name":"_goshdao","type":"address"},
+		{"name":"_owner","type":"address[]"},
+		{"name":"_votes","type":"uint128[]"},
+		{"name":"_grant","type":"uint128[]"},
+		{"name":"_indexwallet","type":"uint128"},
+		{"name":"_indexGrant","type":"uint128"},
+		{"name":"_systemcontract","type":"address"},
+		{"name":"_details","type":"string[]"},
+		{"name":"_tip3wallet","type":"address[]"},
+		{"name":"_balance","type":"uint128[]"},
+		{"name":"_readytovote","type":"bool"},
+		{"name":"_ready","type":"bool"},
+		{"name":"_code","type":"map(uint8,cell)"},
+		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"_wallets","type":"map(uint256,tuple)"},
+		{"name":"_timeofend","type":"uint128"},
+		{"name":"_inprocess","type":"bool"},
+		{"name":"_SortedForGrants","type":"map(uint128,map(uint256,bool))"},
+		{"name":"_used","type":"map(address,bool)"},
+		{"name":"_isTag","type":"string[]"},
+		{"name":"_daoMembersTag","type":"map(uint256,map(uint256,bool))"},
+		{"components":[{"name":"value","type":"uint128"},{"name":"name","type":"string"}],"name":"_daoTagData","type":"map(uint256,tuple)"}
+	]
+}

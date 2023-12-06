@@ -20,22 +20,30 @@ import Skeleton from '../../../components/Skeleton'
 import { GoshError } from '../../../errors'
 import { html2markdown, markdown2html } from '../../../helpers'
 import { useDao, useDaoMember } from '../../hooks/dao.hooks'
-import { useHackathon, useUpdateHackathonDetails } from '../../hooks/hackathon.hooks'
+import { useHackathon, useUpdateHackathon } from '../../hooks/hackathon.hooks'
 import { Editor } from './Editor'
 
 type DescriptionFileFormProps = {
+    title: string
+    mapping_key: string
     filename: string
     icon?: IconDefinition
     initial_collapsed?: boolean
 }
 
 const HackathonDescriptionFileForm = (props: DescriptionFileFormProps) => {
-    const { filename, icon = faList, initial_collapsed = false } = props
+    const {
+        title,
+        mapping_key,
+        filename,
+        icon = faList,
+        initial_collapsed = false,
+    } = props
     const navigate = useNavigate()
     const member = useDaoMember()
     const dao = useDao()
     const { hackathon } = useHackathon()
-    const { update } = useUpdateHackathonDetails()
+    const { updateStorageData } = useUpdateHackathon()
     const [edit, setEdit] = useState<boolean>(false)
     const [collapsed, setCollapsed] = useState<boolean>(initial_collapsed)
     const [content, setContent] = useState<{ md: string; html: string }>({
@@ -46,7 +54,7 @@ const HackathonDescriptionFileForm = (props: DescriptionFileFormProps) => {
 
     const show_skeleton =
         !hackathon?._rg_fetched ||
-        (!hackathon?.metadata.is_fetched && hackathon?.metadata.is_fetching)
+        (!hackathon?.storagedata.is_fetched && hackathon?.storagedata.is_fetching)
 
     const onCollapseToggle = () => {
         setCollapsed(!collapsed)
@@ -70,8 +78,7 @@ const HackathonDescriptionFileForm = (props: DescriptionFileFormProps) => {
             }
 
             const remarked = await html2markdown(values.modified)
-            const { event_address } = await update({
-                repo_name: hackathon.name,
+            const { event_address } = await updateStorageData({
                 filename,
                 content: { original: content.md, modified: remarked },
             })
@@ -85,11 +92,12 @@ const HackathonDescriptionFileForm = (props: DescriptionFileFormProps) => {
     }
 
     const getContentCallback = useCallback(async () => {
-        const key = filename.split('.')[0].toLowerCase()
-        const mapping: { [key: string]: string } = { ...hackathon?.metadata.description }
-        const html = await markdown2html(mapping[key])
-        setContent({ md: mapping[key], html })
-    }, [filename, hackathon?.metadata.is_fetching])
+        const mapping: { [key: string]: string } = {
+            ...hackathon?.storagedata.description,
+        }
+        const html = await markdown2html(mapping[mapping_key])
+        setContent({ md: mapping[mapping_key], html })
+    }, [mapping_key, show_skeleton])
 
     useEffect(() => {
         getContentCallback()
@@ -109,7 +117,7 @@ const HackathonDescriptionFileForm = (props: DescriptionFileFormProps) => {
                         size="sm"
                         className="mr-4 text-gray-7c8db5"
                     />
-                    <span className="text-blue-2b89ff font-medium">{filename}</span>
+                    <span className="text-blue-2b89ff font-medium">{title}</span>
                 </div>
                 <div className="flex flex-nowrap items-center gap-x-4">
                     {member.isMember && !show_skeleton && hackathon.update_enabled && (

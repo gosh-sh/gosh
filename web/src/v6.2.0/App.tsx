@@ -150,7 +150,7 @@ const App = () => {
                             element={<HackathonCreatePage />}
                         />
                         <Route
-                            path="/o/:daoname/hacksgrants/:reponame"
+                            path="/o/:daoname/hacksgrants/:address"
                             element={<HackathonLayout />}
                         >
                             <Route index element={<HackathonOverviewPage />} />

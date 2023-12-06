@@ -78,4 +78,5 @@ export type TGoshCommitTag = {
         name: string
     }
     is_hack: boolean
+    branch_name?: string
 }

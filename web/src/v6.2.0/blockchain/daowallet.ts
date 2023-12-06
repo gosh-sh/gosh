@@ -344,6 +344,7 @@ export class DaoWallet extends BaseContract {
             content: tag.content,
             commit: tag.commit.address,
             isHack: tag.is_hack,
+            branchname: tag.branch_name,
         })
     }
 
@@ -1076,6 +1077,32 @@ export class DaoWallet extends BaseContract {
         }
     }
 
+    async createRepositoryBranch(params: {
+        repo_name: string
+        branch_name: string
+        from_commit: string
+        comment?: string
+        reviewers?: string[]
+        cell?: boolean | undefined
+    }) {
+        const { comment = '', reviewers = [], cell } = params
+
+        const cellParams = {
+            repoName: params.repo_name,
+            newName: params.branch_name,
+            fromCommit: params.from_commit,
+            comment,
+        }
+
+        if (cell) {
+            const { value0 } = await this.runLocal('getCellDeployBranch', cellParams)
+            return value0 as string
+        } else {
+            const cell: any = await this.createRepositoryBranch({ ...params, cell: true })
+            return await this.createSingleEvent({ cell, reviewers })
+        }
+    }
+
     async lockRepositoryBranch(params: {
         repo_name: string
         branch_name: string
@@ -1207,6 +1234,92 @@ export class DaoWallet extends BaseContract {
                 ...params,
                 cell: true,
             })
+            return await this.createSingleEvent({ cell: cell_data, reviewers })
+        }
+    }
+
+    async createHackathon(params: {
+        name: string
+        metadata: {
+            branch_name: string
+            dates: { start: number; voting: number; finish: number }
+            description: string
+        }
+        prize_distribution: number[]
+        prize_wallets: string[]
+        tags?: string[]
+        comment?: string
+        reviewers?: string[]
+        cell?: boolean | undefined
+    }) {
+        const {
+            name,
+            metadata,
+            prize_distribution,
+            prize_wallets,
+            tags = [],
+            comment,
+            reviewers,
+            cell,
+        } = params
+
+        const cell_params = {
+            name,
+            metadata: JSON.stringify(metadata),
+            grants: prize_distribution,
+            tip3wallet: prize_wallets,
+            tags,
+            comment,
+        }
+
+        if (cell) {
+            const { value0 } = await this.runLocal('getCellDeployGrants', cell_params)
+            return value0 as string
+        } else {
+            const cell_data: any = await this.createHackathon({ ...params, cell: true })
+            return await this.createSingleEvent({ cell: cell_data, reviewers })
+        }
+    }
+
+    async updateHackathon(params: {
+        name: string
+        metadata?: {
+            branch_name: string
+            dates: { start: number; voting: number; finish: number }
+            description: string
+        }
+        prize_distribution?: number[]
+        prize_wallets?: string[]
+        tags?: string[]
+        comment?: string
+        reviewers?: string[]
+        cell?: boolean | undefined
+    }) {
+        const {
+            name,
+            metadata,
+            prize_distribution = null,
+            prize_wallets = null,
+            tags = [],
+            comment,
+            reviewers,
+            cell,
+        } = params
+
+        const cell_params = {
+            name,
+            metadata: metadata ? JSON.stringify(metadata) : null,
+            grants: prize_distribution,
+            tip3wallet: prize_wallets,
+            tags,
+            comment,
+        }
+
+        if (cell) {
+            const { value0 } = await this.runLocal('getCellAddCurrencies', cell_params)
+            return value0 as string
+        } else {
+            const cell_data: any = await this.updateHackathon({ ...params, cell: true })
             return await this.createSingleEvent({ cell: cell_data, reviewers })
         }
     }
@@ -1405,6 +1518,15 @@ export class DaoWallet extends BaseContract {
                 }
                 if (type === EDaoEventType.DAO_MEMBER_EXPERT_TAG_DELETE) {
                     return await this.deleteDaoMemberExpertTag({ ...params, cell: true })
+                }
+                if (type === EDaoEventType.HACKATHON_CREATE) {
+                    return await this.createHackathon({ ...params, cell: true })
+                }
+                if (type === EDaoEventType.HACKATHON_UPDATE) {
+                    return await this.updateHackathon({ ...params, cell: true })
+                }
+                if (type === EDaoEventType.BRANCH_CREATE) {
+                    return await this.createRepositoryBranch({ ...params, cell: true })
                 }
                 return null
             },

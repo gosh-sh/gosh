@@ -1,7 +1,9 @@
+import { Buffer } from 'buffer'
 import _ from 'lodash'
 import moment from 'moment'
 import { useCallback, useEffect, useState } from 'react'
 import { GoshAdapterFactory, sha1, unixtimeWithTz, usePush } from 'react-gosh'
+import { IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { useParams } from 'react-router-dom'
 import { useRecoilState, useRecoilValue } from 'recoil'
 import { AppConfig } from '../../appconfig'
@@ -12,13 +14,14 @@ import { appToastStatusSelector } from '../../store/app.state'
 import { EDaoEventType } from '../../types/common.types'
 import { executeByChunk, setLockableInterval } from '../../utils'
 import { Dao } from '../blockchain/dao'
+import { Hackathon } from '../blockchain/hackathon'
 import { getSystemContract } from '../blockchain/helpers'
 import { GoshRepository } from '../blockchain/repository'
 import {
     daoHackathonListSelector,
     daoHackathonSelector,
-    metadata_empty,
     participants_empty,
+    storagedata_empty,
 } from '../store/hackathon.state'
 import {
     EHackathonType,
@@ -30,214 +33,243 @@ import { useUser } from './user.hooks'
 
 export function useCreateHackathon() {
     const { user } = useUser()
-    const dao = useDao()
+    const { details: dao } = useDao()
     const member = useDaoMember()
     const { beforeCreateEvent } = useDaoHelpers()
     const [status, setStatus] = useRecoilState(
         appToastStatusSelector('__createhackathon'),
     )
 
-    const create = async (params: {
-        title: string
-        type: EHackathonType
-        description: {
-            short: string
-            readme: string
-            rules: string
-            prize: string
-        }
-        prize: {
-            total: string
-            places: string[]
-        }
-        dates: {
-            start: number
-            voting: number
-            finish: number
-        }
-        comment?: string
-    }) => {
-        const { title, type, description, prize, dates, comment } = params
-
-        try {
-            if (Object.values(EHackathonType).indexOf(type) < 0) {
-                throw new GoshError('Value error', { message: 'Incorrect type', type })
+    const create = useCallback(
+        async (params: {
+            name: string
+            type: EHackathonType
+            description: {
+                brief: string
+                readme: string
+                rules: string
+                prizes: string
             }
-
-            // Prepare balance for create event (member wallet is checked here)
-            await beforeCreateEvent(20, { onPendingCallback: setStatus })
-
-            // Prepare repository
-            setStatus((state) => ({
-                ...state,
-                type: 'pending',
-                data: `Preparing ${type} repository`,
-            }))
-            const reponame = `_${type}_${Date.now()}`
-            const branch = 'main'
-            // TODO: Get repository adapter (rewrite this part after refactor)
-            const gosh = GoshAdapterFactory.create(dao.details.version!)
-            const _repository = await gosh.getRepository({
-                path: `${dao.details.name}/${reponame}`,
-            })
-            _repository.auth = { username: user.username, wallet0: member.wallet }
-            _repository.name = reponame
-            // /Get repository adapter (rewrite this part after refactor)
-
-            // Generate and push commit without setCommit
-            // Create blobs data
-            const blobs = [
-                {
-                    treepath: ['', 'README.md'],
-                    original: '',
-                    modified: description.readme,
-                },
-                {
-                    treepath: ['', 'RULES.md'],
-                    original: '',
-                    modified: description.rules,
-                },
-                {
-                    treepath: ['', 'PRIZE.md'],
-                    original: '',
-                    modified: description.prize,
-                },
-                {
-                    treepath: ['', 'metadata.json'],
-                    original: '',
-                    modified: JSON.stringify({ title, prize, dates }, undefined, 2),
-                },
-            ]
-            const branch_tree = { tree: '', items: [] }
-            const blobs_data = await Promise.all(
-                blobs.map(async (blob) => {
-                    return await _repository.getBlobPushDataOut(branch_tree.items, blob)
-                }),
-            )
-
-            // Create future tree
-            const future_tree = await _repository.getTreePushDataOut(
-                branch_tree.items,
-                blobs_data.flat(),
-            )
-
-            // Create future commit
-            const commit_email = `${user.username!.replace('@', '')}@gosh.sh`
-            const commit_string = [
-                `tree ${future_tree.sha1}`,
-                `author ${user.username} <${commit_email}> ${unixtimeWithTz()}`,
-                `committer ${user.username} <${commit_email}> ${unixtimeWithTz()}`,
-                '',
-                `Initialize ${type} repository`,
-            ]
-                .filter((item) => item !== null)
-                .join('\n')
-            const commit_hash = sha1(commit_string, 'commit', 'sha1')
-            const commit_parent = {
-                address: await gosh.getCommitAddress({
-                    repo_addr: _repository.getAddress(),
-                    commit_name: ZERO_COMMIT,
-                }),
-                version: _repository.getVersion(),
+            prize: {
+                total: string
+                places: string[]
             }
+            dates: {
+                start: number
+                voting: number
+                finish: number
+            }
+            comment?: string
+        }) => {
+            const { name, type, description, prize, dates, comment } = params
 
-            // Update future tree
-            future_tree.sha256 = await _repository.getTreeSha256Out({
-                items: future_tree.tree[''].map((item) => ({
-                    ...item,
-                    commit: commit_hash,
-                })),
-            })
-
-            // Deploy future commit and etc.
-            await _repository.deployCommitOut(
-                branch,
-                commit_hash,
-                commit_string,
-                [commit_parent],
-                future_tree.sha256,
-                false,
-            )
-            await Promise.all(
-                future_tree.updated.map(async (path) => {
-                    const with_commit = future_tree.tree[path].map((item) => {
-                        return { ...item, commit: commit_hash }
+            try {
+                if (Object.values(EHackathonType).indexOf(type) < 0) {
+                    throw new GoshError('Value error', {
+                        message: 'Incorrect type',
+                        type,
                     })
-                    await _repository.deployTreeOut(with_commit)
-                }),
-            )
-            await Promise.all(
-                blobs_data.flat().map(async ({ data }) => {
-                    const { treepath, content } = data
-                    await _repository.deploySnapshotOut(commit_hash, treepath, content)
-                }),
-            )
+                }
+                if (!dao.account) {
+                    throw new GoshError('Value error', 'DAO account undefined')
+                }
 
-            // Create cells for DAO multi event
-            setStatus((state) => ({
-                ...state,
-                type: 'pending',
-                data: 'Creating DAO event',
-            }))
-            const cells = [
-                {
-                    type: EDaoEventType.REPO_CREATE,
-                    params: {
-                        name: reponame,
-                        description: description.short,
-                        comment: `Create ${title} ${type} repository`,
-                    },
-                },
-                {
-                    type: EDaoEventType.REPO_TAG_ADD,
-                    params: {
-                        reponame,
-                        tags: [HACKATHON_TAG[type]],
-                        comment: `Add system tag to ${type} repository`,
-                    },
-                },
-                { type: EDaoEventType.DELAY, params: {} },
-                { type: EDaoEventType.DELAY, params: {} },
-                {
-                    type: EDaoEventType.PULL_REQUEST,
-                    params: {
-                        repo_name: reponame,
-                        branch_name: branch,
-                        commit_name: commit_hash,
-                        num_files: 0,
-                        num_commits: 1,
-                        comment: 'Initialize repository',
-                    },
-                },
-                {
-                    type: EDaoEventType.BRANCH_LOCK,
-                    params: {
-                        repo_name: reponame,
-                        branch_name: branch,
-                        comment: `Protect branch ${branch}`,
-                    },
-                },
-            ]
+                const event_cells = []
+                const hackathon_name = name.trim()
+                const branch_name = _.kebabCase(new Date().toISOString())
 
-            const eventaddr = await member.wallet!.createMultiEvent({
-                proposals: cells,
-                comment: comment || `Create ${type}`,
-            })
-            setStatus((state) => ({
-                ...state,
-                type: 'success',
-                data: {
-                    title: 'Create DAO event',
-                    content: `Publish ${type} proposal created`,
-                },
-            }))
+                // Prepare balance for create event (member wallet is checked here)
+                await beforeCreateEvent(20, { onPendingCallback: setStatus })
 
-            return { eventaddr }
-        } catch (e: any) {
-            setStatus((state) => ({ ...state, type: 'error', data: e }))
-            throw e
-        }
-    }
+                // Prepare repository
+                setStatus((state) => ({
+                    ...state,
+                    type: 'pending',
+                    data: `Preparing ${type} repository`,
+                }))
+
+                const _gosh = GoshAdapterFactory.create(dao.version!)
+                const _repo = await _gosh.getRepository({
+                    path: `${dao.name}/_hackathons`,
+                })
+                _repo.auth = { username: user.username, wallet0: member.wallet }
+                _repo.name = '_hackathons'
+
+                if (!(await _repo.isDeployed())) {
+                    event_cells.push(
+                        {
+                            type: EDaoEventType.REPO_CREATE,
+                            params: {
+                                name: _repo.name,
+                                description: 'Hackathons container repository',
+                                comment: `Create hackathons repository`,
+                            },
+                        },
+                        { type: EDaoEventType.DELAY, params: {} },
+                    )
+                }
+
+                // Generate and push commit without setCommit
+                // Create blobs data
+                const blobs = [
+                    {
+                        treepath: ['', 'README.md'],
+                        original: '',
+                        modified: description.readme,
+                    },
+                    {
+                        treepath: ['', 'RULES.md'],
+                        original: '',
+                        modified: description.rules,
+                    },
+                    {
+                        treepath: ['', 'PRIZES.md'],
+                        original: '',
+                        modified: description.prizes,
+                    },
+                    {
+                        treepath: ['', 'metadata.json'],
+                        original: '',
+                        modified: JSON.stringify({ prize }, undefined, 2),
+                    },
+                ]
+                const branch_tree = { tree: '', items: [] }
+                const blobs_data = await Promise.all(
+                    blobs.map(async (blob) => {
+                        return await _repo.getBlobPushDataOut(branch_tree.items, blob)
+                    }),
+                )
+
+                // Create future tree
+                const future_tree = await _repo.getTreePushDataOut(
+                    branch_tree.items,
+                    blobs_data.flat(),
+                )
+
+                // Create future commit
+                const commit_email = `${user.username!.replace('@', '')}@gosh.sh`
+                const commit_string = [
+                    `tree ${future_tree.sha1}`,
+                    `author ${user.username} <${commit_email}> ${unixtimeWithTz()}`,
+                    `committer ${user.username} <${commit_email}> ${unixtimeWithTz()}`,
+                    '',
+                    `Initialize ${type}`,
+                ]
+                    .filter((item) => item !== null)
+                    .join('\n')
+                const commit_hash = sha1(commit_string, 'commit', 'sha1')
+                const commit_parent = {
+                    address: await _gosh.getCommitAddress({
+                        repo_addr: _repo.getAddress(),
+                        commit_name: ZERO_COMMIT,
+                    }),
+                    version: _repo.getVersion(),
+                }
+
+                // Update future tree
+                future_tree.sha256 = await _repo.getTreeSha256Out({
+                    items: future_tree.tree[''].map((item) => ({
+                        ...item,
+                        commit: commit_hash,
+                    })),
+                })
+
+                // Deploy future commit and etc.
+                await _repo.deployCommitOut(
+                    branch_name,
+                    commit_hash,
+                    commit_string,
+                    [commit_parent],
+                    future_tree.sha256,
+                    false,
+                )
+                await Promise.all(
+                    future_tree.updated.map(async (path) => {
+                        const with_commit = future_tree.tree[path].map((item) => {
+                            return { ...item, commit: commit_hash }
+                        })
+                        await _repo.deployTreeOut(with_commit)
+                    }),
+                )
+                await Promise.all(
+                    blobs_data.flat().map(async ({ data }) => {
+                        const { treepath, content } = data
+                        await _repo.deploySnapshotOut(commit_hash, treepath, content)
+                    }),
+                )
+
+                // Create cells for DAO multi event
+                setStatus((state) => ({
+                    ...state,
+                    type: 'pending',
+                    data: 'Creating DAO event',
+                }))
+                event_cells.push(
+                    {
+                        type: EDaoEventType.BRANCH_CREATE,
+                        params: {
+                            repo_name: _repo.name,
+                            branch_name,
+                            from_commit: ZERO_COMMIT,
+                            comment: 'Create hackathon branch',
+                        },
+                    },
+                    { type: EDaoEventType.DELAY, params: {} },
+                    {
+                        type: EDaoEventType.PULL_REQUEST,
+                        params: {
+                            repo_name: _repo.name,
+                            branch_name,
+                            commit_name: commit_hash,
+                            num_files: 0,
+                            num_commits: 1,
+                            comment: 'Initialize hackathon branch',
+                        },
+                    },
+                    {
+                        type: EDaoEventType.BRANCH_LOCK,
+                        params: {
+                            repo_name: _repo.name,
+                            branch_name,
+                            comment: `Protect hackathon branch`,
+                        },
+                    },
+                    {
+                        type: EDaoEventType.HACKATHON_CREATE,
+                        params: {
+                            name: hackathon_name,
+                            metadata: {
+                                branch_name,
+                                dates,
+                                description: description.brief,
+                            },
+                            prize_distribution: [],
+                            prize_wallets: [],
+                            comment: `Create hackathon`,
+                        },
+                    },
+                )
+                const eventaddr = await member.wallet!.createMultiEvent({
+                    proposals: event_cells,
+                    comment: comment || `Create ${type}`,
+                })
+                setStatus((state) => ({
+                    ...state,
+                    type: 'success',
+                    data: {
+                        title: 'Create DAO event',
+                        content: `Publish ${type} proposal created`,
+                    },
+                }))
+
+                return { eventaddr }
+            } catch (e: any) {
+                setStatus((state) => ({ ...state, type: 'error', data: e }))
+                throw e
+            }
+        },
+        [dao.version, member.isReady],
+    )
 
     return { create, status }
 }
@@ -250,18 +282,15 @@ export function useDaoHackathonList(
     const [data, setData] = useRecoilState(daoHackathonListSelector(dao.name))
 
     const getBlockchainItems = async (params: {
-        dao_address: string
+        dao_name: string
         limit: number
         cursor?: string
     }) => {
-        const { dao_address, limit, cursor } = params
+        const { dao_name, limit, cursor } = params
         const sc = getSystemContract()
-        const code_hash = [
-            await sc.getDaoRepositoryTagCodeHash(dao_address, HACKATHON_TAG.hackathon),
-            await sc.getDaoRepositoryTagCodeHash(dao_address, HACKATHON_TAG.grant),
-        ]
+        const code_hash = await sc.getHackathonCodeHash(dao_name)
         const { results, lastId, completed } = await getPaginatedAccounts({
-            filters: [`code_hash: {in: ${JSON.stringify(code_hash)}}`],
+            filters: [`code_hash: {eq: "${code_hash}"}`],
             limit,
             lastId: cursor,
         })
@@ -270,24 +299,18 @@ export function useDaoHackathonList(
             results,
             MAX_PARALLEL_READ,
             async ({ id }) => {
-                const tag_account = await sc.getGoshTag({ address: id })
-                const { repo_address } = await tag_account.getDetails()
-                const repo_account = await sc.getRepository({ address: repo_address })
-                const repo_details = await repo_account.getDetails()
-
-                let type = EHackathonType.HACKATHON
-                if (repo_details.tags.indexOf(HACKATHON_TAG.grant) >= 0) {
-                    type = EHackathonType.GRANT
-                }
+                const account = await sc.getHackathon({ address: id })
+                const details = await account.getDetails()
 
                 return {
-                    account: repo_account,
-                    address: repo_account.address,
-                    name: repo_details.name,
-                    type,
-                    description: repo_details.description,
-                    tags_raw: repo_details.tags,
-                    metadata: metadata_empty,
+                    account,
+                    address: account.address,
+                    name: details.name,
+                    type: EHackathonType.HACKATHON,
+                    prize_distribution: details.prize_distribution,
+                    prize_wallets: details.prize_wallets,
+                    metadata: details.metadata,
+                    storagedata: storagedata_empty,
                     participants: participants_empty,
                 }
             },
@@ -297,13 +320,13 @@ export function useDaoHackathonList(
 
     const getHackathonList = useCallback(async () => {
         try {
-            if (!dao.address) {
+            if (!dao.name) {
                 return
             }
 
             setData((state) => ({ ...state, is_fetching: true }))
             const blockchain = await getBlockchainItems({
-                dao_address: dao.address!,
+                dao_name: dao.name!,
                 limit: count,
             })
             setData((state) => {
@@ -327,7 +350,6 @@ export function useDaoHackathonList(
                             ? {
                                   ...item,
                                   ...found,
-                                  metadata: item.metadata,
                                   participants: item.participants,
                               }
                             : item
@@ -341,13 +363,13 @@ export function useDaoHackathonList(
         } finally {
             setData((state) => ({ ...state, is_fetching: false }))
         }
-    }, [dao.address, count])
+    }, [dao.name, count])
 
     const getNext = useCallback(async () => {
         try {
             setData((state) => ({ ...state, is_fetching: true }))
             const blockchain = await getBlockchainItems({
-                dao_address: dao.address!,
+                dao_name: dao.name!,
                 limit: count,
                 cursor: data.cursor,
             })
@@ -369,7 +391,7 @@ export function useDaoHackathonList(
         } finally {
             setData((state) => ({ ...state, is_fetching: false }))
         }
-    }, [dao.address, data.cursor])
+    }, [dao.name, data.cursor])
 
     useEffect(() => {
         if (initialize) {
@@ -385,58 +407,52 @@ export function useDaoHackathonList(
 }
 
 export function useHackathon(
-    options: { initialize?: boolean; subscribe?: boolean; repo_name?: string } = {},
+    options: { initialize?: boolean; subscribe?: boolean; address?: string } = {},
 ) {
     const { initialize, subscribe } = options
     const url_params = useParams()
     const { user } = useUser()
     const member = useDaoMember()
-    const repo_name = options.repo_name || url_params.reponame || ''
+    const address = options.address || url_params.address || ''
     const { details: dao } = useDao()
     const [hackathons, setHakathons] = useRecoilState(daoHackathonListSelector(dao.name))
-    const hackathon = useRecoilValue(daoHackathonSelector(repo_name))
+    const hackathon = useRecoilValue(daoHackathonSelector(address))
     const [error, setError] = useState<any>()
 
     const getHackathon = useCallback(async () => {
+        const sc = getSystemContract()
+
         if (!dao.name) {
             return
         }
 
-        const sc = getSystemContract()
-
         try {
             // Search for hackathon in hackathon list state atom
-            let found = hackathons.items.find((item) => item.name === repo_name)
+            let found = hackathons.items.find((item) => item.address === address)
 
             // Fetch hackathon's metadata from blockchain
             if (!found) {
-                const repo_path = `${dao.name}/${repo_name}`
-                const repo_account = await sc.getRepository({ path: repo_path })
-                const repo_details = await repo_account.getDetails()
-
-                let type = EHackathonType.HACKATHON
-                if (repo_details.tags.indexOf(HACKATHON_TAG.grant) >= 0) {
-                    type = EHackathonType.GRANT
-                }
+                const account = await sc.getHackathon({ address })
+                const details = await account.getDetails()
 
                 found = {
-                    account: repo_account,
-                    address: repo_account.address,
-                    name: repo_details.name,
-                    type,
-                    description: repo_details.description,
-                    tags_raw: repo_details.tags,
-                    metadata: metadata_empty,
+                    account,
+                    address: account.address,
+                    type: EHackathonType.HACKATHON,
+                    storagedata: storagedata_empty,
                     participants: participants_empty,
+                    ...details,
                 }
 
                 setHakathons((state) => {
-                    const exists = state.items.find((v) => v.address === found?.address)
+                    const exists = state.items.find((v) => v.address === found!.address)
                     return {
                         ...state,
                         items: !exists ? [...state.items, found!] : state.items,
                     }
                 })
+            } else {
+                await getDetails(found.account)
             }
 
             ////
@@ -445,7 +461,7 @@ export function useHackathon(
             const _dao_adapter = await _gosh.getDao({ address: dao.address! })
             const _dao_details = await _dao_adapter.getDetails()
             const _repo_adapter = await _dao_adapter.getRepository({
-                name: repo_name,
+                name: '_hackathons',
             })
             _repo_adapter.auth = { username: user.username, wallet0: member.wallet }
             found._rg_dao_details = { ..._dao_details, isAuthMember: member.isMember }
@@ -462,90 +478,123 @@ export function useHackathon(
             }))
             ////
 
-            // Fetch hackathon metadata if not fetching
-            if (!found.metadata.is_fetching) {
-                getHackathonData(found.account)
-                getHackathonParticipants(found.account)
+            // Fetch hackathon storage data
+            if (!found.storagedata.is_fetching) {
+                getStorageData({
+                    address: found.address,
+                    repo: found._rg_repo_adapter,
+                    branch_name: found.metadata.branch_name,
+                })
+            }
+
+            // Fetch hackathon participants
+            if (!found.participants.is_fetching) {
+                getParticipants({
+                    repo_address: found._rg_repo_adapter.getAddress(),
+                    branch_name: found.metadata.branch_name,
+                    hack_address: found.address,
+                })
             }
         } catch (e: any) {
             setError(e)
         }
-    }, [dao.name, repo_name, member.isMember, member.wallet?.address])
+    }, [dao.name, address, member.isMember, member.wallet?.address])
 
-    const getHackathonData = async (repo_account: GoshRepository) => {
+    const getDetails = async (account: Hackathon) => {
         try {
+            const details = await account.getDetails()
             setHakathons((state) => ({
                 ...state,
                 items: state.items.map((item) => {
-                    if (item.address === repo_account.address) {
-                        return {
-                            ...item,
-                            metadata: { ...item.metadata, is_fetching: true },
-                        }
+                    if (item.address === account.address) {
+                        return { ...item, ...details }
                     }
                     return item
                 }),
             }))
+        } catch (e) {
+            setError(e)
+        }
+    }
 
-            // Read metadata
-            const branch = await repo_account.getBranch('main')
-            const commit_account = await repo_account.getCommit({
+    const getStorageData = async (params: {
+        address: string
+        repo: IGoshRepositoryAdapter
+        branch_name: string
+    }) => {
+        const { address, branch_name } = params
+
+        try {
+            setHakathons((state) => ({
+                ...state,
+                items: state.items.map((item) => {
+                    return {
+                        ...item,
+                        storagedata: {
+                            ...item.storagedata,
+                            is_fetching: item.address === address,
+                        },
+                    }
+                }),
+            }))
+
+            // Read files stored in repository
+            let repo = params.repo
+            const branch = await repo.getBranch(branch_name)
+            const commit = await repo.getCommit({
                 address: branch.commit.address,
             })
-            const commit_data = await commit_account.getDetails()
-            const tree_account = await repo_account.getTree({
-                address: commit_data.treeaddr,
-            })
-            const tree_items = await tree_account.getDetails()
+            const tree = await repo.getTree(commit, '')
 
-            const commit_version = await commit_account.getVersion()
-            const repo_address = repo_account.address
-            const repo_version = await repo_account.getVersion()
-            if (commit_version !== repo_version) {
-                const sc = AppConfig.goshroot.getSystemContract(commit_version)
-                const repo_name = await repo_account.getName()
-                repo_account = (await sc.getRepository({
+            if (commit.version !== repo.getVersion()) {
+                const _gosh = GoshAdapterFactory.create(commit.version)
+                const repo_name = await repo.getName()
+                repo = await _gosh.getRepository({
                     path: `${dao.name}/${repo_name}`,
-                })) as unknown as GoshRepository
+                })
             }
 
             const snap_data = await Promise.all(
-                tree_items.map(async (item) => {
-                    const snap_account = await repo_account.getSnapshot({
-                        data: { commitname: item.commit_name, filename: item.name },
-                    })
-                    const content = await snap_account.getContent()
-                    return { ...item, content }
+                tree.items.map(async (item) => {
+                    const { value0 } = await repo.repo.runLocal(
+                        'getSnapshotAddr',
+                        { commitsha: item?.commit, name: item.name },
+                        undefined,
+                        { useCachedBoc: true },
+                    )
+                    const { current } = await repo.getCommitBlob(
+                        value0,
+                        item.name,
+                        commit,
+                    )
+                    return { ...item, content: current }
                 }),
             )
 
-            // Create updated metadata
-            const metadata = { ...metadata_empty, is_fetched: true, is_fetching: false }
-            for (const file of ['readme.md', 'rules.md', 'prize.md', 'metadata.json']) {
+            // Create updated storage data
+            const storagedata: THackathonDetails['storagedata'] & {
+                description: { [k: string]: string }
+            } = {
+                ...storagedata_empty,
+                is_fetched: true,
+                is_fetching: false,
+            }
+            for (const file of ['readme.md', 'rules.md', 'prizes.md', 'metadata.json']) {
                 const item = snap_data.find((v) => v.name.toLowerCase() === file)
                 if (!item) {
                     continue
                 }
 
-                const { is_binary, content } = item.content.approved
-                if (is_binary || !content) {
+                if (!item.content || Buffer.isBuffer(item.content)) {
                     continue
                 }
 
                 if (file === 'metadata.json') {
-                    metadata.raw = content as string
-
-                    const parsed = JSON.parse(metadata.raw)
-                    metadata.title = parsed.title
-                    metadata.prize = parsed.prize
-                    metadata.dates = parsed.dates
+                    const parsed = JSON.parse(item.content)
+                    storagedata.prize = parsed.prize
                 } else {
                     const key = file.split('.')[0]
-                    const description = {
-                        ...metadata.description,
-                        [key]: content as string,
-                    }
-                    metadata.description = description as typeof metadata['description']
+                    storagedata.description[key] = item.content
                 }
             }
 
@@ -553,8 +602,8 @@ export function useHackathon(
             setHakathons((state) => ({
                 ...state,
                 items: state.items.map((item) => {
-                    if (item.address === repo_address) {
-                        return { ...item, metadata }
+                    if (item.address === address) {
+                        return { ...item, storagedata }
                     }
                     return item
                 }),
@@ -564,23 +613,30 @@ export function useHackathon(
         }
     }
 
-    const getHackathonParticipants = async (repo_account: GoshRepository) => {
+    const getParticipants = async (params: {
+        repo_address: string
+        branch_name: string
+        hack_address: string
+    }) => {
+        const { repo_address, branch_name, hack_address } = params
+
         try {
             setHakathons((state) => ({
                 ...state,
-                items: state.items.map((item) => {
-                    if (item.address === repo_account.address) {
-                        return {
-                            ...item,
-                            participants: { ...item.participants, is_fetching: true },
-                        }
-                    }
-                    return item
-                }),
+                items: state.items.map((item) => ({
+                    ...item,
+                    participants: {
+                        ...item.participants,
+                        is_fetching: item.address === hack_address,
+                    },
+                })),
             }))
 
             const sc = getSystemContract()
-            const code_hash = await sc.getHackathonAppIndexCodeHash(repo_account.address)
+            const code_hash = await sc.getHackathonAppIndexCodeHash({
+                repo_address,
+                branch_name,
+            })
             const accounts = await getAllAccounts({
                 filters: [`code_hash: {eq:"${code_hash}"}`],
             })
@@ -588,16 +644,18 @@ export function useHackathon(
                 { id: string },
                 THackathonParticipant
             >(accounts, MAX_PARALLEL_READ, async ({ id }) => {
-                const tag = await repo_account.getCommitTag({ address: id })
+                const tag = await sc.getCommitTag({ address: id })
                 const details = await tag.getDetails()
                 const parsed = JSON.parse(details.content)
 
-                const { sc, dao_account } = await getParticipantVersion(parsed.dao_name)
+                const { sc: psc, dao_account } = await getParticipantVersion(
+                    parsed.dao_name,
+                )
                 const is_member = user.profile
                     ? await dao_account.isMember(user.profile)
                     : false
 
-                const prepo_account = (await sc.getRepository({
+                const prepo_account = (await psc.getRepository({
                     path: `${parsed.dao_name}/${parsed.repo_name}`,
                 })) as unknown as GoshRepository
                 const repo_details = await prepo_account.getDetails()
@@ -609,7 +667,7 @@ export function useHackathon(
             setHakathons((state) => ({
                 ...state,
                 items: state.items.map((item) => {
-                    if (item.address === repo_account.address) {
+                    if (item.address === hack_address) {
                         return {
                             ...item,
                             participants: {
@@ -672,62 +730,59 @@ export function useHackathon(
     }, [initialize, getHackathon])
 
     useEffect(() => {
-        let interval: NodeJS.Timeout
-
-        if (subscribe) {
-            updateFlags()
-            interval = setInterval(updateFlags, 5000)
-        }
-
-        return () => {
-            clearInterval(interval)
-        }
-    }, [subscribe, updateFlags])
+        updateFlags()
+    }, [updateFlags])
 
     useEffect(() => {
         let interval: NodeJS.Timeout
 
-        if (subscribe && hackathon?.account) {
+        if (subscribe && hackathon?.address && hackathon._rg_repo_adapter) {
             interval = setLockableInterval(async () => {
-                await getHackathonData(hackathon.account)
-                await getHackathonParticipants(hackathon.account)
+                await getDetails(hackathon.account)
+                await getStorageData({
+                    address: hackathon.address,
+                    repo: hackathon._rg_repo_adapter!,
+                    branch_name: hackathon.metadata.branch_name,
+                })
+                await getParticipants({
+                    repo_address: hackathon._rg_repo_adapter!.getAddress(),
+                    branch_name: hackathon.metadata.branch_name,
+                    hack_address: hackathon.address,
+                })
             }, 60000)
         }
 
         return () => {
             clearInterval(interval)
         }
-    }, [subscribe, hackathon?.address])
+    }, [subscribe, hackathon?.address, hackathon?.metadata.branch_name])
 
-    return { hackathon, error, getHackathonParticipants }
+    return { hackathon, error, getParticipants }
 }
 
-export function useUpdateHackathonDetails() {
+export function useUpdateHackathon() {
     const member = useDaoMember()
     const { hackathon } = useHackathon()
     const { push } = usePush(
         hackathon?._rg_dao_details!,
         hackathon?._rg_repo_adapter!,
-        'main',
+        hackathon?.metadata.branch_name,
     )
     const { beforeCreateEvent } = useDaoHelpers()
     const [status, setStatus] = useRecoilState(
         appToastStatusSelector('__updatehackathondetails'),
     )
 
-    const update = useCallback(
+    const updateStorageData = useCallback(
         async (params: {
-            repo_name: string
             filename: string
             content: { original: string; modified: string }
         }) => {
             // TODO: repo_name should be used after git part refactor
-            const { repo_name, filename, content } = params
-            const now = moment().unix()
-            const finish = hackathon?.metadata.dates.finish || now + 1
+            const { filename, content } = params
 
             try {
-                if (now >= finish) {
+                if (!hackathon?.update_enabled) {
                     throw new GoshError('Value error', 'Update details time expired')
                 }
 
@@ -736,13 +791,15 @@ export function useUpdateHackathonDetails() {
                 setStatus((state) => ({
                     ...state,
                     type: 'pending',
-                    data: `Updating ${hackathon?.type} details`,
+                    data: `Updating ${hackathon.type} data`,
                 }))
 
                 // TODO: Remove after git refactor
-                const _tbranch = await hackathon?._rg_repo_adapter?.getBranch('main')
+                const _tbranch = await hackathon?._rg_repo_adapter?.getBranch(
+                    hackathon.metadata.branch_name,
+                )
                 const event_address = await push(
-                    `Update details for ${hackathon?.metadata.title} ${hackathon?.type}`,
+                    `Update details for ${hackathon?.name} ${hackathon?.type}`,
                     [
                         {
                             treepath: [filename, filename],
@@ -758,7 +815,7 @@ export function useUpdateHackathonDetails() {
                     type: 'success',
                     data: {
                         title: 'Create DAO event',
-                        content: `Update ${hackathon?.type} details event created`,
+                        content: `Update ${hackathon?.type} data event created`,
                     },
                 }))
 
@@ -770,17 +827,74 @@ export function useUpdateHackathonDetails() {
         },
         [
             member.isReady,
+            hackathon?.update_enabled,
+            hackathon?.metadata.branch_name,
             hackathon?._rg_dao_details?.isAuthMember,
             hackathon?._rg_repo_adapter?.auth?.username,
         ],
     )
 
-    return { update, status }
+    const updateMetadata = useCallback(
+        async (params: {
+            dates?: THackathonDetails['metadata']['dates']
+            description?: string
+        }) => {
+            const { dates, description } = params
+
+            try {
+                if (!hackathon?.update_enabled) {
+                    throw new GoshError('Value error', 'Update hackathon time expired')
+                }
+                if (!dates && !description) {
+                    throw new GoshError('Value error', 'Nothing was changed')
+                }
+
+                // Prepare balance for create event (member wallet is checked here)
+                await beforeCreateEvent(20, { onPendingCallback: setStatus })
+
+                const updated_metadata = { ...hackathon.metadata }
+                if (description) {
+                    updated_metadata.description = description
+                }
+                if (dates) {
+                    updated_metadata.dates = dates
+                }
+
+                // Create cells for DAO multi event
+                setStatus((state) => ({
+                    ...state,
+                    type: 'pending',
+                    data: 'Creating DAO event',
+                }))
+                const event_address = await member.wallet!.updateHackathon({
+                    name: hackathon.name,
+                    metadata: updated_metadata,
+                    comment: `Update ${hackathon.type}`,
+                })
+                setStatus((state) => ({
+                    ...state,
+                    type: 'success',
+                    data: {
+                        title: 'Create DAO event',
+                        content: `Update ${hackathon.type} proposal created`,
+                    },
+                }))
+
+                return { event_address }
+            } catch (e: any) {
+                setStatus((state) => ({ ...state, type: 'error', data: e }))
+                throw e
+            }
+        },
+        [member.isReady, hackathon?.update_enabled],
+    )
+
+    return { updateStorageData, updateMetadata, status }
 }
 
 export function useAddHackathonParticipants() {
     const member = useDaoMember()
-    const { hackathon, getHackathonParticipants } = useHackathon()
+    const { hackathon, getParticipants } = useHackathon()
     const [status, setStatus] = useRecoilState(
         appToastStatusSelector('__addhackathonparticipants'),
     )
@@ -789,16 +903,15 @@ export function useAddHackathonParticipants() {
         items: { dao_name: string; repo_name: string }[]
     }) => {
         const { items } = params
-        const now = moment().unix()
 
         try {
             if (!member.wallet) {
                 throw new GoshError('Value error', 'User wallet undefined')
             }
-            if (!hackathon?.name || !hackathon.account) {
+            if (!hackathon?.name || !hackathon._rg_repo_adapter) {
                 throw new GoshError('Value error', 'Hackathon repository undefined')
             }
-            if (now >= hackathon.metadata.dates.voting) {
+            if (!hackathon.participate_enabled) {
                 throw new GoshError('Value error', 'Add applications time expired')
             }
 
@@ -813,7 +926,7 @@ export function useAddHackathonParticipants() {
                     const repo_path = `${item.dao_name}/${item.repo_name}`
                     const tag_name = `${HACKATHON_TAG.participant}:${repo_path}`
                     await member.wallet!.createCommitTag({
-                        reponame: hackathon!.name,
+                        reponame: '_hackathons',
                         name: tag_name,
                         content: JSON.stringify(item),
                         commit: {
@@ -821,10 +934,15 @@ export function useAddHackathonParticipants() {
                             name: ZERO_COMMIT,
                         },
                         is_hack: true,
+                        branch_name: hackathon.metadata.branch_name,
                     })
                 }),
             )
-            await getHackathonParticipants(hackathon.account)
+            await getParticipants({
+                repo_address: hackathon._rg_repo_adapter.getAddress(),
+                branch_name: hackathon.metadata.branch_name,
+                hack_address: hackathon.address,
+            })
 
             setStatus((state) => ({
                 ...state,

@@ -1,6 +1,6 @@
 import { TDao } from 'react-gosh'
 import { IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
-import { GoshRepository } from '../blockchain/repository'
+import { Hackathon } from '../blockchain/hackathon'
 
 export enum EHackathonType {
     HACKATHON = 'hackathon',
@@ -14,29 +14,33 @@ export type THackathonParticipant = {
     is_member?: boolean
 }
 
+export type THackathonDates = { start: number; voting: number; finish: number }
+
 export type THackathonDetails = {
     _rg_dao_details?: TDao // TODO: remove after git refactor
     _rg_repo_adapter?: IGoshRepositoryAdapter // TODO: remove after git refactor
     _rg_fetched?: boolean // TODO: remove after git refactor
-    account: GoshRepository
+    account: Hackathon
     address: string
     name: string
     type: EHackathonType
-    description: string
-    tags_raw: string[]
+    prize_distribution: number[]
+    prize_wallets: string[]
+    metadata: {
+        branch_name: string
+        dates: THackathonDates
+        description: string
+    }
+    storagedata: {
+        is_fetching: boolean
+        is_fetched: boolean
+        description: { readme: string; rules: string; prizes: string }
+        prize: { total: number; places: number[] }
+    }
     participants: {
         is_fetching: boolean
         is_fetched: boolean
         items: THackathonParticipant[]
-    }
-    metadata: {
-        is_fetching: boolean
-        is_fetched: boolean
-        title: string
-        description: { readme: string; rules: string; prize: string }
-        prize: { total: number; places: number[] }
-        dates: { start: number; voting: number; finish: number }
-        raw: string
     }
     update_enabled?: boolean
     participate_enabled?: boolean

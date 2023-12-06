@@ -17,16 +17,16 @@ import {
     HackathonTypeBadge,
 } from '../../components/Hackathon'
 import { withPin, withRouteAnimation } from '../../hocs'
-import { useDao } from '../../hooks/dao.hooks'
+import { useDao, useDaoMember } from '../../hooks/dao.hooks'
 import { useCreateHackathon } from '../../hooks/hackathon.hooks'
 import { DatesOverview, DescriptionFileField } from './components'
 
 type TFormValues = {
     description: {
-        short: string
+        brief: string
         readme: string
         rules: string
-        prize: string
+        prizes: string
     }
     prize: {
         total: string
@@ -45,6 +45,7 @@ const HackathonCreatePage = () => {
     const navigate = useNavigate()
     const setModal = useSetRecoilState(appModalStateAtom)
     const dao = useDao({ initialize: true, subscribe: true })
+    useDaoMember({ initialize: true, subscribe: true })
     const { create } = useCreateHackathon()
 
     const onUpdatePrizePoolClick = (
@@ -77,7 +78,7 @@ const HackathonCreatePage = () => {
         try {
             const remarked = {
                 readme: await html2markdown(values.description.readme),
-                prize: await html2markdown(values.description.prize),
+                prizes: await html2markdown(values.description.prizes),
                 rules: await html2markdown(values.description.rules),
             }
             const updated = {
@@ -87,7 +88,7 @@ const HackathonCreatePage = () => {
             console.debug('updated', updated)
 
             const { eventaddr } = await create({
-                title: location.state.name,
+                name: location.state.name,
                 type: location.state.type,
                 ...updated,
             })
@@ -118,10 +119,10 @@ const HackathonCreatePage = () => {
             <Formik
                 initialValues={{
                     description: {
-                        short: '',
+                        brief: '',
                         readme: '',
                         rules: '',
-                        prize: '',
+                        prizes: '',
                     },
                     prize: {
                         total: '',
@@ -157,9 +158,9 @@ const HackathonCreatePage = () => {
                                 <DescriptionFileField
                                     className="mt-14"
                                     type="prize"
-                                    value={values.description.prize}
+                                    value={values.description.prizes}
                                     onChange={(content) => {
-                                        setFieldValue('description.prize', content)
+                                        setFieldValue('description.prizes', content)
                                     }}
                                 />
                             </div>
@@ -257,7 +258,7 @@ const HackathonCreatePage = () => {
                                             Short description
                                         </div>
                                         <Field
-                                            name="description.short"
+                                            name="description.brief"
                                             component={FormikTextarea}
                                             autoComplete="off"
                                             minRows={5}

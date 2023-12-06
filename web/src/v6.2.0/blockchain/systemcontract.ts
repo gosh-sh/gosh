@@ -9,6 +9,7 @@ import GoshABI from './abi/systemcontract.abi.json'
 import { GoshCommitTag } from './committag'
 import { Dao } from './dao'
 import { GoshTag } from './goshtag'
+import { Hackathon } from './hackathon'
 import { Milestone } from './milestone'
 import { GoshRepository } from './repository'
 import { Task } from './task'
@@ -198,10 +199,30 @@ export class SystemContract extends BaseContract {
         return profile
     }
 
-    async getHackathonAppIndexCodeHash(repo_address: string) {
+    async getHackathon(options: { address: string }) {
+        const { address } = options
+        return new Hackathon(this.client, address)
+    }
+
+    async getHackathonCodeHash(dao_name: string): Promise<string> {
+        const { value0 } = await this.runLocal(
+            'getGrantCode',
+            { daoName: dao_name },
+            undefined,
+            { useCachedBoc: true },
+        )
+        const { hash } = await this.client.boc.get_boc_hash({ boc: value0 })
+        return hash
+    }
+
+    async getHackathonAppIndexCodeHash(params: {
+        repo_address: string
+        branch_name: string
+    }) {
+        const { repo_address, branch_name } = params
         const { value0 } = await this.runLocal(
             'getTagHackCode',
-            { repo: repo_address },
+            { repo: repo_address, branchname: branch_name },
             undefined,
             { useCachedBoc: true },
         )

@@ -775,6 +775,29 @@
 			]
 		},
 		{
+			"name": "getCellDeployBranch",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"newName","type":"string"},
+				{"name":"fromCommit","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "_deployBranch",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"newName","type":"string"},
+				{"name":"fromCommit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deleteBranch",
 			"inputs": [
 				{"name":"repoName","type":"string"},
@@ -812,7 +835,8 @@
 				{"name":"nameCommit","type":"string"},
 				{"name":"content","type":"string"},
 				{"name":"commit","type":"address"},
-				{"name":"isHack","type":"bool"}
+				{"name":"isHack","type":"bool"},
+				{"name":"branchname","type":"optional(string)"}
 			],
 			"outputs": [
 			]
@@ -1400,11 +1424,28 @@
 			]
 		},
 		{
+			"name": "getCellAddCurrencies",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"grant","type":"optional(uint128[])"},
+				{"name":"tip3wallet","type":"optional(address[])"},
+				{"name":"metadata","type":"optional(string)"},
+				{"name":"tags","type":"optional(string[])"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "getCellDeployGrants",
 			"inputs": [
 				{"name":"name","type":"string"},
+				{"name":"metadata","type":"string"},
 				{"name":"grants","type":"uint128[]"},
-				{"name":"tip3wallet","type":"address"},
+				{"name":"tip3wallet","type":"address[]"},
+				{"name":"tags","type":"string[]"},
 				{"name":"comment","type":"string"},
 				{"name":"time","type":"optional(uint32)"}
 			],
@@ -1424,10 +1465,23 @@
 			]
 		},
 		{
-			"name": "getCellSetGrantPubkey",
+			"name": "voteForHacks",
+			"inputs": [
+				{"name":"amount","type":"uint128"},
+				{"name":"index","type":"uint128"},
+				{"name":"name","type":"string"},
+				{"name":"comment","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCellSetGrantOwners",
 			"inputs": [
 				{"name":"name","type":"string"},
-				{"name":"pubkeys","type":"uint256[]"},
+				{"name":"owners","type":"address[]"},
+				{"name":"details","type":"string[]"},
+				{"name":"timeofend","type":"uint128"},
 				{"name":"comment","type":"string"},
 				{"name":"time","type":"optional(uint32)"}
 			],
@@ -1952,9 +2006,18 @@
 			]
 		},
 		{
+			"name": "getGrantCode",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "getTagHackCode",
 			"inputs": [
-				{"name":"repo","type":"address"}
+				{"name":"repo","type":"address"},
+				{"name":"branchname","type":"string"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
