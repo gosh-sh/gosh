@@ -2355,6 +2355,7 @@ export function useDaoEvent(
                 const details = await event.account!.getDetails({
                     wallet: member.wallet,
                 })
+                console.debug('Event messages trigger', decoded.name, details)
                 setEvents((state) => ({
                     ...state,
                     items: state.items.map((item) => {
@@ -3422,7 +3423,6 @@ export function useMintDaoTokens() {
                     amount,
                     comment,
                     alone,
-                    expert_tags,
                 })
 
                 // Event post create
