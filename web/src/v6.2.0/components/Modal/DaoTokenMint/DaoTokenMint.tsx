@@ -1,13 +1,10 @@
 import { Dialog } from '@headlessui/react'
 import { Field, Form, Formik } from 'formik'
-import randomColor from 'randomcolor'
 import { useNavigate } from 'react-router-dom'
-import Select from 'react-select'
 import { useSetRecoilState } from 'recoil'
 import { Button } from '../../../../components/Form'
-import { BaseField, FormikInput, FormikTextarea } from '../../../../components/Formik'
+import { FormikInput, FormikTextarea } from '../../../../components/Formik'
 import { ModalCloseButton } from '../../../../components/Modal'
-import { Select2ClassNames } from '../../../../helpers'
 import { appModalStateAtom } from '../../../../store/app.state'
 import { useDao, useMintDaoTokens } from '../../../hooks/dao.hooks'
 import yup from '../../../yup-extended'
@@ -15,7 +12,6 @@ import yup from '../../../yup-extended'
 type TFormValues = {
     amount: string
     comment: string
-    expert_tags: string[]
 }
 
 const DaoTokenMintModal = () => {
@@ -34,7 +30,6 @@ const DaoTokenMintModal = () => {
             const { eventaddr } = await mint({
                 amount: parseInt(values.amount),
                 comment,
-                expert_tags: values.expert_tags,
             })
             onModalReset()
             if (eventaddr) {
@@ -59,7 +54,7 @@ const DaoTokenMintModal = () => {
                 })}
                 onSubmit={onSubmit}
             >
-                {({ isSubmitting, setFieldValue }) => (
+                {({ isSubmitting }) => (
                     <Form>
                         <ModalCloseButton disabled={isSubmitting} />
                         <Dialog.Title className="mb-8 text-3xl text-center font-medium">
@@ -83,59 +78,6 @@ const DaoTokenMintModal = () => {
                                 disabled={isSubmitting}
                                 placeholder="Write a description so that the DAO members can understand it"
                             />
-                        </div>
-                        <div className="mt-6">
-                            <Field name="expert_tags" component={BaseField}>
-                                <Select
-                                    options={dao.details.expert_tags?.map((item) => ({
-                                        label: item.name,
-                                        value: item.name,
-                                    }))}
-                                    isMulti
-                                    isClearable
-                                    isDisabled={isSubmitting}
-                                    placeholder="Karma tags"
-                                    classNames={{
-                                        ...Select2ClassNames,
-                                        multiValueRemove: () => '!p-0.5',
-                                    }}
-                                    styles={{
-                                        multiValue: (base, props) => ({
-                                            ...base,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            flexWrap: 'nowrap',
-                                            fontSize: '0.875rem !important',
-                                            padding: '0 0.5rem',
-                                            borderRadius: '2.25rem',
-                                            margin: '0 0.125rem',
-                                            color: randomColor({
-                                                seed: props.data.label,
-                                                luminosity: 'dark',
-                                            }),
-                                            backgroundColor: randomColor({
-                                                seed: props.data.label,
-                                                luminosity: 'light',
-                                                format: 'rgba',
-                                                alpha: 0.35,
-                                            }),
-                                        }),
-                                        multiValueLabel: (base, props) => ({
-                                            ...base,
-                                            color: randomColor({
-                                                seed: props.data.label,
-                                                luminosity: 'dark',
-                                            }),
-                                        }),
-                                    }}
-                                    onChange={(option) => {
-                                        setFieldValue(
-                                            'expert_tags',
-                                            option.map(({ value }) => value),
-                                        )
-                                    }}
-                                />
-                            </Field>
                         </div>
                         <div className="mt-4">
                             <Button
