@@ -164,7 +164,8 @@
 				{"name":"value1","type":"uint128[]"},
 				{"name":"value2","type":"string"},
 				{"name":"value3","type":"bool"},
-				{"name":"value4","type":"string"}
+				{"name":"value4","type":"string"},
+				{"name":"isTag","type":"string[]"}
 			]
 		},
 		{

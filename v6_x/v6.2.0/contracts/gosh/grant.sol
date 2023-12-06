@@ -207,8 +207,8 @@ contract Grant is Modifiers {
     }
     
     //Getters    
-    function getDetails() external view returns(address[], uint128[], string, bool, string) {
-        return (_owner, _grant, _name, _ready, _metadata);
+    function getDetails() external view returns(address[], uint128[], string, bool, string, string[] isTag) {
+        return (_owner, _grant, _name, _ready, _metadata, _isTag);
     }
 
     function getVersion() external pure returns(string, string) {
