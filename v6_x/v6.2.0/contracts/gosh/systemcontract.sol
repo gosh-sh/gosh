@@ -437,8 +437,8 @@ contract SystemContract is Modifiers {
         );
     }
 
-    function getTagHackCode(address repo) external view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildTagHackCode(_code[m_TagCode], repo, version);
+    function getTagHackCode(address repo, string branchname) external view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildTagHackCode(_code[m_TagCode], branchname, repo, version);
         return deployCode;
     }
 

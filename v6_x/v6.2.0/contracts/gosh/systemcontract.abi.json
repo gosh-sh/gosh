@@ -659,7 +659,8 @@
 		{
 			"name": "getTagHackCode",
 			"inputs": [
-				{"name":"repo","type":"address"}
+				{"name":"repo","type":"address"},
+				{"name":"branchname","type":"string"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}

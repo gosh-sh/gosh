@@ -1081,7 +1081,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string nameCommit,
         string content,
         address commit,
-        bool isHack
+        bool isHack,
+        optional(string) branchname
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
@@ -1091,7 +1092,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
         TvmCell deployCode;
         if (isHack == false) { deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version); }
-        else { deployCode = GoshLib.buildTagHackCode(_code[m_TagCode], repo, version); }
+        else { 
+            deployCode = GoshLib.buildTagHackCode(_code[m_TagCode], branchname.get(), repo, version); 
+        }
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag}});
         new Tag{
                 stateInit: s1, value: FEE_DEPLOY_TAG, wid: 0, bounce: true, flag: 1
@@ -2833,8 +2836,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         );
     }
 
-    function getTagHackCode(address repo) external view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildTagHackCode(_code[m_TagCode], repo, version);
+    function getTagHackCode(address repo, string branchname) external view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildTagHackCode(_code[m_TagCode], branchname, repo, version);
         return deployCode;
     }
 
