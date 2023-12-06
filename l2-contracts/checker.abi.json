@@ -1,0 +1,250 @@
+{
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"prevhash","type":"uint256"},
+				{"name":"receiver","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "askEvers",
+			"id": "0x3F8",
+			"inputs": [
+				{"components":[{"name":"name","type":"string"},{"name":"symbol","type":"string"},{"name":"decimals","type":"uint8"},{"name":"ethroot","type":"uint256"}],"name":"root","type":"tuple"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployIndex",
+			"id": "0x401",
+			"inputs": [
+				{"components":[{"name":"name","type":"string"},{"name":"symbol","type":"string"},{"name":"decimals","type":"uint8"},{"name":"ethroot","type":"uint256"}],"name":"root","type":"tuple"},
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setHashRoot",
+			"inputs": [
+				{"name":"hash","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setReady",
+			"inputs": [
+				{"name":"ready","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setProposalCode",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setIndexWalletCode",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setRootCode",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setWalletCode",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setCommission",
+			"inputs": [
+				{"name":"a_from_ax_div10000_plus_b","type":"uint128"},
+				{"name":"b_from_ax_div10000_plus_b","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployRootContract",
+			"inputs": [
+				{"components":[{"name":"name","type":"string"},{"name":"symbol","type":"string"},{"name":"decimals","type":"uint8"},{"name":"ethroot","type":"uint256"}],"name":"root","type":"tuple"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkData",
+			"inputs": [
+				{"components":[{"name":"data","type":"bytes"},{"name":"hash","type":"uint256"}],"name":"data","type":"tuple[]"},
+				{"components":[{"components":[{"name":"name","type":"string"},{"name":"symbol","type":"string"},{"name":"decimals","type":"uint8"},{"name":"ethroot","type":"uint256"}],"name":"root","type":"tuple"},{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"},{"name":"hash","type":"uint256"}],"name":"data","type":"tuple"}],"name":"transactions","type":"tuple[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkDataIndex",
+			"inputs": [
+				{"components":[{"name":"data","type":"bytes"},{"name":"hash","type":"uint256"}],"name":"data","type":"tuple[]"},
+				{"components":[{"components":[{"name":"name","type":"string"},{"name":"symbol","type":"string"},{"name":"decimals","type":"uint8"},{"name":"ethroot","type":"uint256"}],"name":"root","type":"tuple"},{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"},{"name":"hash","type":"uint256"}],"name":"data","type":"tuple"}],"name":"transactions","type":"tuple[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setNewHash",
+			"inputs": [
+				{"name":"prevhash","type":"uint256"},
+				{"name":"newhash","type":"uint256"},
+				{"name":"index","type":"uint128"},
+				{"components":[{"components":[{"name":"name","type":"string"},{"name":"symbol","type":"string"},{"name":"decimals","type":"uint8"},{"name":"ethroot","type":"uint256"}],"name":"root","type":"tuple"},{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"},{"name":"hash","type":"uint256"}],"name":"data","type":"tuple"}],"name":"transactions","type":"tuple[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendBatch",
+			"inputs": [
+				{"components":[{"components":[{"name":"name","type":"string"},{"name":"symbol","type":"string"},{"name":"decimals","type":"uint8"},{"name":"ethroot","type":"uint256"}],"name":"root","type":"tuple"},{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"},{"name":"hash","type":"uint256"}],"name":"data","type":"tuple"}],"name":"transactions","type":"tuple[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyTrash",
+			"inputs": [
+				{"name":"prevhash","type":"uint256"},
+				{"name":"indexmax","type":"uint128"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateCode",
+			"inputs": [
+				{"name":"newcode","type":"cell"},
+				{"name":"cell","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getVersion",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
+			]
+		},
+		{
+			"name": "getIndexWalletAddr",
+			"inputs": [
+				{"components":[{"name":"name","type":"string"},{"name":"symbol","type":"string"},{"name":"decimals","type":"uint8"},{"name":"ethroot","type":"uint256"}],"name":"data","type":"tuple"},
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getIndexWalletCode",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getRootAddr",
+			"inputs": [
+				{"components":[{"name":"name","type":"string"},{"name":"symbol","type":"string"},{"name":"decimals","type":"uint8"},{"name":"ethroot","type":"uint256"}],"name":"data","type":"tuple"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getProposalAddr",
+			"inputs": [
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getAllProposalAddr",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address[]"}
+			]
+		},
+		{
+			"name": "getTransactions",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"components":[{"name":"name","type":"string"},{"name":"symbol","type":"string"},{"name":"decimals","type":"uint8"},{"name":"ethroot","type":"uint256"}],"name":"root","type":"tuple"},{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"},{"name":"hash","type":"uint256"}],"name":"data","type":"tuple"}],"name":"value0","type":"tuple[]"}
+			]
+		},
+		{
+			"name": "getStatus",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"prevhash","type":"uint256"},
+				{"name":"index","type":"uint128"},
+				{"name":"receiver","type":"address"}
+			]
+		}
+	],
+	"data": [
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestamp","type":"uint64"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"_prevhash","type":"uint256"},
+		{"name":"_proposalCount","type":"uint128"},
+		{"name":"a","type":"uint128"},
+		{"name":"b","type":"uint128"},
+		{"name":"_proposalCode","type":"cell"},
+		{"name":"_rootCode","type":"cell"},
+		{"name":"_walletCode","type":"cell"},
+		{"name":"_indexWalletcode","type":"cell"},
+		{"name":"_receiver","type":"address"},
+		{"components":[{"components":[{"name":"name","type":"string"},{"name":"symbol","type":"string"},{"name":"decimals","type":"uint8"},{"name":"ethroot","type":"uint256"}],"name":"root","type":"tuple"},{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"},{"name":"hash","type":"uint256"}],"name":"data","type":"tuple"}],"name":"_transactions","type":"tuple[]"},
+		{"name":"_isReady","type":"bool"}
+	]
+}
