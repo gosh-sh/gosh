@@ -44,7 +44,7 @@ export class AppConfig {
         AppConfig.endpoints = endpoints
         AppConfig.goshclient = new TonClient({
             abi: {
-                message_expiration_timeout: 1000,
+                message_expiration_timeout: 5000,
             },
             network: {
                 endpoints,
@@ -112,7 +112,7 @@ export class AppConfig {
         const config = {
             goshclient: {
                 abi: {
-                    message_expiration_timeout: 1000,
+                    message_expiration_timeout: 5000,
                 },
                 network: {
                     endpoints,
