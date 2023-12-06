@@ -19,7 +19,11 @@ import {
 import { withPin, withRouteAnimation } from '../../hocs'
 import { useDao, useDaoMember } from '../../hooks/dao.hooks'
 import { useCreateHackathon } from '../../hooks/hackathon.hooks'
-import { DatesOverview, DescriptionFileField } from './components'
+import {
+    DatesOverview,
+    DescriptionFileField,
+    HackathonExpertsOverview,
+} from './components'
 
 type TFormValues = {
     description: {
@@ -37,6 +41,7 @@ type TFormValues = {
         voting: number
         finish: number
     }
+    expert_tags: { label: string; value: string }[]
 }
 
 const HackathonCreatePage = () => {
@@ -84,8 +89,8 @@ const HackathonCreatePage = () => {
             const updated = {
                 ...values,
                 description: { ...values.description, ...remarked },
+                expert_tags: values.expert_tags.map(({ value }) => value),
             }
-            console.debug('updated', updated)
 
             const { eventaddr } = await create({
                 name: location.state.name,
@@ -133,6 +138,7 @@ const HackathonCreatePage = () => {
                         voting: 0,
                         finish: 0,
                     },
+                    expert_tags: [],
                 }}
                 onSubmit={onFormSubmit}
             >
@@ -268,35 +274,12 @@ const HackathonCreatePage = () => {
                                         />
                                     </div>
 
-                                    {/* <div>
-                        <div className="pb-5 flex items-center gap-2">
-                            <div className="text-lg font-medium">0 Experts in</div>
-                            <div className="grow flex items-center gap-2">
-                                <Button
-                                    variant="custom"
-                                    size="sm"
-                                    className="block border !border-blue-2b89ff text-blue-2b89ff !rounded-[2rem]"
-                                >
-                                    Add tag
-                                    <FontAwesomeIcon icon={faPlus} className="ml-2" />
-                                </Button>
-                            </div>
-                        </div>
-                        <div className="border border-gray-e6edff rounded-xl overflow-hidden px-5">
-                            <div
-                                className="py-4 w-full flex items-center justify-between
-                                border-b border-b-gray-e6edff"
-                            >
-                                <div className="font-medium">Top 5 by total karma</div>
-                            </div>
-
-                            <div className="py-5 divide-y divide-gray-e6edff">
-                                <p className="text-center">
-                                    Add tags to see experts here
-                                </p>
-                            </div>
-                        </div>
-                    </div> */}
+                                    <HackathonExpertsOverview
+                                        values={values.expert_tags}
+                                        onChange={(option) => {
+                                            setFieldValue('expert_tags', option)
+                                        }}
+                                    />
                                 </div>
                             </div>
                         </div>

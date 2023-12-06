@@ -2,6 +2,7 @@ import { faBookmark } from '@fortawesome/free-regular-svg-icons'
 import {
     HackathonDatesOverview,
     HackathonDescriptionFileForm,
+    HackathonExpertsOverview,
     HackathonParticipantsOverview,
     HackathonPrizePoolOverview,
 } from '../../components/Hackathon'
@@ -30,8 +31,8 @@ const HackathonOverviewPage = () => {
                         <HackathonDatesOverview />
                         <HackathonParticipantsOverview />
                     </div>
-                    {/* <hr className="bg-gray-e6edff" />
-                    <ExpertsOverview /> */}
+                    <hr className="bg-gray-e6edff" />
+                    <HackathonExpertsOverview />
                 </div>
             </div>
         </div>

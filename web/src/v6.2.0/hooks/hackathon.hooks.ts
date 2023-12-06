@@ -59,9 +59,10 @@ export function useCreateHackathon() {
                 voting: number
                 finish: number
             }
+            expert_tags: string[]
             comment?: string
         }) => {
-            const { name, type, description, prize, dates, comment } = params
+            const { name, type, description, prize, dates, expert_tags, comment } = params
 
             try {
                 if (Object.values(EHackathonType).indexOf(type) < 0) {
@@ -245,6 +246,7 @@ export function useCreateHackathon() {
                             },
                             prize_distribution: [],
                             prize_wallets: [],
+                            expert_tags,
                             comment: `Create hackathon`,
                         },
                     },
@@ -305,13 +307,10 @@ export function useDaoHackathonList(
                 return {
                     account,
                     address: account.address,
-                    name: details.name,
                     type: EHackathonType.HACKATHON,
-                    prize_distribution: details.prize_distribution,
-                    prize_wallets: details.prize_wallets,
-                    metadata: details.metadata,
                     storagedata: storagedata_empty,
                     participants: participants_empty,
+                    ...details,
                 }
             },
         )
@@ -838,14 +837,15 @@ export function useUpdateHackathon() {
         async (params: {
             dates?: THackathonDetails['metadata']['dates']
             description?: string
+            expert_tags?: string[]
         }) => {
-            const { dates, description } = params
+            const { dates, description, expert_tags } = params
 
             try {
                 if (!hackathon?.update_enabled) {
                     throw new GoshError('Value error', 'Update hackathon time expired')
                 }
-                if (!dates && !description) {
+                if (!dates && description === undefined && expert_tags === undefined) {
                     throw new GoshError('Value error', 'Nothing was changed')
                 }
 
@@ -869,6 +869,7 @@ export function useUpdateHackathon() {
                 const event_address = await member.wallet!.updateHackathon({
                     name: hackathon.name,
                     metadata: updated_metadata,
+                    expert_tags,
                     comment: `Update ${hackathon.type}`,
                 })
                 setStatus((state) => ({

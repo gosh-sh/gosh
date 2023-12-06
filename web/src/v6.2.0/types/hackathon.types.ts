@@ -26,6 +26,7 @@ export type THackathonDetails = {
     type: EHackathonType
     prize_distribution: number[]
     prize_wallets: string[]
+    expert_tags: string[]
     metadata: {
         branch_name: string
         dates: THackathonDates

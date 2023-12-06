@@ -15,6 +15,7 @@ export class Hackathon extends BaseContract {
             name: details.value2,
             is_ready: details.value3,
             metadata: JSON.parse(details.value4),
+            expert_tags: details.isTag,
         }
     }
 }

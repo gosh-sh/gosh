@@ -1247,7 +1247,7 @@ export class DaoWallet extends BaseContract {
         }
         prize_distribution: number[]
         prize_wallets: string[]
-        tags?: string[]
+        expert_tags?: string[]
         comment?: string
         reviewers?: string[]
         cell?: boolean | undefined
@@ -1257,7 +1257,7 @@ export class DaoWallet extends BaseContract {
             metadata,
             prize_distribution,
             prize_wallets,
-            tags = [],
+            expert_tags = [],
             comment,
             reviewers,
             cell,
@@ -1268,7 +1268,7 @@ export class DaoWallet extends BaseContract {
             metadata: JSON.stringify(metadata),
             grants: prize_distribution,
             tip3wallet: prize_wallets,
-            tags,
+            tags: expert_tags,
             comment,
         }
 
@@ -1290,7 +1290,7 @@ export class DaoWallet extends BaseContract {
         }
         prize_distribution?: number[]
         prize_wallets?: string[]
-        tags?: string[]
+        expert_tags?: string[]
         comment?: string
         reviewers?: string[]
         cell?: boolean | undefined
@@ -1300,7 +1300,7 @@ export class DaoWallet extends BaseContract {
             metadata,
             prize_distribution = null,
             prize_wallets = null,
-            tags = [],
+            expert_tags = null,
             comment,
             reviewers,
             cell,
@@ -1311,7 +1311,7 @@ export class DaoWallet extends BaseContract {
             metadata: metadata ? JSON.stringify(metadata) : null,
             grants: prize_distribution,
             tip3wallet: prize_wallets,
-            tags,
+            tags: expert_tags,
             comment,
         }
 
