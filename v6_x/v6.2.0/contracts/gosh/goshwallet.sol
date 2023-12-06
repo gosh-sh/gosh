@@ -1001,6 +1001,32 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         }(_pubaddr, newName, fromCommit, _index);
     }
 
+    function getCellDeployBranch(
+        string repoName,
+        string newName,
+        string fromCommit,
+        string comment,
+        optional(uint32) time) external pure returns(TvmCell) {
+    	uint256 proposalKind = DEPLOY_BRANCH_KIND;
+        if (time.hasValue() == false) { time = block.timestamp; }
+        return abi.encode(proposalKind, repoName, newName, fromCommit, comment, time.get());
+    }
+
+    function _deployBranch(
+        string repoName,
+        string newName,
+        string fromCommit
+    ) public view senderIs(this) {
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(_limited == false, ERR_WALLET_LIMITED);
+        require(checkNameBranch(newName), ERR_WRONG_NAME);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        Repository(repo).deployBranch{
+            value: FEE_DEPLOY_BRANCH, bounce: true, flag: 1
+        }(_pubaddr, newName, fromCommit, _index);
+    }
+
     function deleteBranch(
         string repoName,
         string Name
@@ -2515,6 +2541,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == ADD_CURRENCIES_KIND) {
                 (,string name, optional(uint128[]) grant, optional(address[]) tip3, optional(string) metadata, optional(string[]) tags,,) = abi.decode(propData,(uint256, string, optional(uint128[]), optional(address[]), optional(string), optional(string[]), string, uint32));
                 _deployCurrencies(name, grant, tip3, metadata, tags);
+            } else 
+            if (kind == DEPLOY_BRANCH_KIND) {
+                (,string repoName, string newName, string fromCommit,,) = abi.decode(propData,(uint256, string, string, string, string, uint32));
+                _deployBranch(repoName, newName, fromCommit);
             }
         }
     }

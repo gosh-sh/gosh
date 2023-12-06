@@ -609,6 +609,19 @@ function getAddCurrenciesParams () external view
         (proposalKind, name, grant, tip3, metadata, tags,,) = abi.decode(propData,(uint256, string, optional(uint128[]), optional(address[]), optional(string), optional(string[]), string, uint32));
 }
 
+function getDeployBranchParamsData (TvmCell Data) external pure
+         returns(uint proposalKind, string repoName, string newName, string fromCommit)
+{
+        (proposalKind, repoName, newName, fromCommit,,) = abi.decode(Data,(uint256, string, string, string, string, uint32));
+}
+
+function getDeployBranchParams () external view
+         returns(uint proposalKind, string repoName, string newName, string fromCommit)
+{
+        (proposalKind, repoName, newName, fromCommit,,) = abi.decode(propData,(uint256, string, string, string, string, uint32));
+}
+
+
 function getDestroyGrantParamsData (TvmCell Data) external pure
          returns(uint proposalKind, string name)
 {

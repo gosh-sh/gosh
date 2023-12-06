@@ -775,6 +775,29 @@
 			]
 		},
 		{
+			"name": "getCellDeployBranch",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"newName","type":"string"},
+				{"name":"fromCommit","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "_deployBranch",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"newName","type":"string"},
+				{"name":"fromCommit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deleteBranch",
 			"inputs": [
 				{"name":"repoName","type":"string"},

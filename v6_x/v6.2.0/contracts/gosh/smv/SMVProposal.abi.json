@@ -644,6 +644,29 @@
 			]
 		},
 		{
+			"name": "getDeployBranchParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"name":"newName","type":"string"},
+				{"name":"fromCommit","type":"string"}
+			]
+		},
+		{
+			"name": "getDeployBranchParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"name":"newName","type":"string"},
+				{"name":"fromCommit","type":"string"}
+			]
+		},
+		{
 			"name": "getDestroyGrantParamsData",
 			"inputs": [
 				{"name":"Data","type":"cell"}
