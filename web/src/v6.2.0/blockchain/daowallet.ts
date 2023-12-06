@@ -302,6 +302,7 @@ export class DaoWallet extends BaseContract {
             addr: string
             version: string
         }
+        expert_tags?: string[]
         comment?: string
         reviewers?: string[]
         alone?: boolean
@@ -312,6 +313,7 @@ export class DaoWallet extends BaseContract {
             previous,
             comment = '',
             description = '',
+            expert_tags = [],
             reviewers = [],
             alone,
             cell,
@@ -332,7 +334,7 @@ export class DaoWallet extends BaseContract {
             return null
         } else {
             const cell: any = await this.createRepository({ ...params, cell: true })
-            return await this.createSingleEvent({ cell, reviewers })
+            return await this.createSingleEvent({ cell, reviewers, expert_tags })
         }
     }
 
@@ -458,16 +460,8 @@ export class DaoWallet extends BaseContract {
         reviewers?: string[]
         alone?: boolean
         cell?: boolean
-        expert_tags?: string[]
     }) {
-        const {
-            amount,
-            comment = '',
-            reviewers = [],
-            alone,
-            cell,
-            expert_tags = [],
-        } = params
+        const { amount, comment = '', reviewers = [], alone, cell } = params
 
         const aloneParams = { token: amount }
         const cellParams = { ...aloneParams, comment }
@@ -480,7 +474,7 @@ export class DaoWallet extends BaseContract {
             return null
         } else {
             const cell: any = await this.mintDaoTokens({ ...params, cell: true })
-            return await this.createSingleEvent({ cell, reviewers, expert_tags })
+            return await this.createSingleEvent({ cell, reviewers })
         }
     }
 

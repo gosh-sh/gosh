@@ -28,7 +28,7 @@ export function useCreateRepository() {
     )
 
     const create = useCallback(
-        async (name: string, description?: string) => {
+        async (name: string, description?: string, expert_tags?: string[]) => {
             try {
                 setStatus((state) => ({
                     ...state,
@@ -79,6 +79,7 @@ export function useCreateRepository() {
                 const eventaddr = await member.wallet.createRepository({
                     name,
                     description,
+                    expert_tags,
                     comment,
                     alone,
                 })
