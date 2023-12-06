@@ -25,7 +25,7 @@ export GOSH_VERSION=$GOSH_VERSION
 # Set network
 NETWORK=`cat ../../multisig/Giver.network`
 # everdev network add $NETWORK $NETWORK
-tonos-cli config --url $NETWORK
+tonos-cli config --url $NETWORK --lifetime 1 --timeout 1000
 # tonos-cli config --async_call true
 echo "========== Network: $NETWORK"
 

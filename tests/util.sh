@@ -447,11 +447,11 @@ function wait_account_balance {
 
 function deploy_repo {
   if [[ $VERSION =~ "v1_x" ]]; then
-    RESULT=$(tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
-      "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1)
+    tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR deployRepository \
+      "{\"nameRepo\":\"$REPO_NAME\", \"previous\":null}" || exit 1
   else
-    RESULT=$(tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \
-      "{\"nameRepo\":\"$REPO_NAME\",\"descr\":\"\",\"previous\":null}" || exit 1)
+    tonos-cli call --abi $WALLET_ABI --sign $WALLET_KEYS $WALLET_ADDR AloneDeployRepository \
+      "{\"nameRepo\":\"$REPO_NAME\",\"descr\":\"\",\"previous\":null}" || exit 1
   fi
   # ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrRepository "{\"name\":\"$REPO_NAME\",\"dao\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | jq -r .value0)
   # echo $ADDR
