@@ -36,6 +36,9 @@ contract Grant is Modifiers {
     bool _inprocess = false;
     mapping (uint128 => mapping (uint256 => bool)) public _SortedForGrants;
     mapping (address => bool) _used;
+    string[] _isTag;
+    mapping(uint256 => mapping(uint256 => bool)) _daoMembersTag;
+    mapping(uint256 => Multiples) _daoTagData;
 
     constructor(
         address pubaddr,
@@ -43,6 +46,7 @@ contract Grant is Modifiers {
         string metadata,
         uint128[] grants,
         address[] tip3wallet,
+        string[] tags,
         TvmCell WalletCode,
         uint128 index) onlyOwner {
         tvm.accept();
@@ -51,15 +55,17 @@ contract Grant is Modifiers {
         _systemcontract = systemcontract;
         _tip3wallet = tip3wallet;
         _grant = grants;
+        _isTag = tags;
         require(_tip3wallet.length <= 10, ERR_WRONG_NUMBER_MEMBER);
         require(_grant.length <= 10, ERR_WRONG_NUMBER_MEMBER);
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
     }
 
-    function addCurrencies(optional(uint128[]) grant, optional(address[]) tip3wallet, optional(string) metadata, address pubaddr, uint128 index) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
+    function addCurrencies(optional(string[]) tags, optional(uint128[]) grant, optional(address[]) tip3wallet, optional(string) metadata, address pubaddr, uint128 index) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
         require(_ready == false, ERR_ALREADY_CONFIRMED);
         require(_readytovote == false, ERR_ALREADY_CONFIRMED);
         require(_votes.length == 0, ERR_ALREADY_CONFIRMED);
+        if (tags.hasValue()) { _isTag = tags.get(); }
         if (metadata.hasValue()) { _metadata = metadata.get(); }
         if (grant.hasValue()) { _grant = grant.get(); }
         if (tip3wallet.hasValue() == false) { return; }
@@ -84,8 +90,10 @@ contract Grant is Modifiers {
         _timeofend = timeofend;
     }
 
-    function setWallets(mapping(uint256 => MemberToken) wallets) public senderIs(_goshdao) accept {
+    function setWallets(mapping(uint256 => MemberToken) wallets, mapping(uint256 => mapping(uint256 => bool)) daoMembersTag, mapping(uint256 => Multiples) daoTagData) public senderIs(_goshdao) accept {
         _wallets = wallets;
+        _daoMembersTag = daoMembersTag;
+        _daoTagData = daoTagData;
     }
 
     function voteFromWallet(uint128 amount, uint128 indexCandidate, address pubaddr, uint128 index, string comment) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
@@ -94,7 +102,27 @@ contract Grant is Modifiers {
         (, uint256 keyaddr) = pubaddr.unpack();
         require(_wallets[keyaddr].count >= amount, ERR_ALREADY_CONFIRMED);
         _wallets[keyaddr].count -= amount;
+        this.calculateVotePower{value: 0.1 ton, flag: 1}(amount, keyaddr, uint128(100), uint256(0), indexCandidate);
+
         _votes[indexCandidate] += amount;
+    }
+
+    function calculateVotePower(uint128 amount, uint256 keyaddr, uint128 sum, uint256 key, uint128 indexCandidate) public senderIs(this) accept {
+        for (uint128 i = 0; i <= BATCH_SIZE_TAG; i++) {
+            optional(uint256, bool) res = _daoMembersTag[keyaddr].next(key);
+            if (res.hasValue() == false) {
+                sum = sum * amount / 100;
+                _votes[indexCandidate] += sum;
+                return;
+            }
+            (uint256 newkey,bool worker) = res.get();
+            worker;
+            key = newkey;
+            for (uint128 j = 0; j < _isTag.length; j++) {
+                if (key == tvm.hash(_isTag[j])) { sum += _daoTagData[key].value - 100; break; }
+            }
+        }
+        this.calculateVotePower{value: 0.1 ton, flag: 1}(amount, keyaddr, sum, key, indexCandidate);
     }
 
     function sendTokens(address pubaddr, uint128 index) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {

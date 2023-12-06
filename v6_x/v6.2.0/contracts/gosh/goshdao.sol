@@ -176,7 +176,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
 
     function askWallets() public view minValue(0.2 ton) {
-        Grant(msg.sender).setWallets{value: 0.1 ton, flag: 1}(_wallets);
+        Grant(msg.sender).setWallets{value: 0.1 ton, flag: 1}(_wallets, _daoMembersTag, _daoTagData);
     }
     
     function deployedWallet(address systemcontract, address goshdao, uint128 index, string ver) public   {

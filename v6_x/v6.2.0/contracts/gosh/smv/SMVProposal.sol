@@ -586,27 +586,27 @@ function getDeleteDaoMembersTagParams () external view
 }
 
 function getDeployGrantParamsData (TvmCell Data) external pure
-         returns(uint proposalKind, string name, string reponame, uint128[] grant, address[] tip3)
+         returns(uint proposalKind, string name, string reponame, uint128[] grant, address[] tip3, string[] tags)
 {
-        (proposalKind, name, reponame, grant, tip3,,) = abi.decode(Data,(uint256, string, string, uint128[], address[], string, uint32));
+        (proposalKind, name, reponame, grant, tip3, tags,,) = abi.decode(Data,(uint256, string, string, uint128[], address[], string[], string, uint32));
 }
 
 function getDeployGrantParams () external view
-         returns(uint proposalKind, string name, string reponame, uint128[] grant, address[] tip3)
+         returns(uint proposalKind, string name, string reponame, uint128[] grant, address[] tip3, string[] tags)
 {
-        (proposalKind, name, reponame, grant, tip3,,) = abi.decode(propData,(uint256, string, string, uint128[], address[], string, uint32));
+        (proposalKind, name, reponame, grant, tip3, tags,,) = abi.decode(propData,(uint256, string, string, uint128[], address[], string[], string, uint32));
 }
 
 function getAddCurrenciesParamsData (TvmCell Data) external pure
-         returns(uint proposalKind, string name, optional(uint128[]) grant, optional(address[]) tip3, optional(string) metadata)
+         returns(uint proposalKind, string name, optional(uint128[]) grant, optional(address[]) tip3, optional(string) metadata, optional(string[]) tags)
 {
-        (proposalKind, name, grant, tip3, metadata,,) = abi.decode(Data,(uint256, string, optional(uint128[]), optional(address[]), optional(string), string, uint32));
+        (proposalKind, name, grant, tip3, metadata, tags,,) = abi.decode(Data,(uint256, string, optional(uint128[]), optional(address[]), optional(string), optional(string[]), string, uint32));
 }
 
 function getAddCurrenciesParams () external view
-         returns(uint proposalKind, string name, optional(uint128[]) grant, optional(address[]) tip3, optional(string) metadata)
+         returns(uint proposalKind, string name, optional(uint128[]) grant, optional(address[]) tip3, optional(string) metadata, optional(string[]) tags)
 {
-        (proposalKind, name, grant, tip3, metadata,,) = abi.decode(propData,(uint256, string, optional(uint128[]), optional(address[]), optional(string), string, uint32));
+        (proposalKind, name, grant, tip3, metadata, tags,,) = abi.decode(propData,(uint256, string, optional(uint128[]), optional(address[]), optional(string), optional(string[]), string, uint32));
 }
 
 function getDestroyGrantParamsData (TvmCell Data) external pure

@@ -67,20 +67,6 @@
 			]
 		},
 		{
-			"name": "getCellForTransferTip3",
-			"inputs": [
-				{"name":"pubkey","type":"uint256"},
-				{"name":"owner","type":"optional(address)"},
-				{"name":"daowallet","type":"address"},
-				{"name":"tokens","type":"uint128"},
-				{"name":"comment","type":"string"},
-				{"name":"time","type":"optional(uint32)"}
-			],
-			"outputs": [
-				{"name":"value0","type":"cell"}
-			]
-		},
-		{
 			"name": "getCellForIndex",
 			"inputs": [
 				{"name":"data","type":"cell"},
@@ -1420,6 +1406,7 @@
 				{"name":"grant","type":"optional(uint128[])"},
 				{"name":"tip3wallet","type":"optional(address[])"},
 				{"name":"metadata","type":"optional(string)"},
+				{"name":"tags","type":"optional(string[])"},
 				{"name":"comment","type":"string"},
 				{"name":"time","type":"optional(uint32)"}
 			],
@@ -1434,6 +1421,7 @@
 				{"name":"metadata","type":"string"},
 				{"name":"grants","type":"uint128[]"},
 				{"name":"tip3wallet","type":"address[]"},
+				{"name":"tags","type":"string[]"},
 				{"name":"comment","type":"string"},
 				{"name":"time","type":"optional(uint32)"}
 			],
