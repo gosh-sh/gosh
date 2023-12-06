@@ -1,11 +1,11 @@
-import { TonClient, NetworkQueriesProtocol } from '@eversdk/core'
 import { createDockerDesktopClient } from '@docker/extension-api-client'
-import { GoshError } from './errors'
-import { VersionController } from './blockchain/versioncontroller'
+import { NetworkQueriesProtocol, TonClient } from '@eversdk/core'
 import { SupabaseClient, createClient } from '@supabase/supabase-js'
 import { AppConfig as _AppConfig } from 'react-gosh'
-import { DISABLED_VERSIONS } from './constants'
 import { TIP3Root } from './blockchain/tip3root'
+import { VersionController } from './blockchain/versioncontroller'
+import { DISABLED_VERSIONS } from './constants'
+import { GoshError } from './errors'
 
 export class AppConfig {
     static endpoints: string[]
@@ -43,6 +43,9 @@ export class AppConfig {
 
         AppConfig.endpoints = endpoints
         AppConfig.goshclient = new TonClient({
+            abi: {
+                message_expiration_timeout: 5000,
+            },
             network: {
                 endpoints,
                 queries_protocol:
@@ -50,6 +53,8 @@ export class AppConfig {
                         ? NetworkQueriesProtocol.HTTP
                         : NetworkQueriesProtocol.WS,
                 sending_endpoint_count: endpoints.length,
+                message_processing_timeout: 1000,
+                wait_for_timeout: 1000,
             },
         })
         AppConfig.dockerclient =
@@ -106,6 +111,9 @@ export class AppConfig {
         const versions = JSON.parse(import.meta.env.REACT_APP_GOSH || '{}')
         const config = {
             goshclient: {
+                abi: {
+                    message_expiration_timeout: 5000,
+                },
                 network: {
                     endpoints,
                     queries_protocol:
@@ -113,6 +121,8 @@ export class AppConfig {
                             ? NetworkQueriesProtocol.HTTP
                             : NetworkQueriesProtocol.WS,
                     sending_endpoint_count: endpoints?.length,
+                    message_processing_timeout: 1000,
+                    wait_for_timeout: 1000,
                 },
             },
             goshroot: import.meta.env.REACT_APP_GOSH_ROOTADDR || '',
