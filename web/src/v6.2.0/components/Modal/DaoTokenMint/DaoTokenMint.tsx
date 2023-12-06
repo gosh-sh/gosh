@@ -46,7 +46,6 @@ const DaoTokenMintModal = () => {
                 initialValues={{
                     amount: '',
                     comment: '',
-                    expert_tags: [],
                 }}
                 validationSchema={yup.object().shape({
                     amount: yup.number().integer().positive().required(),
