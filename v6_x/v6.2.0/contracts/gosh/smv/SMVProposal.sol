@@ -579,6 +579,18 @@ function getSetDaoMembersTagParamsData (TvmCell Data) external pure
         (proposalKind, pubaddr, tags,,) = abi.decode(Data,(uint256, address[], string[], string, uint32));
 }
 
+function getSetApprovedTagForDaoProposalParams () external view
+         returns(uint proposalKind, mapping(uint256 => bool) approved_proposal_with_tags)
+{
+        (proposalKind, approved_proposal_with_tags,,) = abi.decode(propData,(uint256, mapping(uint256 => bool), string, uint32));
+}
+
+function getSetApprovedTagForDaoProposalParamsData (TvmCell Data) external pure
+         returns(uint proposalKind, mapping(uint256 => bool) approved_proposal_with_tags)
+{
+        (proposalKind, approved_proposal_with_tags,,) = abi.decode(Data,(uint256, mapping(uint256 => bool), string, uint32));
+}
+
 function getDeleteDaoMembersTagParams () external view
          returns(uint proposalKind, address[] pubaddr, string tag)
 {

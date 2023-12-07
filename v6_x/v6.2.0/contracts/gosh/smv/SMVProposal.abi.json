@@ -580,6 +580,25 @@
 			]
 		},
 		{
+			"name": "getSetApprovedTagForDaoProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"approved_proposal_with_tags","type":"map(uint256,bool)"}
+			]
+		},
+		{
+			"name": "getSetApprovedTagForDaoProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"approved_proposal_with_tags","type":"map(uint256,bool)"}
+			]
+		},
+		{
 			"name": "getDeleteDaoMembersTagParams",
 			"inputs": [
 			],

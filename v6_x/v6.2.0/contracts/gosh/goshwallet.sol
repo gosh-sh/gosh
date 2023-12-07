@@ -2132,6 +2132,20 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, repoName, taskName, comment, time.get());
     }
+
+    function getCellSetApprovedTagProposalsForDao(
+        mapping(uint256 => bool) approved_proposal_with_tags,
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
+        uint256 proposalKind = SET_ALLOWED_PROPOSAL_WITH_TAG_KIND;
+        if (time.hasValue() == false) { time = block.timestamp; }
+        return abi.encode(proposalKind, approved_proposal_with_tags, comment, time.get());
+    }
+
+    function _setApprovedTagProposalsForDao(
+        mapping(uint256 => bool) approved_proposal_with_tags
+    ) private view {
+        GoshDao(_goshdao).setApprovedProposal{value: 0.1 ton, flag: 1}(approved_proposal_with_tags, _pubaddr, _index);
+    }
     
     function startMultiProposal(
         uint128 number,
@@ -2550,6 +2564,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == DEPLOY_BRANCH_KIND) {
                 (,string repoName, string newName, string fromCommit,,) = abi.decode(propData,(uint256, string, string, string, string, uint32));
                 _deployBranch(repoName, newName, fromCommit);
+            } else 
+            if (kind == SET_ALLOWED_PROPOSAL_WITH_TAG_KIND) {
+                (,mapping(uint256 => bool) approved_proposal_with_tags,,) = abi.decode(propData,(uint256, mapping(uint256 => bool), string, uint32));
+                _setApprovedTagProposalsForDao(approved_proposal_with_tags);
             }
         }
     }
