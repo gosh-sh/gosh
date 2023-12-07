@@ -32,7 +32,7 @@ contract Grant is Modifiers {
     bool _ready = false;
     mapping(uint8 => TvmCell) _code;
     mapping(uint256 => MemberToken) _wallets;
-    mapping(uint256 => MemberToken) _walletsvoted;
+    mapping(uint256 => mapping (uint128 => uint128)) _walletsvoted;
     uint128 _timeofend;
     bool _inprocess = false;
     mapping (uint128 => mapping (uint256 => bool)) public _SortedForGrants;
@@ -103,7 +103,7 @@ contract Grant is Modifiers {
         (, uint256 keyaddr) = pubaddr.unpack();
         require(_wallets[keyaddr].count >= amount, ERR_ALREADY_CONFIRMED);
         _wallets[keyaddr].count -= amount;
-        _walletsvoted[keyaddr].count += amount;
+        _walletsvoted[keyaddr][indexCandidate] += amount;
         this.calculateVotePower{value: 0.1 ton, flag: 1}(amount, keyaddr, uint128(100), uint256(0), indexCandidate);
     }
 
@@ -212,7 +212,7 @@ contract Grant is Modifiers {
     }
     
     //Getters    
-    function getDetails() external view returns(uint128[], address[], uint128[], string, bool, string, string[] isTag, mapping(uint256 => MemberToken) wallets, string[] details, mapping(uint256 => MemberToken) walletsvoted) {
+    function getDetails() external view returns(uint128[], address[], uint128[], string, bool, string, string[] isTag, mapping(uint256 => MemberToken) wallets, string[] details, mapping(uint256 => mapping (uint128 => uint128)) walletsvoted) {
         return (_votes, _owner, _grant, _name, _ready, _metadata, _isTag, _wallets, _details, _walletsvoted);
     }
 
