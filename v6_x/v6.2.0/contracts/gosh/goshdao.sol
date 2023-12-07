@@ -52,6 +52,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     mapping(uint256 => string) _hashtag;
     mapping(uint256 => string) _versions;
     mapping(uint256 => address) _my_wallets;
+    mapping(uint256 => bool) _approved_proposal_with_tags;
     uint128 _tokenforperson = 20;
     uint128 _limit_wallets;
     //added for SMV
@@ -202,7 +203,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function getPreviousInfo(string name) public internalMsg view {
         require(_nameDao == name, ERR_WRONG_DAO);
         tvm.accept();
-        TvmCell a = abi.encode(_allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _wallets, _hashtag, _my_wallets, _daoMembers, _reserve, _allbalance, _totalsupply, _versions, _paidMembership, _daoMembersTag, _daoTagData);
+        TvmCell a = abi.encode(_allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _wallets, _hashtag, _my_wallets, _daoMembers, _reserve, _allbalance, _totalsupply, _versions, _paidMembership, _daoMembersTag, _daoTagData, _approved_proposal_with_tags);
         GoshDao(msg.sender).getPreviousInfoVersion{value: 0.1 ton, flag: 1}(version, a);
     }
     
@@ -247,7 +248,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (ver == "6.2.0") {
             mapping(uint256 => MemberToken) wallets;
             mapping(uint256 => string) hashtag;
-            ( _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, wallets, hashtag, _my_wallets, _daoMembers, _reserve, , _totalsupply , _versions, _paidMembership, _daoMembersTag, _daoTagData) = abi.decode(a, (bool, bool, bool, bool, mapping(uint256 => MemberToken), mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string), mapping(uint8 => PaidMember), mapping(uint256 => mapping(uint256 => bool)), mapping(uint256 => Multiples)));
+            ( _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, wallets, hashtag, _my_wallets, _daoMembers, _reserve, , _totalsupply , _versions, _paidMembership, _daoMembersTag, _daoTagData, _approved_proposal_with_tags) = abi.decode(a, (bool, bool, bool, bool, mapping(uint256 => MemberToken), mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string), mapping(uint8 => PaidMember), mapping(uint256 => mapping(uint256 => bool)), mapping(uint256 => Multiples), mapping(uint256 => bool)));
             _versions[tvm.hash(version)] = version;
             uint256 zero;
             this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
@@ -326,6 +327,24 @@ contract GoshDao is Modifiers, TokenRootOwner {
             }
         }
         getMoney();
+    }
+
+    function setApprovedProposal(mapping(uint256 => bool) approved_proposal_with_tags, address pubaddr, uint128 index) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index)) {
+        _approved_proposal_with_tags = approved_proposal_with_tags;
+    }
+
+    function isItApprovedProposal(
+        uint256 kind,
+        TvmCell proposal,
+        uint128 num_clients, 
+        address[] reviewers,
+        string[] data,
+        address pubaddr, 
+        uint128 index) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index)) {
+        if (_approved_proposal_with_tags[kind] == true) {
+            GoshWallet(msg.sender).startOneProposalWithTags{value: 0.1 ton, flag: 1}(proposal, num_clients, reviewers, data);
+        }
+
     }
     
     function returnWalletsVersion(string ver, uint256 key, mapping(uint256 => MemberToken) wallets, mapping(uint256 => string) tags) public internalMsg senderIs(address(this)) accept {

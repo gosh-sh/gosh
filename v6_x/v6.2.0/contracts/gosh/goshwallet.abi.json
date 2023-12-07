@@ -1571,11 +1571,12 @@
 			]
 		},
 		{
-			"name": "startOneProposalTag",
+			"name": "startOneProposalWithTags",
 			"inputs": [
 				{"name":"proposal","type":"cell"},
 				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
+				{"name":"reviewers","type":"address[]"},
+				{"name":"data","type":"string[]"}
 			],
 			"outputs": [
 			]

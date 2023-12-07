@@ -2163,20 +2163,22 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_limited == false, ERR_WALLET_LIMITED);
         tvm.accept();
         _saveMsg();
-        _startProposalForOperation(proposal, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers, data);
+        if (data.length == 0) {
+            _startProposalForOperation(proposal, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers, data);
+        } else {
+            TvmSlice s = proposal.toSlice();
+            uint256 kind = s.load(uint256);
+            GoshDao(_goshdao).isItApprovedProposal{value: 0.1 ton, flag: 1}(kind, proposal, num_clients, reviewers, data, _pubaddr, _index);
+        }
         getMoney();
     }
 
-    function startOneProposalTag(
+    function startOneProposalWithTags(
         TvmCell proposal,
         uint128 num_clients, 
-        address[] reviewers
-    ) public onlyOwnerPubkeyOptional(_access)  {
-        require(_tombstone == false, ERR_TOMBSTONE);
-        require(_limited == false, ERR_WALLET_LIMITED);
-        tvm.accept();
-        _saveMsg();
-        string[] data;
+        address[] reviewers,
+        string[] data
+    ) public senderIs(_goshdao) accept {
         _startProposalForOperation(proposal, PROPOSAL_START_AFTER, PROPOSAL_DURATION, num_clients, reviewers, data);
         getMoney();
     }

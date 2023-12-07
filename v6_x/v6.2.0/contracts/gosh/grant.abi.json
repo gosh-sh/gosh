@@ -160,11 +160,12 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"address[]"},
-				{"name":"value1","type":"uint128[]"},
-				{"name":"value2","type":"string"},
-				{"name":"value3","type":"bool"},
-				{"name":"value4","type":"string"},
+				{"name":"value0","type":"uint128[]"},
+				{"name":"value1","type":"address[]"},
+				{"name":"value2","type":"uint128[]"},
+				{"name":"value3","type":"string"},
+				{"name":"value4","type":"bool"},
+				{"name":"value5","type":"string"},
 				{"name":"isTag","type":"string[]"}
 			]
 		},
