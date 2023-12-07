@@ -98,7 +98,7 @@ contract Grant is Modifiers {
     }
 
     function voteFromWallet(uint128 amount, uint128 indexCandidate, address pubaddr, uint128 index, string comment) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index)) accept {
-        require(_timeofend <= block.timestamp, ERR_ALREADY_CONFIRMED);
+        require(_timeofend > block.timestamp, ERR_ALREADY_CONFIRMED);
         comment;
         (, uint256 keyaddr) = pubaddr.unpack();
         require(_wallets[keyaddr].count >= amount, ERR_ALREADY_CONFIRMED);
