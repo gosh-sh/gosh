@@ -261,7 +261,15 @@ function calculateVotePower(address _locker, uint256 _platform_id, bool choice, 
         worker;
         key = newkey;
         for (uint128 j = 0; j < _isTag.length; j++) {
-            if (key == tvm.hash(_isTag[j])) { sum += _daoTagData[key].value - 100; break; }
+            if (key == tvm.hash(_isTag[j])) { 
+                sum += _daoTagData[key].value; 
+                if (sum < 100) {
+                    this.continueVote{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, 0, sender);
+                    return;
+                }
+                sum -= 100;
+                break; 
+            }
         }
     }
     this.calculateVotePower{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, amount, pubaddr, sum, key, sender);
