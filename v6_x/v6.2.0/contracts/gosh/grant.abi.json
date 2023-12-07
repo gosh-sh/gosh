@@ -168,7 +168,8 @@
 				{"name":"value5","type":"string"},
 				{"name":"isTag","type":"string[]"},
 				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
-				{"name":"details","type":"string[]"}
+				{"name":"details","type":"string[]"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"walletsvoted","type":"map(uint256,tuple)"}
 			]
 		},
 		{
@@ -241,6 +242,7 @@
 		{"name":"_ready","type":"bool"},
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"_wallets","type":"map(uint256,tuple)"},
+		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"_walletsvoted","type":"map(uint256,tuple)"},
 		{"name":"_timeofend","type":"uint128"},
 		{"name":"_inprocess","type":"bool"},
 		{"name":"_SortedForGrants","type":"map(uint128,map(uint256,bool))"},

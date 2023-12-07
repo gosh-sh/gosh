@@ -32,6 +32,7 @@ contract Grant is Modifiers {
     bool _ready = false;
     mapping(uint8 => TvmCell) _code;
     mapping(uint256 => MemberToken) _wallets;
+    mapping(uint256 => MemberToken) _walletsvoted;
     uint128 _timeofend;
     bool _inprocess = false;
     mapping (uint128 => mapping (uint256 => bool)) public _SortedForGrants;
@@ -102,9 +103,8 @@ contract Grant is Modifiers {
         (, uint256 keyaddr) = pubaddr.unpack();
         require(_wallets[keyaddr].count >= amount, ERR_ALREADY_CONFIRMED);
         _wallets[keyaddr].count -= amount;
+        _walletsvoted[keyaddr].count += amount;
         this.calculateVotePower{value: 0.1 ton, flag: 1}(amount, keyaddr, uint128(100), uint256(0), indexCandidate);
-
-        _votes[indexCandidate] += amount;
     }
 
     function calculateVotePower(uint128 amount, uint256 keyaddr, uint128 sum, uint256 key, uint128 indexCandidate) public senderIs(this) accept {
@@ -119,7 +119,12 @@ contract Grant is Modifiers {
             worker;
             key = newkey;
             for (uint128 j = 0; j < _isTag.length; j++) {
-                if (key == tvm.hash(_isTag[j])) { sum += _daoTagData[key].value - 100; break; }
+                if (key == tvm.hash(_isTag[j])) { 
+                    sum += _daoTagData[key].value; 
+                    if (sum < 100) { return; }
+                    sum -= 100; 
+                    break; 
+            }
             }
         }
         this.calculateVotePower{value: 0.1 ton, flag: 1}(amount, keyaddr, sum, key, indexCandidate);
@@ -207,8 +212,8 @@ contract Grant is Modifiers {
     }
     
     //Getters    
-    function getDetails() external view returns(uint128[], address[], uint128[], string, bool, string, string[] isTag, mapping(uint256 => MemberToken) wallets, string[] details) {
-        return (_votes, _owner, _grant, _name, _ready, _metadata, _isTag, _wallets, _details);
+    function getDetails() external view returns(uint128[], address[], uint128[], string, bool, string, string[] isTag, mapping(uint256 => MemberToken) wallets, string[] details, mapping(uint256 => MemberToken) walletsvoted) {
+        return (_votes, _owner, _grant, _name, _ready, _metadata, _isTag, _wallets, _details, _walletsvoted);
     }
 
     function getVersion() external pure returns(string, string) {
