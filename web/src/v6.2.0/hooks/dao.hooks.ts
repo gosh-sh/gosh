@@ -826,10 +826,16 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
                     message.msg_type,
                 )
                 if (decoded && triggers.indexOf(decoded.name) >= 0) {
+                    console.debug('DAO account messages trigger', decoded.name, decoded)
                     await getDetailsSubscription(data.details.account!)
                 }
             },
         )
+
+        data.details.account?.account.subscribeAccount('boc', async () => {
+            console.debug('DAO account boc trigger')
+            await getDetailsSubscription(data.details.account!)
+        })
 
         // Updates by interval
         const interval = setLockableInterval(async () => {
@@ -1137,8 +1143,14 @@ export function useDaoMember(params: { initialize?: boolean; subscribe?: boolean
                 message.msg_type,
             )
             if (decoded && triggers.indexOf(decoded.name) >= 0) {
+                console.debug('DAO member message trigger', decoded.name, decoded)
                 await getDetails()
             }
+        })
+
+        data.wallet?.account.subscribeAccount('boc', async () => {
+            console.debug('DAO member boc trigger')
+            await getDetails()
         })
 
         return () => {
@@ -2355,6 +2367,7 @@ export function useDaoEvent(
                 const details = await event.account!.getDetails({
                     wallet: member.wallet,
                 })
+                console.debug('Event messages trigger', decoded.name, details)
                 setEvents((state) => ({
                     ...state,
                     items: state.items.map((item) => {
@@ -2365,6 +2378,22 @@ export function useDaoEvent(
                     }),
                 }))
             }
+        })
+
+        await event.account.account.subscribeAccount('boc', async () => {
+            const details = await event.account!.getDetails({
+                wallet: member.wallet,
+            })
+            console.debug('Event account boc trigger', details)
+            setEvents((state) => ({
+                ...state,
+                items: state.items.map((item) => {
+                    if (item.address === event!.address) {
+                        return { ...item, ...details }
+                    }
+                    return item
+                }),
+            }))
         })
     }, [event?.address, member.isFetched])
 
@@ -3422,7 +3451,6 @@ export function useMintDaoTokens() {
                     amount,
                     comment,
                     alone,
-                    expert_tags,
                 })
 
                 // Event post create
@@ -4949,6 +4977,10 @@ export function useTask(
                     await getTaskData(task.account! as Task)
                 }
             })
+
+            await task.account.account.subscribeAccount('boc', async () => {
+                await getTaskData(task.account! as Task)
+            })
         }
 
         const _checkExists = () => {
@@ -5086,6 +5118,10 @@ export function useMilestone(
                 if (decoded && triggers.indexOf(decoded.name) >= 0) {
                     await getMilestoneData(dao.name!, task.account! as Milestone)
                 }
+            })
+
+            await task.account.account.subscribeAccount('boc', async () => {
+                await getMilestoneData(dao.name!, task.account! as Milestone)
             })
         }
 
