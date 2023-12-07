@@ -25,10 +25,11 @@ import "grant.sol";
 import "./libraries/GoshLib.sol";
 import "../smv/TokenRootOwner.sol";
 import "../smv/SMVProposal.sol";
+import "./smv/modifiers/SMVconfiguration.sol";
 
 
 /* Root contract of gosh */
-contract GoshDao is Modifiers, TokenRootOwner {
+contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
     string constant version = "6.2.0";
 
     string _previousversion;
@@ -156,6 +157,12 @@ contract GoshDao is Modifiers, TokenRootOwner {
         m_SMVClientCode = tvm.setCodeSalt(SMVClientCode, b.toCell());
 
         _code[m_contentSignature] = contentSignature;
+        _approved_proposal_with_tags[SETCOMMIT_PROPOSAL_KIND] = true;
+        _approved_proposal_with_tags[ADD_PROTECTED_BRANCH_PROPOSAL_KIND] = true;
+        _approved_proposal_with_tags[DELETE_PROTECTED_BRANCH_PROPOSAL_KIND] = true;
+        _approved_proposal_with_tags[DEPLOY_REPO_PROPOSAL_KIND] = true;
+        _approved_proposal_with_tags[DESTROY_REPOSITORY_PROPOSAL_KIND] = true;
+        _approved_proposal_with_tags[DEPLOY_BRANCH_KIND] = true;
         getMoney();
         ///////////////////////////////////////
         _rootTokenRoot = _deployRoot (address.makeAddrStd(0,0), 0, 0, false, false, false, address.makeAddrStd(0,0), block.timestamp);
