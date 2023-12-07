@@ -73,7 +73,7 @@ contract Grant is Modifiers {
         this.addCurrenciesIn{value: 0.1 ton, flag: 1}(tip3wallet.get(), 0);
     }
 
-    function addCurrenciesIn(address[] tip3wallet, uint128 index) public senderIs(this) {
+    function addCurrenciesIn(address[] tip3wallet, uint128 index) public senderIs(this) accept {
         if (index >= tip3wallet.length) { return; }
         _tip3wallet.push(tip3wallet[index]);
         this.addCurrenciesIn{value: 0.1 ton, flag: 1}(tip3wallet, index);

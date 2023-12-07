@@ -2036,7 +2036,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint128 index,
         string name,
         string comment
-    ) public view onlyOwnerPubkeyOptional(_access) {
+    ) public view onlyOwnerPubkeyOptional(_access) accept {
         address addr = GoshLib.calculateGrantAddress(_code[m_GrantCode], _goshdao, name);
         Grant(addr).voteFromWallet{value: 0.1 ton, flag: 1}(amount, index, _pubaddr, _index, comment);
     }

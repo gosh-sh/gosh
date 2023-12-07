@@ -336,7 +336,7 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
         getMoney();
     }
 
-    function setApprovedProposal(mapping(uint256 => bool) approved_proposal_with_tags, address pubaddr, uint128 index) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index)) {
+    function setApprovedProposal(mapping(uint256 => bool) approved_proposal_with_tags, address pubaddr, uint128 index) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index)) accept {
         _approved_proposal_with_tags = approved_proposal_with_tags;
     }
 
@@ -347,7 +347,7 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
         address[] reviewers,
         string[] data,
         address pubaddr, 
-        uint128 index) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index)) {
+        uint128 index) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index)) accept {
         if (_approved_proposal_with_tags[kind] == true) {
             GoshWallet(msg.sender).startOneProposalWithTags{value: 0.1 ton, flag: 1}(proposal, num_clients, reviewers, data);
         }
