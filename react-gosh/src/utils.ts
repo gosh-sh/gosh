@@ -19,7 +19,7 @@ export const sleep = (ms: number = 0) => {
 
 export const whileFinite = async (
     fn: any,
-    msDelay: number = 5000,
+    msDelay: number = 1000,
     msTimeout: number = 120000,
 ): Promise<boolean> => {
     while (msTimeout > 0) {
