@@ -865,6 +865,10 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
     function setNewTagsIn (string[] tags, uint128[] multiples, uint128 index) public senderIs(address(this))  accept
     {
         if (index >= tags.length) { return; }
+        if (multiples[index] < 100) {
+            this.setNewTagsIn{value: 0.2 ton, flag: 1}(tags, multiples, index + 1);
+            return;
+        }
         if (_daoTagData.exists(tvm.hash(tags[index]))) {        
             address tag = GoshLib.calculateTagSupplyAddress(_code[m_TagSupplyCode], this, tvm.hash(tags[index]));
             TagSupply(tag).changeMultiples{value: 0.1 ton, flag: 1}(multiples[index]);
