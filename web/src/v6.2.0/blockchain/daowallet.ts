@@ -1579,7 +1579,7 @@ export class DaoWallet extends BaseContract {
                 if (type === EDaoEventType.BRANCH_CREATE) {
                     return await this.createRepositoryBranch({ ...params, cell: true })
                 }
-                if (type === EDaoEventType.HACKATHON_VOTING_CREATE) {
+                if (type === EDaoEventType.HACKATHON_APPS_APPROVE) {
                     return await this.approveHackathonApps({ ...params, cell: true })
                 }
                 return null
