@@ -22,11 +22,25 @@ const ListBoundaryInner = (props: { search?: string }) => {
     }, [error])
 
     useEffect(() => {
-        const filtered = hackathon?.apps_submitted.items.filter(({ repo_name }) => {
+        let filtered = hackathon?.apps_submitted.items.filter(({ repo_name }) => {
             return search ? repo_name.startsWith(search.toLowerCase()) : true
         })
+
+        if (hackathon?.is_voting_finished) {
+            filtered = filtered?.sort((a, b) => {
+                const votes_a = a.application?.votes || 0
+                const votes_b = b.application?.votes || 0
+                return votes_b - votes_a
+            })
+        }
+
         setItems(filtered || [])
-    }, [hackathon?.apps_submitted.items.length, search, checked_apps.length])
+    }, [
+        hackathon?.apps_submitted.items.length,
+        search,
+        checked_apps.length,
+        hackathon?.is_voting_finished,
+    ])
 
     if (!hackathon?.apps_submitted.is_fetched && hackathon?.apps_submitted.is_fetching) {
         return (
@@ -48,7 +62,7 @@ const ListBoundaryInner = (props: { search?: string }) => {
 
             <div className="divide-y divide-gray-e6edff">
                 {items.map((item, index) => (
-                    <ListItem key={index} item={item} />
+                    <ListItem key={index} item={item} index={index} />
                 ))}
             </div>
         </div>

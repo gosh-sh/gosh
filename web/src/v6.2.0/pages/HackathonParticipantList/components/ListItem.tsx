@@ -20,10 +20,11 @@ const ListItemSkeleton = () => {
 
 type TRepositoryListItemProps = {
     item: THackathonParticipant
+    index: number
 }
 
 const ListItem = (props: TRepositoryListItemProps) => {
-    const { item } = props
+    const { item, index } = props
     const member = useDaoMember()
     const { hackathon } = useHackathon()
     const { selectAppToApprove, updateAppKarma } = useHackathonVoting()
@@ -71,7 +72,12 @@ const ListItem = (props: TRepositoryListItemProps) => {
     }
 
     return (
-        <div className={classNames('p-4', !item.application ? 'opacity-40' : null)}>
+        <div
+            className={classNames(
+                'p-4',
+                hackathon?.is_voting_created && !item.application ? 'opacity-40' : null,
+            )}
+        >
             <div className="flex items-center gap-4">
                 {member.isMember &&
                     hackathon?.is_voting_started &&
@@ -84,6 +90,9 @@ const ListItem = (props: TRepositoryListItemProps) => {
                     )}
                 <div className="grow">
                     <div className="flex items-center flex-wrap gap-2">
+                        {hackathon?.is_voting_finished && (
+                            <div className="text-xl font-medium pr-3">{index + 1}</div>
+                        )}
                         <div className="w-8">
                             <img
                                 src={getIdenticonAvatar({
@@ -147,6 +156,13 @@ const ListItem = (props: TRepositoryListItemProps) => {
                             </div>
                         </div>
                     )}
+
+                {hackathon?.is_voting_finished && (
+                    <div className="text-3xl font-medium pr-3">
+                        {item.application?.votes.toLocaleString() || 0}
+                        <span className="text-sm text-gray-7c8db5 ml-2">votes</span>
+                    </div>
+                )}
             </div>
         </div>
     )

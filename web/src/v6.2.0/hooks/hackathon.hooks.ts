@@ -517,7 +517,8 @@ export function useHackathon(
                 ...details,
                 is_voting_started: now >= voting,
                 is_voting_created,
-                is_voting_finished: now >= finish,
+                // TODO: Remove +10s and check finished by block time
+                is_voting_finished: now >= finish + 10,
                 is_update_enabled: !is_voting_created,
                 is_participate_enabled: now >= start && now < voting,
             }

@@ -122,7 +122,11 @@ const HackathonParticipantListPage = () => {
                                                 <Button
                                                     type="submit"
                                                     className="w-full"
-                                                    disabled={isSubmitting}
+                                                    disabled={
+                                                        isSubmitting ||
+                                                        hackathon.member_voting_state
+                                                            ?.karma_rest === 0
+                                                    }
                                                     isLoading={isSubmitting}
                                                 >
                                                     Send votes
