@@ -36,7 +36,7 @@ const ListBoundaryInner = (props: { search?: string }) => {
 
         setItems(filtered || [])
     }, [
-        hackathon?.apps_submitted.items.length,
+        hackathon?.apps_submitted.items,
         search,
         checked_apps.length,
         hackathon?.is_voting_finished,

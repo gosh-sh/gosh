@@ -64,15 +64,16 @@ const ListItem = (props: TRepositoryListItemProps) => {
 
             <div className="flex gap-4 mt-5 justify-between">
                 <div className="grow">
-                    {hackathon?.storagedata.is_fetched ? (
+                    {!hackathon?.storagedata.is_fetched &&
+                    hackathon?.storagedata.is_fetching ? (
+                        <Skeleton skeleton={{ height: 8 }}>
+                            <rect x="0" y="0" rx="6" ry="6" width="30%" height="8" />
+                        </Skeleton>
+                    ) : (
                         <div className="text-xl">
                             {hackathon?.storagedata.prize?.total.toLocaleString()}{' '}
                             <span className="text-sm">Prize pool</span>
                         </div>
-                    ) : (
-                        <Skeleton skeleton={{ height: 8 }}>
-                            <rect x="0" y="0" rx="6" ry="6" width="30%" height="8" />
-                        </Skeleton>
                     )}
                 </div>
                 <CopyClipboard

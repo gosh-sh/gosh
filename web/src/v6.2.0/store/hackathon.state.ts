@@ -11,7 +11,7 @@ export const storagedata_empty = {
     prize_raw: '',
 }
 
-export const app_submitted_empty = {
+export const apps_submitted_empty = {
     is_fetching: false,
     is_fetched: false,
     items: [],

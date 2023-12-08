@@ -18,7 +18,7 @@ import { Hackathon } from '../blockchain/hackathon'
 import { getSystemContract } from '../blockchain/helpers'
 import { GoshRepository } from '../blockchain/repository'
 import {
-    app_submitted_empty,
+    apps_submitted_empty,
     daoHackathonListSelector,
     daoHackathonSelector,
     storagedata_empty,
@@ -310,7 +310,7 @@ export function useDaoHackathonList(
                     address: account.address,
                     type: EHackathonType.HACKATHON,
                     storagedata: storagedata_empty,
-                    apps_submitted: app_submitted_empty,
+                    apps_submitted: apps_submitted_empty,
                     apps_approved: applications,
                     ...rest,
                 }
@@ -351,6 +351,7 @@ export function useDaoHackathonList(
                             ? {
                                   ...item,
                                   ...found,
+                                  storagedata: item.storagedata,
                                   apps_submitted: item.apps_submitted,
                               }
                             : item
@@ -441,7 +442,7 @@ export function useHackathon(
                     address: account.address,
                     type: EHackathonType.HACKATHON,
                     storagedata: storagedata_empty,
-                    apps_submitted: app_submitted_empty,
+                    apps_submitted: apps_submitted_empty,
                     apps_approved: applications,
                     ...rest,
                 }
@@ -480,7 +481,7 @@ export function useHackathon(
             }))
             ////
 
-            // Fetch hackathon participants
+            // Fetch hackathon submitted apps
             if (!found.apps_submitted.is_fetching) {
                 getApplications({
                     repo_address: found._rg_repo_adapter.getAddress(),
@@ -505,16 +506,17 @@ export function useHackathon(
 
     const getDetails = async (account: Hackathon) => {
         try {
-            const details = await account.getDetails()
+            const { applications, ...rest } = await account.getDetails()
 
             const now = moment().unix()
-            const start = details.metadata.dates.start
-            const voting = details.metadata.dates.voting || now + 1
-            const finish = details.metadata.dates.finish || now + 1
-            const is_voting_created = !!details.applications.length
+            const start = rest.metadata.dates.start
+            const voting = rest.metadata.dates.voting || now + 1
+            const finish = rest.metadata.dates.finish || now + 1
+            const is_voting_created = !!applications.length
 
             const updated = {
-                ...details,
+                ...rest,
+                apps_approved: applications,
                 is_voting_started: now >= voting,
                 is_voting_created,
                 // TODO: Remove +10s and check finished by block time
@@ -548,12 +550,12 @@ export function useHackathon(
             setHakathons((state) => ({
                 ...state,
                 items: state.items.map((item) => {
+                    if (item.address !== address) {
+                        return item
+                    }
                     return {
                         ...item,
-                        storagedata: {
-                            ...item.storagedata,
-                            is_fetching: item.address === address,
-                        },
+                        storagedata: { ...item.storagedata, is_fetching: true },
                     }
                 }),
             }))
@@ -592,12 +594,10 @@ export function useHackathon(
             )
 
             // Create updated storage data
-            const storagedata: THackathonDetails['storagedata'] & {
-                description: { [k: string]: string }
-            } = {
-                ...storagedata_empty,
-                is_fetched: true,
-                is_fetching: false,
+            const updated: any = {
+                prize: { total: 0, places: [] },
+                prize_raw: '',
+                description: {},
             }
             for (const file of ['readme.md', 'rules.md', 'prizes.md', 'metadata.json']) {
                 const item = snap_data.find((v) => v.name.toLowerCase() === file)
@@ -611,11 +611,11 @@ export function useHackathon(
 
                 if (file === 'metadata.json') {
                     const parsed = JSON.parse(item.content)
-                    storagedata.prize = parsed.prize
-                    storagedata.prize_raw = item.content
+                    updated.prize = parsed.prize
+                    updated.prize_raw = item.content
                 } else {
                     const key = file.split('.')[0]
-                    storagedata.description[key] = item.content
+                    updated.description[key] = item.content
                 }
             }
 
@@ -624,7 +624,15 @@ export function useHackathon(
                 ...state,
                 items: state.items.map((item) => {
                     if (item.address === address) {
-                        return { ...item, storagedata }
+                        return {
+                            ...item,
+                            storagedata: {
+                                ...item.storagedata,
+                                ...updated,
+                                is_fetched: true,
+                                is_fetching: false,
+                            },
+                        }
                     }
                     return item
                 }),
@@ -670,7 +678,7 @@ export function useHackathon(
                 const details = await tag.getDetails()
                 const parsed = JSON.parse(details.content)
 
-                const { sc: psc, dao_account } = await getParticipantVersion(
+                const { sc: psc, dao_account } = await getApplicationVersion(
                     parsed.dao_name,
                 )
                 const is_member = user.profile
@@ -729,7 +737,7 @@ export function useHackathon(
         }
     }
 
-    const getParticipantVersion = async (dao_name: string) => {
+    const getApplicationVersion = async (dao_name: string) => {
         const versions = AppConfig.getVersions({ reverse: true })
         const query = await Promise.all(
             Object.keys(versions).map(async (key) => {
@@ -779,6 +787,7 @@ export function useHackathon(
         subscribe,
         hackathon?.address,
         hackathon?.metadata.branch_name,
+        hackathon?.apps_approved.length,
         hackathon?._rg_repo_adapter?.getAddress(),
     ])
 

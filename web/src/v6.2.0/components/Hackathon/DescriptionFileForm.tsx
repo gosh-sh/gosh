@@ -97,7 +97,7 @@ const HackathonDescriptionFileForm = (props: DescriptionFileFormProps) => {
         }
         const html = await markdown2html(mapping[mapping_key])
         setContent({ md: mapping[mapping_key], html })
-    }, [mapping_key, show_skeleton])
+    }, [mapping_key, hackathon?.address])
 
     useEffect(() => {
         getContentCallback()
