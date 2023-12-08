@@ -15,6 +15,7 @@ export const HACKATHON_TAG = {
     grant: '___!hackathon:grant!___',
     participant: '___!hackathon:participant!___',
 }
+export const HACKATHONS_REPO = '_hackathons'
 export const DISABLED_VERSIONS = ['5.0.0', '6.0.0']
 export const L2_COMISSION = 1000 // 0.1% 0.001
 export const PERSIST_REDIRECT_KEY = 'gosh-redirect'

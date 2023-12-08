@@ -8,7 +8,12 @@ import { useParams } from 'react-router-dom'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { AppConfig } from '../../appconfig'
 import { getAllAccounts, getPaginatedAccounts } from '../../blockchain/utils'
-import { HACKATHON_TAG, MAX_PARALLEL_READ, ZERO_COMMIT } from '../../constants'
+import {
+    HACKATHONS_REPO,
+    HACKATHON_TAG,
+    MAX_PARALLEL_READ,
+    ZERO_COMMIT,
+} from '../../constants'
 import { GoshError } from '../../errors'
 import { appToastStatusSelector } from '../../store/app.state'
 import { EDaoEventType } from '../../types/common.types'
@@ -92,10 +97,10 @@ export function useCreateHackathon() {
 
                 const _gosh = GoshAdapterFactory.create(dao.version!)
                 const _repo = await _gosh.getRepository({
-                    path: `${dao.name}/_hackathons`,
+                    path: `${dao.name}/${HACKATHONS_REPO}`,
                 })
                 _repo.auth = { username: user.username, wallet0: member.wallet }
-                _repo.name = '_hackathons'
+                _repo.name = HACKATHONS_REPO
 
                 if (!(await _repo.isDeployed())) {
                     event_cells.push(
@@ -464,7 +469,7 @@ export function useHackathon(
             const _dao_adapter = await _gosh.getDao({ address: dao.address! })
             const _dao_details = await _dao_adapter.getDetails()
             const _repo_adapter = await _dao_adapter.getRepository({
-                name: '_hackathons',
+                name: HACKATHONS_REPO,
             })
             _repo_adapter.auth = { username: user.username, wallet0: member.wallet }
             found._rg_dao_details = { ..._dao_details, isAuthMember: member.isMember }
@@ -962,7 +967,7 @@ export function useSubmitHackathonApps() {
                     const repo_path = `${item.dao_name}/${item.repo_name}`
                     const tag_name = `${HACKATHON_TAG.participant}:${repo_path}`
                     await member.wallet!.createCommitTag({
-                        reponame: '_hackathons',
+                        reponame: HACKATHONS_REPO,
                         name: tag_name,
                         content: JSON.stringify(item),
                         commit: {
