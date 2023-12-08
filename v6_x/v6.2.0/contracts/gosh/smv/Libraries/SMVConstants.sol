@@ -19,8 +19,8 @@ uint128 constant CLIENT_INIT_VALUE = 5 ton;
 uint128 constant CLIENT_MIN_BALANCE = 2 ton;
 
 uint128 constant PROPOSAL_VOTING_FEE = 0.5 ton;
-uint128 constant PROPOSAL_INIT_VALUE = 10 ton;
-uint128 constant PROPOSAL_MIN_BALANCE = 4 ton;
+uint128 constant PROPOSAL_INIT_VALUE = 5 ton;
+uint128 constant PROPOSAL_MIN_BALANCE = 1 ton;
 uint128 constant VOTING_COMPLETION_FEE = 2 ton;
 
 uint128 constant PROPMAN_INIT_VALUE = 10 ton;
