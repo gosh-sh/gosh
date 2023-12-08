@@ -14,6 +14,7 @@ import { DaoMemberExpertTagDeleteEvent } from '../DaoMemberExpertTagDeleteEvent/
 import { DeleteDaoTagEvent } from '../DeleteDaoTagEvent/DeleteDaoTagEvent'
 import { DeleteTaskEvent } from '../DeleteTaskEvent/DeleteTaskEvent'
 import { DisableMintTokensEvent } from '../DisableMintTokensEvent/DisableMintTokensEvent'
+import { HackathonAppsApproveEvent } from '../HackathonAppsApproveEvent/HackathonAppsApproveEvent'
 import { HackathonCreateEvent } from '../HackathonCreateEvent/HackathonCreateEvent'
 import { HackathonUpdateEvent } from '../HackathonUpdateEvent/HackathonUpdateEvent'
 import { MemberAddEvent } from '../MemberAddEvent/MemberAddEvent'
@@ -150,6 +151,9 @@ const MultiEvent = (props: TMultiEventProps) => {
                         )}
                         {item.type === EDaoEventType.BRANCH_CREATE && (
                             <BranchCreateEvent key={index} data={item.data} />
+                        )}
+                        {item.type === EDaoEventType.HACKATHON_APPS_APPROVE && (
+                            <HackathonAppsApproveEvent key={index} data={item.data} />
                         )}
                     </div>
                 ))}

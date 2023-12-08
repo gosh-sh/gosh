@@ -1,6 +1,12 @@
+import { faMinus, faPlus } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import classNames from 'classnames'
 import { Link } from 'react-router-dom'
+import { Button, Checkbox, Input } from '../../../../components/Form'
 import Skeleton from '../../../../components/Skeleton'
 import { getIdenticonAvatar } from '../../../../helpers'
+import { useDaoMember } from '../../../hooks/dao.hooks'
+import { useHackathon, useHackathonVoting } from '../../../hooks/hackathon.hooks'
 import { THackathonParticipant } from '../../../types/hackathon.types'
 
 const ListItemSkeleton = () => {
@@ -18,10 +24,64 @@ type TRepositoryListItemProps = {
 
 const ListItem = (props: TRepositoryListItemProps) => {
     const { item } = props
+    const member = useDaoMember()
+    const { hackathon } = useHackathon()
+    const { selectAppToApprove, updateAppKarma } = useHackathonVoting()
+
+    const member_karma_added = hackathon?.member_voting_state?.karma_added.find((app) => {
+        return app.dao_name === item.dao_name && app.repo_name === item.repo_name
+    })
+
+    const onItemToggle = () => {
+        selectAppToApprove({
+            dao_name: item.dao_name,
+            repo_name: item.repo_name,
+            is_selected: !item.is_selected,
+        })
+    }
+
+    const onKarmaButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+        const action = e.currentTarget.dataset.action
+
+        let karma_dirty = parseInt(member_karma_added?.value_dirty || '0')
+        karma_dirty += action === 'plus' ? 1 : -1
+
+        updateAppKarma({
+            dao_name: item.dao_name,
+            repo_name: item.repo_name,
+            value: karma_dirty.toString(),
+        })
+    }
+
+    const onKarmaInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        updateAppKarma({
+            dao_name: item.dao_name,
+            repo_name: item.repo_name,
+            value: e.target.value,
+            validate: false,
+        })
+    }
+
+    const onKarmaInputBlur = (e: React.ChangeEvent<HTMLInputElement>) => {
+        updateAppKarma({
+            dao_name: item.dao_name,
+            repo_name: item.repo_name,
+            value: e.target.value,
+        })
+    }
 
     return (
-        <div className="p-4">
+        <div className={classNames('p-4', !item.application ? 'opacity-40' : null)}>
             <div className="flex items-center gap-4">
+                {member.isMember &&
+                    hackathon?.is_voting_started &&
+                    !hackathon?.is_voting_created && (
+                        <Checkbox
+                            checked={!!item.is_selected}
+                            onChange={onItemToggle}
+                            className="h-[24px]"
+                        />
+                    )}
                 <div className="grow">
                     <div className="flex items-center flex-wrap gap-2">
                         <div className="w-8">
@@ -53,30 +113,40 @@ const ListItem = (props: TRepositoryListItemProps) => {
                         </div>
                     )}
                 </div>
-                <div className="basis-5/12 shrink-0">
-                    {/* <div>
-                        <Checkbox className="ml-auto w-full" />
-                    </div> */}
-                    {/* <div className="flex flex-nowrap items-center justify-between gap-x-12">
-                        <div className="flex flex-nowrap items-center justify-between gap-x-2">
-                            <Button className="block !px-3.5" variant="outline-secondary">
-                                <FontAwesomeIcon icon={faMinus} />
-                            </Button>
-                            <Input placeholder="Your vote" />
-                            <Button className="block !px-3.5" variant="outline-secondary">
-                                <FontAwesomeIcon icon={faPlus} />
-                            </Button>
+
+                {member.isMember &&
+                    hackathon?.is_voting_created &&
+                    !hackathon?.is_voting_finished &&
+                    !!item.application && (
+                        <div className="basis-4/12 shrink-0">
+                            <div className="flex flex-nowrap items-center justify-between gap-x-12">
+                                <div className="flex flex-nowrap items-center justify-between gap-x-2">
+                                    <Button
+                                        data-action="minus"
+                                        className="block !px-3.5"
+                                        variant="outline-secondary"
+                                        onClick={onKarmaButtonClick}
+                                    >
+                                        <FontAwesomeIcon icon={faMinus} />
+                                    </Button>
+                                    <Input
+                                        placeholder="Add karma"
+                                        value={member_karma_added?.value_dirty || ''}
+                                        onChange={onKarmaInputChange}
+                                        onBlur={onKarmaInputBlur}
+                                    />
+                                    <Button
+                                        data-action="plus"
+                                        className="block !px-3.5"
+                                        variant="outline-secondary"
+                                        onClick={onKarmaButtonClick}
+                                    >
+                                        <FontAwesomeIcon icon={faPlus} />
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <Button
-                                className="block !bg-white !px-3.5"
-                                variant="outline-secondary"
-                            >
-                                <FontAwesomeIcon icon={faTimes} />
-                            </Button>
-                        </div>
-                    </div> */}
-                </div>
+                    )}
             </div>
         </div>
     )

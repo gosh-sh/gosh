@@ -8,9 +8,10 @@ export const storagedata_empty = {
     is_fetched: false,
     description: { readme: '', rules: '', prizes: '' },
     prize: { total: 0, places: [] },
+    prize_raw: '',
 }
 
-export const participants_empty = {
+export const app_submitted_empty = {
     is_fetching: false,
     is_fetched: false,
     items: [],

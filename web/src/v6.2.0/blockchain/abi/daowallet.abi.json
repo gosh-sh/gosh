@@ -1549,6 +1549,17 @@
 			]
 		},
 		{
+			"name": "getCellSetApprovedTagProposalsForDao",
+			"inputs": [
+				{"name":"approved_proposal_with_tags","type":"map(uint256,bool)"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "startMultiProposal",
 			"inputs": [
 				{"name":"number","type":"uint128"},
@@ -1571,11 +1582,12 @@
 			]
 		},
 		{
-			"name": "startOneProposalTag",
+			"name": "startOneProposalWithTags",
 			"inputs": [
 				{"name":"proposal","type":"cell"},
 				{"name":"num_clients","type":"uint128"},
-				{"name":"reviewers","type":"address[]"}
+				{"name":"reviewers","type":"address[]"},
+				{"name":"data","type":"string[]"}
 			],
 			"outputs": [
 			]

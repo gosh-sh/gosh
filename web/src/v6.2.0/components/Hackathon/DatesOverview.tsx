@@ -111,7 +111,7 @@ const HackathonDatesOverview = () => {
                         <HackathonStatus dates={hackathon.metadata.dates} />
                     </div>
                     <div className="grow text-sm md:text-end">
-                        {hackathon?.participants.items.length.toLocaleString()}{' '}
+                        {hackathon?.apps_submitted.items.length.toLocaleString()}{' '}
                         Participants
                     </div>
                 </div>
@@ -135,7 +135,7 @@ const HackathonDatesOverview = () => {
                                 </div>
                             )}
 
-                            {member.isMember && hackathon.update_enabled && (
+                            {member.isMember && hackathon.is_update_enabled && (
                                 <Button
                                     type="button"
                                     variant="custom"

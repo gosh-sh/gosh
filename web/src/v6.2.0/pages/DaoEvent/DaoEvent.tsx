@@ -34,6 +34,7 @@ import {
     DeleteDaoTagEvent,
     DeleteTaskEvent,
     DisableMintTokensEvent,
+    HackathonAppsApproveEvent,
     HackathonCreateEvent,
     HackathonUpdateEvent,
     MemberAddEvent,
@@ -296,6 +297,9 @@ const DaoEventPageInner = (props: { address: string }) => {
                             )}
                             {event.type === EDaoEventType.BRANCH_CREATE && (
                                 <BranchCreateEvent data={event.data} />
+                            )}
+                            {event.type === EDaoEventType.HACKATHON_APPS_APPROVE && (
+                                <HackathonAppsApproveEvent data={event.data} />
                             )}
                             {event.type === EDaoEventType.MULTI_PROPOSAL && (
                                 <MultiEvent event={event} />

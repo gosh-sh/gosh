@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
 import Alert from '../../../../components/Alert'
-import { useHackathon } from '../../../hooks/hackathon.hooks'
+import Skeleton from '../../../../components/Skeleton'
+import { useHackathon, useHackathonVoting } from '../../../hooks/hackathon.hooks'
 import { THackathonParticipant } from '../../../types/hackathon.types'
 import { ListItem } from './ListItem'
 
@@ -9,8 +10,9 @@ const ListBoundaryInner = (props: { search?: string }) => {
     const { search } = props
     const { hackathon, error } = useHackathon()
     const { showBoundary } = useErrorBoundary()
+    const { checked_apps } = useHackathonVoting()
     const [items, setItems] = useState<THackathonParticipant[]>(
-        hackathon?.participants.items || [],
+        hackathon?.apps_submitted.items || [],
     )
 
     useEffect(() => {
@@ -20,11 +22,21 @@ const ListBoundaryInner = (props: { search?: string }) => {
     }, [error])
 
     useEffect(() => {
-        const filtered = hackathon?.participants.items.filter(({ repo_name }) => {
+        const filtered = hackathon?.apps_submitted.items.filter(({ repo_name }) => {
             return search ? repo_name.startsWith(search.toLowerCase()) : true
         })
         setItems(filtered || [])
-    }, [hackathon?.participants.items.length, search])
+    }, [hackathon?.apps_submitted.items.length, search, checked_apps.length])
+
+    if (!hackathon?.apps_submitted.is_fetched && hackathon?.apps_submitted.is_fetching) {
+        return (
+            <Skeleton skeleton={{ height: 48 }} className="py-5">
+                <rect x="0" y="0" rx="4" ry="4" width="100%" height="12" />
+                <rect x="0" y="18" rx="4" ry="4" width="100%" height="12" />
+                <rect x="0" y="36" rx="4" ry="4" width="100%" height="12" />
+            </Skeleton>
+        )
+    }
 
     return (
         <div className="border border-gray-e6edff rounded-xl overflow-hidden">

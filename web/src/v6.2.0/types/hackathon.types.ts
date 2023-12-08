@@ -8,10 +8,22 @@ export enum EHackathonType {
 }
 
 export type THackathonParticipant = {
+    dao_address: string
     dao_name: string
     repo_name: string
     description?: string
     is_member?: boolean
+    is_selected?: boolean
+    application?: THackathonApplication
+}
+
+export type THackathonApplication = {
+    index: number
+    dao_address: string
+    dao_name: string
+    repo_name: string
+    votes: number
+    members_karma_voted: { [profile: string]: number }
 }
 
 export type THackathonDates = { start: number; voting: number; finish: number }
@@ -32,19 +44,36 @@ export type THackathonDetails = {
         dates: THackathonDates
         description: string
     }
+    apps_approved: THackathonApplication[]
+    members_karma_rest: { [profile: string]: number }
     storagedata: {
         is_fetching: boolean
         is_fetched: boolean
         description: { readme: string; rules: string; prizes: string }
         prize: { total: number; places: number[] }
+        prize_raw: string
     }
-    participants: {
+    apps_submitted: {
         is_fetching: boolean
         is_fetched: boolean
         items: THackathonParticipant[]
     }
-    update_enabled?: boolean
-    participate_enabled?: boolean
+    is_voting_started?: boolean
+    is_voting_created?: boolean
+    is_voting_finished?: boolean
+    is_update_enabled?: boolean
+    is_participate_enabled?: boolean
+    member_voting_state?: {
+        karma_rest: number
+        karma_rest_dirty: number
+        karma_added: {
+            dao_name: string
+            repo_name: string
+            value: number
+            value_dirty: string
+            index: number
+        }[]
+    }
 }
 
 export type TDaoHackathonList = {

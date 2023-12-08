@@ -120,7 +120,7 @@ const HackathonDescriptionFileForm = (props: DescriptionFileFormProps) => {
                     <span className="text-blue-2b89ff font-medium">{title}</span>
                 </div>
                 <div className="flex flex-nowrap items-center gap-x-4">
-                    {member.isMember && !show_skeleton && hackathon.update_enabled && (
+                    {member.isMember && !show_skeleton && hackathon.is_update_enabled && (
                         <>
                             {edit && (
                                 <Button

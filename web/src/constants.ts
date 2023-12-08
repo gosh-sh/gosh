@@ -71,6 +71,7 @@ export const DaoEventType: { [key: number]: string } = {
     49: 'Add expert tag for DAO member',
     50: 'Delete expert tag for DAO member',
     51: 'Create hackathon',
+    53: 'Create hackathon voting',
     54: 'Update hackathon',
     56: 'Create repository branch',
 }

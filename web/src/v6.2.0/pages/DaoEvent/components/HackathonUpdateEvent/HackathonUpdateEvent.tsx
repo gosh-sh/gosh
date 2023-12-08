@@ -56,14 +56,14 @@ const HackathonUpdateEvent = (props: THackathonUpdateEventProps) => {
                 </>
             )}
 
-            {!!data.tags.length && (
+            {!!data.tags?.length && (
                 <div className="flex items-center gap-6">
                     <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
                         Expert tags
                     </div>
                     <div className="text-sm flex items-center gap-3">
                         {data.tags.map((tag: string) => (
-                            <BadgeExpertTag content={tag} />
+                            <BadgeExpertTag key={tag} content={tag} />
                         ))}
                     </div>
                 </div>

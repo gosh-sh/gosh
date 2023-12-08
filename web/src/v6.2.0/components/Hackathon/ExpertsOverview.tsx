@@ -64,7 +64,7 @@ const HackathonExpertsOverview = () => {
                                 isMulti
                                 isClearable={false}
                                 isDisabled={
-                                    !member.isMember || !hackathon?.update_enabled
+                                    !member.isMember || !hackathon?.is_update_enabled
                                 }
                                 placeholder="Expert tags"
                                 classNames={{
@@ -107,7 +107,7 @@ const HackathonExpertsOverview = () => {
                             />
                         </Field>
 
-                        {(member.isMember || hackathon?.update_enabled) && (
+                        {member.isMember && hackathon?.is_update_enabled && (
                             <div className="mt-4">
                                 <Button
                                     type="submit"

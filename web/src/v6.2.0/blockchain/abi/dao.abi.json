@@ -129,6 +129,30 @@
 			]
 		},
 		{
+			"name": "setApprovedProposal",
+			"inputs": [
+				{"name":"approved_proposal_with_tags","type":"map(uint256,bool)"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "isItApprovedProposal",
+			"inputs": [
+				{"name":"kind","type":"uint256"},
+				{"name":"proposal","type":"cell"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"},
+				{"name":"data","type":"string[]"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "returnWalletsVersion",
 			"inputs": [
 				{"name":"ver","type":"string"},
@@ -1634,6 +1658,7 @@
 		{"name":"_hashtag","type":"map(uint256,string)"},
 		{"name":"_versions","type":"map(uint256,string)"},
 		{"name":"_my_wallets","type":"map(uint256,address)"},
+		{"name":"_approved_proposal_with_tags","type":"map(uint256,bool)"},
 		{"name":"_tokenforperson","type":"uint128"},
 		{"name":"_limit_wallets","type":"uint128"},
 		{"name":"m_TokenLockerCode","type":"cell"},

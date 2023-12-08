@@ -1324,6 +1324,57 @@ export class DaoWallet extends BaseContract {
         }
     }
 
+    async approveHackathonApps(params: {
+        name: string
+        applications: {
+            dao_address: string
+            dao_name: string
+            repo_name: string
+        }[]
+        finish: number
+        comment?: string
+        reviewers?: string[]
+        cell?: boolean | undefined
+    }) {
+        const { name, applications, finish, comment, reviewers, cell } = params
+
+        const cell_params = {
+            name,
+            owners: applications.map(({ dao_address }) => dao_address),
+            details: applications.map(({ dao_name, repo_name }) => {
+                return JSON.stringify({ dao_name, repo_name })
+            }),
+            timeofend: finish,
+            comment,
+        }
+
+        if (cell) {
+            const { value0 } = await this.runLocal('getCellSetGrantOwners', cell_params)
+            return value0 as string
+        } else {
+            const cell_data: any = await this.approveHackathonApps({
+                ...params,
+                cell: true,
+            })
+            return await this.createSingleEvent({ cell: cell_data, reviewers })
+        }
+    }
+
+    async voteForHackathonApp(params: {
+        hack_name: string
+        app_index: number
+        value: number
+        comment?: string
+    }) {
+        const { hack_name, app_index, value, comment = '' } = params
+        await this.run('voteForHacks', {
+            amount: value,
+            index: app_index,
+            name: hack_name,
+            comment,
+        })
+    }
+
     async createSingleEvent(params: {
         cell: string
         reviewers?: string[]
@@ -1527,6 +1578,9 @@ export class DaoWallet extends BaseContract {
                 }
                 if (type === EDaoEventType.BRANCH_CREATE) {
                     return await this.createRepositoryBranch({ ...params, cell: true })
+                }
+                if (type === EDaoEventType.HACKATHON_VOTING_CREATE) {
+                    return await this.approveHackathonApps({ ...params, cell: true })
                 }
                 return null
             },

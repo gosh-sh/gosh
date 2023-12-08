@@ -36,7 +36,7 @@ const ListItem = (props: TRepositoryListItemProps) => {
                     <HackathonStatus dates={item.metadata.dates} />
                 </div>
                 <div className="px-2">
-                    {hackathon?.participants.items.length.toLocaleString()} Participants
+                    {hackathon?.apps_submitted.items.length.toLocaleString()} Participants
                 </div>
             </div>
             <div className="mt-2.5 flex items-center flex-wrap gap-2">

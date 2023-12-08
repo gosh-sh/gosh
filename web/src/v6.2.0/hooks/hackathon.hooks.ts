@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { GoshAdapterFactory, sha1, unixtimeWithTz, usePush } from 'react-gosh'
 import { IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { useParams } from 'react-router-dom'
-import { useRecoilState, useRecoilValue } from 'recoil'
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { AppConfig } from '../../appconfig'
 import { getAllAccounts, getPaginatedAccounts } from '../../blockchain/utils'
 import { HACKATHON_TAG, MAX_PARALLEL_READ, ZERO_COMMIT } from '../../constants'
@@ -18,13 +18,14 @@ import { Hackathon } from '../blockchain/hackathon'
 import { getSystemContract } from '../blockchain/helpers'
 import { GoshRepository } from '../blockchain/repository'
 import {
+    app_submitted_empty,
     daoHackathonListSelector,
     daoHackathonSelector,
-    participants_empty,
     storagedata_empty,
 } from '../store/hackathon.state'
 import {
     EHackathonType,
+    THackathonApplication,
     THackathonDetails,
     THackathonParticipant,
 } from '../types/hackathon.types'
@@ -302,15 +303,16 @@ export function useDaoHackathonList(
             MAX_PARALLEL_READ,
             async ({ id }) => {
                 const account = await sc.getHackathon({ address: id })
-                const details = await account.getDetails()
+                const { applications, ...rest } = await account.getDetails()
 
                 return {
                     account,
                     address: account.address,
                     type: EHackathonType.HACKATHON,
                     storagedata: storagedata_empty,
-                    participants: participants_empty,
-                    ...details,
+                    apps_submitted: app_submitted_empty,
+                    apps_approved: applications,
+                    ...rest,
                 }
             },
         )
@@ -349,7 +351,7 @@ export function useDaoHackathonList(
                             ? {
                                   ...item,
                                   ...found,
-                                  participants: item.participants,
+                                  apps_submitted: item.apps_submitted,
                               }
                             : item
                     }),
@@ -432,15 +434,16 @@ export function useHackathon(
             // Fetch hackathon's metadata from blockchain
             if (!found) {
                 const account = await sc.getHackathon({ address })
-                const details = await account.getDetails()
+                const { applications, ...rest } = await account.getDetails()
 
                 found = {
                     account,
                     address: account.address,
                     type: EHackathonType.HACKATHON,
                     storagedata: storagedata_empty,
-                    participants: participants_empty,
-                    ...details,
+                    apps_submitted: app_submitted_empty,
+                    apps_approved: applications,
+                    ...rest,
                 }
 
                 setHakathons((state) => {
@@ -477,21 +480,22 @@ export function useHackathon(
             }))
             ////
 
+            // Fetch hackathon participants
+            if (!found.apps_submitted.is_fetching) {
+                getApplications({
+                    repo_address: found._rg_repo_adapter.getAddress(),
+                    branch_name: found.metadata.branch_name,
+                    hack_address: found.address,
+                    applications: found.apps_approved,
+                })
+            }
+
             // Fetch hackathon storage data
             if (!found.storagedata.is_fetching) {
                 getStorageData({
                     address: found.address,
                     repo: found._rg_repo_adapter,
                     branch_name: found.metadata.branch_name,
-                })
-            }
-
-            // Fetch hackathon participants
-            if (!found.participants.is_fetching) {
-                getParticipants({
-                    repo_address: found._rg_repo_adapter.getAddress(),
-                    branch_name: found.metadata.branch_name,
-                    hack_address: found.address,
                 })
             }
         } catch (e: any) {
@@ -502,11 +506,27 @@ export function useHackathon(
     const getDetails = async (account: Hackathon) => {
         try {
             const details = await account.getDetails()
+
+            const now = moment().unix()
+            const start = details.metadata.dates.start
+            const voting = details.metadata.dates.voting || now + 1
+            const finish = details.metadata.dates.finish || now + 1
+            const is_voting_created = !!details.applications.length
+
+            const updated = {
+                ...details,
+                is_voting_started: now >= voting,
+                is_voting_created,
+                is_voting_finished: now >= finish,
+                is_update_enabled: !is_voting_created,
+                is_participate_enabled: now >= start && now < voting,
+            }
+
             setHakathons((state) => ({
                 ...state,
                 items: state.items.map((item) => {
                     if (item.address === account.address) {
-                        return { ...item, ...details }
+                        return { ...item, ...updated }
                     }
                     return item
                 }),
@@ -591,6 +611,7 @@ export function useHackathon(
                 if (file === 'metadata.json') {
                     const parsed = JSON.parse(item.content)
                     storagedata.prize = parsed.prize
+                    storagedata.prize_raw = item.content
                 } else {
                     const key = file.split('.')[0]
                     storagedata.description[key] = item.content
@@ -612,20 +633,21 @@ export function useHackathon(
         }
     }
 
-    const getParticipants = async (params: {
+    const getApplications = async (params: {
         repo_address: string
         branch_name: string
         hack_address: string
+        applications: THackathonApplication[]
     }) => {
-        const { repo_address, branch_name, hack_address } = params
+        const { repo_address, branch_name, hack_address, applications } = params
 
         try {
             setHakathons((state) => ({
                 ...state,
                 items: state.items.map((item) => ({
                     ...item,
-                    participants: {
-                        ...item.participants,
+                    apps_submitted: {
+                        ...item.apps_submitted,
                         is_fetching: item.address === hack_address,
                     },
                 })),
@@ -639,7 +661,7 @@ export function useHackathon(
             const accounts = await getAllAccounts({
                 filters: [`code_hash: {eq:"${code_hash}"}`],
             })
-            const participants = await executeByChunk<
+            const apps_submitted = await executeByChunk<
                 { id: string },
                 THackathonParticipant
             >(accounts, MAX_PARALLEL_READ, async ({ id }) => {
@@ -659,7 +681,18 @@ export function useHackathon(
                 })) as unknown as GoshRepository
                 const repo_details = await prepo_account.getDetails()
 
-                return { ...parsed, is_member, description: repo_details.description }
+                return {
+                    ...parsed,
+                    dao_address: dao_account.address,
+                    is_member,
+                    description: repo_details.description,
+                    application: applications.find((app) => {
+                        return (
+                            app.dao_name === parsed.dao_name &&
+                            app.repo_name === parsed.repo_name
+                        )
+                    }),
+                }
             })
 
             // Update state
@@ -669,8 +702,19 @@ export function useHackathon(
                     if (item.address === hack_address) {
                         return {
                             ...item,
-                            participants: {
-                                items: participants,
+                            apps_submitted: {
+                                items: apps_submitted.map((app) => {
+                                    const exists = item.apps_submitted.items.find((v) => {
+                                        return (
+                                            v.dao_name === app.dao_name &&
+                                            v.repo_name === app.repo_name
+                                        )
+                                    })
+                                    if (exists) {
+                                        return { ...exists, ...app }
+                                    }
+                                    return app
+                                }),
                                 is_fetching: false,
                                 is_fetched: true,
                             },
@@ -701,36 +745,11 @@ export function useHackathon(
         return { sc: latest.sc, dao_account: latest.dao_account as Dao }
     }
 
-    const updateFlags = useCallback(() => {
-        const now = moment().unix()
-        const start = hackathon?.metadata.dates.start || now + 1
-        const voting = hackathon?.metadata.dates.voting || now + 1
-        const finish = hackathon?.metadata.dates.finish || now + 1
-
-        setHakathons((state) => ({
-            ...state,
-            items: state.items.map((item) => {
-                if (item.address === hackathon?.address) {
-                    return {
-                        ...item,
-                        participate_enabled: now >= start && now < voting,
-                        update_enabled: now < finish,
-                    }
-                }
-                return item
-            }),
-        }))
-    }, [hackathon?.metadata.dates])
-
     useEffect(() => {
         if (initialize) {
             getHackathon()
         }
     }, [initialize, getHackathon])
-
-    useEffect(() => {
-        updateFlags()
-    }, [updateFlags])
 
     useEffect(() => {
         let interval: NodeJS.Timeout
@@ -743,20 +762,26 @@ export function useHackathon(
                     repo: hackathon._rg_repo_adapter!,
                     branch_name: hackathon.metadata.branch_name,
                 })
-                await getParticipants({
+                await getApplications({
                     repo_address: hackathon._rg_repo_adapter!.getAddress(),
                     branch_name: hackathon.metadata.branch_name,
                     hack_address: hackathon.address,
+                    applications: hackathon.apps_approved,
                 })
-            }, 60000)
+            }, 20000)
         }
 
         return () => {
             clearInterval(interval)
         }
-    }, [subscribe, hackathon?.address, hackathon?.metadata.branch_name])
+    }, [
+        subscribe,
+        hackathon?.address,
+        hackathon?.metadata.branch_name,
+        hackathon?._rg_repo_adapter?.getAddress(),
+    ])
 
-    return { hackathon, error, getParticipants }
+    return { hackathon, error, getApplications }
 }
 
 export function useUpdateHackathon() {
@@ -781,7 +806,7 @@ export function useUpdateHackathon() {
             const { filename, content } = params
 
             try {
-                if (!hackathon?.update_enabled) {
+                if (!hackathon?.is_update_enabled) {
                     throw new GoshError('Value error', 'Update details time expired')
                 }
 
@@ -826,7 +851,7 @@ export function useUpdateHackathon() {
         },
         [
             member.isReady,
-            hackathon?.update_enabled,
+            hackathon?.is_update_enabled,
             hackathon?.metadata.branch_name,
             hackathon?._rg_dao_details?.isAuthMember,
             hackathon?._rg_repo_adapter?.auth?.username,
@@ -842,7 +867,7 @@ export function useUpdateHackathon() {
             const { dates, description, expert_tags } = params
 
             try {
-                if (!hackathon?.update_enabled) {
+                if (!hackathon?.is_update_enabled) {
                     throw new GoshError('Value error', 'Update hackathon time expired')
                 }
                 if (!dates && description === undefined && expert_tags === undefined) {
@@ -887,20 +912,20 @@ export function useUpdateHackathon() {
                 throw e
             }
         },
-        [member.isReady, hackathon?.update_enabled],
+        [member.isReady, hackathon?.is_update_enabled],
     )
 
     return { updateStorageData, updateMetadata, status }
 }
 
-export function useAddHackathonParticipants() {
+export function useSubmitHackathonApps() {
     const member = useDaoMember()
-    const { hackathon, getParticipants } = useHackathon()
+    const { hackathon, getApplications } = useHackathon()
     const [status, setStatus] = useRecoilState(
         appToastStatusSelector('__addhackathonparticipants'),
     )
 
-    const addParticipants = async (params: {
+    const submitApps = async (params: {
         items: { dao_name: string; repo_name: string }[]
     }) => {
         const { items } = params
@@ -912,7 +937,7 @@ export function useAddHackathonParticipants() {
             if (!hackathon?.name || !hackathon._rg_repo_adapter) {
                 throw new GoshError('Value error', 'Hackathon repository undefined')
             }
-            if (!hackathon.participate_enabled) {
+            if (!hackathon.is_participate_enabled) {
                 throw new GoshError('Value error', 'Add applications time expired')
             }
 
@@ -939,10 +964,11 @@ export function useAddHackathonParticipants() {
                     })
                 }),
             )
-            await getParticipants({
+            await getApplications({
                 repo_address: hackathon._rg_repo_adapter.getAddress(),
                 branch_name: hackathon.metadata.branch_name,
                 hack_address: hackathon.address,
+                applications: hackathon.apps_approved,
             })
 
             setStatus((state) => ({
@@ -956,5 +982,257 @@ export function useAddHackathonParticipants() {
         }
     }
 
-    return { addParticipants, status }
+    return { submitApps, status }
+}
+
+export function useHackathonVoting() {
+    const { user } = useUser()
+    const { details: dao } = useDao()
+    const { beforeCreateEvent } = useDaoHelpers()
+    const member = useDaoMember()
+    const { hackathon } = useHackathon()
+    const setHakathons = useSetRecoilState(daoHackathonListSelector(dao.name))
+    const setStatus0 = useSetRecoilState(
+        appToastStatusSelector('__createhackathonvoting'),
+    )
+    const setStatus1 = useSetRecoilState(
+        appToastStatusSelector('__submithackathonvoting'),
+    )
+
+    const checked_apps =
+        hackathon?.apps_submitted.items.filter(({ is_selected }) => !!is_selected) || []
+
+    useEffect(() => {
+        if (hackathon?.address && user.profile) {
+            setHakathons((state) => ({
+                ...state,
+                items: state.items.map((item) => {
+                    if (item.address !== hackathon.address) {
+                        return item
+                    }
+
+                    const user_karma_rest = item.members_karma_rest[user.profile!] || 0
+                    const user_karma_added: any = []
+                    item.apps_submitted.items.forEach((app) => {
+                        const value = app.application?.members_karma_voted[user.profile!]
+                        user_karma_added.push({
+                            dao_name: app.dao_name,
+                            repo_name: app.repo_name,
+                            value: value || 0,
+                            value_dirty: value ? value.toString() : '',
+                            index: app.application?.index,
+                        })
+                    })
+
+                    return {
+                        ...item,
+                        member_voting_state: {
+                            karma_rest: user_karma_rest,
+                            karma_rest_dirty: user_karma_rest,
+                            karma_added: user_karma_added,
+                        },
+                    }
+                }),
+            }))
+        }
+    }, [
+        hackathon?.address,
+        user.profile,
+        hackathon?.apps_submitted.items.length,
+        hackathon?.apps_approved.length,
+    ])
+
+    const selectAppToApprove = (params: {
+        dao_name: string
+        repo_name: string
+        is_selected: boolean
+    }) => {
+        const { dao_name, repo_name, is_selected } = params
+        setHakathons((state) => ({
+            ...state,
+            items: state.items.map((item) => {
+                if (item.address !== hackathon?.address) {
+                    return item
+                }
+
+                return {
+                    ...item,
+                    apps_submitted: {
+                        ...item.apps_submitted,
+                        items: item.apps_submitted.items.map((app) => {
+                            if (
+                                app.dao_name === dao_name &&
+                                app.repo_name === repo_name
+                            ) {
+                                return { ...app, is_selected }
+                            }
+                            return app
+                        }),
+                    },
+                }
+            }),
+        }))
+    }
+
+    const updateAppKarma = (params: {
+        dao_name: string
+        repo_name: string
+        value: string
+        validate?: boolean
+    }) => {
+        const { dao_name, repo_name, validate = true } = params
+
+        setHakathons((state) => ({
+            ...state,
+            items: state.items.map((item) => {
+                if (item.address !== hackathon?.address || !item.member_voting_state) {
+                    return item
+                }
+
+                const app_changed = item.member_voting_state.karma_added.find((app) => {
+                    return app.dao_name === dao_name && app.repo_name === repo_name
+                })!
+                const value_int = parseInt(params.value) || app_changed.value
+                const value_diff = value_int - app_changed.value
+
+                // Sum all dirty karma except changed app
+                const { karma_rest } = item.member_voting_state
+                const karma_dirty_other = _.sum(
+                    item.member_voting_state.karma_added
+                        .filter((app) => {
+                            const key = `${app.dao_name}/${app.repo_name}`
+                            const cmp = `${dao_name}/${repo_name}`
+                            return key !== cmp
+                        })
+                        .map(({ value, value_dirty }) => {
+                            const dirty = value_dirty ? parseInt(value_dirty) : 0
+                            return dirty - value
+                        }),
+                )
+
+                let karma_rest_dirty = karma_rest - karma_dirty_other - value_diff
+                if (validate) {
+                    if (value_int < app_changed.value) {
+                        return item
+                    }
+                    if (karma_rest_dirty < 0) {
+                        karma_rest_dirty = karma_rest - karma_dirty_other
+                        params.value = app_changed.value.toString()
+                    }
+                }
+
+                return {
+                    ...item,
+                    member_voting_state: {
+                        ...item.member_voting_state,
+                        karma_rest_dirty,
+                        karma_added: item.member_voting_state.karma_added.map((app) => {
+                            if (
+                                app.dao_name !== dao_name ||
+                                app.repo_name !== repo_name
+                            ) {
+                                return app
+                            }
+                            return { ...app, value_dirty: params.value }
+                        }),
+                    },
+                }
+            }),
+        }))
+    }
+
+    const approveApps = async () => {
+        try {
+            if (checked_apps.length === 0) {
+                throw new GoshError('Value error', 'No applications selected for voting')
+            }
+            if (!hackathon) {
+                throw new GoshError('Value error', 'Hackathon is undefined')
+            }
+
+            await beforeCreateEvent(20, { onPendingCallback: setStatus0 })
+
+            setStatus0((state) => ({
+                ...state,
+                type: 'pending',
+                data: 'Create DAO event',
+            }))
+            const event_address = await member.wallet!.approveHackathonApps({
+                name: hackathon.name,
+                applications: checked_apps.map((app) => ({
+                    dao_address: app.dao_address,
+                    dao_name: app.dao_name,
+                    repo_name: app.repo_name,
+                })),
+                finish: hackathon.metadata.dates.finish,
+                comment: 'Start hackathon voting',
+            })
+            setStatus0((state) => ({
+                ...state,
+                type: 'success',
+                data: {
+                    title: 'Create DAO event',
+                    content: 'Start hackathon voting proposal created',
+                },
+            }))
+
+            return { event_address }
+        } catch (e) {
+            setStatus0((state) => ({ ...state, type: 'error', data: e }))
+            throw e
+        }
+    }
+
+    const voteForApps = async () => {
+        try {
+            if (!member.wallet) {
+                throw new GoshError('Value error', 'DAO wallet is undefined')
+            }
+            if (!hackathon?.member_voting_state) {
+                throw new GoshError('Value error', 'Hackathon data is undefined')
+            }
+
+            const params = hackathon.member_voting_state.karma_added
+                .filter((item) => {
+                    const value_dirty = parseInt(item.value_dirty || '0')
+                    return value_dirty - item.value > 0
+                })
+                .map((item) => ({
+                    hack_name: hackathon.name,
+                    app_index: item.index,
+                    value: parseInt(item.value_dirty) - item.value,
+                }))
+
+            if (params.length === 0) {
+                throw new GoshError('Value error', 'Nothing was changed')
+            }
+
+            setStatus1((state) => ({
+                ...state,
+                type: 'pending',
+                data: 'Submitting votes',
+            }))
+            await Promise.all(
+                params.map(async (item) => {
+                    await member.wallet!.voteForHackathonApp(item)
+                }),
+            )
+            setStatus1((state) => ({
+                ...state,
+                type: 'success',
+                data: 'Votes successfuly submitted',
+            }))
+        } catch (e) {
+            setStatus1((state) => ({ ...state, type: 'error', data: e }))
+            throw e
+        }
+    }
+
+    return {
+        checked_apps,
+        selectAppToApprove,
+        approveApps,
+        updateAppKarma,
+        voteForApps,
+    }
 }
