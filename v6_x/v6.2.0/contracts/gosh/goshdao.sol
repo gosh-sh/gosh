@@ -1223,13 +1223,13 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
         tvm.accept();
         require(_reserve >= pubaddr.count, ERR_LOW_TOKEN_RESERVE);
         (, uint256 keyaddr) = pubaddr.member.unpack(); 
+        require(_wallets.exists(keyaddr) == false, ERR_WALLET_EXIST);
         if (_daoMembers[keyaddr] != "") { 
             pubaddr.member = GoshLib.calculateDaoAddress(_code[m_DaoCode], _systemcontract, _daoMembers[keyaddr]);
             (, uint256 addrkey) = pubaddr.member.unpack(); 
             _daoMembers[addrkey] = _daoMembers[keyaddr];
         }
         (, keyaddr) = pubaddr.member.unpack();
-        require(_wallets.exists(keyaddr) == false, ERR_WALLET_EXIST);
         _reserve -= pubaddr.count;
         _allbalance += pubaddr.count;
         if (_daoMembersTag.exists(keyaddr)) {
