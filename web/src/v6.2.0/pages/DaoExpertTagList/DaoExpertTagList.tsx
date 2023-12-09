@@ -76,7 +76,7 @@ const DaoExpertTagListPage = () => {
                 tags: yup.array().of(
                     yup.object().shape({
                         name: yup.string().required(),
-                        multiplier: yup.number().integer().positive().required(),
+                        multiplier: yup.number().integer().positive().min(100).required(),
                     }),
                 ),
                 comment: yup.string().required(),
