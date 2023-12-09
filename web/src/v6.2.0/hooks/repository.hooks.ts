@@ -1,17 +1,17 @@
-import { useRecoilState, useSetRecoilState } from 'recoil'
-import { daoRepositoryListSelector } from '../store/repository.state'
-import { TGoshRepositoryListItem } from '../types/repository.types'
-import { getPaginatedAccounts } from '../../blockchain/utils'
-import { getSystemContract } from '../blockchain/helpers'
-import { validateRepoName } from '../validators'
-import { EGoshError, GoshError } from '../../errors'
-import { executeByChunk, whileFinite } from '../../utils'
-import { MAX_PARALLEL_READ } from '../../constants'
 import _ from 'lodash'
 import { useCallback, useEffect } from 'react'
-import { GoshRepository } from '../blockchain/repository'
-import { useDao, useDaoHelpers, useDaoMember } from './dao.hooks'
+import { useRecoilState, useSetRecoilState } from 'recoil'
+import { getPaginatedAccounts } from '../../blockchain/utils'
+import { MAX_PARALLEL_READ } from '../../constants'
+import { EGoshError, GoshError } from '../../errors'
 import { appToastStatusSelector } from '../../store/app.state'
+import { executeByChunk, whileFinite } from '../../utils'
+import { getSystemContract } from '../blockchain/helpers'
+import { GoshRepository } from '../blockchain/repository'
+import { daoRepositoryListSelector } from '../store/repository.state'
+import { TGoshRepositoryListItem } from '../types/repository.types'
+import { validateRepoName } from '../validators'
+import { useDao, useDaoHelpers, useDaoMember } from './dao.hooks'
 
 export function useCreateRepository() {
     const { details: dao } = useDao()
@@ -23,7 +23,7 @@ export function useCreateRepository() {
     )
 
     const create = useCallback(
-        async (name: string, description?: string) => {
+        async (name: string, description?: string, expert_tags?: string[]) => {
             try {
                 setStatus((state) => ({
                     ...state,
@@ -74,6 +74,7 @@ export function useCreateRepository() {
                 const eventaddr = await member.wallet.createRepository({
                     name,
                     description,
+                    expert_tags,
                     comment,
                     alone,
                 })

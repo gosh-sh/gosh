@@ -1845,7 +1845,11 @@ export function useDeleteDaoMember() {
                         })
                     }
 
-                    return { profile: address, allowance: member.allowance }
+                    return {
+                        profile: address,
+                        allowance: member.allowance,
+                        expert_tags: member.expert_tags,
+                    }
                 },
             )
 
@@ -1866,8 +1870,29 @@ export function useDeleteDaoMember() {
                 type: EDaoEventType.DAO_MEMBER_DELETE,
                 params: { profile: [profile] },
             }))
+
+            let member_delete_expert_tags_cells: any[] = []
+            profiles.forEach(({ profile, expert_tags }) => {
+                const cells = expert_tags.map(({ name }) => ({
+                    type: EDaoEventType.DAO_MEMBER_EXPERT_TAG_DELETE,
+                    params: {
+                        item: { profile_addr: profile, tag: name },
+                        comment: 'Delete expert tag',
+                    },
+                }))
+                member_delete_expert_tags_cells.push(...cells)
+            })
+
             const eventaddr = await member.wallet!.createMultiEvent({
-                proposals: [...memberDeleteAllowanceCells, ...memberDeleteCells],
+                proposals: [
+                    ...member_delete_expert_tags_cells,
+                    { type: EDaoEventType.DELAY, params: {} },
+                    { type: EDaoEventType.DELAY, params: {} },
+                    { type: EDaoEventType.DELAY, params: {} },
+                    ...memberDeleteAllowanceCells,
+                    { type: EDaoEventType.DELAY, params: {} },
+                    ...memberDeleteCells,
+                ],
                 comment,
             })
 

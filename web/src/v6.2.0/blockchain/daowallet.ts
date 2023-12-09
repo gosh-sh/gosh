@@ -302,6 +302,7 @@ export class DaoWallet extends BaseContract {
             addr: string
             version: string
         }
+        expert_tags?: string[]
         comment?: string
         reviewers?: string[]
         alone?: boolean
@@ -312,6 +313,7 @@ export class DaoWallet extends BaseContract {
             previous,
             comment = '',
             description = '',
+            expert_tags = [],
             reviewers = [],
             alone,
             cell,
@@ -332,7 +334,7 @@ export class DaoWallet extends BaseContract {
             return null
         } else {
             const cell: any = await this.createRepository({ ...params, cell: true })
-            return await this.createSingleEvent({ cell, reviewers })
+            return await this.createSingleEvent({ cell, reviewers, expert_tags })
         }
     }
 
