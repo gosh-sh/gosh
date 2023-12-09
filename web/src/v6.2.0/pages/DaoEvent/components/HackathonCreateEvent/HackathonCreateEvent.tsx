@@ -58,11 +58,11 @@ const HackathonCreateEvent = (props: THackathonCreateEventProps) => {
                 </div>
             </div>
             {!!data.tags.length && (
-                <div className="flex items-center gap-6">
+                <div className="flex flex-wrap items-center gap-6">
                     <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
                         Expert tags
                     </div>
-                    <div className="text-sm flex items-center gap-3">
+                    <div className="text-sm flex flex-wrap items-center gap-3">
                         {data.tags.map((tag: string) => (
                             <BadgeExpertTag key={tag} content={tag} />
                         ))}
