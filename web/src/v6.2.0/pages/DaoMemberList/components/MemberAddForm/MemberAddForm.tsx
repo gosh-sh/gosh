@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import classNames from 'classnames'
+import copyClipboard from 'copy-to-clipboard'
 import {
     ErrorMessage,
     Field,
@@ -7,30 +10,27 @@ import {
     Form,
     Formik,
 } from 'formik'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import AsyncCreatableSelect from 'react-select/async-creatable'
+import { toast } from 'react-toastify'
+import { AppConfig } from '../../../../../appconfig'
+import successImage from '../../../../../assets/images/success.png'
+import Alert from '../../../../../components/Alert/Alert'
+import { MemberIcon } from '../../../../../components/Dao'
 import { Button } from '../../../../../components/Form'
+import { BaseField, FormikInput, FormikTextarea } from '../../../../../components/Formik'
+import { ToastError } from '../../../../../components/Toast'
 import {
     Select2ClassNames,
     ToastOptionsShortcuts,
     getUsernameByEmail,
 } from '../../../../../helpers'
-import { ToastError } from '../../../../../components/Toast'
-import AsyncCreatableSelect from 'react-select/async-creatable'
-import yup from '../../../../yup-extended'
-import successImage from '../../../../../assets/images/success.png'
-import { AppConfig } from '../../../../../appconfig'
-import { AnimatePresence, motion } from 'framer-motion'
-import { useDao, useCreateDaoMember } from '../../../../hooks/dao.hooks'
-import { BaseField, FormikInput, FormikTextarea } from '../../../../../components/Formik'
 import { validateEmail } from '../../../../../validators'
-import classNames from 'classnames'
-import { toast } from 'react-toastify'
-import copyClipboard from 'copy-to-clipboard'
-import Alert from '../../../../../components/Alert/Alert'
-import { MemberIcon } from '../../../../../components/Dao'
 import { getSystemContract } from '../../../../blockchain/helpers'
-import { useNavigate } from 'react-router-dom'
+import { useCreateDaoMember, useDao } from '../../../../hooks/dao.hooks'
+import yup from '../../../../yup-extended'
 
 const getUsernameOptions = async (input: string) => {
     if (input.indexOf('@') >= 0) {
@@ -162,7 +162,7 @@ const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
                                 <Field
                                     name={`members.${index}.allowance`}
                                     component={FormikInput}
-                                    placeholder="Karma"
+                                    placeholder="Karma + DAO tokens"
                                     autoComplete="off"
                                     help={`DAO reserve ${dao.details.supply?.reserve.toLocaleString()}`}
                                     disabled={form.isSubmitting}
