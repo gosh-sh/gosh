@@ -1,0 +1,271 @@
+{
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"owners","type":"uint256[]"},
+				{"name":"reqConfirms","type":"uint8"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "acceptTransfer",
+			"inputs": [
+				{"name":"payload","type":"bytes"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTransaction",
+			"inputs": [
+				{"name":"dest","type":"address"},
+				{"name":"value","type":"uint128"},
+				{"name":"bounce","type":"bool"},
+				{"name":"flags","type":"uint8"},
+				{"name":"payload","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "submitTransaction",
+			"inputs": [
+				{"name":"dest","type":"address"},
+				{"name":"value","type":"uint128"},
+				{"name":"bounce","type":"bool"},
+				{"name":"allBalance","type":"bool"},
+				{"name":"payload","type":"cell"}
+			],
+			"outputs": [
+				{"name":"transId","type":"uint64"}
+			]
+		},
+		{
+			"name": "confirmTransaction",
+			"inputs": [
+				{"name":"transactionId","type":"uint64"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "isConfirmed",
+			"inputs": [
+				{"name":"mask","type":"uint32"},
+				{"name":"index","type":"uint8"}
+			],
+			"outputs": [
+				{"name":"confirmed","type":"bool"}
+			]
+		},
+		{
+			"name": "getParameters",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"maxQueuedTransactions","type":"uint8"},
+				{"name":"maxQueuedLimits","type":"uint8"},
+				{"name":"maxCustodianCount","type":"uint8"},
+				{"name":"maxLimitPeriod","type":"uint32"},
+				{"name":"expirationTime","type":"uint64"},
+				{"name":"minValue","type":"uint128"},
+				{"name":"requiredTxnConfirms","type":"uint8"},
+				{"name":"requiredLimConfirms","type":"uint8"},
+				{"name":"requiredUpdConfirms","type":"uint8"}
+			]
+		},
+		{
+			"name": "getTransaction",
+			"inputs": [
+				{"name":"transactionId","type":"uint64"}
+			],
+			"outputs": [
+				{"components":[{"name":"id","type":"uint64"},{"name":"confirmationsMask","type":"uint32"},{"name":"signsRequired","type":"uint8"},{"name":"signsReceived","type":"uint8"},{"name":"creator","type":"uint256"},{"name":"index","type":"uint8"},{"name":"dest","type":"address"},{"name":"value","type":"uint128"},{"name":"sendFlags","type":"uint16"},{"name":"payload","type":"cell"},{"name":"bounce","type":"bool"}],"name":"trans","type":"tuple"}
+			]
+		},
+		{
+			"name": "getTransactions",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"id","type":"uint64"},{"name":"confirmationsMask","type":"uint32"},{"name":"signsRequired","type":"uint8"},{"name":"signsReceived","type":"uint8"},{"name":"creator","type":"uint256"},{"name":"index","type":"uint8"},{"name":"dest","type":"address"},{"name":"value","type":"uint128"},{"name":"sendFlags","type":"uint16"},{"name":"payload","type":"cell"},{"name":"bounce","type":"bool"}],"name":"transactions","type":"tuple[]"}
+			]
+		},
+		{
+			"name": "getTransactionIds",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"ids","type":"uint64[]"}
+			]
+		},
+		{
+			"name": "getCustodians",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"index","type":"uint8"},{"name":"pubkey","type":"uint256"}],"name":"custodians","type":"tuple[]"}
+			]
+		},
+		{
+			"name": "createLimit",
+			"inputs": [
+				{"name":"value","type":"uint128"},
+				{"name":"period","type":"uint32"},
+				{"name":"required","type":"uint8"}
+			],
+			"outputs": [
+				{"name":"limitId","type":"uint64"}
+			]
+		},
+		{
+			"name": "confirmLimit",
+			"inputs": [
+				{"name":"limitId","type":"uint64"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "changeLimit",
+			"inputs": [
+				{"name":"limitId","type":"uint64"},
+				{"name":"value","type":"uint128"},
+				{"name":"period","type":"uint32"},
+				{"name":"required","type":"uint8"}
+			],
+			"outputs": [
+				{"name":"newLimitId","type":"uint64"}
+			]
+		},
+		{
+			"name": "deleteLimit",
+			"inputs": [
+				{"name":"limitId","type":"uint64"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getLimits",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"id","type":"uint64"},{"name":"value","type":"uint128"},{"name":"period","type":"uint32"},{"name":"required","type":"uint8"},{"name":"spent","type":"uint256"},{"name":"start","type":"uint32"},{"name":"votes","type":"uint8"},{"name":"deletionMask","type":"uint32"}],"name":"limits","type":"tuple[]"}
+			]
+		},
+		{
+			"name": "getPendingLimit",
+			"inputs": [
+				{"name":"limitId","type":"uint64"}
+			],
+			"outputs": [
+				{"components":[{"name":"creator","type":"uint256"},{"name":"index","type":"uint8"},{"name":"confirmationsMask","type":"uint32"},{"name":"signs","type":"uint8"},{"name":"parentId","type":"uint64"},{"components":[{"name":"id","type":"uint64"},{"name":"value","type":"uint128"},{"name":"period","type":"uint32"},{"name":"required","type":"uint8"},{"name":"spent","type":"uint256"},{"name":"start","type":"uint32"},{"name":"votes","type":"uint8"},{"name":"deletionMask","type":"uint32"}],"name":"limit","type":"tuple"}],"name":"limit","type":"tuple"}
+			]
+		},
+		{
+			"name": "getPendingLimits",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"id","type":"uint64"},{"components":[{"name":"creator","type":"uint256"},{"name":"index","type":"uint8"},{"name":"confirmationsMask","type":"uint32"},{"name":"signs","type":"uint8"},{"name":"parentId","type":"uint64"},{"components":[{"name":"id","type":"uint64"},{"name":"value","type":"uint128"},{"name":"period","type":"uint32"},{"name":"required","type":"uint8"},{"name":"spent","type":"uint256"},{"name":"start","type":"uint32"},{"name":"votes","type":"uint8"},{"name":"deletionMask","type":"uint32"}],"name":"limit","type":"tuple"}],"name":"info","type":"tuple"}],"name":"pendingLimits","type":"tuple[]"}
+			]
+		},
+		{
+			"name": "getLimit",
+			"inputs": [
+				{"name":"limitId","type":"uint64"}
+			],
+			"outputs": [
+				{"components":[{"name":"id","type":"uint64"},{"name":"value","type":"uint128"},{"name":"period","type":"uint32"},{"name":"required","type":"uint8"},{"name":"spent","type":"uint256"},{"name":"start","type":"uint32"},{"name":"votes","type":"uint8"},{"name":"deletionMask","type":"uint32"}],"name":"limit","type":"tuple"}
+			]
+		},
+		{
+			"name": "submitUpdate",
+			"inputs": [
+				{"name":"codeHash","type":"uint256"},
+				{"name":"owners","type":"uint256[]"},
+				{"name":"reqConfirms","type":"uint8"}
+			],
+			"outputs": [
+				{"name":"updateId","type":"uint64"}
+			]
+		},
+		{
+			"name": "confirmUpdate",
+			"inputs": [
+				{"name":"updateId","type":"uint64"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "executeUpdate",
+			"inputs": [
+				{"name":"updateId","type":"uint64"},
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getUpdateRequests",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"id","type":"uint64"},{"name":"index","type":"uint8"},{"name":"signs","type":"uint8"},{"name":"confirmationsMask","type":"uint32"},{"name":"creator","type":"uint256"},{"name":"codeHash","type":"uint256"},{"name":"custodians","type":"uint256[]"},{"name":"reqConfirms","type":"uint8"}],"name":"updates","type":"tuple[]"}
+			]
+		},
+		{
+			"name": "TheBigBang",
+			"inputs": [
+				{"name":"returnMoney","type":"address"}
+			],
+			"outputs": [
+			]
+		}
+	],
+	"data": [
+	],
+	"events": [
+		{
+			"name": "TransferAccepted",
+			"inputs": [
+				{"name":"payload","type":"bytes"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "LimitOverrun",
+			"inputs": [
+				{"name":"limitId","type":"uint64"},
+				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		}
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestamp","type":"uint64"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"m_ownerKey","type":"uint256"},
+		{"name":"m_requestsMask","type":"uint256"},
+		{"components":[{"name":"id","type":"uint64"},{"name":"confirmationsMask","type":"uint32"},{"name":"signsRequired","type":"uint8"},{"name":"signsReceived","type":"uint8"},{"name":"creator","type":"uint256"},{"name":"index","type":"uint8"},{"name":"dest","type":"address"},{"name":"value","type":"uint128"},{"name":"sendFlags","type":"uint16"},{"name":"payload","type":"cell"},{"name":"bounce","type":"bool"}],"name":"m_transactions","type":"map(uint64,tuple)"},
+		{"name":"m_custodians","type":"map(uint256,uint8)"},
+		{"name":"m_custodianCount","type":"uint8"},
+		{"components":[{"name":"id","type":"uint64"},{"name":"value","type":"uint128"},{"name":"period","type":"uint32"},{"name":"required","type":"uint8"},{"name":"spent","type":"uint256"},{"name":"start","type":"uint32"},{"name":"votes","type":"uint8"},{"name":"deletionMask","type":"uint32"}],"name":"m_limits","type":"map(uint64,tuple)"},
+		{"components":[{"name":"creator","type":"uint256"},{"name":"index","type":"uint8"},{"name":"confirmationsMask","type":"uint32"},{"name":"signs","type":"uint8"},{"name":"parentId","type":"uint64"},{"components":[{"name":"id","type":"uint64"},{"name":"value","type":"uint128"},{"name":"period","type":"uint32"},{"name":"required","type":"uint8"},{"name":"spent","type":"uint256"},{"name":"start","type":"uint32"},{"name":"votes","type":"uint8"},{"name":"deletionMask","type":"uint32"}],"name":"limit","type":"tuple"}],"name":"m_pendingLimits","type":"map(uint64,tuple)"},
+		{"name":"m_limitRequestsMask","type":"uint256"},
+		{"components":[{"name":"id","type":"uint64"},{"name":"index","type":"uint8"},{"name":"signs","type":"uint8"},{"name":"confirmationsMask","type":"uint32"},{"name":"creator","type":"uint256"},{"name":"codeHash","type":"uint256"},{"name":"custodians","type":"uint256[]"},{"name":"reqConfirms","type":"uint8"}],"name":"m_updateRequests","type":"map(uint64,tuple)"},
+		{"name":"m_updateRequestsMask","type":"uint32"},
+		{"name":"m_requiredVotes","type":"uint8"},
+		{"name":"m_defaultRequiredConfirmations","type":"uint8"}
+	]
+}

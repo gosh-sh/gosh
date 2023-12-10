@@ -15,6 +15,7 @@ export const HACKATHON_TAG = {
     grant: '___!hackathon:grant!___',
     participant: '___!hackathon:participant!___',
 }
+export const HACKATHONS_REPO = '_hackathons'
 export const DISABLED_VERSIONS = ['5.0.0', '6.0.0']
 export const L2_COMISSION = 1000 // 0.1% 0.001
 export const PERSIST_REDIRECT_KEY = 'gosh-redirect'
@@ -65,6 +66,15 @@ export const DaoEventType: { [key: number]: string } = {
     42: 'Delete milestone',
     43: 'Create milestone',
     44: 'Upgrade milestone',
+    46: 'Delete repository',
+    47: 'Update DAO expert tag',
+    48: 'Delete DAO expert tag',
+    49: 'Add expert tag for DAO member',
+    50: 'Delete expert tag for DAO member',
+    51: 'Create hackathon',
+    53: 'Create hackathon voting',
+    54: 'Update hackathon',
+    56: 'Create repository branch',
 }
 
 export const NotificationType: { [key: string]: string } = {

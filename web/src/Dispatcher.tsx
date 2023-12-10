@@ -1,12 +1,12 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
+import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
 import { useMatch } from 'react-router-dom'
-import { withErrorBoundary, useErrorBoundary } from 'react-error-boundary'
-import Loader from './components/Loader/Loader'
-import Alert from './components/Alert/Alert'
 import { useRecoilState } from 'recoil'
-import { appContextAtom } from './store/app.state'
 import { AppConfig } from './appconfig'
 import MaintenenceImg from './assets/images/maintenance.png'
+import Alert from './components/Alert/Alert'
+import Loader from './components/Loader/Loader'
+import { appContextAtom } from './store/app.state'
 
 const App_v1 = lazy(() => import('./v1.0.0/App'))
 const App_v2 = lazy(() => import('./v2.0.0/App'))
@@ -16,6 +16,7 @@ const App_v5 = lazy(() => import('./v5.0.0/App'))
 const App_v5_1 = lazy(() => import('./v5.1.0/App'))
 const App_v6 = lazy(() => import('./v6.0.0/App'))
 const App_v6_1 = lazy(() => import('./v6.1.0/App'))
+const App_v6_2 = lazy(() => import('./v6.2.0/App'))
 
 const renderApp = (version: string) => {
     switch (version) {
@@ -35,6 +36,8 @@ const renderApp = (version: string) => {
             return <App_v6 />
         case '6.1.0':
             return <App_v6_1 />
+        case '6.2.0':
+            return <App_v6_2 />
         default:
             return <Alert variant="danger">Version {version} is not supported</Alert>
     }
