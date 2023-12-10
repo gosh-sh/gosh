@@ -71,7 +71,7 @@ const HackathonParticipantListPage = () => {
                             <div className="border border-gray-e6edff rounded-xl overflow-hidden px-5">
                                 <div
                                     className="py-4 w-full flex items-center justify-between
-                                border-b border-b-gray-e6edff text-xl font-medium"
+                                    border-b border-b-gray-e6edff text-xl font-medium"
                                 >
                                     <div className="grow">Selected applications</div>
                                     <div>{checked_apps.length}</div>

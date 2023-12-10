@@ -317,6 +317,7 @@ export function useDaoHackathonList(
                     storagedata: storagedata_empty,
                     apps_submitted: apps_submitted_empty,
                     apps_approved: applications,
+                    is_voting_created: applications.length > 0,
                     ...rest,
                 }
             },
@@ -479,7 +480,11 @@ export function useHackathon(
                 ...state,
                 items: state.items.map((item) => {
                     if (item.address === found?.address) {
-                        return { ...item, ...found }
+                        return {
+                            ...item,
+                            ...found,
+                            is_voting_created: item.is_voting_created,
+                        }
                     }
                     return item
                 }),
@@ -516,16 +521,16 @@ export function useHackathon(
             const now = moment().unix()
             const start = rest.metadata.dates.start
             const voting = rest.metadata.dates.voting || now + 1
-            const finish = rest.metadata.dates.finish || now + 1
-            const is_voting_created = !!applications.length
+            // TODO: Remove +10s and check finished by block time
+            const finish = (rest.metadata.dates.finish || now + 1) + 10
+            const is_voting_created = applications.length > 0
 
             const updated = {
                 ...rest,
                 apps_approved: applications,
                 is_voting_started: now >= voting,
                 is_voting_created,
-                // TODO: Remove +10s and check finished by block time
-                is_voting_finished: now >= finish + 10,
+                is_voting_finished: now >= finish,
                 is_update_enabled: !is_voting_created,
                 is_participate_enabled: now >= start && now < voting,
             }
@@ -658,13 +663,15 @@ export function useHackathon(
         try {
             setHakathons((state) => ({
                 ...state,
-                items: state.items.map((item) => ({
-                    ...item,
-                    apps_submitted: {
-                        ...item.apps_submitted,
-                        is_fetching: item.address === hack_address,
-                    },
-                })),
+                items: state.items.map((item) => {
+                    if (item.address !== address) {
+                        return item
+                    }
+                    return {
+                        ...item,
+                        apps_submitted: { ...item.apps_submitted, is_fetching: true },
+                    }
+                }),
             }))
 
             const sc = getSystemContract()
@@ -713,28 +720,29 @@ export function useHackathon(
             setHakathons((state) => ({
                 ...state,
                 items: state.items.map((item) => {
-                    if (item.address === hack_address) {
-                        return {
-                            ...item,
-                            apps_submitted: {
-                                items: apps_submitted.map((app) => {
-                                    const exists = item.apps_submitted.items.find((v) => {
-                                        return (
-                                            v.dao_name === app.dao_name &&
-                                            v.repo_name === app.repo_name
-                                        )
-                                    })
-                                    if (exists) {
-                                        return { ...exists, ...app }
-                                    }
-                                    return app
-                                }),
-                                is_fetching: false,
-                                is_fetched: true,
-                            },
-                        }
+                    if (item.address !== hack_address) {
+                        return item
                     }
-                    return item
+
+                    return {
+                        ...item,
+                        apps_submitted: {
+                            items: apps_submitted.map((app) => {
+                                const exists = item.apps_submitted.items.find((v) => {
+                                    return (
+                                        v.dao_name === app.dao_name &&
+                                        v.repo_name === app.repo_name
+                                    )
+                                })
+                                if (exists) {
+                                    return { ...exists, ...app }
+                                }
+                                return app
+                            }),
+                            is_fetching: false,
+                            is_fetched: true,
+                        },
+                    }
                 }),
             }))
         } catch (e: any) {
@@ -792,7 +800,7 @@ export function useHackathon(
         subscribe,
         hackathon?.address,
         hackathon?.metadata.branch_name,
-        hackathon?.apps_approved.length,
+        hackathon?.apps_approved,
         hackathon?._rg_repo_adapter?.getAddress(),
     ])
 
@@ -1026,6 +1034,7 @@ export function useHackathonVoting() {
                         return item
                     }
 
+                    const { member_voting_state: curr } = item
                     const user_karma_rest = item.members_karma_rest[user.profile!] || 0
                     const user_karma_added: any = []
                     item.apps_submitted.items.forEach((app) => {
@@ -1042,20 +1051,26 @@ export function useHackathonVoting() {
                     return {
                         ...item,
                         member_voting_state: {
-                            karma_rest: user_karma_rest,
-                            karma_rest_dirty: user_karma_rest,
-                            karma_added: user_karma_added,
+                            karma_rest: curr?.karma_rest || user_karma_rest,
+                            karma_rest_dirty: curr?.karma_rest_dirty || user_karma_rest,
+                            karma_added: user_karma_added.map((app: any) => {
+                                const found = curr?.karma_added.find((f) => {
+                                    return (
+                                        f.dao_name === app.dao_name &&
+                                        f.repo_name === app.repo_name
+                                    )
+                                })
+                                if (found) {
+                                    return { ...found, index: app.index }
+                                }
+                                return app
+                            }),
                         },
                     }
                 }),
             }))
         }
-    }, [
-        hackathon?.address,
-        user.profile,
-        hackathon?.apps_submitted.items.length,
-        hackathon?.apps_approved.length,
-    ])
+    }, [hackathon?.address, user.profile, hackathon?.apps_submitted])
 
     const selectAppToApprove = (params: {
         dao_name: string
@@ -1227,11 +1242,45 @@ export function useHackathonVoting() {
                 type: 'pending',
                 data: 'Submitting votes',
             }))
+
             await Promise.all(
                 params.map(async (item) => {
                     await member.wallet!.voteForHackathonApp(item)
                 }),
             )
+            setHakathons((state) => ({
+                ...state,
+                items: state.items.map((item) => {
+                    if (item.address !== hackathon.address) {
+                        return item
+                    }
+                    if (!item.member_voting_state) {
+                        return item
+                    }
+
+                    return {
+                        ...item,
+                        member_voting_state: {
+                            ...item.member_voting_state,
+                            karma_added: item.member_voting_state.karma_added.map(
+                                (app: any) => {
+                                    const found = params.find((p) => {
+                                        return p.app_index === app.index
+                                    })
+                                    if (found) {
+                                        return {
+                                            ...app,
+                                            value: app.value + found.value,
+                                        }
+                                    }
+                                    return app
+                                },
+                            ),
+                        },
+                    }
+                }),
+            }))
+
             setStatus1((state) => ({
                 ...state,
                 type: 'success',

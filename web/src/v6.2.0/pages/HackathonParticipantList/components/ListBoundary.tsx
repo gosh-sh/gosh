@@ -54,7 +54,7 @@ const ListBoundaryInner = (props: { search?: string }) => {
 
     return (
         <div className="border border-gray-e6edff rounded-xl overflow-hidden">
-            {!items.length && (
+            {!hackathon?.apps_submitted.is_fetching && !items.length && (
                 <div className="text-sm text-gray-7c8db5 text-center p-4">
                     There are no participants yet
                 </div>

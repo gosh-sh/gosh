@@ -118,7 +118,7 @@ const HackathonParticipantsOverview = () => {
                     </div>
                 )}
 
-            {!show_skeleton && hackathon.is_participate_enabled && (
+            {!show_skeleton && hackathon.is_participate_enabled && hackathon._rg_fetched && (
                 <div className="mt-4">
                     <Button
                         variant="custom"
