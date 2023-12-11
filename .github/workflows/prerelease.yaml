@@ -45,6 +45,7 @@ jobs:
           - git-remote-gosh_v5_1_0
           - git-remote-gosh_v6_0_0
           - git-remote-gosh_v6_1_0
+          - git-remote-gosh_v6_2_0
         result:
           - git-remote-gosh-darwin-arm64
           - git-remote-gosh-darwin-amd64
@@ -88,6 +89,8 @@ jobs:
             dir: v6_x/v6.0.0/git-remote-gosh
           - bin: git-remote-gosh_v6_1_0
             dir: v6_x/v6.1.0/git-remote-gosh
+          - bin: git-remote-gosh_v6_2_0
+            dir: v6_x/v6.2.0/git-remote-gosh
 
     name: B ${{ matrix.bin }} ${{ matrix.target }}
 
