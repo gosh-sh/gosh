@@ -33,3 +33,6 @@ gosh-cli.conf.json
 !GiverV2.keys.json
 
 target/
+
+tonos-cli.conf.json
+

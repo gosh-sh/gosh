@@ -63,7 +63,6 @@ echo "export DAO_NAME=$DAO_NAME" >> env.env
 tonos-cli call --abi $USER_PROFILE_ABI $USER_PROFILE_ADDR --sign $DAO_KEYS deployDao \
   "{\"systemcontract\":\"$SYSTEM_CONTRACT_ADDR\", \"name\":\"$DAO_NAME\", \"pubmem\":[\"$USER_PROFILE_ADDR\"]}"
 DAO_ADDR=$(tonos-cli -j run $SYSTEM_CONTRACT_ADDR getAddrDao "{\"name\":\"$DAO_NAME\"}" --abi $SYSTEM_CONTRACT_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
-wait_account_active $DAO_ADDR
 
 echo "***** awaiting dao deploy *****"
 wait_account_active $DAO_ADDR
@@ -76,6 +75,7 @@ WALLET_PUBKEY=$(cat $WALLET_KEYS | sed -n '/public/ s/.*\([[:xdigit:]]\{64\}\).*
 echo "export WALLET_PUBKEY=$WALLET_PUBKEY" >> env.env
 
 WALLET_ADDR=$(tonos-cli -j run $DAO_ADDR getAddrWallet "{\"pubaddr\":\"$USER_PROFILE_ADDR\",\"index\":0}" --abi $DAO_ABI | sed -n '/value0/ p' | cut -d'"' -f 4)
+wait_account_active $WALLET_ADDR
 export WALLET_ADDR
 echo "export WALLET_ADDR=$WALLET_ADDR" >> env.env
 export WALLET_ABI=$GOSH_PATH/goshwallet.abi.json
