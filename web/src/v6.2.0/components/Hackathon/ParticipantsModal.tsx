@@ -12,11 +12,13 @@ import {
 } from 'formik'
 import { AnimatePresence, motion } from 'framer-motion'
 import AsyncSelect from 'react-select/async'
+import { useSetRecoilState } from 'recoil'
 import { AppConfig } from '../../../appconfig'
-import { Button } from '../../../components/Form'
+import { Button, ButtonLink } from '../../../components/Form'
 import { BaseField } from '../../../components/Formik'
 import { ModalCloseButton } from '../../../components/Modal'
 import { Select2ClassNames } from '../../../helpers'
+import { appModalStateAtom } from '../../../store/app.state'
 import { useUser } from '../../hooks/user.hooks'
 import yup from '../../yup-extended'
 import { UserSelect } from '../UserSelect'
@@ -128,6 +130,7 @@ const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
     const { form, remove, push } = props as FieldArrayRenderProps
     const values = form.values as TFormValues
     const { user } = useUser()
+    const setModal = useSetRecoilState(appModalStateAtom)
 
     const onDaoNameChange = (option: any, index: number) => {
         const name = option?.value.name || ''
@@ -236,7 +239,7 @@ const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
                 </AnimatePresence>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-4">
                 <Button
                     type="button"
                     variant="custom"
@@ -246,8 +249,23 @@ const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
                     onClick={() => push('0')}
                 >
                     <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                    Add application from DAO
+                    Add application from existing DAO
                 </Button>
+            </div>
+
+            <div className="mt-4">
+                <ButtonLink
+                    to={'/a/orgs/create'}
+                    variant="custom"
+                    size="sm"
+                    className="border !border-blue-2b89ff text-blue-2b89ff !rounded-[2rem]"
+                    onClick={() => {
+                        setModal((state) => ({ ...state, element: null, isOpen: false }))
+                    }}
+                >
+                    <FontAwesomeIcon icon={faPlus} className="mr-2" />
+                    Create new DAO
+                </ButtonLink>
             </div>
         </>
     )

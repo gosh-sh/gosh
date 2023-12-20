@@ -6,7 +6,7 @@ import { Button } from '../../../components/Form'
 import Skeleton from '../../../components/Skeleton'
 import { getIdenticonAvatar } from '../../../helpers'
 import { appModalStateAtom } from '../../../store/app.state'
-import { useAddHackathonParticipants, useHackathon } from '../../hooks/hackathon.hooks'
+import { useHackathon, useSubmitHackathonApps } from '../../hooks/hackathon.hooks'
 import { useUser } from '../../hooks/user.hooks'
 import { HackathonParticipantsModal } from './ParticipantsModal'
 
@@ -25,25 +25,22 @@ const HackathonParticipantsOverview = () => {
     const location = useLocation()
     const { user } = useUser()
     const { hackathon } = useHackathon()
-    const { addParticipants } = useAddHackathonParticipants()
+    const { submitApps } = useSubmitHackathonApps()
 
     const show_skeleton =
-        !hackathon?._rg_fetched ||
-        (!hackathon?.participants.is_fetched && hackathon?.participants.is_fetching)
+        !hackathon?.apps_submitted.is_fetched && hackathon?.apps_submitted.is_fetching
 
-    const onAddParticipantsModal = () => {
+    const onSubmitAppModal = () => {
         setModal({
             static: true,
             isOpen: true,
-            element: <HackathonParticipantsModal onSubmit={onAddParticipantsSubmit} />,
+            element: <HackathonParticipantsModal onSubmit={onSubmitApp} />,
         })
     }
 
-    const onAddParticipantsSubmit = async (
-        values: { dao_name: string; repo_name: string }[],
-    ) => {
+    const onSubmitApp = async (values: { dao_name: string; repo_name: string }[]) => {
         try {
-            await addParticipants({ items: values })
+            await submitApps({ items: values })
             setModal((state) => ({ ...state, isOpen: false }))
         } catch (e: any) {
             console.error(e.message)
@@ -64,19 +61,24 @@ const HackathonParticipantsOverview = () => {
         )
     }
 
+    if (!hackathon) {
+        return null
+    }
+
     return (
         <div className="py-5">
             <h3 className="mb-2.5 text-sm font-medium">Your applications</h3>
+
             <div className="flex flex-col gap-2">
                 {show_skeleton && <SkeletonParticipants />}
 
-                {!show_skeleton && !hackathon?.participants.items.length && (
+                {!show_skeleton && !hackathon.apps_submitted.items.length && (
                     <div className="text-sm text-gray-7c8db5">
                         There are no participants where you are a member of
                     </div>
                 )}
 
-                {hackathon?.participants.items
+                {hackathon.apps_submitted.items
                     .filter(({ is_member }) => !!is_member)
                     .map(({ dao_name, repo_name }, index) => (
                         <div
@@ -108,13 +110,21 @@ const HackathonParticipantsOverview = () => {
                     ))}
             </div>
 
-            {!show_skeleton && hackathon.participate_enabled && (
+            {!show_skeleton &&
+                !hackathon.is_participate_enabled &&
+                !hackathon.is_voting_started && (
+                    <div className="mt-4 text-sm text-gray-7c8db5">
+                        Applications submitting will be available after hackathon starts
+                    </div>
+                )}
+
+            {!show_skeleton && hackathon.is_participate_enabled && hackathon._rg_fetched && (
                 <div className="mt-4">
                     <Button
                         variant="custom"
                         size="sm"
                         className="border !border-blue-2b89ff text-blue-2b89ff !rounded-[2rem]"
-                        onClick={onAddParticipantsModal}
+                        onClick={onSubmitAppModal}
                     >
                         <FontAwesomeIcon icon={faPlus} className="mr-2" />
                         Add application

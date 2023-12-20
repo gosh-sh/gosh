@@ -3,17 +3,15 @@ import { atom, selectorFamily } from 'recoil'
 import { contextVersion } from '../constants'
 import { TDaoHackathonList, THackathonDetails } from '../types/hackathon.types'
 
-export const metadata_empty = {
+export const storagedata_empty = {
     is_fetching: false,
     is_fetched: false,
-    title: '',
-    description: { readme: '', rules: '', prize: '' },
+    description: { readme: '', rules: '', prizes: '' },
     prize: { total: 0, places: [] },
-    dates: { start: 0, voting: 0, finish: 0 },
-    raw: '',
+    prize_raw: '',
 }
 
-export const participants_empty = {
+export const apps_submitted_empty = {
     is_fetching: false,
     is_fetched: false,
     items: [],
@@ -64,11 +62,11 @@ export const daoHackathonSelector = selectorFamily<THackathonDetails | undefined
     {
         key: `DaoHackathonSelector_${contextVersion}`,
         get:
-            (repo_name) =>
+            (address) =>
             ({ get }) => {
                 const atom = get(daoHackathonListAtom)
                 const list = _.flatten(Object.values(atom).map(({ items }) => items))
-                return list.find((item) => item.name === repo_name)
+                return list.find((item) => item.address === address)
             },
         dangerouslyAllowMutability: true,
     },

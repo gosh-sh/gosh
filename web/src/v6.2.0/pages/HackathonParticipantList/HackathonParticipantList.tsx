@@ -1,14 +1,44 @@
+import { faClock } from '@fortawesome/free-regular-svg-icons'
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Form, Formik } from 'formik'
 import { ChangeEvent, useState } from 'react'
-import { Input } from '../../../components/Form'
+import { useNavigate } from 'react-router-dom'
+import { Button, Input } from '../../../components/Form'
+import { HackathonStatus } from '../../components/Hackathon'
+import { useDao, useDaoMember } from '../../hooks/dao.hooks'
+import { useHackathon, useHackathonVoting } from '../../hooks/hackathon.hooks'
 import { ListBoundary } from './components'
 
-const HackathonParticipantListPage = (props: { count?: number }) => {
+const HackathonParticipantListPage = () => {
+    const navigate = useNavigate()
+    const dao = useDao()
+    const member = useDaoMember()
+    const { hackathon } = useHackathon()
+    const { checked_apps, approveApps, voteForApps } = useHackathonVoting()
     const [search, setSearch] = useState<string>('')
 
     const onSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
         setSearch(e.target.value)
+    }
+
+    const onApproveApps = async () => {
+        try {
+            const { event_address } = await approveApps()
+            if (event_address) {
+                navigate(`/o/${dao.details.name}/events/${event_address}`)
+            }
+        } catch (e: any) {
+            console.error(e.message)
+        }
+    }
+
+    const onVoteForApps = async () => {
+        try {
+            await voteForApps()
+        } catch (e: any) {
+            console.error(e.message)
+        }
     }
 
     return (
@@ -33,61 +63,104 @@ const HackathonParticipantListPage = (props: { count?: number }) => {
                 <ListBoundary search={search} />
             </div>
 
-            {/* <div className="col !basis-full lg:!basis-4/12 xl:!basis-3/12">
+            <div className="col !basis-full lg:!basis-4/12 xl:!basis-4/12 md:grow-0">
                 <div className="flex flex-col gap-y-5">
-                    <div className="border border-gray-e6edff rounded-xl overflow-hidden px-5">
-                        <div
-                            className="py-4 w-full flex items-center justify-between
-                                border-b border-b-gray-e6edff text-xl font-medium"
-                        >
-                            <div className="grow">Selected applications</div>
-                            <div>5</div>
-                        </div>
+                    {member.isMember &&
+                        hackathon?.is_voting_started &&
+                        !hackathon?.is_voting_created && (
+                            <div className="border border-gray-e6edff rounded-xl overflow-hidden px-5">
+                                <div
+                                    className="py-4 w-full flex items-center justify-between
+                                    border-b border-b-gray-e6edff text-xl font-medium"
+                                >
+                                    <div className="grow">Selected applications</div>
+                                    <div>{checked_apps.length}</div>
+                                </div>
 
-                        <div className="py-5">
-                            <Button className="w-full">
-                                Create proposal to remove selected
-                            </Button>
-                        </div>
+                                <div className="py-5">
+                                    <Formik initialValues={{}} onSubmit={onApproveApps}>
+                                        {({ isSubmitting }) => (
+                                            <Form>
+                                                <Button
+                                                    type="submit"
+                                                    className="w-full"
+                                                    disabled={
+                                                        isSubmitting ||
+                                                        checked_apps.length === 0
+                                                    }
+                                                    isLoading={isSubmitting}
+                                                >
+                                                    Create proposal to start voting
+                                                </Button>
+                                            </Form>
+                                        )}
+                                    </Formik>
+                                </div>
+                            </div>
+                        )}
 
-                        <div className="mb-4 flex items-center justify-between gap-6">
-                            <div className="py-1.5 text-blue-2b89ff text-xs whitespace-nowrap">
-                                <FontAwesomeIcon icon={faClock} className="mr-2.5" />
-                                Ongoing 1 day 14 hours left
+                    {member.isMember && hackathon?.is_voting_created && (
+                        <div className="border border-gray-e6edff rounded-xl overflow-hidden px-5">
+                            <div className="py-4 w-full border-b border-b-gray-e6edff">
+                                <div className="flex items-center justify-between text-xl font-medium">
+                                    <div className="grow">Left to vote</div>
+                                    <div>
+                                        {hackathon.member_voting_state?.karma_rest_dirty.toLocaleString()}
+                                    </div>
+                                </div>
+                                <div className="mt-2 flex items-center justify-between text-gray-7c8db5">
+                                    <div className="grow">total karma</div>
+                                    <div>{member.allowance?.toLocaleString()}</div>
+                                </div>
                             </div>
-                            <div className="grow text-blue-2b89ff font-medium text-end whitespace-nowrap">
-                                16 Participants
-                            </div>
-                        </div>
-                    </div>
 
-                    <div className="border border-gray-e6edff rounded-xl overflow-hidden px-5">
-                        <div className="py-4 w-full border-b border-b-gray-e6edff">
-                            <div className="flex items-center justify-between text-xl font-medium">
-                                <div className="grow">Left to vote</div>
-                                <div>1,200</div>
-                            </div>
-                            <div className="mt-2 flex items-center justify-between text-gray-7c8db5">
-                                <div className="grow">total karma</div>
-                                <div>5,200</div>
-                            </div>
-                        </div>
-                        <div className="py-5">
-                            <Button className="w-full">Send vote</Button>
-                        </div>
+                            {!hackathon.is_voting_finished && (
+                                <div className="mt-5">
+                                    <Formik initialValues={{}} onSubmit={onVoteForApps}>
+                                        {({ isSubmitting }) => (
+                                            <Form>
+                                                <Button
+                                                    type="submit"
+                                                    className="w-full"
+                                                    disabled={
+                                                        isSubmitting ||
+                                                        hackathon.member_voting_state
+                                                            ?.karma_rest === 0
+                                                    }
+                                                    isLoading={isSubmitting}
+                                                >
+                                                    Send votes
+                                                </Button>
+                                            </Form>
+                                        )}
+                                    </Formik>
+                                </div>
+                            )}
 
-                        <div className="mb-4 flex items-center justify-between gap-6">
-                            <div className="py-1.5 text-blue-2b89ff text-xs whitespace-nowrap">
-                                <FontAwesomeIcon icon={faClock} className="mr-2.5" />
-                                Ongoing 1 day 14 hours left
-                            </div>
-                            <div className="grow text-blue-2b89ff font-medium text-end whitespace-nowrap">
-                                16 Participants
+                            <div className="my-4 flex items-center justify-between gap-6">
+                                <div className="flex flex-wrap items-center justify-between gap-6">
+                                    <div
+                                        className="px-3 py-1.5 border border-[#2B89FF]/25 rounded-2xl
+                                        bg-[#2B89FF]/15 text-blue-2b89ff font-medium text-sm"
+                                    >
+                                        <FontAwesomeIcon
+                                            icon={faClock}
+                                            className="mr-2.5"
+                                        />
+                                        <HackathonStatus
+                                            dates={hackathon!.metadata.dates}
+                                        />
+                                    </div>
+                                    <div className="grow text-sm md:text-end">
+                                        {hackathon?.apps_submitted.items.length.toLocaleString()}{' '}
+                                        Participants
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
                 </div>
-            </div> */}
+            </div>
         </div>
     )
 }

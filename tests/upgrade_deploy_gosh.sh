@@ -9,6 +9,7 @@ case $1 in
   4) INPUT_VERSION="v4_x";;
   5) INPUT_VERSION="v5_x/v5.1.0";;
   6) INPUT_VERSION="v6_x/v6.0.0";;
+  7) INPUT_VERSION="v6_x/v6.1.0";;
   *) INPUT_VERSION="v${1}_x/v${1}.0.0";;
 esac
 
@@ -19,6 +20,7 @@ case $2 in
   4) INPUT_VERSION2="v4_x";;
   5) INPUT_VERSION2="v5_x/v5.1.0";;
   6) INPUT_VERSION2="v6_x/v6.1.0";;
+  7) INPUT_VERSION2="v6_x/v6.2.0";;
   *) INPUT_VERSION2="v${2}_x/v${2}.0.0";;
 esac
 

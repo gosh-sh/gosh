@@ -1,6 +1,6 @@
 [package]
 name = "git-remote-gosh"
-version = "6.1.35"
+version = "6.2.36"
 edition = "2021"
 keywords = ['git-remote', 'git', 'gosh']
 rust-version = "1.70"

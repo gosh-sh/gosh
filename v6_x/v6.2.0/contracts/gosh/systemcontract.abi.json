@@ -12,6 +12,14 @@
 			]
 		},
 		{
+			"name": "deployNewDaoWallet",
+			"inputs": [
+				{"name":"nameDao","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "returnTokenToDao",
 			"inputs": [
 				{"name":"nameDao","type":"string"},
@@ -632,6 +640,14 @@
 			]
 		},
 		{
+			"name": "setDaoWaller",
+			"inputs": [
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getTopicCode",
 			"inputs": [
 				{"name":"dao","type":"address"}
@@ -643,7 +659,8 @@
 		{
 			"name": "getTagHackCode",
 			"inputs": [
-				{"name":"repo","type":"address"}
+				{"name":"repo","type":"address"},
+				{"name":"branchname","type":"string"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -708,6 +725,24 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getDaoWalletAddr",
+			"inputs": [
+				{"name":"nameDao","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getGrantCode",
+			"inputs": [
+				{"name":"daoName","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
 			]
 		},
 		{

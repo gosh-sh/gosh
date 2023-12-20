@@ -3222,12 +3222,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 for (const { decoded } of approved) {
                     const { name, value } = decoded
                     if (name === 'approve') {
-                        patches.push(value.diff)
+                        patches.push({ ...value.diff, constructor: false })
                     } else {
                         patches.push({
                             commit: value.commit,
                             patch: value.data || false,
                             ipfs: value.ipfsdata,
+                            constructor: true,
                         })
                         stop = true
                         break
@@ -5288,17 +5289,21 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     ): Promise<string | Buffer> {
         if (Buffer.isBuffer(content)) return content
 
-        const { ipfs, patch } = diff
+        const { ipfs, patch, constructor } = diff
         const compressed = ipfs
             ? (await goshipfs.read(ipfs)).toString()
             : Buffer.from(patch!, 'hex').toString('base64')
         const decompressed = await zstd.decompress(compressed, false)
         const buffer = Buffer.from(decompressed, 'base64')
 
-        if (!isUtf8(buffer)) return buffer
+        if (!isUtf8(buffer)) {
+            return buffer
+        }
 
         const patchOrContent = buffer.toString()
-        if (ipfs) return patchOrContent
+        if (ipfs || constructor) {
+            return patchOrContent
+        }
 
         const apply = reverse
             ? this._reverseBlobDiffPatch(patchOrContent)

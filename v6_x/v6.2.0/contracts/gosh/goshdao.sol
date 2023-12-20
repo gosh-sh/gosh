@@ -25,10 +25,11 @@ import "grant.sol";
 import "./libraries/GoshLib.sol";
 import "../smv/TokenRootOwner.sol";
 import "../smv/SMVProposal.sol";
+import "./smv/modifiers/SMVconfiguration.sol";
 
 
 /* Root contract of gosh */
-contract GoshDao is Modifiers, TokenRootOwner {
+contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
     string constant version = "6.2.0";
 
     string _previousversion;
@@ -52,6 +53,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     mapping(uint256 => string) _hashtag;
     mapping(uint256 => string) _versions;
     mapping(uint256 => address) _my_wallets;
+    mapping(uint256 => bool) _approved_proposal_with_tags;
     uint128 _tokenforperson = 20;
     uint128 _limit_wallets;
     //added for SMV
@@ -155,6 +157,12 @@ contract GoshDao is Modifiers, TokenRootOwner {
         m_SMVClientCode = tvm.setCodeSalt(SMVClientCode, b.toCell());
 
         _code[m_contentSignature] = contentSignature;
+        _approved_proposal_with_tags[SETCOMMIT_PROPOSAL_KIND] = true;
+        _approved_proposal_with_tags[ADD_PROTECTED_BRANCH_PROPOSAL_KIND] = true;
+        _approved_proposal_with_tags[DELETE_PROTECTED_BRANCH_PROPOSAL_KIND] = true;
+        _approved_proposal_with_tags[DEPLOY_REPO_PROPOSAL_KIND] = true;
+        _approved_proposal_with_tags[DESTROY_REPOSITORY_PROPOSAL_KIND] = true;
+        _approved_proposal_with_tags[DEPLOY_BRANCH_KIND] = true;
         getMoney();
         ///////////////////////////////////////
         _rootTokenRoot = _deployRoot (address.makeAddrStd(0,0), 0, 0, false, false, false, address.makeAddrStd(0,0), block.timestamp);
@@ -176,7 +184,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     }
 
     function askWallets() public view minValue(0.2 ton) {
-        Grant(msg.sender).setWallets{value: 0.1 ton, flag: 1}(_wallets);
+        Grant(msg.sender).setWallets{value: 0.1 ton, flag: 1}(_wallets, _daoMembersTag, _daoTagData);
     }
     
     function deployedWallet(address systemcontract, address goshdao, uint128 index, string ver) public   {
@@ -202,7 +210,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function getPreviousInfo(string name) public internalMsg view {
         require(_nameDao == name, ERR_WRONG_DAO);
         tvm.accept();
-        TvmCell a = abi.encode(_allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _wallets, _hashtag, _my_wallets, _daoMembers, _reserve, _allbalance, _totalsupply, _versions, _paidMembership, _daoMembersTag, _daoTagData);
+        TvmCell a = abi.encode(_allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _wallets, _hashtag, _my_wallets, _daoMembers, _reserve, _allbalance, _totalsupply, _versions, _paidMembership, _daoMembersTag, _daoTagData, _approved_proposal_with_tags);
         GoshDao(msg.sender).getPreviousInfoVersion{value: 0.1 ton, flag: 1}(version, a);
     }
     
@@ -247,7 +255,7 @@ contract GoshDao is Modifiers, TokenRootOwner {
         if (ver == "6.2.0") {
             mapping(uint256 => MemberToken) wallets;
             mapping(uint256 => string) hashtag;
-            ( _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, wallets, hashtag, _my_wallets, _daoMembers, _reserve, , _totalsupply , _versions, _paidMembership, _daoMembersTag, _daoTagData) = abi.decode(a, (bool, bool, bool, bool, mapping(uint256 => MemberToken), mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string), mapping(uint8 => PaidMember), mapping(uint256 => mapping(uint256 => bool)), mapping(uint256 => Multiples)));
+            ( _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, wallets, hashtag, _my_wallets, _daoMembers, _reserve, , _totalsupply , _versions, _paidMembership, _daoMembersTag, _daoTagData, _approved_proposal_with_tags) = abi.decode(a, (bool, bool, bool, bool, mapping(uint256 => MemberToken), mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string), mapping(uint8 => PaidMember), mapping(uint256 => mapping(uint256 => bool)), mapping(uint256 => Multiples), mapping(uint256 => bool)));
             _versions[tvm.hash(version)] = version;
             uint256 zero;
             this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
@@ -326,6 +334,24 @@ contract GoshDao is Modifiers, TokenRootOwner {
             }
         }
         getMoney();
+    }
+
+    function setApprovedProposal(mapping(uint256 => bool) approved_proposal_with_tags, address pubaddr, uint128 index) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index)) accept {
+        _approved_proposal_with_tags = approved_proposal_with_tags;
+    }
+
+    function isItApprovedProposal(
+        uint256 kind,
+        TvmCell proposal,
+        uint128 num_clients, 
+        address[] reviewers,
+        string[] data,
+        address pubaddr, 
+        uint128 index) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index)) accept {
+        if (_approved_proposal_with_tags[kind] == true) {
+            GoshWallet(msg.sender).startOneProposalWithTags{value: 0.1 ton, flag: 1}(proposal, num_clients, reviewers, data);
+        }
+
     }
     
     function returnWalletsVersion(string ver, uint256 key, mapping(uint256 => MemberToken) wallets, mapping(uint256 => string) tags) public internalMsg senderIs(address(this)) accept {
@@ -839,6 +865,10 @@ contract GoshDao is Modifiers, TokenRootOwner {
     function setNewTagsIn (string[] tags, uint128[] multiples, uint128 index) public senderIs(address(this))  accept
     {
         if (index >= tags.length) { return; }
+        if (multiples[index] < 100) {
+            this.setNewTagsIn{value: 0.2 ton, flag: 1}(tags, multiples, index + 1);
+            return;
+        }
         if (_daoTagData.exists(tvm.hash(tags[index]))) {        
             address tag = GoshLib.calculateTagSupplyAddress(_code[m_TagSupplyCode], this, tvm.hash(tags[index]));
             TagSupply(tag).changeMultiples{value: 0.1 ton, flag: 1}(multiples[index]);
@@ -1193,13 +1223,13 @@ contract GoshDao is Modifiers, TokenRootOwner {
         tvm.accept();
         require(_reserve >= pubaddr.count, ERR_LOW_TOKEN_RESERVE);
         (, uint256 keyaddr) = pubaddr.member.unpack(); 
+        require(_wallets.exists(keyaddr) == false, ERR_WALLET_EXIST);
         if (_daoMembers[keyaddr] != "") { 
             pubaddr.member = GoshLib.calculateDaoAddress(_code[m_DaoCode], _systemcontract, _daoMembers[keyaddr]);
             (, uint256 addrkey) = pubaddr.member.unpack(); 
             _daoMembers[addrkey] = _daoMembers[keyaddr];
         }
         (, keyaddr) = pubaddr.member.unpack();
-        require(_wallets.exists(keyaddr) == false, ERR_WALLET_EXIST);
         _reserve -= pubaddr.count;
         _allbalance += pubaddr.count;
         if (_daoMembersTag.exists(keyaddr)) {

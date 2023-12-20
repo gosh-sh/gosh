@@ -261,7 +261,15 @@ function calculateVotePower(address _locker, uint256 _platform_id, bool choice, 
         worker;
         key = newkey;
         for (uint128 j = 0; j < _isTag.length; j++) {
-            if (key == tvm.hash(_isTag[j])) { sum += _daoTagData[key].value - 100; break; }
+            if (key == tvm.hash(_isTag[j])) { 
+                sum += _daoTagData[key].value; 
+                if (sum < 100) {
+                    this.continueVote{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, 0, sender);
+                    return;
+                }
+                sum -= 100;
+                break; 
+            }
         }
     }
     this.calculateVotePower{value: 0.1 ton, flag: 1}(_locker, _platform_id, choice, amount, pubaddr, sum, key, sender);
@@ -579,6 +587,18 @@ function getSetDaoMembersTagParamsData (TvmCell Data) external pure
         (proposalKind, pubaddr, tags,,) = abi.decode(Data,(uint256, address[], string[], string, uint32));
 }
 
+function getSetApprovedTagForDaoProposalParams () external view
+         returns(uint proposalKind, mapping(uint256 => bool) approved_proposal_with_tags)
+{
+        (proposalKind, approved_proposal_with_tags,,) = abi.decode(propData,(uint256, mapping(uint256 => bool), string, uint32));
+}
+
+function getSetApprovedTagForDaoProposalParamsData (TvmCell Data) external pure
+         returns(uint proposalKind, mapping(uint256 => bool) approved_proposal_with_tags)
+{
+        (proposalKind, approved_proposal_with_tags,,) = abi.decode(Data,(uint256, mapping(uint256 => bool), string, uint32));
+}
+
 function getDeleteDaoMembersTagParams () external view
          returns(uint proposalKind, address[] pubaddr, string tag)
 {
@@ -586,16 +606,41 @@ function getDeleteDaoMembersTagParams () external view
 }
 
 function getDeployGrantParamsData (TvmCell Data) external pure
-         returns(uint proposalKind, string name, uint128[] grant, address[] tip3)
+         returns(uint proposalKind, string name, string reponame, uint128[] grant, address[] tip3, string[] tags)
 {
-        (proposalKind, name, grant, tip3,,) = abi.decode(Data,(uint256, string, uint128[], address[], string, uint32));
+        (proposalKind, name, reponame, grant, tip3, tags,,) = abi.decode(Data,(uint256, string, string, uint128[], address[], string[], string, uint32));
 }
 
 function getDeployGrantParams () external view
-         returns(uint proposalKind, string name, uint128[] grant, address[] tip3)
+         returns(uint proposalKind, string name, string reponame, uint128[] grant, address[] tip3, string[] tags)
 {
-        (proposalKind, name, grant, tip3,,) = abi.decode(propData,(uint256, string, uint128[], address[], string, uint32));
+        (proposalKind, name, reponame, grant, tip3, tags,,) = abi.decode(propData,(uint256, string, string, uint128[], address[], string[], string, uint32));
 }
+
+function getAddCurrenciesParamsData (TvmCell Data) external pure
+         returns(uint proposalKind, string name, optional(uint128[]) grant, optional(address[]) tip3, optional(string) metadata, optional(string[]) tags)
+{
+        (proposalKind, name, grant, tip3, metadata, tags,,) = abi.decode(Data,(uint256, string, optional(uint128[]), optional(address[]), optional(string), optional(string[]), string, uint32));
+}
+
+function getAddCurrenciesParams () external view
+         returns(uint proposalKind, string name, optional(uint128[]) grant, optional(address[]) tip3, optional(string) metadata, optional(string[]) tags)
+{
+        (proposalKind, name, grant, tip3, metadata, tags,,) = abi.decode(propData,(uint256, string, optional(uint128[]), optional(address[]), optional(string), optional(string[]), string, uint32));
+}
+
+function getDeployBranchParamsData (TvmCell Data) external pure
+         returns(uint proposalKind, string repoName, string newName, string fromCommit)
+{
+        (proposalKind, repoName, newName, fromCommit,,) = abi.decode(Data,(uint256, string, string, string, string, uint32));
+}
+
+function getDeployBranchParams () external view
+         returns(uint proposalKind, string repoName, string newName, string fromCommit)
+{
+        (proposalKind, repoName, newName, fromCommit,,) = abi.decode(propData,(uint256, string, string, string, string, uint32));
+}
+
 
 function getDestroyGrantParamsData (TvmCell Data) external pure
          returns(uint proposalKind, string name)
@@ -610,15 +655,15 @@ function getDestroyGrantParams () external view
 }
 
 function getSetGrantPubkeysParamsData (TvmCell Data) external pure
-         returns(uint proposalKind, string name, uint256[] pubkeys, string[] details, uint128 timeofend)
+         returns(uint proposalKind, string name, address[] owners, string[] details, uint128 timeofend)
 {
-        (proposalKind, name, pubkeys, details, timeofend,,) = abi.decode(Data,(uint256, string, uint256[], string[], uint128, string, uint32));
+        (proposalKind, name, owners, details, timeofend,,) = abi.decode(Data,(uint256, string, address[], string[], uint128, string, uint32));
 }
 
 function getSetGrantPubkeysParams () external view
-         returns(uint proposalKind, string name, uint256[] pubkeys, string[] details, uint128 timeofend)
+         returns(uint proposalKind, string name, address[] owners, string[] details, uint128 timeofend)
 {
-        (proposalKind, name, pubkeys, details, timeofend,,) = abi.decode(propData,(uint256, string, uint256[], string[], uint128, string, uint32));
+        (proposalKind, name, owners, details, timeofend,,) = abi.decode(propData,(uint256, string, address[], string[], uint128, string, uint32));
 }
 
 function getDeleteDaoMembersTagParamsData (TvmCell Data) external pure

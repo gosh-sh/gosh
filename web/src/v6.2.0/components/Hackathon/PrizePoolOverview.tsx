@@ -11,7 +11,7 @@ import Skeleton from '../../../components/Skeleton'
 import { GoshError } from '../../../errors'
 import { appModalStateAtom } from '../../../store/app.state'
 import { useDao, useDaoMember } from '../../hooks/dao.hooks'
-import { useHackathon, useUpdateHackathonDetails } from '../../hooks/hackathon.hooks'
+import { useHackathon, useUpdateHackathon } from '../../hooks/hackathon.hooks'
 import { HackathonPrizePoolModal } from './PrizePoolModal'
 import { HackathonPrizePoolPlaces } from './PrizePoolPlaces'
 
@@ -39,25 +39,25 @@ const HackathonPrizePoolOverview = () => {
     const dao = useDao()
     const member = useDaoMember()
     const { hackathon } = useHackathon()
-    const { update } = useUpdateHackathonDetails()
+    const { updateStorageData } = useUpdateHackathon()
     const [pool_opened, setPoolOpened] = useState<boolean>(false)
 
     const is_fetching =
         !hackathon?._rg_fetched ||
-        (!hackathon?.metadata.is_fetched && hackathon?.metadata.is_fetching)
+        (!hackathon?.storagedata.is_fetched && hackathon?.storagedata.is_fetching)
 
     const onPoolToggle = () => {
         setPoolOpened(!pool_opened)
     }
 
     const onUpdatePrizePoolModal = () => {
-        if (!hackathon?.metadata.prize) {
+        if (!hackathon?.storagedata.prize) {
             return
         }
 
         const initial_values = {
-            total: hackathon.metadata.prize.total.toString(),
-            places: hackathon.metadata.prize.places.map((amount) => amount.toString()),
+            total: hackathon.storagedata.prize.total.toString(),
+            places: hackathon.storagedata.prize.places.map((amount) => amount.toString()),
         }
 
         setModal({
@@ -77,20 +77,20 @@ const HackathonPrizePoolOverview = () => {
         places: number[]
     }) => {
         try {
-            if (!hackathon?.metadata.raw) {
-                throw new GoshError('Value error', 'Hackathon metadata is not loaded yet')
+            if (!hackathon) {
+                throw new GoshError('Value error', 'Hackathon data is undefined')
             }
 
-            const original = JSON.parse(hackathon.metadata.raw)
-            const modified = { ...original, prize: values }
-            const { event_address } = await update({
-                repo_name: hackathon.name,
+            const original = hackathon.storagedata.prize_raw
+            const modified = { ...JSON.parse(original), prize: values }
+            const { event_address } = await updateStorageData({
                 filename: 'metadata.json',
                 content: {
-                    original: hackathon.metadata.raw,
-                    modified: JSON.stringify(modified, undefined, 2),
+                    original,
+                    modified: JSON.stringify(modified),
                 },
             })
+
             setModal((state) => ({ ...state, isOpen: false }))
             if (event_address) {
                 navigate(`/o/${dao.details.name}/events/${event_address}`)
@@ -119,7 +119,7 @@ const HackathonPrizePoolOverview = () => {
                     {is_fetching ? (
                         <SkeletonTotal />
                     ) : (
-                        hackathon?.metadata.prize?.total.toLocaleString()
+                        hackathon?.storagedata.prize?.total.toLocaleString()
                     )}
                     <FontAwesomeIcon
                         icon={faChevronDown}
@@ -139,7 +139,7 @@ const HackathonPrizePoolOverview = () => {
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.2 }}
                     >
-                        {member.isMember && hackathon?.update_enabled && (
+                        {member.isMember && hackathon?.is_update_enabled && (
                             <Button
                                 variant="custom"
                                 size="sm"
@@ -156,7 +156,7 @@ const HackathonPrizePoolOverview = () => {
                         {is_fetching && <SkeletonPlaces />}
 
                         <HackathonPrizePoolPlaces
-                            places={hackathon?.metadata.prize.places || []}
+                            places={hackathon?.storagedata.prize.places || []}
                         />
                     </motion.div>
                 )}

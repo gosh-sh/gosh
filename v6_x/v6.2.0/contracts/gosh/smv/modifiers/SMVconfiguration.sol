@@ -70,4 +70,8 @@ abstract contract SMVConfiguration is ReplayProtection {
     uint256 constant DEPLOY_GRANT_KIND = 51;
     uint256 constant DESTROY_GRANT_KIND = 52;
     uint256 constant SET_GRANT_PUBKEYS_KIND = 53;
+    uint256 constant ADD_CURRENCIES_KIND = 54;
+    uint256 constant TRANSFER_DAO_TIP3_KIND = 55;
+    uint256 constant DEPLOY_BRANCH_KIND = 56;
+    uint256 constant SET_ALLOWED_PROPOSAL_WITH_TAG_KIND = 57;
 }

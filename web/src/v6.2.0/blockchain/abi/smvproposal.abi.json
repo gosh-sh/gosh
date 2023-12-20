@@ -580,6 +580,25 @@
 			]
 		},
 		{
+			"name": "getSetApprovedTagForDaoProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"approved_proposal_with_tags","type":"map(uint256,bool)"}
+			]
+		},
+		{
+			"name": "getSetApprovedTagForDaoProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"approved_proposal_with_tags","type":"map(uint256,bool)"}
+			]
+		},
+		{
 			"name": "getDeleteDaoMembersTagParams",
 			"inputs": [
 			],
@@ -597,8 +616,10 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"name","type":"string"},
+				{"name":"reponame","type":"string"},
 				{"name":"grant","type":"uint128[]"},
-				{"name":"tip3","type":"address"}
+				{"name":"tip3","type":"address[]"},
+				{"name":"tags","type":"string[]"}
 			]
 		},
 		{
@@ -608,8 +629,60 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"name","type":"string"},
+				{"name":"reponame","type":"string"},
 				{"name":"grant","type":"uint128[]"},
-				{"name":"tip3","type":"address"}
+				{"name":"tip3","type":"address[]"},
+				{"name":"tags","type":"string[]"}
+			]
+		},
+		{
+			"name": "getAddCurrenciesParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"name","type":"string"},
+				{"name":"grant","type":"optional(uint128[])"},
+				{"name":"tip3","type":"optional(address[])"},
+				{"name":"metadata","type":"optional(string)"},
+				{"name":"tags","type":"optional(string[])"}
+			]
+		},
+		{
+			"name": "getAddCurrenciesParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"name","type":"string"},
+				{"name":"grant","type":"optional(uint128[])"},
+				{"name":"tip3","type":"optional(address[])"},
+				{"name":"metadata","type":"optional(string)"},
+				{"name":"tags","type":"optional(string[])"}
+			]
+		},
+		{
+			"name": "getDeployBranchParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"name":"newName","type":"string"},
+				{"name":"fromCommit","type":"string"}
+			]
+		},
+		{
+			"name": "getDeployBranchParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"name":"newName","type":"string"},
+				{"name":"fromCommit","type":"string"}
 			]
 		},
 		{
@@ -639,7 +712,9 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"name","type":"string"},
-				{"name":"pubkeys","type":"uint256[]"}
+				{"name":"owners","type":"address[]"},
+				{"name":"details","type":"string[]"},
+				{"name":"timeofend","type":"uint128"}
 			]
 		},
 		{
@@ -649,7 +724,9 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"name","type":"string"},
-				{"name":"pubkeys","type":"uint256[]"}
+				{"name":"owners","type":"address[]"},
+				{"name":"details","type":"string[]"},
+				{"name":"timeofend","type":"uint128"}
 			]
 		},
 		{

@@ -12,11 +12,10 @@ import { useNavigate } from 'react-router-dom'
 import { Tooltip } from 'react-tooltip'
 import { useSetRecoilState } from 'recoil'
 import { Button } from '../../../components/Form'
-import Skeleton from '../../../components/Skeleton'
-import { GoshError } from '../../../errors'
 import { appModalStateAtom } from '../../../store/app.state'
 import { useDao, useDaoMember } from '../../hooks/dao.hooks'
-import { useHackathon, useUpdateHackathonDetails } from '../../hooks/hackathon.hooks'
+import { useHackathon, useUpdateHackathon } from '../../hooks/hackathon.hooks'
+import { THackathonDates } from '../../types/hackathon.types'
 import { HackathonDatesModal } from './DatesModal'
 import { HackathonStatus } from './Status'
 
@@ -40,23 +39,13 @@ const dates_data: {
     },
 }
 
-const SkeletonOverview = () => {
-    return (
-        <Skeleton skeleton={{ height: 48 }} className="py-5">
-            <rect x="0" y="0" rx="4" ry="4" width="100%" height="12" />
-            <rect x="0" y="18" rx="4" ry="4" width="100%" height="12" />
-            <rect x="0" y="36" rx="4" ry="4" width="100%" height="12" />
-        </Skeleton>
-    )
-}
-
 const HackathonDatesOverview = () => {
     const navigate = useNavigate()
     const setModal = useSetRecoilState(appModalStateAtom)
     const dao = useDao()
     const member = useDaoMember()
     const { hackathon } = useHackathon()
-    const { update } = useUpdateHackathonDetails()
+    const { updateMetadata } = useUpdateHackathon()
     const [dates, setDates] = useState<TDateState[]>([])
 
     const onUpdateDatesModal = (tab_index?: number) => {
@@ -80,19 +69,8 @@ const HackathonDatesOverview = () => {
 
     const onUpdateDatesSubmit = async (values: { [k: string]: number }) => {
         try {
-            if (!hackathon?.metadata.raw) {
-                throw new GoshError('Value error', 'Hackathon metadata is not loaded yet')
-            }
-
-            const original = JSON.parse(hackathon.metadata.raw)
-            const modified = { ...original, dates: values }
-            const { event_address } = await update({
-                repo_name: hackathon.name,
-                filename: 'metadata.json',
-                content: {
-                    original: hackathon.metadata.raw,
-                    modified: JSON.stringify(modified, undefined, 2),
-                },
+            const { event_address } = await updateMetadata({
+                dates: values as THackathonDates,
             })
             setModal((state) => ({ ...state, isOpen: false }))
             if (event_address) {
@@ -115,13 +93,10 @@ const HackathonDatesOverview = () => {
             }))
             setDates(listed)
         }
-    }, [hackathon?.metadata.is_fetching])
+    }, [hackathon?.metadata.dates])
 
-    if (
-        !hackathon?._rg_fetched ||
-        (!hackathon?.metadata.is_fetched && hackathon?.metadata.is_fetching)
-    ) {
-        return <SkeletonOverview />
+    if (!hackathon) {
+        return null
     }
 
     return (
@@ -136,7 +111,7 @@ const HackathonDatesOverview = () => {
                         <HackathonStatus dates={hackathon.metadata.dates} />
                     </div>
                     <div className="grow text-sm md:text-end">
-                        {hackathon?.participants.items.length.toLocaleString()}{' '}
+                        {hackathon?.apps_submitted.items.length.toLocaleString()}{' '}
                         Participants
                     </div>
                 </div>
@@ -160,14 +135,13 @@ const HackathonDatesOverview = () => {
                                 </div>
                             )}
 
-                            {member.isMember && hackathon.update_enabled && (
+                            {member.isMember && hackathon.is_update_enabled && (
                                 <Button
                                     type="button"
                                     variant="custom"
                                     size="sm"
                                     className="block border !border-blue-2b89ff text-blue-2b89ff !rounded-[2rem]
                                     opacity-70 hover:opacity-100 disabled:opacity-30 transition-opacity duration-200"
-                                    disabled={!hackathon.metadata.is_fetched}
                                     onClick={() => onUpdateDatesModal(index)}
                                 >
                                     {time > 0 ? 'Edit' : 'Add date'}

@@ -63,7 +63,7 @@ pub const EMPTY_BLOB_SHA1: &str = "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391";
 pub const EMPTY_BLOB_SHA256: &str =
     "0x96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7";
 
-pub const MAX_ACCOUNTS_ADDRESSES_PER_QUERY: usize = 255;
+pub const MAX_ACCOUNTS_ADDRESSES_PER_QUERY: usize = 50;
 
 static PINNED_CONTRACT_BOCREFS: Lazy<
     Arc<RwLock<HashMap<BlockchainContractAddress, (String, EverClient)>>>,

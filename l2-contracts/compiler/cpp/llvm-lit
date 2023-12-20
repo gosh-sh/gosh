@@ -1,0 +1,37 @@
+#!/usr/bin/env python
+
+import os
+import sys
+
+config_map = {}
+
+def map_config(source_dir, site_config):
+    global config_map
+    source_dir = os.path.realpath(source_dir)
+    source_dir = os.path.normcase(source_dir)
+    site_config = os.path.normpath(site_config)
+    config_map[source_dir] = site_config
+
+# Variables configured at build time.
+llvm_source_root = "/home/sehor05/work/TON-Compiler/llvm"
+llvm_obj_root = "/home/sehor05/work/TON-Compiler/build"
+
+# Make sure we can find the lit package.
+sys.path.insert(0, os.path.join(llvm_source_root, 'utils', 'lit'))
+
+# Set up some builtin parameters, so that by default the LLVM test suite
+# configuration file knows how to find the object tree.
+builtin_parameters = { 'build_mode' : "." }
+
+
+map_config('/home/sehor05/work/TON-Compiler/llvm/tools/clang/test/lit.cfg.py', '/home/sehor05/work/TON-Compiler/build/tools/clang/test/lit.site.cfg.py')
+map_config('/home/sehor05/work/TON-Compiler/llvm/tools/clang/test/Unit/lit.cfg.py', '/home/sehor05/work/TON-Compiler/build/tools/clang/test/Unit/lit.site.cfg.py')
+map_config('/home/sehor05/work/TON-Compiler/llvm/utils/lit/tests/lit.cfg', '/home/sehor05/work/TON-Compiler/build/utils/lit/lit.site.cfg')
+map_config('/home/sehor05/work/TON-Compiler/llvm/test/lit.cfg.py', '/home/sehor05/work/TON-Compiler/build/test/lit.site.cfg.py')
+map_config('/home/sehor05/work/TON-Compiler/llvm/test/Unit/lit.cfg.py', '/home/sehor05/work/TON-Compiler/build/test/Unit/lit.site.cfg.py')
+
+builtin_parameters['config_map'] = config_map
+
+if __name__=='__main__':
+    from lit.main import main
+    main(builtin_parameters)

@@ -243,8 +243,8 @@ library GoshLib {
         return address.makeAddrStd(0, tvm.hash(deployCode));
     } 
 
-    function composeTagHackStateInit(TvmCell code, address repo, string nametag) public returns(TvmCell) {
-        TvmCell deployCode = buildTagHackCode(code, repo, versionLib);
+    function composeTagHackStateInit(TvmCell code, address repo, string branchname, string nametag) public returns(TvmCell) {
+        TvmCell deployCode = buildTagHackCode(code, branchname, repo, versionLib);
         return tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag}});
     }
 
@@ -559,10 +559,12 @@ library GoshLib {
 
     function buildTagHackCode(
         TvmCell originalCode,
+        string branch,
         address repo,
         string version
     ) public returns (TvmCell) {
         TvmBuilder b;
+        b.store(branch);
         b.store(repo);
         b.store(version);
         b.store("hack");

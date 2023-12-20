@@ -2,7 +2,7 @@ import { AggregationFn } from '@eversdk/core'
 import { Buffer } from 'buffer'
 import _, { sum } from 'lodash'
 import { useCallback, useEffect, useState } from 'react'
-import { GoshAdapterFactory } from 'react-gosh'
+import { GoshAdapterFactory, sha1 } from 'react-gosh'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { NotificationsAPI } from '../../apis/notifications'
 import { AppConfig } from '../../appconfig'
@@ -12,12 +12,14 @@ import {
     DAO_TOKEN_TRANSFER_TAG,
     DISABLED_VERSIONS,
     DaoEventType,
+    HACKATHONS_REPO,
     MAX_PARALLEL_READ,
     MAX_PARALLEL_WRITE,
     MILESTONE_TAG,
     MILESTONE_TASK_TAG,
     PARTNER_DAO_NAMES,
     SYSTEM_TAG,
+    ZERO_COMMIT,
 } from '../../constants'
 import { EGoshError, GoshError } from '../../errors'
 import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
@@ -1843,7 +1845,11 @@ export function useDeleteDaoMember() {
                         })
                     }
 
-                    return { profile: address, allowance: member.allowance }
+                    return {
+                        profile: address,
+                        allowance: member.allowance,
+                        expert_tags: member.expert_tags,
+                    }
                 },
             )
 
@@ -1864,8 +1870,29 @@ export function useDeleteDaoMember() {
                 type: EDaoEventType.DAO_MEMBER_DELETE,
                 params: { profile: [profile] },
             }))
+
+            let member_delete_expert_tags_cells: any[] = []
+            profiles.forEach(({ profile, expert_tags }) => {
+                const cells = expert_tags.map(({ name }) => ({
+                    type: EDaoEventType.DAO_MEMBER_EXPERT_TAG_DELETE,
+                    params: {
+                        item: { profile_addr: profile, tag: name },
+                        comment: 'Delete expert tag',
+                    },
+                }))
+                member_delete_expert_tags_cells.push(...cells)
+            })
+
             const eventaddr = await member.wallet!.createMultiEvent({
-                proposals: [...memberDeleteAllowanceCells, ...memberDeleteCells],
+                proposals: [
+                    ...member_delete_expert_tags_cells,
+                    { type: EDaoEventType.DELAY, params: {} },
+                    { type: EDaoEventType.DELAY, params: {} },
+                    { type: EDaoEventType.DELAY, params: {} },
+                    ...memberDeleteAllowanceCells,
+                    { type: EDaoEventType.DELAY, params: {} },
+                    ...memberDeleteCells,
+                ],
                 comment,
             })
 
@@ -2725,6 +2752,9 @@ export function useUpgradeDaoComplete() {
             if (upgradeable.findIndex((i) => i.name === item.name) >= 0) {
                 continue
             }
+            if (item.name.startsWith('_hackathon_')) {
+                continue
+            }
             upgradeable.push(item)
         }
 
@@ -2744,24 +2774,6 @@ export function useUpgradeDaoComplete() {
         }))
         await executeByChunk(tags, MAX_PARALLEL_WRITE, async (item) => {
             await wallet.createCommitTag({ ...item, is_hack: false })
-        })
-
-        // Get hackathon app indexes
-        setStatus((state) => ({
-            ...state,
-            type: 'pending',
-            data: 'Fetching hackathons participants',
-        }))
-        const hackathon_apps = await getHackathonAppIndexes(repositories)
-
-        // Deploy hackathon app indexes
-        setStatus((state) => ({
-            ...state,
-            type: 'pending',
-            data: 'Transfer hackathons participants',
-        }))
-        await executeByChunk(hackathon_apps, MAX_PARALLEL_WRITE, async (item) => {
-            await wallet.createCommitTag({ ...item, is_hack: true })
         })
 
         // Deploy repositories or create multi event
@@ -2998,6 +3010,275 @@ export function useUpgradeDaoComplete() {
         return { isEvent: true }
     }
 
+    const upgradeHackathons = async (params: {
+        wallet: DaoWallet
+        daoprev: { account: Dao; version: string } | null
+        repositories: any[]
+    }) => {
+        const { wallet, daoprev } = params
+        const cells = []
+
+        if (!daoprev || daoprev.version < '6.1.0') {
+            return { isEvent: false }
+        }
+
+        // Prepare repositories of needed version
+        const repositories = params.repositories
+            .filter((item: any) => item.version === daoprev.version)
+            .filter((item: any) => item.name.startsWith('_hackathon_'))
+
+        // Get hackathon app indexes
+        setStatus((state) => ({
+            ...state,
+            type: 'pending',
+            data: 'Fetching hackathons apps',
+        }))
+        const hackathon_apps = await getHackathonAppIndexes(repositories)
+        const converted_apps = hackathon_apps.map((item) => {
+            const { reponame, ...rest } = item
+            return {
+                ...rest,
+                reponame: HACKATHONS_REPO,
+                is_hack: true,
+                branch_name: item.reponame,
+            }
+        })
+
+        // Deploy hackathon app indexes
+        setStatus((state) => ({
+            ...state,
+            type: 'pending',
+            data: 'Transfer hackathons apps',
+        }))
+        await executeByChunk(converted_apps, MAX_PARALLEL_WRITE, async (item) => {
+            await wallet.createCommitTag(item)
+        })
+
+        // Check if hackathons global repo exists
+        const gosh_lib = GoshAdapterFactory.create(dao.details.version!)
+        const main_repo = await gosh_lib.getRepository({
+            path: `${dao.details.name}/${HACKATHONS_REPO}`,
+        })
+        main_repo.auth = { username: 'dao', wallet0: wallet }
+        main_repo.name = HACKATHONS_REPO
+        if (!(await main_repo.isDeployed())) {
+            cells.push(
+                {
+                    type: EDaoEventType.REPO_CREATE,
+                    params: {
+                        name: HACKATHONS_REPO,
+                        description: 'Hackathons container repository',
+                        comment: `Create hackathons repository`,
+                    },
+                },
+                { type: EDaoEventType.DELAY, params: {} },
+            )
+        }
+
+        // Read hackathons repositories files
+        const future_hackathons = []
+        for (const [i, hack_repo] of repositories.entries()) {
+            setStatus((state) => ({
+                ...state,
+                type: 'pending',
+                data: `Fetch hackathons data (${i}/${repositories.length})`,
+            }))
+
+            const gosh_lib = GoshAdapterFactory.create(hack_repo.version)
+            const gosh_repo = await gosh_lib.getRepository({ address: hack_repo.address })
+            const branch = await gosh_repo.getBranch('main')
+            const commit = await gosh_repo.getCommit({
+                address: branch.commit.address,
+            })
+            const tree = await gosh_repo.getTree(commit, '')
+            const snapshots = await Promise.all(
+                tree.items.map(async (item) => {
+                    const snapshot = await gosh_repo.getBlob({
+                        fullpath: `${item.commit}/${item.name}`,
+                    })
+                    return { name: item.name, content: snapshot.content }
+                }),
+            )
+            const { description } = await gosh_repo.getDetails()
+            future_hackathons.push({
+                branch_name: hack_repo.name,
+                snapshots,
+                description: description || '',
+            })
+        }
+
+        // Upgrade hackathons
+        for (const [i, data] of future_hackathons.entries()) {
+            const { branch_name, snapshots, description } = data
+
+            setStatus((state) => ({
+                ...state,
+                type: 'pending',
+                data: `Transfer hackathons data (${i}/${future_hackathons.length})`,
+            }))
+
+            // Read and parse snapshots content
+            const readme_str = snapshots.find(({ name }) => {
+                return name.toLowerCase() === 'readme.md'
+            })?.content as string
+            const rules_str = snapshots.find(({ name }) => {
+                return name.toLowerCase() === 'rules.md'
+            })?.content as string
+            const prizes_str = snapshots.find(({ name }) => {
+                return name.toLowerCase() === 'prize.md'
+            })?.content as string
+            const metadata_str = snapshots.find(({ name }) => {
+                return name.toLowerCase() === 'metadata.json'
+            })?.content as string
+            const metadata = JSON.parse(metadata_str)
+
+            // Push commit to hackathons container repo
+            const blobs = [
+                { treepath: ['', 'README.md'], original: '', modified: readme_str },
+                { treepath: ['', 'RULES.md'], original: '', modified: rules_str },
+                { treepath: ['', 'PRIZES.md'], original: '', modified: prizes_str },
+                {
+                    treepath: ['', 'metadata.json'],
+                    original: '',
+                    modified: JSON.stringify({ prize: metadata.prize }),
+                },
+            ]
+            const tree = { tree: '', items: [] }
+            const blobs_data = await Promise.all(
+                blobs.map(async (blob) => {
+                    return await main_repo.getBlobPushDataOut(tree.items, blob)
+                }),
+            )
+
+            // Create future tree
+            const future_tree = await main_repo.getTreePushDataOut(
+                tree.items,
+                blobs_data.flat(),
+            )
+
+            // Create future commit
+            const future_commit_str = [
+                `tree ${future_tree.sha1}`,
+                `author dao`,
+                `committer dao`,
+                '',
+                `Upgrade ${name}`,
+            ]
+                .filter((item) => item !== null)
+                .join('\n')
+            const future_commit_hash = sha1(future_commit_str, 'commit', 'sha1')
+            const future_commit_parent = {
+                address: await gosh_lib.getCommitAddress({
+                    repo_addr: main_repo.getAddress(),
+                    commit_name: ZERO_COMMIT,
+                }),
+                version: dao.details.version!,
+            }
+
+            // Update future tree
+            future_tree.sha256 = await main_repo.getTreeSha256Out({
+                items: future_tree.tree[''].map((item) => ({
+                    ...item,
+                    commit: future_commit_hash,
+                })),
+            })
+
+            // Deploy future commit and etc.
+            await main_repo.deployCommitOut(
+                branch_name,
+                future_commit_hash,
+                future_commit_str,
+                [future_commit_parent],
+                future_tree.sha256,
+                false,
+            )
+            await Promise.all(
+                future_tree.updated.map(async (path) => {
+                    const with_commit = future_tree.tree[path].map((item) => {
+                        return { ...item, commit: future_commit_hash }
+                    })
+                    await main_repo.deployTreeOut(with_commit)
+                }),
+            )
+            await Promise.all(
+                blobs_data.flat().map(async ({ data }) => {
+                    const { treepath, content } = data
+                    await main_repo.deploySnapshotOut(
+                        future_commit_hash,
+                        treepath,
+                        content,
+                    )
+                }),
+            )
+
+            // Create cells for DAO multi event
+            setStatus((state) => ({
+                ...state,
+                type: 'pending',
+                data: 'Generating upgrade cells',
+            }))
+            cells.push(
+                {
+                    type: EDaoEventType.BRANCH_CREATE,
+                    params: {
+                        repo_name: main_repo.name,
+                        branch_name,
+                        from_commit: ZERO_COMMIT,
+                        comment: 'Create hackathon branch',
+                    },
+                },
+                { type: EDaoEventType.DELAY, params: {} },
+                {
+                    type: EDaoEventType.PULL_REQUEST,
+                    params: {
+                        repo_name: main_repo.name,
+                        branch_name,
+                        commit_name: future_commit_hash,
+                        num_files: 0,
+                        num_commits: 1,
+                        comment: 'Initialize hackathon branch',
+                    },
+                },
+                {
+                    type: EDaoEventType.BRANCH_LOCK,
+                    params: {
+                        repo_name: main_repo.name,
+                        branch_name,
+                        comment: `Protect hackathon branch`,
+                    },
+                },
+                {
+                    type: EDaoEventType.HACKATHON_CREATE,
+                    params: {
+                        name: metadata.title,
+                        metadata: {
+                            branch_name,
+                            dates: metadata.dates,
+                            description,
+                        },
+                        prize_distribution: [],
+                        prize_wallets: [],
+                        expert_tags: [],
+                        comment: `Upgrade hackathon`,
+                    },
+                },
+            )
+        }
+
+        // Create multi event or return
+        if (cells.length === 0) {
+            return { isEvent: false }
+        }
+
+        const comment = 'Upgrade hackathons'
+        const eventaddr = await wallet.createMultiEvent({
+            proposals: cells,
+            comment: 'Upgrade hackathons',
+        })
+        await afterCreateEvent({ label: comment, comment, eventaddr }, {})
+        return { isEvent: true }
+    }
+
     const upgradeMint = async (
         wallet: DaoWallet,
         daoprev: { account: Dao; version: string } | null,
@@ -3072,18 +3353,7 @@ export function useUpgradeDaoComplete() {
                     version,
                 }
             }
-
             let isEvent = false
-            // Upgrade repositories and commit tags
-            if (!isRepoUpgraded) {
-                const { isEvent: isRepositoriesEvent } = await upgradeRepositories({
-                    wallet: member.wallet!,
-                    repositories,
-                    daover: version,
-                    alone: members.length === 1,
-                })
-                isEvent = isEvent || isRepositoriesEvent
-            }
 
             // Upgrade milestones
             const { isEvent: isMilestonesEvent } = await upgradeMilestones({
@@ -3103,8 +3373,27 @@ export function useUpgradeDaoComplete() {
                 isEvent = isEvent || isTasksEvent
             }
 
+            // Upgrade hackathons
+            const { isEvent: isHackathonsEvent } = await upgradeHackathons({
+                wallet: member.wallet!,
+                daoprev,
+                repositories,
+            })
+            isEvent = isEvent || isHackathonsEvent
+
             // Upgrade minting policy
             await upgradeMint(member.wallet!, daoprev, isMintOn)
+
+            // Upgrade repositories and commit tags
+            if (!isRepoUpgraded) {
+                const { isEvent: isRepositoriesEvent } = await upgradeRepositories({
+                    wallet: member.wallet!,
+                    repositories,
+                    daover: version,
+                    alone: members.length === 1,
+                })
+                isEvent = isEvent || isRepositoriesEvent
+            }
 
             setStatus((state) => ({
                 ...state,

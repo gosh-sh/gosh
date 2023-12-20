@@ -9,6 +9,7 @@ case $1 in
   4) VERSION="v4_x";;
   5) VERSION="v5_x/v5.1.0";;
   6) VERSION="v6_x/v6.1.0";;
+  7) VERSION="v6_x/v6.2.0";;
   *) VERSION="v${1}_x/v${1}.0.0";;
 esac
 

@@ -54,6 +54,11 @@ contract SystemContract is Modifiers {
         _versionController = msg.sender;
     }
 
+    function deployNewDaoWallet(string nameDao) public pure {
+        nameDao; //m_DaoWalletCode;
+        return;
+    }
+
     function returnTokenToDao(string nameDao, address pubaddr, uint128 value) public view senderIs(_trusted) accept {
         GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), nameDao), pubaddr, 0)).returnTokenToDao{value: 0.1 ton, flag: 1}(value);
     }
@@ -421,6 +426,10 @@ contract SystemContract is Modifiers {
         _trusted = trusted;
     }
 
+    function setDaoWaller(TvmCell code) public onlyOwner accept {
+        _code[m_DaoWalletCode] = code;
+    }
+
     //Getters
     function getTopicCode(address dao) external view returns(TvmCell) {
         return GoshLib.buildTopicCode(
@@ -428,8 +437,8 @@ contract SystemContract is Modifiers {
         );
     }
 
-    function getTagHackCode(address repo) external view returns(TvmCell) {
-        TvmCell deployCode = GoshLib.buildTagHackCode(_code[m_TagCode], repo, version);
+    function getTagHackCode(address repo, string branchname) external view returns(TvmCell) {
+        TvmCell deployCode = GoshLib.buildTagHackCode(_code[m_TagCode], branchname, repo, version);
         return deployCode;
     }
 
@@ -461,6 +470,11 @@ contract SystemContract is Modifiers {
         return taskaddr;
     }
 
+    function getDaoWalletAddr(string nameDao) external pure returns(address){
+        nameDao;
+        return this;
+    }
+
     function getTagAddr(
         string daoName,
         string repoName,
@@ -469,6 +483,13 @@ contract SystemContract is Modifiers {
         address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), daoName);
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, repoName);
         return GoshLib.calculateTagAddress(_code[m_TagCode], repo, nametag);
+    }
+
+    function getGrantCode(string daoName) external view returns(TvmCell) {
+        address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), daoName);
+        return GoshLib.buildGrantsCode(
+            _code[m_GrantCode], addr, version
+        );
     }
 
     function getTagAddress(
