@@ -4723,9 +4723,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         )
         return await executeByChunk(filtered, MAX_PARALLEL_READ, async (item) => {
             const treepath = getTreeItemFullPath(item)
-            const fullpath = `${commit}/${treepath}`
-            const { address, content } = await this.getBlob({ commit, fullpath })
-            return { address, treepath, content }
+            const address = await this._getSnapshotAddress(item.commit!, treepath)
+            const { current } = await this.getCommitBlob(address, treepath, commit)
+            return { address, treepath, content: current }
         })
     }
 
