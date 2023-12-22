@@ -27,7 +27,7 @@ use super::utilities::retry::default_retry_strategy;
 // const PUSH_DIFF_MAX_TRIES: i32 = 3;
 // const PUSH_SNAPSHOT_MAX_TRIES: i32 = 3;
 
-const WAIT_FOR_DELETE_SNAPSHOT_TRIES: i32 = 20;
+const WAIT_FOR_DELETE_SNAPSHOT_TRIES: i32 = 3;
 
 enum BlobDst {
     Ipfs(String),
@@ -291,7 +291,7 @@ pub async fn push_new_branch_snapshot(
                 tracing::trace!("Snapshot is deleted: {expected_addr}");
                 break;
             }
-            sleep(Duration::from_secs(5)).await;
+            sleep(Duration::from_secs(1)).await;
         }
     }
 

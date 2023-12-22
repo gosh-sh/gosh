@@ -145,8 +145,7 @@ pub async fn get_set_commit_created_at_time(
                     is_internal: true,
                     ..Default::default()
                 },
-            )
-            .await?;
+            )?;
 
             tracing::trace!("Decoded message `{}`", decoded.name);
             if decoded.name == "setCommit" {

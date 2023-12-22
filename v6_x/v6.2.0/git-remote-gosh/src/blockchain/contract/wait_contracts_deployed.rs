@@ -6,7 +6,7 @@ use std::collections::HashSet;
 use tokio::task::JoinSet;
 use tracing::Instrument;
 
-const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 20; // x 3sec
+const MAX_RETRIES_FOR_DIFFS_TO_APPEAR: i32 = 3; // x 3sec
 
 #[instrument(level = "info", skip_all)]
 pub async fn wait_contracts_deployed<B>(
@@ -40,7 +40,7 @@ where
                                 HashSet::from_iter(found_addresses.iter().cloned());
                             waiting_for_addresses.retain(|e| !available.contains(e));
                             if !waiting_for_addresses.is_empty() {
-                                tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+                                tokio::time::sleep(std::time::Duration::from_secs(1)).await;
                                 tracing::trace!(
                                     "Addresses {} are not ready yet. iteration {}",
                                     waiting_for_addresses.format_short(),
@@ -49,7 +49,7 @@ where
                             }
                         }
                         Err(ref e) => {
-                            tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+                            tokio::time::sleep(std::time::Duration::from_secs(1)).await;
                             tracing::trace!(
                                 "State request failed with: {}. iteration {}",
                                 e,

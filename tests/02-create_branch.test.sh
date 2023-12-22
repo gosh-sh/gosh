@@ -41,7 +41,7 @@ echo "foo" > foo-$CHANGE.txt
 git add .
 git commit -m "foo-$CHANGE"
 echo "***** awaiting push into $BRANCH_NAME *****"
-git push -u origin $BRANCH_NAME
+GOSH_TRACE=5 git push -u origin $BRANCH_NAME &> ../trace_02.log
 
 # echo "***** awaiting set commit into $BRANCH_NAME *****"
 # wait_set_commit $REPO_ADDR $BRANCH_NAME
@@ -49,7 +49,7 @@ git push -u origin $BRANCH_NAME
 echo "***** cloning repo *****"
 cd ..
 
-sleep 10
+sleep 1
 
 git clone gosh://$SYSTEM_CONTRACT_ADDR/$DAO_NAME/$REPO_NAME $REPO_NAME"-clone"
 

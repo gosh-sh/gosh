@@ -186,7 +186,7 @@ impl BlockchainCall for Everscale {
                         timeout.as_secs(),
                     );
                 }
-                tokio::time::sleep(Duration::from_secs(5)).await;
+                tokio::time::sleep(Duration::from_millis(300)).await;
             }
         }
 

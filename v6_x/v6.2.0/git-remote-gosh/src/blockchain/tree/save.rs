@@ -10,7 +10,7 @@ use std::ops::Deref;
 use std::sync::Arc;
 use crate::blockchain::tree::load::TreeComponent;
 
-const MAX_RETRIES_FOR_CHUNKS_TO_APPEAR: i32 = 20;
+const MAX_RETRIES_FOR_CHUNKS_TO_APPEAR: i32 = 3;
 
 #[derive(Serialize, Debug, Clone)]
 pub struct DeployTreeArgs {
@@ -162,7 +162,7 @@ where
             return Ok(());
         }
         counter += 1;
-        tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
     }
     Err(anyhow::format_err!("Tree state is not complete after wait"))
 }

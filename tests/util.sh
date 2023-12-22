@@ -89,7 +89,7 @@ function wait_account_active {
             echo account is active
             break
         fi
-        sleep 5
+        sleep 1
     done
 
     if [ "$is_ok" = "0" ]; then
@@ -131,7 +131,7 @@ function wait_set_commit {
             break
         fi
 
-        sleep 5
+        sleep 1
     done
 
     if [ "$is_ok" = "0" ]; then
@@ -314,7 +314,7 @@ function upgrade_DAO_2 {
   WALLET_ADDR=$(tonos-cli -j run $DAO_ADDR getAddrWallet "{\"pubaddr\":\"$USER_PROFILE_ADDR\",\"index\":0}" --abi $DAO_ABI_1 | sed -n '/value0/ p' | cut -d'"' -f 4)
   echo "NEW_WALLET_ADDR=$WALLET_ADDR"
 
-  sleep 5
+  sleep 1
 
   tonos-cli call --abi $USER_PROFILE_ABI $USER_PROFILE_ADDR --sign $WALLET_KEYS turnOn \
     "{\"pubkey\":\"$WALLET_PUBKEY\",\"wallet\":\"$WALLET_ADDR\"}"
@@ -362,7 +362,7 @@ function upgrade_DAO_6 {
   WALLET_ADDR=$(tonos-cli -j run $DAO_ADDR getAddrWallet "{\"pubaddr\":\"$USER_PROFILE_ADDR\",\"index\":0}" --abi $DAO_ABI_1 | sed -n '/value0/ p' | cut -d'"' -f 4)
   echo "NEW_WALLET_ADDR=$WALLET_ADDR"
 
-  sleep 5
+  sleep 1
 
   tonos-cli call --abi $USER_PROFILE_ABI $USER_PROFILE_ADDR --sign $WALLET_KEYS turnOn \
     "{\"pubkey\":\"$WALLET_PUBKEY\",\"wallet\":\"$WALLET_ADDR\"}"
@@ -416,7 +416,7 @@ function wait_wallet_tombstone {
           echo "Tombstone is set"
           break
         fi
-        sleep 5
+        sleep 1
     done
 
     if [ "$is_ok" = "0" ]; then
@@ -436,7 +436,7 @@ function wait_account_balance {
             echo account has enough balance
             break
         fi
-        sleep 5
+        sleep 1
     done
 
     if [ "$is_ok" = "0" ]; then

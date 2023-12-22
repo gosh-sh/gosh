@@ -1,9 +1,9 @@
 use crate::{blockchain::EverClient, config::Config, utilities::env::parse_env_or};
 use std::{env, sync::Arc, time::Duration};
-use ton_client::{net::NetworkQueriesProtocol, ClientConfig, ClientContext};
+use ton_client::{net::NetworkQueriesProtocol, ClientConfig, ClientContext, abi::AbiConfig};
 
 // default timeout for all types of operation (e.g. message_processing, wait_for, query)
-static DEFAULT_BLOCKCHAIN_TIMEOUT: Duration = Duration::from_secs(15 * 60);
+static DEFAULT_BLOCKCHAIN_TIMEOUT: Duration = Duration::from_secs(2);
 static BLOCKCHAIN_TIMEOUT: &'static str = "GOSH_BLOCKCHAIN_TIMEOUT_SEC";
 static MESSAGE_PROCESSING_TIMEOUT: &'static str = "GOSH_MESSAGE_PROCESSING_TIMEOUT_SEC";
 static WAIT_FOR_TIMEOUT: &'static str = "GOSH_WAIT_FOR_TIMEOUT_SEC";
@@ -43,6 +43,11 @@ pub fn create_client(config: &Config, network: &str) -> anyhow::Result<EverClien
             wait_for_timeout: wait_for_timeout.as_millis().try_into()?,
             query_timeout: query_timeout.as_millis().try_into()?,
             ..Default::default()
+        },
+        abi: AbiConfig {
+            workchain: 0,
+            message_expiration_timeout: 2000,
+            message_expiration_timeout_grow_factor: 1.3,
         },
         ..Default::default()
     };

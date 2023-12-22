@@ -255,7 +255,7 @@ impl BlockchainCommitPusher for Everscale {
             if start.elapsed() > timeout {
                 bail!("Time is up. Fix and retry");
             }
-            sleep(Duration::from_secs(5)).await;
+            sleep(Duration::from_secs(1)).await;
         }
         tracing::info!("Branch `{branch}` has been updated");
         Ok(())
@@ -360,8 +360,7 @@ pub async fn find_messages(
                 is_internal: true,
                 ..Default::default()
             },
-        )
-        .await;
+        );
         got_new_messages = true;
         already_processed_messages.insert(message.id.clone(), true);
 

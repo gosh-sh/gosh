@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use tokio::task::JoinSet;
 use tracing::Instrument;
 
-const MAX_RETRIES_FOR_SNAP_READINESS: i32 = 20;
+const MAX_RETRIES_FOR_SNAP_READINESS: i32 = 3;
 const CHUNK_SIZE: usize = 50;
 
 #[instrument(level = "info", skip_all)]
@@ -61,7 +61,7 @@ where
                         );
                     }
                     chunk_clone = not_ready.to_vec();
-                    tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+                    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
                 }
                 Ok(vec![])
             }

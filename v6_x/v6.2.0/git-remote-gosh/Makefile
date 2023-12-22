@@ -43,7 +43,7 @@ copy_abi: clear_abi
 
 .PHONY: build
 build: copy_abi clear_screen
-	cargo build --release --bin git-remote-gosh --target=${TARGET_ARCH}
+	cargo build --release --bin git-remote-gosh_v6_2_0 --target=${TARGET_ARCH}
 
 .PHONY: install
 install: copy_abi clear_screen
