@@ -5,16 +5,16 @@
   "type": "module",
   "scripts": {
     "wasm": "cp ./node_modules/@eversdk/lib-web/eversdk.wasm ./public",
-    "start": "pnpm run wasm && pnpm run start:dev",
-    "start:ci": "dotenv -e .env.ci node env.json.js && dotenv -e .env.ci vite",
-    "start:dev": "dotenv -e .env.development node env.json.js && dotenv -e .env.development vite",
-    "start:prod": "dotenv -e .env.production node env.json.js && dotenv -e .env.production vite",
-    "build:ci": "dotenv -e .env.ci node env.json.js && dotenv -e .env.ci vite build",
-    "build:dev": "dotenv -e .env.development node env.json.js && dotenv -e .env.development vite build",
-    "build:prod": "dotenv -e .env.production node env.json.js && dotenv -e .env.production vite build",
+    "start": "bun run wasm && bun run start:dev",
+    "start:ci": "dotenv -e .env.ci bun env.json.js && dotenv -e .env.ci vite",
+    "start:dev": "dotenv -e .env.development bun env.json.js && dotenv -e .env.development vite",
+    "start:prod": "dotenv -e .env.production bun env.json.js && dotenv -e .env.production vite",
+    "build:ci": "dotenv -e .env.ci bun env.json.js && dotenv -e .env.ci vite build",
+    "build:dev": "dotenv -e .env.development bun env.json.js && dotenv -e .env.development vite build",
+    "build:prod": "dotenv -e .env.production bun env.json.js && dotenv -e .env.production vite build",
     "build:dockerdev": "dotenv -e .env.docker.development -- vite build --base=./",
     "build:dockerprod": "dotenv -e .env.docker.production -- vite build --base=./",
-    "update-react-gosh": "cd ../react-gosh && rm -rf dist && pnpm run build && cd - && pnpm update react-gosh"
+    "update-react-gosh": "cd ../react-gosh && rm -rf dist && bun run build && cd - && bun update react-gosh"
   },
   "eslintConfig": {
     "extends": [

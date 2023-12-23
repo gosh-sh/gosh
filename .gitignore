@@ -24,6 +24,7 @@ package-lock.json
 deno.lock
 pnpm-lock.yaml
 .pnpm-store
+bun.lockb
 
 !tests/node_se_scripts/prop_id_gen.tvc
 !tests/node_se_scripts/local_giver.keys.json
