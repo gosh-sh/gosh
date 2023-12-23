@@ -1,4 +1,4 @@
 export type TValidationResult = {
-    valid: boolean
-    reason?: string
+  valid: boolean
+  reason?: string
 }

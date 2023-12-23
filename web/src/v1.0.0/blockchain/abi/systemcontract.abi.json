@@ -1,421 +1,320 @@
 {
-	"ABI version": 2,
-	"version": "2.3",
-	"header": ["pubkey", "time", "expire"],
-	"functions": [
-		{
-			"name": "constructor",
-			"inputs": [
-				{"name":"code","type":"map(uint8,cell)"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "upgradeDao1",
-			"inputs": [
-				{"name":"namedao","type":"string"},
-				{"name":"newversion","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "checkUpdateRepo1",
-			"inputs": [
-				{"name":"name","type":"string"},
-				{"name":"namedao","type":"string"},
-				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"prev","type":"tuple"},
-				{"name":"answer","type":"address"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "checkUpdateRepo3",
-			"inputs": [
-				{"name":"name","type":"string"},
-				{"name":"namedao","type":"string"},
-				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"prev","type":"tuple"},
-				{"name":"answer","type":"address"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "deployProfile",
-			"inputs": [
-				{"name":"name","type":"string"},
-				{"name":"pubkey","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "deployDao",
-			"inputs": [
-				{"name":"name","type":"string"},
-				{"name":"pubaddr","type":"address"},
-				{"name":"previous","type":"optional(address)"},
-				{"name":"pubmem","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "sendMoney",
-			"inputs": [
-				{"name":"pubaddr","type":"address"},
-				{"name":"goshdao","type":"address"},
-				{"name":"value","type":"uint128"},
-				{"name":"index","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "sendMoneyProfile",
-			"inputs": [
-				{"name":"name","type":"string"},
-				{"name":"value","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "sendMoneyDao",
-			"inputs": [
-				{"name":"name","type":"string"},
-				{"name":"value","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setFlag",
-			"inputs": [
-				{"name":"flag","type":"bool"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setLimitWallets",
-			"inputs": [
-				{"name":"limit_wallets","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setTokenRoot",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setTokenWallet",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setTokenLocker",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setSMVPlatform",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setSMVClient",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setSMVProposal",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setDiff",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setRepository",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setCommit",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setSnapshot",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setcontentSignature",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setWallet",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setDao",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setTree",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setTag",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "getContentAddress",
-			"inputs": [
-				{"name":"repoName","type":"string"},
-				{"name":"daoName","type":"string"},
-				{"name":"commit","type":"string"},
-				{"name":"label","type":"string"}
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "getAddrRepository",
-			"inputs": [
-				{"name":"name","type":"string"},
-				{"name":"dao","type":"string"}
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "getAddrDao",
-			"inputs": [
-				{"name":"name","type":"string"}
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "getAddrWallet",
-			"inputs": [
-				{"name":"pubaddr","type":"address"},
-				{"name":"dao","type":"address"},
-				{"name":"index","type":"uint128"}
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "getRepoDaoCode",
-			"inputs": [
-				{"name":"dao","type":"address"}
-			],
-			"outputs": [
-				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "getProfileAddr",
-			"inputs": [
-				{"name":"name","type":"string"}
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "getProfileDaoAddr",
-			"inputs": [
-				{"name":"name","type":"string"}
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "getDaoWalletCode",
-			"inputs": [
-				{"name":"pubaddr","type":"address"}
-			],
-			"outputs": [
-				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "getSMVProposalCode",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "getSMVPlatformCode",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "getSMVClientCode",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "getRepositoryCode",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "getCommitCode",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "getSnapshotCode",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "getTagCode",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"cell"}
-			]
-		},
-		{
-			"name": "getHash",
-			"inputs": [
-				{"name":"state","type":"bytes"}
-			],
-			"outputs": [
-				{"name":"value0","type":"uint256"}
-			]
-		},
-		{
-			"name": "getCreator",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "getVersion",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"string"},
-				{"name":"value1","type":"string"}
-			]
-		},
-		{
-			"name": "_lastGoshDao",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"_lastGoshDao","type":"address"}
-			]
-		}
-	],
-	"data": [
-	],
-	"events": [
-	],
-	"fields": [
-		{"name":"_pubkey","type":"uint256"},
-		{"name":"_constructorFlag","type":"bool"},
-		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
-		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
-		{"name":"__value","type":"uint256"},
-		{"name":"_versionController","type":"address"},
-		{"name":"_flag","type":"bool"},
-		{"name":"_code","type":"map(uint8,cell)"},
-		{"name":"_limit_wallets","type":"uint128"},
-		{"name":"m_TokenLockerCode","type":"cell"},
-		{"name":"m_SMVPlatformCode","type":"cell"},
-		{"name":"m_SMVClientCode","type":"cell"},
-		{"name":"m_SMVProposalCode","type":"cell"},
-		{"name":"m_TokenRootCode","type":"cell"},
-		{"name":"m_TokenWalletCode","type":"cell"},
-		{"name":"_lastGoshDao","type":"address"}
-	]
+  "ABI version": 2,
+  "version": "2.3",
+  "header": ["pubkey", "time", "expire"],
+  "functions": [
+    {
+      "name": "constructor",
+      "inputs": [{ "name": "code", "type": "map(uint8,cell)" }],
+      "outputs": []
+    },
+    {
+      "name": "upgradeDao1",
+      "inputs": [
+        { "name": "namedao", "type": "string" },
+        { "name": "newversion", "type": "string" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "checkUpdateRepo1",
+      "inputs": [
+        { "name": "name", "type": "string" },
+        { "name": "namedao", "type": "string" },
+        {
+          "components": [
+            { "name": "addr", "type": "address" },
+            { "name": "version", "type": "string" }
+          ],
+          "name": "prev",
+          "type": "tuple"
+        },
+        { "name": "answer", "type": "address" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "checkUpdateRepo3",
+      "inputs": [
+        { "name": "name", "type": "string" },
+        { "name": "namedao", "type": "string" },
+        {
+          "components": [
+            { "name": "addr", "type": "address" },
+            { "name": "version", "type": "string" }
+          ],
+          "name": "prev",
+          "type": "tuple"
+        },
+        { "name": "answer", "type": "address" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "deployProfile",
+      "inputs": [
+        { "name": "name", "type": "string" },
+        { "name": "pubkey", "type": "uint256" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "deployDao",
+      "inputs": [
+        { "name": "name", "type": "string" },
+        { "name": "pubaddr", "type": "address" },
+        { "name": "previous", "type": "optional(address)" },
+        { "name": "pubmem", "type": "address[]" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "sendMoney",
+      "inputs": [
+        { "name": "pubaddr", "type": "address" },
+        { "name": "goshdao", "type": "address" },
+        { "name": "value", "type": "uint128" },
+        { "name": "index", "type": "uint128" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "sendMoneyProfile",
+      "inputs": [
+        { "name": "name", "type": "string" },
+        { "name": "value", "type": "uint128" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "sendMoneyDao",
+      "inputs": [
+        { "name": "name", "type": "string" },
+        { "name": "value", "type": "uint128" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "setFlag",
+      "inputs": [{ "name": "flag", "type": "bool" }],
+      "outputs": []
+    },
+    {
+      "name": "setLimitWallets",
+      "inputs": [{ "name": "limit_wallets", "type": "uint128" }],
+      "outputs": []
+    },
+    {
+      "name": "setTokenRoot",
+      "inputs": [{ "name": "code", "type": "cell" }],
+      "outputs": []
+    },
+    {
+      "name": "setTokenWallet",
+      "inputs": [{ "name": "code", "type": "cell" }],
+      "outputs": []
+    },
+    {
+      "name": "setTokenLocker",
+      "inputs": [{ "name": "code", "type": "cell" }],
+      "outputs": []
+    },
+    {
+      "name": "setSMVPlatform",
+      "inputs": [{ "name": "code", "type": "cell" }],
+      "outputs": []
+    },
+    {
+      "name": "setSMVClient",
+      "inputs": [{ "name": "code", "type": "cell" }],
+      "outputs": []
+    },
+    {
+      "name": "setSMVProposal",
+      "inputs": [{ "name": "code", "type": "cell" }],
+      "outputs": []
+    },
+    {
+      "name": "setDiff",
+      "inputs": [{ "name": "code", "type": "cell" }],
+      "outputs": []
+    },
+    {
+      "name": "setRepository",
+      "inputs": [{ "name": "code", "type": "cell" }],
+      "outputs": []
+    },
+    {
+      "name": "setCommit",
+      "inputs": [{ "name": "code", "type": "cell" }],
+      "outputs": []
+    },
+    {
+      "name": "setSnapshot",
+      "inputs": [{ "name": "code", "type": "cell" }],
+      "outputs": []
+    },
+    {
+      "name": "setcontentSignature",
+      "inputs": [{ "name": "code", "type": "cell" }],
+      "outputs": []
+    },
+    {
+      "name": "setWallet",
+      "inputs": [{ "name": "code", "type": "cell" }],
+      "outputs": []
+    },
+    {
+      "name": "setDao",
+      "inputs": [{ "name": "code", "type": "cell" }],
+      "outputs": []
+    },
+    {
+      "name": "setTree",
+      "inputs": [{ "name": "code", "type": "cell" }],
+      "outputs": []
+    },
+    {
+      "name": "setTag",
+      "inputs": [{ "name": "code", "type": "cell" }],
+      "outputs": []
+    },
+    {
+      "name": "getContentAddress",
+      "inputs": [
+        { "name": "repoName", "type": "string" },
+        { "name": "daoName", "type": "string" },
+        { "name": "commit", "type": "string" },
+        { "name": "label", "type": "string" }
+      ],
+      "outputs": [{ "name": "value0", "type": "address" }]
+    },
+    {
+      "name": "getAddrRepository",
+      "inputs": [
+        { "name": "name", "type": "string" },
+        { "name": "dao", "type": "string" }
+      ],
+      "outputs": [{ "name": "value0", "type": "address" }]
+    },
+    {
+      "name": "getAddrDao",
+      "inputs": [{ "name": "name", "type": "string" }],
+      "outputs": [{ "name": "value0", "type": "address" }]
+    },
+    {
+      "name": "getAddrWallet",
+      "inputs": [
+        { "name": "pubaddr", "type": "address" },
+        { "name": "dao", "type": "address" },
+        { "name": "index", "type": "uint128" }
+      ],
+      "outputs": [{ "name": "value0", "type": "address" }]
+    },
+    {
+      "name": "getRepoDaoCode",
+      "inputs": [{ "name": "dao", "type": "address" }],
+      "outputs": [{ "name": "value0", "type": "cell" }]
+    },
+    {
+      "name": "getProfileAddr",
+      "inputs": [{ "name": "name", "type": "string" }],
+      "outputs": [{ "name": "value0", "type": "address" }]
+    },
+    {
+      "name": "getProfileDaoAddr",
+      "inputs": [{ "name": "name", "type": "string" }],
+      "outputs": [{ "name": "value0", "type": "address" }]
+    },
+    {
+      "name": "getDaoWalletCode",
+      "inputs": [{ "name": "pubaddr", "type": "address" }],
+      "outputs": [{ "name": "value0", "type": "cell" }]
+    },
+    {
+      "name": "getSMVProposalCode",
+      "inputs": [],
+      "outputs": [{ "name": "value0", "type": "cell" }]
+    },
+    {
+      "name": "getSMVPlatformCode",
+      "inputs": [],
+      "outputs": [{ "name": "value0", "type": "cell" }]
+    },
+    {
+      "name": "getSMVClientCode",
+      "inputs": [],
+      "outputs": [{ "name": "value0", "type": "cell" }]
+    },
+    {
+      "name": "getRepositoryCode",
+      "inputs": [],
+      "outputs": [{ "name": "value0", "type": "cell" }]
+    },
+    {
+      "name": "getCommitCode",
+      "inputs": [],
+      "outputs": [{ "name": "value0", "type": "cell" }]
+    },
+    {
+      "name": "getSnapshotCode",
+      "inputs": [],
+      "outputs": [{ "name": "value0", "type": "cell" }]
+    },
+    {
+      "name": "getTagCode",
+      "inputs": [],
+      "outputs": [{ "name": "value0", "type": "cell" }]
+    },
+    {
+      "name": "getHash",
+      "inputs": [{ "name": "state", "type": "bytes" }],
+      "outputs": [{ "name": "value0", "type": "uint256" }]
+    },
+    {
+      "name": "getCreator",
+      "inputs": [],
+      "outputs": [{ "name": "value0", "type": "address" }]
+    },
+    {
+      "name": "getVersion",
+      "inputs": [],
+      "outputs": [
+        { "name": "value0", "type": "string" },
+        { "name": "value1", "type": "string" }
+      ]
+    },
+    {
+      "name": "_lastGoshDao",
+      "inputs": [],
+      "outputs": [{ "name": "_lastGoshDao", "type": "address" }]
+    }
+  ],
+  "data": [],
+  "events": [],
+  "fields": [
+    { "name": "_pubkey", "type": "uint256" },
+    { "name": "_constructorFlag", "type": "bool" },
+    { "name": "messages", "type": "map(uint32,map(uint256,bool))" },
+    {
+      "components": [
+        { "name": "messageHash", "type": "uint256" },
+        { "name": "expireAt", "type": "uint32" }
+      ],
+      "name": "lastMessage",
+      "type": "tuple"
+    },
+    { "name": "__value", "type": "uint256" },
+    { "name": "_versionController", "type": "address" },
+    { "name": "_flag", "type": "bool" },
+    { "name": "_code", "type": "map(uint8,cell)" },
+    { "name": "_limit_wallets", "type": "uint128" },
+    { "name": "m_TokenLockerCode", "type": "cell" },
+    { "name": "m_SMVPlatformCode", "type": "cell" },
+    { "name": "m_SMVClientCode", "type": "cell" },
+    { "name": "m_SMVProposalCode", "type": "cell" },
+    { "name": "m_TokenRootCode", "type": "cell" },
+    { "name": "m_TokenWalletCode", "type": "cell" },
+    { "name": "_lastGoshDao", "type": "address" }
+  ]
 }

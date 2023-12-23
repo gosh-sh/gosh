@@ -15,60 +15,60 @@ import { useOauth } from '../../hooks/oauth.hooks'
 import { withRouteAnimation } from '../../hocs'
 
 const OnboardingPage = () => {
-    const navigate = useNavigate()
-    const { persist } = useUser()
-    const { signin, signout, oauth } = useOauth()
-    const { data } = useOnboardingData(oauth)
+  const navigate = useNavigate()
+  const { persist } = useUser()
+  const { signin, signout, oauth } = useOauth()
+  const { data } = useOnboardingData(oauth)
 
-    const signinOAuth = async () => {
-        try {
-            await signin('github')
-        } catch (e: any) {
-            console.error(e.message)
-            toast.error(<ToastError error={e} />)
-        }
+  const signinOAuth = async () => {
+    try {
+      await signin('github')
+    } catch (e: any) {
+      console.error(e.message)
+      toast.error(<ToastError error={e} />)
     }
+  }
 
-    const signoutOAuth = async () => {
-        try {
-            await signout()
-        } catch (e: any) {
-            console.error(e.message)
-            toast.error(<ToastError error={e} />)
-        }
+  const signoutOAuth = async () => {
+    try {
+      await signout()
+    } catch (e: any) {
+      console.error(e.message)
+      toast.error(<ToastError error={e} />)
     }
+  }
 
-    useEffect(() => {
-        if (oauth.error) {
-            toast.error(<ToastError error={oauth.error} />)
-            navigate('/')
-        }
-    }, [oauth.error])
-
-    if (data.redirectTo) {
-        return <Navigate to={data.redirectTo} replace />
+  useEffect(() => {
+    if (oauth.error) {
+      toast.error(<ToastError error={oauth.error} />)
+      navigate('/')
     }
-    if (persist.pin) {
-        return <Navigate to="/a/orgs" replace />
-    }
-    return (
-        <div className="container pt-20 pb-8">
-            {oauth.isLoading && <Loader>Please, wait...</Loader>}
+  }, [oauth.error])
 
-            {data.step === 'signin' && <OAuthSignin signinOAuth={signinOAuth} />}
-            {data.step === 'invites' && (
-                <GoshDaoInvites oauth={oauth} signoutOAuth={signoutOAuth} />
-            )}
-            {data.step === 'organizations' && (
-                <GithubOrganizations oauth={oauth} signoutOAuth={signoutOAuth} />
-            )}
-            {data.step === 'phrase' && <GoshPhrase oauth={oauth} />}
-            {data.step === 'phrase-check' && <GoshPhraseCheck oauth={oauth} />}
-            {data.step === 'username' && (
-                <GoshUsername oauth={oauth} signoutOAuth={signoutOAuth} />
-            )}
-        </div>
-    )
+  if (data.redirectTo) {
+    return <Navigate to={data.redirectTo} replace />
+  }
+  if (persist.pin) {
+    return <Navigate to="/a/orgs" replace />
+  }
+  return (
+    <div className="container pt-20 pb-8">
+      {oauth.isLoading && <Loader>Please, wait...</Loader>}
+
+      {data.step === 'signin' && <OAuthSignin signinOAuth={signinOAuth} />}
+      {data.step === 'invites' && (
+        <GoshDaoInvites oauth={oauth} signoutOAuth={signoutOAuth} />
+      )}
+      {data.step === 'organizations' && (
+        <GithubOrganizations oauth={oauth} signoutOAuth={signoutOAuth} />
+      )}
+      {data.step === 'phrase' && <GoshPhrase oauth={oauth} />}
+      {data.step === 'phrase-check' && <GoshPhraseCheck oauth={oauth} />}
+      {data.step === 'username' && (
+        <GoshUsername oauth={oauth} signoutOAuth={signoutOAuth} />
+      )}
+    </div>
+  )
 }
 
 export default withRouteAnimation(OnboardingPage)

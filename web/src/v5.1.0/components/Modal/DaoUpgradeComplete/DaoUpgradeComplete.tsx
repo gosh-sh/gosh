@@ -8,52 +8,52 @@ import { ModalCloseButton } from '../../../../components/Modal'
 import { useNavigate } from 'react-router-dom'
 
 const DaoUpgradeCompleteModal = () => {
-    const setModal = useSetRecoilState(appModalStateAtom)
-    const navigate = useNavigate()
-    const dao = useDao()
-    const { upgrade } = useUpgradeDaoComplete()
+  const setModal = useSetRecoilState(appModalStateAtom)
+  const navigate = useNavigate()
+  const dao = useDao()
+  const { upgrade } = useUpgradeDaoComplete()
 
-    const onModalReset = () => {
-        setModal((state) => ({ ...state, isOpen: false }))
+  const onModalReset = () => {
+    setModal((state) => ({ ...state, isOpen: false }))
+  }
+
+  const onCompleteUpgrade = async () => {
+    try {
+      await upgrade()
+      onModalReset()
+      navigate(`/o/${dao.details.name}/events`)
+    } catch (e: any) {
+      console.error(e.message)
     }
+  }
 
-    const onCompleteUpgrade = async () => {
-        try {
-            await upgrade()
-            onModalReset()
-            navigate(`/o/${dao.details.name}/events`)
-        } catch (e: any) {
-            console.error(e.message)
-        }
-    }
+  return (
+    <Dialog.Panel className="relative rounded-xl bg-white p-10 w-full max-w-lg">
+      <Formik initialValues={{}} onSubmit={onCompleteUpgrade}>
+        {({ isSubmitting }) => (
+          <Form>
+            <ModalCloseButton disabled={isSubmitting} />
+            <Dialog.Title className="mb-8 text-3xl text-center font-medium">
+              Complete DAO upgrade
+            </Dialog.Title>
 
-    return (
-        <Dialog.Panel className="relative rounded-xl bg-white p-10 w-full max-w-lg">
-            <Formik initialValues={{}} onSubmit={onCompleteUpgrade}>
-                {({ isSubmitting }) => (
-                    <Form>
-                        <ModalCloseButton disabled={isSubmitting} />
-                        <Dialog.Title className="mb-8 text-3xl text-center font-medium">
-                            Complete DAO upgrade
-                        </Dialog.Title>
-
-                        <div>
-                            <div className="text-center">
-                                <Button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    isLoading={isSubmitting}
-                                    test-id="btn-dao-upgrade-complete"
-                                >
-                                    Start upgrade complete process
-                                </Button>
-                            </div>
-                        </div>
-                    </Form>
-                )}
-            </Formik>
-        </Dialog.Panel>
-    )
+            <div>
+              <div className="text-center">
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  isLoading={isSubmitting}
+                  test-id="btn-dao-upgrade-complete"
+                >
+                  Start upgrade complete process
+                </Button>
+              </div>
+            </div>
+          </Form>
+        )}
+      </Formik>
+    </Dialog.Panel>
+  )
 }
 
 export { DaoUpgradeCompleteModal }

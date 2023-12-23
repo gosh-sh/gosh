@@ -15,120 +15,98 @@ import { AppConfig } from '../../../appconfig'
 import { ButtonLink } from '../../../components/Form'
 
 const Header = () => {
-    const user = useUser()
-    const location = useLocation()
-    const setModal = useSetRecoilState(appModalStateAtom)
+  const user = useUser()
+  const location = useLocation()
+  const setModal = useSetRecoilState(appModalStateAtom)
 
-    return (
-        <header>
-            <Disclosure
-                as="nav"
-                className="container relative flex items-center justify-between h-10 sm:h-12 mt-30px sm:mt-12"
-            >
-                {() => (
-                    <>
-                        <Link to="/">
-                            <img
-                                src={logoBlack}
-                                alt="Logo"
-                                className="block h-10 sm:h-12 w-auto"
-                            />
-                        </Link>
+  return (
+    <header>
+      <Disclosure
+        as="nav"
+        className="container relative flex items-center justify-between h-10 sm:h-12 mt-30px sm:mt-12"
+      >
+        {() => (
+          <>
+            <Link to="/">
+              <img src={logoBlack} alt="Logo" className="block h-10 sm:h-12 w-auto" />
+            </Link>
 
-                        <div className="flex items-center gap-x-4 sm:gap-x-34px ml-4">
-                            {AppConfig.dockerclient && (
-                                <>
-                                    <Link
-                                        to="/containers"
-                                        className="text-gray-53596d hover:underline"
-                                    >
-                                        <FontAwesomeIcon icon={faDocker} size="lg" />
-                                        <span className="ml-3 hidden sm:inline">
-                                            Containers
-                                        </span>
-                                    </Link>
+            <div className="flex items-center gap-x-4 sm:gap-x-34px ml-4">
+              {AppConfig.dockerclient && (
+                <>
+                  <Link to="/containers" className="text-gray-53596d hover:underline">
+                    <FontAwesomeIcon icon={faDocker} size="lg" />
+                    <span className="ml-3 hidden sm:inline">Containers</span>
+                  </Link>
 
-                                    <button
-                                        type="button"
-                                        className="text-gray-53596d hover:underline"
-                                        onClick={() => {
-                                            setModal({
-                                                static: false,
-                                                isOpen: true,
-                                                element: (
-                                                    <MDDocumentModal
-                                                        title="Help"
-                                                        path="help"
-                                                    />
-                                                ),
-                                            })
-                                        }}
-                                    >
-                                        <FontAwesomeIcon
-                                            icon={faQuestionCircle}
-                                            size="lg"
-                                        />
-                                        <span className="ml-3 hidden sm:inline">
-                                            Help
-                                        </span>
-                                    </button>
-                                </>
-                            )}
+                  <button
+                    type="button"
+                    className="text-gray-53596d hover:underline"
+                    onClick={() => {
+                      setModal({
+                        static: false,
+                        isOpen: true,
+                        element: <MDDocumentModal title="Help" path="help" />,
+                      })
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faQuestionCircle} size="lg" />
+                    <span className="ml-3 hidden sm:inline">Help</span>
+                  </button>
+                </>
+              )}
 
-                            <a
-                                href="https://blog.gosh.sh/"
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-gray-53596d hover:underline"
-                                onClick={(e) => {
-                                    onExternalLinkClick(e, 'https://blog.gosh.sh/')
-                                }}
-                            >
-                                <FontAwesomeIcon icon={faBlog} size="lg" />
-                                <span className="ml-3 hidden sm:inline">Our blog</span>
-                            </a>
+              <a
+                href="https://blog.gosh.sh/"
+                target="_blank"
+                rel="noreferrer"
+                className="text-gray-53596d hover:underline"
+                onClick={(e) => {
+                  onExternalLinkClick(e, 'https://blog.gosh.sh/')
+                }}
+              >
+                <FontAwesomeIcon icon={faBlog} size="lg" />
+                <span className="ml-3 hidden sm:inline">Our blog</span>
+              </a>
 
-                            <a
-                                href="https://t.me/gosh_sh"
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-gray-53596d hover:underline"
-                                onClick={(e) => {
-                                    onExternalLinkClick(e, 'https://t.me/gosh_sh')
-                                }}
-                            >
-                                <FontAwesomeIcon icon={faPaperPlane} size="lg" />
-                                <span className="ml-3 hidden sm:inline">
-                                    Our telegram
-                                </span>
-                            </a>
+              <a
+                href="https://t.me/gosh_sh"
+                target="_blank"
+                rel="noreferrer"
+                className="text-gray-53596d hover:underline"
+                onClick={(e) => {
+                  onExternalLinkClick(e, 'https://t.me/gosh_sh')
+                }}
+              >
+                <FontAwesomeIcon icon={faPaperPlane} size="lg" />
+                <span className="ml-3 hidden sm:inline">Our telegram</span>
+              </a>
 
-                            {!user.persist.phrase &&
-                                location.pathname.search(/signin|signup/) < 0 && (
-                                    <ButtonLink to={`/a/signin`}>Sign in</ButtonLink>
-                                )}
-                            {location.pathname.search('/signin') >= 0 && (
-                                <ButtonLink to={`/`}>Sign up</ButtonLink>
-                            )}
-                            {location.pathname.search('/signup') >= 0 && (
-                                <ButtonLink to={`/a/signin`}>Sign in</ButtonLink>
-                            )}
+              {!user.persist.phrase && location.pathname.search(/signin|signup/) < 0 && (
+                <ButtonLink to={`/a/signin`}>Sign in</ButtonLink>
+              )}
+              {location.pathname.search('/signin') >= 0 && (
+                <ButtonLink to={`/`}>Sign up</ButtonLink>
+              )}
+              {location.pathname.search('/signup') >= 0 && (
+                <ButtonLink to={`/a/signin`}>Sign in</ButtonLink>
+              )}
 
-                            {/* Mobile menu button. Simple dropdown menu is used for now */}
-                            {/* <Disclosure.Button className="btn btn--header btn--burger icon-burger" /> */}
+              {/* Mobile menu button. Simple dropdown menu is used for now */}
+              {/* <Disclosure.Button className="btn btn--header btn--burger icon-burger" /> */}
 
-                            {/* Menu dropdown (is used as for mobile, as for desktop for now) */}
-                            {user.persist.phrase && <DropdownMenu />}
-                        </div>
+              {/* Menu dropdown (is used as for mobile, as for desktop for now) */}
+              {user.persist.phrase && <DropdownMenu />}
+            </div>
 
-                        <Disclosure.Panel className="sm:hidden">
-                            {/* Mobile menu content. Simple dropdown menu is used for now */}
-                        </Disclosure.Panel>
-                    </>
-                )}
-            </Disclosure>
-        </header>
-    )
+            <Disclosure.Panel className="sm:hidden">
+              {/* Mobile menu content. Simple dropdown menu is used for now */}
+            </Disclosure.Panel>
+          </>
+        )}
+      </Disclosure>
+    </header>
+  )
 }
 
 export default Header

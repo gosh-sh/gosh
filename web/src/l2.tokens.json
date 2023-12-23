@@ -1,42 +1,42 @@
 [
-    {
-        "network": "eth",
-        "name": "Ethereum",
-        "symbol": "ETH",
-        "decimals": 18,
-        "iconpath": "/images/tokens/ethereum.webp",
-        "rootaddr": null,
-        "pair_name": "eth",
-        "pair_with": ["weth"]
-    },
-    {
-        "network": "gosh",
-        "name": "Ethereum",
-        "symbol": "ETH",
-        "decimals": 18,
-        "iconpath": "/images/tokens/gosh.webp",
-        "rootaddr": "0:d6182377a82e7f159f1b9995b2582ac933791599a4da9d72cc2c7812f056592d",
-        "pair_name": "weth",
-        "pair_with": ["eth", "weth"]
-    },
-    {
-        "network": "eth",
-        "name": "USDC",
-        "symbol": "USDC",
-        "decimals": 6,
-        "iconpath": "/images/tokens/ethereum.webp",
-        "rootaddr": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-        "pair_name": "usdc",
-        "pair_with": ["wusdc"]
-    },
-    {
-        "network": "gosh",
-        "name": "USDC",
-        "symbol": "USDC",
-        "decimals": 6,
-        "iconpath": "/images/tokens/gosh.webp",
-        "rootaddr": "0:882a2b5ed0f169ca6329c23e9a772578cf12a9fe2835b1a3bc6ca1984ff6cb60",
-        "pair_name": "wusdc",
-        "pair_with": ["usdc", "wusdc"]
-    }
+  {
+    "network": "eth",
+    "name": "Ethereum",
+    "symbol": "ETH",
+    "decimals": 18,
+    "iconpath": "/images/tokens/ethereum.webp",
+    "rootaddr": null,
+    "pair_name": "eth",
+    "pair_with": ["weth"]
+  },
+  {
+    "network": "gosh",
+    "name": "Ethereum",
+    "symbol": "ETH",
+    "decimals": 18,
+    "iconpath": "/images/tokens/gosh.webp",
+    "rootaddr": "0:d6182377a82e7f159f1b9995b2582ac933791599a4da9d72cc2c7812f056592d",
+    "pair_name": "weth",
+    "pair_with": ["eth", "weth"]
+  },
+  {
+    "network": "eth",
+    "name": "USDC",
+    "symbol": "USDC",
+    "decimals": 6,
+    "iconpath": "/images/tokens/ethereum.webp",
+    "rootaddr": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    "pair_name": "usdc",
+    "pair_with": ["wusdc"]
+  },
+  {
+    "network": "gosh",
+    "name": "USDC",
+    "symbol": "USDC",
+    "decimals": 6,
+    "iconpath": "/images/tokens/gosh.webp",
+    "rootaddr": "0:882a2b5ed0f169ca6329c23e9a772578cf12a9fe2835b1a3bc6ca1984ff6cb60",
+    "pair_name": "wusdc",
+    "pair_with": ["usdc", "wusdc"]
+  }
 ]

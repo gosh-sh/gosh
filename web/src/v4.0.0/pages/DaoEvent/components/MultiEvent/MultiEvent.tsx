@@ -23,94 +23,92 @@ import { ShowDaoEventProgressEvent } from '../ShowDaoEventProgressEvent/ShowDaoE
 import { UpgradeTaskEvent } from '../UpgradeTaskEvent/UpgradeTaskEvent'
 
 type TMultiEventProps = {
-    event: TDaoEventDetails
+  event: TDaoEventDetails
 }
 
 const MultiEvent = (props: TMultiEventProps) => {
-    const { event } = props
+  const { event } = props
 
-    return (
-        <div className="flex flex-col divide-y divide-gray-e6edff">
-            {event.data.items
-                .filter((data: any) => data.type !== EDaoEventType.DELAY)
-                .map((item: any, index: number) => (
-                    <div className="py-3" key={index}>
-                        <h3 className="font-medium text-sm">{item.label}</h3>
-                        {item.data.comment && (
-                            <div className="mt-2 text-xs">{item.data.comment}</div>
-                        )}
+  return (
+    <div className="flex flex-col divide-y divide-gray-e6edff">
+      {event.data.items
+        .filter((data: any) => data.type !== EDaoEventType.DELAY)
+        .map((item: any, index: number) => (
+          <div className="py-3" key={index}>
+            <h3 className="font-medium text-sm">{item.label}</h3>
+            {item.data.comment && <div className="mt-2 text-xs">{item.data.comment}</div>}
 
-                        {item.type === EDaoEventType.REPO_CREATE && (
-                            <RepositoryCreateEvent
-                                key={index}
-                                data={item.data}
-                                isCompleted={event.status.completed}
-                            />
-                        )}
-                        {item.type === EDaoEventType.REPO_TAG_ADD && (
-                            <RepositoryTagAddEvent key={index} data={item.data} />
-                        )}
-                        {item.type === EDaoEventType.REPO_TAG_REMOVE && (
-                            <RepositoryTagDeleteEvent key={index} data={item.data} />
-                        )}
-                        {item.type === EDaoEventType.REPO_UPDATE_DESCRIPTION && (
-                            <RepositoryDescriptionEvent key={index} data={item.data} />
-                        )}
-                        {item.type === EDaoEventType.DAO_MEMBER_ADD && (
-                            <MemberAddEvent key={index} data={item.data} />
-                        )}
-                        {item.type === EDaoEventType.DAO_MEMBER_DELETE && (
-                            <MemberDeleteEvent key={index} data={item.data} />
-                        )}
-                        {item.type === EDaoEventType.DAO_TOKEN_MINT && (
-                            <MintTokensEvent key={index} data={item.data} />
-                        )}
-                        {item.type === EDaoEventType.DAO_TOKEN_VOTING_ADD && (
-                            <AddVotingTokensEvent key={index} data={item.data} />
-                        )}
-                        {item.type === EDaoEventType.DAO_TOKEN_REGULAR_ADD && (
-                            <AddRegularTokensEvent key={index} data={item.data} />
-                        )}
-                        {item.type === EDaoEventType.DAO_TAG_ADD && (
-                            <CreateDaoTagEvent key={index} data={item.data} />
-                        )}
-                        {item.type === EDaoEventType.DAO_TAG_REMOVE && (
-                            <DeleteDaoTagEvent key={index} data={item.data} />
-                        )}
-                        {item.type === EDaoEventType.DAO_EVENT_HIDE_PROGRESS && (
-                            <ShowDaoEventProgressEvent key={index} data={item.data} />
-                        )}
-                        {item.type === EDaoEventType.DAO_EVENT_ALLOW_DISCUSSION && (
-                            <AllowDaoEventDiscussionEvent key={index} data={item.data} />
-                        )}
-                        {item.type === EDaoEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE && (
-                            <AskDaoMembershipEvent key={index} data={item.data} />
-                        )}
-                        {item.type === EDaoEventType.DAO_TOKEN_MINT_DISABLE && (
-                            <DisableMintTokensEvent key={index} data={item.data} />
-                        )}
-                        {item.type === EDaoEventType.DAO_ALLOWANCE_CHANGE && (
-                            <MemberUpdateEvent key={index} data={item.data} />
-                        )}
-                        {item.type === EDaoEventType.TASK_CREATE && (
-                            <CreateTaskEvent key={index} data={item.data} />
-                        )}
-                        {item.type === EDaoEventType.TASK_DELETE && (
-                            <DeleteTaskEvent key={index} data={item.data} />
-                        )}
-                        {item.type === EDaoEventType.TASK_UPGRADE && (
-                            <UpgradeTaskEvent key={index} data={item.data} />
-                        )}
-                        {item.type === EDaoEventType.TASK_REDEPLOY && (
-                            <RedeployTaskEvent key={index} data={item.data} />
-                        )}
-                        {item.type === EDaoEventType.TASK_REDEPLOYED && (
-                            <RedeployTaskCompleteEvent key={index} data={item.data} />
-                        )}
-                    </div>
-                ))}
-        </div>
-    )
+            {item.type === EDaoEventType.REPO_CREATE && (
+              <RepositoryCreateEvent
+                key={index}
+                data={item.data}
+                isCompleted={event.status.completed}
+              />
+            )}
+            {item.type === EDaoEventType.REPO_TAG_ADD && (
+              <RepositoryTagAddEvent key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.REPO_TAG_REMOVE && (
+              <RepositoryTagDeleteEvent key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.REPO_UPDATE_DESCRIPTION && (
+              <RepositoryDescriptionEvent key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.DAO_MEMBER_ADD && (
+              <MemberAddEvent key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.DAO_MEMBER_DELETE && (
+              <MemberDeleteEvent key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.DAO_TOKEN_MINT && (
+              <MintTokensEvent key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.DAO_TOKEN_VOTING_ADD && (
+              <AddVotingTokensEvent key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.DAO_TOKEN_REGULAR_ADD && (
+              <AddRegularTokensEvent key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.DAO_TAG_ADD && (
+              <CreateDaoTagEvent key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.DAO_TAG_REMOVE && (
+              <DeleteDaoTagEvent key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.DAO_EVENT_HIDE_PROGRESS && (
+              <ShowDaoEventProgressEvent key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.DAO_EVENT_ALLOW_DISCUSSION && (
+              <AllowDaoEventDiscussionEvent key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.DAO_ASK_MEMBERSHIP_ALLOWANCE && (
+              <AskDaoMembershipEvent key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.DAO_TOKEN_MINT_DISABLE && (
+              <DisableMintTokensEvent key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.DAO_ALLOWANCE_CHANGE && (
+              <MemberUpdateEvent key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.TASK_CREATE && (
+              <CreateTaskEvent key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.TASK_DELETE && (
+              <DeleteTaskEvent key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.TASK_UPGRADE && (
+              <UpgradeTaskEvent key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.TASK_REDEPLOY && (
+              <RedeployTaskEvent key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.TASK_REDEPLOYED && (
+              <RedeployTaskCompleteEvent key={index} data={item.data} />
+            )}
+          </div>
+        ))}
+    </div>
+  )
 }
 
 export { MultiEvent }

@@ -10,54 +10,54 @@ import Loader from '../../../components/Loader'
 import { GithubOrganizations, OAuthSignin } from './components'
 
 const OnboardingPage = () => {
-    const navigate = useNavigate()
-    const user = useUser()
-    const { signin, signout, oauth } = useOauth({ initialize: true })
-    const { data } = useOnboardingData(oauth, { initialize: true })
+  const navigate = useNavigate()
+  const user = useUser()
+  const { signin, signout, oauth } = useOauth({ initialize: true })
+  const { data } = useOnboardingData(oauth, { initialize: true })
 
-    const signinOAuth = async () => {
-        try {
-            await signin('github')
-        } catch (e: any) {
-            console.error(e.message)
-            toast.error(<ToastError error={e} />)
-        }
+  const signinOAuth = async () => {
+    try {
+      await signin('github')
+    } catch (e: any) {
+      console.error(e.message)
+      toast.error(<ToastError error={e} />)
     }
+  }
 
-    const signoutOAuth = async () => {
-        try {
-            await signout()
-        } catch (e: any) {
-            console.error(e.message)
-            toast.error(<ToastError error={e} />)
-        }
+  const signoutOAuth = async () => {
+    try {
+      await signout()
+    } catch (e: any) {
+      console.error(e.message)
+      toast.error(<ToastError error={e} />)
     }
+  }
 
-    useEffect(() => {
-        if (oauth.error) {
-            toast.error(<ToastError error={oauth.error} />)
-            navigate('/onboarding')
-        }
-    }, [oauth.error])
-
-    if (!user.persist.phrase) {
-        return <Navigate to="/a/signup" />
+  useEffect(() => {
+    if (oauth.error) {
+      toast.error(<ToastError error={oauth.error} />)
+      navigate('/onboarding')
     }
+  }, [oauth.error])
 
-    if (data.redirectTo) {
-        return <Navigate to={data.redirectTo} replace />
-    }
+  if (!user.persist.phrase) {
+    return <Navigate to="/a/signup" />
+  }
 
-    return (
-        <div className="container pt-20 pb-8">
-            {oauth.isLoading && <Loader>Please, wait...</Loader>}
+  if (data.redirectTo) {
+    return <Navigate to={data.redirectTo} replace />
+  }
 
-            {data.step === 'signin' && <OAuthSignin signinOAuth={signinOAuth} />}
-            {data.step === 'organizations' && (
-                <GithubOrganizations oauth={oauth} signoutOAuth={signoutOAuth} />
-            )}
-        </div>
-    )
+  return (
+    <div className="container pt-20 pb-8">
+      {oauth.isLoading && <Loader>Please, wait...</Loader>}
+
+      {data.step === 'signin' && <OAuthSignin signinOAuth={signinOAuth} />}
+      {data.step === 'organizations' && (
+        <GithubOrganizations oauth={oauth} signoutOAuth={signoutOAuth} />
+      )}
+    </div>
+  )
 }
 
 export default withRouteAnimation(OnboardingPage)

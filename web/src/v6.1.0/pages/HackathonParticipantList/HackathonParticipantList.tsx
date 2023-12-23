@@ -5,35 +5,35 @@ import { Input } from '../../../components/Form'
 import { ListBoundary } from './components'
 
 const HackathonParticipantListPage = (props: { count?: number }) => {
-    const [search, setSearch] = useState<string>('')
+  const [search, setSearch] = useState<string>('')
 
-    const onSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setSearch(e.target.value)
-    }
+  const onSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value)
+  }
 
-    return (
-        <div className="row flex-wrap lg:flex-nowrap">
-            <div className="col !basis-full lg:!basis-8/12 xl:!basis-9/12">
-                <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
-                    <Input
-                        className="grow"
-                        type="search"
-                        placeholder="Search participant"
-                        autoComplete="off"
-                        before={
-                            <FontAwesomeIcon
-                                icon={faMagnifyingGlass}
-                                className="text-gray-7c8db5 font-extralight py-3 pl-4"
-                            />
-                        }
-                        value={search}
-                        onChange={onSearchChange}
-                    />
-                </div>
-                <ListBoundary search={search} />
-            </div>
+  return (
+    <div className="row flex-wrap lg:flex-nowrap">
+      <div className="col !basis-full lg:!basis-8/12 xl:!basis-9/12">
+        <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
+          <Input
+            className="grow"
+            type="search"
+            placeholder="Search participant"
+            autoComplete="off"
+            before={
+              <FontAwesomeIcon
+                icon={faMagnifyingGlass}
+                className="text-gray-7c8db5 font-extralight py-3 pl-4"
+              />
+            }
+            value={search}
+            onChange={onSearchChange}
+          />
+        </div>
+        <ListBoundary search={search} />
+      </div>
 
-            {/* <div className="col !basis-full lg:!basis-4/12 xl:!basis-3/12">
+      {/* <div className="col !basis-full lg:!basis-4/12 xl:!basis-3/12">
                 <div className="flex flex-col gap-y-5">
                     <div className="border border-gray-e6edff rounded-xl overflow-hidden px-5">
                         <div
@@ -88,8 +88,8 @@ const HackathonParticipantListPage = (props: { count?: number }) => {
                     </div>
                 </div>
             </div> */}
-        </div>
-    )
+    </div>
+  )
 }
 
 export default HackathonParticipantListPage

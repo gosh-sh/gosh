@@ -40,86 +40,65 @@ import { ToastStatus } from '../components/Toast'
 // TODO: /Update after full refactor
 
 const App = () => {
-    return (
-        <div className="wrapper">
-            <Header />
-            <main id="main" className="grow">
-                <AnimatePresence mode="wait">
-                    <Routes>
-                        <Route path="/" element={<Navigate to="onboarding" replace />} />
-                        <Route path="/containers" element={<Containers />} />
-                        <Route path="/onboarding">
-                            <Route index element={<OnboardingPage />} />
-                            <Route path="status" element={<OnboardingStatusPage />} />
-                        </Route>
-                        <Route path="/a/signin" element={<SigninPage />} />
-                        <Route path="/a/signup" element={<SignupPage />} />
-                        <Route path="/a" element={<AccountLayout />}>
-                            <Route index element={null} />
-                            <Route path="orgs/create" element={<DaoCreatePage />} />
-                            <Route path="orgs" element={<UserDaoListPage />} />
-                            <Route path="settings" element={<SettingsPage />} />
-                        </Route>
-                        <Route path="/o/:daoname" element={<DaoLayout />}>
-                            <Route index element={<DaoPage />} />
-                            <Route path="repos" element={<DaoRepositoryListPage />} />
-                            <Route
-                                path="events/:address?"
-                                element={<DaoEventListPage />}
-                            />
-                            <Route path="members" element={<DaoMemberListPage />} />
-                            <Route path="settings" element={<DaoSettingsLayout />}>
-                                <Route
-                                    index
-                                    element={<Navigate to="upgrade" replace={true} />}
-                                />
-                                <Route path="upgrade" element={<DaoUpgradePage />} />
-                            </Route>
-                        </Route>
-                        <Route path="/o/:daoName/r/:repoName" element={<RepoLayout />}>
-                            <Route index element={<RepoPage />} />
-                            <Route path="tree/:branchName/*" element={<RepoPage />} />
-                            <Route path="branches" element={<BranchesPage />} />
-                            <Route path="blobs">
-                                <Route
-                                    path="create/:branchName/*"
-                                    element={<BlobCreatePage />}
-                                />
-                                <Route
-                                    path="update/:branchName/*"
-                                    element={<BlobUpdatePage />}
-                                />
-                                <Route
-                                    path="delete/:branchName/*"
-                                    element={<BlobDeletePage />}
-                                />
-                                <Route path="view/:branchName/*" element={<BlobPage />} />
-                            </Route>
-                            <Route path="commits">
-                                <Route path=":branchName" element={<CommitsPage />} />
-                                <Route
-                                    path=":branchName/:commitName"
-                                    element={<CommitPage />}
-                                />
-                            </Route>
-                            <Route path="merge" element={<MergeCreatePage />} />
-                            <Route path="build/:branchName" element={<BuildPage />} />
-                            <Route path="find/:branchName" element={<GotoPage />} />
-                        </Route>
-                        <Route path="*" element={<NotFoundPage />} />
-                    </Routes>
-                </AnimatePresence>
-            </main>
-            <footer className="footer"></footer>
+  return (
+    <div className="wrapper">
+      <Header />
+      <main id="main" className="grow">
+        <AnimatePresence mode="wait">
+          <Routes>
+            <Route path="/" element={<Navigate to="onboarding" replace />} />
+            <Route path="/containers" element={<Containers />} />
+            <Route path="/onboarding">
+              <Route index element={<OnboardingPage />} />
+              <Route path="status" element={<OnboardingStatusPage />} />
+            </Route>
+            <Route path="/a/signin" element={<SigninPage />} />
+            <Route path="/a/signup" element={<SignupPage />} />
+            <Route path="/a" element={<AccountLayout />}>
+              <Route index element={null} />
+              <Route path="orgs/create" element={<DaoCreatePage />} />
+              <Route path="orgs" element={<UserDaoListPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+            </Route>
+            <Route path="/o/:daoname" element={<DaoLayout />}>
+              <Route index element={<DaoPage />} />
+              <Route path="repos" element={<DaoRepositoryListPage />} />
+              <Route path="events/:address?" element={<DaoEventListPage />} />
+              <Route path="members" element={<DaoMemberListPage />} />
+              <Route path="settings" element={<DaoSettingsLayout />}>
+                <Route index element={<Navigate to="upgrade" replace={true} />} />
+                <Route path="upgrade" element={<DaoUpgradePage />} />
+              </Route>
+            </Route>
+            <Route path="/o/:daoName/r/:repoName" element={<RepoLayout />}>
+              <Route index element={<RepoPage />} />
+              <Route path="tree/:branchName/*" element={<RepoPage />} />
+              <Route path="branches" element={<BranchesPage />} />
+              <Route path="blobs">
+                <Route path="create/:branchName/*" element={<BlobCreatePage />} />
+                <Route path="update/:branchName/*" element={<BlobUpdatePage />} />
+                <Route path="delete/:branchName/*" element={<BlobDeletePage />} />
+                <Route path="view/:branchName/*" element={<BlobPage />} />
+              </Route>
+              <Route path="commits">
+                <Route path=":branchName" element={<CommitsPage />} />
+                <Route path=":branchName/:commitName" element={<CommitPage />} />
+              </Route>
+              <Route path="merge" element={<MergeCreatePage />} />
+              <Route path="build/:branchName" element={<BuildPage />} />
+              <Route path="find/:branchName" element={<GotoPage />} />
+            </Route>
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </AnimatePresence>
+      </main>
+      <footer className="footer"></footer>
 
-            {createPortal(
-                <ToastContainer {...ToastOptionsShortcuts.Default} />,
-                document.body,
-            )}
-            <ToastStatus />
-            <BaseModal />
-        </div>
-    )
+      {createPortal(<ToastContainer {...ToastOptionsShortcuts.Default} />, document.body)}
+      <ToastStatus />
+      <BaseModal />
+    </div>
+  )
 }
 
 export default App

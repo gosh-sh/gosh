@@ -1,86 +1,81 @@
 {
-	"ABI version": 2,
-	"version": "2.3",
-	"header": ["pubkey", "time", "expire"],
-	"functions": [
-		{
-			"name": "constructor",
-			"inputs": [
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "deployDao",
-			"inputs": [
-				{"name":"systemcontract","type":"address"},
-				{"name":"previous","type":"optional(address)"},
-				{"name":"pubmem","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "upgradeDao",
-			"inputs": [
-				{"name":"systemcontract","type":"address"},
-				{"name":"previous","type":"optional(address)"},
-				{"name":"pubmem","type":"address[]"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "deployedDao",
-			"inputs": [
-				{"name":"name","type":"string"},
-				{"name":"ver","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "updateCode",
-			"inputs": [
-				{"name":"newcode","type":"cell"},
-				{"name":"cell","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "destroy",
-			"inputs": [
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "getOwner",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"address"}
-			]
-		}
-	],
-	"data": [
-		{"key":1,"name":"_versioncontroller","type":"address"},
-		{"key":2,"name":"_name","type":"string"}
-	],
-	"events": [
-	],
-	"fields": [
-		{"name":"_pubkey","type":"uint256"},
-		{"name":"_constructorFlag","type":"bool"},
-		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
-		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
-		{"name":"__value","type":"uint256"},
-		{"name":"_versioncontroller","type":"address"},
-		{"name":"_name","type":"string"},
-		{"name":"_pubaddr","type":"address"},
-		{"name":"_flag","type":"bool"},
-		{"name":"_owners","type":"map(uint256,bool)"},
-		{"name":"timeMoney","type":"uint128"}
-	]
+  "ABI version": 2,
+  "version": "2.3",
+  "header": ["pubkey", "time", "expire"],
+  "functions": [
+    {
+      "name": "constructor",
+      "inputs": [],
+      "outputs": []
+    },
+    {
+      "name": "deployDao",
+      "inputs": [
+        { "name": "systemcontract", "type": "address" },
+        { "name": "previous", "type": "optional(address)" },
+        { "name": "pubmem", "type": "address[]" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "upgradeDao",
+      "inputs": [
+        { "name": "systemcontract", "type": "address" },
+        { "name": "previous", "type": "optional(address)" },
+        { "name": "pubmem", "type": "address[]" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "deployedDao",
+      "inputs": [
+        { "name": "name", "type": "string" },
+        { "name": "ver", "type": "string" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "updateCode",
+      "inputs": [
+        { "name": "newcode", "type": "cell" },
+        { "name": "cell", "type": "cell" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "destroy",
+      "inputs": [],
+      "outputs": []
+    },
+    {
+      "name": "getOwner",
+      "inputs": [],
+      "outputs": [{ "name": "value0", "type": "address" }]
+    }
+  ],
+  "data": [
+    { "key": 1, "name": "_versioncontroller", "type": "address" },
+    { "key": 2, "name": "_name", "type": "string" }
+  ],
+  "events": [],
+  "fields": [
+    { "name": "_pubkey", "type": "uint256" },
+    { "name": "_constructorFlag", "type": "bool" },
+    { "name": "messages", "type": "map(uint32,map(uint256,bool))" },
+    {
+      "components": [
+        { "name": "messageHash", "type": "uint256" },
+        { "name": "expireAt", "type": "uint32" }
+      ],
+      "name": "lastMessage",
+      "type": "tuple"
+    },
+    { "name": "__value", "type": "uint256" },
+    { "name": "_versioncontroller", "type": "address" },
+    { "name": "_name", "type": "string" },
+    { "name": "_pubaddr", "type": "address" },
+    { "name": "_flag", "type": "bool" },
+    { "name": "_owners", "type": "map(uint256,bool)" },
+    { "name": "timeMoney", "type": "uint128" }
+  ]
 }

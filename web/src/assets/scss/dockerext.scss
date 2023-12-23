@@ -1,99 +1,99 @@
 .dd-status-dot {
-    width: 0.6rem;
-    height: 0.6rem;
-    border-radius: 0.3rem;
-    margin: 0.5rem 0.5rem;
-    display: block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 0.3rem;
+  margin: 0.5rem 0.5rem;
+  display: block;
 
-    &.success {
-        background: #05d105;
-        box-shadow1: #05d10588 0px 8px 14px 0px;
-    }
+  &.success {
+    background: #05d105;
+    box-shadow1: #05d10588 0px 8px 14px 0px;
+  }
 
-    &.warning {
-        background: #ffdb4d;
-        box-shadow1: rgba(255, 204, 0, 0.25) 0px 8px 14px 0px;
-    }
+  &.warning {
+    background: #ffdb4d;
+    box-shadow1: rgba(255, 204, 0, 0.25) 0px 8px 14px 0px;
+  }
 
-    &.error {
-        background: #fc3f1d;
-        box-shadow1: #fc3f1d80 0px 8px 14px 0px;
-    }
+  &.error {
+    background: #fc3f1d;
+    box-shadow1: #fc3f1d80 0px 8px 14px 0px;
+  }
 
-    &.loading {
-        background: #c5c7d8;
-        box-shadow1: #9299bb52 0px 8px 14px 0px;
-        -webkit-animation: blink 1.25s -0.24s infinite cubic-bezier(0.2, 0.68, 0.18, 1.08);
-        animation: blink 1.25s -0.24s infinite cubic-bezier(0.2, 0.68, 0.18, 1.08);
-    }
+  &.loading {
+    background: #c5c7d8;
+    box-shadow1: #9299bb52 0px 8px 14px 0px;
+    -webkit-animation: blink 1.25s -0.24s infinite cubic-bezier(0.2, 0.68, 0.18, 1.08);
+    animation: blink 1.25s -0.24s infinite cubic-bezier(0.2, 0.68, 0.18, 1.08);
+  }
 
-    @-webkit-keyframes blink {
-        0% {
-            opacity: 1;
-        }
-        45% {
-            opacity: 0.3;
-        }
-        80% {
-            opacity: 1;
-        }
+  @-webkit-keyframes blink {
+    0% {
+      opacity: 1;
     }
-    @keyframes blink {
-        0% {
-            opacity: 1;
-        }
-        45% {
-            opacity: 0.3;
-        }
-        80% {
-            opacity: 1;
-        }
+    45% {
+      opacity: 0.3;
     }
+    80% {
+      opacity: 1;
+    }
+  }
+  @keyframes blink {
+    0% {
+      opacity: 1;
+    }
+    45% {
+      opacity: 0.3;
+    }
+    80% {
+      opacity: 1;
+    }
+  }
 }
 
 .dd-table-row-noborder {
+  td,
+  th {
+    border-bottom: none !important;
+  }
+
+  & + tr {
     td,
     th {
-        border-bottom: none !important;
+      padding-top: 0;
     }
-
-    & + tr {
-        td,
-        th {
-            padding-top: 0;
-        }
-    }
+  }
 }
 
 .dd-cell-button {
-    padding: 12px 16px !important;
-    text-align: right;
+  padding: 12px 16px !important;
+  text-align: right;
 
-    button {
-        float: right;
-    }
+  button {
+    float: right;
+  }
 }
 
 .dd-loading {
-    opacity: 0.7;
+  opacity: 0.7;
 }
 
 .dd-button-block {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    position: fixed !important;
-    bottom: 0.875rem;
-    right: 1.5rem;
-    z-index: 1010;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  position: fixed !important;
+  bottom: 0.875rem;
+  right: 1.5rem;
+  z-index: 1010;
 
-    & > * {
-        margin-left: 0.5rem;
-    }
+  & > * {
+    margin-left: 0.5rem;
+  }
 }
 
 .dd-containers {
-    table th {
-        @apply text-xs;
-    }
+  table th {
+    @apply text-xs;
+  }
 }

@@ -8,221 +8,221 @@ import { TGoshCommit } from './repository.types'
 import { GoshRepository } from '../blockchain/repository'
 
 export enum EDaoMemberType {
-    Dao = 'dao',
-    User = 'user',
+  Dao = 'dao',
+  User = 'user',
 }
 
 export type TDaoListItem = {
-    account: Dao | null
-    name: string
-    address: string
-    version: string
-    supply: number
-    members: number
-    onboarding?: string[]
+  account: Dao | null
+  name: string
+  address: string
+  version: string
+  supply: number
+  members: number
+  onboarding?: string[]
 }
 
 export type TUserDaoList = {
-    isFetching: boolean
-    error?: any
-    items: TDaoListItem[]
-    cursor?: string
-    hasNext?: boolean
+  isFetching: boolean
+  error?: any
+  items: TDaoListItem[]
+  cursor?: string
+  hasNext?: boolean
 }
 
 export type TDaoDetailsMemberItem = {
-    usertype: EDaoMemberType
-    profile: UserProfile | Dao
-    wallet: DaoWallet
-    allowance: number
-    daomembers: { [address: string]: string }
+  usertype: EDaoMemberType
+  profile: UserProfile | Dao
+  wallet: DaoWallet
+  allowance: number
+  daomembers: { [address: string]: string }
 }
 
 export type TDaoDetails = {
-    isFetching: boolean
-    isFetchingData: boolean
-    error?: any
-    details: {
-        account?: Dao
-        _adapter?: IGoshDaoAdapter // TODO: Remove this after git part refactor
-        name?: string
-        address?: string
-        version?: string
-        repository?: GoshRepository
-        summary?: string
-        description?: string
-        members?: TDaoDetailsMemberItem[]
-        supply?: {
-            reserve: number
-            voting: number
-            total: number
-        }
-        owner?: string
-        tags?: string[]
-        tasks?: number
-        isMemberOf?: TDaoDetailsMemberItem[]
-        isMintOn?: boolean
-        isAskMembershipOn?: boolean
-        isEventDiscussionOn?: boolean
-        isEventProgressOn?: boolean
-        isRepoUpgraded?: boolean
-        isTaskUpgraded?: boolean
-        isUpgraded?: boolean
+  isFetching: boolean
+  isFetchingData: boolean
+  error?: any
+  details: {
+    account?: Dao
+    _adapter?: IGoshDaoAdapter // TODO: Remove this after git part refactor
+    name?: string
+    address?: string
+    version?: string
+    repository?: GoshRepository
+    summary?: string
+    description?: string
+    members?: TDaoDetailsMemberItem[]
+    supply?: {
+      reserve: number
+      voting: number
+      total: number
     }
+    owner?: string
+    tags?: string[]
+    tasks?: number
+    isMemberOf?: TDaoDetailsMemberItem[]
+    isMintOn?: boolean
+    isAskMembershipOn?: boolean
+    isEventDiscussionOn?: boolean
+    isEventProgressOn?: boolean
+    isRepoUpgraded?: boolean
+    isTaskUpgraded?: boolean
+    isUpgraded?: boolean
+  }
 }
 
 export type TDaoMember = {
-    profile: UserProfile | null
-    wallet: DaoWallet | null
-    allowance: number | null
-    balance: {
-        voting: number
-        locked: number
-        regular: number
-    } | null
-    vesting: number | null
-    isFetched: boolean
-    isMember: boolean
-    isLimited: boolean
-    isReady: boolean
+  profile: UserProfile | null
+  wallet: DaoWallet | null
+  allowance: number | null
+  balance: {
+    voting: number
+    locked: number
+    regular: number
+  } | null
+  vesting: number | null
+  isFetched: boolean
+  isMember: boolean
+  isLimited: boolean
+  isReady: boolean
 }
 
 export type TDaoMemberListItem = TDaoDetailsMemberItem & {
-    isFetching: boolean
-    username: string
-    balance: number
+  isFetching: boolean
+  username: string
+  balance: number
 }
 
 export type TDaoMemberList = {
-    isFetching: boolean
-    error?: any
-    items: TDaoMemberListItem[]
+  isFetching: boolean
+  error?: any
+  items: TDaoMemberListItem[]
 }
 
 export type TDaoEventReviewer = {
-    username: string
-    usertype: EDaoMemberType
-    profile: string
+  username: string
+  usertype: EDaoMemberType
+  profile: string
 }
 
 export type TDaoEventDetails = {
-    account: DaoEvent
-    address: string
-    updatedAt: number
-    platformId: string
-    type: number
-    label: string
-    status: {
-        completed: boolean
-        accepted: boolean
-    }
-    time: {
-        start: number
-        finish: number
-        completed: number
-    }
-    votes: {
-        yes: number
-        no: number
-        total: number
-        yours: number
-    }
-    reviewers: TDaoEventReviewer[]
-    data?: any
-    isOpen?: boolean
+  account: DaoEvent
+  address: string
+  updatedAt: number
+  platformId: string
+  type: number
+  label: string
+  status: {
+    completed: boolean
+    accepted: boolean
+  }
+  time: {
+    start: number
+    finish: number
+    completed: number
+  }
+  votes: {
+    yes: number
+    no: number
+    total: number
+    yours: number
+  }
+  reviewers: TDaoEventReviewer[]
+  data?: any
+  isOpen?: boolean
 }
 
 export type TDaoEventList = {
-    isFetching: boolean
-    items: TDaoEventDetails[]
-    cursor?: string
-    hasNext?: boolean
-    error?: any
+  isFetching: boolean
+  items: TDaoEventDetails[]
+  cursor?: string
+  hasNext?: boolean
+  error?: any
 }
 
 export type TDaoInviteListItem = {
-    id: string
-    token: string
-    username?: string
-    email?: string
-    status?: string
-    allowance?: number
-    comment?: string
-    isFetching?: boolean
+  id: string
+  token: string
+  username?: string
+  email?: string
+  status?: string
+  allowance?: number
+  comment?: string
+  isFetching?: boolean
 }
 
 export type TDaoInviteList = {
-    isFetching: boolean
-    items: TDaoInviteListItem[]
-    error?: any
+  isFetching: boolean
+  items: TDaoInviteListItem[]
+  error?: any
 }
 
 export enum ETaskReward {
-    ASSING = 1,
-    REVIEW = 2,
-    MANAGER = 3,
+  ASSING = 1,
+  REVIEW = 2,
+  MANAGER = 3,
 }
 
 export type TTaskGrantPair = { grant: number; lock: number }
 
 export type TTaskGrant = {
-    assign: TTaskGrantPair[]
-    review: TTaskGrantPair[]
-    manager: TTaskGrantPair[]
-    subtask: TTaskGrantPair[]
+  assign: TTaskGrantPair[]
+  review: TTaskGrantPair[]
+  manager: TTaskGrantPair[]
+  subtask: TTaskGrantPair[]
 }
 
 export type TTaskGrantTotal = {
-    assign: number
-    review: number
-    manager: number
+  assign: number
+  review: number
+  manager: number
 }
 
 export type TTaskTeamMember = {
-    username: string
-    usertype: EDaoMemberType
-    profile: string
+  username: string
+  usertype: EDaoMemberType
+  profile: string
 }
 
 export type TTaskDetails = {
-    account: Task
-    address: string
+  account: Task
+  address: string
+  name: string
+  repository: {
     name: string
-    repository: {
-        name: string
-        address: string
-    }
-    grant: TTaskGrant
-    grantTotal: TTaskGrantTotal
-    reward: number
-    vestingEnd: number
-    tagsRaw: string[]
-    tags: string[]
-    candidates: any[]
-    team: {
-        assigners: TTaskTeamMember[]
-        reviewers: TTaskTeamMember[]
-        managers: TTaskTeamMember[]
-        commit: TGoshCommit
-    } | null
-    locktime: number
-    isReady: boolean
-    isOpen?: boolean
-    isDeleted?: boolean
+    address: string
+  }
+  grant: TTaskGrant
+  grantTotal: TTaskGrantTotal
+  reward: number
+  vestingEnd: number
+  tagsRaw: string[]
+  tags: string[]
+  candidates: any[]
+  team: {
+    assigners: TTaskTeamMember[]
+    reviewers: TTaskTeamMember[]
+    managers: TTaskTeamMember[]
+    commit: TGoshCommit
+  } | null
+  locktime: number
+  isReady: boolean
+  isOpen?: boolean
+  isDeleted?: boolean
 }
 
 export type TMilestoneTaskDetails = TTaskDetails & {
-    milestone: {
-        address: string
-        name: string
-    }
-    index: number
+  milestone: {
+    address: string
+    name: string
+  }
+  index: number
 }
 
 export type TDaoTaskList = {
-    isFetching: boolean
-    items: TTaskDetails[]
-    cursor?: string
-    hasNext?: boolean
-    error?: any
+  isFetching: boolean
+  items: TTaskDetails[]
+  cursor?: string
+  hasNext?: boolean
+  error?: any
 }

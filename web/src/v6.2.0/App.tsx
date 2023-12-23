@@ -10,8 +10,8 @@ import NotFoundPage from '../pages/404'
 import HomePage from '../pages/Home'
 import Header from './components/Header'
 import {
-    useUserNotificationList,
-    useUserNotificationSettings,
+  useUserNotificationList,
+  useUserNotificationSettings,
 } from './hooks/notification.hooks'
 import AccountDetailsPage from './pages/AccountDetails'
 import AccountGitRemotePage from './pages/AccountGitRemote'
@@ -63,147 +63,96 @@ import RepoLayout from '../pages/RepoLayout'
 // TODO: /Update after full refactor
 
 const App = () => {
-    useUserNotificationSettings({ initialize: true })
-    useUserNotificationList({ initialize: true })
+  useUserNotificationSettings({ initialize: true })
+  useUserNotificationList({ initialize: true })
 
-    return (
-        <div className="wrapper">
-            <Header />
-            <main id="main" className="grow">
-                <AnimatePresence mode="wait">
-                    <Routes>
-                        <Route path="/" element={<HomePage />} />
-                        <Route path="/containers" element={<Containers />} />
-                        <Route path="/onboarding">
-                            <Route index element={<OnboardingPage />} />
-                            <Route path="status" element={<OnboardingStatusPage />} />
-                        </Route>
-                        <Route path="/a/signin" element={<SigninPage />} />
-                        <Route path="/a/signup" element={<SignupPage />} />
-                        <Route path="/a" element={<AccountLayout />}>
-                            <Route index element={null} />
-                            <Route path="orgs/create" element={<DaoCreatePage />} />
-                            <Route path="orgs" element={<UserDaoListPage />} />
-                            <Route path="l2" element={<L2Page />} />
-                            <Route path="settings" element={<AccountSettingsLayout />}>
-                                <Route
-                                    index
-                                    element={<Navigate to="details" replace={true} />}
-                                />
-                                <Route path="details" element={<AccountDetailsPage />} />
-                                <Route
-                                    path="security"
-                                    element={<AccountSecurityPage />}
-                                />
-                                <Route
-                                    path="git-remote"
-                                    element={<AccountGitRemotePage />}
-                                />
-                                <Route
-                                    path="notifications"
-                                    element={<AccountNotificationsPage />}
-                                />
-                            </Route>
-                        </Route>
-                        <Route path="/o/:daoname" element={<DaoLayout />}>
-                            <Route index element={<DaoPage />} />
-                            <Route path="onboarding" element={<OnboardingDaoPage />} />
-                            <Route path="repos" element={<DaoRepositoryListPage />} />
-                            <Route
-                                path="events/:address?"
-                                element={<DaoEventListPage />}
-                            />
-                            <Route path="members" element={<DaoMemberListPage />} />
-                            <Route path="tasks">
-                                <Route index element={<DaoTaskListPage />} />
-                                <Route path="create" element={<TaskCreatePage />} />
-                                <Route
-                                    path="milestone/:address"
-                                    element={<DaoTaskListPage />}
-                                />
-                                <Route path=":address" element={<DaoTaskListPage />} />
-                            </Route>
-                            <Route path="settings" element={<DaoSettingsLayout />}>
-                                <Route
-                                    index
-                                    element={<Navigate to="setup" replace={true} />}
-                                />
-                                <Route
-                                    path="karma-tags"
-                                    element={<DaoExpertTagListPage />}
-                                />
-                                <Route path="upgrade" element={<DaoUpgradePage />} />
-                                <Route path="setup" element={<DaoSetupPage />} />
-                                <Route
-                                    path="notifications"
-                                    element={<DaoNotificationsPage />}
-                                />
-                            </Route>
-                            <Route path="l2" element={<DaoTokenL2Page />} />
-                            <Route
-                                path="hacksgrants"
-                                element={<DaoHackathonListPage />}
-                            />
-                        </Route>
-                        <Route
-                            path="/o/:daoname/hacksgrants/create"
-                            element={<HackathonCreatePage />}
-                        />
-                        <Route
-                            path="/o/:daoname/hacksgrants/:address"
-                            element={<HackathonLayout />}
-                        >
-                            <Route index element={<HackathonOverviewPage />} />
-                            <Route path="rewards" element={<HackathonRewardPage />} />
-                            <Route
-                                path="participants"
-                                element={<HackathonParticipantListPage />}
-                            />
-                        </Route>
-                        <Route path="/o/:daoName/r/:repoName" element={<RepoLayout />}>
-                            <Route index element={<RepoPage />} />
-                            <Route path="tree/:branchName/*" element={<RepoPage />} />
-                            <Route path="branches" element={<BranchesPage />} />
-                            <Route path="blobs">
-                                <Route
-                                    path="create/:branchName/*"
-                                    element={<BlobCreatePage />}
-                                />
-                                <Route
-                                    path="update/:branchName/*"
-                                    element={<BlobUpdatePage />}
-                                />
-                                <Route
-                                    path="delete/:branchName/*"
-                                    element={<BlobDeletePage />}
-                                />
-                                <Route path="view/:branchName/*" element={<BlobPage />} />
-                            </Route>
-                            <Route path="commits">
-                                <Route path=":branchName" element={<CommitsPage />} />
-                                <Route
-                                    path=":branchName/:commitName"
-                                    element={<CommitPage />}
-                                />
-                            </Route>
-                            <Route path="merge" element={<MergeCreatePage />} />
-                            <Route path="build/:branchName" element={<BuildPage />} />
-                            <Route path="find/:branchName" element={<GotoPage />} />
-                        </Route>
-                        <Route path="*" element={<NotFoundPage />} />
-                    </Routes>
-                </AnimatePresence>
-            </main>
-            <footer className="footer"></footer>
+  return (
+    <div className="wrapper">
+      <Header />
+      <main id="main" className="grow">
+        <AnimatePresence mode="wait">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/containers" element={<Containers />} />
+            <Route path="/onboarding">
+              <Route index element={<OnboardingPage />} />
+              <Route path="status" element={<OnboardingStatusPage />} />
+            </Route>
+            <Route path="/a/signin" element={<SigninPage />} />
+            <Route path="/a/signup" element={<SignupPage />} />
+            <Route path="/a" element={<AccountLayout />}>
+              <Route index element={null} />
+              <Route path="orgs/create" element={<DaoCreatePage />} />
+              <Route path="orgs" element={<UserDaoListPage />} />
+              <Route path="l2" element={<L2Page />} />
+              <Route path="settings" element={<AccountSettingsLayout />}>
+                <Route index element={<Navigate to="details" replace={true} />} />
+                <Route path="details" element={<AccountDetailsPage />} />
+                <Route path="security" element={<AccountSecurityPage />} />
+                <Route path="git-remote" element={<AccountGitRemotePage />} />
+                <Route path="notifications" element={<AccountNotificationsPage />} />
+              </Route>
+            </Route>
+            <Route path="/o/:daoname" element={<DaoLayout />}>
+              <Route index element={<DaoPage />} />
+              <Route path="onboarding" element={<OnboardingDaoPage />} />
+              <Route path="repos" element={<DaoRepositoryListPage />} />
+              <Route path="events/:address?" element={<DaoEventListPage />} />
+              <Route path="members" element={<DaoMemberListPage />} />
+              <Route path="tasks">
+                <Route index element={<DaoTaskListPage />} />
+                <Route path="create" element={<TaskCreatePage />} />
+                <Route path="milestone/:address" element={<DaoTaskListPage />} />
+                <Route path=":address" element={<DaoTaskListPage />} />
+              </Route>
+              <Route path="settings" element={<DaoSettingsLayout />}>
+                <Route index element={<Navigate to="setup" replace={true} />} />
+                <Route path="karma-tags" element={<DaoExpertTagListPage />} />
+                <Route path="upgrade" element={<DaoUpgradePage />} />
+                <Route path="setup" element={<DaoSetupPage />} />
+                <Route path="notifications" element={<DaoNotificationsPage />} />
+              </Route>
+              <Route path="l2" element={<DaoTokenL2Page />} />
+              <Route path="hacksgrants" element={<DaoHackathonListPage />} />
+            </Route>
+            <Route
+              path="/o/:daoname/hacksgrants/create"
+              element={<HackathonCreatePage />}
+            />
+            <Route path="/o/:daoname/hacksgrants/:address" element={<HackathonLayout />}>
+              <Route index element={<HackathonOverviewPage />} />
+              <Route path="rewards" element={<HackathonRewardPage />} />
+              <Route path="participants" element={<HackathonParticipantListPage />} />
+            </Route>
+            <Route path="/o/:daoName/r/:repoName" element={<RepoLayout />}>
+              <Route index element={<RepoPage />} />
+              <Route path="tree/:branchName/*" element={<RepoPage />} />
+              <Route path="branches" element={<BranchesPage />} />
+              <Route path="blobs">
+                <Route path="create/:branchName/*" element={<BlobCreatePage />} />
+                <Route path="update/:branchName/*" element={<BlobUpdatePage />} />
+                <Route path="delete/:branchName/*" element={<BlobDeletePage />} />
+                <Route path="view/:branchName/*" element={<BlobPage />} />
+              </Route>
+              <Route path="commits">
+                <Route path=":branchName" element={<CommitsPage />} />
+                <Route path=":branchName/:commitName" element={<CommitPage />} />
+              </Route>
+              <Route path="merge" element={<MergeCreatePage />} />
+              <Route path="build/:branchName" element={<BuildPage />} />
+              <Route path="find/:branchName" element={<GotoPage />} />
+            </Route>
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </AnimatePresence>
+      </main>
+      <footer className="footer"></footer>
 
-            {createPortal(
-                <ToastContainer {...ToastOptionsShortcuts.Default} />,
-                document.body,
-            )}
-            <ToastStatus />
-            <BaseModal />
-        </div>
-    )
+      {createPortal(<ToastContainer {...ToastOptionsShortcuts.Default} />, document.body)}
+      <ToastStatus />
+      <BaseModal />
+    </div>
+  )
 }
 
 export default App

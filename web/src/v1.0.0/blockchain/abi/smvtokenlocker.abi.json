@@ -1,289 +1,219 @@
 {
-	"ABI version": 2,
-	"version": "2.3",
-	"header": ["time", "expire"],
-	"functions": [
-		{
-			"name": "constructor",
-			"inputs": [
-				{"name":"_platformCodeHash","type":"uint256"},
-				{"name":"_platformCodeDepth","type":"uint16"},
-				{"name":"_m_walletCode","type":"cell"},
-				{"name":"_m_tokenRoot","type":"address"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "calcClientAddress",
-			"inputs": [
-				{"name":"platform_id","type":"uint256"}
-			],
-			"outputs": [
-				{"name":"value0","type":"uint256"}
-			]
-		},
-		{
-			"name": "startPlatform",
-			"inputs": [
-				{"name":"platformCode","type":"cell"},
-				{"name":"clientCode","type":"cell"},
-				{"name":"amountToLock","type":"uint128"},
-				{"name":"staticCell","type":"cell"},
-				{"name":"inputCell","type":"cell"},
-				{"name":"deployFee","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "unlockVoting",
-			"inputs": [
-				{"name":"amount","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "onAcceptTokensBurn",
-			"inputs": [
-				{"name":"amount","type":"uint128"},
-				{"name":"value1","type":"address"},
-				{"name":"value2","type":"address"},
-				{"name":"remainingGasTo","type":"address"},
-				{"name":"value4","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "onHeadUpdated",
-			"inputs": [
-				{"name":"_platform_id","type":"uint256"},
-				{"name":"newClientHead","type":"optional(address)"},
-				{"name":"newHeadValue","type":"optional(uint128)"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "onClientCompleted",
-			"inputs": [
-				{"name":"_platform_id","type":"uint256"},
-				{"name":"success","type":"bool"},
-				{"name":"newClientHead","type":"optional(address)"},
-				{"name":"newHeadValue","type":"optional(uint128)"},
-				{"name":"isDead","type":"bool"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "onClientInserted",
-			"inputs": [
-				{"name":"_platform_id","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "onClientRemoved",
-			"inputs": [
-				{"name":"_platform_id","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "updateHead",
-			"inputs": [
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "returnAllButInitBalance",
-			"inputs": [
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "upgradeCode",
-			"inputs": [
-				{"name":"code","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "onAcceptTokensMint",
-			"inputs": [
-				{"name":"value0","type":"address"},
-				{"name":"amount","type":"uint128"},
-				{"name":"gasTo","type":"address"},
-				{"name":"value3","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "onBounceTokensBurn",
-			"inputs": [
-				{"name":"value0","type":"address"},
-				{"name":"amount","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "onBounceTokensTransfer",
-			"inputs": [
-				{"name":"value0","type":"address"},
-				{"name":"amount","type":"uint128"},
-				{"name":"value2","type":"address"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "onAcceptTokensTransfer",
-			"inputs": [
-				{"name":"value0","type":"address"},
-				{"name":"amount","type":"uint128"},
-				{"name":"value2","type":"address"},
-				{"name":"value3","type":"address"},
-				{"name":"gasTo","type":"address"},
-				{"name":"value5","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "updateTokenBalance",
-			"inputs": [
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "onUpdateBalance",
-			"inputs": [
-				{"name":"amount","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "m_tokenRoot",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"m_tokenRoot","type":"address"}
-			]
-		},
-		{
-			"name": "m_tokenWallet",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"m_tokenWallet","type":"address"}
-			]
-		},
-		{
-			"name": "m_tokenBalance",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"m_tokenBalance","type":"uint128"}
-			]
-		},
-		{
-			"name": "m_tokenWalletCode",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"m_tokenWalletCode","type":"cell"}
-			]
-		},
-		{
-			"name": "smvAccount",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"smvAccount","type":"address"}
-			]
-		},
-		{
-			"name": "lockerBusy",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"lockerBusy","type":"bool"}
-			]
-		},
-		{
-			"name": "platformPerformActionFailed",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"platformPerformActionFailed","type":"bool"}
-			]
-		},
-		{
-			"name": "platformConstructorFailed",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"platformConstructorFailed","type":"bool"}
-			]
-		},
-		{
-			"name": "clientHead",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"clientHead","type":"optional(address)"}
-			]
-		},
-		{
-			"name": "votes_locked",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"votes_locked","type":"uint128"}
-			]
-		},
-		{
-			"name": "m_num_clients",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"m_num_clients","type":"uint32"}
-			]
-		}
-	],
-	"data": [
-		{"key":1,"name":"smvAccount","type":"address"}
-	],
-	"events": [
-	],
-	"fields": [
-		{"name":"_pubkey","type":"uint256"},
-		{"name":"_timestamp","type":"uint64"},
-		{"name":"_constructorFlag","type":"bool"},
-		{"name":"m_tokenRoot","type":"address"},
-		{"name":"m_tokenWallet","type":"address"},
-		{"name":"m_tokenBalance","type":"uint128"},
-		{"name":"m_tokenWalletCode","type":"cell"},
-		{"name":"smvAccount","type":"address"},
-		{"name":"lockerBusy","type":"bool"},
-		{"name":"platformPerformActionFailed","type":"bool"},
-		{"name":"platformConstructorFailed","type":"bool"},
-		{"name":"clientHead","type":"optional(address)"},
-		{"name":"votes_locked","type":"uint128"},
-		{"name":"platformCodeHash","type":"uint256"},
-		{"name":"platformCodeDepth","type":"uint16"},
-		{"name":"m_num_clients","type":"uint32"}
-	]
+  "ABI version": 2,
+  "version": "2.3",
+  "header": ["time", "expire"],
+  "functions": [
+    {
+      "name": "constructor",
+      "inputs": [
+        { "name": "_platformCodeHash", "type": "uint256" },
+        { "name": "_platformCodeDepth", "type": "uint16" },
+        { "name": "_m_walletCode", "type": "cell" },
+        { "name": "_m_tokenRoot", "type": "address" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "calcClientAddress",
+      "inputs": [{ "name": "platform_id", "type": "uint256" }],
+      "outputs": [{ "name": "value0", "type": "uint256" }]
+    },
+    {
+      "name": "startPlatform",
+      "inputs": [
+        { "name": "platformCode", "type": "cell" },
+        { "name": "clientCode", "type": "cell" },
+        { "name": "amountToLock", "type": "uint128" },
+        { "name": "staticCell", "type": "cell" },
+        { "name": "inputCell", "type": "cell" },
+        { "name": "deployFee", "type": "uint128" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "unlockVoting",
+      "inputs": [{ "name": "amount", "type": "uint128" }],
+      "outputs": []
+    },
+    {
+      "name": "onAcceptTokensBurn",
+      "inputs": [
+        { "name": "amount", "type": "uint128" },
+        { "name": "value1", "type": "address" },
+        { "name": "value2", "type": "address" },
+        { "name": "remainingGasTo", "type": "address" },
+        { "name": "value4", "type": "cell" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "onHeadUpdated",
+      "inputs": [
+        { "name": "_platform_id", "type": "uint256" },
+        { "name": "newClientHead", "type": "optional(address)" },
+        { "name": "newHeadValue", "type": "optional(uint128)" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "onClientCompleted",
+      "inputs": [
+        { "name": "_platform_id", "type": "uint256" },
+        { "name": "success", "type": "bool" },
+        { "name": "newClientHead", "type": "optional(address)" },
+        { "name": "newHeadValue", "type": "optional(uint128)" },
+        { "name": "isDead", "type": "bool" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "onClientInserted",
+      "inputs": [{ "name": "_platform_id", "type": "uint256" }],
+      "outputs": []
+    },
+    {
+      "name": "onClientRemoved",
+      "inputs": [{ "name": "_platform_id", "type": "uint256" }],
+      "outputs": []
+    },
+    {
+      "name": "updateHead",
+      "inputs": [],
+      "outputs": []
+    },
+    {
+      "name": "returnAllButInitBalance",
+      "inputs": [],
+      "outputs": []
+    },
+    {
+      "name": "upgradeCode",
+      "inputs": [{ "name": "code", "type": "cell" }],
+      "outputs": []
+    },
+    {
+      "name": "onAcceptTokensMint",
+      "inputs": [
+        { "name": "value0", "type": "address" },
+        { "name": "amount", "type": "uint128" },
+        { "name": "gasTo", "type": "address" },
+        { "name": "value3", "type": "cell" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "onBounceTokensBurn",
+      "inputs": [
+        { "name": "value0", "type": "address" },
+        { "name": "amount", "type": "uint128" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "onBounceTokensTransfer",
+      "inputs": [
+        { "name": "value0", "type": "address" },
+        { "name": "amount", "type": "uint128" },
+        { "name": "value2", "type": "address" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "onAcceptTokensTransfer",
+      "inputs": [
+        { "name": "value0", "type": "address" },
+        { "name": "amount", "type": "uint128" },
+        { "name": "value2", "type": "address" },
+        { "name": "value3", "type": "address" },
+        { "name": "gasTo", "type": "address" },
+        { "name": "value5", "type": "cell" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "updateTokenBalance",
+      "inputs": [],
+      "outputs": []
+    },
+    {
+      "name": "onUpdateBalance",
+      "inputs": [{ "name": "amount", "type": "uint128" }],
+      "outputs": []
+    },
+    {
+      "name": "m_tokenRoot",
+      "inputs": [],
+      "outputs": [{ "name": "m_tokenRoot", "type": "address" }]
+    },
+    {
+      "name": "m_tokenWallet",
+      "inputs": [],
+      "outputs": [{ "name": "m_tokenWallet", "type": "address" }]
+    },
+    {
+      "name": "m_tokenBalance",
+      "inputs": [],
+      "outputs": [{ "name": "m_tokenBalance", "type": "uint128" }]
+    },
+    {
+      "name": "m_tokenWalletCode",
+      "inputs": [],
+      "outputs": [{ "name": "m_tokenWalletCode", "type": "cell" }]
+    },
+    {
+      "name": "smvAccount",
+      "inputs": [],
+      "outputs": [{ "name": "smvAccount", "type": "address" }]
+    },
+    {
+      "name": "lockerBusy",
+      "inputs": [],
+      "outputs": [{ "name": "lockerBusy", "type": "bool" }]
+    },
+    {
+      "name": "platformPerformActionFailed",
+      "inputs": [],
+      "outputs": [{ "name": "platformPerformActionFailed", "type": "bool" }]
+    },
+    {
+      "name": "platformConstructorFailed",
+      "inputs": [],
+      "outputs": [{ "name": "platformConstructorFailed", "type": "bool" }]
+    },
+    {
+      "name": "clientHead",
+      "inputs": [],
+      "outputs": [{ "name": "clientHead", "type": "optional(address)" }]
+    },
+    {
+      "name": "votes_locked",
+      "inputs": [],
+      "outputs": [{ "name": "votes_locked", "type": "uint128" }]
+    },
+    {
+      "name": "m_num_clients",
+      "inputs": [],
+      "outputs": [{ "name": "m_num_clients", "type": "uint32" }]
+    }
+  ],
+  "data": [{ "key": 1, "name": "smvAccount", "type": "address" }],
+  "events": [],
+  "fields": [
+    { "name": "_pubkey", "type": "uint256" },
+    { "name": "_timestamp", "type": "uint64" },
+    { "name": "_constructorFlag", "type": "bool" },
+    { "name": "m_tokenRoot", "type": "address" },
+    { "name": "m_tokenWallet", "type": "address" },
+    { "name": "m_tokenBalance", "type": "uint128" },
+    { "name": "m_tokenWalletCode", "type": "cell" },
+    { "name": "smvAccount", "type": "address" },
+    { "name": "lockerBusy", "type": "bool" },
+    { "name": "platformPerformActionFailed", "type": "bool" },
+    { "name": "platformConstructorFailed", "type": "bool" },
+    { "name": "clientHead", "type": "optional(address)" },
+    { "name": "votes_locked", "type": "uint128" },
+    { "name": "platformCodeHash", "type": "uint256" },
+    { "name": "platformCodeDepth", "type": "uint16" },
+    { "name": "m_num_clients", "type": "uint32" }
+  ]
 }

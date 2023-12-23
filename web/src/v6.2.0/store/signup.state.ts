@@ -3,18 +3,18 @@ import { contextVersion } from '../constants'
 import { TDBDaoInvite } from '../types/dao.types'
 
 export const userSignupAtom = atom<{
-    username: string
-    email: string
-    phrase: string[]
-    daoinvites: TDBDaoInvite[]
-    step: 'oauth' | 'username' | 'daoinvite' | 'phrase' | 'phrasecheck' | 'complete'
+  username: string
+  email: string
+  phrase: string[]
+  daoinvites: TDBDaoInvite[]
+  step: 'oauth' | 'username' | 'daoinvite' | 'phrase' | 'phrasecheck' | 'complete'
 }>({
-    key: `UserSignupAtom_${contextVersion}`,
-    default: {
-        username: '',
-        email: '',
-        phrase: [],
-        daoinvites: [],
-        step: 'oauth',
-    },
+  key: `UserSignupAtom_${contextVersion}`,
+  default: {
+    username: '',
+    email: '',
+    phrase: [],
+    daoinvites: [],
+    step: 'oauth',
+  },
 })

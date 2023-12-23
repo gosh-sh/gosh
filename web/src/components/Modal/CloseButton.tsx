@@ -6,38 +6,38 @@ import { appModalStateAtom } from '../../store/app.state'
 import { Button } from '../Form'
 
 type TModalCloseButtonProps = React.HTMLAttributes<HTMLDivElement> & {
-    disabled?: boolean
-    two_factor?: boolean // Used for 2-factor closing
-    onClose?: () => Promise<void>
-    twoFactorCallback?: () => void
+  disabled?: boolean
+  two_factor?: boolean // Used for 2-factor closing
+  onClose?: () => Promise<void>
+  twoFactorCallback?: () => void
 }
 
 const ModalCloseButton = (props: TModalCloseButtonProps) => {
-    const { className, disabled, two_factor = false, onClose, twoFactorCallback } = props
-    const setModal = useSetRecoilState(appModalStateAtom)
+  const { className, disabled, two_factor = false, onClose, twoFactorCallback } = props
+  const setModal = useSetRecoilState(appModalStateAtom)
 
-    const onModalReset = async () => {
-        if (two_factor && twoFactorCallback) {
-            twoFactorCallback()
-        } else {
-            setModal((state) => ({ ...state, isOpen: false }))
-            onClose && (await onClose())
-        }
+  const onModalReset = async () => {
+    if (two_factor && twoFactorCallback) {
+      twoFactorCallback()
+    } else {
+      setModal((state) => ({ ...state, isOpen: false }))
+      onClose && (await onClose())
     }
+  }
 
-    return (
-        <div className={classNames('absolute right-2 top-2', className)}>
-            <Button
-                type="button"
-                variant="custom"
-                className="px-3 py-2 text-gray-7c8db5 disabled:opacity-25"
-                disabled={disabled}
-                onClick={onModalReset}
-            >
-                <FontAwesomeIcon icon={faTimes} size="lg" />
-            </Button>
-        </div>
-    )
+  return (
+    <div className={classNames('absolute right-2 top-2', className)}>
+      <Button
+        type="button"
+        variant="custom"
+        className="px-3 py-2 text-gray-7c8db5 disabled:opacity-25"
+        disabled={disabled}
+        onClick={onModalReset}
+      >
+        <FontAwesomeIcon icon={faTimes} size="lg" />
+      </Button>
+    </div>
+  )
 }
 
 export { ModalCloseButton }

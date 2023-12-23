@@ -12,81 +12,81 @@ import { EDaoMemberType } from '../../../types/dao.types'
 import { useUser } from '../../../hooks/user.hooks'
 
 type TFormValues = {
-    comment: string
+  comment: string
 }
 
 const RequestDaoMembershipModal = () => {
-    const navigate = useNavigate()
-    const setModal = useSetRecoilState(appModalStateAtom)
-    const { user } = useUser()
-    const dao = useDao()
-    const { createMember } = useCreateDaoMember()
+  const navigate = useNavigate()
+  const setModal = useSetRecoilState(appModalStateAtom)
+  const { user } = useUser()
+  const dao = useDao()
+  const { createMember } = useCreateDaoMember()
 
-    const onModalReset = () => {
-        setModal((state) => ({ ...state, isOpen: false }))
+  const onModalReset = () => {
+    setModal((state) => ({ ...state, isOpen: false }))
+  }
+
+  const onRequestMembership = async (values: TFormValues) => {
+    try {
+      const { comment } = values
+      await createMember(
+        [
+          {
+            user: { name: user.username!, type: EDaoMemberType.User },
+            allowance: 0,
+            comment,
+          },
+        ],
+        true,
+      )
+      onModalReset()
+      navigate(`/o/${dao.details.name}/events`)
+    } catch (e: any) {
+      console.error(e.message)
     }
+  }
 
-    const onRequestMembership = async (values: TFormValues) => {
-        try {
-            const { comment } = values
-            await createMember(
-                [
-                    {
-                        user: { name: user.username!, type: EDaoMemberType.User },
-                        allowance: 0,
-                        comment,
-                    },
-                ],
-                true,
-            )
-            onModalReset()
-            navigate(`/o/${dao.details.name}/events`)
-        } catch (e: any) {
-            console.error(e.message)
-        }
-    }
+  return (
+    <Dialog.Panel className="relative rounded-xl bg-white p-10 w-full max-w-md">
+      <Formik
+        initialValues={{ comment: '' }}
+        onSubmit={onRequestMembership}
+        validationSchema={yup.object().shape({
+          comment: yup.string().required(),
+        })}
+      >
+        {({ isSubmitting }) => (
+          <Form>
+            <ModalCloseButton disabled={isSubmitting} />
+            <Dialog.Title className="mb-8 text-3xl text-center font-medium">
+              Request membership
+            </Dialog.Title>
 
-    return (
-        <Dialog.Panel className="relative rounded-xl bg-white p-10 w-full max-w-md">
-            <Formik
-                initialValues={{ comment: '' }}
-                onSubmit={onRequestMembership}
-                validationSchema={yup.object().shape({
-                    comment: yup.string().required(),
-                })}
-            >
-                {({ isSubmitting }) => (
-                    <Form>
-                        <ModalCloseButton disabled={isSubmitting} />
-                        <Dialog.Title className="mb-8 text-3xl text-center font-medium">
-                            Request membership
-                        </Dialog.Title>
-
-                        <div>
-                            <Field
-                                name="comment"
-                                component={FormikTextarea}
-                                disabled={isSubmitting}
-                                autoComplete="off"
-                                placeholder="Write description of your request to DAO membership"
-                                maxRows={5}
-                            />
-                        </div>
-                        <div className="mt-4">
-                            <Button
-                                type="submit"
-                                className="w-full"
-                                isLoading={isSubmitting}
-                                disabled={isSubmitting}
-                            >
-                                Create event
-                            </Button>
-                        </div>
-                    </Form>
-                )}
-            </Formik>
-        </Dialog.Panel>
-    )
+            <div>
+              <Field
+                name="comment"
+                component={FormikTextarea}
+                disabled={isSubmitting}
+                autoComplete="off"
+                placeholder="Write description of your request to DAO membership"
+                maxRows={5}
+              />
+            </div>
+            <div className="mt-4">
+              <Button
+                type="submit"
+                className="w-full"
+                isLoading={isSubmitting}
+                disabled={isSubmitting}
+              >
+                Create event
+              </Button>
+            </div>
+          </Form>
+        )}
+      </Formik>
+    </Dialog.Panel>
+  )
 }
 
 export { RequestDaoMembershipModal }

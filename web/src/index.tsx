@@ -10,24 +10,24 @@ import './assets/scss/style.scss'
 // Check for docker extension flag
 let ConditionedRouter = BrowserRouter
 if (import.meta.env.REACT_APP_ISDOCKEREXT === 'true') {
-    ConditionedRouter = HashRouter
-    libWebSetup({
-        binaryURL: `./eversdk.wasm?v=${Math.random().toString(36).slice(2, 8)}`,
-    })
+  ConditionedRouter = HashRouter
+  libWebSetup({
+    binaryURL: `./eversdk.wasm?v=${Math.random().toString(36).slice(2, 8)}`,
+  })
 } else {
-    libWebSetup({
-        binaryURL: `/eversdk.wasm?v=8aiwbx`,
-    })
+  libWebSetup({
+    binaryURL: `/eversdk.wasm?v=8aiwbx`,
+  })
 }
 
 const container = document.getElementById('root')
 const root = createRoot(container!)
 root.render(
-    <RecoilRoot>
-        <ConditionedRouter>
-            <Dispatcher />
-        </ConditionedRouter>
-    </RecoilRoot>,
+  <RecoilRoot>
+    <ConditionedRouter>
+      <Dispatcher />
+    </ConditionedRouter>
+  </RecoilRoot>,
 )
 
 // If you want to start measuring performance in your app, pass a function
@@ -37,6 +37,6 @@ reportWebVitals()
 
 // eslint-disable-next-line react-hooks/rules-of-hooks
 TonClient.useBinaryLibrary(() => {
-    const promise = libWeb()
-    return promise as unknown as Promise<BinaryLibrary>
+  const promise = libWeb()
+  return promise as unknown as Promise<BinaryLibrary>
 })
