@@ -1050,7 +1050,7 @@ export function useDaoMember(params: { initialize?: boolean; subscribe?: boolean
   }, [getDetails, initialize])
 
   useEffect(() => {
-    let interval: NodeJS.Timer
+    let interval: NodeJS.Timeout
 
     if (initialize) {
       transferTokensFromPrevDao()
