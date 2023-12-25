@@ -1,420 +1,313 @@
 {
-	"ABI version": 2,
-	"version": "2.3",
-	"header": ["pubkey", "time", "expire"],
-	"functions": [
-		{
-			"name": "amount_locked",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"uint128"}
-			]
-		},
-		{
-			"name": "onContinueAction",
-			"inputs": [
-				{"name":"t","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "performAction",
-			"inputs": [
-				{"name":"value0","type":"uint128"},
-				{"name":"value1","type":"uint128"},
-				{"name":"value2","type":"cell"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "getInitialize",
-			"inputs": [
-				{"name":"_tokenLocker","type":"address"},
-				{"name":"_platform_id","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "vote",
-			"inputs": [
-				{"name":"_locker","type":"address"},
-				{"name":"_platform_id","type":"uint256"},
-				{"name":"choice","type":"bool"},
-				{"name":"amount","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "isCompleted",
-			"inputs": [
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "_isCompleted",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"optional(bool)"}
-			]
-		},
-		{
-			"name": "getGoshProposalKind",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"proposalKind","type":"uint256"}
-			]
-		},
-		{
-			"name": "getGoshSetCommitProposalParams",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"proposalKind","type":"uint256"},
-				{"name":"repoName","type":"string"},
-				{"name":"branchName","type":"string"},
-				{"name":"commit","type":"string"}
-			]
-		},
-		{
-			"name": "getGoshAddProtectedBranchProposalParams",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"proposalKind","type":"uint256"},
-				{"name":"repoName","type":"string"},
-				{"name":"branchName","type":"string"}
-			]
-		},
-		{
-			"name": "getGoshSetConfigDaoProposalParams",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"proposalKind","type":"uint256"},
-				{"name":"token","type":"uint128"}
-			]
-		},
-		{
-			"name": "getGoshDeleteProtectedBranchProposalParams",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"proposalKind","type":"uint256"},
-				{"name":"repoName","type":"string"},
-				{"name":"branchName","type":"string"}
-			]
-		},
-		{
-			"name": "getGoshDeployWalletDaoProposalParams",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"proposalKind","type":"uint256"},
-				{"name":"pubaddr","type":"address[]"}
-			]
-		},
-		{
-			"name": "getGoshDeleteWalletDaoProposalParams",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"proposalKind","type":"uint256"},
-				{"name":"pubaddr","type":"address[]"}
-			]
-		},
-		{
-			"name": "getGoshUpgradeDaoProposalParams",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"proposalKind","type":"uint256"},
-				{"name":"newversion","type":"string"},
-				{"name":"description","type":"string"}
-			]
-		},
-		{
-			"name": "continueUpdateHead",
-			"inputs": [
-				{"name":"_platform_id","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "updateHead",
-			"inputs": [
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "setRightBro",
-			"inputs": [
-				{"name":"answerId","type":"uint32"},
-				{"name":"_platform_id","type":"uint256"},
-				{"name":"rb","type":"optional(address)"},
-				{"name":"ra","type":"optional(uint128)"}
-			],
-			"outputs": [
-				{"name":"value0","type":"uint256"}
-			]
-		},
-		{
-			"name": "setLeftBro",
-			"inputs": [
-				{"name":"answerId","type":"uint32"},
-				{"name":"_platform_id","type":"uint256"},
-				{"name":"lb","type":"optional(address)"}
-			],
-			"outputs": [
-				{"name":"value0","type":"uint256"}
-			]
-		},
-		{
-			"name": "onClientInserted",
-			"inputs": [
-				{"name":"_platform_id","type":"uint256"},
-				{"name":"leftClient","type":"optional(address)"},
-				{"name":"rightClient","type":"optional(address)"},
-				{"name":"rightAmount_","type":"optional(uint128)"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "nothing",
-			"inputs": [
-				{"name":"_platform_id","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "insertClient",
-			"inputs": [
-				{"name":"_platform_id","type":"uint256"},
-				{"name":"newClient","type":"address"},
-				{"name":"amount","type":"uint128"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "getLockedAmount",
-			"inputs": [
-				{"name":"answerId","type":"uint32"}
-			],
-			"outputs": [
-				{"name":"value0","type":"uint128"}
-			]
-		},
-		{
-			"name": "onSetRightBro",
-			"inputs": [
-				{"name":"_platform_id","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "onSetLeftBro",
-			"inputs": [
-				{"name":"_platform_id","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "constructor",
-			"inputs": [
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "tokenLocker",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"tokenLocker","type":"address"}
-			]
-		},
-		{
-			"name": "platform_id",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"platform_id","type":"uint256"}
-			]
-		},
-		{
-			"name": "leftBro",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"leftBro","type":"optional(address)"}
-			]
-		},
-		{
-			"name": "rightBro",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"rightBro","type":"optional(address)"}
-			]
-		},
-		{
-			"name": "rightAmount",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"rightAmount","type":"optional(uint128)"}
-			]
-		},
-		{
-			"name": "initialized",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"initialized","type":"bool"}
-			]
-		},
-		{
-			"name": "inserted",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"inserted","type":"bool"}
-			]
-		},
-		{
-			"name": "propId",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"propId","type":"uint256"}
-			]
-		},
-		{
-			"name": "tokenRoot",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"tokenRoot","type":"address"}
-			]
-		},
-		{
-			"name": "startTime",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"startTime","type":"uint32"}
-			]
-		},
-		{
-			"name": "finishTime",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"finishTime","type":"uint32"}
-			]
-		},
-		{
-			"name": "ownerAddress",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"ownerAddress","type":"address"}
-			]
-		},
-		{
-			"name": "votesYes",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"votesYes","type":"uint128"}
-			]
-		},
-		{
-			"name": "votesNo",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"votesNo","type":"uint128"}
-			]
-		},
-		{
-			"name": "votingResult",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"votingResult","type":"optional(bool)"}
-			]
-		},
-		{
-			"name": "amountLocked",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"amountLocked","type":"uint128"}
-			]
-		},
-		{
-			"name": "totalSupply",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"totalSupply","type":"uint128"}
-			]
-		},
-		{
-			"name": "realFinishTime",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"realFinishTime","type":"uint32"}
-			]
-		}
-	],
-	"data": [
-		{"key":1,"name":"platform_id","type":"uint256"}
-	],
-	"events": [
-	],
-	"fields": [
-		{"name":"_pubkey","type":"uint256"},
-		{"name":"_timestamp","type":"uint64"},
-		{"name":"_constructorFlag","type":"bool"},
-		{"name":"tokenLocker","type":"address"},
-		{"name":"platform_id","type":"uint256"},
-		{"name":"platformCodeHash","type":"uint256"},
-		{"name":"platformCodeDepth","type":"uint16"},
-		{"name":"leftBro","type":"optional(address)"},
-		{"name":"rightBro","type":"optional(address)"},
-		{"name":"rightAmount","type":"optional(uint128)"},
-		{"name":"currentHead","type":"optional(address)"},
-		{"name":"initialized","type":"bool"},
-		{"name":"inserted","type":"bool"},
-		{"name":"propId","type":"uint256"},
-		{"name":"creationTime","type":"uint32"},
-		{"name":"tokenRoot","type":"address"},
-		{"name":"propData","type":"cell"},
-		{"name":"startTime","type":"uint32"},
-		{"name":"finishTime","type":"uint32"},
-		{"name":"ownerAddress","type":"address"},
-		{"name":"votesYes","type":"uint128"},
-		{"name":"votesNo","type":"uint128"},
-		{"name":"votingResult","type":"optional(bool)"},
-		{"name":"amountLocked","type":"uint128"},
-		{"name":"totalSupply","type":"uint128"},
-		{"name":"realFinishTime","type":"uint32"}
-	]
+  "ABI version": 2,
+  "version": "2.3",
+  "header": ["pubkey", "time", "expire"],
+  "functions": [
+    {
+      "name": "amount_locked",
+      "inputs": [],
+      "outputs": [{ "name": "value0", "type": "uint128" }]
+    },
+    {
+      "name": "onContinueAction",
+      "inputs": [{ "name": "t", "type": "uint128" }],
+      "outputs": []
+    },
+    {
+      "name": "performAction",
+      "inputs": [
+        { "name": "value0", "type": "uint128" },
+        { "name": "value1", "type": "uint128" },
+        { "name": "value2", "type": "cell" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "getInitialize",
+      "inputs": [
+        { "name": "_tokenLocker", "type": "address" },
+        { "name": "_platform_id", "type": "uint256" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "vote",
+      "inputs": [
+        { "name": "_locker", "type": "address" },
+        { "name": "_platform_id", "type": "uint256" },
+        { "name": "choice", "type": "bool" },
+        { "name": "amount", "type": "uint128" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "isCompleted",
+      "inputs": [],
+      "outputs": []
+    },
+    {
+      "name": "_isCompleted",
+      "inputs": [],
+      "outputs": [{ "name": "value0", "type": "optional(bool)" }]
+    },
+    {
+      "name": "getGoshProposalKind",
+      "inputs": [],
+      "outputs": [{ "name": "proposalKind", "type": "uint256" }]
+    },
+    {
+      "name": "getGoshSetCommitProposalParams",
+      "inputs": [],
+      "outputs": [
+        { "name": "proposalKind", "type": "uint256" },
+        { "name": "repoName", "type": "string" },
+        { "name": "branchName", "type": "string" },
+        { "name": "commit", "type": "string" }
+      ]
+    },
+    {
+      "name": "getGoshAddProtectedBranchProposalParams",
+      "inputs": [],
+      "outputs": [
+        { "name": "proposalKind", "type": "uint256" },
+        { "name": "repoName", "type": "string" },
+        { "name": "branchName", "type": "string" }
+      ]
+    },
+    {
+      "name": "getGoshSetConfigDaoProposalParams",
+      "inputs": [],
+      "outputs": [
+        { "name": "proposalKind", "type": "uint256" },
+        { "name": "token", "type": "uint128" }
+      ]
+    },
+    {
+      "name": "getGoshDeleteProtectedBranchProposalParams",
+      "inputs": [],
+      "outputs": [
+        { "name": "proposalKind", "type": "uint256" },
+        { "name": "repoName", "type": "string" },
+        { "name": "branchName", "type": "string" }
+      ]
+    },
+    {
+      "name": "getGoshDeployWalletDaoProposalParams",
+      "inputs": [],
+      "outputs": [
+        { "name": "proposalKind", "type": "uint256" },
+        { "name": "pubaddr", "type": "address[]" }
+      ]
+    },
+    {
+      "name": "getGoshDeleteWalletDaoProposalParams",
+      "inputs": [],
+      "outputs": [
+        { "name": "proposalKind", "type": "uint256" },
+        { "name": "pubaddr", "type": "address[]" }
+      ]
+    },
+    {
+      "name": "getGoshUpgradeDaoProposalParams",
+      "inputs": [],
+      "outputs": [
+        { "name": "proposalKind", "type": "uint256" },
+        { "name": "newversion", "type": "string" },
+        { "name": "description", "type": "string" }
+      ]
+    },
+    {
+      "name": "continueUpdateHead",
+      "inputs": [{ "name": "_platform_id", "type": "uint256" }],
+      "outputs": []
+    },
+    {
+      "name": "updateHead",
+      "inputs": [],
+      "outputs": []
+    },
+    {
+      "name": "setRightBro",
+      "inputs": [
+        { "name": "answerId", "type": "uint32" },
+        { "name": "_platform_id", "type": "uint256" },
+        { "name": "rb", "type": "optional(address)" },
+        { "name": "ra", "type": "optional(uint128)" }
+      ],
+      "outputs": [{ "name": "value0", "type": "uint256" }]
+    },
+    {
+      "name": "setLeftBro",
+      "inputs": [
+        { "name": "answerId", "type": "uint32" },
+        { "name": "_platform_id", "type": "uint256" },
+        { "name": "lb", "type": "optional(address)" }
+      ],
+      "outputs": [{ "name": "value0", "type": "uint256" }]
+    },
+    {
+      "name": "onClientInserted",
+      "inputs": [
+        { "name": "_platform_id", "type": "uint256" },
+        { "name": "leftClient", "type": "optional(address)" },
+        { "name": "rightClient", "type": "optional(address)" },
+        { "name": "rightAmount_", "type": "optional(uint128)" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "nothing",
+      "inputs": [{ "name": "_platform_id", "type": "uint256" }],
+      "outputs": []
+    },
+    {
+      "name": "insertClient",
+      "inputs": [
+        { "name": "_platform_id", "type": "uint256" },
+        { "name": "newClient", "type": "address" },
+        { "name": "amount", "type": "uint128" }
+      ],
+      "outputs": []
+    },
+    {
+      "name": "getLockedAmount",
+      "inputs": [{ "name": "answerId", "type": "uint32" }],
+      "outputs": [{ "name": "value0", "type": "uint128" }]
+    },
+    {
+      "name": "onSetRightBro",
+      "inputs": [{ "name": "_platform_id", "type": "uint256" }],
+      "outputs": []
+    },
+    {
+      "name": "onSetLeftBro",
+      "inputs": [{ "name": "_platform_id", "type": "uint256" }],
+      "outputs": []
+    },
+    {
+      "name": "constructor",
+      "inputs": [],
+      "outputs": []
+    },
+    {
+      "name": "tokenLocker",
+      "inputs": [],
+      "outputs": [{ "name": "tokenLocker", "type": "address" }]
+    },
+    {
+      "name": "platform_id",
+      "inputs": [],
+      "outputs": [{ "name": "platform_id", "type": "uint256" }]
+    },
+    {
+      "name": "leftBro",
+      "inputs": [],
+      "outputs": [{ "name": "leftBro", "type": "optional(address)" }]
+    },
+    {
+      "name": "rightBro",
+      "inputs": [],
+      "outputs": [{ "name": "rightBro", "type": "optional(address)" }]
+    },
+    {
+      "name": "rightAmount",
+      "inputs": [],
+      "outputs": [{ "name": "rightAmount", "type": "optional(uint128)" }]
+    },
+    {
+      "name": "initialized",
+      "inputs": [],
+      "outputs": [{ "name": "initialized", "type": "bool" }]
+    },
+    {
+      "name": "inserted",
+      "inputs": [],
+      "outputs": [{ "name": "inserted", "type": "bool" }]
+    },
+    {
+      "name": "propId",
+      "inputs": [],
+      "outputs": [{ "name": "propId", "type": "uint256" }]
+    },
+    {
+      "name": "tokenRoot",
+      "inputs": [],
+      "outputs": [{ "name": "tokenRoot", "type": "address" }]
+    },
+    {
+      "name": "startTime",
+      "inputs": [],
+      "outputs": [{ "name": "startTime", "type": "uint32" }]
+    },
+    {
+      "name": "finishTime",
+      "inputs": [],
+      "outputs": [{ "name": "finishTime", "type": "uint32" }]
+    },
+    {
+      "name": "ownerAddress",
+      "inputs": [],
+      "outputs": [{ "name": "ownerAddress", "type": "address" }]
+    },
+    {
+      "name": "votesYes",
+      "inputs": [],
+      "outputs": [{ "name": "votesYes", "type": "uint128" }]
+    },
+    {
+      "name": "votesNo",
+      "inputs": [],
+      "outputs": [{ "name": "votesNo", "type": "uint128" }]
+    },
+    {
+      "name": "votingResult",
+      "inputs": [],
+      "outputs": [{ "name": "votingResult", "type": "optional(bool)" }]
+    },
+    {
+      "name": "amountLocked",
+      "inputs": [],
+      "outputs": [{ "name": "amountLocked", "type": "uint128" }]
+    },
+    {
+      "name": "totalSupply",
+      "inputs": [],
+      "outputs": [{ "name": "totalSupply", "type": "uint128" }]
+    },
+    {
+      "name": "realFinishTime",
+      "inputs": [],
+      "outputs": [{ "name": "realFinishTime", "type": "uint32" }]
+    }
+  ],
+  "data": [{ "key": 1, "name": "platform_id", "type": "uint256" }],
+  "events": [],
+  "fields": [
+    { "name": "_pubkey", "type": "uint256" },
+    { "name": "_timestamp", "type": "uint64" },
+    { "name": "_constructorFlag", "type": "bool" },
+    { "name": "tokenLocker", "type": "address" },
+    { "name": "platform_id", "type": "uint256" },
+    { "name": "platformCodeHash", "type": "uint256" },
+    { "name": "platformCodeDepth", "type": "uint16" },
+    { "name": "leftBro", "type": "optional(address)" },
+    { "name": "rightBro", "type": "optional(address)" },
+    { "name": "rightAmount", "type": "optional(uint128)" },
+    { "name": "currentHead", "type": "optional(address)" },
+    { "name": "initialized", "type": "bool" },
+    { "name": "inserted", "type": "bool" },
+    { "name": "propId", "type": "uint256" },
+    { "name": "creationTime", "type": "uint32" },
+    { "name": "tokenRoot", "type": "address" },
+    { "name": "propData", "type": "cell" },
+    { "name": "startTime", "type": "uint32" },
+    { "name": "finishTime", "type": "uint32" },
+    { "name": "ownerAddress", "type": "address" },
+    { "name": "votesYes", "type": "uint128" },
+    { "name": "votesNo", "type": "uint128" },
+    { "name": "votingResult", "type": "optional(bool)" },
+    { "name": "amountLocked", "type": "uint128" },
+    { "name": "totalSupply", "type": "uint128" },
+    { "name": "realFinishTime", "type": "uint32" }
+  ]
 }

@@ -23,9 +23,9 @@
     },
     "dependencies": {
         "@docker/extension-api-client": "^0.2.3",
-        "@eversdk/appkit": "^0.3.6",
-        "@eversdk/core": "^1.42.1",
-        "@eversdk/lib-web": "^1.42.1",
+        "@eversdk/appkit": "^0.3.8",
+        "@eversdk/core": "1.44.4",
+        "@eversdk/lib-web": "1.44.4",
         "buffer": "^6.0.3",
         "crypto-js": "^4.1.1",
         "diff": "^5.1.0",

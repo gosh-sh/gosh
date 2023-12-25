@@ -1,27 +1,27 @@
 {
-    "name": "run-if-modified",
-    "version": "1.0.3",
-    "description": "Run when match files or last-modified is different.",
-    "main": "index.js",
-    "bin": {
-        "rim": "./index.js"
-    },
-    "repository": {
-        "url": ""
-    },
-    "scripts": {},
-    "keywords": [
-        "last-modified",
-        "run",
-        "execute",
-        "build",
-        "bundle-time",
-        "cache"
-    ],
-    "author": "lf.amorim@bipbop.com.br",
-    "license": "MIT",
-    "peerDependencies": {
-        "commander": "^6.0.0",
-        "glob": "^7.1.6"
-    }
+  "name": "run-if-modified",
+  "version": "1.0.3",
+  "description": "Run when match files or last-modified is different.",
+  "main": "index.js",
+  "bin": {
+    "rim": "./index.js"
+  },
+  "repository": {
+    "url": ""
+  },
+  "scripts": {},
+  "keywords": [
+    "last-modified",
+    "run",
+    "execute",
+    "build",
+    "bundle-time",
+    "cache"
+  ],
+  "author": "lf.amorim@bipbop.com.br",
+  "license": "MIT",
+  "peerDependencies": {
+    "commander": "^6.0.0",
+    "glob": "^7.1.6"
+  }
 }

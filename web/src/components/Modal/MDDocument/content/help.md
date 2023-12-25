@@ -23,8 +23,8 @@ Trust management system has to be built in accordance with the following princip
 
 A variety of utility tools to assist with all the aspects of the solution are under active development. A sneak peek of the tool set to be released in the upcoming months:
 
-* work with on-chain repository as if you use git repo with gosh helper:
-  * [Documentation](https://docs.gosh.sh/working-with-gosh/git-remote-helper)
-  * [Gosh Git Helper Releases](https://github.com/gosh-sh/gosh/releases)
-* build and sign images via `Build image` tab in each repository
-* ensure you’re using trusted docker images on [Containers page](#/containers)
+-   work with on-chain repository as if you use git repo with gosh helper:
+    -   [Documentation](https://docs.gosh.sh/working-with-gosh/git-remote-helper)
+    -   [Gosh Git Helper Releases](https://github.com/gosh-sh/gosh/releases)
+-   build and sign images via `Build image` tab in each repository
+-   ensure you’re using trusted docker images on [Containers page](#/containers)

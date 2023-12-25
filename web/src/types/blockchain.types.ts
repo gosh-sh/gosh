@@ -9,18 +9,18 @@ import { SystemContract as SystemContract6_1 } from '../v6.1.0/blockchain/system
 import { SystemContract as SystemContract6_2 } from '../v6.2.0/blockchain/systemcontract'
 
 export type TSystemContract =
-    | SystemContract1
-    | SystemContract2
-    | SystemContract3
-    | SystemContract4
-    | SystemContract5
-    | SystemContract5_1
-    | SystemContract6
-    | SystemContract6_1
-    | SystemContract6_2
+  | SystemContract1
+  | SystemContract2
+  | SystemContract3
+  | SystemContract4
+  | SystemContract5
+  | SystemContract5_1
+  | SystemContract6
+  | SystemContract6_1
+  | SystemContract6_2
 
 export type TPaginatedAccountsResult = {
-    results: any[]
-    lastId?: string
-    completed: boolean
+  results: any[]
+  lastId?: string
+  completed: boolean
 }

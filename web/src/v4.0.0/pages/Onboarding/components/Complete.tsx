@@ -6,45 +6,45 @@ import { Button } from '../../../../components/Form'
 import { useOnboardingData } from '../../../hooks/onboarding.hooks'
 
 const OnboardingComplete = () => {
-    const {
-        data: { username, emailOther },
-        updateData,
-        resetData,
-    } = useOnboardingData()
+  const {
+    data: { username, emailOther },
+    updateData,
+    resetData,
+  } = useOnboardingData()
 
-    useEffect(() => {
-        updateData({ redirectTo: undefined })
-    }, [])
+  useEffect(() => {
+    updateData({ redirectTo: undefined })
+  }, [])
 
-    return (
-        <div className="relative border rounded-xl items-center py-9 px-4 lg:px-16 mb-9">
-            <Button
-                type="button"
-                variant="custom"
-                className="absolute right-4 top-3 p-1 text-gray-7c8db5 hover:text-black"
-                onClick={resetData}
-            >
-                <FontAwesomeIcon icon={faTimes} size="lg" />
-            </Button>
+  return (
+    <div className="relative border rounded-xl items-center py-9 px-4 lg:px-16 mb-9">
+      <Button
+        type="button"
+        variant="custom"
+        className="absolute right-4 top-3 p-1 text-gray-7c8db5 hover:text-black"
+        onClick={resetData}
+      >
+        <FontAwesomeIcon icon={faTimes} size="lg" />
+      </Button>
 
-            <div className="flex flex-nowrap items-center overflow-hidden">
-                <div>
-                    <div className="mb-4 text-2xl md:text-3xl font-semibold leading-tight">
-                        Welcome to GOSH, <br />
-                        {username}
-                    </div>
+      <div className="flex flex-nowrap items-center overflow-hidden">
+        <div>
+          <div className="mb-4 text-2xl md:text-3xl font-semibold leading-tight">
+            Welcome to GOSH, <br />
+            {username}
+          </div>
 
-                    <p className="text-gray-53596d">
-                        When the repositories are uploaded we will send a notification to
-                        <span className="text-blue-2b89ff"> {emailOther}</span>
-                    </p>
-                </div>
-                <div className="hidden lg:block">
-                    <img src={githubgosh} alt="" />
-                </div>
-            </div>
+          <p className="text-gray-53596d">
+            When the repositories are uploaded we will send a notification to
+            <span className="text-blue-2b89ff"> {emailOther}</span>
+          </p>
         </div>
-    )
+        <div className="hidden lg:block">
+          <img src={githubgosh} alt="" />
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default OnboardingComplete

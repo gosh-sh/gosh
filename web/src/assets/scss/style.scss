@@ -16,42 +16,42 @@
 html,
 body,
 #root {
-    @apply h-full bg-white text-black font-body;
+  @apply h-full bg-white text-black font-body;
 }
 
 .wrapper {
-    @apply h-full min-h-full flex flex-col;
+  @apply h-full min-h-full flex flex-col;
 }
 
 .container {
-    @apply max-w-full px-5 lg:px-10 xl:px-24;
+  @apply max-w-full px-5 lg:px-10 xl:px-24;
 
-    &--full {
-        @apply px-0 sm:px-5;
-    }
+  &--full {
+    @apply px-0 sm:px-5;
+  }
 }
 
 .no-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 
-    /* Chrome, Safari and Opera */
-    &::-webkit-scrollbar {
-        display: none;
-    }
+  /* Chrome, Safari and Opera */
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .row {
-    @apply flex flex-wrap gap-y-4 -mx-3;
+  @apply flex flex-wrap gap-y-4 -mx-3;
 }
 
 .col {
-    @apply px-3 w-full grow basis-0;
+  @apply px-3 w-full grow basis-0;
 }
 
 .col-n {
-    @extend .col;
-    @apply grow-0 shrink-0 basis-full
+  @extend .col;
+  @apply grow-0 shrink-0 basis-full
         md:w-6/12 md:basis-6/12
         xl:w-4/12 xl:basis-4/12
         2xl:w-3/12 2xl:basis-3/12
@@ -59,109 +59,109 @@ body,
 }
 
 .checkbox-custom {
-    @apply block relative pl-9 cursor-pointer text-sm leading-6;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+  @apply block relative pl-9 cursor-pointer text-sm leading-6;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 
-    &.disabled {
-        @apply text-gray-7c8db5;
-    }
+  &.disabled {
+    @apply text-gray-7c8db5;
+  }
 
-    input {
-        @apply absolute opacity-0 cursor-pointer h-0 w-0;
-    }
+  input {
+    @apply absolute opacity-0 cursor-pointer h-0 w-0;
+  }
 
-    .checkmark {
-        @apply absolute top-0 left-0 h-6 w-6
+  .checkmark {
+    @apply absolute top-0 left-0 h-6 w-6
             border rounded border-gray-7c8db5;
 
-        &::after {
-            @apply absolute hidden
+    &::after {
+      @apply absolute hidden
                 top-[5px] left-[9px] w-[5px] h-[10px]
                 border-white border-0 border-r-2 border-b-2
                 rotate-45;
-            content: '';
-        }
+      content: '';
     }
+  }
 
-    &:hover input ~ .checkmark {
-        @apply bg-gray-100;
+  &:hover input ~ .checkmark {
+    @apply bg-gray-100;
+  }
+
+  input:checked ~ .checkmark {
+    @apply bg-blue-348eff border-transparent;
+
+    &::after {
+      @apply block;
     }
+  }
 
-    input:checked ~ .checkmark {
-        @apply bg-blue-348eff border-transparent;
-
-        &::after {
-            @apply block;
-        }
-    }
-
-    input:disabled ~ .checkmark {
-        @apply bg-gray-d6e4ee;
-    }
+  input:disabled ~ .checkmark {
+    @apply bg-gray-d6e4ee;
+  }
 }
 
 .slider-custom {
-    @apply w-full flex flex-nowrap items-center gap-x-6 font-medium;
+  @apply w-full flex flex-nowrap items-center gap-x-6 font-medium;
 
-    input {
-        @apply appearance-none outline-none
+  input {
+    @apply appearance-none outline-none
             w-full h-0.5
             bg-gray-e6edff opacity-70 transition-opacity;
-    }
+  }
 
-    input:hover {
-        @apply opacity-100;
-    }
+  input:hover {
+    @apply opacity-100;
+  }
 
-    input::-webkit-slider-thumb {
-        @apply appearance-none cursor-pointer
+  input::-webkit-slider-thumb {
+    @apply appearance-none cursor-pointer
             w-6 h-6 rounded-full;
-        background: url('../images/slider-thumb.png');
-    }
+    background: url('../images/slider-thumb.png');
+  }
 
-    input::-moz-range-thumb {
-        @apply appearance-none cursor-pointer
+  input::-moz-range-thumb {
+    @apply appearance-none cursor-pointer
             w-6 h-6 bg-gray-7c8db5 rounded-full;
-        background: url('../images/slider-thumb.png');
-    }
+    background: url('../images/slider-thumb.png');
+  }
 
-    input:disabled {
-        @apply opacity-50;
-    }
+  input:disabled {
+    @apply opacity-50;
+  }
 }
 
 /** Line numbers for highlight.js */
 .code-line {
-    &__number {
-        @apply block absolute p-0 w-11;
-    }
+  &__number {
+    @apply block absolute p-0 w-11;
+  }
 
-    &__number a {
-        @apply block
+  &__number a {
+    @apply block
             leading-5
             text-right
             px-2
             py-px
             bg-white
             text-black/20 hover:text-black/80;
-        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
-        font-size: 0.8125rem;
-    }
+    font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+    font-size: 0.8125rem;
+  }
 
-    &__content {
-        @apply pl-14;
-    }
+  &__content {
+    @apply pl-14;
+  }
 
-    &--selected {
-        @apply bg-gray-e5e5f9;
-    }
+  &--selected {
+    @apply bg-gray-e5e5f9;
+  }
 
-    &--selected &__number > a {
-        @apply text-black bg-gray-e5e5f9;
-    }
+  &--selected &__number > a {
+    @apply text-black bg-gray-e5e5f9;
+  }
 }
 
 /* Technique to disable line numbers from being selected and copied.
@@ -169,56 +169,56 @@ body,
 [data-pseudo-content]::before,
 [data-pseudo-content--before]::before,
 [data-pseudo-content--after]::after {
-    content: attr(data-pseudo-content);
+  content: attr(data-pseudo-content);
 }
 
 /**
  * Markdown renderer table fix
  */
 .markdown-body {
-    @apply break-words;
+  @apply break-words;
 
-    table {
-        @apply w-full;
-    }
-    ol {
-        @apply list-decimal;
-    }
-    ul {
-        @apply list-disc;
-    }
+  table {
+    @apply w-full;
+  }
+  ol {
+    @apply list-decimal;
+  }
+  ul {
+    @apply list-disc;
+  }
 }
 
 /**
  * Customize react-multi-date-picker
  */
 .rmdp-calendar {
-    .rmdp-day.rmdp-today span {
-        @apply bg-gray-f6f6f9 text-black;
-    }
+  .rmdp-day.rmdp-today span {
+    @apply bg-gray-f6f6f9 text-black;
+  }
 }
 
 .date-picker-fw {
-    &.rmdp-wrapper {
-        @apply w-full;
-    }
+  &.rmdp-wrapper {
+    @apply w-full;
+  }
 
-    .rmdp-calendar {
-        @apply w-full;
-    }
+  .rmdp-calendar {
+    @apply w-full;
+  }
 
-    .rmdp-day-picker > div {
-        @apply w-full;
-    }
+  .rmdp-day-picker > div {
+    @apply w-full;
+  }
 
-    .rmdp-time-picker input {
-        @apply w-[1.625rem];
-    }
+  .rmdp-time-picker input {
+    @apply w-[1.625rem];
+  }
 }
 
 /**
  * Customize sun-editor
  */
 .sun-editor--noborder .sun-editor {
-    @apply border-none;
+  @apply border-none;
 }

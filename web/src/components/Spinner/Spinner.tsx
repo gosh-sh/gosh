@@ -5,16 +5,16 @@ import classNames from 'classnames'
 type TSpinnerProps = Omit<FontAwesomeIconProps, 'icon'>
 
 const Spinner = (props: TSpinnerProps) => {
-    const { className, ...rest } = props
-    return (
-        <FontAwesomeIcon
-            className={classNames('spinner', className)}
-            {...rest}
-            icon={faSpinner}
-            spin
-            speed={'100s'}
-        />
-    )
+  const { className, ...rest } = props
+  return (
+    <FontAwesomeIcon
+      className={classNames('spinner', className)}
+      {...rest}
+      icon={faSpinner}
+      spin
+      speed={'100s'}
+    />
+  )
 }
 
 export default Spinner
