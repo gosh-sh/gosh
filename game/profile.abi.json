@@ -38,6 +38,72 @@
 			]
 		},
 		{
+			"name": "buildTree",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "buildPipe",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addToPing",
+			"inputs": [
+				{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"position","type":"tuple"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "rejectBuild",
+			"inputs": [
+				{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"position","type":"tuple"},
+				{"name":"id","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "ping",
+			"inputs": [
+				{"name":"tvmhash","type":"uint256[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "pingIn",
+			"inputs": [
+				{"name":"tvmhash","type":"uint256[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deleteFromPingList",
+			"inputs": [
+				{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"position","type":"tuple"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "buildFinished",
+			"inputs": [
+				{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"position","type":"tuple"},
+				{"components":[{"name":"id","type":"uint128"}],"name":"content","type":"tuple"},
+				{"name":"timer","type":"uint32"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getDetails",
 			"inputs": [
 			],
@@ -66,6 +132,7 @@
 		{"name":"_karma_income","type":"uint128"},
 		{"name":"_timeupdate","type":"uint128"},
 		{"name":"_code","type":"map(uint8,cell)"},
-		{"name":"_awards","type":"map(uint8,uint128)"}
+		{"name":"_awards","type":"map(uint8,uint128)"},
+		{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"_needToPing","type":"map(uint256,tuple)"}
 	]
 }

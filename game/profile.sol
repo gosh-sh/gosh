@@ -28,6 +28,8 @@ contract Profile is Constants {
     mapping(uint8 => TvmCell) _code;
     mapping(uint8 => uint128) _awards;
 
+    mapping(uint256 => Position) _needToPing;
+
     constructor(
         TvmCell fieldCode,
         TvmCell profileCode,
@@ -55,6 +57,7 @@ contract Profile is Constants {
                 stateInit: s1, value: 10 ton, wid: 0, flag: 1
             }(_code[m_FieldCode], _code[m_ProfileCode], _code[m_AwardCode]);
             Field(GameLib.calculateFieldAddress(_code[m_FieldCode], _fabric, Position(_position.x - 1, _position.y), version)).step{value: 0.6 ton}(tvm.pubkey());
+            _position.x -= 1;
             return;
         }
         if (direction == RIGHT) {
@@ -63,6 +66,7 @@ contract Profile is Constants {
                 stateInit: s1, value: 10 ton, wid: 0, flag: 1
             }(_code[m_FieldCode], _code[m_ProfileCode], _code[m_AwardCode]);
             Field(GameLib.calculateFieldAddress(_code[m_FieldCode], _fabric, Position(_position.x + 1, _position.y), version)).step{value: 0.6 ton}(tvm.pubkey());
+            _position.x += 1;
             return;
         }
         if (direction == FORWARD) {
@@ -71,6 +75,7 @@ contract Profile is Constants {
                 stateInit: s1, value: 10 ton, wid: 0, flag: 1
             }(_code[m_FieldCode], _code[m_ProfileCode], _code[m_AwardCode]);
             Field(GameLib.calculateFieldAddress(_code[m_FieldCode], _fabric, Position(_position.x, _position.y + 1), version)).step{value: 0.6 ton}(tvm.pubkey());
+            _position.y += 1;
             return;
         }
         if (direction == BACK) {
@@ -79,6 +84,7 @@ contract Profile is Constants {
                 stateInit: s1, value: 10 ton, wid: 0, flag: 1
             }(_code[m_FieldCode], _code[m_ProfileCode], _code[m_AwardCode]);
             Field(GameLib.calculateFieldAddress(_code[m_FieldCode], _fabric, Position(_position.x, _position.y - 1), version)).step{value: 0.6 ton}(tvm.pubkey());
+            _position.y -= 1;
             return;
         }
     }
@@ -88,6 +94,20 @@ contract Profile is Constants {
         return;
     }
 
+    function buildTree() public onlyOwner accept {
+        reCalculateKarma();
+        require(_karma >= TREE_PRICE, ERR_LOW_BALANCE);
+        _karma -= TREE_PRICE;
+        Field(GameLib.calculateFieldAddress(_code[m_FieldCode], _fabric, _position, version)).buildTree{value: 0.6 ton}(tvm.pubkey());
+    }
+
+    function buildPipe() public onlyOwner accept {
+        reCalculateKarma();
+        require(_karma >= PIPE_PRICE, ERR_LOW_BALANCE);
+        _karma -= PIPE_PRICE;
+        Field(GameLib.calculateFieldAddress(_code[m_FieldCode], _fabric, _position, version)).buildPipe{value: 0.6 ton}(tvm.pubkey());
+    }
+
     function reCalculateKarma() private accept {
         uint128 num = uint128(block.timestamp) - _timeupdate;
         num *= BASE_INCOME;
@@ -95,6 +115,50 @@ contract Profile is Constants {
         if (num == 0) { return; }
         _karma += num;
         _timeupdate += num * 60 / BASE_INCOME;
+    }
+
+    function addToPing(Position position) public senderIs(GameLib.calculateFieldAddress(_code[m_FieldCode], _fabric, position, version)) accept {
+        TvmBuilder b;
+        b.store(position);
+        _needToPing[tvm.hash(b.toCell())] = position;
+    }
+
+    function rejectBuild(Position position, uint128 id) public senderIs(GameLib.calculateFieldAddress(_code[m_FieldCode], _fabric, position, version)) accept  {
+        if (id == TREE) {
+            _karma += TREE_PRICE;
+            return;
+        }
+        if (id == PIPE) {
+            _karma += PIPE_PRICE;
+            return;
+        }
+    }
+
+    function ping(uint256[] tvmhash) public view onlyOwner accept {
+        this.pingIn{value: 0.1 ton, flag: 1}(tvmhash, 0);
+    }
+
+    function pingIn(uint256[] tvmhash, uint128 index) public view senderIs(this) accept {
+        Field(GameLib.calculateFieldAddress(_code[m_FieldCode], _fabric, _needToPing[tvmhash[index]], version)).ping{value: 0.6 ton}(tvm.pubkey());
+        if (index + 1 >= tvmhash.length) { return; }
+        this.pingIn{value: 0.1 ton, flag: 1}(tvmhash, index + 1);
+    } 
+
+    function deleteFromPingList(Position position) public senderIs(GameLib.calculateFieldAddress(_code[m_FieldCode], _fabric, position, version)) accept  {
+        TvmBuilder b;
+        b.store(position);
+        delete _needToPing[tvm.hash(b.toCell())];
+    }
+
+    function buildFinished(Position position, Building content, uint32 timer) public senderIs(GameLib.calculateFieldAddress(_code[m_FieldCode], _fabric, position, version)) accept  {
+        TvmBuilder b;
+        b.store(position);
+        delete _needToPing[tvm.hash(b.toCell())];
+        if (content.id == TREE) {
+            reCalculateKarma();
+            _karma += (block.timestamp - timer) * TREE_KARMA / 3600;
+            _karma_income += TREE_KARMA;
+        }
     }
 
     //Fallback/Receive

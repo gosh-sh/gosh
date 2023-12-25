@@ -22,13 +22,37 @@
 			]
 		},
 		{
+			"name": "buildTree",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "buildPipe",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "ping",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getDetails",
 			"inputs": [
 			],
 			"outputs": [
 				{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"position","type":"tuple"},
 				{"components":[{"name":"id","type":"uint128"}],"name":"content","type":"optional(tuple)"},
-				{"name":"owner","type":"optional(address)"},
+				{"name":"owner","type":"optional(uint256)"},
 				{"name":"visiters","type":"map(uint256,bool)"}
 			]
 		}
@@ -48,8 +72,9 @@
 		{"name":"_fabric","type":"address"},
 		{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"_position","type":"tuple"},
 		{"components":[{"name":"id","type":"uint128"}],"name":"_content","type":"optional(tuple)"},
-		{"name":"_owner","type":"optional(address)"},
+		{"name":"_owner","type":"optional(uint256)"},
 		{"name":"_code","type":"map(uint8,cell)"},
-		{"name":"_visiters","type":"map(uint256,bool)"}
+		{"name":"_visiters","type":"map(uint256,bool)"},
+		{"name":"_timer","type":"optional(uint32)"}
 	]
 }

@@ -16,6 +16,15 @@ abstract contract Constants is ReplayProtection {
     uint128 constant BASE_INCOME = 20;
     uint128 constant BASE_KARMA = 20;
 
+    uint128 constant TREE_PRICE = 30;
+    uint32 constant TREE_TIME = 300;
+    uint128 constant TREE_KARMA = 2;
+    uint128 constant PIPE_PRICE = 10;
+    uint32 constant PIPE_TIME = 100;
+
+    uint128 constant TREE = 0;
+    uint128 constant PIPE = 1;
+
     uint8 constant LEFT = 0;
     uint8 constant FORWARD = 1;
     uint8 constant BACK = 2;
