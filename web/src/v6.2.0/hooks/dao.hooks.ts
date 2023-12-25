@@ -90,14 +90,14 @@ export function usePartnerDaoList(params: { initialize?: boolean } = {}) {
           rest.map(async (name) => {
             const account = (await sc.getDao({ name })) as Dao
             if (await account.isDeployed()) {
-              const members = await account.getMembers({})
+              const details = await account.getDetails()
               items.push({
                 account,
                 name,
                 address: account.address,
                 version: ver,
-                supply: _.sum(members.map(({ allowance }) => allowance)),
-                members: members.length,
+                supply: parseInt(details.totalsupply),
+                members: Object.keys(details.wallets).length,
               })
             }
           }),
@@ -352,14 +352,14 @@ export function useUserDaoList(params: { count?: number; initialize?: boolean } 
         const { goshdao, ver } = decoded.value
         const sc = AppConfig.goshroot.getSystemContract(ver)
         const account = (await sc.getDao({ address: goshdao })) as Dao
-        const members = await account.getMembers({})
+        const details = await account.getDetails()
         return {
           account,
           name: await account.getName(),
           address: goshdao,
           version: ver,
-          supply: _.sum(members.map(({ allowance }) => allowance)),
-          members: members.length,
+          supply: parseInt(details.totalsupply),
+          members: Object.keys(details.wallets).length,
         }
       },
     )

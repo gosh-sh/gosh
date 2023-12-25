@@ -1,4 +1,5 @@
 import { KeyPair, TonClient } from '@eversdk/core'
+import _ from 'lodash'
 import { BaseContract } from '../../blockchain/contract'
 import { UserProfile } from '../../blockchain/userprofile'
 import { TDaoDetailsMemberItem } from '../types/dao.types'
@@ -21,6 +22,14 @@ export class Dao extends BaseContract {
       useCachedBoc: true,
     })
     return value0
+  }
+
+  async getDetails() {
+    const { value0 } = await this.runLocal('getWalletsFull', {})
+    return {
+      totalsupply: _.sum(Object.values(value0).map((item: any) => parseInt(item.count))),
+      wallets: value0,
+    }
   }
 
   async getOwner(): Promise<string> {
