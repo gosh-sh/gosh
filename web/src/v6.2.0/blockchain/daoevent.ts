@@ -33,7 +33,7 @@ export class DaoEvent extends BaseContract {
       completed: parseInt(details.value4) * 1000,
     }
     const status = {
-      completed: details.value1 !== null || (time.finish > 0 && Date.now() > time.finish),
+      completed: details.value1 !== null,
       accepted: !!details.value1,
     }
     const votes = {

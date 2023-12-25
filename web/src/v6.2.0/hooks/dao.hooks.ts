@@ -1,6 +1,7 @@
 import { AggregationFn } from '@eversdk/core'
 import { Buffer } from 'buffer'
 import _, { sum } from 'lodash'
+import moment from 'moment'
 import { useCallback, useEffect, useState } from 'react'
 import { GoshAdapterFactory, sha1 } from 'react-gosh'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
@@ -2294,6 +2295,11 @@ export function useDaoEvent(
             }),
           }
         })
+      }
+
+      // Run check event (for expired events)
+      if (moment().unix() > found.time.finish && !found.status.completed) {
+        member.wallet?.smvCheckEvent(found.address)
       }
 
       // Fetch event data if not present
