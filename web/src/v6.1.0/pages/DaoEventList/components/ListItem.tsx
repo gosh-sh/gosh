@@ -1,11 +1,11 @@
-import Skeleton from '../../../../components/Skeleton'
-import classNames from 'classnames'
-import { TDaoEventDetails } from '../../../types/dao.types'
-import { getDurationDelta } from '../../../../utils'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCircle, faCircleCheck } from '@fortawesome/free-regular-svg-icons'
-import { useDao, useDaoEvent, useDaoEventList } from '../../../hooks/dao.hooks'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import classNames from 'classnames'
+import Skeleton from '../../../../components/Skeleton'
+import { getDurationDelta } from '../../../../utils'
 import { DaoEventStatusBadge } from '../../../components/DaoEvent'
+import { useDao, useDaoEvent, useDaoEventList } from '../../../hooks/dao.hooks'
+import { TDaoEventDetails } from '../../../types/dao.types'
 
 const basis = {
   contaner: 'flex-wrap lg:flex-nowrap',
@@ -113,11 +113,11 @@ const ListItem = (props: TListItemProps) => {
         {event.status.completed
           ? 'Completed'
           : event.time.finish > 0
-          ? getDurationDelta(event.time.finish, '[d:d] [h:h] [m:m]')
-          : '-'}
+            ? getDurationDelta(event.time.finish, '[d:d] [h:h] [m:m]')
+            : '-'}
       </div>
     </div>
   )
 }
 
-export { ListItem, ListItemSkeleton, ListItemHeader }
+export { ListItem, ListItemHeader, ListItemSkeleton }

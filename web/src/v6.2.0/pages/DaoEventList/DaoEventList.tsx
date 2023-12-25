@@ -26,7 +26,7 @@ const DaoEventListPage = () => {
   return (
     <>
       <div className="row flex-wrap">
-        <div className="col !basis-full md:!basis-0">
+        <div className="col !basis-full md:!basis-0 !w-0">
           <div className="flex items-center justify-between pb-2 mb-4 gap-4">
             <h3 className="text-xl font-medium">DAO events</h3>
             {eventList.isFetching && <Loader className="text-xs">Updating...</Loader>}
