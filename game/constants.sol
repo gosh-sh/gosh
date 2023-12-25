@@ -12,9 +12,9 @@ abstract contract Constants is ReplayProtection {
     string constant versionConstants = "6.2.0";
     
     uint128 constant RANGE_SPAWN = 50;
-    uint128 constant STEP_CARMA = 1;
+    uint128 constant STEP_KARMA = 1;
     uint128 constant BASE_INCOME = 20;
-    uint128 constant BASE_CARMA = 20;
+    uint128 constant BASE_KARMA = 20;
 
     uint8 constant LEFT = 0;
     uint8 constant FORWARD = 1;

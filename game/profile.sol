@@ -21,8 +21,8 @@ contract Profile is Constants {
     address static _fabric;
 
     Position _position;
-    uint128 _carma = BASE_CARMA;
-    uint128 _carma_income = BASE_INCOME;
+    uint128 _karma = BASE_KARMA;
+    uint128 _karma_income = BASE_INCOME;
     uint128 _timeupdate = uint128(block.timestamp);
 
     mapping(uint8 => TvmCell) _code;
@@ -47,8 +47,8 @@ contract Profile is Constants {
 
     function nextStep (uint8 direction) public accept onlyOwner {
         require(address(this).balance >= 15 ever, ERR_LOW_BALANCE);
-        reCalculateCarma();
-        require(_carma >= STEP_CARMA, ERR_NOT_ENOUGH_CARMA);
+        reCalculateKarma();
+        require(_karma >= STEP_KARMA, ERR_NOT_ENOUGH_KARMA);
         if (direction == LEFT) {
             TvmCell s1 = GameLib.composeFieldStateInit(_code[m_FieldCode], _fabric, Position(_position.x - 1, _position.y), version);
             new Field {
@@ -88,12 +88,12 @@ contract Profile is Constants {
         return;
     }
 
-    function reCalculateCarma() private accept {
+    function reCalculateKarma() private accept {
         uint128 num = uint128(block.timestamp) - _timeupdate;
         num *= BASE_INCOME;
         num /= 60;
         if (num == 0) { return; }
-        _carma += num;
+        _karma += num;
         _timeupdate += num * 60 / BASE_INCOME;
     }
 
@@ -107,7 +107,7 @@ contract Profile is Constants {
     //Getters
       
     
-    function getDetails() external view returns(Position position, uint128 carma, uint128 carma_income, mapping(uint8 => uint128) awards) {
-        return (_position, _carma, _carma_income, _awards);
+    function getDetails() external view returns(Position position, uint128 karma, uint128 karma_income, mapping(uint8 => uint128) awards) {
+        return (_position, _karma, _karma_income, _awards);
     }
 }

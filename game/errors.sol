@@ -17,5 +17,5 @@ abstract contract Errors {
     uint16 constant ERR_LOW_BALANCE = 305;
     uint16 constant ERR_LOW_VALUE = 306;
     uint16 constant ERR_SENDER_NO_ALLOWED = 307;
-    uint16 constant ERR_NOT_ENOUGH_CARMA = 308;
+    uint16 constant ERR_NOT_ENOUGH_KARMA = 308;
 }

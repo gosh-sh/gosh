@@ -43,8 +43,8 @@
 			],
 			"outputs": [
 				{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"position","type":"tuple"},
-				{"name":"carma","type":"uint128"},
-				{"name":"carma_income","type":"uint128"},
+				{"name":"karma","type":"uint128"},
+				{"name":"karma_income","type":"uint128"},
 				{"name":"awards","type":"map(uint8,uint128)"}
 			]
 		}
@@ -62,8 +62,8 @@
 		{"name":"__value","type":"uint256"},
 		{"name":"_fabric","type":"address"},
 		{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"_position","type":"tuple"},
-		{"name":"_carma","type":"uint128"},
-		{"name":"_carma_income","type":"uint128"},
+		{"name":"_karma","type":"uint128"},
+		{"name":"_karma_income","type":"uint128"},
 		{"name":"_timeupdate","type":"uint128"},
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_awards","type":"map(uint8,uint128)"}
