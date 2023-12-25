@@ -1,11 +1,11 @@
-import { TonClient, NetworkQueriesProtocol } from '@eversdk/core'
 import { createDockerDesktopClient } from '@docker/extension-api-client'
-import { GoshError } from './errors'
-import { VersionController } from './blockchain/versioncontroller'
+import { NetworkQueriesProtocol, TonClient } from '@eversdk/core'
 import { SupabaseClient, createClient } from '@supabase/supabase-js'
 import { AppConfig as _AppConfig } from 'react-gosh'
-import { DISABLED_VERSIONS } from './constants'
 import { TIP3Root } from './blockchain/tip3root'
+import { VersionController } from './blockchain/versioncontroller'
+import { DISABLED_VERSIONS } from './constants'
+import { GoshError } from './errors'
 
 export class AppConfig {
   static endpoints: string[]
@@ -38,8 +38,6 @@ export class AppConfig {
     if (!ipfsUrl) {
       throw new GoshError('IPFS url is undefined')
     }
-
-    const tip3RootAddress = import.meta.env.REACT_APP_TIP3_ROOTADDR
 
     AppConfig.endpoints = endpoints
     AppConfig.goshclient = new TonClient({
