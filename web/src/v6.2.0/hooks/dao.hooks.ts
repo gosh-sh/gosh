@@ -1938,8 +1938,25 @@ export function useUpdateDaoMember() {
           })
         }
 
+        // Filter only updated members
+        const items_dirty = items.filter((item) => {
+          const expert_tags_diff = _.xorWith(
+            item.expert_tags,
+            item._expert_tags,
+            (a, b) => a.name === b.name,
+          )
+          const karma_changed = item._allowance !== item.allowance
+          const tokens_changed = item._balance !== item.balance
+          return expert_tags_diff.length > 0 || karma_changed || tokens_changed
+        })
+
+        // Check if something was changed
+        if (items_dirty.length === 0) {
+          throw new GoshError('Value error', 'Nothing was changed')
+        }
+
         // Check allowance against balance
-        for (const item of items) {
+        for (const item of items_dirty) {
           if (item.allowance > item.balance) {
             throw new GoshError('Value error', {
               message: 'Member karma can not be greater than token balance',
@@ -1956,25 +1973,29 @@ export function useUpdateDaoMember() {
           type: 'pending',
           data: 'Resolve user profiles',
         }))
-        const profiles = await executeByChunk(items, MAX_PARALLEL_READ, async (item) => {
-          const username = item.username.toLowerCase()
+        const profiles = await executeByChunk(
+          items_dirty,
+          MAX_PARALLEL_READ,
+          async (item) => {
+            const username = item.username.toLowerCase()
 
-          let profile
-          if (item.usertype === EDaoMemberType.Dao) {
-            profile = await sc.getDao({ name: username })
-          } else if (item.usertype === EDaoMemberType.User) {
-            profile = await AppConfig.goshroot.getUserProfile({
-              username,
-            })
-          }
-          if (!profile || !(await profile.isDeployed())) {
-            throw new GoshError('Profile error', {
-              message: 'Profile does not exist',
-              username,
-            })
-          }
-          return { ...item, profile: profile.address }
-        })
+            let profile
+            if (item.usertype === EDaoMemberType.Dao) {
+              profile = await sc.getDao({ name: username })
+            } else if (item.usertype === EDaoMemberType.User) {
+              profile = await AppConfig.goshroot.getUserProfile({
+                username,
+              })
+            }
+            if (!profile || !(await profile.isDeployed())) {
+              throw new GoshError('Profile error', {
+                message: 'Profile does not exist',
+                username,
+              })
+            }
+            return { ...item, profile: profile.address }
+          },
+        )
 
         // Prepare event data
         const events = []
