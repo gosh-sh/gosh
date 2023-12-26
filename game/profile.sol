@@ -51,6 +51,7 @@ contract Profile is Constants {
         require(address(this).balance >= 15 ever, ERR_LOW_BALANCE);
         reCalculateKarma();
         require(_karma >= STEP_KARMA, ERR_NOT_ENOUGH_KARMA);
+        _karma -= STEP_KARMA;
         if (direction == LEFT) {
             TvmCell s1 = GameLib.composeFieldStateInit(_code[m_FieldCode], _fabric, Position(_position.x - 1, _position.y), version);
             new Field {
