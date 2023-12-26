@@ -197,6 +197,10 @@ export class DaoWallet extends BaseContract {
     })
   }
 
+  async smvCheckEvent(address: string) {
+    await this.run('tryProposalResult', { proposal: address })
+  }
+
   async createDaoMember(params: {
     members: {
       profile: string

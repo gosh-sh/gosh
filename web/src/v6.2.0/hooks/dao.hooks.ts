@@ -1,7 +1,6 @@
 import { AggregationFn } from '@eversdk/core'
 import { Buffer } from 'buffer'
 import _, { sum } from 'lodash'
-import moment from 'moment'
 import { useCallback, useEffect, useState } from 'react'
 import { GoshAdapterFactory, sha1 } from 'react-gosh'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
@@ -2298,7 +2297,7 @@ export function useDaoEvent(
       }
 
       // Run check event (for expired events)
-      if (moment().unix() > found.time.finish && !found.status.completed) {
+      if (Date.now() > found.time.finish && !found.status.completed) {
         member.wallet?.smvCheckEvent(found.address)
       }
 
@@ -2333,23 +2332,19 @@ export function useDaoEvent(
       return
     }
 
-    await event.account.account.subscribeMessages('body', async ({ body }) => {
-      const decoded = await event.account!.decodeMessageBody(body, 0)
-      const triggers = ['acceptReviewer', 'rejectReviewer', 'updateHead', 'vote']
-      if (decoded && triggers.indexOf(decoded.name) >= 0) {
-        const details = await event.account!.getDetails({
-          wallet: member.wallet,
-        })
-        setEvents((state) => ({
-          ...state,
-          items: state.items.map((item) => {
-            if (item.address === event!.address) {
-              return { ...item, ...details }
-            }
-            return item
-          }),
-        }))
-      }
+    await event.account.account.subscribeAccount('boc', async () => {
+      const details = await event.account!.getDetails({
+        wallet: member.wallet,
+      })
+      setEvents((state) => ({
+        ...state,
+        items: state.items.map((item) => {
+          if (item.address === event!.address) {
+            return { ...item, ...details }
+          }
+          return item
+        }),
+      }))
     })
   }, [event?.address, member.isFetched])
 
