@@ -1,20 +1,20 @@
-import { useNavigate } from 'react-router-dom'
-import { getIdenticonAvatar } from '../../../../helpers'
-import { TDaoListItem } from '../../../types/dao.types'
-import classNames from 'classnames'
-import Spinner from '../../../../components/Spinner/Spinner'
-import Skeleton from '../../../../components/Skeleton'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCoins, faUsers } from '@fortawesome/free-solid-svg-icons'
-import { Tooltip } from 'react-tooltip'
-import { Popover } from '@headlessui/react'
 import { faBell, faBellSlash } from '@fortawesome/free-regular-svg-icons'
-import { Button, Checkbox } from '../../../../components/Form'
-import { ChangeEvent } from 'react'
-import { useDaoNotificationSettings } from '../../../hooks/notification.hooks'
-import { NotificationType } from '../../../../constants'
-import { useUser } from '../../../hooks/user.hooks'
+import { faCoins, faUsers } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Popover } from '@headlessui/react'
+import classNames from 'classnames'
 import { AnimatePresence, motion } from 'framer-motion'
+import { ChangeEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Tooltip } from 'react-tooltip'
+import { Button, Checkbox } from '../../../../components/Form'
+import Skeleton from '../../../../components/Skeleton'
+import Spinner from '../../../../components/Spinner/Spinner'
+import { NotificationType } from '../../../../constants'
+import { getIdenticonAvatar } from '../../../../helpers'
+import { useDaoNotificationSettings } from '../../../hooks/notification.hooks'
+import { useUser } from '../../../hooks/user.hooks'
+import { TDaoListItem } from '../../../types/dao.types'
 
 type TListItemSkeletonProps = React.HTMLAttributes<HTMLDivElement>
 
@@ -192,8 +192,7 @@ const ListItem = (props: TListItemProps) => {
                         icon={faBellSlash}
                         size="xl"
                         fixedWidth
-                        className="mr-2 text-gray-7c8db5 group-hover:text-black
-                                                    transition-colors duration-200"
+                        className="mr-2 text-gray-7c8db5 group-hover:text-black transition-colors duration-200"
                       />
                       Disable notifications
                     </Button>

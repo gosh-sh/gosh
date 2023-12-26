@@ -5,6 +5,7 @@ import { AnimatePresence, Variants, motion } from 'framer-motion'
 import { Fragment, useState } from 'react'
 import { Calendar } from 'react-multi-date-picker'
 import TimePicker from 'react-multi-date-picker/plugins/time_picker'
+import Alert from '../../../components/Alert'
 import { Button } from '../../../components/Form'
 import { ModalCloseButton } from '../../../components/Modal'
 
@@ -54,6 +55,17 @@ const HackathonDatesModal = (props: DatePickerModalProps) => {
   ) => {
     const { start, voting, finish } = values
 
+    // Move to the tab with empty date for force select date
+    const no_date_index = Object.values(values).findIndex((v) => !v)
+    if (no_date_index >= 0) {
+      onTabChange(no_date_index)
+      if (no_date_index === tab_active.index) {
+        const key = tabs[no_date_index].key
+        helpers.setFieldError(key, `Please select ${key} date from calendar`)
+      }
+      return
+    }
+
     try {
       if (start > Math.min(voting, finish)) {
         helpers.setFieldError(
@@ -88,8 +100,7 @@ const HackathonDatesModal = (props: DatePickerModalProps) => {
             >
               <Tab.List
                 as="div"
-                className="flex gap-x-8 mb-6 overflow-x-auto no-scrollbar
-                                border-b border-b-gray-e6edff text-sm"
+                className="flex gap-x-3 mb-6 overflow-x-auto no-scrollbar border-b border-b-gray-e6edff"
               >
                 {tabs.map(({ title }) => (
                   <Tab key={title} as={Fragment}>
@@ -97,7 +108,7 @@ const HackathonDatesModal = (props: DatePickerModalProps) => {
                       <Button
                         variant="custom"
                         className={classNames(
-                          'grow pt-1.5 pb-2 border-b-2 !rounded-none',
+                          'grow pt-1.5 pb-2 border-b-2 !rounded-none font-medium',
                           'hover:text-black hover:border-b-black transition-colors duration-200',
                           selected
                             ? 'text-black border-b-black'
@@ -125,6 +136,12 @@ const HackathonDatesModal = (props: DatePickerModalProps) => {
                   exit="exit"
                   custom={{ dir: tab_active.dir }}
                 >
+                  {tab_active.index === 1 && (
+                    <Alert variant="warning" className="mb-4 text-xs">
+                      You won't be able to change hackathon details after voting date
+                    </Alert>
+                  )}
+
                   <Calendar
                     className="date-picker-fw mt-4 !border-none"
                     shadow={false}
@@ -143,7 +160,7 @@ const HackathonDatesModal = (props: DatePickerModalProps) => {
               </Tab.Panels>
             </Tab.Group>
 
-            <div className="mt-6 text-sm text-red-ff3b30 text-center">
+            <div className="mt-4 text-sm text-red-ff3b30 text-center">
               <ErrorMessage name="start" />
               <ErrorMessage name="voting" />
               <ErrorMessage name="finish" />
