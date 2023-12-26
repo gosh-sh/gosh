@@ -302,7 +302,10 @@ export function useDaoHackathonList(
     })
 
     const items = await executeByChunk<{ id: string }, THackathonDetails>(
-      results,
+      // Filter broken or incorrect hackathons
+      results.filter(({ id }) => {
+        return id !== '0:0a23509cd7a69fffb86949a0c90a7686c1d24df26ffc290154e56cbee6d5fab2'
+      }),
       MAX_PARALLEL_READ,
       async ({ id }) => {
         const account = await sc.getHackathon({ address: id })
