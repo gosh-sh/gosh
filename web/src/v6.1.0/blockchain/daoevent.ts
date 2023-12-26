@@ -1,20 +1,20 @@
 import { TonClient } from '@eversdk/core'
+import _ from 'lodash'
+import { AppConfig } from '../../appconfig'
 import { BaseContract } from '../../blockchain/contract'
-import SmvEventABI from './abi/smvproposal.abi.json'
 import {
   DaoEventType,
   MAX_PARALLEL_READ,
   MILESTONE_TAG,
   SYSTEM_TAG,
 } from '../../constants'
-import { DaoWallet } from './daowallet'
-import { EDaoEventType } from '../../types/common.types'
 import { GoshError } from '../../errors'
+import { EDaoEventType } from '../../types/common.types'
 import { executeByChunk, sleep } from '../../utils'
-import _ from 'lodash'
 import { EDaoMemberType, TDaoEventReviewer, TTaskGrantPair } from '../types/dao.types'
-import { getDaoOrProfile, getSystemContract } from './helpers'
-import { AppConfig } from '../../appconfig'
+import SmvEventABI from './abi/smvproposal.abi.json'
+import { DaoWallet } from './daowallet'
+import { getDaoOrProfile } from './helpers'
 
 export class DaoEvent extends BaseContract {
   constructor(client: TonClient, address: string) {
@@ -33,7 +33,7 @@ export class DaoEvent extends BaseContract {
       completed: parseInt(details.value4) * 1000,
     }
     const status = {
-      completed: details.value1 !== null || (time.finish > 0 && Date.now() > time.finish),
+      completed: details.value1 !== null,
       accepted: !!details.value1,
     }
     const votes = {
