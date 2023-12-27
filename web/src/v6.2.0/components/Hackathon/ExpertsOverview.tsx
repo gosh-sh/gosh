@@ -1,7 +1,7 @@
 import { Field, Form, Formik } from 'formik'
 import randomColor from 'randomcolor'
 import { useNavigate } from 'react-router-dom'
-import Select from 'react-select'
+import Select, { CSSObjectWithLabel } from 'react-select'
 import { Button } from '../../../components/Form'
 import { BaseField } from '../../../components/Formik'
 import { Select2ClassNames } from '../../../helpers'
@@ -71,33 +71,37 @@ const HackathonExpertsOverview = () => {
                   multiValueRemove: () => '!p-0.5',
                 }}
                 styles={{
-                  multiValue: (base, props) => ({
-                    ...base,
-                    display: 'flex',
-                    alignItems: 'center',
-                    flexWrap: 'nowrap',
-                    fontSize: '0.875rem !important',
-                    padding: '0 0.5rem',
-                    borderRadius: '2.25rem',
-                    margin: '0 0.125rem',
-                    color: randomColor({
-                      seed: props.data.label,
-                      luminosity: 'dark',
-                    }),
-                    backgroundColor: randomColor({
-                      seed: props.data.label,
-                      luminosity: 'light',
-                      format: 'rgba',
-                      alpha: 0.35,
-                    }),
-                  }),
-                  multiValueLabel: (base, props) => ({
-                    ...base,
-                    color: randomColor({
-                      seed: props.data.label,
-                      luminosity: 'dark',
-                    }),
-                  }),
+                  multiValue: (base, props) => {
+                    return {
+                      ...base,
+                      display: 'flex',
+                      alignItems: 'center',
+                      flexWrap: 'nowrap',
+                      fontSize: '0.875rem !important',
+                      padding: '0 0.5rem',
+                      borderRadius: '2.25rem',
+                      margin: '0 0.125rem',
+                      color: randomColor({
+                        seed: props.data.label,
+                        luminosity: 'dark',
+                      }),
+                      backgroundColor: randomColor({
+                        seed: props.data.label,
+                        luminosity: 'light',
+                        format: 'rgba',
+                        alpha: 0.35,
+                      }),
+                    } as CSSObjectWithLabel
+                  },
+                  multiValueLabel: (base, props) => {
+                    return {
+                      ...base,
+                      color: randomColor({
+                        seed: props.data.label,
+                        luminosity: 'dark',
+                      }),
+                    } as CSSObjectWithLabel
+                  },
                 }}
                 onChange={(option) => {
                   setFieldValue('expert_tags', option)

@@ -5,7 +5,7 @@ import classNames from 'classnames'
 import { ErrorMessage, Field, useFormikContext } from 'formik'
 import randomColor from 'randomcolor'
 import { useNavigate } from 'react-router-dom'
-import Select from 'react-select'
+import Select, { CSSObjectWithLabel } from 'react-select'
 import { Tooltip } from 'react-tooltip'
 import { MemberIcon } from '../../../../../components/Dao'
 import { Button } from '../../../../../components/Form'
@@ -114,37 +114,41 @@ const ListItem = (props: TListItemProps) => {
               placeholder="Expert tags"
               classNames={{
                 ...Select2ClassNames,
-                valueContainer: () => '!p-1',
+                valueContainer: () => '!py-1 !px-3',
                 multiValueRemove: () => '!p-0.5',
               }}
               styles={{
-                multiValue: (base, props) => ({
-                  ...base,
-                  display: 'flex',
-                  alignItems: 'center',
-                  flexWrap: 'nowrap',
-                  fontSize: '0.875rem !important',
-                  padding: '0 0.5rem',
-                  borderRadius: '2.25rem',
-                  margin: '0 0.125rem',
-                  color: randomColor({
-                    seed: props.data.label,
-                    luminosity: 'dark',
-                  }),
-                  backgroundColor: randomColor({
-                    seed: props.data.label,
-                    luminosity: 'light',
-                    format: 'rgba',
-                    alpha: 0.35,
-                  }),
-                }),
-                multiValueLabel: (base, props) => ({
-                  ...base,
-                  color: randomColor({
-                    seed: props.data.label,
-                    luminosity: 'dark',
-                  }),
-                }),
+                multiValue: (base, props) => {
+                  return {
+                    ...base,
+                    display: 'flex',
+                    alignItems: 'center',
+                    flexWrap: 'nowrap',
+                    fontSize: '0.875rem !important',
+                    padding: '0 0.5rem',
+                    borderRadius: '2.25rem',
+                    margin: '0 0.125rem',
+                    color: randomColor({
+                      seed: props.data.label,
+                      luminosity: 'dark',
+                    }),
+                    backgroundColor: randomColor({
+                      seed: props.data.label,
+                      luminosity: 'light',
+                      format: 'rgba',
+                      alpha: 0.35,
+                    }),
+                  } as CSSObjectWithLabel
+                },
+                multiValueLabel: (base, props) => {
+                  return {
+                    ...base,
+                    color: randomColor({
+                      seed: props.data.label,
+                      luminosity: 'dark',
+                    }),
+                  } as CSSObjectWithLabel
+                },
               }}
               onChange={(option) => {
                 formik.setFieldValue(`items.${index}.expert_tags`, option)
