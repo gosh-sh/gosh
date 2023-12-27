@@ -701,6 +701,10 @@ class GoshDaoAdapter implements IGoshDaoAdapter {
             },
             owner,
             tags: Object.values(details.hashtag),
+            expert_tags: Object.values(details.daoTagData).map((item: any) => ({
+                name: item.name,
+                multiplier: parseInt(item.value),
+            })),
             isMintOn: await this._isMintOn(),
             isMintOnPrevDiff: await this._isMintOnPrevDiff(),
             isEventProgressOn: !details.hide_voting_results,
