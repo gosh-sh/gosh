@@ -780,48 +780,9 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
       return
     }
 
-    // Subscribe for DAO incoming messages
-    const triggers = [
-      'addRegularTokenPub',
-      'addVoteTokenPub',
-      'addVoteTokenPub3',
-      'calculateBalanceManager',
-      'changeAllowDiscussion',
-      'changeAllowanceIn',
-      'changeAllowanceIn2',
-      'changeHideVotingResult',
-      'deleteWallet',
-      'deployWallets',
-      'deployedWallet',
-      'destroyedWallet',
-      'isAlone',
-      'mintReserve',
-      'receiveTokentoReserve',
-      'redeployedTask',
-      'returnAllowance',
-      'returnTaskToken',
-      'returnTaskTokenBig',
-      'returnWalletsVersion',
-      'returnWalletsVersionv4',
-      'setAbilityInvite',
-      'setRepoUpgraded',
-      'smvdeploytag',
-      'smvdeploytagin',
-      'smvdestroytag',
-      'smvnotallowmint',
-      'setNewTags',
-      'destroyTags',
-      'setNewMembersTags',
-      'destroyTagsForMembers',
-    ]
-    data.details.account?.account.subscribeMessages('msg_type body', async (message) => {
-      const decoded = await data.details.account?.decodeMessageBody(
-        message.body,
-        message.msg_type,
-      )
-      if (decoded && triggers.indexOf(decoded.name) >= 0) {
-        await getDetailsSubscription(data.details.account!)
-      }
+    // Subscribe for DAO account BOC change
+    data.details.account?.account.subscribeAccount('boc', async () => {
+      await getDetailsSubscription(data.details.account!)
     })
 
     // Updates by interval
@@ -1093,37 +1054,9 @@ export function useDaoMember(params: { initialize?: boolean; subscribe?: boolean
       return
     }
 
-    // Subscribe for DAO wallet messages
-    const triggers = [
-      'acceptUnlock',
-      'addAllowance',
-      'addAllowanceC',
-      'addRegularToken',
-      'addVoteToken',
-      'askForLimited',
-      'askForLimitedBasic',
-      'daoSendTokenToNewVersionAfter5',
-      'grantToken',
-      'grantTokenBig',
-      'lockVoting',
-      'lockVotingInDao',
-      'receiveToken',
-      'returnDaoBalance',
-      'sendTokenToDaoReserve',
-      'sendTokenToDaoReserveIn',
-      'sendToken',
-      'sendTokenIn',
-      'sendTokenToNewVersion',
-      'sendTokenToNewVersionAfter5',
-      'sendTokenToNewVersionIn',
-      'sendTokenToNewVersion5',
-      'setLimitedWallet',
-    ]
-    data.wallet?.account.subscribeMessages('msg_type body', async (message) => {
-      const decoded = await data.wallet?.decodeMessageBody(message.body, message.msg_type)
-      if (decoded && triggers.indexOf(decoded.name) >= 0) {
-        await getDetails()
-      }
+    // Subscribe for DAO wallet account BOC change
+    data.wallet?.account.subscribeAccount('boc', async () => {
+      await getDetails()
     })
 
     return () => {
@@ -5137,12 +5070,8 @@ export function useTask(
         return
       }
 
-      await task.account.account.subscribeMessages('body', async ({ body }) => {
-        const decoded = await task.account!.decodeMessageBody(body, 0)
-        const triggers = ['destroy', 'isReady', 'getGrant']
-        if (decoded && triggers.indexOf(decoded.name) >= 0) {
-          await getTaskData(task.account! as Task)
-        }
+      await task.account.account.subscribeAccount('boc', async () => {
+        await getTaskData(task.account! as Task)
       })
     }
 
@@ -5275,12 +5204,8 @@ export function useMilestone(
         return
       }
 
-      await task.account.account.subscribeMessages('body', async ({ body }) => {
-        const decoded = await task.account!.decodeMessageBody(body, 0)
-        const triggers = ['destroy', 'isReady', 'getGrant']
-        if (decoded && triggers.indexOf(decoded.name) >= 0) {
-          await getMilestoneData(dao.name!, task.account! as Milestone)
-        }
+      await task.account.account.subscribeAccount('boc', async () => {
+        await getMilestoneData(dao.name!, task.account! as Milestone)
       })
     }
 

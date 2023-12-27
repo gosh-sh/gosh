@@ -221,7 +221,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
   const submitRouteStep = () => {
     const route = `${data.summary.from.token.network}:${data.summary.to.token.network}`
 
-    let steps: typeof data['summary']['progress']['steps'] = []
+    let steps: (typeof data)['summary']['progress']['steps'] = []
     if (route === `${EL2Network.ETH}:${EL2Network.GOSH}`) {
       if (data.summary.from.token.rootaddr) {
         steps.push({
@@ -940,16 +940,9 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
       return
     }
 
-    data.gosh.instance?.account.subscribeMessages(
-      'id body msg_type',
-      async ({ body, msg_type }) => {
-        const decoded = await data.gosh.instance!.decodeMessageBody(body, msg_type)
-        const triggers = ['acceptMint', 'acceptTransfer', 'transfer']
-        if (decoded && triggers.indexOf(decoded.name) >= 0) {
-          await goshSubscribeCallback()
-        }
-      },
-    )
+    data.gosh.instance?.account.subscribeAccount('boc', async () => {
+      await goshSubscribeCallback()
+    })
 
     return () => {
       if (initialize) {
@@ -1070,7 +1063,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
   }, [])
 
   useEffect(() => {
-    let interval: NodeJS.Timer
+    let interval: NodeJS.Timeout
     if (initialize) {
       getEthComission()
       interval = setLockableInterval(async () => {
