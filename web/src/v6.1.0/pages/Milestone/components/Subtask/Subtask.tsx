@@ -1,18 +1,38 @@
-import { Tooltip } from 'react-tooltip'
-import { useCallback, useEffect, useRef } from 'react'
-import { useDao, useDaoTaskList, useTask } from '../../../../hooks/dao.hooks'
-import CopyClipboard from '../../../../../components/CopyClipboard'
-import { shortString } from '../../../../../utils'
-import { Button } from '../../../../../components/Form'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import moment from 'moment'
+import { useCallback, useEffect, useRef } from 'react'
 import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
-import Alert from '../../../../../components/Alert'
-import { TaskStatusBadge, TaskTeam, lockToStr } from '../../../../components/Task'
 import { Link } from 'react-router-dom'
+import { Tooltip } from 'react-tooltip'
+import Alert from '../../../../../components/Alert'
+import CopyClipboard from '../../../../../components/CopyClipboard'
+import { Button } from '../../../../../components/Form'
 import { useBodyScrollLock } from '../../../../../hooks/common.hooks'
-import { SubtaskManage } from './Manage'
+import { shortString } from '../../../../../utils'
+import { TaskStatusBadge, TaskTeam, lockToStr } from '../../../../components/Task'
+import { useDao, useDaoTaskList, useTask } from '../../../../hooks/dao.hooks'
 import { TMilestoneTaskDetails } from '../../../../types/dao.types'
+import { SubtaskManage } from './Manage'
+
+const styles = {
+  table: {
+    header: 'border-b border-gray-e6edff font-medium px-3 py-2 rounded-t-lg',
+    row: 'border-b border-gray-e6edff py-3 md:border-0 md:py-0 block md:table-row',
+    cell: 'md:border-b border-gray-e6edff px-3 py-1 md:py-2 text-sm flex md:table-cell before:content-[attr(data-cell)] before:font-medium before:basis-5/12 md:before:hidden',
+  },
+}
+
+const getUnlockDate = (unixtime: number, duration: number) => {
+  let formatted: string
+  if (unixtime > 0) {
+    const date = moment.unix(unixtime + duration)
+    formatted = date.format('MMM D, YY')
+  } else {
+    formatted = lockToStr(duration)
+  }
+  return formatted
+}
 
 type TSubtaskPageInnerProps = {
   address: string
@@ -75,8 +95,8 @@ const SubtaskPageInner = (props: TSubtaskPageInnerProps) => {
   }
 
   return (
-    <div ref={ref}>
-      <div className="flex flex-wrap items-center gap-2 border-b border-b-gray-e8eeed pt-2 pb-4 relative">
+    <div ref={ref} className="pb-6">
+      <div className="flex flex-wrap items-center gap-2 border-b border-b-gray-e8eeed py-4 relative">
         <div className="basis-full lg:basis-auto grow">
           <h3 className="text-xl font-medium">{task.name}</h3>
         </div>
@@ -161,6 +181,42 @@ const SubtaskPageInner = (props: TSubtaskPageInnerProps) => {
           <SubtaskManage task={task as TMilestoneTaskDetails} milestone={milestone} />
         </div>
       </div>
+
+      <div className="mt-6">
+        <h3 className="mb-3">Rewards vesting</h3>
+
+        <div className="border border-gray-e6edff rounded-lg overflow-hidden">
+          <table className="w-full table-auto border-collapse -my-px">
+            <thead className="hidden md:table-header-group">
+              <tr className="text-xs text-left">
+                <th className={styles.table.header}>Unlock date</th>
+                <th className={styles.table.header}>Assigner</th>
+                <th className={styles.table.header}>Reviewer</th>
+                <th className={styles.table.header}>Manager</th>
+              </tr>
+            </thead>
+            <tbody>
+              {task.grant.assign.map((item, index) => (
+                <tr key={index} className={styles.table.row}>
+                  <td className={styles.table.cell} data-cell="Unlock date">
+                    {getUnlockDate(task.locktime, item.lock)}
+                  </td>
+                  <td className={styles.table.cell} data-cell="Assigner">
+                    {item.grant.toLocaleString()}
+                  </td>
+                  <td className={styles.table.cell} data-cell="Reviewer">
+                    {task.grant.review[index].grant.toLocaleString()}
+                  </td>
+                  <td className={styles.table.cell} data-cell="Manager">
+                    {task.grant.manager[index].grant.toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <Tooltip id="common-tip" clickable />
     </div>
   )
