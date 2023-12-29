@@ -1,17 +1,12 @@
-import { useCallback, useEffect, useState } from 'react'
-import _ from 'lodash'
-import { useProfile, useUser } from './user.hooks'
-import { EGoshError, GoshError } from '../../errors'
-import { AppConfig } from '../../appconfig'
-import { getSystemContract } from '../blockchain/helpers'
-import { supabase } from '../../supabase'
+import { AggregationFn } from '@eversdk/core'
 import { Buffer } from 'buffer'
-import {
-  executeByChunk,
-  setLockableInterval,
-  splitByChunk,
-  whileFinite,
-} from '../../utils'
+import _ from 'lodash'
+import { useCallback, useEffect, useState } from 'react'
+import { GoshAdapterFactory, sleep } from 'react-gosh'
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
+import { AppConfig } from '../../appconfig'
+import { UserProfile } from '../../blockchain/userprofile'
+import { getAllAccounts, getPaginatedAccounts } from '../../blockchain/utils'
 import {
   DAO_TOKEN_TRANSFER_TAG,
   DISABLED_VERSIONS,
@@ -20,7 +15,24 @@ import {
   SYSTEM_TAG,
   VESTING_BALANCE_TAG,
 } from '../../constants'
-import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
+import { EGoshError, GoshError } from '../../errors'
+import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
+import { supabase } from '../../supabase'
+import { TSystemContract } from '../../types/blockchain.types'
+import { EDaoEventType, TToastStatus } from '../../types/common.types'
+import {
+  executeByChunk,
+  setLockableInterval,
+  splitByChunk,
+  whileFinite,
+} from '../../utils'
+import { Dao } from '../blockchain/dao'
+import { DaoEvent } from '../blockchain/daoevent'
+import { DaoWallet } from '../blockchain/daowallet'
+import { getSystemContract } from '../blockchain/helpers'
+import { GoshRepository } from '../blockchain/repository'
+import { SystemContract } from '../blockchain/systemcontract'
+import { Task } from '../blockchain/task'
 import {
   daoDetailsSelector,
   daoEventListSelector,
@@ -44,21 +56,9 @@ import {
   TTaskGrant,
   TTaskGrantPair,
 } from '../types/dao.types'
-import { Dao } from '../blockchain/dao'
-import { UserProfile } from '../../blockchain/userprofile'
-import { DaoWallet } from '../blockchain/daowallet'
-import { EDaoEventType, TToastStatus } from '../../types/common.types'
-import { getAllAccounts, getPaginatedAccounts } from '../../blockchain/utils'
-import { DaoEvent } from '../blockchain/daoevent'
-import { GoshAdapterFactory, sleep } from 'react-gosh'
-import { TSystemContract } from '../../types/blockchain.types'
-import { TGoshCommitTag } from '../types/repository.types'
-import { GoshRepository } from '../blockchain/repository'
 import { EDaoInviteStatus } from '../types/onboarding.types'
-import { Task } from '../blockchain/task'
-import { AggregationFn } from '@eversdk/core'
-import { SystemContract } from '../blockchain/systemcontract'
-import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
+import { TGoshCommitTag } from '../types/repository.types'
+import { useProfile, useUser } from './user.hooks'
 
 export function useCreateDao() {
   const profile = useProfile()
@@ -705,13 +705,19 @@ export function useDaoMember(params: { initialize?: boolean; subscribe?: boolean
     }
 
     const sc = getSystemContract()
-    const tagname = `${DAO_TOKEN_TRANSFER_TAG}:${user.username}`
 
     // Check if stoptag exists
-    const stoptag = await sc.getCommitTag({
-      data: { daoname: dao.name, reponame: DAO_TOKEN_TRANSFER_TAG, tagname },
+    const skip_repo = await sc.getRepository({
+      path: `${dao.name}/${DAO_TOKEN_TRANSFER_TAG}`,
     })
-    if (await stoptag.isDeployed()) {
+    const skip_transfer = await data.wallet.getSnapshot({
+      data: {
+        branch: '',
+        repo_addr: skip_repo.address,
+        filename: user.username!,
+      },
+    })
+    if (await skip_transfer.isDeployed()) {
       return { retry: false }
     }
 
@@ -760,13 +766,14 @@ export function useDaoMember(params: { initialize?: boolean; subscribe?: boolean
       }),
     )
 
-    // Deploy stop transfer tag
+    // Deploy skip transfer tag
     if (transfer.length === 0) {
-      await data.wallet.createCommitTag({
-        reponame: DAO_TOKEN_TRANSFER_TAG,
-        name: tagname,
+      await data.wallet.createSnapshot({
+        branch: '',
+        commit_name: '',
+        repo_addr: skip_repo.address,
+        filename: user.username!,
         content: '',
-        commit: { address: user.profile, name: user.username! },
       })
     }
 

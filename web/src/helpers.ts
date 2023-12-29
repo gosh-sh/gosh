@@ -86,7 +86,7 @@ export const markdown2html = async (value: string) => {
  */
 export const ToastOptionsShortcuts = {
   Default: {
-    position: toast.POSITION.TOP_RIGHT,
+    position: toast.POSITION.BOTTOM_RIGHT,
     autoClose: 3000,
     hideProgressBar: false,
     closeOnClick: false,
