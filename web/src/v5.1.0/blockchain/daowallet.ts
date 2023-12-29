@@ -1,14 +1,16 @@
 import { KeyPair, TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
-import WalletABI from './abi/daowallet.abi.json'
-import { SmvLocker } from './smvlocker'
-import { SmvClient } from './smvclient'
-import { TGoshCommitTag } from '../types/repository.types'
-import { executeByChunk, sleep } from '../../utils'
-import { EDaoEventType } from '../../types/common.types'
-import { MAX_PARALLEL_READ, SYSTEM_TAG } from '../../constants'
-import { ETaskReward, TTaskGrant } from '../types/dao.types'
 import { UserProfile } from '../../blockchain/userprofile'
+import { MAX_PARALLEL_READ, SYSTEM_TAG } from '../../constants'
+import { GoshError } from '../../errors'
+import { EDaoEventType } from '../../types/common.types'
+import { executeByChunk, sleep } from '../../utils'
+import { ETaskReward, TTaskGrant } from '../types/dao.types'
+import { TGoshCommitTag } from '../types/repository.types'
+import WalletABI from './abi/daowallet.abi.json'
+import { SmvClient } from './smvclient'
+import { SmvLocker } from './smvlocker'
+import { GoshShapshot } from './snapshot'
 
 export class DaoWallet extends BaseContract {
   constructor(client: TonClient, address: string, keys?: KeyPair) {
@@ -816,6 +818,53 @@ export class DaoWallet extends BaseContract {
     })
   }
 
+  async getSnapshot(params: {
+    address?: string
+    data?: { branch: string; repo_addr: string; filename: string }
+  }) {
+    const { address, data } = params
+
+    if (!address && !data) {
+      throw new GoshError('Value error', 'Data or address not passed')
+    }
+
+    let _address = address
+    if (!_address) {
+      const { branch, repo_addr, filename } = data!
+      const { value0 } = await this.runLocal(
+        'getSnapshotAddr',
+        { branch, repo: repo_addr, name: filename },
+        undefined,
+        { useCachedBoc: true },
+      )
+      _address = value0
+    }
+
+    return new GoshShapshot(this.client, _address!)
+  }
+
+  async createSnapshot(params: {
+    branch: string
+    commit_name: string
+    repo_addr: string
+    filename: string
+    content: string
+    ipfs_url?: string
+  }) {
+    const { branch, commit_name, repo_addr, filename, content, ipfs_url } = params
+    await this.run('deployNewSnapshot', {
+      branch,
+      commit: commit_name,
+      repo: repo_addr,
+      name: filename,
+      snapshotdata: content,
+      snapshotipfs: ipfs_url,
+    })
+  }
+
+  /**
+   * Private methods
+   */
   private async createMultiEventData(proposals: { type: EDaoEventType; params: any }[]) {
     // Prepare cells
     const cells = await executeByChunk(
