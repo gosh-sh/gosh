@@ -47,7 +47,9 @@ contract Profile is Constants {
         Fabric(_fabric).increaseBalance{value: 0.1 ton, flag: 1}(tvm.pubkey());
     }
 
-    function nextStep (uint8 direction) public accept onlyOwner {
+    function nextStep (Position my_pos, uint8 direction) public accept onlyOwner {
+        require(my_pos.x == _position.x, ERR_WRONG_POSITION);
+        require(my_pos.y == _position.y, ERR_WRONG_POSITION);
         require(address(this).balance >= 15 ever, ERR_LOW_BALANCE);
         reCalculateKarma();
         require(_karma >= STEP_KARMA, ERR_NOT_ENOUGH_KARMA);
