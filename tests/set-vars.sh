@@ -27,6 +27,8 @@ tonos-cli config --url $NETWORK
 set -x
 # Should exist VersionConrtroler and SystemContract contracts
 
+export VERSION_CONTROLLER=`cat $GOSH_PATH/VersionController.addr`
+echo "export VERSION_CONTROLLER=$VERSION_CONTROLLER" >> env.env
 export SYSTEM_CONTRACT_ADDR=`cat $GOSH_PATH/SystemContract.addr`
 echo "export SYSTEM_CONTRACT_ADDR=$SYSTEM_CONTRACT_ADDR" >> env.env
 

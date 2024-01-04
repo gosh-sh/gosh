@@ -163,7 +163,10 @@ impl UserWalletMirrors {
         Ok(())
     }
 
-    pub(super) async fn try_init_mirrors<B>(&self, blockchain: &B) -> anyhow::Result<()>
+    pub(super) async fn try_init_mirrors<B>(
+        &self, blockchain: &B,
+        dao_address: &BlockchainContractAddress,
+    ) -> anyhow::Result<()>
     where
         B: BlockchainService + BlockchainCall,
     {
@@ -223,9 +226,11 @@ impl UserWalletMirrors {
                 match max_number_of_wallets {
                     Some(w) => w,
                     None => {
-                        let n =
-                            get_user_wallet_config_max_number_of_mirrors(blockchain, &zero_wallet)
-                                .await?;
+                        let n = get_user_wallet_config_max_number_of_mirrors(
+                            blockchain,
+                            dao_address
+                        )
+                        .await?;
                         let mut inner_state = self.inner.write().await;
                         let w: TWalletMirrorIndex = (n + 1) as TWalletMirrorIndex;
                         inner_state.max_number_of_wallets = Some(w);
