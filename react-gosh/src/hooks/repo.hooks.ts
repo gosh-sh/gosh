@@ -7,8 +7,8 @@ import { GoshAdapterFactory } from '../gosh'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from '../gosh/interfaces'
 import { executeByChunk, getRepositoryAccounts, getTreeItemFullPath } from '../helpers'
 import {
-    branchesAtom,
     branchSelector,
+    branchesAtom,
     daoAtom,
     repositoryAtom,
     treeAtom,
@@ -829,7 +829,7 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branchName?: string) {
             while (!repairCommit.correct) {
                 const _parent = branch.commit.parents[0]
                 if (!_parent) {
-                    throw new GoshError('Value error', 'Correct commit not found')
+                    break
                 }
 
                 const _gosh = GoshAdapterFactory.create(_parent.version)
@@ -838,14 +838,27 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branchName?: string) {
                 })
                 repairCommit = await repairRepo.getCommit({ address: _parent.address })
                 if (repairCommit.name === ZERO_COMMIT) {
-                    throw new GoshError('Value error', 'Correct commit not found')
+                    break
                 }
             }
 
-            // Deploy upgrade commit (without setCommit)
-            const upgradeData = await repairRepo.getUpgrade(repairCommit.name)
+            // Deploy upgrade/zero commit (without setCommit)
+            if (repairCommit.name === ZERO_COMMIT) {
+                const tree_sha256 = await repo.getTreeSha256Out({ items: [] })
+                await repo.deployCommitOut(
+                    repairCommit.branch,
+                    repairCommit.name,
+                    repairCommit.content,
+                    [],
+                    tree_sha256,
+                    false,
+                )
+            } else {
+                const upgradeData = await repairRepo.getUpgrade(repairCommit.name)
+                await repo.pushUpgrade(upgradeData, { setCommit: false })
+            }
+
             const repairCommitAcc = await repo._getCommit({ name: repairCommit.name })
-            await repo.pushUpgrade(upgradeData, { setCommit: false })
             const waitRepairCommit = await whileFinite(async () => {
                 return await repairCommitAcc.isDeployed()
             })
@@ -1282,17 +1295,17 @@ function usePullRequestCommit(
 }
 
 export {
-    useRepoList,
-    useRepo,
-    useRepoCreate,
-    useRepoUpgrade,
-    useBranches,
-    useBranchManagement,
-    useTree,
     useBlob,
-    useCommitList,
+    useBranchManagement,
+    useBranches,
     useCommit,
-    usePush,
+    useCommitList,
     useMergeRequest,
     usePullRequestCommit,
+    usePush,
+    useRepo,
+    useRepoCreate,
+    useRepoList,
+    useRepoUpgrade,
+    useTree,
 }
