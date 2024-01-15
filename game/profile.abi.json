@@ -8,7 +8,8 @@
 			"inputs": [
 				{"name":"fieldCode","type":"cell"},
 				{"name":"profileCode","type":"cell"},
-				{"name":"awardCode","type":"cell"}
+				{"name":"awardCode","type":"cell"},
+				{"name":"forestCode","type":"cell"}
 			],
 			"outputs": [
 			]
@@ -30,6 +31,13 @@
 			]
 		},
 		{
+			"name": "dig",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getAward",
 			"inputs": [
 				{"name":"index","type":"uint128"},
@@ -40,13 +48,6 @@
 		},
 		{
 			"name": "buildTree",
-			"inputs": [
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "buildPipe",
 			"inputs": [
 			],
 			"outputs": [
@@ -89,6 +90,15 @@
 		{
 			"name": "deleteFromPingList",
 			"inputs": [
+				{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"position","type":"tuple"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "takeKarmaFromTree",
+			"inputs": [
+				{"name":"karma","type":"uint128"},
 				{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"position","type":"tuple"}
 			],
 			"outputs": [

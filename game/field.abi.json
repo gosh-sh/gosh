@@ -8,13 +8,14 @@
 			"inputs": [
 				{"name":"fieldCode","type":"cell"},
 				{"name":"profileCode","type":"cell"},
-				{"name":"awardCode","type":"cell"}
+				{"name":"awardCode","type":"cell"},
+				{"name":"forestCode","type":"cell"}
 			],
 			"outputs": [
 			]
 		},
 		{
-			"name": "step",
+			"name": "dig",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"}
 			],
@@ -23,6 +24,14 @@
 		},
 		{
 			"name": "buildTree",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "takeMoney",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"}
 			],
@@ -75,6 +84,11 @@
 		{"name":"_owner","type":"optional(uint256)"},
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_visiters","type":"map(uint256,bool)"},
-		{"name":"_timer","type":"optional(uint32)"}
+		{"name":"_timer","type":"optional(uint32)"},
+		{"name":"_tree_balance","type":"uint128"},
+		{"name":"_tree_income","type":"uint128"},
+		{"name":"_union","type":"optional(string)"},
+		{"name":"_timeupdate","type":"uint128"},
+		{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"_main","type":"optional(tuple)"}
 	]
 }

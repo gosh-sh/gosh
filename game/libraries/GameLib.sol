@@ -8,6 +8,7 @@ pragma ever-solidity >=0.66.0;
 import "../field.sol";
 import "../profile.sol";
 import "../award.sol";
+import "../forest.sol";
 
 library GameLib {
     string constant versionLib = "0.0.1";
@@ -26,7 +27,33 @@ library GameLib {
         return s1;
     }
 
+    function calculateForestAddress(TvmCell code, address fabric, Position position, string version) public returns(address) {
+        TvmCell s1 = composeForestStateInit(code, fabric, position, version);
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
+
+    function composeForestStateInit(TvmCell code, address fabric, Position position, string version) public returns(TvmCell) {
+        TvmCell s1 = tvm.buildStateInit({
+            code: buildFieldCode(code, version),
+            contr: Forest,
+            varInit: {_fabric: fabric, _position : position}
+        });
+        return s1;
+    }
+
     function buildFieldCode(
+        TvmCell originalCode,
+        string version
+    ) public returns (TvmCell) {
+        TvmBuilder b;
+        b.store(version);
+        uint256 hash = tvm.hash(b.toCell());
+        delete b;
+        b.store(hash);
+        return tvm.setCodeSalt(originalCode, b.toCell());
+    }
+
+    function buildForestCode(
         TvmCell originalCode,
         string version
     ) public returns (TvmCell) {

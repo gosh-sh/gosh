@@ -51,7 +51,7 @@ contract Fabric is Constants {
             value: 100 ton, 
             wid: 0, 
             flag: 1
-        }(_code[m_FieldCode], _code[m_ProfileCode], _code[m_AwardCode]);
+        }(_code[m_FieldCode], _code[m_ProfileCode], _code[m_AwardCode], _code[m_ForestCode]);
         return;
     }
 

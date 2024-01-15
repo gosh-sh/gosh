@@ -35,6 +35,7 @@ abstract contract Constants is ReplayProtection {
     uint8 constant m_ProfileCode = 0;
     uint8 constant m_FieldCode = 1;
     uint8 constant m_AwardCode = 2;
+    uint8 constant m_ForestCode = 3;
 
     modifier onlyOwnerPubkeyOptional(optional(uint256) rootpubkey) {
         require(rootpubkey.hasValue() == true, ERR_NOT_OWNER);
