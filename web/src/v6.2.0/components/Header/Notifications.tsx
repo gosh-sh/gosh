@@ -1,14 +1,14 @@
-import { Menu, Popover } from '@headlessui/react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Button } from '../../../components/Form'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBell } from '@fortawesome/free-regular-svg-icons'
-import { useUserNotificationList } from '../../hooks/notification.hooks'
+import { faCheck, faChevronDown, faGear } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Menu, Popover } from '@headlessui/react'
+import classNames from 'classnames'
+import { AnimatePresence, motion } from 'framer-motion'
 import moment from 'moment'
 import { Link, useNavigate } from 'react-router-dom'
+import { Button } from '../../../components/Form'
 import { ENotificationType } from '../../../types/notification.types'
-import { faCheck, faChevronDown, faGear } from '@fortawesome/free-solid-svg-icons'
-import classNames from 'classnames'
+import { useUserNotificationList } from '../../hooks/notification.hooks'
 
 const getGroupedItems = (items: any[], daoname?: string) => {
   if (daoname) {
@@ -18,7 +18,11 @@ const getGroupedItems = (items: any[], daoname?: string) => {
   const groups: { [unixtime: string]: any[] } = {}
   for (const item of items) {
     const created_at = moment(item.created_at)
-    const key = moment({ day: created_at.date(), month: created_at.month() })
+    const key = moment({
+      day: created_at.date(),
+      month: created_at.month(),
+      year: created_at.year(),
+    })
       .unix()
       .toString()
 

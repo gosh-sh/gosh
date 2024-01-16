@@ -12,7 +12,7 @@ import { useBodyScrollLock } from '../../../../../hooks/common.hooks'
 import { shortString } from '../../../../../utils'
 import { TaskStatusBadge, TaskTeam, lockToStr } from '../../../../components/Task'
 import { useDao, useDaoTaskList, useTask } from '../../../../hooks/dao.hooks'
-import { TMilestoneTaskDetails } from '../../../../types/dao.types'
+import { TMilestoneTaskDetails, TTaskGrant } from '../../../../types/dao.types'
 import { SubtaskManage } from './Manage'
 
 const styles = {
@@ -32,6 +32,17 @@ const getUnlockDate = (unixtime: number, duration: number) => {
     formatted = lockToStr(duration)
   }
   return formatted
+}
+
+const getGrant = (grant: TTaskGrant) => {
+  const as_array = Object.values(grant).map((v) => v)
+  const item_max = as_array.sort((a, b) => b.length - a.length)[0]
+  return item_max.map((item, i) => ({
+    lock: item.lock,
+    assign: grant.assign[i]?.grant || 0,
+    review: grant.review[i]?.grant || 0,
+    manager: grant.manager[i]?.grant || 0,
+  }))
 }
 
 type TSubtaskPageInnerProps = {
@@ -196,19 +207,19 @@ const SubtaskPageInner = (props: TSubtaskPageInnerProps) => {
               </tr>
             </thead>
             <tbody>
-              {task.grant.assign.map((item, index) => (
+              {getGrant(task.grant).map((item, index) => (
                 <tr key={index} className={styles.table.row}>
                   <td className={styles.table.cell} data-cell="Unlock date">
                     {getUnlockDate(task.locktime, item.lock)}
                   </td>
                   <td className={styles.table.cell} data-cell="Assigner">
-                    {item.grant.toLocaleString()}
+                    {item.assign.toLocaleString()}
                   </td>
                   <td className={styles.table.cell} data-cell="Reviewer">
-                    {task.grant.review[index].grant.toLocaleString()}
+                    {item.review.toLocaleString()}
                   </td>
                   <td className={styles.table.cell} data-cell="Manager">
-                    {task.grant.manager[index].grant.toLocaleString()}
+                    {item.manager.toLocaleString()}
                   </td>
                 </tr>
               ))}
