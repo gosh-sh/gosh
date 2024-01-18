@@ -14,6 +14,15 @@
 			]
 		},
 		{
+			"name": "unionForest",
+			"inputs": [
+				{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"pos","type":"tuple"},
+				{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"forest","type":"optional(tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getDetails",
 			"inputs": [
 			],
@@ -38,6 +47,8 @@
 		{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"_position","type":"tuple"},
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"_trees","type":"map(uint256,tuple)"},
-		{"name":"_union","type":"optional(string)"}
+		{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"_candidates_trees","type":"map(uint256,tuple)"},
+		{"name":"_union","type":"optional(string)"},
+		{"name":"_union_status","type":"bool"}
 	]
 }

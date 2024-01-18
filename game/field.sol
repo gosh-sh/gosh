@@ -29,7 +29,7 @@ contract Field is Constants {
     uint128 _tree_income = 0;
     optional(string) _union;
     uint128 _timeupdate = uint128(0);
-    optional(Position) _main;
+    optional(Position) _forest;
 
 
     constructor(
@@ -124,9 +124,29 @@ contract Field is Constants {
                 new Forest  {
                     stateInit: s1, value: 10 ton, wid: 0, flag: 1
                 }(_code[m_FieldCode], _code[m_ProfileCode], _code[m_AwardCode]);
+                Position pos;
+                pos = _position;
+                pos.x += 1;
+                Field(GameLib.calculateFieldAddress(_code[m_FieldCode], _fabric, pos, version)).checkForest{value: 0.6 ton}(_position, _owner);
+                pos.x -= 2;
+                Field(GameLib.calculateFieldAddress(_code[m_FieldCode], _fabric, pos, version)).checkForest{value: 0.6 ton}(_position, _owner);
+                pos.x += 1;
+                pos.y += 1;
+                Field(GameLib.calculateFieldAddress(_code[m_FieldCode], _fabric, pos, version)).checkForest{value: 0.6 ton}(_position, _owner);
+                pos.y -= 2;
+                Field(GameLib.calculateFieldAddress(_code[m_FieldCode], _fabric, pos, version)).checkForest{value: 0.6 ton}(_position, _owner);
                 reCalculateKarma();
             }
         }
+    }
+
+    function checkForest(Position pos, optional(uint256) owner) public view senderIs(GameLib.calculateFieldAddress(_code[m_FieldCode], _fabric, pos, version)) accept {
+        if (_owner.get() != owner.get()) { return; }
+        Field(msg.sender).unionForest{value: 0.3 ton, flag: 1}(_position, _forest);
+    }
+
+    function unionForest(Position pos, optional(Position) forest) public view senderIs(GameLib.calculateFieldAddress(_code[m_FieldCode], _fabric, pos, version)) accept {
+        Forest(GameLib.calculateForestAddress(_code[m_ForestCode], _fabric, _forest.get(), version)).unionForest{value: 0.4 ton, flag: 1}(_position, forest);
     }
 
     //Fallback/Receive

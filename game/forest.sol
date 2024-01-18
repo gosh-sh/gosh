@@ -21,7 +21,10 @@ contract Forest is Constants {
     Position static _position;
     mapping(uint8 => TvmCell) _code;
     mapping(uint256 => Position) _trees;
+    mapping(uint256 => Position) _candidates_trees;
     optional(string) _union;
+    bool _union_status = false;
+    
 
     constructor(
         TvmCell fieldCode,
@@ -37,6 +40,14 @@ contract Forest is Constants {
         _trees[hash] = _position;
     }
 
+    function unionForest(Position pos, optional(Position) forest) public view senderIs(GameLib.calculateFieldAddress(_code[m_FieldCode], _fabric, pos, version)) accept {
+        TvmBuilder b;
+        b.store(pos);
+        uint256 hash = tvm.hash(b.toCell());
+        require(_trees[hash].x == pos.x, ERR_SENDER_NO_ALLOWED);
+        require(_trees[hash].y == pos.y, ERR_SENDER_NO_ALLOWED);
+        forest;
+    }
     //Fallback/Receive
     receive() external {
 //        if (msg.sender == _systemcontract) {

@@ -55,6 +55,24 @@
 			]
 		},
 		{
+			"name": "checkForest",
+			"inputs": [
+				{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"pos","type":"tuple"},
+				{"name":"owner","type":"optional(uint256)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "unionForest",
+			"inputs": [
+				{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"pos","type":"tuple"},
+				{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"forest","type":"optional(tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getDetails",
 			"inputs": [
 			],
@@ -89,6 +107,6 @@
 		{"name":"_tree_income","type":"uint128"},
 		{"name":"_union","type":"optional(string)"},
 		{"name":"_timeupdate","type":"uint128"},
-		{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"_main","type":"optional(tuple)"}
+		{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"_forest","type":"optional(tuple)"}
 	]
 }
