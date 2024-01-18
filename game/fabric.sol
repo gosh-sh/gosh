@@ -28,11 +28,11 @@ contract Fabric is Constants {
         msg.sender.transfer(1000 ever);
     }
 
-    function deployAwards() public view onlyOwner {
+    function deployAwards() public view onlyOwner accept {
         this.deployAwardsIn{value: 0.1 ever, flag: 1}(0);
     }
 
-    function deployAwardsIn(uint128 index) public view senderIs(this) {
+    function deployAwardsIn(uint128 index) public view senderIs(this) accept {
         if (index < AWARD_NUM) {
             new Award {
                 stateInit: GameLib.composeAwardStateInit(_code[m_AwardCode], this, index, version), 
