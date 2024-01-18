@@ -933,11 +933,12 @@ export function useDaoMember(params: { initialize?: boolean; subscribe?: boolean
     const skip_repo = await sc.getRepository({
       path: `${dao.name}/${DAO_TOKEN_TRANSFER_TAG}`,
     })
+    const skip_transfer_name = `${user.username}-v1`
     const skip_transfer = await data.wallet.getSnapshot({
       data: {
         commit_name: '',
         repo_addr: skip_repo.address,
-        filename: user.username!,
+        filename: skip_transfer_name,
       },
     })
     if (await skip_transfer.isDeployed()) {
@@ -994,7 +995,7 @@ export function useDaoMember(params: { initialize?: boolean; subscribe?: boolean
       await data.wallet.createSnapshot({
         commit_name: '',
         repo_addr: skip_repo.address,
-        filename: user.username!,
+        filename: skip_transfer_name,
         content: '',
         is_pin: false,
       })
