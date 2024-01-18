@@ -47,6 +47,13 @@
 			]
 		},
 		{
+			"name": "takeKarma",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "buildTree",
 			"inputs": [
 			],

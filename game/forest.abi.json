@@ -1,0 +1,43 @@
+{
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"fieldCode","type":"cell"},
+				{"name":"profileCode","type":"cell"},
+				{"name":"awardCode","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getDetails",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"trees","type":"map(uint256,tuple)"}
+			]
+		}
+	],
+	"data": [
+		{"key":1,"name":"_fabric","type":"address"},
+		{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"key":2,"name":"_position","type":"tuple"}
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
+		{"name":"_fabric","type":"address"},
+		{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"_position","type":"tuple"},
+		{"name":"_code","type":"map(uint8,cell)"},
+		{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"_trees","type":"map(uint256,tuple)"},
+		{"name":"_union","type":"optional(string)"}
+	]
+}

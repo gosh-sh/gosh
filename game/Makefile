@@ -1,4 +1,4 @@
-tvcs = fabric profile field award
+tvcs = fabric profile field award forest
 KEYS_PATH = ${CURDIR}
 EXTRA_DOCKER_ARGS = --network=host --add-host localnode:127.0.0.1
 

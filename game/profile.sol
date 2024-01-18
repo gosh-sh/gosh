@@ -90,13 +90,19 @@ contract Profile is Constants {
         }
     }
 
-    function dig() public view accept onlyOwner  {
+    function dig() public accept onlyOwner  {
+        reCalculateKarma();
         Field(GameLib.calculateFieldAddress(_code[m_FieldCode], _fabric, _position, version)).dig{value: 0.6 ton}(tvm.pubkey());
     }
 
     function getAward(uint128 index, uint8 id) public senderIs(GameLib.calculateAwardAddress(_code[m_AwardCode], _fabric, index, version)) accept {
         _awards[id] += 1;
         return;
+    }
+
+    function takeKarma() public onlyOwner accept {
+        reCalculateKarma();
+        Field(GameLib.calculateFieldAddress(_code[m_FieldCode], _fabric, _position, version)).takeMoney{value: 0.6 ton}(tvm.pubkey());
     }
 
     function buildTree() public onlyOwner accept {
