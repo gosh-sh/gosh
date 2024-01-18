@@ -25,7 +25,7 @@
 			"name": "nextStep",
 			"inputs": [
 				{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"my_pos","type":"tuple"},
-				{"name":"direction","type":"uint8"}
+				{"components":[{"name":"x","type":"uint128"},{"name":"y","type":"uint128"}],"name":"next_pos","type":"tuple"}
 			],
 			"outputs": [
 			]

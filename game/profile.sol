@@ -49,45 +49,30 @@ contract Profile is Constants {
         Fabric(_fabric).increaseBalance{value: 0.1 ton, flag: 1}(tvm.pubkey());
     }
 
-    function nextStep (Position my_pos, uint8 direction) public accept onlyOwner {
+    function nextStep (Position my_pos, Position next_pos) public accept onlyOwner {
         require(my_pos.x == _position.x, ERR_WRONG_POSITION);
         require(my_pos.y == _position.y, ERR_WRONG_POSITION);
+        if (_position.x != next_pos.x) {
+            require(_position.y == next_pos.y, ERR_WRONG_POSITION);
+            if (_position.x != next_pos.x + 1) {
+                require(_position.x == next_pos.x - 1, ERR_WRONG_POSITION);
+            }
+        }
+        else {
+            if (_position.y != next_pos.y + 1) {
+                require(_position.y == next_pos.y - 1, ERR_WRONG_POSITION);
+            }
+        }
         require(address(this).balance >= 15 ever, ERR_LOW_BALANCE);
         reCalculateKarma();
         require(_karma >= STEP_KARMA, ERR_NOT_ENOUGH_KARMA);
         _karma -= STEP_KARMA;
-        if (direction == LEFT) {
-            TvmCell s1 = GameLib.composeFieldStateInit(_code[m_FieldCode], _fabric, Position(_position.x - 1, _position.y), version);
-            new Field {
-                stateInit: s1, value: 10 ton, wid: 0, flag: 1
-            }(_code[m_FieldCode], _code[m_ProfileCode], _code[m_AwardCode], _code[m_ForestCode]);
-            _position.x -= 1;
-            return;
-        }
-        if (direction == RIGHT) {
-            TvmCell s1 = GameLib.composeFieldStateInit(_code[m_FieldCode], _fabric, Position(_position.x + 1, _position.y), version);
-            new Field {
-                stateInit: s1, value: 10 ton, wid: 0, flag: 1
-            }(_code[m_FieldCode], _code[m_ProfileCode], _code[m_AwardCode], _code[m_ForestCode]);
-            _position.x += 1;
-            return;
-        }
-        if (direction == FORWARD) {
-            TvmCell s1 = GameLib.composeFieldStateInit(_code[m_FieldCode], _fabric, Position(_position.x, _position.y + 1), version);
-            new Field {
-                stateInit: s1, value: 10 ton, wid: 0, flag: 1
-            }(_code[m_FieldCode], _code[m_ProfileCode], _code[m_AwardCode], _code[m_ForestCode]);
-            _position.y += 1;
-            return;
-        }
-        if (direction == BACK) {
-            TvmCell s1 = GameLib.composeFieldStateInit(_code[m_FieldCode], _fabric, Position(_position.x, _position.y - 1), version);
-            new Field {
-                stateInit: s1, value: 10 ton, wid: 0, flag: 1
-            }(_code[m_FieldCode], _code[m_ProfileCode], _code[m_AwardCode], _code[m_ForestCode]);
-            _position.y -= 1;
-            return;
-        }
+        TvmCell s1 = GameLib.composeFieldStateInit(_code[m_FieldCode], _fabric, Position(_position.x - 1, _position.y), version);
+        new Field {
+            stateInit: s1, value: 10 ton, wid: 0, flag: 1
+        }(_code[m_FieldCode], _code[m_ProfileCode], _code[m_AwardCode], _code[m_ForestCode]);
+        _position = next_pos;
+        return;
     }
 
     function dig() public accept onlyOwner  {
