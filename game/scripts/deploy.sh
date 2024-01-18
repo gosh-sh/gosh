@@ -33,6 +33,10 @@ echo $seed > $contracts_path/fabric.seed
 # Check fabric balance
 fabric_balance=$(get_account_balance $fabric_addr)
 echo -e "> Fabric balance:\t$fabric_balance"
+if [ $fabric_balance == "null" ]; then
+    echo -e "> Topup fabric account with 1000 tokens"
+    wait_account_balance $fabric_addr 1000000000000
+fi
 if [ $fabric_balance -lt 1000000000000 ]; then
     echo -e "> Topup fabric account with 1000 tokens"
     wait_account_balance $fabric_addr 1000000000000
@@ -58,3 +62,5 @@ echo -e "> Set award code..."
 _=$($tonos_cli callx --abi $fabric_abi --addr $fabric_addr --keys "$seed" -m setCode "{\"code\": \"$award_code\", \"id\": 2}")
 echo -e "> Set forest code..."
 _=$($tonos_cli callx --abi $fabric_abi --addr $fabric_addr --keys "$seed" -m setCode "{\"code\": \"$forest_code\", \"id\": 3}")
+echo -e "> Deploy awards..."
+_=$($tonos_cli callx --abi $fabric_abi --addr $fabric_addr --keys "$seed" -m deployAwards "{}")
