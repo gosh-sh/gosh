@@ -55,6 +55,7 @@ const HackathonStatus = (props: THackathonStatusProps) => {
       {prefix}
       {duration && (
         <>
+          {duration.months() > 0 && ` ${duration.months()} months`}
           {duration.days() > 0 && ` ${duration.days()} days`}
           {` ${duration.hours()} hours`}
           {` ${duration.minutes()} minutes left`}
