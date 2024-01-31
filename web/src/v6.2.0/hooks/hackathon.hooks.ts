@@ -990,7 +990,7 @@ export function useSubmitHackathonApps() {
           application_form.owners.map(async ({ address }) => {
             const profile = await sc.versionController.getUserProfile({ address })
             const keys = await profile.getPubkeys()
-            return keys
+            return keys.map((key) => key.slice(2)) // Remove 0x
           }),
         )
         const pubkeys_flat = _.flatten(pubkeys)
@@ -1060,35 +1060,84 @@ export function useApplicationForm() {
     const sc = getSystemContract()
     const crypto = sc.account.client.crypto
 
+    // User keypair (from seed phrase)
+    const keypair_user = {
+      public: 'ee22599e8df751e99a939c336eb33ec6cce6eabdb9cbebad055765b326a888f4',
+      secret: '9bc7b57dd7f38218eaa37cc79fc2a872b3b36c0fc9bf2bfaa313c39fc45946b9',
+    }
+
     // Generate encryption keypair (nacl keypair)
+    const nonce = await generateRandomBytes(24, true)
     const keypair_encrypt = await crypto.nacl_box_keypair()
 
-    // Encrypt application form data with nacl secret box
-    const nonce = await generateRandomBytes(24, true)
-    const nacl_secret_box = await crypto.nacl_secret_box({
+    // NOT WORKING
+    // Want to encrypt keypair_encrypt.secret key with keypair_user.public
+    const nacl_box = await crypto.nacl_box({
       nonce,
-      decrypted: Buffer.from(JSON.stringify(data)).toString('base64'),
-      key: keypair_encrypt.secret,
+      decrypted: Buffer.from(keypair_encrypt.secret).toString('base64'),
+      their_public: keypair_user.public,
+      secret: keypair_encrypt.secret,
     })
+    // Want to decrypt nacl_box.encrypted with keypair_encrypt.public and keypair_user.secret
+    // It fails with code 111 (need to find what it means)
+    const nacl_box_open = await crypto.nacl_box_open({
+      nonce,
+      their_public: keypair_encrypt.public,
+      secret: keypair_user.secret,
+      encrypted: nacl_box.encrypted,
+    })
+    console.debug('nacl_box_open: ', nacl_box_open)
+
+    // THIS WORKED
+    // Derive NACL keypair from keypair_user.secret
+    const keypair_user_nacl = await crypto.nacl_box_keypair_from_secret_key({
+      secret: keypair_user.secret,
+    })
+    // Want to encrypt keypair_encrypt.secret key with keypair_user.public
+    const nacl_box2 = await crypto.nacl_box({
+      nonce,
+      decrypted: Buffer.from(keypair_encrypt.secret).toString('base64'),
+      their_public: keypair_user_nacl.public,
+      secret: keypair_encrypt.secret,
+    })
+    // Want to decrypt nacl_box2.encrypted with keypair_encrypt.public and keypair_user.secret
+    // It fails with code 111 (need to find what it means)
+    const nacl_box_open2 = await crypto.nacl_box_open({
+      nonce,
+      their_public: keypair_encrypt.public,
+      secret: keypair_user.secret,
+      encrypted: nacl_box2.encrypted,
+    })
+    console.debug('nacl_box_open2: ', nacl_box_open2)
+
+    // DO NOT WATCH BOTTOM
+    // Encrypt application form data with nacl secret box
+    // const nonce = await generateRandomBytes(24, true)
+    // const nacl_secret_box = await crypto.nacl_secret_box({
+    //   nonce,
+    //   decrypted: Buffer.from(JSON.stringify(data)).toString('base64'),
+    //   key: keypair_encrypt.secret,
+    // })
 
     // Encrypt nacl secret key with nacl box (nacl secret + user public)
-    const encrypted_key = await Promise.all(
-      owners.map(async (pubkey) => {
-        const nacl_box = await crypto.nacl_box({
-          nonce,
-          decrypted: Buffer.from(keypair_encrypt.secret).toString('base64'),
-          their_public: pubkey,
-          secret: keypair_encrypt.secret,
-        })
-        return [pubkey, nacl_box.encrypted]
-      }),
-    )
+    // const encrypted_key = await Promise.all(
+    //   owners.map(async (pubkey) => {
+    //     console.debug('user public: ', pubkey)
+    //     const nacl_box = await crypto.nacl_box({
+    //       nonce,
+    //       decrypted: Buffer.from(keypair_encrypt.secret).toString('base64'),
+    //       their_public: pubkey,
+    //       secret: keypair_encrypt.secret,
+    //     })
+    //     return [pubkey, nacl_box.encrypted]
+    //   }),
+    // )
 
     return {
-      nonce,
-      public: keypair_encrypt.public,
-      encrypted_key: Object.fromEntries(encrypted_key),
-      data: nacl_secret_box.encrypted,
+      // nonce,
+      // public: keypair_encrypt.public,
+      // encrypted_key: Object.fromEntries(encrypted_key),
+      // data: nacl_secret_box.encrypted,
     }
   }
 
