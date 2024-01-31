@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useEffect, useState } from 'react'
 import { Button } from '../../../../components/Form'
 import { useApplicationForm } from '../../../hooks/hackathon.hooks'
+import { useUser } from '../../../hooks/user.hooks'
 
 type TApplicationFormProps = React.HTMLAttributes<HTMLDivElement> & {
   application_data?: any
@@ -12,11 +13,8 @@ type TApplicationFormProps = React.HTMLAttributes<HTMLDivElement> & {
 
 const ApplicationForm = (props: TApplicationFormProps) => {
   const { application_data, className } = props
-  const keypair = {
-    public: 'dc589cebfbe1feabd528231799c3a2d1d6f2e58a2288ee9facdea2a9f275133c',
-    secret: '9bc7b57dd7f38218eaa37cc79fc2a872b3b36c0fc9bf2bfaa313c39fc45946b9',
-  }
-  const [data, setData] = useState<any[]>([])
+  const { user } = useUser()
+  const [data, setData] = useState<any[] | null>(null)
   const [opened, setOpened] = useState<boolean>(false)
   const { decrypt } = useApplicationForm()
 
@@ -25,13 +23,13 @@ const ApplicationForm = (props: TApplicationFormProps) => {
   }
 
   const decryptData = useCallback(async () => {
-    if (!application_data) {
+    if (!application_data || !user.keys) {
       return
     }
 
     try {
       const decrypted = await decrypt({
-        keypair_user: keypair,
+        user_keypair: user.keys,
         application_form: application_data,
       })
       setData(decrypted)
@@ -44,7 +42,7 @@ const ApplicationForm = (props: TApplicationFormProps) => {
     decryptData()
   }, [decryptData])
 
-  if (!application_data || data.length === 0) {
+  if (!application_data || !data) {
     return null
   }
 

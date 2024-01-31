@@ -1,5 +1,6 @@
 import { KeyPair } from '@eversdk/core'
 import { Buffer } from 'buffer'
+import * as _sodium from 'libsodium-wrappers'
 import _ from 'lodash'
 import moment from 'moment'
 import { useCallback, useEffect, useState } from 'react'
@@ -8,12 +9,13 @@ import { IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { useParams } from 'react-router-dom'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { AppConfig } from '../../appconfig'
+import { getAllAccounts, getPaginatedAccounts } from '../../blockchain/utils'
 import {
-  generateRandomBytes,
-  getAllAccounts,
-  getPaginatedAccounts,
-} from '../../blockchain/utils'
-import { HACKATHONS_REPO, MAX_PARALLEL_READ, ZERO_COMMIT } from '../../constants'
+  HACKATHONS_REPO,
+  HACKATHON_TAG,
+  MAX_PARALLEL_READ,
+  ZERO_COMMIT,
+} from '../../constants'
 import { GoshError } from '../../errors'
 import { appToastStatusSelector } from '../../store/app.state'
 import { EDaoEventType } from '../../types/common.types'
@@ -994,9 +996,6 @@ export function useSubmitHackathonApps() {
           }),
         )
         const pubkeys_flat = _.flatten(pubkeys)
-        // const pubkeys_flat = [
-        //   'dc589cebfbe1feabd528231799c3a2d1d6f2e58a2288ee9facdea2a9f275133c',
-        // ]
 
         // Encrypt form data
         application_form_encrypted = await encrypt({
@@ -1005,39 +1004,39 @@ export function useSubmitHackathonApps() {
         })
       }
 
-      // // Add applications to hackathon
-      // setStatus((state) => ({
-      //   ...state,
-      //   type: 'pending',
-      //   data: 'Adding participants indexes',
-      // }))
+      // Add applications to hackathon
+      setStatus((state) => ({
+        ...state,
+        type: 'pending',
+        data: 'Adding participants indexes',
+      }))
 
-      // await Promise.all(
-      //   items.map(async (item) => {
-      //     const repo_path = `${item.dao_name}/${item.repo_name}`
-      //     const tag_name = `${HACKATHON_TAG.participant}:${repo_path}`
-      //     await member.wallet!.createCommitTag({
-      //       reponame: HACKATHONS_REPO,
-      //       name: tag_name,
-      //       content: JSON.stringify({
-      //         application_form: application_form_encrypted,
-      //         application: item,
-      //       }),
-      //       commit: {
-      //         address: `0:${new Array(64).fill(0).join('')}`,
-      //         name: ZERO_COMMIT,
-      //       },
-      //       is_hack: true,
-      //       branch_name: hackathon.metadata.branch_name,
-      //     })
-      //   }),
-      // )
-      // await getApplications({
-      //   repo_address: hackathon._rg_repo_adapter.getAddress(),
-      //   branch_name: hackathon.metadata.branch_name,
-      //   hack_address: hackathon.address,
-      //   applications: hackathon.apps_approved,
-      // })
+      await Promise.all(
+        items.map(async (item) => {
+          const repo_path = `${item.dao_name}/${item.repo_name}`
+          const tag_name = `${HACKATHON_TAG.participant}:${repo_path}`
+          await member.wallet!.createCommitTag({
+            reponame: HACKATHONS_REPO,
+            name: tag_name,
+            content: JSON.stringify({
+              application_form: application_form_encrypted,
+              application: item,
+            }),
+            commit: {
+              address: `0:${new Array(64).fill(0).join('')}`,
+              name: ZERO_COMMIT,
+            },
+            is_hack: true,
+            branch_name: hackathon.metadata.branch_name,
+          })
+        }),
+      )
+      await getApplications({
+        repo_address: hackathon._rg_repo_adapter.getAddress(),
+        branch_name: hackathon.metadata.branch_name,
+        hack_address: hackathon.address,
+        applications: hackathon.apps_approved,
+      })
 
       setStatus((state) => ({
         ...state,
@@ -1057,119 +1056,86 @@ export function useApplicationForm() {
   const encrypt = async (params: { owners: string[]; data: Object }) => {
     const { owners, data } = params
 
+    // Initialize libsodium
+    await _sodium.ready
+    const sodium = _sodium
+
+    // Generate random bytes (used as symmetric key for data encryption)
+    const data_encryption_nonce = sodium.randombytes_buf(12)
+    const data_encryption_key = sodium.randombytes_buf(32)
+
+    // Encrypt encryption_key for each owner's public key
+    const key_encryption_nonce = sodium.randombytes_buf(24)
+    const key_encryption_keys = sodium.crypto_box_keypair()
+    const encrypted_data_encryption_key = owners.map((pubkey) => {
+      // Pubkey is signing key (ed25519) and needs to be converted to
+      // encryption key (curve25519)
+      const pubkey_uint8 = sodium.from_hex(pubkey)
+      const pubkey_curve25519 = sodium.crypto_sign_ed25519_pk_to_curve25519(pubkey_uint8)
+
+      // Encrypt data encryption key
+      const encrypted = sodium.crypto_box_easy(
+        data_encryption_key,
+        key_encryption_nonce,
+        pubkey_curve25519,
+        key_encryption_keys.privateKey,
+      )
+      return [pubkey, sodium.to_base64(encrypted)]
+    })
+
+    // Encrypt form data with data_encryption_key
     const sc = getSystemContract()
     const crypto = sc.account.client.crypto
-
-    // User keypair (from seed phrase)
-    const keypair_user = {
-      public: 'ee22599e8df751e99a939c336eb33ec6cce6eabdb9cbebad055765b326a888f4',
-      secret: '9bc7b57dd7f38218eaa37cc79fc2a872b3b36c0fc9bf2bfaa313c39fc45946b9',
-    }
-
-    // Generate encryption keypair (nacl keypair)
-    const nonce = await generateRandomBytes(24, true)
-    const keypair_encrypt = await crypto.nacl_box_keypair()
-
-    // NOT WORKING
-    // Want to encrypt keypair_encrypt.secret key with keypair_user.public
-    const nacl_box = await crypto.nacl_box({
-      nonce,
-      decrypted: Buffer.from(keypair_encrypt.secret).toString('base64'),
-      their_public: keypair_user.public,
-      secret: keypair_encrypt.secret,
+    const { data: encrypted_data } = await crypto.chacha20({
+      nonce: sodium.to_hex(data_encryption_nonce),
+      key: sodium.to_hex(data_encryption_key),
+      data: Buffer.from(JSON.stringify(data)).toString('base64'),
     })
-    // Want to decrypt nacl_box.encrypted with keypair_encrypt.public and keypair_user.secret
-    // It fails with code 111 (need to find what it means)
-    const nacl_box_open = await crypto.nacl_box_open({
-      nonce,
-      their_public: keypair_encrypt.public,
-      secret: keypair_user.secret,
-      encrypted: nacl_box.encrypted,
-    })
-    console.debug('nacl_box_open: ', nacl_box_open)
-
-    // THIS WORKED
-    // Derive NACL keypair from keypair_user.secret
-    const keypair_user_nacl = await crypto.nacl_box_keypair_from_secret_key({
-      secret: keypair_user.secret,
-    })
-    // Want to encrypt keypair_encrypt.secret key with keypair_user_nacl.public
-    // (this differs from public i have)
-    const nacl_box2 = await crypto.nacl_box({
-      nonce,
-      decrypted: Buffer.from(keypair_encrypt.secret).toString('base64'),
-      their_public: keypair_user_nacl.public,
-      secret: keypair_encrypt.secret,
-    })
-    // Want to decrypt nacl_box2.encrypted with keypair_encrypt.public and keypair_user.secret
-    // And it works..
-    // Decision: my public key (from phrase) is not acceptable as nacl public key
-    const nacl_box_open2 = await crypto.nacl_box_open({
-      nonce,
-      their_public: keypair_encrypt.public,
-      secret: keypair_user.secret,
-      encrypted: nacl_box2.encrypted,
-    })
-    console.debug('nacl_box_open2: ', nacl_box_open2)
-
-    // DO NOT WATCH BOTTOM
-    // Encrypt application form data with nacl secret box
-    // const nonce = await generateRandomBytes(24, true)
-    // const nacl_secret_box = await crypto.nacl_secret_box({
-    //   nonce,
-    //   decrypted: Buffer.from(JSON.stringify(data)).toString('base64'),
-    //   key: keypair_encrypt.secret,
-    // })
-
-    // Encrypt nacl secret key with nacl box (nacl secret + user public)
-    // const encrypted_key = await Promise.all(
-    //   owners.map(async (pubkey) => {
-    //     console.debug('user public: ', pubkey)
-    //     const nacl_box = await crypto.nacl_box({
-    //       nonce,
-    //       decrypted: Buffer.from(keypair_encrypt.secret).toString('base64'),
-    //       their_public: pubkey,
-    //       secret: keypair_encrypt.secret,
-    //     })
-    //     return [pubkey, nacl_box.encrypted]
-    //   }),
-    // )
 
     return {
-      // nonce,
-      // public: keypair_encrypt.public,
-      // encrypted_key: Object.fromEntries(encrypted_key),
-      // data: nacl_secret_box.encrypted,
+      key_encryption_nonce: sodium.to_hex(key_encryption_nonce),
+      key_encryption_public: sodium.to_hex(key_encryption_keys.publicKey),
+      data_encryption_nonce: sodium.to_hex(data_encryption_nonce),
+      encrypted_key: Object.fromEntries(encrypted_data_encryption_key),
+      encrypted_data,
     }
   }
 
-  const decrypt = async (params: { keypair_user: KeyPair; application_form: any }) => {
-    const { keypair_user, application_form } = params
+  const decrypt = async (params: { user_keypair: KeyPair; application_form: any }) => {
+    const { user_keypair, application_form } = params
 
-    // Decrypt data encryption key with user seceret
-    const encrypted_key = application_form.encrypted_key[keypair_user.public]
-    if (!encrypted_key) {
+    // Initialize libsodium
+    await _sodium.ready
+    const sodium = _sodium
+
+    // Search for user public key in owners
+    const user_pubkey = user_keypair.public
+    const encrypted_data_encryption_key = application_form.encrypted_key[user_pubkey]
+    if (!encrypted_data_encryption_key) {
       return null
     }
 
+    // Decrypt data encryption key with user secret
+    // User keypair is signing keypair (ed25519) and secret key needs to be
+    // converted to encryption secrtet key (curve25519)
+    const ed25519_skpk = sodium.from_hex(`${user_keypair.secret}${user_keypair.public}`)
+    const user_secret = sodium.crypto_sign_ed25519_sk_to_curve25519(ed25519_skpk)
+    const decrypted_data_encryption_key = sodium.crypto_box_open_easy(
+      sodium.from_base64(encrypted_data_encryption_key),
+      sodium.from_hex(application_form.key_encryption_nonce),
+      sodium.from_hex(application_form.key_encryption_public),
+      user_secret,
+    )
+
+    // Decrypt encrypted data
     const sc = getSystemContract()
     const crypto = sc.account.client.crypto
-    const nacl_box_open = await crypto.nacl_box_open({
-      nonce: application_form.nonce,
-      encrypted: encrypted_key,
-      their_public: application_form.public,
-      secret: keypair_user.secret,
+    const { data } = await crypto.chacha20({
+      nonce: application_form.data_encryption_nonce,
+      key: sodium.to_hex(decrypted_data_encryption_key),
+      data: application_form.encrypted_data,
     })
-    const encryption_key = Buffer.from(nacl_box_open.decrypted, 'base64').toString()
-
-    // Decrypt form data with decryption key
-    const nacl_secret_box_open = await crypto.nacl_secret_box_open({
-      nonce: application_form.nonce,
-      encrypted: application_form.data,
-      key: encryption_key,
-    })
-    const decrypted = Buffer.from(nacl_secret_box_open.decrypted, 'base64').toString()
-    return JSON.parse(decrypted)
+    return JSON.parse(Buffer.from(data, 'base64').toString())
   }
 
   return { encrypt, decrypt }
