@@ -8,6 +8,7 @@ import { getIdenticonAvatar } from '../../../../helpers'
 import { useDaoMember } from '../../../hooks/dao.hooks'
 import { useHackathon, useHackathonVoting } from '../../../hooks/hackathon.hooks'
 import { THackathonParticipant } from '../../../types/hackathon.types'
+import ApplicationForm from './ApplicationForm'
 
 const ListItemSkeleton = () => {
   return (
@@ -118,6 +119,10 @@ const ListItem = (props: TRepositoryListItemProps) => {
 
           {item.description && (
             <div className="mt-2.5 text-sm text-gray-53596d">{item.description}</div>
+          )}
+
+          {item.application_form && (
+            <ApplicationForm className="mt-2" application_data={item.application_form} />
           )}
         </div>
 

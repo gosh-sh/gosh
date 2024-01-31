@@ -9,6 +9,8 @@ export const storagedata_empty = {
   description: { readme: '', rules: '', prizes: '' },
   prize: { total: 0, places: [] },
   prize_raw: '',
+  application_form: { owners: [], fields: [] },
+  application_form_raw: '',
 }
 
 export const apps_submitted_empty = {

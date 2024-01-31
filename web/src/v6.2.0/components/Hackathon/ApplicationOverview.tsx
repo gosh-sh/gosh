@@ -8,7 +8,8 @@ import { getIdenticonAvatar } from '../../../helpers'
 import { appModalStateAtom } from '../../../store/app.state'
 import { useHackathon, useSubmitHackathonApps } from '../../hooks/hackathon.hooks'
 import { useUser } from '../../hooks/user.hooks'
-import { HackathonParticipantsModal } from './ParticipantsModal'
+import { TFormGeneratorField, TUserSelectOption } from '../../types/form.types'
+import { HackathonApplicationSubmit } from './ApplicationSubmit'
 
 const SkeletonParticipants = () => {
   return (
@@ -20,7 +21,7 @@ const SkeletonParticipants = () => {
   )
 }
 
-const HackathonParticipantsOverview = () => {
+const HackathonApplicationOverview = () => {
   const setModal = useSetRecoilState(appModalStateAtom)
   const location = useLocation()
   const { user } = useUser()
@@ -34,13 +35,24 @@ const HackathonParticipantsOverview = () => {
     setModal({
       static: true,
       isOpen: true,
-      element: <HackathonParticipantsModal onSubmit={onSubmitApp} />,
+      element: (
+        <HackathonApplicationSubmit
+          application_form={hackathon?.storagedata.application_form}
+          onSubmit={onSubmitApp}
+        />
+      ),
     })
   }
 
-  const onSubmitApp = async (values: { dao_name: string; repo_name: string }[]) => {
+  const onSubmitApp = async (params: {
+    application_form?: {
+      owners: TUserSelectOption['value'][]
+      fields: (TFormGeneratorField & { value: string })[]
+    }
+    items: { dao_name: string; repo_name: string }[]
+  }) => {
     try {
-      await submitApps({ items: values })
+      await submitApps(params)
       setModal((state) => ({ ...state, isOpen: false }))
     } catch (e: any) {
       console.error(e.message)
@@ -129,4 +141,4 @@ const HackathonParticipantsOverview = () => {
   )
 }
 
-export { HackathonParticipantsOverview }
+export { HackathonApplicationOverview }

@@ -4,6 +4,7 @@ import { MemberIcon } from '../../../components/Dao'
 import { Select2ClassNames } from '../../../helpers'
 import { getSystemContract } from '../../blockchain/helpers'
 import { EDaoMemberType } from '../../types/dao.types'
+import { TUserSelectOption } from '../../types/form.types'
 
 type TUserSelectProps = AsyncProps<any, any, any> & {
   searchUser?: boolean
@@ -23,7 +24,7 @@ const UserSelect = (props: TUserSelectProps) => {
 
   const getUsernameOptions = async (input: string) => {
     input = input.toLowerCase()
-    const options: any[] = []
+    const options: TUserSelectOption[] = []
 
     if (searchUser) {
       const query = await AppConfig.goshroot.getUserProfile({

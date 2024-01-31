@@ -10,7 +10,7 @@ import { useDao, useDaoMember } from '../../hooks/dao.hooks'
 import { useHackathon, useHackathonVoting } from '../../hooks/hackathon.hooks'
 import { ListBoundary } from './components'
 
-const HackathonParticipantListPage = () => {
+const HackathonApplicationListPage = () => {
   const navigate = useNavigate()
   const dao = useDao()
   const member = useDaoMember()
@@ -155,4 +155,4 @@ const HackathonParticipantListPage = () => {
   )
 }
 
-export default HackathonParticipantListPage
+export default HackathonApplicationListPage

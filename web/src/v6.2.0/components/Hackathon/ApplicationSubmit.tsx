@@ -15,34 +15,44 @@ import AsyncSelect from 'react-select/async'
 import { useSetRecoilState } from 'recoil'
 import { AppConfig } from '../../../appconfig'
 import { Button, ButtonLink } from '../../../components/Form'
-import { BaseField } from '../../../components/Formik'
+import { BaseField, FormikInput } from '../../../components/Formik'
 import { ModalCloseButton } from '../../../components/Modal'
 import { Select2ClassNames } from '../../../helpers'
 import { appModalStateAtom } from '../../../store/app.state'
 import { useUser } from '../../hooks/user.hooks'
+import { TFormGeneratorField, TUserSelectOption } from '../../types/form.types'
+import { THackathonDetails } from '../../types/hackathon.types'
 import yup from '../../yup-extended'
 import { UserSelect } from '../UserSelect'
 
 type TFormParticipant = { dao_name: string; dao_version: string; repo_names: string[] }
 
 type TFormValues = {
-  participants: TFormParticipant[]
+  applications: TFormParticipant[]
+  form_data?: any
 }
 
-type TParticipantsModalProps = {
-  onSubmit(values: { dao_name: string; repo_name: string }[]): Promise<void>
+type TApplicationSubmitProps = {
+  application_form?: THackathonDetails['storagedata']['application_form']
+  onSubmit(params: {
+    items: { dao_name: string; repo_name: string }[]
+    application_form?: {
+      owners: TUserSelectOption['value'][]
+      fields: (TFormGeneratorField & { value: string })[]
+    }
+  }): Promise<void>
 }
 
 const getRepositoryOptions = async (params: {
-  participant: TFormParticipant
+  application: TFormParticipant
   input: string
 }) => {
-  const { participant } = params
+  const { application } = params
   const input = params.input.toLowerCase()
   const options: any[] = []
 
-  const sc = AppConfig.goshroot.getSystemContract(participant.dao_version)
-  const query = await sc.getRepository({ path: `${participant.dao_name}/${input}` })
+  const sc = AppConfig.goshroot.getSystemContract(application.dao_version)
+  const query = await sc.getRepository({ path: `${application.dao_name}/${input}` })
   if (await query.isDeployed()) {
     options.push({
       label: input,
@@ -56,20 +66,59 @@ const getRepositoryOptions = async (params: {
   return options
 }
 
-const HackathonParticipantsModal = (props: TParticipantsModalProps) => {
-  const { onSubmit } = props
+const HackathonApplicationSubmit = (props: TApplicationSubmitProps) => {
+  const { application_form, onSubmit } = props
+
+  const getFormValidationSchema = () => {
+    const form_data =
+      application_form?.fields.map((field) => [field.name, yup.string().required()]) || []
+
+    const schema = yup.object().shape({
+      applications: yup
+        .array()
+        .of(
+          yup.object().shape({
+            dao_name: yup.string().required(),
+            repo_names: yup.array().of(yup.string().required()).min(1),
+          }),
+        )
+        .min(1),
+      form_data: yup.object().shape(Object.fromEntries(form_data)),
+    })
+
+    return schema
+  }
+
+  const getFormInitialValues = () => {
+    const form_data = application_form?.fields.map((field) => [field.name, '']) || []
+    return {
+      applications: [],
+      form_data: Object.fromEntries(form_data),
+    }
+  }
 
   const onFormSubmit = async (values: TFormValues) => {
     try {
+      // Generate filled application form
+      const app_form = application_form && {
+        owners: application_form?.owners,
+        fields: application_form?.fields.map((field) => ({
+          ...field,
+          value: values.form_data[field.name],
+        })),
+      }
+
+      // Submitted applications
       const items: { dao_name: string; repo_name: string }[] = []
-      for (const item of values.participants) {
+      for (const item of values.applications) {
         const group = item.repo_names.map((repo_name) => ({
           dao_name: item.dao_name,
           repo_name,
         }))
         items.push(...group)
       }
-      await onSubmit(items)
+
+      await onSubmit({ application_form: app_form, items })
     } catch (e: any) {
       console.error(e.message)
     }
@@ -78,34 +127,50 @@ const HackathonParticipantsModal = (props: TParticipantsModalProps) => {
   return (
     <Dialog.Panel className="relative rounded-xl bg-white p-10 w-full max-w-md">
       <Formik
-        initialValues={{ participants: [] }}
-        validationSchema={yup.object().shape({
-          participants: yup
-            .array()
-            .of(
-              yup.object().shape({
-                dao_name: yup.string().required(),
-                repo_names: yup.array().of(yup.string().required()).min(1),
-              }),
-            )
-            .min(1),
-        })}
+        initialValues={getFormInitialValues()}
+        validationSchema={getFormValidationSchema()}
         onSubmit={onFormSubmit}
       >
-        {({ isSubmitting, errors, values }) => (
+        {({ isSubmitting, errors }) => (
           <Form>
             <ModalCloseButton disabled={isSubmitting} />
 
-            <h1 className="text-xl font-medium">Add participants</h1>
+            <h1 className="mb-6 text-xl font-medium">Add applications</h1>
 
-            {typeof errors.participants === 'string' && (
-              <ErrorMessage
-                component="div"
-                name="participants"
-                className="text-xs text-red-ff3b30 mt-1"
-              />
+            {application_form && (
+              <>
+                <h4 className="mb-2">Application form</h4>
+                <div className="mb-6 flex flex-col space-y-2">
+                  {application_form.fields.map((field, index) => (
+                    <div key={index}>
+                      <Field
+                        component={FormikInput}
+                        name={`form_data.${field.name}`}
+                        label={field.label}
+                        autoComplete="off"
+                      />
+                      <ErrorMessage
+                        component="div"
+                        name={`form_data.${field.name}`}
+                        className="text-xs text-red-ff3b30 mt-1"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
-            <FieldArray name="participants" component={FieldArrayForm} />
+
+            <div>
+              <h4>Applications to submit</h4>
+              {typeof errors.applications === 'string' && (
+                <ErrorMessage
+                  component="div"
+                  name="applications"
+                  className="text-xs text-red-ff3b30 mt-1"
+                />
+              )}
+              <FieldArray name="applications" component={FieldArrayForm} />
+            </div>
 
             <div className="mt-6 text-center">
               <Button type="submit" isLoading={isSubmitting} disabled={isSubmitting}>
@@ -128,21 +193,21 @@ const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
   const onDaoNameChange = (option: any, index: number) => {
     const name = option?.value.name || ''
     const version = option?.value.version || ''
-    form.setFieldValue(`participants.${index}.dao_name`, name, true)
-    form.setFieldValue(`participants.${index}.dao_version`, version, true)
-    form.setFieldValue(`participants.${index}.repo_names`, [], true)
+    form.setFieldValue(`applications.${index}.dao_name`, name, true)
+    form.setFieldValue(`applications.${index}.dao_version`, version, true)
+    form.setFieldValue(`applications.${index}.repo_names`, [], true)
   }
 
   const onRepoNameChange = (option: any, index: number) => {
     const names: string[] = option.map((item: any) => item.value.name)
-    form.setFieldValue(`participants.${index}.repo_names`, names, true)
+    form.setFieldValue(`applications.${index}.repo_names`, names, true)
   }
 
   return (
     <>
       <div className="flex flex-col divide-y divide-gray-e6edff">
         <AnimatePresence>
-          {values.participants.map((_, index) => (
+          {values.applications.map((_, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0 }}
@@ -156,7 +221,7 @@ const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
             >
               <div className="grow">
                 <div className="mb-2">
-                  <Field name={`participants.${index}.dao_name`} component={BaseField}>
+                  <Field name={`applications.${index}.dao_name`} component={BaseField}>
                     <UserSelect
                       placeholder="DAO name"
                       isDisabled={form.isSubmitting}
@@ -171,23 +236,23 @@ const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
                   <ErrorMessage
                     className="text-xs text-red-ff3b30 mt-0.5"
                     component="div"
-                    name={`participants.${index}.dao_name`}
+                    name={`applications.${index}.dao_name`}
                   />
                 </div>
                 <div>
-                  <Field name={`participants.${index}.dao_name`} component={BaseField}>
+                  <Field name={`applications.${index}.dao_name`} component={BaseField}>
                     <AsyncSelect
                       classNames={Select2ClassNames}
                       isClearable
                       isMulti
                       isDisabled={
-                        form.isSubmitting || !values.participants[index].dao_name
+                        form.isSubmitting || !values.applications[index].dao_name
                       }
                       cacheOptions={false}
                       defaultOptions={false}
                       loadOptions={(input) => {
                         return getRepositoryOptions({
-                          participant: values.participants[index],
+                          application: values.applications[index],
                           input,
                         })
                       }}
@@ -201,7 +266,7 @@ const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
                   <ErrorMessage
                     className="text-xs text-red-ff3b30 mt-0.5"
                     component="div"
-                    name={`participants.${index}.repo_names`}
+                    name={`applications.${index}.repo_names`}
                   />
                 </div>
               </div>
@@ -254,4 +319,4 @@ const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
   )
 }
 
-export { HackathonParticipantsModal }
+export { HackathonApplicationSubmit }

@@ -1,3 +1,4 @@
+import { KeyPair } from '@eversdk/core'
 import { Buffer } from 'buffer'
 import _ from 'lodash'
 import moment from 'moment'
@@ -7,13 +8,12 @@ import { IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { useParams } from 'react-router-dom'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { AppConfig } from '../../appconfig'
-import { getAllAccounts, getPaginatedAccounts } from '../../blockchain/utils'
 import {
-  HACKATHONS_REPO,
-  HACKATHON_TAG,
-  MAX_PARALLEL_READ,
-  ZERO_COMMIT,
-} from '../../constants'
+  generateRandomBytes,
+  getAllAccounts,
+  getPaginatedAccounts,
+} from '../../blockchain/utils'
+import { HACKATHONS_REPO, MAX_PARALLEL_READ, ZERO_COMMIT } from '../../constants'
 import { GoshError } from '../../errors'
 import { appToastStatusSelector } from '../../store/app.state'
 import { EDaoEventType } from '../../types/common.types'
@@ -28,6 +28,7 @@ import {
   daoHackathonSelector,
   storagedata_empty,
 } from '../store/hackathon.state'
+import { TFormGeneratorField, TUserSelectOption } from '../types/form.types'
 import {
   EHackathonType,
   THackathonApplication,
@@ -604,9 +605,17 @@ export function useHackathon(
       const updated: any = {
         prize: { total: 0, places: [] },
         prize_raw: '',
+        application_form: { owners: [], fields: [] },
+        application_form_raw: '',
         description: {},
       }
-      for (const file of ['readme.md', 'rules.md', 'prizes.md', 'metadata.json']) {
+      for (const file of [
+        'readme.md',
+        'rules.md',
+        'prizes.md',
+        'metadata.json',
+        'application.form.json',
+      ]) {
         const item = snap_data.find((v) => v.name.toLowerCase() === file)
         if (!item) {
           continue
@@ -620,6 +629,9 @@ export function useHackathon(
           const parsed = JSON.parse(item.content)
           updated.prize = parsed.prize
           updated.prize_raw = item.content
+        } else if (file === 'application.form.json') {
+          updated.application_form = JSON.parse(item.content)
+          updated.application_form_raw = item.content
         } else {
           const key = file.split('.')[0]
           updated.description[key] = item.content
@@ -686,26 +698,28 @@ export function useHackathon(
           const tag = await sc.getCommitTag({ address: id })
           const details = await tag.getDetails()
           const parsed = JSON.parse(details.content)
+          const dao_name = parsed.application.dao_name
+          const repo_name = parsed.application.repo_name
 
-          const { sc: psc, dao_account } = await getApplicationVersion(parsed.dao_name)
+          const { sc: psc, dao_account } = await getApplicationVersion(dao_name)
           const is_member = user.profile
             ? await dao_account.isMember(user.profile)
             : false
 
           const prepo_account = (await psc.getRepository({
-            path: `${parsed.dao_name}/${parsed.repo_name}`,
+            path: `${dao_name}/${repo_name}`,
           })) as unknown as GoshRepository
           const repo_details = await prepo_account.getDetails()
 
           return {
-            ...parsed,
+            dao_name,
             dao_address: dao_account.address,
+            repo_name,
             is_member,
             description: repo_details.description,
+            application_form: parsed.application_form,
             application: applications.find((app) => {
-              return (
-                app.dao_name === parsed.dao_name && app.repo_name === parsed.repo_name
-              )
+              return app.dao_name === dao_name && app.repo_name === repo_name
             }),
           }
         },
@@ -814,7 +828,7 @@ export function useUpdateHackathon() {
 
   const updateStorageData = useCallback(
     async (params: {
-      filename: string
+      filename: { original: string; modified: string }
       content: { original: string; modified: string }
     }) => {
       // TODO: repo_name should be used after git part refactor
@@ -841,7 +855,7 @@ export function useUpdateHackathon() {
           `Update details for ${hackathon?.name} ${hackathon?.type}`,
           [
             {
-              treepath: [filename, filename],
+              treepath: [filename.original, filename.modified],
               original: content.original,
               modified: content.modified,
             },
@@ -935,6 +949,7 @@ export function useUpdateHackathon() {
 
 export function useSubmitHackathonApps() {
   const member = useDaoMember()
+  const { encrypt } = useApplicationForm()
   const { hackathon, getApplications } = useHackathon()
   const [status, setStatus] = useRecoilState(
     appToastStatusSelector('__addhackathonparticipants'),
@@ -942,8 +957,12 @@ export function useSubmitHackathonApps() {
 
   const submitApps = async (params: {
     items: { dao_name: string; repo_name: string }[]
+    application_form?: {
+      owners: TUserSelectOption['value'][]
+      fields: (TFormGeneratorField & { value: string })[]
+    }
   }) => {
-    const { items } = params
+    const { items, application_form } = params
 
     try {
       if (!member.wallet) {
@@ -956,35 +975,69 @@ export function useSubmitHackathonApps() {
         throw new GoshError('Value error', 'Add applications time expired')
       }
 
-      setStatus((state) => ({
-        ...state,
-        type: 'pending',
-        data: 'Adding participants indexes',
-      }))
+      // Encrypt application form if present
+      let application_form_encrypted: Object | undefined
+      if (application_form) {
+        setStatus((state) => ({
+          ...state,
+          type: 'pending',
+          data: 'Encrypting application form data',
+        }))
 
-      await Promise.all(
-        items.map(async (item) => {
-          const repo_path = `${item.dao_name}/${item.repo_name}`
-          const tag_name = `${HACKATHON_TAG.participant}:${repo_path}`
-          await member.wallet!.createCommitTag({
-            reponame: HACKATHONS_REPO,
-            name: tag_name,
-            content: JSON.stringify(item),
-            commit: {
-              address: `0:${new Array(64).fill(0).join('')}`,
-              name: ZERO_COMMIT,
-            },
-            is_hack: true,
-            branch_name: hackathon.metadata.branch_name,
-          })
-        }),
-      )
-      await getApplications({
-        repo_address: hackathon._rg_repo_adapter.getAddress(),
-        branch_name: hackathon.metadata.branch_name,
-        hack_address: hackathon.address,
-        applications: hackathon.apps_approved,
-      })
+        // Get owners public keys
+        const sc = getSystemContract()
+        const pubkeys = await Promise.all(
+          application_form.owners.map(async ({ address }) => {
+            const profile = await sc.versionController.getUserProfile({ address })
+            const keys = await profile.getPubkeys()
+            return keys
+          }),
+        )
+        const pubkeys_flat = _.flatten(pubkeys)
+        // const pubkeys_flat = [
+        //   'dc589cebfbe1feabd528231799c3a2d1d6f2e58a2288ee9facdea2a9f275133c',
+        // ]
+
+        // Encrypt form data
+        application_form_encrypted = await encrypt({
+          owners: pubkeys_flat,
+          data: application_form.fields,
+        })
+      }
+
+      // // Add applications to hackathon
+      // setStatus((state) => ({
+      //   ...state,
+      //   type: 'pending',
+      //   data: 'Adding participants indexes',
+      // }))
+
+      // await Promise.all(
+      //   items.map(async (item) => {
+      //     const repo_path = `${item.dao_name}/${item.repo_name}`
+      //     const tag_name = `${HACKATHON_TAG.participant}:${repo_path}`
+      //     await member.wallet!.createCommitTag({
+      //       reponame: HACKATHONS_REPO,
+      //       name: tag_name,
+      //       content: JSON.stringify({
+      //         application_form: application_form_encrypted,
+      //         application: item,
+      //       }),
+      //       commit: {
+      //         address: `0:${new Array(64).fill(0).join('')}`,
+      //         name: ZERO_COMMIT,
+      //       },
+      //       is_hack: true,
+      //       branch_name: hackathon.metadata.branch_name,
+      //     })
+      //   }),
+      // )
+      // await getApplications({
+      //   repo_address: hackathon._rg_repo_adapter.getAddress(),
+      //   branch_name: hackathon.metadata.branch_name,
+      //   hack_address: hackathon.address,
+      //   applications: hackathon.apps_approved,
+      // })
 
       setStatus((state) => ({
         ...state,
@@ -998,6 +1051,77 @@ export function useSubmitHackathonApps() {
   }
 
   return { submitApps, status }
+}
+
+export function useApplicationForm() {
+  const encrypt = async (params: { owners: string[]; data: Object }) => {
+    const { owners, data } = params
+
+    const sc = getSystemContract()
+    const crypto = sc.account.client.crypto
+
+    // Generate encryption keypair (nacl keypair)
+    const keypair_encrypt = await crypto.nacl_box_keypair()
+
+    // Encrypt application form data with nacl secret box
+    const nonce = await generateRandomBytes(24, true)
+    const nacl_secret_box = await crypto.nacl_secret_box({
+      nonce,
+      decrypted: Buffer.from(JSON.stringify(data)).toString('base64'),
+      key: keypair_encrypt.secret,
+    })
+
+    // Encrypt nacl secret key with nacl box (nacl secret + user public)
+    const encrypted_key = await Promise.all(
+      owners.map(async (pubkey) => {
+        const nacl_box = await crypto.nacl_box({
+          nonce,
+          decrypted: Buffer.from(keypair_encrypt.secret).toString('base64'),
+          their_public: pubkey,
+          secret: keypair_encrypt.secret,
+        })
+        return [pubkey, nacl_box.encrypted]
+      }),
+    )
+
+    return {
+      nonce,
+      public: keypair_encrypt.public,
+      encrypted_key: Object.fromEntries(encrypted_key),
+      data: nacl_secret_box.encrypted,
+    }
+  }
+
+  const decrypt = async (params: { keypair_user: KeyPair; application_form: any }) => {
+    const { keypair_user, application_form } = params
+
+    // Decrypt data encryption key with user seceret
+    const encrypted_key = application_form.encrypted_key[keypair_user.public]
+    if (!encrypted_key) {
+      return null
+    }
+
+    const sc = getSystemContract()
+    const crypto = sc.account.client.crypto
+    const nacl_box_open = await crypto.nacl_box_open({
+      nonce: application_form.nonce,
+      encrypted: encrypted_key,
+      their_public: application_form.public,
+      secret: keypair_user.secret,
+    })
+    const encryption_key = Buffer.from(nacl_box_open.decrypted, 'base64').toString()
+
+    // Decrypt form data with decryption key
+    const nacl_secret_box_open = await crypto.nacl_secret_box_open({
+      nonce: application_form.nonce,
+      encrypted: application_form.data,
+      key: encryption_key,
+    })
+    const decrypted = Buffer.from(nacl_secret_box_open.decrypted, 'base64').toString()
+    return JSON.parse(decrypted)
+  }
+
+  return { encrypt, decrypt }
 }
 
 export function useHackathonVoting() {

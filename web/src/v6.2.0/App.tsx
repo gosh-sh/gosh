@@ -33,10 +33,10 @@ import DaoSetupPage from './pages/DaoSetup'
 import DaoTaskListPage from './pages/DaoTaskList'
 import DaoTokenL2Page from './pages/DaoTokenL2'
 import DaoUpgradePage from './pages/DaoUpgrade'
+import HackathonApplicationListPage from './pages/HackathonApplicationList'
 import HackathonCreatePage from './pages/HackathonCreate'
 import HackathonLayout from './pages/HackathonLayout'
 import HackathonOverviewPage from './pages/HackathonOverview'
-import HackathonParticipantListPage from './pages/HackathonParticipantList'
 import HackathonRewardPage from './pages/HackathonReward'
 import L2Page from './pages/L2'
 import OnboardingPage from './pages/Onboarding'
@@ -122,7 +122,7 @@ const App = () => {
             <Route path="/o/:daoname/hacksgrants/:address" element={<HackathonLayout />}>
               <Route index element={<HackathonOverviewPage />} />
               <Route path="rewards" element={<HackathonRewardPage />} />
-              <Route path="participants" element={<HackathonParticipantListPage />} />
+              <Route path="participants" element={<HackathonApplicationListPage />} />
             </Route>
             <Route path="/o/:daoName/r/:repoName" element={<RepoLayout />}>
               <Route index element={<RepoPage />} />
