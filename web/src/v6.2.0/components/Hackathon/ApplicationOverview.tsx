@@ -124,19 +124,22 @@ const HackathonApplicationOverview = () => {
           </div>
         )}
 
-      {!show_skeleton && hackathon.is_participate_enabled && hackathon._rg_fetched && (
-        <div className="mt-4">
-          <Button
-            variant="custom"
-            size="sm"
-            className="border !border-blue-2b89ff text-blue-2b89ff !rounded-[2rem]"
-            onClick={onSubmitAppModal}
-          >
-            <FontAwesomeIcon icon={faPlus} className="mr-2" />
-            Add application
-          </Button>
-        </div>
-      )}
+      {!show_skeleton &&
+        hackathon.is_participate_enabled &&
+        hackathon._rg_fetched &&
+        hackathon.storagedata.is_fetched && (
+          <div className="mt-4">
+            <Button
+              variant="custom"
+              size="sm"
+              className="border !border-blue-2b89ff text-blue-2b89ff !rounded-[2rem]"
+              onClick={onSubmitAppModal}
+            >
+              <FontAwesomeIcon icon={faPlus} className="mr-2" />
+              Add application
+            </Button>
+          </div>
+        )}
     </div>
   )
 }

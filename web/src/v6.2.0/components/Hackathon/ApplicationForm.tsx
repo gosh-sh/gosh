@@ -66,7 +66,7 @@ const HackathonApplicationForm = () => {
     }
   }
 
-  if (!hackathon) {
+  if (!hackathon?.storagedata.is_fetched || hackathon.is_voting_started) {
     return null
   }
 
