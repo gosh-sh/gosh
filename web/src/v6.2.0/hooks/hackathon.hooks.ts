@@ -1102,7 +1102,8 @@ export function useApplicationForm() {
       secret: keypair_encrypt.secret,
     })
     // Want to decrypt nacl_box2.encrypted with keypair_encrypt.public and keypair_user.secret
-    // It fails with code 111 (need to find what it means)
+    // And it works..
+    // Decision: my public key (from phrase) is not acceptable as nacl public key
     const nacl_box_open2 = await crypto.nacl_box_open({
       nonce,
       their_public: keypair_encrypt.public,
