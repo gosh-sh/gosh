@@ -1093,7 +1093,8 @@ export function useApplicationForm() {
     const keypair_user_nacl = await crypto.nacl_box_keypair_from_secret_key({
       secret: keypair_user.secret,
     })
-    // Want to encrypt keypair_encrypt.secret key with keypair_user.public
+    // Want to encrypt keypair_encrypt.secret key with keypair_user_nacl.public
+    // (this differs from public i have)
     const nacl_box2 = await crypto.nacl_box({
       nonce,
       decrypted: Buffer.from(keypair_encrypt.secret).toString('base64'),
