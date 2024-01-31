@@ -699,9 +699,7 @@ export function useHackathon(
         async ({ id }) => {
           const tag = await sc.getCommitTag({ address: id })
           const details = await tag.getDetails()
-          const parsed = JSON.parse(details.content)
-          const dao_name = parsed.application.dao_name
-          const repo_name = parsed.application.repo_name
+          const { dao_name, repo_name, ...rest } = JSON.parse(details.content)
 
           const { sc: psc, dao_account } = await getApplicationVersion(dao_name)
           const is_member = user.profile
@@ -719,7 +717,7 @@ export function useHackathon(
             repo_name,
             is_member,
             description: repo_details.description,
-            application_form: parsed.application_form,
+            application_form: rest.application_form,
             application: applications.find((app) => {
               return app.dao_name === dao_name && app.repo_name === repo_name
             }),
@@ -1019,8 +1017,8 @@ export function useSubmitHackathonApps() {
             reponame: HACKATHONS_REPO,
             name: tag_name,
             content: JSON.stringify({
+              ...item,
               application_form: application_form_encrypted,
-              application: item,
             }),
             commit: {
               address: `0:${new Array(64).fill(0).join('')}`,

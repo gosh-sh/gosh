@@ -145,6 +145,7 @@ const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
                   component={FormikInput}
                   placeholder="Field label"
                   autoComplete="off"
+                  disabled={form.isSubmitting}
                 />
                 {Array.isArray(form.errors.fields) && (
                   <ErrorMessage

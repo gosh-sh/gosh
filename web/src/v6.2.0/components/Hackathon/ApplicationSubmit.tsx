@@ -137,7 +137,7 @@ const HackathonApplicationSubmit = (props: TApplicationSubmitProps) => {
 
             <h1 className="mb-6 text-xl font-medium">Add applications</h1>
 
-            {application_form && (
+            {application_form && application_form.fields.length > 0 && (
               <>
                 <h4 className="mb-2">Application form</h4>
                 <div className="mb-6 flex flex-col space-y-2">
@@ -148,6 +148,7 @@ const HackathonApplicationSubmit = (props: TApplicationSubmitProps) => {
                         name={`form_data.${field.name}`}
                         label={field.label}
                         autoComplete="off"
+                        disabled={isSubmitting}
                       />
                       <ErrorMessage
                         component="div"

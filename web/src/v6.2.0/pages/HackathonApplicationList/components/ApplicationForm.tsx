@@ -36,7 +36,7 @@ const ApplicationForm = (props: TApplicationFormProps) => {
     } catch (e: any) {
       console.error(`ApplicationForm: error decrypt application data - ${e.message}`)
     }
-  }, [application_data?.nonce])
+  }, [application_data?.data_encryption_nonce])
 
   useEffect(() => {
     decryptData()
