@@ -1,6 +1,6 @@
 import { KeyPair } from '@eversdk/core'
 import { Buffer } from 'buffer'
-import * as _sodium from 'libsodium-wrappers'
+import * as sodium from 'libsodium-wrappers'
 import _ from 'lodash'
 import moment from 'moment'
 import { useCallback, useEffect, useState } from 'react'
@@ -1055,8 +1055,7 @@ export function useApplicationForm() {
     const { owners, data } = params
 
     // Initialize libsodium
-    await _sodium.ready
-    const sodium = _sodium
+    await sodium.ready
 
     // Generate random bytes (used as symmetric key for data encryption)
     const data_encryption_nonce = sodium.randombytes_buf(12)
@@ -1103,8 +1102,7 @@ export function useApplicationForm() {
     const { user_keypair, application_form } = params
 
     // Initialize libsodium
-    await _sodium.ready
-    const sodium = _sodium
+    await sodium.ready
 
     // Search for user public key in owners
     const user_pubkey = user_keypair.public
