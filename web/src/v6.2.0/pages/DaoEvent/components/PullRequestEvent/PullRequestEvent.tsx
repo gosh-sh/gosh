@@ -1,11 +1,11 @@
 import { getCommitTime, usePullRequestCommit } from 'react-gosh'
-import { useDao, useDaoMember } from '../../../../hooks/dao.hooks'
-import CopyClipboard from '../../../../../components/CopyClipboard'
-import { shortString } from '../../../../../utils'
-import { Commiter } from '../../../../../components/Commit'
-import Loader from '../../../../../components/Loader'
-import BlobDiffPreview from '../../../../../components/Blob/DiffPreview'
 import { Link, useParams } from 'react-router-dom'
+import BlobDiffPreview from '../../../../../components/Blob/DiffPreview'
+import { Commiter } from '../../../../../components/Commit'
+import CopyClipboard from '../../../../../components/CopyClipboard'
+import Loader from '../../../../../components/Loader'
+import { shortString } from '../../../../../utils'
+import { useDao, useDaoMember } from '../../../../hooks/dao.hooks'
 
 type TPullRequestEventProps = {
   data: { branchName: string; repoName: string; commit: string }
