@@ -1,0 +1,62 @@
+{
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"goshaddr","type":"address"},
+				{"name":"tag","type":"string"},
+				{"name":"WalletCode","type":"cell"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroy",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getVersion",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
+			]
+		},
+		{
+			"name": "getOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"address"}
+			]
+		}
+	],
+	"data": [
+		{"key":1,"name":"_goshdao","type":"address"}
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
+		{"name":"_systemcontract","type":"address"},
+		{"name":"_goshdao","type":"address"},
+		{"name":"_code","type":"map(uint8,cell)"},
+		{"name":"_tag","type":"string"}
+	]
+}
