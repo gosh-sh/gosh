@@ -1,6 +1,9 @@
 import { TonClient } from '@eversdk/core'
+import _ from 'lodash'
+import { AppConfig } from '../../appconfig'
 import { BaseContract } from '../../blockchain/contract'
-import TaskABI from './abi/task.abi.json'
+import { MILESTONE_TASK_TAG, SYSTEM_TAG } from '../../constants'
+import { getSystemContract } from '../blockchain/helpers'
 import {
   EDaoMemberType,
   TTaskDetails,
@@ -9,10 +12,7 @@ import {
   TTaskGrantTotal,
   TTaskTeamMember,
 } from '../types/dao.types'
-import { MILESTONE_TASK_TAG, SYSTEM_TAG } from '../../constants'
-import { getSystemContract } from '../blockchain/helpers'
-import _ from 'lodash'
-import { AppConfig } from '../../appconfig'
+import TaskABI from './abi/task.abi.json'
 
 export class Task extends BaseContract {
   constructor(client: TonClient, address: string) {
@@ -93,6 +93,7 @@ export class Task extends BaseContract {
     }
 
     return {
+      milestone_name: data.bigtask,
       name: data.nametask,
       repository: {
         name: await repository.getName(),
