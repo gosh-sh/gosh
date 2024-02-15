@@ -19,14 +19,6 @@
 			]
 		},
 		{
-			"name": "deployNewCCWallet",
-			"inputs": [
-				{"name":"pubkey","type":"uint256"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "sendMoneyCCWallet",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},

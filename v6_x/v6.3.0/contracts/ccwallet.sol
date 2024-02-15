@@ -12,6 +12,7 @@ pragma AbiHeader pubkey;
 import "./smv/modifiers/modifiers.sol";
 import "./libraries/GoshLib.sol";
 import "./versioncontroller.sol";
+import "./ccwallet.sol";
 
 contract CCWallet is Modifiers {
     string constant version = "1.0.0";
@@ -19,15 +20,20 @@ contract CCWallet is Modifiers {
     address static _versioncontroller;
     uint256 _balance = 0;
     uint32 timeMoney = 0;
+    uint256 _decimals = 1e9;
+
     bool _flag = false;
+    mapping(uint8 => TvmCell) _code;
 
     constructor( 
-    ) senderIs(_versioncontroller) accept {
+        TvmCell code
+    ) accept {
+        _code[m_CCWalletCode] = code;
         getMoney();
     }
 
     function getGOSHToken(uint128 token) public senderIs(_versioncontroller) accept {
-        _balance += uint256(token);
+        _balance += uint256(token) * _decimals;
     }
 
     function transferCurrency(uint256 token, address to) public onlyOwner accept {
@@ -37,6 +43,11 @@ contract CCWallet is Modifiers {
         ExtraCurrencyCollection data;
         data[CURRENCIES_ID] = token;
         to.transfer({value: 0.3 ton, currencies: data});
+        CCWallet(to).changeBalance{value: 0.1 ton, flag: 1}(tvm.pubkey(), token);
+    }
+
+    function changeBalance(uint256 pubkey, uint256 token) public senderIs(GoshLib.calculateCCWalletAddress(_code[m_CCWalletCode], _versioncontroller, pubkey)) accept {
+        _balance += token;
     }
 
     //Money part

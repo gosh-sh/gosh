@@ -20,6 +20,7 @@ import "topic.sol";
 import "versioncontroller.sol";
 import "content-signature.sol";
 import "trusted.sol";
+import "ccwallet.sol";
 import "./libraries/GoshLib.sol";
 
 /* System contract of Gosh version*/
@@ -178,6 +179,14 @@ contract SystemContract is Modifiers {
         address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), "gosh");
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         VersionController(_versionController).updateCodeDao{value : 0.3 ton, flag: 1}(newcode, cell, version);
+    }
+
+    function deployNewCCWallet(uint256 pubkey) public view accept {
+        _deployNewCCWallet(pubkey);
+    }
+
+    function _deployNewCCWallet(uint256 pubkey) private view {
+        new CCWallet {stateInit: GoshLib.composeCCWalletStateInit(_code[m_CCWalletCode], address(this), pubkey), value: FEE_DEPLOY_CCWALLET, wid: 0, flag: 1}(_code[m_CCWalletCode]);
     }
 
     function deployDao(string name, address pubaddr, optional(address) previous, address[] pubmem) public accept saveMsg {

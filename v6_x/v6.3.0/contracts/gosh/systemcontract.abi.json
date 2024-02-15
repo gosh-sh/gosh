@@ -285,6 +285,14 @@
 			]
 		},
 		{
+			"name": "deployNewCCWallet",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployDao",
 			"inputs": [
 				{"name":"name","type":"string"},

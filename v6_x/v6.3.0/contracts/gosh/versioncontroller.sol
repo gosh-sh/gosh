@@ -33,12 +33,8 @@ contract VersionController is Modifiers {
         _readyForCurrencies = status;
     }
 
-    function deployNewCCWallet(uint256 pubkey) public view accept {
-        _deployNewCCWallet(pubkey);
-    }
-
     function _deployNewCCWallet(uint256 pubkey) private view {
-        new CCWallet {stateInit: GoshLib.composeCCWalletStateInit(_code[m_CCWalletCode], address(this), pubkey), value: FEE_DEPLOY_CCWALLET, wid: 0, flag: 1}();
+        new CCWallet {stateInit: GoshLib.composeCCWalletStateInit(_code[m_CCWalletCode], address(this), pubkey), value: FEE_DEPLOY_CCWALLET, wid: 0, flag: 1}(_code[m_CCWalletCode]);
     }
 
     function sendMoneyCCWallet(uint256 pubkey, uint128 value) public view senderIs(GoshLib.calculateCCWalletAddress(_code[m_CCWalletCode], address(this), pubkey)) accept {
