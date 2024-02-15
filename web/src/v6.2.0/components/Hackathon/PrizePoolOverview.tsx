@@ -81,7 +81,7 @@ const HackathonPrizePoolOverview = () => {
       const original = hackathon.storagedata.prize_raw
       const modified = { ...JSON.parse(original), prize: values }
       const { event_address } = await updateStorageData({
-        filename: 'metadata.json',
+        filename: { original: 'metadata.json', modified: 'metadata.json' },
         content: {
           original,
           modified: JSON.stringify(modified),

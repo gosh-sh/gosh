@@ -1,9 +1,10 @@
 import { faAward } from '@fortawesome/free-solid-svg-icons'
 import {
+  HackathonApplicationForm,
+  HackathonApplicationOverview,
   HackathonDatesOverview,
   HackathonDescriptionFileForm,
   HackathonExpertsOverview,
-  HackathonParticipantsOverview,
   HackathonPrizePoolOverview,
 } from '../../components/Hackathon'
 
@@ -23,7 +24,8 @@ const HackathonRewardPage = () => {
           <div className="border border-gray-e6edff rounded-xl overflow-hidden px-5">
             <HackathonPrizePoolOverview />
             <HackathonDatesOverview />
-            <HackathonParticipantsOverview />
+            <HackathonApplicationForm />
+            <HackathonApplicationOverview />
           </div>
           <hr className="bg-gray-e6edff" />
           <HackathonExpertsOverview />

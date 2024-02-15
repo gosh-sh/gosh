@@ -73,7 +73,7 @@ const HackathonDescriptionFileForm = (props: DescriptionFileFormProps) => {
 
       const remarked = await html2markdown(values.modified)
       const { event_address } = await updateStorageData({
-        filename,
+        filename: { original: filename, modified: filename },
         content: { original: content.md, modified: remarked },
       })
       onEditToggle()
@@ -91,7 +91,7 @@ const HackathonDescriptionFileForm = (props: DescriptionFileFormProps) => {
     }
     const html = await markdown2html(mapping[mapping_key])
     setContent({ md: mapping[mapping_key], html })
-  }, [mapping_key, hackathon?.address])
+  }, [mapping_key, hackathon?.address, hackathon?.storagedata.description])
 
   useEffect(() => {
     getContentCallback()

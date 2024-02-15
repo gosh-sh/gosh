@@ -1,4 +1,6 @@
+import { KeyPair } from '@eversdk/core'
 import { Buffer } from 'buffer'
+import * as sodium from 'libsodium-wrappers'
 import _ from 'lodash'
 import moment from 'moment'
 import { useCallback, useEffect, useState } from 'react'
@@ -28,6 +30,7 @@ import {
   daoHackathonSelector,
   storagedata_empty,
 } from '../store/hackathon.state'
+import { TFormGeneratorField, TUserSelectOption } from '../types/form.types'
 import {
   EHackathonType,
   THackathonApplication,
@@ -604,9 +607,17 @@ export function useHackathon(
       const updated: any = {
         prize: { total: 0, places: [] },
         prize_raw: '',
+        application_form: { owners: [], fields: [] },
+        application_form_raw: '',
         description: {},
       }
-      for (const file of ['readme.md', 'rules.md', 'prizes.md', 'metadata.json']) {
+      for (const file of [
+        'readme.md',
+        'rules.md',
+        'prizes.md',
+        'metadata.json',
+        'application.form.json',
+      ]) {
         const item = snap_data.find((v) => v.name.toLowerCase() === file)
         if (!item) {
           continue
@@ -620,6 +631,9 @@ export function useHackathon(
           const parsed = JSON.parse(item.content)
           updated.prize = parsed.prize
           updated.prize_raw = item.content
+        } else if (file === 'application.form.json') {
+          updated.application_form = JSON.parse(item.content)
+          updated.application_form_raw = item.content
         } else {
           const key = file.split('.')[0]
           updated.description[key] = item.content
@@ -685,27 +699,27 @@ export function useHackathon(
         async ({ id }) => {
           const tag = await sc.getCommitTag({ address: id })
           const details = await tag.getDetails()
-          const parsed = JSON.parse(details.content)
+          const { dao_name, repo_name, ...rest } = JSON.parse(details.content)
 
-          const { sc: psc, dao_account } = await getApplicationVersion(parsed.dao_name)
+          const { sc: psc, dao_account } = await getApplicationVersion(dao_name)
           const is_member = user.profile
             ? await dao_account.isMember(user.profile)
             : false
 
           const prepo_account = (await psc.getRepository({
-            path: `${parsed.dao_name}/${parsed.repo_name}`,
+            path: `${dao_name}/${repo_name}`,
           })) as unknown as GoshRepository
           const repo_details = await prepo_account.getDetails()
 
           return {
-            ...parsed,
+            dao_name,
             dao_address: dao_account.address,
+            repo_name,
             is_member,
             description: repo_details.description,
+            application_form: rest.application_form,
             application: applications.find((app) => {
-              return (
-                app.dao_name === parsed.dao_name && app.repo_name === parsed.repo_name
-              )
+              return app.dao_name === dao_name && app.repo_name === repo_name
             }),
           }
         },
@@ -814,7 +828,7 @@ export function useUpdateHackathon() {
 
   const updateStorageData = useCallback(
     async (params: {
-      filename: string
+      filename: { original: string; modified: string }
       content: { original: string; modified: string }
     }) => {
       // TODO: repo_name should be used after git part refactor
@@ -841,7 +855,7 @@ export function useUpdateHackathon() {
           `Update details for ${hackathon?.name} ${hackathon?.type}`,
           [
             {
-              treepath: [filename, filename],
+              treepath: [filename.original, filename.modified],
               original: content.original,
               modified: content.modified,
             },
@@ -935,6 +949,7 @@ export function useUpdateHackathon() {
 
 export function useSubmitHackathonApps() {
   const member = useDaoMember()
+  const { encrypt } = useApplicationForm()
   const { hackathon, getApplications } = useHackathon()
   const [status, setStatus] = useRecoilState(
     appToastStatusSelector('__addhackathonparticipants'),
@@ -942,8 +957,12 @@ export function useSubmitHackathonApps() {
 
   const submitApps = async (params: {
     items: { dao_name: string; repo_name: string }[]
+    application_form?: {
+      owners: TUserSelectOption['value'][]
+      fields: (TFormGeneratorField & { value: string })[]
+    }
   }) => {
-    const { items } = params
+    const { items, application_form } = params
 
     try {
       if (!member.wallet) {
@@ -956,6 +975,34 @@ export function useSubmitHackathonApps() {
         throw new GoshError('Value error', 'Add applications time expired')
       }
 
+      // Encrypt application form if present
+      let application_form_encrypted: Object | undefined
+      if (application_form) {
+        setStatus((state) => ({
+          ...state,
+          type: 'pending',
+          data: 'Encrypting application form data',
+        }))
+
+        // Get owners public keys
+        const sc = getSystemContract()
+        const pubkeys = await Promise.all(
+          application_form.owners.map(async ({ address }) => {
+            const profile = await sc.versionController.getUserProfile({ address })
+            const keys = await profile.getPubkeys()
+            return keys.map((key) => key.slice(2)) // Remove 0x
+          }),
+        )
+        const pubkeys_flat = _.flatten(pubkeys)
+
+        // Encrypt form data
+        application_form_encrypted = await encrypt({
+          owners: pubkeys_flat,
+          data: application_form.fields,
+        })
+      }
+
+      // Add applications to hackathon
       setStatus((state) => ({
         ...state,
         type: 'pending',
@@ -969,7 +1016,10 @@ export function useSubmitHackathonApps() {
           await member.wallet!.createCommitTag({
             reponame: HACKATHONS_REPO,
             name: tag_name,
-            content: JSON.stringify(item),
+            content: JSON.stringify({
+              ...item,
+              application_form: application_form_encrypted,
+            }),
             commit: {
               address: `0:${new Array(64).fill(0).join('')}`,
               name: ZERO_COMMIT,
@@ -998,6 +1048,93 @@ export function useSubmitHackathonApps() {
   }
 
   return { submitApps, status }
+}
+
+export function useApplicationForm() {
+  const encrypt = async (params: { owners: string[]; data: Object }) => {
+    const { owners, data } = params
+
+    // Initialize libsodium
+    await sodium.ready
+
+    // Generate random bytes (used as symmetric key for data encryption)
+    const data_encryption_nonce = sodium.randombytes_buf(12)
+    const data_encryption_key = sodium.randombytes_buf(32)
+
+    // Encrypt encryption_key for each owner's public key
+    const key_encryption_nonce = sodium.randombytes_buf(24)
+    const key_encryption_keys = sodium.crypto_box_keypair()
+    const encrypted_data_encryption_key = owners.map((pubkey) => {
+      // Pubkey is signing key (ed25519) and needs to be converted to
+      // encryption key (curve25519)
+      const pubkey_uint8 = sodium.from_hex(pubkey)
+      const pubkey_curve25519 = sodium.crypto_sign_ed25519_pk_to_curve25519(pubkey_uint8)
+
+      // Encrypt data encryption key
+      const encrypted = sodium.crypto_box_easy(
+        data_encryption_key,
+        key_encryption_nonce,
+        pubkey_curve25519,
+        key_encryption_keys.privateKey,
+      )
+      return [pubkey, sodium.to_base64(encrypted)]
+    })
+
+    // Encrypt form data with data_encryption_key
+    const sc = getSystemContract()
+    const crypto = sc.account.client.crypto
+    const { data: encrypted_data } = await crypto.chacha20({
+      nonce: sodium.to_hex(data_encryption_nonce),
+      key: sodium.to_hex(data_encryption_key),
+      data: Buffer.from(JSON.stringify(data)).toString('base64'),
+    })
+
+    return {
+      key_encryption_nonce: sodium.to_hex(key_encryption_nonce),
+      key_encryption_public: sodium.to_hex(key_encryption_keys.publicKey),
+      data_encryption_nonce: sodium.to_hex(data_encryption_nonce),
+      encrypted_key: Object.fromEntries(encrypted_data_encryption_key),
+      encrypted_data,
+    }
+  }
+
+  const decrypt = async (params: { user_keypair: KeyPair; application_form: any }) => {
+    const { user_keypair, application_form } = params
+
+    // Initialize libsodium
+    await sodium.ready
+
+    // Search for user public key in owners
+    const user_pubkey = user_keypair.public
+    const encrypted_data_encryption_key = application_form.encrypted_key[user_pubkey]
+    if (!encrypted_data_encryption_key) {
+      return null
+    }
+
+    // Decrypt data encryption key with user secret
+    // User keypair is signing keypair (ed25519) and secret key needs to be
+    // converted to encryption secrtet key (curve25519)
+    const ed25519_skpk = sodium.from_hex(`${user_keypair.secret}${user_keypair.public}`)
+    const user_secret = sodium.crypto_sign_ed25519_sk_to_curve25519(ed25519_skpk)
+    const decrypted_data_encryption_key = sodium.crypto_box_open_easy(
+      sodium.from_base64(encrypted_data_encryption_key),
+      sodium.from_hex(application_form.key_encryption_nonce),
+      sodium.from_hex(application_form.key_encryption_public),
+      user_secret,
+    )
+
+    // Decrypt encrypted data
+    const sc = getSystemContract()
+    const crypto = sc.account.client.crypto
+    const { data } = await crypto.chacha20({
+      nonce: application_form.data_encryption_nonce,
+      key: sodium.to_hex(decrypted_data_encryption_key),
+      data: application_form.encrypted_data,
+    })
+    return JSON.parse(Buffer.from(data, 'base64').toString())
+  }
+
+  return { encrypt, decrypt }
 }
 
 export function useHackathonVoting() {

@@ -1,6 +1,7 @@
 import { TDao } from 'react-gosh'
 import { IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { Hackathon } from '../blockchain/hackathon'
+import { TFormGeneratorField, TUserSelectOption } from './form.types'
 
 export enum EHackathonType {
   HACKATHON = 'hackathon',
@@ -14,6 +15,7 @@ export type THackathonParticipant = {
   description?: string
   is_member?: boolean
   is_selected?: boolean
+  application_form?: any
   application?: THackathonApplication
 }
 
@@ -52,6 +54,11 @@ export type THackathonDetails = {
     description: { readme: string; rules: string; prizes: string }
     prize: { total: number; places: number[] }
     prize_raw: string
+    application_form: {
+      owners: TUserSelectOption['value'][]
+      fields: TFormGeneratorField[]
+    }
+    application_form_raw: string
   }
   apps_submitted: {
     is_fetching: boolean
