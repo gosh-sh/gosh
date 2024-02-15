@@ -5,10 +5,11 @@ import { Commiter } from '../../../../../components/Commit'
 import CopyClipboard from '../../../../../components/CopyClipboard'
 import Loader from '../../../../../components/Loader'
 import { shortString } from '../../../../../utils'
+import { lockToStr } from '../../../../components/Task'
 import { useDao, useDaoMember } from '../../../../hooks/dao.hooks'
 
 type TPullRequestEventProps = {
-  data: { branchName: string; repoName: string; commit: string }
+  data: { branchName: string; repoName: string; commit: string; task: any }
 }
 
 const PullRequestEvent = (props: TPullRequestEventProps) => {
@@ -72,6 +73,46 @@ const PullRequestEvent = (props: TPullRequestEventProps) => {
               <div className="text-sm">
                 <Commiter committer={commit.committer} />
               </div>
+            </div>
+          </>
+        )}
+
+        {data.task && (
+          <>
+            <div className="flex items-center gap-6">
+              <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
+                Milestone/Task
+              </div>
+              <div className="text-sm">
+                {data.task.milestone_name ? (
+                  <Link
+                    to={`/o/${dao.details.name}/tasks/milestone/${data.task.milestone_address}?subtask=${data.task.address}`}
+                    className="block text-blue-2b89ff max-w-sm truncate text-ellipsis"
+                  >
+                    {data.task.name} Community Management & SMM:Creating and customizing
+                    accounts
+                  </Link>
+                ) : (
+                  <Link
+                    to={`/o/${dao.details.name}/tasks/${data.task.address}`}
+                    className="block text-blue-2b89ff max-w-sm truncate text-ellipsis"
+                  >
+                    {data.task.name}
+                  </Link>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
+                Vesting
+              </div>
+              <div className="text-sm">{lockToStr(data.task.vestingEnd)}</div>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
+                Reward
+              </div>
+              <div className="text-sm">{data.task.balance.toLocaleString()}</div>
             </div>
           </>
         )}
