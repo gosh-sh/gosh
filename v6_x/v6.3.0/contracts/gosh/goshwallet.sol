@@ -119,6 +119,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 20 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_nameDao == "GOSH", ERR_NOT_GOSH);
+        require(token <= m_pseudoDAOBalance, ERR_TOO_LOW_BALANCE);
+        m_pseudoDAOBalance -= token;
         SystemContract(_systemcontract).sendToken{value: 0.2 ton, flag: 1}(_pubaddr, token, pubkey);
     }
     
