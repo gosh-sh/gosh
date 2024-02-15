@@ -3225,13 +3225,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 for (const { decoded } of approved) {
                     const { name, value } = decoded
                     if (name === 'approve') {
-                        patches.push({ ...value.diff, constructor: false })
+                        patches.push({ ...value.diff, is_constructor: false })
                     } else {
                         patches.push({
                             commit: value.commit,
                             patch: value.data || false,
                             ipfs: value.ipfsdata,
-                            constructor: true,
+                            is_constructor: true,
                         })
                         stop = true
                         break
@@ -3273,11 +3273,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 })
                 .map(({ decoded }) => {
                     const { name, value } = decoded
-                    if (name === 'approve') return value.diff
+                    if (name === 'approve') {
+                        return { ...value.diff, is_constructor: false }
+                    }
                     return {
                         commit: value.commit,
                         patch: value.data || false,
                         ipfs: value.ipfsdata,
+                        is_constructor: true,
                     }
                 })
 
@@ -5312,7 +5315,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     ): Promise<string | Buffer> {
         if (Buffer.isBuffer(content)) return content
 
-        const { ipfs, patch, constructor } = diff
+        const { ipfs, patch, is_constructor } = diff
         const compressed = ipfs
             ? (await goshipfs.read(ipfs)).toString()
             : Buffer.from(patch!, 'hex').toString('base64')
@@ -5324,7 +5327,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         const patchOrContent = buffer.toString()
-        if (ipfs || constructor) {
+        if (ipfs || is_constructor) {
             return patchOrContent
         }
 
