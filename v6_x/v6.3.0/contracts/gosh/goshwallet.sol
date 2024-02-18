@@ -118,8 +118,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function sendTokensToCCWallet(uint128 token, uint256 pubkey) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 20 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        require(_nameDao == "GOSH", ERR_NOT_GOSH);
+        require(_nameDao == "gosh", ERR_NOT_GOSH);
         require(token <= m_pseudoDAOBalance, ERR_TOO_LOW_BALANCE);
+        updateHeadIn();
         m_pseudoDAOBalance -= token;
         SystemContract(_systemcontract).sendToken{value: 0.2 ton, flag: 1}(_pubaddr, token, pubkey);
     }
@@ -278,7 +279,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             m_pseudoDAOVoteBalance = 0;
             _totalDoubt = _lockedBalance;
             updateHeadIn();
-            unlockVotingIn(_lockedBalance);
+            (_lockedBalance);
         }
         _limited = decision;
         _limit_wallets = limitwallet;
