@@ -403,7 +403,7 @@ library GoshLib {
             code: buildCCWalletCode(code),
             contr: CCWallet,
             pubkey: pubkey,
-            varInit: { _versioncontroller : versionController }
+            varInit: { _wallettype : true, _versioncontroller : versionController }
         });
     }
 
