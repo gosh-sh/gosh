@@ -49,7 +49,8 @@
 		}
 	],
 	"data": [
-		{"key":1,"name":"_versioncontroller","type":"address"}
+		{"key":1,"name":"_versioncontroller","type":"address"},
+		{"key":2,"name":"_wallettype","type":"bool"}
 	],
 	"events": [
 	],
@@ -60,6 +61,7 @@
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
 		{"name":"__value","type":"uint256"},
 		{"name":"_versioncontroller","type":"address"},
+		{"name":"_wallettype","type":"bool"},
 		{"name":"_balance","type":"uint256"},
 		{"name":"timeMoney","type":"uint32"},
 		{"name":"_decimals","type":"uint256"},

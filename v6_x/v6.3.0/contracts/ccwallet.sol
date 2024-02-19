@@ -34,12 +34,14 @@ contract CCWallet is Modifiers {
     }
 
     function getGOSHToken(uint128 token) public senderIs(_versioncontroller) accept {
-        if (_wallettype == false) { _balance += uint256(token) * _decimals; }
+        getMoney();
+        if (_wallettype == LOCK_CCWALLET) { _balance += uint256(token) * _decimals; }
     }
 
     function transferCurrency(uint256 token, address to) public onlyOwner accept {
         require(address(this).currencies[CURRENCIES_ID] >= token, ERR_LOW_TOKEN);
-        if (_wallettype == true) { require(_balance >= token, ERR_LOW_TOKEN); _balance -= token; }
+        getMoney();
+        if (_wallettype == LOCK_CCWALLET) { require(_balance >= token, ERR_LOW_TOKEN); _balance -= token; }
         ExtraCurrencyCollection data;
         data[CURRENCIES_ID] = token;
         CCWallet(to).changeBalance{value: 0.3 ton, currencies: data, flag: 1}(tvm.pubkey(), token);
@@ -48,7 +50,8 @@ contract CCWallet is Modifiers {
     function changeBalance(uint256 pubkey, uint256 token) public {
         if (GoshLib.calculateCCWalletAddress(_code[m_CCWalletCode], _versioncontroller, pubkey) != msg.sender) { return; }
         tvm.accept();
-        if (_wallettype == false) { _balance += token; }
+        getMoney();
+        if (_wallettype == LOCK_CCWALLET) { _balance += token; }
     }
 
     //Money part

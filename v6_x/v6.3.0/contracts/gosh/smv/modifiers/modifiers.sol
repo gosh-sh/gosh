@@ -107,6 +107,7 @@ abstract contract Modifiers is ReplayProtection {
     
     address constant giver = address.makeAddrStd(-1, 0x94fb06c32a69c30bc419a368d1cf567e6358c9c5f07e4326f0c48db506b6f44c);
     uint32 constant CURRENCIES_ID = 1; //NEED TO CHECK
+    bool constant LOCK_CCWALLET = true;
 
     uint128 constant BATCH_SIZE_COMMIT = 5;
     uint128 constant BATCH_SIZE_TREE_DIFF = 5;
