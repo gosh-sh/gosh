@@ -45,7 +45,9 @@ contract CCWallet is Modifiers {
         CCWallet(to).changeBalance{value: 0.3 ton, currencies: data, flag: 1}(tvm.pubkey(), token);
     }
 
-    function changeBalance(uint256 pubkey, uint256 token) public senderIs(GoshLib.calculateCCWalletAddress(_code[m_CCWalletCode], _versioncontroller, pubkey)) accept {
+    function changeBalance(uint256 pubkey, uint256 token) public {
+        if (GoshLib.calculateCCWalletAddress(_code[m_CCWalletCode], _versioncontroller, pubkey) != msg.sender) { return; }
+        tvm.accept();
         if (_wallettype == false) { _balance += token; }
     }
 
