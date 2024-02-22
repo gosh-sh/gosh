@@ -1,3 +1,4 @@
+import moment from 'moment'
 import { getCommitTime, usePullRequestCommit } from 'react-gosh'
 import { Link, useParams } from 'react-router-dom'
 import BlobDiffPreview from '../../../../../components/Blob/DiffPreview'
@@ -104,15 +105,29 @@ const PullRequestEvent = (props: TPullRequestEventProps) => {
             </div>
             <div className="flex items-center gap-6">
               <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
+                Reward
+              </div>
+              <div className="text-sm">{data.task.balance.toLocaleString()}</div>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
                 Vesting
               </div>
               <div className="text-sm">{lockToStr(data.task.vestingEnd)}</div>
             </div>
             <div className="flex items-center gap-6">
               <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
-                Reward
+                First payment
               </div>
-              <div className="text-sm">{data.task.balance.toLocaleString()}</div>
+              <div className="text-sm">
+                {data.task.locktime > 0 ? (
+                  moment
+                    .unix(data.task.locktime + data.task.grant.assign[0].lock)
+                    .format('MMM D, YYYY HH:mm:ss')
+                ) : (
+                  <>{lockToStr(data.task.grant.assign[0].lock)} after proposal accepted</>
+                )}
+              </div>
             </div>
           </>
         )}
