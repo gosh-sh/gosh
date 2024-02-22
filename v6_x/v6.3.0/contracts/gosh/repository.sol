@@ -38,6 +38,8 @@ contract Repository is Modifiers{
     mapping(uint256 => string) public _versions;
     string public _description;
     address _creator;
+    optional(string) _tokendescription;
+    optional(Grants[]) _tokengrants;
 
     constructor(
         address pubaddr,
@@ -53,6 +55,8 @@ contract Repository is Modifiers{
         TvmCell codeTree,
         TvmCell codeDiff,
         TvmCell contentSignature,
+        TvmCell tokenrootcode,
+        TvmCell tokenwalletcode,
         mapping(uint256 => string) versions,
         uint128 index,
         optional(AddrVersion) previousversion
@@ -74,12 +78,26 @@ contract Repository is Modifiers{
         _code[m_SnapshotCode] = SnapshotCode;
         _code[m_DiffCode] = codeDiff;
         _code[m_contentSignature] = contentSignature;
+        _code[m_RepoTokenRootCode] = tokenrootcode;
+        _code[m_RepoTokenWalletCode] = tokenwalletcode;
         _previousversion = previousversion;
         _creator = msg.sender;
         if (_previousversion.hasValue()) { SystemContract(_systemcontract).checkUpdateRepo1{value: 0.3 ton, bounce: true, flag: 1}(_name, _nameDao, _previousversion.get(), address(this)); return; }
         _ready = true;
         _Branches[tvm.hash("main")] = Item("main", GoshLib.calculateCommitAddress(_code[m_CommitCode], address(this), "0000000000000000000000000000000000000000"), version);
         _head = "main";
+    }
+
+    function startToken(address pubaddr, string tokendescription, Grants[] tokengrants) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, 0)) accept {
+        if (_tokendescription.hasValue()) { return; }
+        _tokendescription = tokendescription;
+        _tokengrants = tokengrants;
+        this.startGrantToken{value: 0.1 ton, flag: 1}(tokengrants, uint128(0));
+    }
+
+    function startGrantToken(Grants[] tokengrants, uint128 index) public pure senderIs(this) accept {
+        if (index >= tokengrants.length) { return; }
+        this.startGrantToken{value: 0.1 ton, flag: 1}(tokengrants, index + 1);
     }
 
     function checkUpdateRepo4(AddrVersion prev, address answer) public view senderIs(_systemcontract) accept {
@@ -453,14 +471,14 @@ contract Repository is Modifiers{
         return GoshLib.buildTaskCode(_code[m_TaskCode], address(this), version);
     }
 
-    function getDetails() external view returns(string description, string name, Item[] alladress, string head, mapping(uint256 => string) hashtag, bool ready)
+    function getDetails() external view returns(string description, string name, Item[] alladress, string head, mapping(uint256 => string) hashtag, bool ready, optional(string) tokendescription, optional(Grants[]) tokengrants)
     {
         Item[] AllBranches;
         for ((uint256 key, Item value) : _Branches) {
             key;
             AllBranches.push(value);
         }
-        return (_description, _name, AllBranches, _head, _hashtag, _ready);
+        return (_description, _name, AllBranches, _head, _hashtag, _ready, _tokendescription, _tokengrants);
     }
 
     function getRepositoryIn() public view minValue(0.5 ton) {

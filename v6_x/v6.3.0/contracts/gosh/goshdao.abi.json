@@ -29,6 +29,8 @@
 				{"name":"codegrant","type":"cell"},
 				{"name":"codewrapper","type":"cell"},
 				{"name":"codetagsupply","type":"cell"},
+				{"name":"coderoottoken","type":"cell"},
+				{"name":"codewallettoken","type":"cell"},
 				{"name":"TokenLockerCode","type":"cell"},
 				{"name":"SMVPlatformCode","type":"cell"},
 				{"name":"SMVClientCode","type":"cell"},

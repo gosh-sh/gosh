@@ -563,6 +563,18 @@ function getCreateDaoMembersTagParamsData (TvmCell Data) external pure
         (proposalKind, tags, multiples,,) = abi.decode(Data,(uint256, string[], uint128[], string, uint32));
 }
 
+function getStartTokenParamsData (TvmCell Data) external pure
+         returns(uint proposalKind, string repoName, string tokendescription, Grants[] tokengrants)
+{
+        (proposalKind, repoName, tokendescription, tokengrants,,) = abi.decode(Data,(uint256, string, string, Grants[], string, uint32));
+}
+
+function getStartTokenParams () external view
+         returns(uint proposalKind, string repoName, string tokendescription, Grants[] tokengrants)
+{
+        (proposalKind, repoName, tokendescription, tokengrants,,) = abi.decode(propData, (uint256, string, string, Grants[], string, uint32));
+}
+
 function getDestroyDaoMembersTagParams () external view
          returns(uint proposalKind, string[] tags)
 {

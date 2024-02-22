@@ -218,6 +218,8 @@ contract SystemContract is Modifiers {
             _code[m_GrantCode],
             _code[m_WrapperCode],
             _code[m_TagSupplyCode],
+            _code[m_RepoTokenRootCode],
+            _code[m_RepoTokenWalletCode],
             m_TokenLockerCode,
             m_SMVPlatformCode,
             m_SMVClientCode,

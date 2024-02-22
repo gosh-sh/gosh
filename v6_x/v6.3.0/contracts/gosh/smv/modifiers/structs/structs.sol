@@ -7,6 +7,10 @@
 pragma ever-solidity >=0.66.0;
 
 //Structs
+struct Grants {
+    uint256 pubkey;
+    uint128 value;
+}
 
 struct Multiples {
     uint128 value;

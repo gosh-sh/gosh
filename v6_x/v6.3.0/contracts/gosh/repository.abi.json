@@ -19,9 +19,30 @@
 				{"name":"codeTree","type":"cell"},
 				{"name":"codeDiff","type":"cell"},
 				{"name":"contentSignature","type":"cell"},
+				{"name":"tokenrootcode","type":"cell"},
+				{"name":"tokenwalletcode","type":"cell"},
 				{"name":"versions","type":"map(uint256,string)"},
 				{"name":"index","type":"uint128"},
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previousversion","type":"optional(tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startToken",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"tokendescription","type":"string"},
+				{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"tuple[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startGrantToken",
+			"inputs": [
+				{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"tuple[]"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -484,7 +505,9 @@
 				{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"}],"name":"alladress","type":"tuple[]"},
 				{"name":"head","type":"string"},
 				{"name":"hashtag","type":"map(uint256,string)"},
-				{"name":"ready","type":"bool"}
+				{"name":"ready","type":"bool"},
+				{"name":"tokendescription","type":"optional(string)"},
+				{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"optional(tuple[])"}
 			]
 		},
 		{
@@ -547,6 +570,8 @@
 		{"name":"_limited","type":"bool"},
 		{"name":"_versions","type":"map(uint256,string)"},
 		{"name":"_description","type":"string"},
-		{"name":"_creator","type":"address"}
+		{"name":"_creator","type":"address"},
+		{"name":"_tokendescription","type":"optional(string)"},
+		{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"}],"name":"_tokengrants","type":"optional(tuple[])"}
 	]
 }

@@ -540,6 +540,29 @@
 			]
 		},
 		{
+			"name": "getStartTokenParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"name":"tokendescription","type":"string"},
+				{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"tuple[]"}
+			]
+		},
+		{
+			"name": "getStartTokenParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"name":"tokendescription","type":"string"},
+				{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"tuple[]"}
+			]
+		},
+		{
 			"name": "getDestroyDaoMembersTagParams",
 			"inputs": [
 			],

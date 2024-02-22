@@ -25,6 +25,8 @@
 				{"name":"coderepotag","type":"cell"},
 				{"name":"topiccode","type":"cell"},
 				{"name":"grantCode","type":"cell"},
+				{"name":"tokenrootcode","type":"cell"},
+				{"name":"tokenwalletcode","type":"cell"},
 				{"name":"versions","type":"map(uint256,string)"},
 				{"name":"limit_wallets","type":"uint128"},
 				{"name":"access","type":"optional(uint256)"},
@@ -37,6 +39,19 @@
 				{"name":"_tip3Root","type":"address"}
 			],
 			"outputs": [
+			]
+		},
+		{
+			"name": "getCellForStartToken",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"tokendescription","type":"string"},
+				{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"tuple[]"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
 			]
 		},
 		{
