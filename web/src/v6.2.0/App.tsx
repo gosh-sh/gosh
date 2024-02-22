@@ -44,7 +44,6 @@ import OnboardingDaoPage from './pages/OnboardingDao'
 import OnboardingStatusPage from './pages/OnboardingStatus'
 import SigninPage from './pages/Signin'
 import SignupPage from './pages/Signup'
-import TaskCreatePage from './pages/TaskCreate'
 import UserDaoListPage from './pages/UserDaoList'
 
 // TODO: Update after full refactor
@@ -101,7 +100,6 @@ const App = () => {
               <Route path="members" element={<DaoMemberListPage />} />
               <Route path="tasks">
                 <Route index element={<DaoTaskListPage />} />
-                <Route path="create" element={<TaskCreatePage />} />
                 <Route path="milestone/:address" element={<DaoTaskListPage />} />
                 <Route path=":address" element={<DaoTaskListPage />} />
               </Route>

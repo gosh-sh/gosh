@@ -1,17 +1,18 @@
-import { useEffect, useState } from 'react'
-import { Button, Input } from '../../../components/Form'
+import { faChevronDown, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
-import { useDaoMember, useDaoTaskList } from '../../hooks/dao.hooks'
-import Loader from '../../../components/Loader'
-import { ListBoundary } from './components'
-import { matchPath } from 'react-router-dom'
+import { Menu } from '@headlessui/react'
 import classNames from 'classnames'
-import TaskPage from '../Task'
+import { Fragment, useEffect, useState } from 'react'
+import { matchPath } from 'react-router-dom'
 import { useSetRecoilState } from 'recoil'
+import { Button, Input } from '../../../components/Form'
+import Loader from '../../../components/Loader'
 import { appModalStateAtom } from '../../../store/app.state'
-import { MilestoneCreateModal } from '../../components/Modal'
+import { MilestoneCreateModal, TaskCreateModal } from '../../components/Modal'
+import { useDaoMember, useDaoTaskList } from '../../hooks/dao.hooks'
 import MilestonePage from '../Milestone/Milestone'
+import TaskPage from '../Task'
+import { ListBoundary } from './components'
 
 const DaoTaskListPage = () => {
   const member = useDaoMember()
@@ -19,6 +20,14 @@ const DaoTaskListPage = () => {
   const setModal = useSetRecoilState(appModalStateAtom)
   const [taskOpened, setTaskOpened] = useState<string>()
   const [milestoneOpened, setMilestoneOpened] = useState<string>()
+
+  const onCreateTask = () => {
+    setModal({
+      static: true,
+      isOpen: true,
+      element: <TaskCreateModal />,
+    })
+  }
 
   const onCreateMilestone = () => {
     setModal({
@@ -66,14 +75,44 @@ const DaoTaskListPage = () => {
           test-id="input-task-search"
         />
         {member.isMember && (
-          <Button
-            variant="outline-secondary"
-            size="xl"
-            test-id="btn-milestone-create"
-            onClick={onCreateMilestone}
-          >
-            Create milestone
-          </Button>
+          <Menu as="div" className="relative block">
+            {({ open }) => (
+              <>
+                <Menu.Button as={Fragment}>
+                  <Button variant="outline-secondary" size="xl">
+                    Create new
+                    <FontAwesomeIcon
+                      icon={faChevronDown}
+                      className={classNames(
+                        'ml-2 transition-transform duration-150',
+                        open ? 'rotate-180' : 'rotate-0',
+                      )}
+                    />
+                  </Button>
+                </Menu.Button>
+                <Menu.Items className="absolute w-full right-0 mt-2 origin-top-right border border-gray-e6edff rounded-md bg-white shadow-lg focus:outline-none overflow-clip divide-y divide-gray-e6edff">
+                  <Menu.Item
+                    as={Button}
+                    variant="custom"
+                    className="block text-start text-gray-7c8db5 hover:text-black w-full border-0 rounded-none transition-colors duration-150"
+                    test-id="btn-task-create"
+                    onClick={onCreateTask}
+                  >
+                    Create task
+                  </Menu.Item>
+                  <Menu.Item
+                    as={Button}
+                    variant="custom"
+                    className="block text-start text-gray-7c8db5 hover:text-black w-full border-0 rounded-none transition-colors duration-150"
+                    test-id="btn-milestone-create"
+                    onClick={onCreateMilestone}
+                  >
+                    Create milestone
+                  </Menu.Item>
+                </Menu.Items>
+              </>
+            )}
+          </Menu>
         )}
       </div>
 
