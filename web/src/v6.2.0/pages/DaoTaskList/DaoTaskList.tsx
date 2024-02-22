@@ -90,7 +90,7 @@ const DaoTaskListPage = () => {
                     />
                   </Button>
                 </Menu.Button>
-                <Menu.Items className="absolute w-full right-0 mt-2 origin-top-right border border-gray-e6edff rounded-md bg-white shadow-lg focus:outline-none overflow-clip divide-y divide-gray-e6edff">
+                <Menu.Items className="absolute w-full right-0 mt-2 origin-top-right border border-gray-e6edff rounded-md bg-white shadow-lg focus:outline-none overflow-clip divide-y divide-gray-e6edff z-1">
                   <Menu.Item
                     as={Button}
                     variant="custom"

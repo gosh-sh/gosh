@@ -2263,7 +2263,8 @@ export function useDaoEvent(
       }
 
       // Fetch event data if not present
-      if (!found.data) {
+      const force_reload = [EDaoEventType.PULL_REQUEST]
+      if (!found.data || force_reload.indexOf(found.type) >= 0) {
         getEventData(found.account!, found.type)
       }
     } catch (e: any) {
