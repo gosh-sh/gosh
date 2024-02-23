@@ -39,6 +39,7 @@ contract CCWallet is Modifiers {
     }
 
     function transferCurrency(uint256 token, address to) public onlyOwner accept saveMsg {
+        require(token > 0, ERR_LOW_TOKEN);
         require(address(this).currencies[CURRENCIES_ID] >= token, ERR_LOW_TOKEN);
         getMoney();
         if (_wallettype == LOCK_CCWALLET) { require(_balance >= token, ERR_LOW_TOKEN); _balance -= token; }
