@@ -125,7 +125,9 @@ const PullRequestEvent = (props: TPullRequestEventProps) => {
                     .unix(data.task.locktime + data.task.grant.assign[0].lock)
                     .format('MMM D, YYYY HH:mm:ss')
                 ) : (
-                  <>{lockToStr(data.task.grant.assign[0].lock)} after proposal accepted</>
+                  <>
+                    {lockToStr(data.task.grant.assign[0].lock)} after proposal is accepted
+                  </>
                 )}
               </div>
             </div>
