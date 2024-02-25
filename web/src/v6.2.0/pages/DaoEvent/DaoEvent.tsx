@@ -145,8 +145,8 @@ const DaoEventPageInner = (props: { address: string }) => {
         </div>
       </div>
 
-      <div className="mt-8 row flex-wrap">
-        <div className="col !basis-full md:!basis-0">
+      <div className="mt-8 grid gap-4 grid-cols-1 lg:grid-cols-[1fr_minmax(260px,_300px)]">
+        <div>
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-6">
               <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
@@ -164,8 +164,8 @@ const DaoEventPageInner = (props: { address: string }) => {
                       event.time.completed || event.time.finish,
                     ).toLocaleDateString()
                   : event.time.finish > 0
-                  ? getDurationDelta(event.time.finish, '[d:d] [h:h] [m:m]')
-                  : 'Review required'}
+                    ? getDurationDelta(event.time.finish, '[d:d] [h:h] [m:m]')
+                    : 'Review required'}
               </div>
             </div>
           </div>
@@ -299,7 +299,7 @@ const DaoEventPageInner = (props: { address: string }) => {
           )}
         </div>
 
-        <div className="col !basis-full md:!basis-[18rem] lg:!basis-[20.4375rem] !grow-0">
+        <div className="w-full max-w-[300px] justify-self-center">
           <div className="border border-gray-e6edff rounded-xl p-5">
             <DaoEventProgressBar
               event={event}
