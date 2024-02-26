@@ -89,7 +89,7 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
   }, [commentsOn, isDiffLoaded])
 
   return (
-    <div className="flex flex-wrap lg:flex-nowrap items-start gap-y-4">
+    <div className="flex flex-wrap xl:flex-nowrap items-start gap-y-4">
       <div className="grow border border-gray-e6edff rounded-xl overflow-hidden">
         <div className="flex items-center justify-between px-3 py-1 border-b border-b-gray-e6edff bg-gray-fafafd">
           <div className="text-xs">{filename}</div>

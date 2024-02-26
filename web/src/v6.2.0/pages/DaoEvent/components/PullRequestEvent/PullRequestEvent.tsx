@@ -80,23 +80,22 @@ const PullRequestEvent = (props: TPullRequestEventProps) => {
 
         {data.task && (
           <>
-            <div className="flex items-center gap-6">
-              <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
+            <div className="flex items-center gap-6 overflow-hidden">
+              <div className="basis-5/12 xl:basis-2/12 shrink-0 text-xs text-gray-53596d">
                 Milestone/Task
               </div>
-              <div className="text-sm">
+              <div className="text-sm truncate">
                 {data.task.milestone_name ? (
                   <Link
                     to={`/o/${dao.details.name}/tasks/milestone/${data.task.milestone_address}?subtask=${data.task.address}`}
-                    className="block text-blue-2b89ff max-w-sm truncate text-ellipsis"
+                    className="block text-blue-2b89ff max-w-[320px] truncate"
                   >
-                    {data.task.name} Community Management & SMM:Creating and customizing
-                    accounts
+                    {data.task.name} {data.task.name} {data.task.name}
                   </Link>
                 ) : (
                   <Link
                     to={`/o/${dao.details.name}/tasks/${data.task.address}`}
-                    className="block text-blue-2b89ff max-w-sm truncate text-ellipsis"
+                    className="block text-blue-2b89ff max-w-[320px] truncate"
                   >
                     {data.task.name}
                   </Link>
@@ -116,7 +115,7 @@ const PullRequestEvent = (props: TPullRequestEventProps) => {
               <div className="text-sm">{lockToStr(data.task.vestingEnd)}</div>
             </div>
             <div className="flex items-center gap-6">
-              <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
+              <div className="basis-5/12 xl:basis-2/12 shrink-0 text-xs text-gray-53596d">
                 First payment
               </div>
               <div className="text-sm">
