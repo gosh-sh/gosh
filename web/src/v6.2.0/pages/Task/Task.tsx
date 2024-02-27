@@ -1,6 +1,5 @@
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import moment from 'moment'
 import { useCallback, useEffect, useRef } from 'react'
 import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
 import { Link } from 'react-router-dom'
@@ -11,28 +10,14 @@ import { Button } from '../../../components/Form'
 import Skeleton from '../../../components/Skeleton'
 import { useBodyScrollLock } from '../../../hooks/common.hooks'
 import { shortString } from '../../../utils'
-import { TaskStatusBadge, TaskTeam, lockToStr } from '../../components/Task'
+import {
+  TaskGrantList,
+  TaskStatusBadge,
+  TaskTeam,
+  lockToStr,
+} from '../../components/Task'
 import { useDao, useDaoTaskList, useTask } from '../../hooks/dao.hooks'
 import { TaskManage } from './components'
-
-const styles = {
-  table: {
-    header: 'border-b border-gray-e6edff font-medium px-3 py-2 rounded-t-lg',
-    row: 'border-b border-gray-e6edff py-3 md:border-0 md:py-0 block md:table-row',
-    cell: 'md:border-b border-gray-e6edff px-3 py-1 md:py-2 text-sm flex md:table-cell before:content-[attr(data-cell)] before:font-medium before:basis-5/12 md:before:hidden',
-  },
-}
-
-const getUnlockDate = (unixtime: number, duration: number) => {
-  let formatted: string
-  if (unixtime > 0) {
-    const date = moment.unix(unixtime + duration)
-    formatted = date.format('MMM D, YY')
-  } else {
-    formatted = lockToStr(duration)
-  }
-  return formatted
-}
 
 const TaskPageInner = (props: { address: string }) => {
   const { address } = props
@@ -188,35 +173,8 @@ const TaskPageInner = (props: { address: string }) => {
       <div className="mt-6">
         <h3 className="mb-3">Rewards vesting</h3>
 
-        <div className="border border-gray-e6edff rounded-lg overflow-hidden">
-          <table className="w-full table-auto border-collapse -my-px">
-            <thead className="hidden md:table-header-group">
-              <tr className="text-xs text-left">
-                <th className={styles.table.header}>Unlock date</th>
-                <th className={styles.table.header}>Assigner</th>
-                <th className={styles.table.header}>Reviewer</th>
-                <th className={styles.table.header}>Manager</th>
-              </tr>
-            </thead>
-            <tbody>
-              {task.grant.assign.map((item, index) => (
-                <tr key={index} className={styles.table.row}>
-                  <td className={styles.table.cell} data-cell="Unlock date">
-                    {getUnlockDate(task.locktime, item.lock)}
-                  </td>
-                  <td className={styles.table.cell} data-cell="Assigner">
-                    {item.grant.toLocaleString()}
-                  </td>
-                  <td className={styles.table.cell} data-cell="Reviewer">
-                    {task.grant.review[index].grant.toLocaleString()}
-                  </td>
-                  <td className={styles.table.cell} data-cell="Manager">
-                    {task.grant.manager[index].grant.toLocaleString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="border p-2 border-gray-e6edff rounded-lg overflow-hidden">
+          <TaskGrantList config={task.grant} locktime={task.locktime} />
         </div>
       </div>
 
