@@ -11,7 +11,6 @@ import {
     MAX_PARALLEL_WRITE,
     SYSTEM_TAG,
     SmvEventTypes,
-    ZERO_BLOB_SHA1,
     ZERO_COMMIT,
 } from '../../constants'
 import { EGoshError, GoshError } from '../../errors'
@@ -3226,13 +3225,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 for (const { decoded } of approved) {
                     const { name, value } = decoded
                     if (name === 'approve') {
-                        patches.push({ ...value.diff, constructor: false })
+                        patches.push({ ...value.diff, is_constructor: false })
                     } else {
                         patches.push({
                             commit: value.commit,
                             patch: value.data || false,
                             ipfs: value.ipfsdata,
-                            constructor: true,
+                            is_constructor: true,
                         })
                         stop = true
                         break
@@ -3274,11 +3273,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 })
                 .map(({ decoded }) => {
                     const { name, value } = decoded
-                    if (name === 'approve') return value.diff
+                    if (name === 'approve') {
+                        return { ...value.diff, is_constructor: false }
+                    }
                     return {
                         commit: value.commit,
                         patch: value.data || false,
                         ipfs: value.ipfsdata,
+                        is_constructor: true,
                     }
                 })
 
@@ -3310,8 +3312,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     return false
                 }
 
-                const { name, value } = decoded
-                // return name === 'getAcceptedDiff' && value.branch === branch
+                const { name } = decoded
                 return name === 'getAcceptedDiff'
             })
             .map(({ decoded }) => ({
@@ -3377,26 +3378,45 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             index1++
         }
 
-        // Get blobs list from commit (if commit was accepted)
-        if (!diffs.length) {
-            const blobs = await this.getCommitBlobs(commit.branch, commit)
-            return blobs.map(({ address, treepath }) => ({
-                address,
-                treepath,
-                index: -1,
-            }))
+        // Get blobs list from diffs (if present)
+        if (diffs.length > 0) {
+            return await executeByChunk<
+                IGoshDiff,
+                { address: string; treepath: string; index: number }
+            >(diffs, MAX_PARALLEL_READ, async (diff, index) => {
+                const subdiffs = await this._getDiffs(diff)
+                const snapshot = await this._getSnapshot({ address: subdiffs[0].snap })
+                const treepath = await snapshot.getName()
+                return { address: snapshot.address, treepath, index }
+            })
         }
 
-        // Get blobs list from diffs (if commit is not accepted)
-        return await executeByChunk<
-            IGoshDiff,
-            { address: string; treepath: string; index: number }
-        >(diffs, MAX_PARALLEL_READ, async (diff, index) => {
-            const subdiffs = await this._getDiffs(diff)
-            const snapshot = await this._getSnapshot({ address: subdiffs[0].snap })
-            const treepath = await snapshot.getName()
-            return { address: snapshot.address, treepath, index }
-        })
+        // Get blobs list from commit
+        // Created blobs
+        const tree = await this.getTree(commit)
+        const created = tree.items.filter(
+            (item) => item.commit == (commit as TCommit).name,
+        )
+        const created_blobs = await Promise.all(
+            created.map(async (item) => {
+                const path = item.path ? `${item.path}/` : ''
+                const treepath = `${path}${item.name}`
+                const snapshot_addr = await this._getSnapshotAddress(
+                    (commit as TCommit).name,
+                    treepath,
+                )
+                return { address: snapshot_addr, treepath, index: -1 }
+            }),
+        )
+
+        // Updated blobs
+        const commit_blobs = await this.getCommitBlobs(commit.branch, commit)
+        const updated_blobs = commit_blobs.map(({ address, treepath }) => ({
+            address,
+            treepath,
+            index: -1,
+        }))
+        return [...created_blobs, ...updated_blobs]
     }
 
     async getBranch(name: string): Promise<TBranch> {
@@ -4621,7 +4641,9 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
         const tree = (await _repo.getTree(commit, treepath)).items
         const found = tree.find((item) => getTreeItemFullPath(item) === treepath)
-        const sha1 = found?.sha1 || ZERO_BLOB_SHA1
+        if (!found) {
+            return ''
+        }
 
         let restored = content
         let stop = false
@@ -4637,7 +4659,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                     continue
                 }
             }
-            if (diff.ipfs && diff.sha1 !== sha1) continue
+            if (diff.ipfs && diff.sha1 !== found.sha1) continue
             if (diff.removeIpfs) {
                 const compressed = Buffer.from(diff.patch, 'hex').toString('base64')
                 restored = await zstd.decompress(compressed, true)
@@ -4646,7 +4668,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 const compressed = Buffer.from(prev.patch, 'hex').toString('base64')
                 restored = await zstd.decompress(compressed, true)
             }
-            if (diff.sha1 === sha1) {
+            if (diff.sha1 === found.sha1) {
                 if (!diff.ipfs && diff.patch && reversePatch) {
                     break
                 }
@@ -5293,7 +5315,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
     ): Promise<string | Buffer> {
         if (Buffer.isBuffer(content)) return content
 
-        const { ipfs, patch, constructor } = diff
+        const { ipfs, patch, is_constructor } = diff
         const compressed = ipfs
             ? (await goshipfs.read(ipfs)).toString()
             : Buffer.from(patch!, 'hex').toString('base64')
@@ -5305,7 +5327,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
 
         const patchOrContent = buffer.toString()
-        if (ipfs || constructor) {
+        if (ipfs || is_constructor) {
             return patchOrContent
         }
 

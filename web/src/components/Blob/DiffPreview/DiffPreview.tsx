@@ -1,13 +1,13 @@
-import { useState, useMemo, useEffect } from 'react'
 import { Buffer } from 'buffer'
 import * as Diff from 'diff'
 import * as Diff2Html from 'diff2html'
+import { useEffect, useMemo, useState } from 'react'
+import { TCommit } from 'react-gosh'
+import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
+import { useBlobComments } from '../../../hooks/codecomment.hooks'
 import { Button } from '../../Form'
 import { CodeComments } from '../Comments'
 import LinesBlock from './LinesBlock'
-import { TCommit } from 'react-gosh'
-import { useBlobComments } from '../../../hooks/codecomment.hooks'
-import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 
 type TBlobDiffPreviewProps = {
   dao: IGoshDaoAdapter
@@ -89,7 +89,7 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
   }, [commentsOn, isDiffLoaded])
 
   return (
-    <div className="flex flex-wrap lg:flex-nowrap items-start gap-y-4">
+    <div className="flex flex-wrap xl:flex-nowrap items-start gap-y-4">
       <div className="grow border border-gray-e6edff rounded-xl overflow-hidden">
         <div className="flex items-center justify-between px-3 py-1 border-b border-b-gray-e6edff bg-gray-fafafd">
           <div className="text-xs">{filename}</div>

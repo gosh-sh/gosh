@@ -1,11 +1,24 @@
+import moment from 'moment'
 import { lockToStr } from '../helpers'
 
 type TTaskGrantList = {
   config: any
+  locktime?: number
 }
 
 const TaskGrantList = (props: TTaskGrantList) => {
-  const { config } = props
+  const { config, locktime = 0 } = props
+
+  const getUnlockDate = (unixtime: number, duration: number) => {
+    let formatted: string
+    if (unixtime > 0) {
+      const date = moment.unix(unixtime + duration)
+      formatted = date.format('MMM D, YYYY')
+    } else {
+      formatted = lockToStr(duration)
+    }
+    return formatted
+  }
 
   const getGrantList = () => {
     if (!config) {
@@ -42,7 +55,7 @@ const TaskGrantList = (props: TTaskGrantList) => {
       <tbody>
         {getGrantList().map((item: any, index: number) => (
           <tr key={index} className="font-mono text-sm">
-            <td className="px-2">{lockToStr(item.lock)}</td>
+            <td className="px-2">{getUnlockDate(locktime, item.lock)}</td>
             <td className="px-2">{parseInt(item.assign).toLocaleString()}</td>
             <td className="px-2">{parseInt(item.review).toLocaleString()}</td>
             <td className="px-2">{parseInt(item.manager).toLocaleString()}</td>

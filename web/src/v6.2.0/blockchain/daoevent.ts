@@ -14,7 +14,7 @@ import { executeByChunk, sleep } from '../../utils'
 import { EDaoMemberType, TDaoEventReviewer, TTaskGrantPair } from '../types/dao.types'
 import SmvEventABI from './abi/smvproposal.abi.json'
 import { DaoWallet } from './daowallet'
-import { getDaoOrProfile } from './helpers'
+import { getDaoOrProfile, getSystemContract } from './helpers'
 
 export class DaoEvent extends BaseContract {
   constructor(client: TonClient, address: string) {
@@ -87,6 +87,7 @@ export class DaoEvent extends BaseContract {
       fn = 'getGoshDeleteProtectedBranchProposalParams'
     } else if (type === EDaoEventType.PULL_REQUEST) {
       fn = 'getGoshSetCommitProposalParams'
+      parser = this.parsePullRequestParams
     } else if (type === EDaoEventType.DAO_CONFIG_CHANGE) {
       fn = 'getGoshSetConfigDaoProposalParams'
     } else if (type === EDaoEventType.REPO_CREATE) {
@@ -359,6 +360,39 @@ export class DaoEvent extends BaseContract {
   async parseApproveackathonAppsEventParams(data: any) {
     const details = data.details.map((item: string) => JSON.parse(item))
     return { ...data, details }
+  }
+
+  async parsePullRequestParams(data: any) {
+    const sc = getSystemContract()
+    const details = { ...data, task: null }
+
+    // Parse task data
+    if (data.task) {
+      const task_account = await sc.getTask({ address: data.task.task })
+      const task_details: any = { ...(await task_account.getDetails()) }
+      task_details.address = task_account.address
+
+      if (task_details.milestone_name) {
+        const repo_account = await sc.getRepository({
+          address: task_details.repository.address,
+        })
+        const repo_details = await repo_account.getDetails()
+        const dao_account = await sc.getDao({ address: repo_details.dao_address })
+        const dao_name = await dao_account.getName()
+        const milestone_account = await sc.getMilestone({
+          data: {
+            daoname: dao_name,
+            reponame: repo_details.name,
+            taskname: task_details.milestone_name,
+          },
+        })
+        task_details.milestone_address = milestone_account.address
+      }
+
+      details.task = task_details
+    }
+
+    return details
   }
 
   private async parseMultiEventCell(params: {

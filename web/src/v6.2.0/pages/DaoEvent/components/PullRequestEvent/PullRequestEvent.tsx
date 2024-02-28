@@ -1,14 +1,16 @@
+import moment from 'moment'
 import { getCommitTime, usePullRequestCommit } from 'react-gosh'
-import { useDao, useDaoMember } from '../../../../hooks/dao.hooks'
-import CopyClipboard from '../../../../../components/CopyClipboard'
-import { shortString } from '../../../../../utils'
-import { Commiter } from '../../../../../components/Commit'
-import Loader from '../../../../../components/Loader'
-import BlobDiffPreview from '../../../../../components/Blob/DiffPreview'
 import { Link, useParams } from 'react-router-dom'
+import BlobDiffPreview from '../../../../../components/Blob/DiffPreview'
+import { Commiter } from '../../../../../components/Commit'
+import CopyClipboard from '../../../../../components/CopyClipboard'
+import Loader from '../../../../../components/Loader'
+import { shortString } from '../../../../../utils'
+import { lockToStr } from '../../../../components/Task'
+import { useDao, useDaoMember } from '../../../../hooks/dao.hooks'
 
 type TPullRequestEventProps = {
-  data: { branchName: string; repoName: string; commit: string }
+  data: { branchName: string; repoName: string; commit: string; task: any }
 }
 
 const PullRequestEvent = (props: TPullRequestEventProps) => {
@@ -71,6 +73,61 @@ const PullRequestEvent = (props: TPullRequestEventProps) => {
               </div>
               <div className="text-sm">
                 <Commiter committer={commit.committer} />
+              </div>
+            </div>
+          </>
+        )}
+
+        {data.task && (
+          <>
+            <div className="flex items-center gap-6 overflow-hidden">
+              <div className="basis-5/12 xl:basis-2/12 shrink-0 text-xs text-gray-53596d">
+                Milestone/Task
+              </div>
+              <div className="text-sm truncate">
+                {data.task.milestone_name ? (
+                  <Link
+                    to={`/o/${dao.details.name}/tasks/milestone/${data.task.milestone_address}?subtask=${data.task.address}`}
+                    className="block text-blue-2b89ff max-w-[320px] truncate"
+                  >
+                    {data.task.name} {data.task.name} {data.task.name}
+                  </Link>
+                ) : (
+                  <Link
+                    to={`/o/${dao.details.name}/tasks/${data.task.address}`}
+                    className="block text-blue-2b89ff max-w-[320px] truncate"
+                  >
+                    {data.task.name}
+                  </Link>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
+                Reward
+              </div>
+              <div className="text-sm">{data.task.balance.toLocaleString()}</div>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
+                Vesting
+              </div>
+              <div className="text-sm">{lockToStr(data.task.vestingEnd)}</div>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="basis-5/12 xl:basis-2/12 shrink-0 text-xs text-gray-53596d">
+                First payment
+              </div>
+              <div className="text-sm">
+                {data.task.locktime > 0 ? (
+                  moment
+                    .unix(data.task.locktime + data.task.grant.assign[0].lock)
+                    .format('MMM D, YYYY HH:mm:ss')
+                ) : (
+                  <>
+                    {lockToStr(data.task.grant.assign[0].lock)} after proposal is accepted
+                  </>
+                )}
               </div>
             </div>
           </>
