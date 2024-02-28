@@ -4713,13 +4713,6 @@ export function useCreateTask() {
     return Math.round((cost * percent) / 100)
   }
 
-  const getVestingPart = (calculated: TTaskGrantPair[], parts: number, total: number) => {
-    const sum = calculated.reduce((_sum, num) => _sum + num.grant, 0)
-    const part = Math.ceil((total - sum) / parts)
-    const value = sum + part <= total ? part : total - (sum + part)
-    return value > 0 ? value : 0
-  }
-
   const getCalculatedGrant = (values: {
     cost: number
     assign: number
@@ -4729,33 +4722,62 @@ export function useCreateTask() {
     vesting: number
   }) => {
     const { cost, assign, review, manager, lock, vesting } = values
-
-    const lockSec = lock * 30 * 24 * 60 * 60
-    const assignTokens = getTokenAmount(cost, assign)
-    const reviewTokens = getTokenAmount(cost, review)
-    const managerTokens = getTokenAmount(cost, manager)
-
     const struct: TTaskGrant = { assign: [], review: [], manager: [], subtask: [] }
+
+    // Check sum of percent parts
+    const percent_sum = assign + review + manager
+    if (percent_sum !== 100) {
+      throw new GoshError('Value error', {
+        message: 'Total percent sum should be equal to 100%',
+        current: percent_sum,
+      })
+    }
+
+    // Calculate total rewards amount for each group
+    const month2sec = 30 * 24 * 60 * 60
+    let assign_total = getTokenAmount(cost, assign)
+    let review_total = getTokenAmount(cost, review)
+    let manager_total = getTokenAmount(cost, manager)
+
+    // Task has no vesting
     if (!vesting) {
-      struct.assign.push({ grant: assignTokens, lock: lockSec })
-      struct.review.push({ grant: reviewTokens, lock: lockSec })
-      struct.manager.push({ grant: managerTokens, lock: lockSec })
+      struct.assign.push({ grant: assign_total, lock: lock * month2sec })
+      struct.review.push({ grant: review_total, lock: lock * month2sec })
+      struct.manager.push({ grant: manager_total, lock: lock * month2sec })
       return struct
     }
 
-    // Vesting calculate
-    for (let i = 1; i <= vesting; i++) {
-      const vLock = lockSec + i * 30 * 24 * 60 * 60
-      const parts = i === 1 ? vesting : vesting - i + 1
+    // Task has vesting
+    // Calculate lock list
+    const lock_list: number[] = []
+    for (let tick = vesting; tick > 0; tick--) {
+      const delay = lock + (vesting - tick + 1)
+      lock_list.push(delay * month2sec)
+    }
 
-      const vAssign = getVestingPart(struct.assign, parts, assignTokens)
-      struct.assign.push({ grant: vAssign, lock: vLock })
+    // Calculate grant struct
+    const grant = getGrantMapping({
+      amount: cost,
+      percent: { assign, review, manager },
+      lock: lock_list,
+    })
+    struct.assign = grant.assign.list
+    struct.review = grant.review.list
+    struct.manager = grant.manager.list
 
-      const vReview = getVestingPart(struct.review, parts, reviewTokens)
-      struct.review.push({ grant: vReview, lock: vLock })
+    // Check total rewards are correct
+    for (const key of ['assign', 'review', 'manager']) {
+      const { percent, int } = grant[key]
+      if ((percent > 0 && int > 0) || (percent === 0 && int === 0)) {
+        continue
+      }
 
-      const vManager = getVestingPart(struct.manager, parts, managerTokens)
-      struct.manager.push({ grant: vManager, lock: vLock })
+      throw new GoshError('Value error', {
+        message: 'Incorrect token distribution',
+        key,
+        percent,
+        reward: int,
+      })
     }
     return struct
   }
@@ -4786,19 +4808,6 @@ export function useCreateTask() {
 
         // Get task config
         const grant = getCalculatedGrant(params)
-
-        // Validate task config
-        const errTitle = 'Incorrect vesting schema'
-        const errMessage = `has not enough tokens to pay all periods`
-        if (grant.assign.slice(-1)[0].grant === 0) {
-          throw new GoshError(errTitle, `Assigner ${errMessage}`)
-        }
-        if (grant.review.slice(-1)[0].grant === 0) {
-          throw new GoshError(errTitle, `Reviewer ${errMessage}`)
-        }
-        if (grant.manager.slice(-1)[0].grant === 0) {
-          throw new GoshError(errTitle, `Manager ${errMessage}`)
-        }
 
         // Check if task already exists
         const account = await getSystemContract().getTask({

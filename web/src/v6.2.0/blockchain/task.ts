@@ -26,17 +26,36 @@ export class Task extends BaseContract {
   async getDetails() {
     const data = await this.getRawDetails()
 
-    const grant: { [key: string]: TTaskGrantPair[] } = {}
-    const grantTotal: { [key: string]: number } = {}
-    let reward: number = 0
-    for (const key of ['assign', 'review', 'manager']) {
-      grant[key] = data.grant[key].map((item: any) => ({
-        grant: parseInt(item.grant),
-        lock: parseInt(item.lock),
-      }))
-      grantTotal[key] = _.sum(grant[key].map((item: any) => item.grant))
-      reward += grantTotal[key]
+    const grant_array: any[] = Object.values(data.grant).map((v) => v)
+    const grant_max: any[] = grant_array.sort((a, b) => b.length - a.length)[0]
+    const grant: { [key: string]: TTaskGrantPair[] } = {
+      assign: [],
+      review: [],
+      manager: [],
     }
+    for (let i = 0; i < grant_max.length; i++) {
+      const lock = parseInt(grant_max[i].lock)
+      grant.assign.push({
+        grant: parseInt(data.grant.assign[i]?.grant || '0'),
+        lock,
+      })
+      grant.review.push({
+        grant: parseInt(data.grant.review[i]?.grant || '0'),
+        lock,
+      })
+      grant.manager.push({
+        grant: parseInt(data.grant.manager[i]?.grant || '0'),
+        lock,
+      })
+    }
+
+    const grant_total = {
+      assign: _.sum(grant.assign.map((item) => item.grant)),
+      review: _.sum(grant.review.map((item) => item.grant)),
+      manager: _.sum(grant.manager.map((item) => item.grant)),
+    }
+
+    let reward: number = _.sum(Object.values(grant_total))
 
     const tags = data.hashtag.filter((item: string) => {
       return [SYSTEM_TAG, MILESTONE_TASK_TAG].indexOf(item) < 0
@@ -100,10 +119,10 @@ export class Task extends BaseContract {
         address: repository.address,
       },
       grant: grant as TTaskGrant,
-      grantTotal: grantTotal as TTaskGrantTotal,
+      grantTotal: grant_total as TTaskGrantTotal,
       reward,
       balance: reward,
-      vestingEnd: grant.assign.slice(-1)[0].lock,
+      vestingEnd: grant_max.slice(-1)[0].lock,
       tagsRaw: data.hashtag,
       tags,
       candidates: data.candidates,
