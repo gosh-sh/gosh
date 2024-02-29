@@ -12,7 +12,7 @@ import "./structs/structs.sol";
 interface IObject {
     function returnSnap(string, bytes, optional(string), string, bytes, optional(string), string, bool) external;
     function returnTree(mapping(uint256 => TreeObject), uint256, string, address) external;
-    function returnRepo(string, string, Item[], string, mapping(uint256 => string), bool) external;
+    function returnRepo(string, string, Item[], string, mapping(uint256 => string), bool, optional(string), optional(Grants[]), optional(uint128), optional(address)) external;
     function returnCommit(uint128, address, string, AddrVersion[], string, bool, bool, bool) external;
     function deployIndex(string, address, uint128, TvmCell) external; 
     function returnDao(address, bool, bool, bool, bool, bool, string, mapping(uint256 => MemberToken), uint128, uint128, uint128, mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), bool, mapping(uint8 => PaidMember)) external;
@@ -60,12 +60,12 @@ abstract contract Modifiers is ReplayProtection {
     uint8 constant m_TagSupplyCode = 23;
     uint8 constant m_DaoWalletCode = 24;
     uint8 constant m_CCWalletCode = 25;
-    uint8 constant m_RepoTokenRootCode = 26;
-    uint8 constant m_RepoTokenWalletCode = 27;
+    uint8 constant m_TokenRepoRootCode = 26;
+    uint8 constant m_TokenRepoWalletCode = 27;
     
     //Deploy constants
     uint128 constant FEE_DEPLOY_DAO = 100000 ton;
-    uint128 constant FEE_DEPLOY_REPO = 35 ton;
+    uint128 constant FEE_DEPLOY_REPO = 85 ton;
     uint128 constant FEE_DEPLOY_COMMIT = 20 ton;
     uint128 constant FEE_DEPLOY_DIFF = 17 ton;
     uint128 constant FEE_DEPLOY_SNAPSHOT = 50 ton;
@@ -90,6 +90,8 @@ abstract contract Modifiers is ReplayProtection {
     uint128 constant FEE_DEPLOY_WRAPPER = 28 ton;
     uint128 constant FEE_DEPLOY_TAG_SUPPLY = 11 ton;
     uint128 constant FEE_DEPLOY_CCWALLET = 105 ton;
+    uint128 constant FEE_DEPLOY_TOKEN_ROOT = 30 ton;
+    uint128 constant FEE_DEPLOY_TOKEN_WALLET = 5 ton;
 
     uint128 constant TYPE_DESTROY_BRANCH = 0;
     uint128 constant TYPE_INITUPGRADE = 1;

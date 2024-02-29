@@ -15,6 +15,9 @@ import "task.sol";
 import "snapshot.sol";
 import "./libraries/GoshLib.sol";
 import "./smv/modifiers/modifiers.sol";
+import "./smv/External/tip3/libraries/TokenMsgFlag.sol";
+import "./smv/External/tip3/TokenRoot.sol";
+import "./smv/External/tip3/TokenRootUpgradeable.sol";
 
 /* Root contract of Repository */
 contract Repository is Modifiers{
@@ -40,6 +43,8 @@ contract Repository is Modifiers{
     address _creator;
     optional(string) _tokendescription;
     optional(Grants[]) _tokengrants;
+    optional(uint128) _supply;
+    optional(address) _tokenroot;
 
     constructor(
         address pubaddr,
@@ -78,8 +83,8 @@ contract Repository is Modifiers{
         _code[m_SnapshotCode] = SnapshotCode;
         _code[m_DiffCode] = codeDiff;
         _code[m_contentSignature] = contentSignature;
-        _code[m_RepoTokenRootCode] = tokenrootcode;
-        _code[m_RepoTokenWalletCode] = tokenwalletcode;
+        _code[m_TokenRepoRootCode] = tokenrootcode;
+        _code[m_TokenRepoWalletCode] = tokenwalletcode;
         _previousversion = previousversion;
         _creator = msg.sender;
         if (_previousversion.hasValue()) { SystemContract(_systemcontract).checkUpdateRepo1{value: 0.3 ton, bounce: true, flag: 1}(_name, _nameDao, _previousversion.get(), address(this)); return; }
@@ -88,10 +93,43 @@ contract Repository is Modifiers{
         _head = "main";
     }
 
-    function startToken(address pubaddr, string tokendescription, Grants[] tokengrants) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, 0)) accept {
+    function startToken(address pubaddr, string tokendescription, 
+        string name,
+        string symbol,
+        uint8 decimals,
+        Grants[] tokengrants) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, 0)) accept {
         if (_tokendescription.hasValue()) { return; }
         _tokendescription = tokendescription;
         _tokengrants = tokengrants;
+        TvmCell stateInit = tvm.buildStateInit({
+            contr: TokenRoot,
+            varInit: {
+                randomNonce_: 0,
+                deployer_: address(this),
+                name_: name,
+                symbol_: symbol,
+                decimals_: decimals,
+                rootOwner_: address(this),
+                walletCode_: _code[m_TokenRepoWalletCode]
+            },
+            code: _code[m_TokenRepoRootCode],
+            pubkey: 0
+        });
+
+        _tokenroot = new TokenRoot {
+            value: FEE_DEPLOY_TOKEN_ROOT,
+            flag: TokenMsgFlag.SENDER_PAYS_FEES,
+            bounce: false,
+            stateInit: stateInit
+        }(
+            address(this),
+            0,
+            FEE_DEPLOY_TOKEN_WALLET,
+            false,
+            false,
+            false,
+            address(this)
+        );
         this.startGrantToken{value: 0.1 ton, flag: 1}(tokengrants, uint128(0));
     }
 
@@ -471,14 +509,14 @@ contract Repository is Modifiers{
         return GoshLib.buildTaskCode(_code[m_TaskCode], address(this), version);
     }
 
-    function getDetails() external view returns(string description, string name, Item[] alladress, string head, mapping(uint256 => string) hashtag, bool ready, optional(string) tokendescription, optional(Grants[]) tokengrants)
+    function getDetails() external view returns(string description, string name, Item[] alladress, string head, mapping(uint256 => string) hashtag, bool ready, optional(string) tokendescription, optional(Grants[]) tokengrants, optional(uint128) tokensupply, optional(address) tokenroot)
     {
         Item[] AllBranches;
         for ((uint256 key, Item value) : _Branches) {
             key;
             AllBranches.push(value);
         }
-        return (_description, _name, AllBranches, _head, _hashtag, _ready, _tokendescription, _tokengrants);
+        return (_description, _name, AllBranches, _head, _hashtag, _ready, _tokendescription, _tokengrants, _supply, _tokenroot);
     }
 
     function getRepositoryIn() public view minValue(0.5 ton) {
@@ -487,6 +525,6 @@ contract Repository is Modifiers{
             key;
             AllBranches.push(value);
         }
-        IObject(msg.sender).returnRepo{value: 0.1 ton, flag: 1}(_description, _name, AllBranches, _head, _hashtag, _ready);
+        IObject(msg.sender).returnRepo{value: 0.1 ton, flag: 1}(_description, _name, AllBranches, _head, _hashtag, _ready, _tokendescription, _tokengrants, _supply, _tokenroot);
     }
 }

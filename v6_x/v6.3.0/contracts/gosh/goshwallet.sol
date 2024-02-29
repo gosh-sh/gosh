@@ -105,8 +105,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         _code[m_RepoTagCode] = coderepotag;
         _code[m_TopicCode] = topiccode;
         _code[m_GrantCode] = grantCode;
-        _code[m_RepoTokenRootCode] = tokenrootcode;
-        _code[m_RepoTokenWalletCode] = tokenwalletcode;
+        _code[m_TokenRepoRootCode] = tokenrootcode;
+        _code[m_TokenRepoWalletCode] = tokenwalletcode;
         _access = access;
         _limit_wallets = limit_wallets;
         ///////////////////
@@ -130,9 +130,15 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return abi.encode(proposalKind, repoName, tokendescription, tokengrants, comment, time.get());
     }
 
-    function _startToken(string repoName, string tokendescription, Grants[] tokengrants) private view {
+    function _startToken(
+        string repoName, 
+        string tokendescription, 
+        string name,
+        string symbol,
+        uint8 decimals,
+        Grants[] tokengrants) private view {
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
-        Repository(repo).startToken{value: 0.1 ton, flag: 1}(_pubaddr, tokendescription, tokengrants);
+        Repository(repo).startToken{value: 0.1 ton, flag: 1}(_pubaddr, tokendescription, name, symbol, decimals, tokengrants);
     }
 
     function sendTokensToCCWallet(uint128 token, uint256 pubkey) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
@@ -225,7 +231,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             _code[m_RepositoryCode],
             _code[m_WalletCode],
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _code[m_GrantCode], 
-            _code[m_RepoTokenRootCode], _code[m_RepoTokenWalletCode], _versions, _limit_wallets, _access,
+            _code[m_TokenRepoRootCode], _code[m_TokenRepoWalletCode], _versions, _limit_wallets, _access,
             m_lockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, DEFAULT_DAO_BALANCE, m_tokenRoot);
         GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, _walletcounter - 1)).askForLimitedBasic{value : 0.1 ton, flag: 1}(_limited, 0);
@@ -675,7 +681,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             _code[m_RepositoryCode],
             _code[m_WalletCode],
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode],  _code[m_DaoTagCode], _code[m_RepoTagCode],  _code[m_TopicCode], _code[m_GrantCode], 
-            _code[m_RepoTokenRootCode], _code[m_RepoTokenWalletCode], _versions, _limit_wallets, _access,
+            _code[m_TokenRepoRootCode], _code[m_TokenRepoWalletCode], _versions, _limit_wallets, _access,
             m_lockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, DEFAULT_DAO_BALANCE, m_tokenRoot);
         this.deployWalletIn{value: 0.1 ton, flag: 1}();
@@ -804,7 +810,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         }
         TvmCell s1 = GoshLib.composeRepositoryStateInit(_code[m_RepositoryCode], _systemcontract, _goshdao, nameRepo);
         new Repository {stateInit: s1, value: FEE_DEPLOY_REPO, wid: 0, flag: 1}(
-            _pubaddr, nameRepo, _nameDao, _goshdao, _systemcontract, descr, _code[m_CommitCode], _code[m_WalletCode], _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_RepoTokenRootCode], _code[m_RepoTokenWalletCode], _versions, _index, previous);
+            _pubaddr, nameRepo, _nameDao, _goshdao, _systemcontract, descr, _code[m_CommitCode], _code[m_WalletCode], _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TokenRepoRootCode], _code[m_TokenRepoWalletCode], _versions, _index, previous);
         getMoney();
     }
 
@@ -2602,8 +2608,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 _setApprovedTagProposalsForDao(approved_proposal_with_tags);
             } else 
             if (kind == START_TOKEN_KIND) {
-                (,string repoName, string tokendescription, Grants[] tokengrants,,) = abi.decode(propData,(uint256, string, string, Grants[], string, uint32));
-                _startToken(repoName, tokendescription, tokengrants);
+                (,string repoName, string tokendescription, string name, string symbol, uint8 decimals,Grants[] tokengrants,,) = abi.decode(propData,(uint256, string, string, string, string, uint8, Grants[], string, uint32));
+                _startToken(repoName, tokendescription, name, symbol, decimals, tokengrants);
             }
         }
     }

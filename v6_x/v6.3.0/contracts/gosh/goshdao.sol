@@ -115,8 +115,6 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
         TvmCell codegrant,
         TvmCell codewrapper,
         TvmCell codetagsupply,
-        TvmCell coderoottoken,
-        TvmCell codewallettoken,
         /////////////////////
         TvmCell TokenLockerCode,
         TvmCell SMVPlatformCode,
@@ -149,8 +147,8 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
         _code[m_GrantCode] = codegrant;
         _code[m_WrapperCode] = codewrapper;
         _code[m_TagSupplyCode] = codetagsupply;
-        _code[m_RepoTokenRootCode] = coderoottoken;
-        _code[m_RepoTokenWalletCode] = codewallettoken;
+        _code[m_TokenRepoRootCode] = TokenRootCode;
+        _code[m_TokenRepoWalletCode] = TokenWalletCode;
         /////
         m_TokenLockerCode = TokenLockerCode;
         m_SMVPlatformCode = SMVPlatformCode;
@@ -1113,7 +1111,7 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
             _code[m_RepositoryCode],
             _code[m_WalletCode],
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _code[m_GrantCode], 
-            _code[m_RepoTokenRootCode], _code[m_RepoTokenWalletCode], _versions, _limit_wallets, null,
+            _code[m_TokenRepoRootCode], _code[m_TokenRepoWalletCode], _versions, _limit_wallets, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, 0, _rootTokenRoot);
         this.addVoteTokenPubSub{value: 0.2 ton, flag: 1}(pubaddr, valuePerSubs, block.timestamp + timeForSubs, Programindex);
@@ -1195,7 +1193,7 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
         }(  _versionController, _pubaddr, pubaddr, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _code[m_GrantCode], _code[m_RepoTokenRootCode], _code[m_RepoTokenWalletCode], _versions, _limit_wallets, null,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _code[m_GrantCode], _code[m_TokenRepoRootCode], _code[m_TokenRepoWalletCode], _versions, _limit_wallets, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, _tokenforperson, _rootTokenRoot);
         GoshWallet(_lastAccountAddress).setLimitedWallet{value: 0.2 ton, flag: 1}(false, _limit_wallets);
@@ -1248,7 +1246,7 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
         }(  _versionController, _pubaddr, pubaddr.member, _nameDao, _code[m_DaoCode], _code[m_CommitCode], 
             _code[m_RepositoryCode],
             _code[m_WalletCode],
-            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _code[m_GrantCode], _code[m_RepoTokenRootCode], _code[m_RepoTokenWalletCode], _versions, _limit_wallets, null,
+            _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _code[m_GrantCode], _code[m_TokenRepoRootCode], _code[m_TokenRepoWalletCode], _versions, _limit_wallets, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, pubaddr.count, _rootTokenRoot);
         GoshWallet(_lastAccountAddress).setLimitedWallet{value: 0.2 ton, flag: 1}(false, _limit_wallets);
@@ -1274,7 +1272,7 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
             _code[m_RepositoryCode],
             _code[m_WalletCode],
             _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TaskCode], _code[m_BigTaskCode], _code[m_DaoTagCode], _code[m_RepoTagCode], _code[m_TopicCode], _code[m_GrantCode], 
-            _code[m_RepoTokenRootCode], _code[m_RepoTokenWalletCode], _versions, 1, null,
+            _code[m_TokenRepoRootCode], _code[m_TokenRepoWalletCode], _versions, 1, null,
             m_TokenLockerCode, m_tokenWalletCode, m_SMVPlatformCode,
             m_SMVClientCode, m_SMVProposalCode, 0, _rootTokenRoot);
         getMoney();

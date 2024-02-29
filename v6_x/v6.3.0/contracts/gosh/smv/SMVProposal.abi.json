@@ -548,6 +548,9 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"repoName","type":"string"},
 				{"name":"tokendescription","type":"string"},
+				{"name":"name","type":"string"},
+				{"name":"symbol","type":"string"},
+				{"name":"decimals","type":"uint8"},
 				{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"tuple[]"}
 			]
 		},
@@ -559,6 +562,9 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"repoName","type":"string"},
 				{"name":"tokendescription","type":"string"},
+				{"name":"name","type":"string"},
+				{"name":"symbol","type":"string"},
+				{"name":"decimals","type":"uint8"},
 				{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"tuple[]"}
 			]
 		},
