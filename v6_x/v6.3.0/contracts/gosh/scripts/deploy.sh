@@ -102,11 +102,11 @@ echo "========== Run VersionController setters"
 echo "     ====> Run setSystemContractCode"
 everdev contract run $VERSIONCONTROLLER_ABI setSystemContractCode --input "{\"code\": \"$SYSTEMCONTRACT_CODE\", \"version\": \"$GOSH_VERSION\"}" --network $NETWORK --signer $SIGNER --address $VERSIONCONTROLLER_ADDR > /dev/null || exit 1
 echo "     ====> Run setProfile"
-everdev contract run $VERSIONCONTROLLER_ABI setProfile --input "{\"code\": \"$PROFILE_CODE\"}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+everdev contract run $VERSIONCONTROLLER_ABI setCode --input "{\"code\": \"$PROFILE_CODE\", \"id\": 10}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 echo "     ====> Run setProfileIndex"
-everdev contract run $VERSIONCONTROLLER_ABI setProfileIndex --input "{\"code\": \"$PROFILEINDEX_CODE\"}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+everdev contract run $VERSIONCONTROLLER_ABI setCode --input "{\"code\": \"$PROFILEINDEX_CODE\", \"id\": 12}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 echo "     ====> Run setProfileDao"
-everdev contract run $VERSIONCONTROLLER_ABI setProfileDao --input "{\"code\": \"$PROFILEDAO_CODE\"}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+everdev contract run $VERSIONCONTROLLER_ABI setCode --input "{\"code\": \"$PROFILEDAO_CODE\", \"id\": 11}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 
 # Deploy SystemContract
 echo "========== Deploy SystemContract"

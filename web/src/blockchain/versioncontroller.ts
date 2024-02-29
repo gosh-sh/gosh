@@ -1,8 +1,5 @@
 import { TonClient } from '@eversdk/core'
 import { EGoshError, GoshError } from '../errors'
-import { getAllAccounts } from './utils'
-import { BaseContract } from './contract'
-import VersionControllerABI from './abi/versioncontroller.abi.json'
 import { SystemContract as SystemContract1 } from '../v1.0.0/blockchain/systemcontract'
 import { SystemContract as SystemContract2 } from '../v2.0.0/blockchain/systemcontract'
 import { SystemContract as SystemContract3 } from '../v3.0.0/blockchain/systemcontract'
@@ -12,9 +9,13 @@ import { SystemContract as SystemContract5_1 } from '../v5.1.0/blockchain/system
 import { SystemContract as SystemContract6 } from '../v6.0.0/blockchain/systemcontract'
 import { SystemContract as SystemContract6_1 } from '../v6.1.0/blockchain/systemcontract'
 import { SystemContract as SystemContract6_2 } from '../v6.2.0/blockchain/systemcontract'
-import { UserProfileIndex } from './userprofileindex'
-import { UserProfile } from './userprofile'
+import { SystemContract as SystemContract6_3 } from '../v6.3.0/blockchain/systemcontract'
+import VersionControllerABI from './abi/versioncontroller.abi.json'
+import { BaseContract } from './contract'
 import { DaoProfile } from './daoprofile'
+import { UserProfile } from './userprofile'
+import { UserProfileIndex } from './userprofileindex'
+import { getAllAccounts } from './utils'
 
 export class VersionController extends BaseContract {
   versions: { [ver: string]: string } = {}
@@ -47,6 +48,8 @@ export class VersionController extends BaseContract {
         return new SystemContract6_1(this.client, address)
       case '6.2.0':
         return new SystemContract6_2(this.client, address)
+      case '6.3.0':
+        return new SystemContract6_3(this.client, address)
       default:
         throw new GoshError('Version not found', { version })
     }

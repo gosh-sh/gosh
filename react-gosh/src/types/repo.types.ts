@@ -88,6 +88,7 @@ type TDiff = {
     sha1: string
     sha256: string
     removeIpfs: boolean
+    is_constructor?: boolean
 }
 
 type TPushProgress = {
@@ -208,31 +209,31 @@ interface ITBranchOperateCallback {
 
 export {
     EBlobFlag,
-    TRepository,
-    TRepositoryListItem,
-    TTree,
-    TTreeItem,
-    TCommit,
+    IPushCallback,
+    ITBranchOperateCallback,
     TBranch,
-    TCommitTag,
-    TDiff,
-    TUpgradeData,
-    TPushBlobData,
-    TPushProgress,
     TBranchCompareProgress,
     TBranchOperateProgress,
-    TTaskCommitConfig,
-    TRepositoryCreateParams,
-    TRepositoryCreateResult,
-    TRepositoryUpdateDescriptionParams,
-    TRepositoryUpdateDescriptionResult,
+    TCommit,
+    TCommitTag,
+    TDiff,
+    TPushBlobData,
+    TPushProgress,
+    TRepository,
     TRepositoryChangeBranchProtectionParams,
     TRepositoryChangeBranchProtectionResult,
+    TRepositoryCreateCommitTagParams,
+    TRepositoryCreateParams,
+    TRepositoryCreateResult,
+    TRepositoryListItem,
     TRepositoryTagCreateParams,
     TRepositoryTagCreateResult,
     TRepositoryTagDeleteParams,
     TRepositoryTagDeleteResult,
-    TRepositoryCreateCommitTagParams,
-    IPushCallback,
-    ITBranchOperateCallback,
+    TRepositoryUpdateDescriptionParams,
+    TRepositoryUpdateDescriptionResult,
+    TTaskCommitConfig,
+    TTree,
+    TTreeItem,
+    TUpgradeData,
 }

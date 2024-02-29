@@ -5,7 +5,7 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills'
 // https://vitejs.dev/config/
 export default defineConfig({
   envPrefix: 'REACT_',
-  plugins: [react(), nodePolyfills()],
+  plugins: [react(), nodePolyfills({ globals: { Buffer: false } })],
   assetsInclude: ['**/*.md'],
   server: {
     port: 3000,
