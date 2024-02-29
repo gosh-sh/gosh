@@ -250,6 +250,10 @@ contract SystemContract is Modifiers {
         addr.transfer(value);
     }
 
+    function returnTokenToGosh(address pubaddr, uint128 value) public view senderIs(_versionController) accept {
+        GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), "gosh"), pubaddr, 0)).returnTokenToGosh{value: 0.1 ton, flag: 1}(value);
+    }
+
     function checkOldTaskVersion2(string name, string nametask, string repo, string previous, address previousaddr, address answer) public view {
         address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), name);
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);

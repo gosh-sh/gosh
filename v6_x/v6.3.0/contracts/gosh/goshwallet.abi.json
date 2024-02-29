@@ -42,6 +42,14 @@
 			]
 		},
 		{
+			"name": "returnTokenToGosh",
+			"inputs": [
+				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getCellForStartToken",
 			"inputs": [
 				{"name":"repoName","type":"string"},

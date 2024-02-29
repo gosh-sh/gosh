@@ -28,6 +28,17 @@
 			]
 		},
 		{
+			"name": "returnTokenToGosh",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"value","type":"uint128"},
+				{"name":"version","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "sendToken",
 			"inputs": [
 				{"name":"token","type":"uint128"},

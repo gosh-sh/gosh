@@ -133,8 +133,15 @@ contract Repository is Modifiers{
         this.startGrantToken{value: 0.1 ton, flag: 1}(tokengrants, uint128(0));
     }
 
-    function startGrantToken(Grants[] tokengrants, uint128 index) public pure senderIs(this) accept {
-        if (index >= tokengrants.length) { return; }
+    function startGrantToken(Grants[] tokengrants, uint128 index) public senderIs(this) accept {
+        if (index >= tokengrants.length) { return; }      
+//        TokenRoot(_tokenroot).deployWallet{value: 0.1 ton, flag: 1}(tokengrants[index].pubkey, tokengrants[index].value);
+        if (_supply.hasValue() == false) {
+            _supply = tokengrants[index].value;
+        }
+        else {
+            _supply = _supply.get() + tokengrants[index].value;
+        }
         this.startGrantToken{value: 0.1 ton, flag: 1}(tokengrants, index + 1);
     }
 
@@ -145,7 +152,7 @@ contract Repository is Modifiers{
             Repository(answer).checkUpdateRepoVer5{value : 0.15 ton, flag: 1}(version, a);
             return;
         }
-        a = abi.encode(true, _Branches, _protectedBranch, _head, _hashtag, _description);
+        a = abi.encode(true, _Branches, _protectedBranch, _head, _hashtag, _description, _tokendescription, _tokengrants, _supply, _tokenroot);
         Repository(answer).checkUpdateRepoVer5{value : 0.15 ton, flag: 1}(version, a);
     }
 
@@ -174,10 +181,18 @@ contract Repository is Modifiers{
             this.smvdeployrepotagin{value: 0.1 ton, flag: 1}(hashtag.values());
             return;
         }
-        if ((ver == "4.0.0") || (ver == "5.0.0") || (ver == "5.1.0") || (ver == "6.0.0") || (ver == "6.1.0") || (ver == "6.2.0") || (ver == "6.3.0")){
+        if ((ver == "4.0.0") || (ver == "5.0.0") || (ver == "5.1.0") || (ver == "6.0.0") || (ver == "6.1.0") || (ver == "6.2.0")){
             mapping(uint256 => string) hashtag;
             bool ans;
             (ans, _Branches, _protectedBranch, _head, hashtag, _description) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => bool), string, mapping(uint256 => string), string));
+            if (ans == false) { selfdestruct(_systemcontract); }
+            this.smvdeployrepotagin{value: 0.1 ton, flag: 1}(hashtag.values());
+            return;
+        }
+        if (ver == "6.3.0") {
+            mapping(uint256 => string) hashtag;
+            bool ans;
+            (ans, _Branches, _protectedBranch, _head, hashtag, _description, _tokendescription, _tokengrants, _supply, _tokenroot) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => bool), string, mapping(uint256 => string), string, optional(string), optional(Grants[]), optional(uint128), optional(address)));
             if (ans == false) { selfdestruct(_systemcontract); }
             this.smvdeployrepotagin{value: 0.1 ton, flag: 1}(hashtag.values());
             return;

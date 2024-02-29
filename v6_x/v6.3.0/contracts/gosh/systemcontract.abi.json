@@ -333,6 +333,15 @@
 			]
 		},
 		{
+			"name": "returnTokenToGosh",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "checkOldTaskVersion2",
 			"inputs": [
 				{"name":"name","type":"string"},

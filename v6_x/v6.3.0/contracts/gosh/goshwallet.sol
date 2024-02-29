@@ -119,6 +119,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
+    function returnTokenToGosh(uint128 value) public senderIs(_systemcontract) accept {
+        m_pseudoDAOBalance += value;
+    }
+
     function getCellForStartToken(
         string repoName,
         string tokendescription,
