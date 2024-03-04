@@ -75,4 +75,5 @@ abstract contract SMVConfiguration is ReplayProtection {
     uint256 constant DEPLOY_BRANCH_KIND = 56;
     uint256 constant SET_ALLOWED_PROPOSAL_WITH_TAG_KIND = 57;
     uint256 constant START_TOKEN_KIND = 58;
+    uint256 constant DEPLOY_REPO_METADATA_PROPOSAL_KIND = 59;
 }

@@ -264,6 +264,16 @@
 			]
 		},
 		{
+			"name": "updateRepoMetadata",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"metadata","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "addProtectedBranch",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
@@ -512,7 +522,8 @@
 				{"name":"tokendescription","type":"optional(string)"},
 				{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"optional(tuple[])"},
 				{"name":"tokensupply","type":"optional(uint128)"},
-				{"name":"tokenroot","type":"optional(address)"}
+				{"name":"tokenroot","type":"optional(address)"},
+				{"name":"metadata","type":"string"}
 			]
 		},
 		{
@@ -579,6 +590,7 @@
 		{"name":"_tokendescription","type":"optional(string)"},
 		{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"}],"name":"_tokengrants","type":"optional(tuple[])"},
 		{"name":"_supply","type":"optional(uint128)"},
-		{"name":"_tokenroot","type":"optional(address)"}
+		{"name":"_tokenroot","type":"optional(address)"},
+		{"name":"_metadata","type":"string"}
 	]
 }

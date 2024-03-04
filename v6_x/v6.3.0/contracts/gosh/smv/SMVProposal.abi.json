@@ -540,6 +540,27 @@
 			]
 		},
 		{
+			"name": "getRepoUpdateMetadataTagParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"nameRepo","type":"string"},
+				{"name":"metadata","type":"string"}
+			]
+		},
+		{
+			"name": "getRepoUpdateMetadataTagParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"nameRepo","type":"string"},
+				{"name":"metadata","type":"string"}
+			]
+		},
+		{
 			"name": "getStartTokenParamsData",
 			"inputs": [
 				{"name":"Data","type":"cell"}

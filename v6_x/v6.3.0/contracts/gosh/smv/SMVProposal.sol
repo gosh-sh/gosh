@@ -563,6 +563,18 @@ function getCreateDaoMembersTagParamsData (TvmCell Data) external pure
         (proposalKind, tags, multiples,,) = abi.decode(Data,(uint256, string[], uint128[], string, uint32));
 }
 
+function getRepoUpdateMetadataTagParams () external view
+         returns(uint proposalKind, string nameRepo, string metadata)
+{
+        (proposalKind, nameRepo, metadata,,) = abi.decode(propData,(uint256, string, string, string, uint32));
+}
+
+function getRepoUpdateMetadataTagParamsData (TvmCell Data) external pure
+         returns(uint proposalKind, string nameRepo, string metadata)
+{
+        (proposalKind, nameRepo, metadata,,) = abi.decode(Data,(uint256, string, string, string, uint32));
+}
+
 function getStartTokenParamsData (TvmCell Data) external pure
          returns(uint proposalKind, string repoName, string tokendescription, string name, string symbol, uint8 decimals, Grants[] tokengrants)
 {

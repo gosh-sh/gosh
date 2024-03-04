@@ -727,6 +727,18 @@
 			]
 		},
 		{
+			"name": "getCellMetadataRepo",
+			"inputs": [
+				{"name":"nameRepo","type":"string"},
+				{"name":"metadata","type":"string"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "deployNewSnapshot",
 			"inputs": [
 				{"name":"commitsha","type":"string"},

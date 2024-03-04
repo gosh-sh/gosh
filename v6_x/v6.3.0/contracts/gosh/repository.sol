@@ -46,6 +46,8 @@ contract Repository is Modifiers{
     optional(uint128) _supply;
     optional(address) _tokenroot;
 
+    string _metadata;
+
     constructor(
         address pubaddr,
         string name,
@@ -152,7 +154,7 @@ contract Repository is Modifiers{
             Repository(answer).checkUpdateRepoVer5{value : 0.15 ton, flag: 1}(version, a);
             return;
         }
-        a = abi.encode(true, _Branches, _protectedBranch, _head, _hashtag, _description, _tokendescription, _tokengrants, _supply, _tokenroot);
+        a = abi.encode(true, _Branches, _protectedBranch, _head, _hashtag, _description, _tokendescription, _tokengrants, _supply, _tokenroot, _metadata);
         Repository(answer).checkUpdateRepoVer5{value : 0.15 ton, flag: 1}(version, a);
     }
 
@@ -192,7 +194,7 @@ contract Repository is Modifiers{
         if (ver == "6.3.0") {
             mapping(uint256 => string) hashtag;
             bool ans;
-            (ans, _Branches, _protectedBranch, _head, hashtag, _description, _tokendescription, _tokengrants, _supply, _tokenroot) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => bool), string, mapping(uint256 => string), string, optional(string), optional(Grants[]), optional(uint128), optional(address)));
+            (ans, _Branches, _protectedBranch, _head, hashtag, _description, _tokendescription, _tokengrants, _supply, _tokenroot, _metadata) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => bool), string, mapping(uint256 => string), string, optional(string), optional(Grants[]), optional(uint128), optional(address), string));
             if (ans == false) { selfdestruct(_systemcontract); }
             this.smvdeployrepotagin{value: 0.1 ton, flag: 1}(hashtag.values());
             return;
@@ -364,6 +366,13 @@ contract Repository is Modifiers{
         _head = nameBranch;
     }
 
+    function updateRepoMetadata(address pubaddr, uint128 index, string metadata) public {
+        require(_ready == true, ERR_REPOSITORY_NOT_READY);
+        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        _metadata = metadata;
+    }
+
     //Protected branch
 
     function addProtectedBranch(address pubaddr, string branch, uint128 index) public {
@@ -524,14 +533,14 @@ contract Repository is Modifiers{
         return GoshLib.buildTaskCode(_code[m_TaskCode], address(this), version);
     }
 
-    function getDetails() external view returns(string description, string name, Item[] alladress, string head, mapping(uint256 => string) hashtag, bool ready, optional(string) tokendescription, optional(Grants[]) tokengrants, optional(uint128) tokensupply, optional(address) tokenroot)
+    function getDetails() external view returns(string description, string name, Item[] alladress, string head, mapping(uint256 => string) hashtag, bool ready, optional(string) tokendescription, optional(Grants[]) tokengrants, optional(uint128) tokensupply, optional(address) tokenroot, string metadata)
     {
         Item[] AllBranches;
         for ((uint256 key, Item value) : _Branches) {
             key;
             AllBranches.push(value);
         }
-        return (_description, _name, AllBranches, _head, _hashtag, _ready, _tokendescription, _tokengrants, _supply, _tokenroot);
+        return (_description, _name, AllBranches, _head, _hashtag, _ready, _tokendescription, _tokengrants, _supply, _tokenroot, _metadata);
     }
 
     function getRepositoryIn() public view minValue(0.5 ton) {
@@ -540,6 +549,6 @@ contract Repository is Modifiers{
             key;
             AllBranches.push(value);
         }
-        IObject(msg.sender).returnRepo{value: 0.1 ton, flag: 1}(_description, _name, AllBranches, _head, _hashtag, _ready, _tokendescription, _tokengrants, _supply, _tokenroot);
+        IObject(msg.sender).returnRepo{value: 0.1 ton, flag: 1}(_description, _name, AllBranches, _head, _hashtag, _ready, _tokendescription, _tokengrants, _supply, _tokenroot, _metadata);
     }
 }

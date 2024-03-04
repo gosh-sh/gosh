@@ -818,6 +818,13 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
+    function _updateRepoMetadata(string nameRepo, string metadata) private {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, nameRepo);
+        Repository(repo).updateRepoMetadata{value: 0.1 ton, flag: 1}(_pubaddr, _index, metadata);
+        getMoney();
+    }    
+
     function getCellForTaskUpgrade(string nametask,
         string reponame,
         string oldversion,
@@ -911,6 +918,15 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = DEPLOY_REPO_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, nameRepo, descr, previous, comment, time.get());       
+    }
+
+    function getCellMetadataRepo(string nameRepo, 
+        string metadata,
+        string comment,
+        optional(uint32) time) external pure returns(TvmCell) {
+        uint256 proposalKind = DEPLOY_REPO_METADATA_PROPOSAL_KIND;
+        if (time.hasValue() == false) { time = block.timestamp; }
+        return abi.encode(proposalKind, nameRepo, metadata, comment, time.get());       
     }
 
     //Snapshot part
@@ -2614,6 +2630,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == START_TOKEN_KIND) {
                 (,string repoName, string tokendescription, string name, string symbol, uint8 decimals,Grants[] tokengrants,,) = abi.decode(propData,(uint256, string, string, string, string, uint8, Grants[], string, uint32));
                 _startToken(repoName, tokendescription, name, symbol, decimals, tokengrants);
+            } else 
+            if (kind == DEPLOY_REPO_METADATA_PROPOSAL_KIND) {
+                (,string repoName, string metadata,,) = abi.decode(propData,(uint256, string, string, string, uint32));
+                _updateRepoMetadata(repoName, metadata);
             }
         }
     }
