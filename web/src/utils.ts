@@ -1,5 +1,5 @@
-import { GoshError } from './errors'
 import moment from 'moment'
+import { GoshError } from './errors'
 
 export const shortString = (
   data: string,
@@ -206,4 +206,17 @@ export const toBigint = (number: string, decimals: number) => {
   // Add zeros to make length equal to required decimal points
   // If string is larger than decimal points required then remove last zeros
   return BigInt(updatedValue.toString().padStart(_decimals, '0').slice(0, -_decimals))
+}
+
+export const readFileAsBuffer = async (file: File) => {
+  const content = await new Promise((resolve) => {
+    let reader = new FileReader()
+    reader.onload = () => {
+      const buffer = Buffer.from(reader.result as Uint8Array)
+      resolve(buffer)
+    }
+    reader.readAsArrayBuffer(file)
+  })
+
+  return content as Buffer
 }

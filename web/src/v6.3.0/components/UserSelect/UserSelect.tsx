@@ -10,7 +10,7 @@ type TUserSelectProps = AsyncProps<any, any, any> & {
   searchUser?: boolean
   searchDao?: boolean
   searchDaoGlobal?: boolean // Search for DAO of any version
-  searchDaoIsMember?: string // Search for DAO where searchDaoMember (address) is member
+  searchDaoIsMember?: string // Search for DAO where user profile (address) is member
 }
 
 const UserSelect = (props: TUserSelectProps) => {

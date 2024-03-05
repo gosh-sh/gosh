@@ -4741,9 +4741,15 @@ export function useCreateTask() {
 
     // Task has no vesting
     if (!vesting) {
-      struct.assign.push({ grant: assign_total, lock: lock * month2sec })
-      struct.review.push({ grant: review_total, lock: lock * month2sec })
-      struct.manager.push({ grant: manager_total, lock: lock * month2sec })
+      if (assign_total > 0) {
+        struct.assign.push({ grant: assign_total, lock: lock * month2sec })
+      }
+      if (review_total > 0) {
+        struct.review.push({ grant: review_total, lock: lock * month2sec })
+      }
+      if (manager_total > 0) {
+        struct.manager.push({ grant: manager_total, lock: lock * month2sec })
+      }
       return struct
     }
 
@@ -4864,6 +4870,7 @@ export function useCreateTask() {
     status,
     createTask,
     getTokenAmount,
+    getCalculatedGrant,
   }
 }
 

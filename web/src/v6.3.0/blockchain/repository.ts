@@ -31,6 +31,7 @@ export class GoshRepository extends BaseContract {
       head: data.head,
       tags: Object.values(data.hashtag) as string[],
       isReady: data.ready,
+      metadata: data.metadata ? JSON.parse(data.metadata) : {},
     }
   }
 

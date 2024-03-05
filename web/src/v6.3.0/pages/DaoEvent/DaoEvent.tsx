@@ -49,6 +49,7 @@ import {
   PullRequestEvent,
   RepositoryCreateEvent,
   RepositoryDescriptionEvent,
+  RepositoryMetadataEvent,
   RepositoryTagAddEvent,
   RepositoryTagDeleteEvent,
   ShowDaoEventProgressEvent,
@@ -291,6 +292,9 @@ const DaoEventPageInner = (props: { address: string }) => {
               )}
               {event.type === EDaoEventType.HACKATHON_APPS_APPROVE && (
                 <HackathonAppsApproveEvent data={event.data} />
+              )}
+              {event.type === EDaoEventType.REPO_UPDATE_METADATA && (
+                <RepositoryMetadataEvent data={event.data} />
               )}
               {event.type === EDaoEventType.MULTI_PROPOSAL && (
                 <MultiEvent event={event} />

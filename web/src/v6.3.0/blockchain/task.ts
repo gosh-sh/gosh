@@ -94,20 +94,24 @@ export class Task extends BaseContract {
       )
 
       // Get commit data
-      let commit = await repository.getCommit({ address: candidate.commit })
-      const commitver = await commit.getVersion()
-      const repover = await repository.getVersion()
-      if (commitver !== repover) {
-        const sc = AppConfig.goshroot.getSystemContract(commitver)
-        const repo = await sc.getRepository({ address: repository.address })
-        commit = await repo.getCommit({ address: commit.address })
+      let commit_data = null
+      if (candidate.commit) {
+        let commit = await repository.getCommit({ address: candidate.commit })
+        const commitver = await commit.getVersion()
+        const repover = await repository.getVersion()
+        if (commitver !== repover) {
+          const sc = AppConfig.goshroot.getSystemContract(commitver)
+          const repo = await sc.getRepository({ address: repository.address })
+          commit = await repo.getCommit({ address: commit.address })
+        }
+        commit_data = await commit.getDetails()
       }
 
       team = {
         assigners: users[0],
         reviewers: users[1],
         managers: users[2],
-        commit: await commit.getDetails(),
+        commit: commit_data,
       }
     }
 

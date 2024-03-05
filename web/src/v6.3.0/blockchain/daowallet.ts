@@ -786,6 +786,7 @@ export class DaoWallet extends BaseContract {
     reponame: string
     taskname: string
     config: TTaskGrant
+    team?: TTaskAssignerData
     tags?: string[]
     reviewers?: string[]
     comment?: string
@@ -795,6 +796,7 @@ export class DaoWallet extends BaseContract {
       reponame,
       taskname,
       config,
+      team,
       tags = [],
       comment = '',
       reviewers = [],
@@ -802,10 +804,20 @@ export class DaoWallet extends BaseContract {
     } = params
 
     const tagList = [SYSTEM_TAG, ...tags]
+    const team_struct = team
+      ? {
+          task: team.taskaddr,
+          pubaddrassign: team.assigner,
+          pubaddrreview: team.reviewer,
+          pubaddrmanager: team.manager,
+          daoMembers: team.daomember,
+        }
+      : undefined
     const cellParams = {
       repoName: reponame,
       taskName: taskname,
       grant: config,
+      workers: team_struct,
       tag: tagList,
       comment,
     }
@@ -990,6 +1002,29 @@ export class DaoWallet extends BaseContract {
       return value0 as string
     } else {
       const cell: any = await this.updateRepositoryDescription({
+        ...params,
+        cell: true,
+      })
+      return await this.createSingleEvent({ cell, reviewers })
+    }
+  }
+
+  async updateRepositoryMetadata(params: {
+    reponame: string
+    metadata: object
+    reviewers?: string[]
+    comment?: string
+    cell?: boolean
+  }) {
+    const { reponame, metadata, comment = '', reviewers = [], cell } = params
+
+    const cellParams = { nameRepo: reponame, metadata: JSON.stringify(metadata), comment }
+
+    if (cell) {
+      const { value0 } = await this.runLocal('getCellMetadataRepo', cellParams)
+      return value0 as string
+    } else {
+      const cell: any = await this.updateRepositoryMetadata({
         ...params,
         cell: true,
       })
@@ -1613,6 +1648,9 @@ export class DaoWallet extends BaseContract {
         }
         if (type === EDaoEventType.HACKATHON_APPS_APPROVE) {
           return await this.approveHackathonApps({ ...params, cell: true })
+        }
+        if (type === EDaoEventType.REPO_UPDATE_METADATA) {
+          return await this.updateRepositoryMetadata({ ...params, cell: true })
         }
         return null
       },

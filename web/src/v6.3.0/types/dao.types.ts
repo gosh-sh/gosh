@@ -230,7 +230,7 @@ export type TTaskDetails = {
     assigners: TTaskTeamMember[]
     reviewers: TTaskTeamMember[]
     managers: TTaskTeamMember[]
-    commit: TGoshCommit
+    commit: TGoshCommit | null
   } | null
   locktime: number
   subtasks: TMilestoneTaskDetails[]
