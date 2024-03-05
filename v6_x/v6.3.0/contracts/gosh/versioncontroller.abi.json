@@ -43,7 +43,8 @@
 			"inputs": [
 				{"name":"token","type":"uint128"},
 				{"name":"pubkey","type":"uint256"},
-				{"name":"version","type":"string"}
+				{"name":"version","type":"string"},
+				{"name":"pubaddr","type":"address"}
 			],
 			"outputs": [
 			]
@@ -401,6 +402,7 @@
 		{"name":"__value","type":"uint256"},
 		{"components":[{"name":"Key","type":"string"},{"name":"Value","type":"cell"}],"name":"_SystemContractCode","type":"map(uint256,tuple)"},
 		{"name":"_code","type":"map(uint8,cell)"},
-		{"name":"_readyForCurrencies","type":"bool"}
+		{"name":"_readyForCurrencies","type":"bool"},
+		{"name":"_decimals","type":"uint128"}
 	]
 }

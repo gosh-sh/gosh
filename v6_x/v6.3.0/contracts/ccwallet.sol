@@ -38,6 +38,17 @@ contract CCWallet is Modifiers {
         if (_wallettype == LOCK_CCWALLET) { _balance += uint256(token) * _decimals; }
     }
 
+    function transferCurrencyToPubkey(uint256 token, uint256 pubkey) public onlyOwner accept saveMsg {
+        require(token > 0, ERR_LOW_TOKEN);
+        require(address(this).currencies[CURRENCIES_ID] >= token, ERR_LOW_TOKEN);
+        getMoney();
+        if (_wallettype == LOCK_CCWALLET) { require(_balance >= token, ERR_LOW_TOKEN); _balance -= token; }
+        address to = GoshLib.calculateCCWalletAddress(_code[m_CCWalletCode], _versioncontroller, pubkey);
+        ExtraCurrencyCollection data;
+        data[CURRENCIES_ID] = token;
+        CCWallet(to).changeBalance{value: 0.3 ton, currencies: data, flag: 1}(tvm.pubkey(), token);
+    }
+
     function transferCurrency(uint256 token, address to) public onlyOwner accept saveMsg {
         require(token > 0, ERR_LOW_TOKEN);
         require(address(this).currencies[CURRENCIES_ID] >= token, ERR_LOW_TOKEN);
@@ -73,6 +84,7 @@ contract CCWallet is Modifiers {
     function getMoney() private {
         if (address(this).balance > 100 ton) { return; }
         if (block.timestamp - timeMoney > 3600) { _flag = false; timeMoney = block.timestamp; }
+        else { return; }
         if (_flag == true) { return; }
         _flag = true;
         VersionController(_versioncontroller).sendMoneyCCWallet{value : 0.2 ton}(tvm.pubkey(), 100 ton);

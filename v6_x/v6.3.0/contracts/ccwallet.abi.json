@@ -20,6 +20,15 @@
 			]
 		},
 		{
+			"name": "transferCurrencyToPubkey",
+			"inputs": [
+				{"name":"token","type":"uint256"},
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "transferCurrency",
 			"inputs": [
 				{"name":"token","type":"uint256"},

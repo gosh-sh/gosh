@@ -23,6 +23,7 @@ contract VersionController is Modifiers {
     mapping(uint8 => TvmCell) _code;
 
     bool _readyForCurrencies = false;
+    uint128 _decimals = 1e9;
 
     constructor() onlyOwner {
         require(tvm.pubkey() != 0, ERR_NEED_PUBKEY);
@@ -46,14 +47,18 @@ contract VersionController is Modifiers {
         SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey())).returnTokenToGosh{value: 0.3 ton, flag: 1}(pubaddr, value);
     }
 
-    function sendToken(uint128 token, uint256 pubkey, string version) public view {
+    function sendToken(uint128 token, uint256 pubkey, string version, address pubaddr) public view {
         require(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey()) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
+        if (token * _decimals > address(this).currencies[CURRENCIES_ID]) {
+            SystemContract(msg.sender).returnTokenToGosh{value: 0.3 ton, flag: 1}(pubaddr, token);
+            return;
+        }
         address answer = _deployNewCCWallet(pubkey);
         CCWallet(answer).getGOSHToken{value: 0.2 ton, flag: 1}(token);
         if (_readyForCurrencies == true) {
             ExtraCurrencyCollection data;
-            data[CURRENCIES_ID] = token;
+            data[CURRENCIES_ID] = token * _decimals;
             answer.transfer({value: 0.1 ton, currencies: data});           
         }
     }

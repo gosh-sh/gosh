@@ -56,7 +56,7 @@ contract SystemContract is Modifiers {
     }
 
     function sendToken(address pubaddr, uint128 token, uint256 pubkey) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), "gosh"), pubaddr, 0)) accept {
-        VersionController(_versionController).sendToken{value : 0.4 ton, flag: 1}(token, pubkey, version);
+        VersionController(_versionController).sendToken{value : 0.4 ton, flag: 1}(token, pubkey, version, pubaddr);
     }
 
     function deployNewDaoWallet(string nameDao) public pure {
