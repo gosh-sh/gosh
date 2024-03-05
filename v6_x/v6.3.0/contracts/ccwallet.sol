@@ -57,9 +57,9 @@ contract CCWallet is Modifiers {
 
     //Money part
     function getMoney() private {
-        if (_flag == true) { return; }
         if (address(this).balance > 100 ton) { return; }
         if (block.timestamp - timeMoney > 3600) { _flag = false; timeMoney = block.timestamp; }
+        if (_flag == true) { return; }
         _flag = true;
         VersionController(_versioncontroller).sendMoneyCCWallet{value : 0.2 ton}(tvm.pubkey(), 100 ton);
     }

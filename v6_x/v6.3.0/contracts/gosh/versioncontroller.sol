@@ -50,10 +50,8 @@ contract VersionController is Modifiers {
         require(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey()) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         address answer = _deployNewCCWallet(pubkey);
-        if (_readyForCurrencies == false) {
-            CCWallet(answer).getGOSHToken{value: 0.2 ton, flag: 1}(token);
-        } else {
-            CCWallet(answer).getGOSHToken{value: 0.2 ton, flag: 1}(token);
+        CCWallet(answer).getGOSHToken{value: 0.2 ton, flag: 1}(token);
+        if (_readyForCurrencies == true) {
             ExtraCurrencyCollection data;
             data[CURRENCIES_ID] = token;
             answer.transfer({value: 0.1 ton, currencies: data});           
