@@ -126,12 +126,15 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function getCellForStartToken(
         string repoName,
         string tokendescription,
+        string name, 
+        string symbol, 
+        uint8 decimals,
         Grants[] tokengrants,
         string comment,
         optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind =  START_TOKEN_KIND;        
         if (time.hasValue() == false) { time = block.timestamp; }
-        return abi.encode(proposalKind, repoName, tokendescription, tokengrants, comment, time.get());
+        return abi.encode(proposalKind, repoName, tokendescription, name, symbol, decimals, tokengrants, comment, time.get());
     }
 
     function _startToken(
