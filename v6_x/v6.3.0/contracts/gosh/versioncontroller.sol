@@ -33,8 +33,8 @@ contract VersionController is Modifiers {
         _readyForCurrencies = status;
     }
 
-    function _deployNewCCWallet(uint256 pubkey) private view {
-        new CCWallet {stateInit: GoshLib.composeCCWalletStateInit(_code[m_CCWalletCode], address(this), pubkey), value: FEE_DEPLOY_CCWALLET, wid: 0, flag: 1}(_code[m_CCWalletCode]);
+    function _deployNewCCWallet(uint256 pubkey) private view returns(address){
+        return new CCWallet {stateInit: GoshLib.composeCCWalletStateInit(_code[m_CCWalletCode], address(this), pubkey), value: FEE_DEPLOY_CCWALLET, wid: 0, flag: 1}(_code[m_CCWalletCode]);
     }
 
     function sendMoneyCCWallet(uint256 pubkey, uint128 value) public view senderIs(GoshLib.calculateCCWalletAddress(_code[m_CCWalletCode], address(this), pubkey)) accept {
@@ -49,14 +49,14 @@ contract VersionController is Modifiers {
     function sendToken(uint128 token, uint256 pubkey, string version) public view {
         require(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey()) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        _deployNewCCWallet(pubkey);
+        address answer = _deployNewCCWallet(pubkey);
         if (_readyForCurrencies == false) {
-            CCWallet(GoshLib.calculateCCWalletAddress(_code[m_CCWalletCode], address(this), pubkey)).getGOSHToken{value: 0.2 ton, flag: 1}(token);
+            CCWallet(answer).getGOSHToken{value: 0.2 ton, flag: 1}(token);
         } else {
-            CCWallet(GoshLib.calculateCCWalletAddress(_code[m_CCWalletCode], address(this), pubkey)).getGOSHToken{value: 0.2 ton, flag: 1}(token);
+            CCWallet(answer).getGOSHToken{value: 0.2 ton, flag: 1}(token);
             ExtraCurrencyCollection data;
             data[CURRENCIES_ID] = token;
-            GoshLib.calculateCCWalletAddress(_code[m_CCWalletCode], address(this), pubkey).transfer({value: 0.3 ton, currencies: data});           
+            answer.transfer({value: 0.1 ton, currencies: data});           
         }
     }
 

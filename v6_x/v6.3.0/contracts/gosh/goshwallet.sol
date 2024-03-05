@@ -152,7 +152,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(token <= m_pseudoDAOBalance, ERR_TOO_LOW_BALANCE);
         updateHeadIn();
         m_pseudoDAOBalance -= token;
-        SystemContract(_systemcontract).sendToken{value: 0.2 ton, flag: 1}(_pubaddr, token, pubkey);
+        SystemContract(_systemcontract).sendToken{value: 0.5 ton, flag: 1}(_pubaddr, token, pubkey);
     }
     
     function deployIndex(TvmCell data, uint128 index) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
