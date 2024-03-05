@@ -49,12 +49,14 @@ contract CCWallet is Modifiers {
     }
 
     function returnTokenToGosh(uint128 token, address pubaddr, string version) public onlyOwner accept saveMsg {
-        require(address(this).currencies[CURRENCIES_ID] >= token, ERR_LOW_TOKEN);
         getMoney();
         require(_wallettype == LOCK_CCWALLET, ERR_WRONG_DATA);
         token /= _decimals;
         require(token > 0, ERR_LOW_TOKEN);
         token *= _decimals;
+        require(address(this).currencies[CURRENCIES_ID] >= token, ERR_LOW_TOKEN);
+        require(_balance >= token, ERR_LOW_TOKEN);
+        _balance -= token;
         ExtraCurrencyCollection data;
         data[CURRENCIES_ID] = token;
         VersionController(_versioncontroller).returnTokenToGosh{value: 0.4 ton, currencies: data, flag: 1}(tvm.pubkey(), pubaddr, token / _decimals, version);
