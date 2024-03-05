@@ -43,7 +43,7 @@ contract VersionController is Modifiers {
 
     function returnTokenToGosh(uint256 pubkey, address pubaddr, uint128 value, string version) public view senderIs(GoshLib.calculateCCWalletAddress(_code[m_CCWalletCode], address(this), pubkey)) accept {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
-        SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey())).returnTokenToGosh{value: 0.1 ton, flag: 1}(pubaddr, value);
+        SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey())).returnTokenToGosh{value: 0.3 ton, flag: 1}(pubaddr, value);
     }
 
     function sendToken(uint128 token, uint256 pubkey, string version) public view {

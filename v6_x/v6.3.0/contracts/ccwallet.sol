@@ -21,7 +21,7 @@ contract CCWallet is Modifiers {
     bool static _wallettype;
     uint256 _balance = 0;
     uint32 timeMoney = 0;
-    uint256 _decimals = 1e9;
+    uint128 _decimals = 1e9;
 
     bool _flag = false;
     mapping(uint8 => TvmCell) _code;
@@ -46,6 +46,18 @@ contract CCWallet is Modifiers {
         ExtraCurrencyCollection data;
         data[CURRENCIES_ID] = token;
         CCWallet(to).changeBalance{value: 0.3 ton, currencies: data, flag: 1}(tvm.pubkey(), token);
+    }
+
+    function returnTokenToGosh(uint128 token, address pubaddr, string version) public onlyOwner accept saveMsg {
+        require(address(this).currencies[CURRENCIES_ID] >= token, ERR_LOW_TOKEN);
+        getMoney();
+        require(_wallettype == LOCK_CCWALLET, ERR_WRONG_DATA);
+        token /= _decimals;
+        require(token > 0, ERR_LOW_TOKEN);
+        token *= _decimals;
+        ExtraCurrencyCollection data;
+        data[CURRENCIES_ID] = token;
+        VersionController(_versioncontroller).returnTokenToGosh{value: 0.4 ton, currencies: data, flag: 1}(tvm.pubkey(), pubaddr, token / _decimals, version);
     }
 
     function changeBalance(uint256 pubkey, uint256 token) public {
