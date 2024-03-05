@@ -38,6 +38,7 @@ import HackathonCreatePage from './pages/HackathonCreate'
 import HackathonLayout from './pages/HackathonLayout'
 import HackathonOverviewPage from './pages/HackathonOverview'
 import HackathonRewardPage from './pages/HackathonReward'
+import ICCreatePage from './pages/ICCreate'
 import L2Page from './pages/L2'
 import OnboardingPage from './pages/Onboarding'
 import OnboardingDaoPage from './pages/OnboardingDao'
@@ -112,6 +113,7 @@ const App = () => {
               </Route>
               <Route path="l2" element={<DaoTokenL2Page />} />
               <Route path="hacksgrants" element={<DaoHackathonListPage />} />
+              <Route path="ic/create" element={<ICCreatePage />} />
             </Route>
             <Route
               path="/o/:daoname/hacksgrants/create"

@@ -38,7 +38,7 @@ type TApplicationSubmitProps = {
     items: { dao_name: string; repo_name: string }[]
     application_form?: {
       owners: TUserSelectOption['value'][]
-      fields: (TFormGeneratorField & { value: string })[]
+      fields: TFormGeneratorField[]
     }
   }): Promise<void>
 }

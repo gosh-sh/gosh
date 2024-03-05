@@ -540,6 +540,27 @@
 			]
 		},
 		{
+			"name": "getRepoUpdateMetadataTagParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"nameRepo","type":"string"},
+				{"name":"metadata","type":"string"}
+			]
+		},
+		{
+			"name": "getRepoUpdateMetadataTagParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"nameRepo","type":"string"},
+				{"name":"metadata","type":"string"}
+			]
+		},
+		{
 			"name": "getStartTokenParamsData",
 			"inputs": [
 				{"name":"Data","type":"cell"}
@@ -548,6 +569,9 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"repoName","type":"string"},
 				{"name":"tokendescription","type":"string"},
+				{"name":"name","type":"string"},
+				{"name":"symbol","type":"string"},
+				{"name":"decimals","type":"uint8"},
 				{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"tuple[]"}
 			]
 		},
@@ -559,6 +583,9 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"repoName","type":"string"},
 				{"name":"tokendescription","type":"string"},
+				{"name":"name","type":"string"},
+				{"name":"symbol","type":"string"},
+				{"name":"decimals","type":"uint8"},
 				{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"tuple[]"}
 			]
 		},

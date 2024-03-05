@@ -33,6 +33,9 @@
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
 				{"name":"tokendescription","type":"string"},
+				{"name":"name","type":"string"},
+				{"name":"symbol","type":"string"},
+				{"name":"decimals","type":"uint8"},
 				{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"tuple[]"}
 			],
 			"outputs": [
@@ -256,6 +259,16 @@
 				{"name":"pubaddr","type":"address"},
 				{"name":"nameBranch","type":"string"},
 				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateRepoMetadata",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"metadata","type":"string"}
 			],
 			"outputs": [
 			]
@@ -507,7 +520,10 @@
 				{"name":"hashtag","type":"map(uint256,string)"},
 				{"name":"ready","type":"bool"},
 				{"name":"tokendescription","type":"optional(string)"},
-				{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"optional(tuple[])"}
+				{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"optional(tuple[])"},
+				{"name":"tokensupply","type":"optional(uint128)"},
+				{"name":"tokenroot","type":"optional(address)"},
+				{"name":"metadata","type":"string"}
 			]
 		},
 		{
@@ -572,6 +588,9 @@
 		{"name":"_description","type":"string"},
 		{"name":"_creator","type":"address"},
 		{"name":"_tokendescription","type":"optional(string)"},
-		{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"}],"name":"_tokengrants","type":"optional(tuple[])"}
+		{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"}],"name":"_tokengrants","type":"optional(tuple[])"},
+		{"name":"_supply","type":"optional(uint128)"},
+		{"name":"_tokenroot","type":"optional(address)"},
+		{"name":"_metadata","type":"string"}
 	]
 }

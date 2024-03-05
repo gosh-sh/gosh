@@ -31,6 +31,7 @@ const DaoLayout = () => {
     if (member.isMember) {
       tabs.push({ to: `/o/${daoname}/settings`, title: 'Settings', order: 6 })
       tabs.push({ to: `/o/${daoname}/l2`, title: 'Ethereum', order: 7 })
+      tabs.push({ to: `/o/${daoname}/ic/create`, title: 'Integrity Credits', order: 8 })
     }
 
     return tabs.sort((a, b) => a.order - b.order)

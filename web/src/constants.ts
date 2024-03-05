@@ -75,6 +75,7 @@ export const DaoEventType: { [key: number]: string } = {
   53: 'Create hackathon voting',
   54: 'Update hackathon',
   56: 'Create repository branch',
+  59: 'Update repository metadata',
 }
 
 export const NotificationType: { [key: string]: string } = {

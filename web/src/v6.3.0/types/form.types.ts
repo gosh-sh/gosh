@@ -5,6 +5,13 @@ export type TFormGeneratorField = {
   name: string
   type: string
   required: boolean
+  static?: boolean
+  value?: string
+}
+
+export type TFormGeneratorForm = {
+  title: string
+  fields: TFormGeneratorField[]
 }
 
 export type TUserSelectOption = {

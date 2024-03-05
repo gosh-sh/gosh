@@ -42,6 +42,14 @@
 			]
 		},
 		{
+			"name": "returnTokenToGosh",
+			"inputs": [
+				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getCellForStartToken",
 			"inputs": [
 				{"name":"repoName","type":"string"},
@@ -711,6 +719,18 @@
 				{"name":"nameRepo","type":"string"},
 				{"name":"descr","type":"string"},
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getCellMetadataRepo",
+			"inputs": [
+				{"name":"nameRepo","type":"string"},
+				{"name":"metadata","type":"string"},
 				{"name":"comment","type":"string"},
 				{"name":"time","type":"optional(uint32)"}
 			],

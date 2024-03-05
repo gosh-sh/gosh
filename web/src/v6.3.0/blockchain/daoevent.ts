@@ -160,6 +160,9 @@ export class DaoEvent extends BaseContract {
     } else if (type === EDaoEventType.HACKATHON_APPS_APPROVE) {
       fn = 'getSetGrantPubkeysParams'
       parser = this.parseApproveackathonAppsEventParams
+    } else if (type === EDaoEventType.REPO_UPDATE_METADATA) {
+      fn = 'getRepoUpdateMetadataTagParams'
+      parser = this.parseUpdateRepositoryMetadataEventParams
     } else if (type === EDaoEventType.MULTI_PROPOSAL) {
       const { num, data0 } = await this.runLocal('getDataFirst', {}, undefined, {
         useCachedBoc: true,
@@ -395,6 +398,10 @@ export class DaoEvent extends BaseContract {
     return details
   }
 
+  async parseUpdateRepositoryMetadataEventParams(data: any) {
+    return { ...data, metadata: JSON.parse(data.metadata) }
+  }
+
   private async parseMultiEventCell(params: {
     count: number
     cell: string
@@ -535,6 +542,9 @@ export class DaoEvent extends BaseContract {
     } else if (type === EDaoEventType.HACKATHON_APPS_APPROVE) {
       fn = 'getSetGrantPubkeysParamsData'
       parser = this.parseApproveackathonAppsEventParams
+    } else if (type === EDaoEventType.REPO_UPDATE_METADATA) {
+      fn = 'getRepoUpdateMetadataTagParamsData'
+      parser = this.parseUpdateRepositoryMetadataEventParams
     } else if (type === EDaoEventType.DELAY) {
       return { type, label: DaoEventType[type], data: {} }
     } else {
