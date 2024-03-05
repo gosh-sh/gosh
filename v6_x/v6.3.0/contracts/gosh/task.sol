@@ -71,7 +71,7 @@ contract Task is Modifiers{
             (_repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], _grant, _balance, _needbalance, _hashtag, _bigtask, workers) = abi.decode(defaultData.get(),(string, address, TvmCell, TvmCell, TvmCell, TvmCell, ConfigGrant, uint128, uint128, string[], optional(string), optional(ConfigCommitBase)));
             _repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, _repoName);
             if (workers.hasValue()) {
-                require((_bigtask.hasValue() == true), ERR_WRONG_DATA);
+//                require((_bigtask.hasValue() == true), ERR_WRONG_DATA);
                 _candidates.push(workers.get());
                 _isFix = true;
 //                this.calculateAssignLength{value : 0.15 ton, flag: 1}(uint128(_candidates.length - 1));
