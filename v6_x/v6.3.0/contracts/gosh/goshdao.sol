@@ -657,7 +657,7 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
     function daoSendToken (address pub, uint128 index, address wallet, optional(address)  pubaddr, uint128 grant) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pub, index))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
     	if (pubaddr.hasValue()) {
-//    	    GoshWallet(wallet).sendTokenIn{value:0.2 ton, flag: 1}(pubaddr.get(), grant);   
+    	    GoshWallet(wallet).sendTokenIn{value:0.2 ton, flag: 1}(pubaddr.get(), grant);   
     	} else {
     	    GoshWallet(wallet).sendTokenToDaoReserveIn{value:0.2 ton, flag: 1}(grant);
     	}	

@@ -1154,6 +1154,24 @@
 			]
 		},
 		{
+			"name": "sendToken",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokenIn",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployCustomContract",
 			"inputs": [
 				{"name":"data","type":"cell"}
