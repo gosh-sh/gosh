@@ -11,14 +11,6 @@
 			]
 		},
 		{
-			"name": "setReadyCurrecies",
-			"inputs": [
-				{"name":"status","type":"bool"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "sendMoneyCCWallet",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},
@@ -273,6 +265,23 @@
 			]
 		},
 		{
+			"name": "setInvestors",
+			"inputs": [
+				{"name":"investors","type":"map(uint256,uint128)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addInvestor",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"token","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getProfileIndexAddr",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},
@@ -402,7 +411,7 @@
 		{"name":"__value","type":"uint256"},
 		{"components":[{"name":"Key","type":"string"},{"name":"Value","type":"cell"}],"name":"_SystemContractCode","type":"map(uint256,tuple)"},
 		{"name":"_code","type":"map(uint8,cell)"},
-		{"name":"_readyForCurrencies","type":"bool"},
+		{"name":"_investors","type":"map(uint256,uint128)"},
 		{"name":"_decimals","type":"uint128"}
 	]
 }

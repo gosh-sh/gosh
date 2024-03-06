@@ -22,16 +22,13 @@ contract VersionController is Modifiers {
     mapping(uint256 => SystemContractV) _SystemContractCode;
     mapping(uint8 => TvmCell) _code;
 
-    bool _readyForCurrencies = false;
+    mapping(uint256 => uint128) _investors;
+
     uint128 _decimals = 1e9;
 
     constructor() onlyOwner {
         require(tvm.pubkey() != 0, ERR_NEED_PUBKEY);
         tvm.accept();
-    }
-
-    function setReadyCurrecies(bool status) public onlyOwner accept {
-        _readyForCurrencies = status;
     }
 
     function _deployNewCCWallet(uint256 pubkey) private view returns(address){
@@ -47,7 +44,7 @@ contract VersionController is Modifiers {
         SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey())).returnTokenToGosh{value: 0.3 ton, flag: 1}(pubaddr, value);
     }
 
-    function sendToken(uint128 token, uint256 pubkey, string version, address pubaddr) public view {
+    function sendToken(uint128 token, uint256 pubkey, string version, address pubaddr) public {
         require(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey()) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (token * _decimals > address(this).currencies[CURRENCIES_ID]) {
@@ -56,7 +53,19 @@ contract VersionController is Modifiers {
         }
         address answer = _deployNewCCWallet(pubkey);
         CCWallet(answer).getGOSHToken{value: 0.2 ton, flag: 1}(token);
-        if (_readyForCurrencies == true) {
+        if (_investors.exists(pubkey) == true) {
+            if (_investors[pubkey] / _decimals >= token) {
+                _investors[pubkey] -= token * _decimals; 
+                if (_investors[pubkey] == 0) {
+                    delete _investors[pubkey];
+                }
+                return;
+            }
+            else {
+                uint128 out = _investors[pubkey] / _decimals;
+                token -= out;
+                _investors[pubkey] -= out;
+            }
             ExtraCurrencyCollection data;
             data[CURRENCIES_ID] = token * _decimals;
             answer.transfer({value: 0.1 ton, currencies: data});           
@@ -209,6 +218,14 @@ contract VersionController is Modifiers {
     //Setters
     function setCode(TvmCell code, uint8 id) public  onlyOwner accept {
         _code[id] = code;
+    }
+
+    function setInvestors(mapping(uint256 => uint128) investors) public  onlyOwner accept {
+        _investors = investors;
+    }
+
+    function addInvestor(uint256 pubkey, uint128 token) public  onlyOwner accept {
+        _investors[pubkey] += token;
     }
 
     //Getters   
