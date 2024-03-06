@@ -8,7 +8,7 @@ pragma ever-solidity >=0.66.0;
 
 //Structs
 struct Grants {
-    uint256 pubkey;
+    address pubaddr;
     uint128 value;
 }
 

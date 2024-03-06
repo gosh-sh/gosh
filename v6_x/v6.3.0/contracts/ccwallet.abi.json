@@ -83,7 +83,6 @@
 		{"name":"_wallettype","type":"bool"},
 		{"name":"_balance","type":"uint256"},
 		{"name":"timeMoney","type":"uint32"},
-		{"name":"_decimals","type":"uint128"},
 		{"name":"_flag","type":"bool"},
 		{"name":"_code","type":"map(uint8,cell)"}
 	]

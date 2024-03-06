@@ -24,8 +24,6 @@ contract VersionController is Modifiers {
 
     mapping(uint256 => uint128) _investors;
 
-    uint128 _decimals = 1e9;
-
     constructor() onlyOwner {
         require(tvm.pubkey() != 0, ERR_NEED_PUBKEY);
         tvm.accept();
@@ -41,34 +39,41 @@ contract VersionController is Modifiers {
 
     function returnTokenToGosh(uint256 pubkey, address pubaddr, uint128 value, string version) public view senderIs(GoshLib.calculateCCWalletAddress(_code[m_CCWalletCode], address(this), pubkey)) accept {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        value /= CURRENCIES_DECIMALS;
         SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey())).returnTokenToGosh{value: 0.3 ton, flag: 1}(pubaddr, value);
     }
 
     function sendToken(uint128 token, uint256 pubkey, string version, address pubaddr) public {
         require(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey()) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        if (token * _decimals > address(this).currencies[CURRENCIES_ID]) {
+        token *= CURRENCIES_DECIMALS;
+        if (token > address(this).currencies[CURRENCIES_ID]) {
             SystemContract(msg.sender).returnTokenToGosh{value: 0.3 ton, flag: 1}(pubaddr, token);
             return;
         }
         address answer = _deployNewCCWallet(pubkey);
         CCWallet(answer).getGOSHToken{value: 0.2 ton, flag: 1}(token);
         if (_investors.exists(pubkey) == true) {
-            if (_investors[pubkey] / _decimals >= token) {
-                _investors[pubkey] -= token * _decimals; 
+            if (_investors[pubkey] >= token) {
+                _investors[pubkey] -= token; 
                 if (_investors[pubkey] == 0) {
                     delete _investors[pubkey];
                 }
                 return;
             }
             else {
-                uint128 out = _investors[pubkey] / _decimals;
-                token -= out;
-                _investors[pubkey] -= out;
+                token -= _investors[pubkey];
+                delete _investors[pubkey];
                 ExtraCurrencyCollection data;
-                data[CURRENCIES_ID] = token * _decimals;
+                data[CURRENCIES_ID] = token;
                 answer.transfer({value: 0.1 ton, currencies: data});
+                return;
             }           
+        } else {
+            ExtraCurrencyCollection data;
+            data[CURRENCIES_ID] = token;
+            answer.transfer({value: 0.1 ton, currencies: data});
+            return;
         }
     }
 

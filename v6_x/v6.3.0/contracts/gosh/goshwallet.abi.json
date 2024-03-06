@@ -57,7 +57,7 @@
 				{"name":"name","type":"string"},
 				{"name":"symbol","type":"string"},
 				{"name":"decimals","type":"uint8"},
-				{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"tuple[]"},
+				{"components":[{"name":"pubaddr","type":"address"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"tuple[]"},
 				{"name":"comment","type":"string"},
 				{"name":"time","type":"optional(uint32)"}
 			],
