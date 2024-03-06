@@ -1608,6 +1608,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshDao(_goshdao).receiveTokentoReserve{value: 0.1 ton, flag: 1}(_pubaddr, _index, grant);
         getMoney();
     }
+    
+    /*
+    // Not available
     function sendToken(
         address pubaddr,
         uint128 grant
@@ -1619,7 +1622,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, 0)).receiveToken{value: 0.1 ton, flag: 1}(_pubaddr, _index, grant);
         getMoney();
     }
+    */
     
+    /*
+    // Not available
     function sendTokenIn(
         address pubaddr,
         uint128 grant
@@ -1631,6 +1637,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, 0)).receiveToken{value: 0.1 ton, flag: 1}(_pubaddr, _index, grant);
         getMoney();
     }
+    */
     
     function deployCustomContract(TvmCell data) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
