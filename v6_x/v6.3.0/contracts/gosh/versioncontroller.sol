@@ -65,10 +65,10 @@ contract VersionController is Modifiers {
                 uint128 out = _investors[pubkey] / _decimals;
                 token -= out;
                 _investors[pubkey] -= out;
-            }
-            ExtraCurrencyCollection data;
-            data[CURRENCIES_ID] = token * _decimals;
-            answer.transfer({value: 0.1 ton, currencies: data});           
+                ExtraCurrencyCollection data;
+                data[CURRENCIES_ID] = token * _decimals;
+                answer.transfer({value: 0.1 ton, currencies: data});
+            }           
         }
     }
 
