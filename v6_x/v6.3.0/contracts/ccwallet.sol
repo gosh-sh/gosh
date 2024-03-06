@@ -21,7 +21,6 @@ contract CCWallet is Modifiers {
     bool static _wallettype;
     uint256 _balance = 0;
     uint32 timeMoney = 0;
-    uint128 _decimals = 1e9;
 
     bool _flag = false;
     mapping(uint8 => TvmCell) _code;
@@ -35,7 +34,15 @@ contract CCWallet is Modifiers {
 
     function getGOSHToken(uint128 token) public senderIs(_versioncontroller) accept {
         getMoney();
-        if (_wallettype == LOCK_CCWALLET) { _balance += uint256(token) * _decimals; }
+        if (_wallettype != LOCK_CCWALLET) { return; }
+        _balance += uint256(token) * CURRENCY_DECIMALS;
+        if (address(this).currencies[CURRENCIES_ID] > _balance) {
+            uint256 return_token = math.min(address(this).currencies[CURRENCIES_ID] - _balance, token * CURRENCY_DECIMALS);
+            ExtraCurrencyCollection data;
+            data[CURRENCIES_ID] = return_token;
+            msg.sender.transfer({value: 0.1 ton, currencies: data, flag: 1});
+        }
+
     }
 
     function transferCurrencyToPubkey(uint256 token, uint256 pubkey) public onlyOwner accept saveMsg {
@@ -62,15 +69,15 @@ contract CCWallet is Modifiers {
     function returnTokenToGosh(uint128 token, address pubaddr, string version) public onlyOwner accept saveMsg {
         getMoney();
         require(_wallettype == LOCK_CCWALLET, ERR_WRONG_DATA);
-        token /= _decimals;
+        token /= CURRENCY_DECIMALS;
         require(token > 0, ERR_LOW_TOKEN);
-        token *= _decimals;
+        token *= CURRENCY_DECIMALS;
         require(address(this).currencies[CURRENCIES_ID] >= token, ERR_LOW_TOKEN);
         require(_balance >= token, ERR_LOW_TOKEN);
         _balance -= token;
         ExtraCurrencyCollection data;
         data[CURRENCIES_ID] = token;
-        VersionController(_versioncontroller).returnTokenToGosh{value: 0.4 ton, currencies: data, flag: 1}(tvm.pubkey(), pubaddr, token / _decimals, version);
+        VersionController(_versioncontroller).returnTokenToGosh{value: 0.4 ton, currencies: data, flag: 1}(tvm.pubkey(), pubaddr, token / CURRENCY_DECIMALS, version);
     }
 
     function changeBalance(uint256 pubkey, uint256 token) public {
