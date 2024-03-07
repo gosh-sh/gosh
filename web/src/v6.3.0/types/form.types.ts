@@ -1,11 +1,14 @@
 import { EDaoMemberType } from './dao.types'
 
+export type TApplicationForm = { filename: string; form: TFormGeneratorForm }
+
 export type TFormGeneratorField = {
   label: string
   name: string
   type: string
   required: boolean
   static?: boolean
+  disabled?: boolean
   value?: string
 }
 

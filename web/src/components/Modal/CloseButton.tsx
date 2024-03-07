@@ -1,26 +1,38 @@
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import classNames from 'classnames'
-import { useSetRecoilState } from 'recoil'
+import { useResetRecoilState, useSetRecoilState } from 'recoil'
 import { appModalStateAtom } from '../../store/app.state'
 import { Button } from '../Form'
 
 type TModalCloseButtonProps = React.HTMLAttributes<HTMLDivElement> & {
   disabled?: boolean
   two_factor?: boolean // Used for 2-factor closing
+  close_custom?: boolean
   onClose?: () => Promise<void>
   twoFactorCallback?: () => void
 }
 
 const ModalCloseButton = (props: TModalCloseButtonProps) => {
-  const { className, disabled, two_factor = false, onClose, twoFactorCallback } = props
+  const {
+    className,
+    disabled,
+    two_factor = false,
+    close_custom = false,
+    onClose,
+    twoFactorCallback,
+  } = props
   const setModal = useSetRecoilState(appModalStateAtom)
+  const resetModal = useResetRecoilState(appModalStateAtom)
 
   const onModalReset = async () => {
     if (two_factor && twoFactorCallback) {
       twoFactorCallback()
     } else {
-      setModal((state) => ({ ...state, isOpen: false }))
+      if (!close_custom) {
+        setModal((state) => ({ ...state, isOpen: false }))
+        setTimeout(resetModal, 300)
+      }
       onClose && (await onClose())
     }
   }

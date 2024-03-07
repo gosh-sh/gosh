@@ -1,4 +1,4 @@
-import { TFormGeneratorForm, TUserSelectOption } from './form.types'
+import { TApplicationForm, TUserSelectOption } from './form.types'
 
 export enum EICCreateStep {
   ROLES = 'roles',
@@ -7,8 +7,6 @@ export enum EICCreateStep {
   DOCUMENTS = 'documents',
   FORMS = 'forms',
 }
-
-export type TICCreateStateForm = { filename: string; form: TFormGeneratorForm }
 
 export type TICCreateState = {
   step: { name: EICCreateStep; params: { [key: string]: any } }
@@ -28,5 +26,5 @@ export type TICCreateState = {
   } | null
   repository: { name: string; description?: string } | null
   documents: File[]
-  forms: TICCreateStateForm[]
+  forms: TApplicationForm[]
 }

@@ -1161,6 +1161,40 @@ export class DaoWallet extends BaseContract {
     }
   }
 
+  async issueRepositoryToken(params: {
+    reponame: string
+    token: {
+      name: string
+      symbol: string
+      decimals: number
+      description: object
+    }
+    grant: { pubkey: string; amount: number }[]
+    reviewers?: string[]
+    comment?: string
+    cell?: boolean
+  }) {
+    const { reponame, token, grant, comment = '', reviewers = [], cell } = params
+
+    const cellParams = {
+      repoName: reponame,
+      tokendescription: JSON.stringify(token.description),
+      name: token.name,
+      symbol: token.symbol,
+      decimals: token.decimals,
+      tokengrants: grant.map(({ pubkey, amount }) => ({ pubkey, value: amount })),
+      comment,
+    }
+
+    if (cell) {
+      const { value0 } = await this.runLocal('getCellForStartToken', cellParams)
+      return value0 as string
+    } else {
+      const cell: any = await this.issueRepositoryToken({ ...params, cell: true })
+      return await this.createSingleEvent({ cell, reviewers })
+    }
+  }
+
   async createDaoExpertTag(params: {
     tags: { name: string; multiplier: number }[]
     comment?: string
@@ -1651,6 +1685,9 @@ export class DaoWallet extends BaseContract {
         }
         if (type === EDaoEventType.REPO_UPDATE_METADATA) {
           return await this.updateRepositoryMetadata({ ...params, cell: true })
+        }
+        if (type === EDaoEventType.REPO_ISSUE_TOKEN) {
+          return await this.issueRepositoryToken({ ...params, cell: true })
         }
         return null
       },

@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useCreateIC } from '../../hooks/ic.hooks'
+import { useCreateICFlow } from '../../hooks/ic.hooks'
 import { EICCreateStep } from '../../types/ic.types'
 import { ApplicationForm, Documents, Repository, Rewards, Roles } from './components'
 
@@ -11,7 +11,7 @@ const motionProps = {
 }
 
 const ICCreatePage = () => {
-  const { state } = useCreateIC({ initialize: true })
+  const { state } = useCreateICFlow({ initialize: true })
 
   return (
     <>

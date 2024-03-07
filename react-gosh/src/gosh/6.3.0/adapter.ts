@@ -2983,6 +2983,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             commitsIn: [],
             description: details.description,
             tags: Object.values(details.hashtag),
+            metadata: details.metadata ? JSON.parse(details.metadata) : undefined,
         }
     }
 
@@ -3856,12 +3857,13 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             branchParent?: string
             task?: TTaskCommitConfig
             callback?: IPushCallback
+            cell?: boolean
         },
-    ): Promise<string | null> {
+    ): Promise<string | any | null> {
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
         }
-        const { tags, branchParent, callback } = options
+        const { tags, branchParent, callback, cell } = options
 
         const daoname = await (await this._getDao()).getName()
         const reponame = await this.getName()
@@ -4097,27 +4099,30 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 patched.length,
                 message,
                 task,
+                cell,
             )
 
             // Create notification
-            try {
-                await NotificationsAPI.notifications.createNotificaton({
-                    data: {
-                        username: this.auth.username,
-                        payload: {
-                            daoname,
-                            type: 'dao_event_created',
-                            meta: {
-                                label: 'Pull request',
-                                comment: `New pull request to repository ${reponame}`,
-                                eventaddr,
+            if (!cell) {
+                try {
+                    await NotificationsAPI.notifications.createNotificaton({
+                        data: {
+                            username: this.auth.username,
+                            payload: {
+                                daoname,
+                                type: 'dao_event_created',
+                                meta: {
+                                    label: 'Pull request',
+                                    comment: `New pull request to repository ${reponame}`,
+                                    eventaddr,
+                                },
                             },
                         },
-                    },
-                    keys: signer.keys,
-                })
-            } catch (e: any) {
-                console.warn('Post create event error', e.message)
+                        keys: signer.keys,
+                    })
+                } catch (e: any) {
+                    console.warn('Post create event error', e.message)
+                }
             }
 
             cb({ completed: true })
@@ -5122,6 +5127,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             pubaddrreview: { [address: string]: boolean }
             pubaddrmanager: { [address: string]: boolean }
         },
+        cell?: boolean,
     ) {
         if (!this.auth) {
             throw new GoshError(EGoshError.PROFILE_UNDEFINED)
@@ -5138,7 +5144,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         )
 
         const smvClientsCount = await this._validateProposalStart(0)
-        const result = await this.auth.wallet0.run('startProposalForSetCommit', {
+        const cell_params = {
             repoName: await this.getName(),
             branchName: branch,
             commit,
@@ -5148,8 +5154,16 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
             comment,
             num_clients: smvClientsCount,
             reviewers: _reviewers,
-        })
-        return await dao.getEventAddress(result)
+        }
+        if (cell) {
+            return cell_params
+        } else {
+            const result = await this.auth.wallet0.run(
+                'startProposalForSetCommit',
+                cell_params,
+            )
+            return await dao.getEventAddress(result)
+        }
     }
 
     private async _getTaskCommitConfig(config?: TTaskCommitConfig) {

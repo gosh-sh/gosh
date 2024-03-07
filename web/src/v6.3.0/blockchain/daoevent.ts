@@ -163,6 +163,9 @@ export class DaoEvent extends BaseContract {
     } else if (type === EDaoEventType.REPO_UPDATE_METADATA) {
       fn = 'getRepoUpdateMetadataTagParams'
       parser = this.parseUpdateRepositoryMetadataEventParams
+    } else if (type === EDaoEventType.REPO_ISSUE_TOKEN) {
+      fn = 'getStartTokenParams'
+      parser = this.parseIssueRepositoryTokenEventParams
     } else if (type === EDaoEventType.MULTI_PROPOSAL) {
       const { num, data0 } = await this.runLocal('getDataFirst', {}, undefined, {
         useCachedBoc: true,
@@ -402,6 +405,15 @@ export class DaoEvent extends BaseContract {
     return { ...data, metadata: JSON.parse(data.metadata) }
   }
 
+  async parseIssueRepositoryTokenEventParams(data: any) {
+    console.debug('data: ', data)
+    const sc = getSystemContract()
+    // const grant = await Promise.all(data.tokengrants.map(async (item: any) => {
+    //   const profile = await sc.versionController.getUserProfile({address: item.})
+    // }))
+    return { ...data, tokendescription: JSON.parse(data.tokendescription) }
+  }
+
   private async parseMultiEventCell(params: {
     count: number
     cell: string
@@ -545,6 +557,9 @@ export class DaoEvent extends BaseContract {
     } else if (type === EDaoEventType.REPO_UPDATE_METADATA) {
       fn = 'getRepoUpdateMetadataTagParamsData'
       parser = this.parseUpdateRepositoryMetadataEventParams
+    } else if (type === EDaoEventType.REPO_ISSUE_TOKEN) {
+      fn = 'getStartTokenParamsData'
+      parser = this.parseIssueRepositoryTokenEventParams
     } else if (type === EDaoEventType.DELAY) {
       return { type, label: DaoEventType[type], data: {} }
     } else {

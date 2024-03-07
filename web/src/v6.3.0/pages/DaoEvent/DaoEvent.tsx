@@ -49,6 +49,7 @@ import {
   PullRequestEvent,
   RepositoryCreateEvent,
   RepositoryDescriptionEvent,
+  RepositoryIssueTokenEvent,
   RepositoryMetadataEvent,
   RepositoryTagAddEvent,
   RepositoryTagDeleteEvent,
@@ -295,6 +296,9 @@ const DaoEventPageInner = (props: { address: string }) => {
               )}
               {event.type === EDaoEventType.REPO_UPDATE_METADATA && (
                 <RepositoryMetadataEvent data={event.data} />
+              )}
+              {event.type === EDaoEventType.REPO_ISSUE_TOKEN && (
+                <RepositoryIssueTokenEvent data={event.data} />
               )}
               {event.type === EDaoEventType.MULTI_PROPOSAL && (
                 <MultiEvent event={event} />

@@ -1,18 +1,24 @@
-import { Fragment } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
-import { useRecoilValue, useResetRecoilState } from 'recoil'
+import { Fragment } from 'react'
+import { useRecoilState, useResetRecoilState } from 'recoil'
 import { appModalStateAtom } from '../../store/app.state'
 
-const BaseModal = () => {
-  const modal = useRecoilValue(appModalStateAtom)
-  const resetModal = useResetRecoilState(appModalStateAtom)
+type TBaseModalCleanProps = {
+  is_open: boolean
+  is_static?: boolean
+  element: any
+  onClose?(): void
+}
+
+export const BaseModalClean = (props: TBaseModalCleanProps) => {
+  const { is_open, is_static, element } = props
+
+  const onCloseDefault = () => {}
+  const onClose = props.onClose || onCloseDefault
 
   return (
-    <Transition show={modal.isOpen} as={Fragment}>
-      <Dialog
-        onClose={() => !modal.static && resetModal()}
-        className="fixed inset-0 z-50"
-      >
+    <Transition show={is_open} as={Fragment}>
+      <Dialog onClose={onClose} static={is_static} className="fixed inset-0 z-50">
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -34,11 +40,32 @@ const BaseModal = () => {
           leaveTo="opacity-0 scale-95"
         >
           <div className="fixed inset-0 flex items-start justify-center p-4 overflow-y-auto">
-            {modal.element}
+            {element}
           </div>
         </Transition.Child>
       </Dialog>
     </Transition>
+  )
+}
+
+const BaseModal = () => {
+  const [modal, setModal] = useRecoilState(appModalStateAtom)
+  const resetModal = useResetRecoilState(appModalStateAtom)
+
+  const onClose = () => {
+    if (!modal.static) {
+      setModal((state) => ({ ...state, isOpen: false }))
+      setTimeout(resetModal, 300)
+    }
+  }
+
+  return (
+    <BaseModalClean
+      is_open={modal.isOpen}
+      is_static={modal.static}
+      element={modal.element}
+      onClose={onClose}
+    />
   )
 }
 

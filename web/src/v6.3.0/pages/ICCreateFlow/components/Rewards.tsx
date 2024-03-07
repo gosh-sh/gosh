@@ -2,7 +2,7 @@ import { Field, Form, Formik } from 'formik'
 import { Button } from '../../../../components/Form'
 import { FormikInput, FormikSlider, FormikTextarea } from '../../../../components/Formik'
 import { useCreateTask, useDao } from '../../../hooks/dao.hooks'
-import { useCreateIC } from '../../../hooks/ic.hooks'
+import { useCreateICFlow } from '../../../hooks/ic.hooks'
 import { EICCreateStep } from '../../../types/ic.types'
 import yup from '../../../yup-extended'
 
@@ -19,7 +19,7 @@ type TFormValues = {
 const Rewards = () => {
   const dao = useDao()
   const { getTokenAmount } = useCreateTask()
-  const { state, setStep, submitRewards } = useCreateIC()
+  const { state, setStep, submitRewards } = useCreateICFlow()
 
   const onBackClick = () => {
     setStep(EICCreateStep.ROLES)

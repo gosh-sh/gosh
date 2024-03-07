@@ -785,6 +785,7 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branchName?: string) {
             parent?: string
             task?: TTaskCommitConfig
             tbranch?: TBranch
+            cell?: boolean
         },
     ) => {
         if (!repo.auth) {
@@ -797,7 +798,7 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branchName?: string) {
             throw new GoshError(EGoshError.NOT_MEMBER)
         }
 
-        const { message, tags, parent, task, isPullRequest = false } = options
+        const { message, tags, parent, task, isPullRequest = false, cell } = options
         const branch = (_branch || options.tbranch) as TBranch
         const { name, version } = branch.commit
 
@@ -925,6 +926,7 @@ function usePush(dao: TDao, repo: IGoshRepositoryAdapter, branchName?: string) {
             branchParent: parent,
             task,
             callback: pushCallback,
+            cell,
         })
         !isPullRequest && (await updateBranch(branch.name))
 
@@ -1022,7 +1024,7 @@ function _useMergeRequest(
         ])
         if (srcBranch.commit.name === dstBranch.commit.name) {
             setProgress({ isFetching: false, details: {}, items: [] })
-            return
+            return { src_branch: srcBranch, dst_branch: dstBranch, diff_items: [] }
         }
 
         // Get repostory adapters depending on commit version
@@ -1134,6 +1136,8 @@ function _useMergeRequest(
         setSrcBranch(srcBranch)
         setDstBranch(dstBranch)
         setProgress((state) => ({ ...state, isFetching: false, items: blobDiff }))
+
+        return { src_branch: srcBranch, dst_branch: dstBranch, diff_items: blobDiff }
     }
 
     return {
@@ -1184,17 +1188,23 @@ function useMergeRequest(
             tags?: string
             deleteSrcBranch?: boolean
             task?: TTaskCommitConfig
+            src_branch?: TBranch
+            dst_branch?: TBranch
+            diff_items?: typeof buildProgress.items
+            cell?: boolean
         },
     ) => {
         const { deleteSrcBranch, ...rest } = options
-        const { name: srcCommit, version: srcVersion } = srcBranch!.commit
-        await _pushUpgrade(srcBranch!.name, srcCommit, srcVersion)
-        const eventaddr = await _push(title, buildProgress.items, {
+        const src_branch = rest.src_branch || srcBranch
+        const { name: srcCommit, version: srcVersion } = src_branch!.commit
+        const diff_items = rest.diff_items || buildProgress.items
+        await _pushUpgrade(src_branch!.name, srcCommit, srcVersion)
+        const eventaddr = await _push(title, diff_items, {
             ...rest,
-            parent: squash ? undefined : srcBranch!.name,
+            parent: squash ? undefined : src_branch!.name,
         })
         if (deleteSrcBranch) {
-            await deleteBranch(srcBranch!.name)
+            await deleteBranch(src_branch!.name)
             await updateBranches()
         }
 
