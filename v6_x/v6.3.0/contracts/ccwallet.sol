@@ -45,17 +45,17 @@ contract CCWallet is Modifiers {
         address to = GoshLib.calculateCCWalletAddress(_code[m_CCWalletCode], _versioncontroller, pubkey);
         ExtraCurrencyCollection data;
         data[CURRENCIES_ID] = token;
-        CCWallet(to).changeBalance{value: 0 ton, currencies: data, flag: 1}(tvm.pubkey(), token);
+        CCWallet(to).changeBalance{value: 0.1 ton, currencies: data, flag: 1}(tvm.pubkey(), token);
     }
 
     function transferCurrency(uint256 token, address to) public onlyOwner accept saveMsg {
-        if (_wallettype == LOCK_CCWALLET) { return; }
+        require(_wallettype != LOCK_CCWALLET, ERR_WRONG_DATA);
         require(token > 0, ERR_LOW_TOKEN);
         require(address(this).currencies[CURRENCIES_ID] >= token, ERR_LOW_TOKEN);
         getMoney();
         ExtraCurrencyCollection data;
         data[CURRENCIES_ID] = token;
-        CCWallet(to).changeBalance{value: 0 ton, currencies: data, flag: 1}(tvm.pubkey(), token);
+        CCWallet(to).changeBalance{value: 0.1 ton, currencies: data, flag: 1}(tvm.pubkey(), token);
     }
 
     function returnTokenToGosh(uint128 token, address pubaddr, string version) public onlyOwner accept saveMsg {
@@ -72,8 +72,9 @@ contract CCWallet is Modifiers {
         VersionController(_versioncontroller).returnTokenToGosh{value: 0.4 ton, currencies: data, flag: 1}(tvm.pubkey(), pubaddr, token, version);
     }
 
-    function changeBalance(uint256 pubkey, uint256 token) public accept {
+    function changeBalance(uint256 pubkey, uint256 token) public {
         if (GoshLib.calculateCCWalletAddress(_code[m_CCWalletCode], _versioncontroller, pubkey) != msg.sender) { return; }
+        tvm.accept();
         getMoney();
         if (_wallettype == LOCK_CCWALLET) { _balance += token; }
     }
