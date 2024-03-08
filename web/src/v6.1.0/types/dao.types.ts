@@ -1,12 +1,12 @@
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
-import { UserProfile } from '../../blockchain/userprofile'
 import { Dao } from '../blockchain/dao'
 import { DaoEvent } from '../blockchain/daoevent'
 import { DaoWallet } from '../blockchain/daowallet'
-import { Task } from '../blockchain/task'
-import { TGoshCommit } from './repository.types'
-import { GoshRepository } from '../blockchain/repository'
 import { Milestone } from '../blockchain/milestone'
+import { GoshRepository } from '../blockchain/repository'
+import { Task } from '../blockchain/task'
+import { UserProfile } from '../blockchain/userprofile'
+import { TGoshCommit } from './repository.types'
 
 export enum EDaoMemberType {
   Dao = 'dao',

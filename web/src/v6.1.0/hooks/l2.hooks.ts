@@ -10,6 +10,7 @@ import { GoshError } from '../../errors'
 import { appToastStatusSelector } from '../../store/app.state'
 import { supabase } from '../../supabase'
 import { fromBigint, setLockableInterval, toBigint, whileFinite } from '../../utils'
+import { getSystemContract } from '../blockchain/helpers'
 import { l2Tokens, l2TransferAtom } from '../store/l2.state'
 import { EL2Network, TL2Token, TL2TransferStatusItem, TL2User } from '../types/l2.types'
 import { useUser } from './user.hooks'
@@ -178,9 +179,8 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
   }
 
   const setSummaryUser = async (user: TL2User) => {
-    const profile = await AppConfig.goshroot.getUserProfile({
-      address: user.value.address,
-    })
+    const sc = getSystemContract()
+    const profile = await sc.getUserProfile({ address: user.value.address })
     const pubkey = (await profile.getPubkeys())[0]
 
     setData((state) => ({
@@ -221,7 +221,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
   const submitRouteStep = () => {
     const route = `${data.summary.from.token.network}:${data.summary.to.token.network}`
 
-    let steps: typeof data['summary']['progress']['steps'] = []
+    let steps: (typeof data)['summary']['progress']['steps'] = []
     if (route === `${EL2Network.ETH}:${EL2Network.GOSH}`) {
       if (data.summary.from.token.rootaddr) {
         steps.push({
@@ -1070,7 +1070,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
   }, [])
 
   useEffect(() => {
-    let interval: NodeJS.Timer
+    let interval: NodeJS.Timeout
     if (initialize) {
       getEthComission()
       interval = setLockableInterval(async () => {

@@ -51,6 +51,32 @@
 			]
 		},
 		{
+			"name": "getWalletAddr",
+			"inputs": [
+				{"name":"wallet","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "transferFromWallet",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"value","type":"uint128"},
+				{"name":"pubaddr2","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployWalletForRepo",
+			"inputs": [
+				{"name":"pubaddr","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "checkUpdateRepo4",
 			"inputs": [
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"prev","type":"tuple"},
@@ -345,6 +371,15 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"bool"}
+			]
+		},
+		{
+			"name": "getRepoWalletAddr",
+			"inputs": [
+				{"name":"pubaddr","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
 			]
 		},
 		{

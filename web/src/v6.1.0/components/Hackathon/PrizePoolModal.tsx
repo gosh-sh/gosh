@@ -218,7 +218,6 @@ const HackathonPrizePoolModal = (props: TPrizePoolModalProps) => {
                               onAmountChange={onAmountChange}
                             />
                           )}
-                          onKeyUp={() => onAmountChange(values)}
                         />
                       </div>
                       <div

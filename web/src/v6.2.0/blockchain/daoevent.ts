@@ -1,6 +1,5 @@
 import { TonClient } from '@eversdk/core'
 import _ from 'lodash'
-import { AppConfig } from '../../appconfig'
 import { BaseContract } from '../../blockchain/contract'
 import {
   DaoEventType,
@@ -314,6 +313,7 @@ export class DaoEvent extends BaseContract {
 
   async parseMilestoneCreateEventParams(data: any) {
     const { tag, hashtag, ...rest } = data
+    const sc = getSystemContract()
 
     const grant: { [key: string]: TTaskGrantPair[] } = {}
     const grantTotal: { [key: string]: number } = {}
@@ -328,7 +328,7 @@ export class DaoEvent extends BaseContract {
       budget += grantTotal[key]
     }
 
-    const manager = await AppConfig.goshroot.getUserProfile({
+    const manager = await sc.getUserProfile({
       address: Object.keys(data.commit.pubaddrmanager)[0],
     })
     const tags = tag || hashtag

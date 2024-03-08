@@ -3,7 +3,7 @@ import { AppConfig } from '../../appconfig'
 import { BaseContract } from '../../blockchain/contract'
 import { DaoProfile } from '../../blockchain/daoprofile'
 import { VersionController } from '../../blockchain/versioncontroller'
-import { GoshError } from '../../errors'
+import { EGoshError, GoshError } from '../../errors'
 import { whileFinite } from '../../utils'
 import { THackathonAppIndex } from '../types/hackathon.types'
 import GoshABI from './abi/systemcontract.abi.json'
@@ -13,6 +13,7 @@ import { GoshTag } from './goshtag'
 import { Milestone } from './milestone'
 import { GoshRepository } from './repository'
 import { Task } from './task'
+import { UserProfile } from './userprofile'
 
 export class SystemContract extends BaseContract {
   versionController: VersionController
@@ -51,6 +52,24 @@ export class SystemContract extends BaseContract {
     return new GoshCommitTag(this.client, value0)
   }
 
+  async getUserProfile(params: { username?: string; address?: string }) {
+    const { username, address } = params
+    if (address) {
+      return new UserProfile(this.client, address)
+    }
+
+    if (!username) {
+      throw new GoshError(EGoshError.USER_NAME_UNDEFINED)
+    }
+    const { value0 } = await this.runLocal(
+      'getProfileAddr',
+      { name: username },
+      undefined,
+      { useCachedBoc: true },
+    )
+    return new UserProfile(this.client, value0)
+  }
+
   async getDaoProfile(name: string) {
     const { value0 } = await this.runLocal('getProfileDaoAddr', { name }, undefined, {
       useCachedBoc: true,
@@ -61,18 +80,18 @@ export class SystemContract extends BaseContract {
   async getDao(params: { name?: string; address?: string }) {
     const { name, address } = params
 
+    if (!name && !address) {
+      throw new GoshError('DAO name or address required')
+    }
+
     if (address) {
       return new Dao(this.client, address)
     }
 
-    if (name) {
-      const { value0 } = await this.runLocal('getAddrDao', { name }, undefined, {
-        useCachedBoc: true,
-      })
-      return new Dao(this.client, value0)
-    }
-
-    throw new GoshError('DAO name or address required')
+    const { value0 } = await this.runLocal('getAddrDao', { name }, undefined, {
+      useCachedBoc: true,
+    })
+    return new Dao(this.client, value0)
   }
 
   async getRepository(options: { path?: string; address?: string }) {
@@ -185,7 +204,7 @@ export class SystemContract extends BaseContract {
 
   async createUserProfile(username: string, pubkey: string) {
     // Get profile and check it's status
-    const profile = await this.versionController.getUserProfile({ username })
+    const profile = await this.getUserProfile({ username })
     if (await profile.isDeployed()) {
       return profile
     }

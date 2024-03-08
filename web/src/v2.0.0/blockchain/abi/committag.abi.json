@@ -1,100 +1,110 @@
 {
-  "ABI version": 2,
-  "version": "2.3",
-  "header": ["pubkey", "time", "expire"],
-  "functions": [
-    {
-      "name": "constructor",
-      "inputs": [
-        { "name": "pubaddr", "type": "address" },
-        { "name": "nameCommit", "type": "string" },
-        { "name": "commit", "type": "address" },
-        { "name": "content", "type": "string" },
-        { "name": "goshaddr", "type": "address" },
-        { "name": "goshdao", "type": "address" },
-        { "name": "reponame", "type": "string" },
-        { "name": "namedao", "type": "string" },
-        { "name": "WalletCode", "type": "cell" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "upgradeToVersion",
-      "inputs": [
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "newversion", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "destroy",
-      "inputs": [
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "getDetails",
-      "inputs": [],
-      "outputs": [
-        { "name": "value0", "type": "string" },
-        { "name": "value1", "type": "address" },
-        { "name": "value2", "type": "string" },
-        { "name": "value3", "type": "string" },
-        { "name": "value4", "type": "string" }
-      ]
-    },
-    {
-      "name": "getCommit",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "address" }]
-    },
-    {
-      "name": "getContent",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "string" }]
-    },
-    {
-      "name": "getVersion",
-      "inputs": [],
-      "outputs": [
-        { "name": "value0", "type": "string" },
-        { "name": "value1", "type": "string" }
-      ]
-    },
-    {
-      "name": "getOwner",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "address" }]
-    }
-  ],
-  "data": [{ "key": 1, "name": "_nametag", "type": "string" }],
-  "events": [],
-  "fields": [
-    { "name": "_pubkey", "type": "uint256" },
-    { "name": "_constructorFlag", "type": "bool" },
-    { "name": "messages", "type": "map(uint32,map(uint256,bool))" },
-    {
-      "components": [
-        { "name": "messageHash", "type": "uint256" },
-        { "name": "expireAt", "type": "uint32" }
-      ],
-      "name": "lastMessage",
-      "type": "tuple"
-    },
-    { "name": "__value", "type": "uint256" },
-    { "name": "_nametag", "type": "string" },
-    { "name": "_nameCommit", "type": "string" },
-    { "name": "_content", "type": "string" },
-    { "name": "_commit", "type": "address" },
-    { "name": "_pubaddr", "type": "address" },
-    { "name": "_systemcontract", "type": "address" },
-    { "name": "_goshdao", "type": "address" },
-    { "name": "_repoName", "type": "string" },
-    { "name": "_nameDao", "type": "string" },
-    { "name": "_code", "type": "map(uint8,cell)" }
-  ]
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"nameCommit","type":"string"},
+				{"name":"commit","type":"address"},
+				{"name":"content","type":"string"},
+				{"name":"goshaddr","type":"address"},
+				{"name":"goshdao","type":"address"},
+				{"name":"reponame","type":"string"},
+				{"name":"namedao","type":"string"},
+				{"name":"WalletCode","type":"cell"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "upgradeToVersion",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"newversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroy",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getDetails",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"address"},
+				{"name":"value2","type":"string"},
+				{"name":"value3","type":"string"},
+				{"name":"value4","type":"string"}
+			]
+		},
+		{
+			"name": "getCommit",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getContent",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
+			]
+		},
+		{
+			"name": "getVersion",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
+			]
+		},
+		{
+			"name": "getOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		}
+	],
+	"data": [
+		{"key":1,"name":"_nametag","type":"string"}
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
+		{"name":"_nametag","type":"string"},
+		{"name":"_nameCommit","type":"string"},
+		{"name":"_content","type":"string"},
+		{"name":"_commit","type":"address"},
+		{"name":"_pubaddr","type":"address"},
+		{"name":"_systemcontract","type":"address"},
+		{"name":"_goshdao","type":"address"},
+		{"name":"_repoName","type":"string"},
+		{"name":"_nameDao","type":"string"},
+		{"name":"_code","type":"map(uint8,cell)"}
+	]
 }

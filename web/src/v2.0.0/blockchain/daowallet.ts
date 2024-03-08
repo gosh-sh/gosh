@@ -1,14 +1,14 @@
 import { KeyPair, TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
-import WalletABI from './abi/daowallet.abi.json'
-import { SmvLocker } from './smvlocker'
-import { SmvClient } from './smvclient'
-import { TGoshCommitTag } from '../types/repository.types'
-import { executeByChunk, sleep } from '../../utils'
-import { EDaoEventType } from '../../types/common.types'
 import { MAX_PARALLEL_READ, SYSTEM_TAG } from '../../constants'
+import { EDaoEventType } from '../../types/common.types'
+import { executeByChunk, sleep } from '../../utils'
 import { ETaskReward, TTaskGrant } from '../types/dao.types'
-import { UserProfile } from '../../blockchain/userprofile'
+import { TGoshCommitTag } from '../types/repository.types'
+import WalletABI from './abi/daowallet.abi.json'
+import { SmvClient } from './smvclient'
+import { SmvLocker } from './smvlocker'
+import { UserProfile } from './userprofile'
 
 export class DaoWallet extends BaseContract {
   constructor(client: TonClient, address: string, keys?: KeyPair) {

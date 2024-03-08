@@ -2,6 +2,7 @@ import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { classNames } from 'react-gosh'
 import { TBranch, TBranchCompareProgress } from 'react-gosh/dist/types/repo.types'
+import { useOutletContext } from 'react-router-dom'
 import BlobDiffPreview from '../Blob/DiffPreview'
 import { BranchCompareProgress } from './CompareProgress'
 
@@ -26,6 +27,7 @@ type TBranchComparePreviewProps = {
 const BranchComparePreview = (props: TBranchComparePreviewProps) => {
   const { className, srcBranch, dstBranch, progress } = props
   const { isEmpty, isFetching, details, items, getDiff } = progress
+  const { dao } = useOutletContext<any>()
 
   return (
     <div className={classNames(className)}>
@@ -50,9 +52,9 @@ const BranchComparePreview = (props: TBranchComparePreviewProps) => {
             return (
               <div key={index} className="my-5">
                 <BlobDiffPreview
+                  dao={dao.adapter}
                   commentsOn={false}
                   commit={dstBranch!.commit}
-                  address=""
                   filename={treepath.find((value) => !!value)}
                   original={original}
                   modified={modified}

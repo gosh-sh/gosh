@@ -23,7 +23,7 @@ export const getDaoOrProfile = async (address: string) => {
     const dao = await sc.getDao({ address })
     return { type: EDaoMemberType.Dao, account: dao }
   } catch (e: any) {
-    const profile = await AppConfig.goshroot.getUserProfile({ address })
+    const profile = await sc.getUserProfile({ address })
     return { type: EDaoMemberType.User, account: profile }
   }
 }

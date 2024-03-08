@@ -1,1805 +1,1502 @@
 {
-  "ABI version": 2,
-  "version": "2.3",
-  "header": ["pubkey", "time", "expire"],
-  "functions": [
-    {
-      "name": "constructor",
-      "inputs": [
-        { "name": "versionController", "type": "address" },
-        { "name": "pubaddr", "type": "address" },
-        { "name": "profiledao", "type": "address" },
-        { "name": "name", "type": "string" },
-        { "name": "pubmem", "type": "address[]" },
-        { "name": "limit_wallets", "type": "uint128" },
-        { "name": "DaoCode", "type": "cell" },
-        { "name": "CommitCode", "type": "cell" },
-        { "name": "RepositoryCode", "type": "cell" },
-        { "name": "WalletCode", "type": "cell" },
-        { "name": "TagCode", "type": "cell" },
-        { "name": "codeSnapshot", "type": "cell" },
-        { "name": "codeTree", "type": "cell" },
-        { "name": "codeDiff", "type": "cell" },
-        { "name": "contentSignature", "type": "cell" },
-        { "name": "codeTask", "type": "cell" },
-        { "name": "codeBigTask", "type": "cell" },
-        { "name": "codedaotag", "type": "cell" },
-        { "name": "coderepotag", "type": "cell" },
-        { "name": "codetopic", "type": "cell" },
-        { "name": "TokenLockerCode", "type": "cell" },
-        { "name": "SMVPlatformCode", "type": "cell" },
-        { "name": "SMVClientCode", "type": "cell" },
-        { "name": "SMVProposalCode", "type": "cell" },
-        { "name": "TokenRootCode", "type": "cell" },
-        { "name": "TokenWalletCode", "type": "cell" },
-        { "name": "previous", "type": "optional(address)" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "deployedWallet",
-      "inputs": [
-        { "name": "systemcontract", "type": "address" },
-        { "name": "goshdao", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "ver", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "destroyedWallet",
-      "inputs": [
-        { "name": "systemcontract", "type": "address" },
-        { "name": "goshdao", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "ver", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "getPreviousInfo",
-      "inputs": [{ "name": "name", "type": "string" }],
-      "outputs": []
-    },
-    {
-      "name": "getPreviousInfoVersion",
-      "inputs": [
-        { "name": "ver", "type": "string" },
-        { "name": "a", "type": "cell" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "returnDao",
-      "inputs": [
-        { "name": "value0", "type": "address" },
-        { "name": "allowMint", "type": "bool" },
-        { "name": "hide_voting_results", "type": "bool" },
-        { "name": "allow_discussion_on_proposals", "type": "bool" },
-        { "name": "abilityInvite", "type": "bool" },
-        { "name": "value5", "type": "bool" },
-        { "name": "value6", "type": "string" },
-        {
-          "components": [
-            { "name": "member", "type": "address" },
-            { "name": "count", "type": "uint128" },
-            { "name": "expired", "type": "uint128" }
-          ],
-          "name": "value7",
-          "type": "map(uint256,tuple)"
-        },
-        { "name": "value8", "type": "uint128" },
-        { "name": "value9", "type": "uint128" },
-        { "name": "value10", "type": "uint128" },
-        { "name": "value11", "type": "map(uint256,string)" },
-        { "name": "value12", "type": "map(uint256,address)" },
-        { "name": "value13", "type": "map(uint256,string)" },
-        { "name": "value14", "type": "bool" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "getPreviousInfo1",
-      "inputs": [
-        {
-          "components": [
-            { "name": "member", "type": "address" },
-            { "name": "count", "type": "uint128" }
-          ],
-          "name": "wallets",
-          "type": "map(uint256,tuple)"
-        },
-        { "name": "trash", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "returnWalletsVersionv4",
-      "inputs": [
-        { "name": "ver", "type": "string" },
-        { "name": "key", "type": "uint256" },
-        {
-          "components": [
-            { "name": "member", "type": "address" },
-            { "name": "count", "type": "uint128" }
-          ],
-          "name": "wallets",
-          "type": "map(uint256,tuple)"
-        },
-        { "name": "tags", "type": "map(uint256,string)" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "returnWalletsVersion",
-      "inputs": [
-        { "name": "ver", "type": "string" },
-        { "name": "key", "type": "uint256" },
-        {
-          "components": [
-            { "name": "member", "type": "address" },
-            { "name": "count", "type": "uint128" },
-            { "name": "expired", "type": "uint128" }
-          ],
-          "name": "wallets",
-          "type": "map(uint256,tuple)"
-        },
-        { "name": "tags", "type": "map(uint256,string)" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "returnWallets",
-      "inputs": [
-        { "name": "key", "type": "uint256" },
-        {
-          "components": [
-            { "name": "member", "type": "address" },
-            { "name": "count", "type": "uint128" }
-          ],
-          "name": "wallets",
-          "type": "map(uint256,tuple)"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "changeHideVotingResult",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "res", "type": "bool" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "changeAllowDiscussion",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "res", "type": "bool" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "sendMoneyDiff",
-      "inputs": [
-        { "name": "repo", "type": "address" },
-        { "name": "commit", "type": "string" },
-        { "name": "index1", "type": "uint128" },
-        { "name": "index2", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "sendMoneySnap",
-      "inputs": [
-        { "name": "branch", "type": "string" },
-        { "name": "repo", "type": "address" },
-        { "name": "name", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "asktotalSupply",
-      "inputs": [],
-      "outputs": []
-    },
-    {
-      "name": "volunteersnap",
-      "inputs": [],
-      "outputs": []
-    },
-    {
-      "name": "volunteerdiff",
-      "inputs": [],
-      "outputs": []
-    },
-    {
-      "name": "volunteertree",
-      "inputs": [],
-      "outputs": []
-    },
-    {
-      "name": "volunteercommit",
-      "inputs": [],
-      "outputs": []
-    },
-    {
-      "name": "sendMoneyCommit",
-      "inputs": [
-        { "name": "repo", "type": "address" },
-        { "name": "commit", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "sendMoneyTree",
-      "inputs": [
-        { "name": "repo", "type": "address" },
-        { "name": "shaTree", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "upgradeDao",
-      "inputs": [
-        { "name": "newversion", "type": "string" },
-        { "name": "description", "type": "string" },
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "upgradeTag4",
-      "inputs": [
-        { "name": "namerepo", "type": "string" },
-        { "name": "nametag", "type": "string" },
-        { "name": "namecommit", "type": "string" },
-        { "name": "commit", "type": "address" },
-        { "name": "content", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "setRepoUpgraded",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "res", "type": "bool" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "setAbilityInvite",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "res", "type": "bool" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "setTombstone",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "description", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "proposalForDeployWalletDao",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        {
-          "components": [
-            { "name": "member", "type": "address" },
-            { "name": "count", "type": "uint128" },
-            { "name": "expired", "type": "uint128" }
-          ],
-          "name": "pubaddr",
-          "type": "tuple[]"
-        },
-        { "name": "dao", "type": "optional(string)[]" },
-        { "name": "comment", "type": "string" },
-        { "name": "num_clients", "type": "uint128" },
-        { "name": "reviewers", "type": "address[]" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "isAlone",
-      "inputs": [
-        { "name": "token", "type": "uint128" },
-        {
-          "components": [
-            { "name": "member", "type": "address" },
-            { "name": "count", "type": "uint128" },
-            { "name": "expired", "type": "uint128" }
-          ],
-          "name": "pubaddr",
-          "type": "tuple[]"
-        },
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "tag", "type": "string[]" },
-        { "name": "typeF", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "smvnotallowmint",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "smvdeploytag",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "tag", "type": "string[]" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "askAddr",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "data", "type": "cell" },
-        { "name": "index1", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "upgradeVersionCode",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "UpgradeCode", "type": "cell" },
-        { "name": "cell", "type": "cell" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "daoVote",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "wallet", "type": "address" },
-        { "name": "platform_id", "type": "uint256" },
-        { "name": "choice", "type": "bool" },
-        { "name": "amount", "type": "uint128" },
-        { "name": "num_clients_base", "type": "uint128" },
-        { "name": "note", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "daoSendToken",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "wallet", "type": "address" },
-        { "name": "pubaddr", "type": "optional(address)" },
-        { "name": "grant", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "daoSendTokenToNewVersionAuto1",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "wallet", "type": "address" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "daoMulti",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "wallet", "type": "address" },
-        { "name": "number", "type": "uint128" },
-        { "name": "proposals", "type": "cell" },
-        { "name": "num_clients", "type": "uint128" },
-        { "name": "reviewers", "type": "address[]" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "daoSendTokenToNewVersion",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "wallet", "type": "address" },
-        { "name": "newwallet", "type": "optional(address)" },
-        { "name": "grant", "type": "uint128" },
-        { "name": "newversion", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "daoAskLockTomb",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "wallet", "type": "address" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "daoAskLock",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "wallet", "type": "address" },
-        { "name": "isLock", "type": "bool" },
-        { "name": "grant", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "daoAskGrantFull",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "wallet", "type": "address" },
-        { "name": "repoName", "type": "string" },
-        { "name": "nameTask", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "daoSendReview",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "wallet", "type": "address" },
-        { "name": "propAddr", "type": "address" },
-        { "name": "isAccept", "type": "bool" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "doNothing",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "redeployTask",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "repoName", "type": "string" },
-        { "name": "nametask", "type": "string" },
-        { "name": "hashtag", "type": "string[]" },
-        { "name": "Data", "type": "cell" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "upgradeTask",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "nametask", "type": "string" },
-        { "name": "repoName", "type": "string" },
-        { "name": "oldversion", "type": "string" },
-        { "name": "oldtask", "type": "address" },
-        { "name": "hashtag", "type": "string[]" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "upgradeBigTask",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "nametask", "type": "string" },
-        { "name": "repoName", "type": "string" },
-        { "name": "oldversion", "type": "string" },
-        { "name": "oldtask", "type": "address" },
-        { "name": "hashtag", "type": "string[]" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "redeployedTask",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "smvdeploytagin",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "tag", "type": "string[]" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "smvdestroytag",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "tag", "type": "string[]" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "mintReserve",
-      "inputs": [
-        { "name": "token", "type": "uint128" },
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "isAloneDeploy",
-      "inputs": [
-        { "name": "nameRepo", "type": "string" },
-        { "name": "descr", "type": "string" },
-        {
-          "components": [
-            { "name": "addr", "type": "address" },
-            { "name": "version", "type": "string" }
-          ],
-          "name": "previous",
-          "type": "optional(tuple)"
-        },
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "typeF", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "askForTombstoneIn",
-      "inputs": [
-        { "name": "key", "type": "uint256" },
-        { "name": "description", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "deployWallet",
-      "inputs": [
-        {
-          "components": [
-            { "name": "member", "type": "address" },
-            { "name": "count", "type": "uint128" },
-            { "name": "expired", "type": "uint128" }
-          ],
-          "name": "pubaddrdeploy",
-          "type": "tuple[]"
-        },
-        { "name": "dao", "type": "optional(string)[]" },
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "requestBurn",
-      "inputs": [
-        { "name": "recipient", "type": "address" },
-        { "name": "pubaddr", "type": "address" },
-        { "name": "burn_amount", "type": "uint128" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "requestMint",
-      "inputs": [
-        { "name": "recipient", "type": "address" },
-        { "name": "pubaddr", "type": "address" },
-        { "name": "mint_amount", "type": "uint128" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "setCheck",
-      "inputs": [
-        { "name": "pubaddrs", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "changeAllowance",
-      "inputs": [
-        { "name": "pubaddrs", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "pubaddr", "type": "address[]" },
-        { "name": "increase", "type": "bool[]" },
-        { "name": "grant", "type": "uint128[]" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "changeAllowanceIn",
-      "inputs": [
-        { "name": "pubaddr", "type": "address[]" },
-        { "name": "increase", "type": "bool[]" },
-        { "name": "grant", "type": "uint128[]" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "changeAllowanceIn2",
-      "inputs": [
-        { "name": "pubaddr", "type": "address[]" },
-        { "name": "increase", "type": "bool[]" },
-        { "name": "grant", "type": "uint128[]" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "returnAllowance",
-      "inputs": [
-        { "name": "grant", "type": "uint128" },
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "addVoteTokenTask",
-      "inputs": [
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "grant", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "startCheckPaidMembershipWallet",
-      "inputs": [
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "startCheckPaidMembershipService",
-      "inputs": [{ "name": "ProgramIndex", "type": "uint8" }],
-      "outputs": []
-    },
-    {
-      "name": "checkExpiredTime",
-      "inputs": [{ "name": "key", "type": "uint256" }],
-      "outputs": []
-    },
-    {
-      "name": "stopPaidMembership",
-      "inputs": [
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "Programindex", "type": "uint8" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "startPaidMembership",
-      "inputs": [
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        {
-          "components": [
-            { "name": "fiatValue", "type": "uint128" },
-            { "name": "decimals", "type": "uint128" },
-            { "name": "paidMembershipValue", "type": "uint128" },
-            { "name": "valuePerSubs", "type": "uint128" },
-            { "name": "timeForSubs", "type": "uint128" },
-            { "name": "details", "type": "string" },
-            { "name": "accessKey", "type": "uint256" }
-          ],
-          "name": "newProgram",
-          "type": "tuple"
-        },
-        { "name": "Programindex", "type": "uint8" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "deployMemberFromSubs",
-      "inputs": [
-        { "name": "pubaddr", "type": "address" },
-        { "name": "isdao", "type": "optional(string)" },
-        { "name": "Programindex", "type": "uint8" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "addVoteTokenPubSub",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "grant", "type": "uint128" },
-        { "name": "time", "type": "uint128" },
-        { "name": "Programindex", "type": "uint8" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "addVoteTokenPubSub2",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "grant", "type": "uint128" },
-        { "name": "time", "type": "uint128" },
-        { "name": "Programindex", "type": "uint8" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "addVoteTokenPubSub3",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "grant", "type": "uint128" },
-        { "name": "time", "type": "uint128" },
-        { "name": "Programindex", "type": "uint8" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "addVoteTokenPub",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "grant", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "addVoteTokenPub2",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "grant", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "addVoteTokenPub3",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "grant", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "addRegularTokenPub",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "grant", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "deployWalletsConst",
-      "inputs": [
-        { "name": "pubmem", "type": "address[]" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "deployWallets",
-      "inputs": [
-        {
-          "components": [
-            { "name": "member", "type": "address" },
-            { "name": "count", "type": "uint128" },
-            { "name": "expired", "type": "uint128" }
-          ],
-          "name": "pubmem",
-          "type": "tuple[]"
-        },
-        { "name": "dao", "type": "optional(string)[]" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "deployWalletsOutMember",
-      "inputs": [
-        {
-          "components": [
-            { "name": "member", "type": "address" },
-            { "name": "count", "type": "uint128" },
-            { "name": "expired", "type": "uint128" }
-          ],
-          "name": "pubmem",
-          "type": "tuple[]"
-        },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "deleteWallet",
-      "inputs": [
-        { "name": "pubmem", "type": "address[]" },
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "deployTask",
-      "inputs": [
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "repoName", "type": "string" },
-        { "name": "nametask", "type": "string" },
-        { "name": "hashtag", "type": "string[]" },
-        {
-          "components": [
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "assign",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "review",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "manager",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "subtask",
-              "type": "tuple[]"
-            }
-          ],
-          "name": "grant",
-          "type": "tuple"
-        },
-        { "name": "value", "type": "uint128" },
-        { "name": "bigtask", "type": "optional(string)" },
-        {
-          "components": [
-            { "name": "task", "type": "address" },
-            { "name": "commit", "type": "optional(address)" },
-            { "name": "number_commit", "type": "optional(uint128)" },
-            { "name": "pubaddrassign", "type": "map(address,bool)" },
-            { "name": "pubaddrreview", "type": "map(address,bool)" },
-            { "name": "pubaddrmanager", "type": "map(address,bool)" },
-            { "name": "daoMembers", "type": "map(address,string)" }
-          ],
-          "name": "workers",
-          "type": "optional(tuple)"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "deployBigTask",
-      "inputs": [
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "repoName", "type": "string" },
-        { "name": "nametask", "type": "string" },
-        { "name": "hashtag", "type": "string[]" },
-        {
-          "components": [
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "assign",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "review",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "manager",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "subtask",
-              "type": "tuple[]"
-            }
-          ],
-          "name": "grant",
-          "type": "tuple"
-        },
-        {
-          "components": [
-            { "name": "task", "type": "address" },
-            { "name": "pubaddrassign", "type": "map(address,bool)" },
-            { "name": "pubaddrreview", "type": "map(address,bool)" },
-            { "name": "pubaddrmanager", "type": "map(address,bool)" },
-            { "name": "daoMembers", "type": "map(address,string)" }
-          ],
-          "name": "commit",
-          "type": "tuple"
-        },
-        { "name": "freebalance", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "calculateBalanceSubtask",
-      "inputs": [
-        { "name": "repoName", "type": "string" },
-        { "name": "nametask", "type": "string" },
-        {
-          "components": [
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "assign",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "review",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "manager",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "subtask",
-              "type": "tuple[]"
-            }
-          ],
-          "name": "grant",
-          "type": "tuple"
-        },
-        { "name": "balance", "type": "uint128" },
-        {
-          "components": [
-            { "name": "task", "type": "address" },
-            { "name": "pubaddrassign", "type": "map(address,bool)" },
-            { "name": "pubaddrreview", "type": "map(address,bool)" },
-            { "name": "pubaddrmanager", "type": "map(address,bool)" },
-            { "name": "daoMembers", "type": "map(address,string)" }
-          ],
-          "name": "commit",
-          "type": "tuple"
-        },
-        { "name": "freebalance", "type": "uint128" },
-        { "name": "hashtag", "type": "string[]" },
-        { "name": "index", "type": "uint128" },
-        { "name": "sender", "type": "address" },
-        { "name": "num", "type": "uint8" },
-        { "name": "value", "type": "uint128" },
-        { "name": "bigtask", "type": "optional(string)" },
-        {
-          "components": [
-            { "name": "task", "type": "address" },
-            { "name": "commit", "type": "optional(address)" },
-            { "name": "number_commit", "type": "optional(uint128)" },
-            { "name": "pubaddrassign", "type": "map(address,bool)" },
-            { "name": "pubaddrreview", "type": "map(address,bool)" },
-            { "name": "pubaddrmanager", "type": "map(address,bool)" },
-            { "name": "daoMembers", "type": "map(address,string)" }
-          ],
-          "name": "workers",
-          "type": "optional(tuple)"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "calculateBalanceAssign",
-      "inputs": [
-        { "name": "repoName", "type": "string" },
-        { "name": "nametask", "type": "string" },
-        {
-          "components": [
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "assign",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "review",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "manager",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "subtask",
-              "type": "tuple[]"
-            }
-          ],
-          "name": "grant",
-          "type": "tuple"
-        },
-        { "name": "balance", "type": "uint128" },
-        {
-          "components": [
-            { "name": "task", "type": "address" },
-            { "name": "pubaddrassign", "type": "map(address,bool)" },
-            { "name": "pubaddrreview", "type": "map(address,bool)" },
-            { "name": "pubaddrmanager", "type": "map(address,bool)" },
-            { "name": "daoMembers", "type": "map(address,string)" }
-          ],
-          "name": "commit",
-          "type": "tuple"
-        },
-        { "name": "freebalance", "type": "uint128" },
-        { "name": "hashtag", "type": "string[]" },
-        { "name": "index", "type": "uint128" },
-        { "name": "sender", "type": "address" },
-        { "name": "num", "type": "uint8" },
-        { "name": "value", "type": "uint128" },
-        { "name": "bigtask", "type": "optional(string)" },
-        {
-          "components": [
-            { "name": "task", "type": "address" },
-            { "name": "commit", "type": "optional(address)" },
-            { "name": "number_commit", "type": "optional(uint128)" },
-            { "name": "pubaddrassign", "type": "map(address,bool)" },
-            { "name": "pubaddrreview", "type": "map(address,bool)" },
-            { "name": "pubaddrmanager", "type": "map(address,bool)" },
-            { "name": "daoMembers", "type": "map(address,string)" }
-          ],
-          "name": "workers",
-          "type": "optional(tuple)"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "calculateBalanceReview",
-      "inputs": [
-        { "name": "repoName", "type": "string" },
-        { "name": "nametask", "type": "string" },
-        {
-          "components": [
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "assign",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "review",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "manager",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "subtask",
-              "type": "tuple[]"
-            }
-          ],
-          "name": "grant",
-          "type": "tuple"
-        },
-        { "name": "balance", "type": "uint128" },
-        {
-          "components": [
-            { "name": "task", "type": "address" },
-            { "name": "pubaddrassign", "type": "map(address,bool)" },
-            { "name": "pubaddrreview", "type": "map(address,bool)" },
-            { "name": "pubaddrmanager", "type": "map(address,bool)" },
-            { "name": "daoMembers", "type": "map(address,string)" }
-          ],
-          "name": "commit",
-          "type": "tuple"
-        },
-        { "name": "freebalance", "type": "uint128" },
-        { "name": "hashtag", "type": "string[]" },
-        { "name": "index", "type": "uint128" },
-        { "name": "sender", "type": "address" },
-        { "name": "num", "type": "uint8" },
-        { "name": "value", "type": "uint128" },
-        { "name": "bigtask", "type": "optional(string)" },
-        {
-          "components": [
-            { "name": "task", "type": "address" },
-            { "name": "commit", "type": "optional(address)" },
-            { "name": "number_commit", "type": "optional(uint128)" },
-            { "name": "pubaddrassign", "type": "map(address,bool)" },
-            { "name": "pubaddrreview", "type": "map(address,bool)" },
-            { "name": "pubaddrmanager", "type": "map(address,bool)" },
-            { "name": "daoMembers", "type": "map(address,string)" }
-          ],
-          "name": "workers",
-          "type": "optional(tuple)"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "calculateBalanceManager",
-      "inputs": [
-        { "name": "repoName", "type": "string" },
-        { "name": "nametask", "type": "string" },
-        {
-          "components": [
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "assign",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "review",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "manager",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "subtask",
-              "type": "tuple[]"
-            }
-          ],
-          "name": "grant",
-          "type": "tuple"
-        },
-        { "name": "balance", "type": "uint128" },
-        {
-          "components": [
-            { "name": "task", "type": "address" },
-            { "name": "pubaddrassign", "type": "map(address,bool)" },
-            { "name": "pubaddrreview", "type": "map(address,bool)" },
-            { "name": "pubaddrmanager", "type": "map(address,bool)" },
-            { "name": "daoMembers", "type": "map(address,string)" }
-          ],
-          "name": "commit",
-          "type": "tuple"
-        },
-        { "name": "freebalance", "type": "uint128" },
-        { "name": "hashtag", "type": "string[]" },
-        { "name": "index", "type": "uint128" },
-        { "name": "sender", "type": "address" },
-        { "name": "num", "type": "uint8" },
-        { "name": "value", "type": "uint128" },
-        { "name": "bigtask", "type": "optional(string)" },
-        {
-          "components": [
-            { "name": "task", "type": "address" },
-            { "name": "commit", "type": "optional(address)" },
-            { "name": "number_commit", "type": "optional(uint128)" },
-            { "name": "pubaddrassign", "type": "map(address,bool)" },
-            { "name": "pubaddrreview", "type": "map(address,bool)" },
-            { "name": "pubaddrmanager", "type": "map(address,bool)" },
-            { "name": "daoMembers", "type": "map(address,string)" }
-          ],
-          "name": "workers",
-          "type": "optional(tuple)"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "deployTaskTag",
-      "inputs": [
-        { "name": "repo", "type": "address" },
-        { "name": "task", "type": "address" },
-        { "name": "tag", "type": "string[]" },
-        { "name": "sender", "type": "address" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "destroyTaskTag",
-      "inputs": [
-        { "name": "nametask", "type": "string" },
-        { "name": "repo", "type": "address" },
-        { "name": "tag", "type": "string[]" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "destroyTaskTagBig",
-      "inputs": [
-        { "name": "nametask", "type": "string" },
-        { "name": "repo", "type": "address" },
-        { "name": "tag", "type": "string[]" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "checkOldTaskVersion",
-      "inputs": [
-        { "name": "nametask", "type": "string" },
-        { "name": "repo", "type": "string" },
-        { "name": "previous", "type": "string" },
-        { "name": "previousaddr", "type": "address" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "checkOldBigTaskVersion",
-      "inputs": [
-        { "name": "nametask", "type": "string" },
-        { "name": "repo", "type": "string" },
-        { "name": "previous", "type": "string" },
-        { "name": "previousaddr", "type": "address" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "checkOldTaskVersion5",
-      "inputs": [
-        { "name": "nametask", "type": "string" },
-        { "name": "repo", "type": "string" },
-        { "name": "previous", "type": "address" },
-        { "name": "answer", "type": "address" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "checkOldBigTaskVersion5",
-      "inputs": [
-        { "name": "nametask", "type": "string" },
-        { "name": "repo", "type": "string" },
-        { "name": "previous", "type": "address" },
-        { "name": "answer", "type": "address" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "returnTaskToken",
-      "inputs": [
-        { "name": "nametask", "type": "string" },
-        { "name": "repo", "type": "address" },
-        { "name": "token", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "returnTaskTokenBig",
-      "inputs": [
-        { "name": "nametask", "type": "string" },
-        { "name": "repo", "type": "address" },
-        { "name": "token", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "receiveTokentoReserve",
-      "inputs": [
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "grant", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "deleteWallets",
-      "inputs": [
-        { "name": "pubmem", "type": "address[]" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "getTaskCode",
-      "inputs": [{ "name": "repoName", "type": "string" }],
-      "outputs": [{ "name": "value0", "type": "cell" }]
-    },
-    {
-      "name": "getTaskAddr",
-      "inputs": [
-        { "name": "nametask", "type": "string" },
-        { "name": "repoName", "type": "string" }
-      ],
-      "outputs": [{ "name": "value0", "type": "address" }]
-    },
-    {
-      "name": "getBigTaskCode",
-      "inputs": [{ "name": "repoName", "type": "string" }],
-      "outputs": [{ "name": "value0", "type": "cell" }]
-    },
-    {
-      "name": "getBigTaskAddr",
-      "inputs": [
-        { "name": "nametask", "type": "string" },
-        { "name": "repoName", "type": "string" }
-      ],
-      "outputs": [{ "name": "value0", "type": "address" }]
-    },
-    {
-      "name": "getDaoTagAddr",
-      "inputs": [{ "name": "daotag", "type": "string" }],
-      "outputs": [{ "name": "value0", "type": "address" }]
-    },
-    {
-      "name": "getAddrWallet",
-      "inputs": [
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": [{ "name": "value0", "type": "address" }]
-    },
-    {
-      "name": "getWalletCode",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "cell" }]
-    },
-    {
-      "name": "getProposalCode",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "cell" }]
-    },
-    {
-      "name": "getClientCode",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "cell" }]
-    },
-    {
-      "name": "getAddrRepository",
-      "inputs": [{ "name": "name", "type": "string" }],
-      "outputs": [{ "name": "value0", "type": "address" }]
-    },
-    {
-      "name": "getTombstone",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "bool" }]
-    },
-    {
-      "name": "getWallets",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "address[]" }]
-    },
-    {
-      "name": "getWalletsToken",
-      "inputs": [],
-      "outputs": [
-        {
-          "components": [
-            { "name": "member", "type": "address" },
-            { "name": "count", "type": "uint128" },
-            { "name": "expired", "type": "uint128" }
-          ],
-          "name": "value0",
-          "type": "tuple[]"
-        }
-      ]
-    },
-    {
-      "name": "getWalletsFull",
-      "inputs": [],
-      "outputs": [
-        {
-          "components": [
-            { "name": "member", "type": "address" },
-            { "name": "count", "type": "uint128" },
-            { "name": "expired", "type": "uint128" }
-          ],
-          "name": "value0",
-          "type": "map(uint256,tuple)"
-        }
-      ]
-    },
-    {
-      "name": "getVersions",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "map(uint256,string)" }]
-    },
-    {
-      "name": "getTags",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "map(uint256,string)" }]
-    },
-    {
-      "name": "isMember",
-      "inputs": [{ "name": "pubaddr", "type": "address" }],
-      "outputs": [{ "name": "value0", "type": "bool" }]
-    },
-    {
-      "name": "getNameDao",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "string" }]
-    },
-    {
-      "name": "getConfig",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "uint128" }]
-    },
-    {
-      "name": "getVersion",
-      "inputs": [],
-      "outputs": [
-        { "name": "value0", "type": "string" },
-        { "name": "value1", "type": "string" }
-      ]
-    },
-    {
-      "name": "getTokenBalance",
-      "inputs": [],
-      "outputs": [
-        { "name": "value0", "type": "uint128" },
-        { "name": "value1", "type": "uint128" },
-        { "name": "value2", "type": "uint128" }
-      ]
-    },
-    {
-      "name": "getOwner",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "address" }]
-    },
-    {
-      "name": "getPreviousDaoAddr",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "optional(address)" }]
-    },
-    {
-      "name": "getDetails",
-      "inputs": [],
-      "outputs": [
-        { "name": "pubaddr", "type": "address" },
-        { "name": "allowMint", "type": "bool" },
-        { "name": "hide_voting_results", "type": "bool" },
-        { "name": "allow_discussion_on_proposals", "type": "bool" },
-        { "name": "abilityInvite", "type": "bool" },
-        { "name": "isRepoUpgraded", "type": "bool" },
-        { "name": "nameDao", "type": "string" },
-        {
-          "components": [
-            { "name": "member", "type": "address" },
-            { "name": "count", "type": "uint128" },
-            { "name": "expired", "type": "uint128" }
-          ],
-          "name": "wallets",
-          "type": "map(uint256,tuple)"
-        },
-        { "name": "reserve", "type": "uint128" },
-        { "name": "allbalance", "type": "uint128" },
-        { "name": "totalsupply", "type": "uint128" },
-        { "name": "hashtag", "type": "map(uint256,string)" },
-        { "name": "my_wallets", "type": "map(uint256,address)" },
-        { "name": "daoMembers", "type": "map(uint256,string)" },
-        { "name": "isCheck", "type": "bool" },
-        {
-          "components": [
-            { "name": "fiatValue", "type": "uint128" },
-            { "name": "decimals", "type": "uint128" },
-            { "name": "paidMembershipValue", "type": "uint128" },
-            { "name": "valuePerSubs", "type": "uint128" },
-            { "name": "timeForSubs", "type": "uint128" },
-            { "name": "details", "type": "string" },
-            { "name": "accessKey", "type": "uint256" }
-          ],
-          "name": "paidMembership",
-          "type": "map(uint8,tuple)"
-        }
-      ]
-    },
-    {
-      "name": "getDaoIn",
-      "inputs": [],
-      "outputs": []
-    },
-    {
-      "name": "onAcceptTokensTransfer",
-      "inputs": [
-        { "name": "value0", "type": "address" },
-        { "name": "value1", "type": "uint128" },
-        { "name": "value2", "type": "address" },
-        { "name": "value3", "type": "address" },
-        { "name": "value4", "type": "address" },
-        { "name": "value5", "type": "cell" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "createProjectCurrencies",
-      "inputs": [],
-      "outputs": []
-    },
-    {
-      "name": "deployRoot",
-      "inputs": [
-        { "name": "initialSupplyTo", "type": "address" },
-        { "name": "initialSupply", "type": "uint128" },
-        { "name": "deployWalletValue", "type": "uint128" },
-        { "name": "mintDisabled", "type": "bool" },
-        { "name": "burnByRootDisabled", "type": "bool" },
-        { "name": "burnPaused", "type": "bool" },
-        { "name": "remainingGasTo", "type": "address" },
-        { "name": "randomNonce", "type": "uint256" }
-      ],
-      "outputs": [{ "name": "value0", "type": "address" }]
-    },
-    {
-      "name": "callback",
-      "inputs": [{ "name": "res", "type": "address" }],
-      "outputs": []
-    },
-    {
-      "name": "mint",
-      "inputs": [
-        { "name": "tokenRoot", "type": "address" },
-        { "name": "amount", "type": "uint128" },
-        { "name": "recipient", "type": "address" },
-        { "name": "deployWalletValue", "type": "uint128" },
-        { "name": "remainingGasTo", "type": "address" },
-        { "name": "notify", "type": "bool" },
-        { "name": "payload", "type": "cell" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "projectTokens",
-      "inputs": [],
-      "outputs": [
-        {
-          "components": [
-            { "name": "ProjectTokenRoot", "type": "address" },
-            { "name": "ReverueTokenRoot", "type": "address" },
-            { "name": "RevenueTokenWallet", "type": "address" }
-          ],
-          "name": "projectTokens",
-          "type": "map(address,tuple)"
-        }
-      ]
-    },
-    {
-      "name": "lastWalletDeployed",
-      "inputs": [],
-      "outputs": [{ "name": "lastWalletDeployed", "type": "address" }]
-    },
-    {
-      "name": "_rootTokenRoot",
-      "inputs": [],
-      "outputs": [{ "name": "_rootTokenRoot", "type": "address" }]
-    },
-    {
-      "name": "_lastAccountAddress",
-      "inputs": [],
-      "outputs": [{ "name": "_lastAccountAddress", "type": "address" }]
-    },
-    {
-      "name": "_isTaskRedeployed",
-      "inputs": [],
-      "outputs": [{ "name": "_isTaskRedeployed", "type": "bool" }]
-    },
-    {
-      "name": "_allowMint",
-      "inputs": [],
-      "outputs": [{ "name": "_allowMint", "type": "bool" }]
-    },
-    {
-      "name": "_hide_voting_results",
-      "inputs": [],
-      "outputs": [{ "name": "_hide_voting_results", "type": "bool" }]
-    },
-    {
-      "name": "_allow_discussion_on_proposals",
-      "inputs": [],
-      "outputs": [{ "name": "_allow_discussion_on_proposals", "type": "bool" }]
-    },
-    {
-      "name": "_isRepoUpgraded",
-      "inputs": [],
-      "outputs": [{ "name": "_isRepoUpgraded", "type": "bool" }]
-    },
-    {
-      "name": "_abilityInvite",
-      "inputs": [],
-      "outputs": [{ "name": "_abilityInvite", "type": "bool" }]
-    },
-    {
-      "name": "_isCheck",
-      "inputs": [],
-      "outputs": [{ "name": "_isCheck", "type": "bool" }]
-    }
-  ],
-  "data": [
-    { "key": 1, "name": "nonce", "type": "uint256" },
-    { "key": 2, "name": "_systemcontract", "type": "address" }
-  ],
-  "events": [],
-  "fields": [
-    { "name": "_pubkey", "type": "uint256" },
-    { "name": "_constructorFlag", "type": "bool" },
-    { "name": "messages", "type": "map(uint32,map(uint256,bool))" },
-    {
-      "components": [
-        { "name": "messageHash", "type": "uint256" },
-        { "name": "expireAt", "type": "uint32" }
-      ],
-      "name": "lastMessage",
-      "type": "tuple"
-    },
-    { "name": "__value", "type": "uint256" },
-    { "name": "nonce", "type": "uint256" },
-    { "name": "m_tokenRootCode", "type": "cell" },
-    { "name": "m_tokenWalletCode", "type": "cell" },
-    { "name": "_rootpubkey", "type": "uint256" },
-    {
-      "components": [
-        { "name": "ProjectTokenRoot", "type": "address" },
-        { "name": "ReverueTokenRoot", "type": "address" },
-        { "name": "RevenueTokenWallet", "type": "address" }
-      ],
-      "name": "projectTokens",
-      "type": "map(address,tuple)"
-    },
-    { "name": "lastWalletDeployed", "type": "address" },
-    { "name": "_previousversion", "type": "string" },
-    { "name": "_versionController", "type": "address" },
-    { "name": "_limittag", "type": "uint128" },
-    { "name": "_counttag", "type": "uint128" },
-    { "name": "_volunteersnap", "type": "address[]" },
-    { "name": "_volunteerdiff", "type": "address[]" },
-    { "name": "_volunteertree", "type": "address[]" },
-    { "name": "_volunteercommit", "type": "address[]" },
-    { "name": "_systemcontract", "type": "address" },
-    { "name": "_pubaddr", "type": "address" },
-    { "name": "_profiledao", "type": "address" },
-    { "name": "_nameDao", "type": "string" },
-    { "name": "_previous", "type": "optional(address)" },
-    {
-      "components": [
-        { "name": "member", "type": "address" },
-        { "name": "count", "type": "uint128" },
-        { "name": "expired", "type": "uint128" }
-      ],
-      "name": "_wallets",
-      "type": "map(uint256,tuple)"
-    },
-    { "name": "_daoMembers", "type": "map(uint256,string)" },
-    { "name": "_code", "type": "map(uint8,cell)" },
-    { "name": "_hashtag", "type": "map(uint256,string)" },
-    { "name": "_versions", "type": "map(uint256,string)" },
-    { "name": "_my_wallets", "type": "map(uint256,address)" },
-    { "name": "_tokenforperson", "type": "uint128" },
-    { "name": "_limit_wallets", "type": "uint128" },
-    { "name": "m_TokenLockerCode", "type": "cell" },
-    { "name": "m_SMVPlatformCode", "type": "cell" },
-    { "name": "m_SMVClientCode", "type": "cell" },
-    { "name": "m_SMVProposalCode", "type": "cell" },
-    { "name": "_rootTokenRoot", "type": "address" },
-    { "name": "_lastAccountAddress", "type": "address" },
-    { "name": "_isTaskRedeployed", "type": "bool" },
-    { "name": "_flag", "type": "bool" },
-    { "name": "_tombstone", "type": "bool" },
-    { "name": "_allowMint", "type": "bool" },
-    { "name": "_hide_voting_results", "type": "bool" },
-    { "name": "_allow_discussion_on_proposals", "type": "bool" },
-    { "name": "timeMoney", "type": "uint128" },
-    {
-      "components": [
-        { "name": "member", "type": "address" },
-        { "name": "count", "type": "uint128" },
-        { "name": "expired", "type": "uint128" }
-      ],
-      "name": "saveaddr",
-      "type": "optional(tuple[])"
-    },
-    { "name": "savedao", "type": "optional(optional(string)[])" },
-    { "name": "saveind", "type": "optional(uint128)" },
-    { "name": "_reserve", "type": "uint128" },
-    { "name": "_allbalance", "type": "uint128" },
-    { "name": "_totalsupply", "type": "uint128" },
-    { "name": "_isRepoUpgraded", "type": "bool" },
-    { "name": "_abilityInvite", "type": "bool" },
-    { "name": "_isCheck", "type": "bool" },
-    {
-      "components": [
-        { "name": "fiatValue", "type": "uint128" },
-        { "name": "decimals", "type": "uint128" },
-        { "name": "paidMembershipValue", "type": "uint128" },
-        { "name": "valuePerSubs", "type": "uint128" },
-        { "name": "timeForSubs", "type": "uint128" },
-        { "name": "details", "type": "string" },
-        { "name": "accessKey", "type": "uint256" }
-      ],
-      "name": "_paidMembership",
-      "type": "map(uint8,tuple)"
-    }
-  ]
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"versionController","type":"address"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"profiledao","type":"address"},
+				{"name":"name","type":"string"},
+				{"name":"pubmem","type":"address[]"},
+				{"name":"limit_wallets","type":"uint128"},
+				{"name":"DaoCode","type":"cell"},
+				{"name":"CommitCode","type":"cell"},
+				{"name":"RepositoryCode","type":"cell"},
+				{"name":"WalletCode","type":"cell"},
+				{"name":"TagCode","type":"cell"},
+				{"name":"codeSnapshot","type":"cell"},
+				{"name":"codeTree","type":"cell"},
+				{"name":"codeDiff","type":"cell"},
+				{"name":"contentSignature","type":"cell"},
+				{"name":"codeTask","type":"cell"},
+				{"name":"codeBigTask","type":"cell"},
+				{"name":"codedaotag","type":"cell"},
+				{"name":"coderepotag","type":"cell"},
+				{"name":"codetopic","type":"cell"},
+				{"name":"TokenLockerCode","type":"cell"},
+				{"name":"SMVPlatformCode","type":"cell"},
+				{"name":"SMVClientCode","type":"cell"},
+				{"name":"SMVProposalCode","type":"cell"},
+				{"name":"TokenRootCode","type":"cell"},
+				{"name":"TokenWalletCode","type":"cell"},
+				{"name":"previous","type":"optional(address)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployedWallet",
+			"inputs": [
+				{"name":"systemcontract","type":"address"},
+				{"name":"goshdao","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"ver","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyedWallet",
+			"inputs": [
+				{"name":"systemcontract","type":"address"},
+				{"name":"goshdao","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"ver","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getPreviousInfo",
+			"inputs": [
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getPreviousInfoVersion",
+			"inputs": [
+				{"name":"ver","type":"string"},
+				{"name":"a","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "returnDao",
+			"inputs": [
+				{"name":"value0","type":"address"},
+				{"name":"allowMint","type":"bool"},
+				{"name":"hide_voting_results","type":"bool"},
+				{"name":"allow_discussion_on_proposals","type":"bool"},
+				{"name":"abilityInvite","type":"bool"},
+				{"name":"value5","type":"bool"},
+				{"name":"value6","type":"string"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"value7","type":"map(uint256,tuple)"},
+				{"name":"value8","type":"uint128"},
+				{"name":"value9","type":"uint128"},
+				{"name":"value10","type":"uint128"},
+				{"name":"value11","type":"map(uint256,string)"},
+				{"name":"value12","type":"map(uint256,address)"},
+				{"name":"value13","type":"map(uint256,string)"},
+				{"name":"value14","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getPreviousInfo1",
+			"inputs": [
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
+				{"name":"trash","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "returnWalletsVersionv4",
+			"inputs": [
+				{"name":"ver","type":"string"},
+				{"name":"key","type":"uint256"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
+				{"name":"tags","type":"map(uint256,string)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "returnWalletsVersion",
+			"inputs": [
+				{"name":"ver","type":"string"},
+				{"name":"key","type":"uint256"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
+				{"name":"tags","type":"map(uint256,string)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "returnWallets",
+			"inputs": [
+				{"name":"key","type":"uint256"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "changeHideVotingResult",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"res","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "changeAllowDiscussion",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"res","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendMoneyDiff",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"commit","type":"string"},
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendMoneySnap",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "asktotalSupply",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "volunteersnap",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "volunteerdiff",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "volunteertree",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "volunteercommit",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendMoneyCommit",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"commit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendMoneyTree",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"shaTree","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "upgradeDao",
+			"inputs": [
+				{"name":"newversion","type":"string"},
+				{"name":"description","type":"string"},
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "upgradeTag4",
+			"inputs": [
+				{"name":"namerepo","type":"string"},
+				{"name":"nametag","type":"string"},
+				{"name":"namecommit","type":"string"},
+				{"name":"commit","type":"address"},
+				{"name":"content","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setRepoUpgraded",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"res","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setAbilityInvite",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"res","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setTombstone",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"description","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "proposalForDeployWalletDao",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
+				{"name":"dao","type":"optional(string)[]"},
+				{"name":"comment","type":"string"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "isAlone",
+			"inputs": [
+				{"name":"token","type":"uint128"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"pubaddr","type":"tuple[]"},
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"tag","type":"string[]"},
+				{"name":"typeF","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "smvnotallowmint",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "smvdeploytag",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"tag","type":"string[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "askAddr",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"data","type":"cell"},
+				{"name":"index1","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "upgradeVersionCode",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"UpgradeCode","type":"cell"},
+				{"name":"cell","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "daoVote",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"wallet","type":"address"},
+				{"name":"platform_id","type":"uint256"},
+				{"name":"choice","type":"bool"},
+				{"name":"amount","type":"uint128"},
+				{"name":"num_clients_base","type":"uint128"},
+				{"name":"note","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "daoSendToken",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"wallet","type":"address"},
+				{"name":"pubaddr","type":"optional(address)"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "daoSendTokenToNewVersionAuto1",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"wallet","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "daoMulti",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"wallet","type":"address"},
+				{"name":"number","type":"uint128"},
+				{"name":"proposals","type":"cell"},
+				{"name":"num_clients","type":"uint128"},
+				{"name":"reviewers","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "daoSendTokenToNewVersion",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"wallet","type":"address"},
+				{"name":"newwallet","type":"optional(address)"},
+				{"name":"grant","type":"uint128"},
+				{"name":"newversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "daoAskLockTomb",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"wallet","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "daoAskLock",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"wallet","type":"address"},
+				{"name":"isLock","type":"bool"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "daoAskGrantFull",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"wallet","type":"address"},
+				{"name":"repoName","type":"string"},
+				{"name":"nameTask","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "daoSendReview",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"wallet","type":"address"},
+				{"name":"propAddr","type":"address"},
+				{"name":"isAccept","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "doNothing",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "redeployTask",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"},
+				{"name":"hashtag","type":"string[]"},
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "upgradeTask",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"nametask","type":"string"},
+				{"name":"repoName","type":"string"},
+				{"name":"oldversion","type":"string"},
+				{"name":"oldtask","type":"address"},
+				{"name":"hashtag","type":"string[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "upgradeBigTask",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"nametask","type":"string"},
+				{"name":"repoName","type":"string"},
+				{"name":"oldversion","type":"string"},
+				{"name":"oldtask","type":"address"},
+				{"name":"hashtag","type":"string[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "redeployedTask",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "smvdeploytagin",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"tag","type":"string[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "smvdestroytag",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"tag","type":"string[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "mintReserve",
+			"inputs": [
+				{"name":"token","type":"uint128"},
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "isAloneDeploy",
+			"inputs": [
+				{"name":"nameRepo","type":"string"},
+				{"name":"descr","type":"string"},
+				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previous","type":"optional(tuple)"},
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"typeF","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "askForTombstoneIn",
+			"inputs": [
+				{"name":"key","type":"uint256"},
+				{"name":"description","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployWallet",
+			"inputs": [
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"pubaddrdeploy","type":"tuple[]"},
+				{"name":"dao","type":"optional(string)[]"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "requestBurn",
+			"inputs": [
+				{"name":"recipient","type":"address"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"burn_amount","type":"uint128"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "requestMint",
+			"inputs": [
+				{"name":"recipient","type":"address"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"mint_amount","type":"uint128"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setCheck",
+			"inputs": [
+				{"name":"pubaddrs","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "changeAllowance",
+			"inputs": [
+				{"name":"pubaddrs","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"increase","type":"bool[]"},
+				{"name":"grant","type":"uint128[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "changeAllowanceIn",
+			"inputs": [
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"increase","type":"bool[]"},
+				{"name":"grant","type":"uint128[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "changeAllowanceIn2",
+			"inputs": [
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"increase","type":"bool[]"},
+				{"name":"grant","type":"uint128[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "returnAllowance",
+			"inputs": [
+				{"name":"grant","type":"uint128"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addVoteTokenTask",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startCheckPaidMembershipWallet",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startCheckPaidMembershipService",
+			"inputs": [
+				{"name":"ProgramIndex","type":"uint8"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkExpiredTime",
+			"inputs": [
+				{"name":"key","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "stopPaidMembership",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"Programindex","type":"uint8"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startPaidMembership",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"components":[{"name":"fiatValue","type":"uint128"},{"name":"decimals","type":"uint128"},{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"details","type":"string"},{"name":"accessKey","type":"uint256"}],"name":"newProgram","type":"tuple"},
+				{"name":"Programindex","type":"uint8"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployMemberFromSubs",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"isdao","type":"optional(string)"},
+				{"name":"Programindex","type":"uint8"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addVoteTokenPubSub",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"grant","type":"uint128"},
+				{"name":"time","type":"uint128"},
+				{"name":"Programindex","type":"uint8"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addVoteTokenPubSub2",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"grant","type":"uint128"},
+				{"name":"time","type":"uint128"},
+				{"name":"Programindex","type":"uint8"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addVoteTokenPubSub3",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"grant","type":"uint128"},
+				{"name":"time","type":"uint128"},
+				{"name":"Programindex","type":"uint8"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addVoteTokenPub",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addVoteTokenPub2",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addVoteTokenPub3",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addRegularTokenPub",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployWalletsConst",
+			"inputs": [
+				{"name":"pubmem","type":"address[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployWallets",
+			"inputs": [
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"pubmem","type":"tuple[]"},
+				{"name":"dao","type":"optional(string)[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployWalletsOutMember",
+			"inputs": [
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"pubmem","type":"tuple[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deleteWallet",
+			"inputs": [
+				{"name":"pubmem","type":"address[]"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployTask",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"},
+				{"name":"hashtag","type":"string[]"},
+				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
+				{"name":"value","type":"uint128"},
+				{"name":"bigtask","type":"optional(string)"},
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployBigTask",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"},
+				{"name":"hashtag","type":"string[]"},
+				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"commit","type":"tuple"},
+				{"name":"freebalance","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "calculateBalanceSubtask",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"},
+				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
+				{"name":"balance","type":"uint128"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"commit","type":"tuple"},
+				{"name":"freebalance","type":"uint128"},
+				{"name":"hashtag","type":"string[]"},
+				{"name":"index","type":"uint128"},
+				{"name":"sender","type":"address"},
+				{"name":"num","type":"uint8"},
+				{"name":"value","type":"uint128"},
+				{"name":"bigtask","type":"optional(string)"},
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "calculateBalanceAssign",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"},
+				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
+				{"name":"balance","type":"uint128"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"commit","type":"tuple"},
+				{"name":"freebalance","type":"uint128"},
+				{"name":"hashtag","type":"string[]"},
+				{"name":"index","type":"uint128"},
+				{"name":"sender","type":"address"},
+				{"name":"num","type":"uint8"},
+				{"name":"value","type":"uint128"},
+				{"name":"bigtask","type":"optional(string)"},
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "calculateBalanceReview",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"},
+				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
+				{"name":"balance","type":"uint128"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"commit","type":"tuple"},
+				{"name":"freebalance","type":"uint128"},
+				{"name":"hashtag","type":"string[]"},
+				{"name":"index","type":"uint128"},
+				{"name":"sender","type":"address"},
+				{"name":"num","type":"uint8"},
+				{"name":"value","type":"uint128"},
+				{"name":"bigtask","type":"optional(string)"},
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "calculateBalanceManager",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"nametask","type":"string"},
+				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
+				{"name":"balance","type":"uint128"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"commit","type":"tuple"},
+				{"name":"freebalance","type":"uint128"},
+				{"name":"hashtag","type":"string[]"},
+				{"name":"index","type":"uint128"},
+				{"name":"sender","type":"address"},
+				{"name":"num","type":"uint8"},
+				{"name":"value","type":"uint128"},
+				{"name":"bigtask","type":"optional(string)"},
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployTaskTag",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"task","type":"address"},
+				{"name":"tag","type":"string[]"},
+				{"name":"sender","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyTaskTag",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"tag","type":"string[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyTaskTagBig",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"tag","type":"string[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkOldTaskVersion",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"string"},
+				{"name":"previous","type":"string"},
+				{"name":"previousaddr","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkOldBigTaskVersion",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"string"},
+				{"name":"previous","type":"string"},
+				{"name":"previousaddr","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkOldTaskVersion5",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"string"},
+				{"name":"previous","type":"address"},
+				{"name":"answer","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkOldBigTaskVersion5",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"string"},
+				{"name":"previous","type":"address"},
+				{"name":"answer","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "returnTaskToken",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"token","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "returnTaskTokenBig",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"token","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "receiveTokentoReserve",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"grant","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deleteWallets",
+			"inputs": [
+				{"name":"pubmem","type":"address[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getTaskCode",
+			"inputs": [
+				{"name":"repoName","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getTaskAddr",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repoName","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getBigTaskCode",
+			"inputs": [
+				{"name":"repoName","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getBigTaskAddr",
+			"inputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repoName","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getDaoTagAddr",
+			"inputs": [
+				{"name":"daotag","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getAddrWallet",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getWalletCode",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getProposalCode",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getClientCode",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getAddrRepository",
+			"inputs": [
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getTombstone",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
+			]
+		},
+		{
+			"name": "getWallets",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address[]"}
+			]
+		},
+		{
+			"name": "getWalletsToken",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"value0","type":"tuple[]"}
+			]
+		},
+		{
+			"name": "getWalletsFull",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"value0","type":"map(uint256,tuple)"}
+			]
+		},
+		{
+			"name": "getVersions",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"map(uint256,string)"}
+			]
+		},
+		{
+			"name": "getTags",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"map(uint256,string)"}
+			]
+		},
+		{
+			"name": "isMember",
+			"inputs": [
+				{"name":"pubaddr","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
+			]
+		},
+		{
+			"name": "getNameDao",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
+			]
+		},
+		{
+			"name": "getConfig",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"}
+			]
+		},
+		{
+			"name": "getVersion",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
+			]
+		},
+		{
+			"name": "getTokenBalance",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"},
+				{"name":"value1","type":"uint128"},
+				{"name":"value2","type":"uint128"}
+			]
+		},
+		{
+			"name": "getOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getPreviousDaoAddr",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"optional(address)"}
+			]
+		},
+		{
+			"name": "getDetails",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"allowMint","type":"bool"},
+				{"name":"hide_voting_results","type":"bool"},
+				{"name":"allow_discussion_on_proposals","type":"bool"},
+				{"name":"abilityInvite","type":"bool"},
+				{"name":"isRepoUpgraded","type":"bool"},
+				{"name":"nameDao","type":"string"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
+				{"name":"reserve","type":"uint128"},
+				{"name":"allbalance","type":"uint128"},
+				{"name":"totalsupply","type":"uint128"},
+				{"name":"hashtag","type":"map(uint256,string)"},
+				{"name":"my_wallets","type":"map(uint256,address)"},
+				{"name":"daoMembers","type":"map(uint256,string)"},
+				{"name":"isCheck","type":"bool"},
+				{"components":[{"name":"fiatValue","type":"uint128"},{"name":"decimals","type":"uint128"},{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"details","type":"string"},{"name":"accessKey","type":"uint256"}],"name":"paidMembership","type":"map(uint8,tuple)"}
+			]
+		},
+		{
+			"name": "getDaoIn",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onAcceptTokensTransfer",
+			"inputs": [
+				{"name":"value0","type":"address"},
+				{"name":"value1","type":"uint128"},
+				{"name":"value2","type":"address"},
+				{"name":"value3","type":"address"},
+				{"name":"value4","type":"address"},
+				{"name":"value5","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "createProjectCurrencies",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployRoot",
+			"inputs": [
+				{"name":"initialSupplyTo","type":"address"},
+				{"name":"initialSupply","type":"uint128"},
+				{"name":"deployWalletValue","type":"uint128"},
+				{"name":"mintDisabled","type":"bool"},
+				{"name":"burnByRootDisabled","type":"bool"},
+				{"name":"burnPaused","type":"bool"},
+				{"name":"remainingGasTo","type":"address"},
+				{"name":"randomNonce","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "callback",
+			"inputs": [
+				{"name":"res","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "mint",
+			"inputs": [
+				{"name":"tokenRoot","type":"address"},
+				{"name":"amount","type":"uint128"},
+				{"name":"recipient","type":"address"},
+				{"name":"deployWalletValue","type":"uint128"},
+				{"name":"remainingGasTo","type":"address"},
+				{"name":"notify","type":"bool"},
+				{"name":"payload","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "projectTokens",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"ProjectTokenRoot","type":"address"},{"name":"ReverueTokenRoot","type":"address"},{"name":"RevenueTokenWallet","type":"address"}],"name":"projectTokens","type":"map(address,tuple)"}
+			]
+		},
+		{
+			"name": "lastWalletDeployed",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"lastWalletDeployed","type":"address"}
+			]
+		},
+		{
+			"name": "_rootTokenRoot",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_rootTokenRoot","type":"address"}
+			]
+		},
+		{
+			"name": "_lastAccountAddress",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_lastAccountAddress","type":"address"}
+			]
+		},
+		{
+			"name": "_isTaskRedeployed",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_isTaskRedeployed","type":"bool"}
+			]
+		},
+		{
+			"name": "_allowMint",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_allowMint","type":"bool"}
+			]
+		},
+		{
+			"name": "_hide_voting_results",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_hide_voting_results","type":"bool"}
+			]
+		},
+		{
+			"name": "_allow_discussion_on_proposals",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_allow_discussion_on_proposals","type":"bool"}
+			]
+		},
+		{
+			"name": "_isRepoUpgraded",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_isRepoUpgraded","type":"bool"}
+			]
+		},
+		{
+			"name": "_abilityInvite",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_abilityInvite","type":"bool"}
+			]
+		},
+		{
+			"name": "_isCheck",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_isCheck","type":"bool"}
+			]
+		}
+	],
+	"data": [
+		{"key":1,"name":"nonce","type":"uint256"},
+		{"key":2,"name":"_systemcontract","type":"address"}
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
+		{"name":"nonce","type":"uint256"},
+		{"name":"m_tokenRootCode","type":"cell"},
+		{"name":"m_tokenWalletCode","type":"cell"},
+		{"name":"_rootpubkey","type":"uint256"},
+		{"components":[{"name":"ProjectTokenRoot","type":"address"},{"name":"ReverueTokenRoot","type":"address"},{"name":"RevenueTokenWallet","type":"address"}],"name":"projectTokens","type":"map(address,tuple)"},
+		{"name":"lastWalletDeployed","type":"address"},
+		{"name":"_previousversion","type":"string"},
+		{"name":"_versionController","type":"address"},
+		{"name":"_limittag","type":"uint128"},
+		{"name":"_counttag","type":"uint128"},
+		{"name":"_volunteersnap","type":"address[]"},
+		{"name":"_volunteerdiff","type":"address[]"},
+		{"name":"_volunteertree","type":"address[]"},
+		{"name":"_volunteercommit","type":"address[]"},
+		{"name":"_systemcontract","type":"address"},
+		{"name":"_pubaddr","type":"address"},
+		{"name":"_profiledao","type":"address"},
+		{"name":"_nameDao","type":"string"},
+		{"name":"_previous","type":"optional(address)"},
+		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"_wallets","type":"map(uint256,tuple)"},
+		{"name":"_daoMembers","type":"map(uint256,string)"},
+		{"name":"_code","type":"map(uint8,cell)"},
+		{"name":"_hashtag","type":"map(uint256,string)"},
+		{"name":"_versions","type":"map(uint256,string)"},
+		{"name":"_my_wallets","type":"map(uint256,address)"},
+		{"name":"_tokenforperson","type":"uint128"},
+		{"name":"_limit_wallets","type":"uint128"},
+		{"name":"m_TokenLockerCode","type":"cell"},
+		{"name":"m_SMVPlatformCode","type":"cell"},
+		{"name":"m_SMVClientCode","type":"cell"},
+		{"name":"m_SMVProposalCode","type":"cell"},
+		{"name":"_rootTokenRoot","type":"address"},
+		{"name":"_lastAccountAddress","type":"address"},
+		{"name":"_isTaskRedeployed","type":"bool"},
+		{"name":"_flag","type":"bool"},
+		{"name":"_tombstone","type":"bool"},
+		{"name":"_allowMint","type":"bool"},
+		{"name":"_hide_voting_results","type":"bool"},
+		{"name":"_allow_discussion_on_proposals","type":"bool"},
+		{"name":"timeMoney","type":"uint128"},
+		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"saveaddr","type":"optional(tuple[])"},
+		{"name":"savedao","type":"optional(optional(string)[])"},
+		{"name":"saveind","type":"optional(uint128)"},
+		{"name":"_reserve","type":"uint128"},
+		{"name":"_allbalance","type":"uint128"},
+		{"name":"_totalsupply","type":"uint128"},
+		{"name":"_isRepoUpgraded","type":"bool"},
+		{"name":"_abilityInvite","type":"bool"},
+		{"name":"_isCheck","type":"bool"},
+		{"components":[{"name":"fiatValue","type":"uint128"},{"name":"decimals","type":"uint128"},{"name":"paidMembershipValue","type":"uint128"},{"name":"valuePerSubs","type":"uint128"},{"name":"timeForSubs","type":"uint128"},{"name":"details","type":"string"},{"name":"accessKey","type":"uint256"}],"name":"_paidMembership","type":"map(uint8,tuple)"}
+	]
 }

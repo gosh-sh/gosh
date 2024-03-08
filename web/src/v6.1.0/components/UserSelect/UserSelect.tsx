@@ -22,13 +22,12 @@ const UserSelect = (props: TUserSelectProps) => {
   } = props
 
   const getUsernameOptions = async (input: string) => {
+    const sc = getSystemContract()
     input = input.toLowerCase()
     const options: any[] = []
 
     if (searchUser) {
-      const query = await AppConfig.goshroot.getUserProfile({
-        username: input,
-      })
+      const query = await sc.getUserProfile({ username: input })
       if (await query.isDeployed()) {
         options.push({
           label: input,
@@ -42,7 +41,7 @@ const UserSelect = (props: TUserSelectProps) => {
     }
 
     if (searchDao) {
-      const query = await getSystemContract().getDao({ name: input })
+      const query = await sc.getDao({ name: input })
       const option = {
         label: input,
         value: { name: input, address: query.address, type: EDaoMemberType.Dao },
@@ -61,8 +60,8 @@ const UserSelect = (props: TUserSelectProps) => {
       const versions = AppConfig.getVersions({ reverse: true })
       const query = await Promise.all(
         Object.keys(versions).map(async (key) => {
-          const sc = AppConfig.goshroot.getSystemContract(key)
-          const dao_account = await sc.getDao({ name: input })
+          const sc_ver = AppConfig.goshroot.getSystemContract(key)
+          const dao_account = await sc_ver.getDao({ name: input })
           return {
             version: key,
             account: dao_account,

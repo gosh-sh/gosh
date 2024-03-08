@@ -1,4 +1,5 @@
 import { KeyPair } from '@eversdk/core'
+import { userAtom as _userAtom, userPersistAtom as _userPersistAtom } from 'react-gosh'
 import {
   snapshot_UNSTABLE,
   useGotoRecoilSnapshot,
@@ -9,14 +10,14 @@ import {
   useSetRecoilState,
 } from 'recoil'
 import { AppConfig } from '../../appconfig'
-import { userAtom, userPersistAtom, userProfileSelector } from '../../store/user.state'
+import { EGoshError, GoshError } from '../../errors'
+import { appContextAtom } from '../../store/app.state'
+import { userAtom, userPersistAtom } from '../../store/user.state'
 import { TUserPersist } from '../../types/user.types'
 import { validatePhrase } from '../../validators'
-import { EGoshError, GoshError } from '../../errors'
-import { validateUsername } from '../validators'
 import { getSystemContract } from '../blockchain/helpers'
-import { userPersistAtom as _userPersistAtom, userAtom as _userAtom } from 'react-gosh'
-import { appContextAtom } from '../../store/app.state'
+import { userProfileSelector } from '../store/user.state'
+import { validateUsername } from '../validators'
 
 export function useUser() {
   const [userPersist, setUserPersist] = useRecoilState(userPersistAtom)
@@ -67,10 +68,11 @@ export function useUser() {
   }
 
   const signin = async (params: { username: string; phrase: string }) => {
+    const sc = getSystemContract()
     await _validateCredentials(params)
 
     const { username, phrase } = params
-    const profile = await AppConfig.goshroot.getUserProfile({ username })
+    const profile = await sc.getUserProfile({ username })
     if (!(await profile.isDeployed())) {
       throw new GoshError(EGoshError.PROFILE_NOT_EXIST)
     }
@@ -90,11 +92,12 @@ export function useUser() {
   }
 
   const signup = async (params: { username: string; phrase: string }) => {
+    const sc = getSystemContract()
     await _validateCredentials(params)
 
     const { phrase } = params
     const username = params.username.trim().toLowerCase()
-    const profile = await AppConfig.goshroot.getUserProfile({ username })
+    const profile = await sc.getUserProfile({ username })
     if (await profile.isDeployed()) {
       throw new GoshError(
         EGoshError.PROFILE_EXISTS,
