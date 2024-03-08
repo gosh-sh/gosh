@@ -466,6 +466,10 @@ contract Repository is Modifiers{
         return true;
     }
 
+    function getRepoWalletAddr(address pubaddr) external view returns(address) {
+        return GoshLib.calculateRepoRootWalletAddress(_code[m_TokenRepoWalletCode], _tokenroot.get(), pubaddr);
+    }
+
     function getTreeAddr(uint256 shainnertree) external view returns(address) {
         return GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnertree, address(this));
     }

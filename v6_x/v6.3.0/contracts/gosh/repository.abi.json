@@ -374,6 +374,15 @@
 			]
 		},
 		{
+			"name": "getRepoWalletAddr",
+			"inputs": [
+				{"name":"pubaddr","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
 			"name": "getTreeAddr",
 			"inputs": [
 				{"name":"shainnertree","type":"uint256"}
