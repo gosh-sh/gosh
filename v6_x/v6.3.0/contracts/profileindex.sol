@@ -10,7 +10,7 @@ pragma AbiHeader pubkey;
 
 import "./smv/modifiers/modifiers.sol";
 import "systemcontract.sol";
-import "profile.sol";
+import "profile_basic.sol";
 
 /* Index contract of Profile */
 contract ProfileIndex is Modifiers {

@@ -248,14 +248,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     //Profile part
     function turnOnPubkey(
         uint256 pubkey
-    ) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
+    ) public onlyOwnerAddress(_systemcontract)  accept saveMsg {
         _access = pubkey;
         getMoney();
         GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, _index + 1)).turnOnPubkeyIn{value : 0.15 ton, flag: 1}(pubkey);
     }
 
     function turnOffPubkey(
-    ) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
+    ) public onlyOwnerAddress(_systemcontract)  accept saveMsg {
         _access = null;
         getMoney();
         GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, _index + 1)).turnOffPubkeyIn{value : 0.15 ton, flag: 1}();

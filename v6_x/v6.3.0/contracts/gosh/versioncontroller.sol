@@ -13,6 +13,7 @@ import "./libraries/GoshLib.sol";
 import "systemcontract.sol";
 import "profiledao.sol";
 import "profileindex.sol";
+import "profile.sol";
 import "ccwallet.sol";
 
 /* Version contract of SystemContract */
@@ -27,6 +28,10 @@ contract VersionController is Modifiers {
     constructor() onlyOwner {
         require(tvm.pubkey() != 0, ERR_NEED_PUBKEY);
         tvm.accept();
+    }
+
+    function getSystemContractAddress(string version) public view minValue(0.2 ton) {
+        ProfileNew(msg.sender).setNewSystemContractAddress{value: 0.1 ton, flag: 1}(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey()));
     }
 
     function _deployNewCCWallet(uint256 pubkey) private view returns(address){

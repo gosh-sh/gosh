@@ -1,0 +1,274 @@
+{
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"codeProfileDao","type":"cell"},
+				{"name":"codeProfile","type":"cell"},
+				{"name":"codeIndex","type":"cell"},
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployedWallet",
+			"inputs": [
+				{"name":"systemcontract","type":"address"},
+				{"name":"goshdao","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"ver","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyedWallet",
+			"inputs": [
+				{"name":"systemcontract","type":"address"},
+				{"name":"goshdao","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"ver","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "confirmTransaction",
+			"inputs": [
+				{"name":"id","type":"uint64"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "clearExpired",
+			"inputs": [
+				{"name":"index","type":"uint64"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setNewExpiredTime",
+			"inputs": [
+				{"name":"time","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setNewNeedCustodians",
+			"inputs": [
+				{"name":"need","type":"uint8"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addPubkey",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deletePubkey",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "turnOn",
+			"inputs": [
+				{"name":"namedao","type":"string"},
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "turnOff",
+			"inputs": [
+				{"name":"namedao","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployDao",
+			"inputs": [
+				{"name":"systemcontract","type":"address"},
+				{"name":"name","type":"string"},
+				{"name":"pubmem","type":"address[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendMoneyProfileDao",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deleteProfileIndexContract",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployProfileIndexContract",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "codeUpdate",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateCode",
+			"inputs": [
+				{"name":"newcode","type":"cell"},
+				{"name":"cell","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setNewSystemContract",
+			"inputs": [
+				{"name":"newversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setNewSystemContractAddress",
+			"inputs": [
+				{"name":"systemcontract","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getProfileIndexAddr",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getProfileIndexCode",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getMessages",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"index","type":"uint128"},{"name":"expiredAt","type":"uint128"},{"name":"mask","type":"uint32"},{"name":"signsReceived","type":"uint8"},{"name":"pubkey","type":"optional(uint256)"},{"name":"walletsystemcontract","type":"optional(address)"},{"name":"name","type":"optional(string)"},{"name":"previous","type":"optional(address)"},{"name":"newneed","type":"optional(uint8)"},{"name":"time","type":"optional(uint128)"},{"name":"pubmembers","type":"optional(address[])"}],"name":"value0","type":"map(uint64,tuple)"}
+			]
+		},
+		{
+			"name": "getName",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
+			]
+		},
+		{
+			"name": "getCustodians",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"},
+				{"name":"value1","type":"uint128"}
+			]
+		},
+		{
+			"name": "getAccess",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"map(uint256,uint8)"}
+			]
+		},
+		{
+			"name": "getCurrentSystemContract",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "isPubkeyCorrect",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
+			]
+		},
+		{
+			"name": "getProfileDaoAddr",
+			"inputs": [
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		}
+	],
+	"data": [
+		{"key":1,"name":"_versioncontroller","type":"address"},
+		{"key":2,"name":"_name","type":"string"}
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
+		{"name":"_code","type":"map(uint8,cell)"},
+		{"name":"_versioncontroller","type":"address"},
+		{"name":"_name","type":"string"},
+		{"name":"_systemcontract","type":"address"},
+		{"name":"_flag","type":"bool"},
+		{"name":"_owners","type":"map(uint256,uint8)"},
+		{"name":"_index","type":"map(uint8,uint256)"},
+		{"components":[{"name":"index","type":"uint128"},{"name":"expiredAt","type":"uint128"},{"name":"mask","type":"uint32"},{"name":"signsReceived","type":"uint8"},{"name":"pubkey","type":"optional(uint256)"},{"name":"walletsystemcontract","type":"optional(address)"},{"name":"name","type":"optional(string)"},{"name":"previous","type":"optional(address)"},{"name":"newneed","type":"optional(uint8)"},{"name":"time","type":"optional(uint128)"},{"name":"pubmembers","type":"optional(address[])"}],"name":"_messages","type":"map(uint64,tuple)"},
+		{"name":"_custodians","type":"uint8"},
+		{"name":"_needcustodians","type":"uint8"},
+		{"name":"_expTime","type":"uint128"},
+		{"name":"timeMoney","type":"uint128"}
+	]
+}

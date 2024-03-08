@@ -42,7 +42,7 @@
 			"inputs": [
 				{"name":"token","type":"uint128"},
 				{"name":"pubaddr","type":"address"},
-				{"name":"version","type":"string"}
+				{"name":"toversion","type":"string"}
 			],
 			"outputs": [
 			]

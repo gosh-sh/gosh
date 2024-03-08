@@ -12,7 +12,7 @@ import "./smv/modifiers/modifiers.sol";
 import "goshwallet.sol";
 import "systemcontract.sol";
 import "goshdao.sol";
-import "profile.sol";
+import "profile_basic.sol";
 
 contract ProfileDao is Modifiers {
     string constant version = "1.0.0";

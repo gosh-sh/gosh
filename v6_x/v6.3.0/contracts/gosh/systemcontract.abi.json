@@ -12,6 +12,33 @@
 			]
 		},
 		{
+			"name": "turnOnPubkeyFromProfile",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"namedao","type":"string"},
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "turnOffPubkeyFromProfile",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"namedao","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateCodeForProfile",
+			"inputs": [
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "sendToken",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},

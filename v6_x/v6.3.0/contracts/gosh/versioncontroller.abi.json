@@ -11,6 +11,14 @@
 			]
 		},
 		{
+			"name": "getSystemContractAddress",
+			"inputs": [
+				{"name":"version","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "sendMoneyCCWallet",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},

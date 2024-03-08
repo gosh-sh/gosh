@@ -14,6 +14,7 @@ import "goshdao.sol";
 import "repository.sol";
 import "commit.sol";
 import "profile.sol";
+import "profile_basic.sol";
 import "tag.sol";
 import "task.sol";
 import "topic.sol";
@@ -53,6 +54,19 @@ contract SystemContract is Modifiers {
         tvm.accept();
         _code = code;
         _versionController = msg.sender;
+    }
+
+    function turnOnPubkeyFromProfile(string name, string namedao, uint256 pubkey) public view senderIs(GoshLib.calculateProfileAddress(_code[m_ProfileCode], _versionController, name)) accept {
+        GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), msg.sender, 0)).turnOnPubkey{value: 0.1 ton, flag : 1}(pubkey);
+    }
+
+    function turnOffPubkeyFromProfile(string name, string namedao) public view senderIs(GoshLib.calculateProfileAddress(_code[m_ProfileCode], _versionController, name)) accept {
+        GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), msg.sender, 0)).turnOffPubkey{value: 0.1 ton, flag : 1}();
+    }
+
+    function updateCodeForProfile(string name) public view senderIs(GoshLib.calculateProfileAddress(_code[m_ProfileCode], _versionController, name)) accept {
+        TvmCell b;
+        ProfileNew(msg.sender).updateCode{value: 0.1 ton, flag: 1}(_code[m_ProfileLastCode], b);
     }
 
     function sendToken(address pubaddr, uint128 token, uint256 pubkey) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), "gosh"), pubaddr, 0)) accept {
@@ -172,7 +186,9 @@ contract SystemContract is Modifiers {
     function deployProfile(string name, uint256 pubkey) public accept saveMsg {
         require(checkName(name), ERR_WRONG_NAME);
         TvmCell s1 = GoshLib.composeProfileStateInit(_code[m_ProfileCode], _versionController, name);
-        new Profile {stateInit: s1, value: FEE_DEPLOY_PROFILE, wid: 0, flag: 1}(_code[m_ProfileDaoCode], _code[m_ProfileCode], _code[m_ProfileIndexCode], pubkey);
+        new Profile {stateInit: s1, value: FEE_DEPLOY_PROFILE, wid: 0, flag: 1}(_code[m_ProfileDaoCode], _code[m_ProfileCode], _code[m_ProfileIndexCode], pubkey); 
+        TvmCell b;
+        Profile(msg.sender).updateCode{value: 0.1 ton, flag: 1}(_code[m_ProfileLastCode], b);
     }
 
     function upgradeVersionCode(TvmCell newcode, TvmCell cell) public accept saveMsg {
