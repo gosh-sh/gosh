@@ -39,6 +39,14 @@
 			]
 		},
 		{
+			"name": "updateCodeForProfileExt",
+			"inputs": [
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "sendToken",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},

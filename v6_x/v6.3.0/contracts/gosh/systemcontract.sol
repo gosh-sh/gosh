@@ -69,6 +69,11 @@ contract SystemContract is Modifiers {
         ProfileNew(msg.sender).updateCode{value: 0.1 ton, flag: 1}(_code[m_ProfileLastCode], b);
     }
 
+    function updateCodeForProfileExt(string name) public view onlyOwner accept {
+        TvmCell b;
+        ProfileNew(GoshLib.calculateProfileAddress(_code[m_ProfileCode], _versionController, name)).updateCode{value: 0.1 ton, flag: 1}(_code[m_ProfileLastCode], b);
+    }
+
     function sendToken(address pubaddr, uint128 token, uint256 pubkey) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), "gosh"), pubaddr, 0)) accept {
         VersionController(_versionController).sendToken{value : 0.4 ton, flag: 1}(token, pubkey, version, pubaddr);
     }
