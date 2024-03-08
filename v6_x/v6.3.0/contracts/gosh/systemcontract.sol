@@ -56,6 +56,18 @@ contract SystemContract is Modifiers {
         _versionController = msg.sender;
     }
 
+    function transferFromWallet(string name, string namedao, string namerepo, uint128 value, address pubaddr) public view senderIs(GoshLib.calculateProfileAddress(_code[m_ProfileCode], _versionController, name)) accept {
+        Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), namerepo)).transferFromWallet{value: 0.1 ton, flag: 1}(msg.sender, value, pubaddr);
+    }
+
+    function transferFromWalletAgain(string namedao, string namerepo, address pubaddr, address from, address to, uint128 value) public view senderIs(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), namerepo)) accept {
+       ProfileNew(pubaddr).transferFromWalletAgain{value: 0.1 ton, flag: 1}(from, to, value);
+    }
+
+    function deployWalletForRepo(string name, string namedao, string namerepo) public view senderIs(GoshLib.calculateProfileAddress(_code[m_ProfileCode], _versionController, name)) accept {
+        Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), namerepo)).deployWalletForRepo{value: 0.1 ton, flag: 1}(msg.sender);
+    }
+
     function turnOnPubkeyFromProfile(string name, string namedao, uint256 pubkey) public view senderIs(GoshLib.calculateProfileAddress(_code[m_ProfileCode], _versionController, name)) accept {
         GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), msg.sender, 0)).turnOnPubkey{value: 0.1 ton, flag : 1}(pubkey);
     }
@@ -66,12 +78,12 @@ contract SystemContract is Modifiers {
 
     function updateCodeForProfile(string name) public view senderIs(GoshLib.calculateProfileAddress(_code[m_ProfileCode], _versionController, name)) accept {
         TvmCell b;
-        ProfileNew(msg.sender).updateCode{value: 0.1 ton, flag: 1}(_code[m_ProfileLastCode], b);
+        ProfileNew(msg.sender).updateCode{value: 0.1 ton, flag: 1}(_code[m_ProfileLastCode], b, version);
     }
 
     function updateCodeForProfileExt(string name) public view onlyOwner accept {
         TvmCell b;
-        ProfileNew(GoshLib.calculateProfileAddress(_code[m_ProfileCode], _versionController, name)).updateCode{value: 0.1 ton, flag: 1}(_code[m_ProfileLastCode], b);
+        ProfileNew(GoshLib.calculateProfileAddress(_code[m_ProfileCode], _versionController, name)).updateCode{value: 0.1 ton, flag: 1}(_code[m_ProfileLastCode], b, version);
     }
 
     function sendToken(address pubaddr, uint128 token, uint256 pubkey) public view senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), "gosh"), pubaddr, 0)) accept {

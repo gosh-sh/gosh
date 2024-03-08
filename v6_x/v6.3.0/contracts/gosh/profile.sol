@@ -17,9 +17,25 @@ import "systemcontract.sol";
 import "goshdao.sol";
 import "profiledao.sol";
 import "profileindex.sol";
+import "./smv/External/tip3/TokenRoot.sol";
+
+struct MessageProfileNew {
+    uint128 index;
+    uint128 expiredAt;
+    uint32 mask;
+    uint8 signsReceived;
+    optional(uint256) pubkey;
+    optional(address) walletsystemcontract;
+    optional(string) name;
+    optional(string) namerepo;
+    optional(address) previous;
+    optional(uint8) newneed;
+    optional(uint128) time;
+    optional(address[]) pubmembers;
+}
 
 contract ProfileNew is Modifiers {
-    string constant version = "1.0.0";
+    string version = "1.0.0";
     mapping(uint8 => TvmCell) _code;
     
     address static _versioncontroller;
@@ -34,7 +50,7 @@ contract ProfileNew is Modifiers {
     bool _flag = false;
     mapping(uint256 => uint8) _owners;
     mapping(uint8 => uint256) _index;
-    mapping(uint64 => MessageProfile) _messages;
+    mapping(uint64 => MessageProfileNew) _messages;
     uint128 constant MAX_CUSTODIANS = 32;
     uint8 _custodians = 1;
     uint8 _needcustodians = 1;
@@ -100,15 +116,16 @@ contract ProfileNew is Modifiers {
         if (_messages[id].index == 4) { _turnOff(_messages[id].name.get()); delete _messages[id]; return; }
         if (_messages[id].index == 5) { _deployDao(_messages[id].walletsystemcontract.get(), _messages[id].name.get(), _messages[id].previous, _messages[id].pubmembers.get()); delete _messages[id]; return; }
         if (_messages[id].index == 7) { _needcustodians = _messages[id].newneed.get(); delete _messages; return; }      
-        if (_messages[id].index == 8) { _expTime = _messages[id].time.get(); delete _messages[id]; return; }         
+        if (_messages[id].index == 8) { _expTime = _messages[id].time.get(); delete _messages[id]; return; }        
+        if (_messages[id].index == 9) { _transferFromWallet(_messages[id].name.get(), _messages[id].namerepo.get(), _messages[id].time.get(), _messages[id].previous.get()); delete _messages[id]; return; }         
     }
     
     function clearExpired(uint64 index) public senderIs(address(this))  accept saveMsg {  
-        MessageProfile obj;   
+        MessageProfileNew obj;   
         if ((index == 0) && (_messages.exists(index) == true)) {
             if (_messages[index].expiredAt < block.timestamp) { delete _messages[index]; }  
         }
-        optional(uint64, MessageProfile) res = _messages.next(index);
+        optional(uint64, MessageProfileNew) res = _messages.next(index);
         if (res.hasValue()) {
             (index, obj) = res.get();
             if (obj.expiredAt < block.timestamp) { delete _messages[index]; }    
@@ -125,10 +142,34 @@ contract ProfileNew is Modifiers {
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(8, block.timestamp + _expTime, mask, 1, null, null, null, null, null, time, null);
+        _messages[_generateId()] = MessageProfileNew(8, block.timestamp + _expTime, mask, 1, null, null, null, null, null, null, time, null);
     }
 
-    
+    function transferFromWallet(string namedao, string namerepo, uint128 value, address pubaddr) public onlyOwnerPubkeyList  accept saveMsg {
+        getMoney();
+        this.clearExpired{value: 0.1 ton, flag: 1}(0);
+        if (_needcustodians == 1) { 
+            _transferFromWallet(namedao, namerepo, value, pubaddr);
+            return; 
+        }
+        uint32 mask;
+        mask = _incMaskValue(mask, _owners[msg.pubkey()]);
+        _messages[_generateId()] = MessageProfileNew(9, block.timestamp + _expTime, mask, 1, null, null, namedao, namerepo, pubaddr, null, value, null);
+    }
+
+    function _transferFromWallet(string namedao, string namerepo, uint128 value, address pubaddr) private view accept {
+        SystemContract(_systemcontract).transferFromWallet{value: 0.1 ton, flag: 1}(_name, namedao, namerepo, value, pubaddr);
+    }
+
+    function transferFromWalletAgain(address from, address to, uint128 value) public view senderIs(_systemcontract) accept {
+        TvmCell b;
+        TokenWallet(from).transfer{value: 0.5 ton, flag: 1}(value, to, FEE_DEPLOY_TOKEN_WALLET, address(this), false, b);
+    }
+
+    function deployWalletForRepo(string namedao, string namerepo) public onlyOwnerPubkeyList  accept saveMsg {
+        SystemContract(_systemcontract).deployWalletForRepo{value: 0.1 ton, flag: 1}(_name, namedao, namerepo);
+    }
+
     function setNewNeedCustodians(uint8 need) public onlyOwnerPubkeyList  accept saveMsg {
         require(_custodians >= need, ERR_BAD_NUMBER_CUSTODIANS);
         getMoney();
@@ -141,7 +182,7 @@ contract ProfileNew is Modifiers {
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(7, block.timestamp + _expTime, mask, 1, null, null, null, null, need, null, null);
+        _messages[_generateId()] = MessageProfileNew(7, block.timestamp + _expTime, mask, 1, null, null, null, null, null, need, null, null);
     }
 
     function addPubkey(uint256 pubkey) public onlyOwnerPubkeyList  accept saveMsg {
@@ -154,7 +195,7 @@ contract ProfileNew is Modifiers {
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(1, block.timestamp + _expTime, mask, 1, pubkey, null, null, null, null, null, null);
+        _messages[_generateId()] = MessageProfileNew(1, block.timestamp + _expTime, mask, 1, pubkey, null, null, null, null, null, null, null);
     }
 
     function deletePubkey(uint256 pubkey) public onlyOwnerPubkeyList  accept saveMsg {
@@ -167,7 +208,7 @@ contract ProfileNew is Modifiers {
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(2, block.timestamp + _expTime, mask, 1, pubkey, null, null, null, null, null, null);
+        _messages[_generateId()] = MessageProfileNew(2, block.timestamp + _expTime, mask, 1, pubkey, null, null, null, null, null, null, null);
     }
     
     function _addPubkey(uint256 pubkey) private  accept  {
@@ -201,7 +242,7 @@ contract ProfileNew is Modifiers {
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(3, block.timestamp + _expTime, mask, 1, pubkey, null, namedao, null, null, null, null);
+        _messages[_generateId()] = MessageProfileNew(3, block.timestamp + _expTime, mask, 1, pubkey, null, namedao, null, null, null, null, null);
     }
     
     function _turnOn(string namedao, uint256 pubkey) private accept {
@@ -223,7 +264,7 @@ contract ProfileNew is Modifiers {
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(4, block.timestamp + _expTime, mask, 1, null, null, namedao, null, null, null, null);
+        _messages[_generateId()] = MessageProfileNew(4, block.timestamp + _expTime, mask, 1, null, null, namedao, null, null, null, null, null);
     }
 
     function deployDao(address systemcontract, string name, address[] pubmem) public onlyOwnerPubkeyList  accept saveMsg {
@@ -236,7 +277,7 @@ contract ProfileNew is Modifiers {
         }
         uint32 mask;
         mask = _incMaskValue(mask, _owners[msg.pubkey()]);
-        _messages[_generateId()] = MessageProfile(5, block.timestamp + _expTime, mask, 1, null, systemcontract, name, null, null, null, pubmem);
+        _messages[_generateId()] = MessageProfileNew(5, block.timestamp + _expTime, mask, 1, null, systemcontract, name, null, null, null, null, pubmem);
     }
     
     function _deployDao(address systemcontract, string name, optional(address) previous, address[] pubmem) private view  accept  {
@@ -279,7 +320,8 @@ contract ProfileNew is Modifiers {
         SystemContract(_systemcontract).updateCodeForProfile{value: 0.1 ton, flag: 1}(_name);
     }
     
-    function updateCode(TvmCell newcode, TvmCell cell) public view senderIs(_systemcontract) accept {
+    function updateCode(TvmCell newcode, TvmCell cell, string newversion) public senderIs(_systemcontract) accept {
+        version = newversion;
         tvm.setcode(newcode);
         tvm.setCurrentCode(newcode);
         onCodeUpgrade(cell);
@@ -334,7 +376,7 @@ contract ProfileNew is Modifiers {
         return GoshLib.buildProfileIndexCode(_code[m_ProfileIndexCode], pubkey, _versioncontroller, version);
     }
     
-    function getMessages() external view returns(mapping(uint64 => MessageProfile)){
+    function getMessages() external view returns(mapping(uint64 => MessageProfileNew)){
         return _messages;
     }
     

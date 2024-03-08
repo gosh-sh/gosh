@@ -22,6 +22,7 @@ import "../profiledao.sol";
 import "../grant.sol";
 import "../tagsupply.sol";
 import "../ccwallet.sol";
+import "../smv/External/tip3/TokenRoot.sol";
 
 contract IRootToken {
     bool static __uninitialized;
@@ -51,6 +52,23 @@ contract IRootToken {
 
 library GoshLib {
     string constant versionLib = "6.3.0";
+
+    function calculateRepoRootWalletAddress(TvmCell code, address root, address walletowner) public returns(address) {
+        TvmCell s1 = composeRepoWalletInitData(code, root, walletowner);
+        return address.makeAddrStd(0, tvm.hash(s1));
+    }
+
+    function composeRepoWalletInitData(TvmCell code, address root, address walletowner) private returns (TvmCell) {
+        return tvm.buildStateInit({
+            contr: TokenWallet,
+            varInit: {
+                root_: root,
+                owner_: walletowner
+            },
+            pubkey: 0,
+            code: code
+        });
+    }
 
 //ROOT PART
     function calculateRootAddress(TvmCell code, RootData root, uint256 pubkey, address receiver) public returns(address) {

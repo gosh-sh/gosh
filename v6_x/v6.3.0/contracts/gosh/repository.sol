@@ -137,7 +137,7 @@ contract Repository is Modifiers{
 
     function startGrantToken(Grants[] tokengrants, uint128 index) public senderIs(this) accept {
         if (index >= tokengrants.length) { return; }      
-//        TokenRoot(_tokenroot).deployWallet{value: 0.1 ton, flag: 1}(tokengrants[index].pubkey, tokengrants[index].value);
+        TokenRoot(_tokenroot.get()).deployWallet{value: FEE_DEPLOY_TOKEN_WALLET + 0.2 ton, flag: 1, callback: Repository.getWalletAddr}(tokengrants[index].pubaddr, tokengrants[index].value);
         if (_supply.hasValue() == false) {
             _supply = tokengrants[index].value;
         }
@@ -145,6 +145,20 @@ contract Repository is Modifiers{
             _supply = _supply.get() + tokengrants[index].value;
         }
         this.startGrantToken{value: 0.1 ton, flag: 1}(tokengrants, index + 1);
+    }
+
+    function getWalletAddr(address wallet) public view senderIs(_tokenroot.get()) accept {
+        wallet;
+    }
+
+    function transferFromWallet(address pubaddr, uint128 value, address pubaddr2) public view senderIs(_systemcontract) accept {
+        address to = GoshLib.calculateRepoRootWalletAddress(_code[m_TokenRepoWalletCode], _tokenroot.get(), pubaddr2);
+        address from = GoshLib.calculateRepoRootWalletAddress(_code[m_TokenRepoWalletCode], _tokenroot.get(), pubaddr);
+        SystemContract(_systemcontract).transferFromWalletAgain{value: 0.1 ton, flag: 1}(_nameDao, _name, pubaddr, from, to, value);
+    }
+
+    function deployWalletForRepo(address pubaddr) public view senderIs(_systemcontract) accept {
+        TokenRoot(_tokenroot.get()).deployWallet{value: FEE_DEPLOY_TOKEN_WALLET + 0.2 ton, flag: 1, callback: Repository.getWalletAddr}(pubaddr, 0);
     }
 
     function checkUpdateRepo4(AddrVersion prev, address answer) public view senderIs(_systemcontract) accept {

@@ -61,6 +61,36 @@
 			]
 		},
 		{
+			"name": "transferFromWallet",
+			"inputs": [
+				{"name":"namedao","type":"string"},
+				{"name":"namerepo","type":"string"},
+				{"name":"value","type":"uint128"},
+				{"name":"pubaddr","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "transferFromWalletAgain",
+			"inputs": [
+				{"name":"from","type":"address"},
+				{"name":"to","type":"address"},
+				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployWalletForRepo",
+			"inputs": [
+				{"name":"namedao","type":"string"},
+				{"name":"namerepo","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setNewNeedCustodians",
 			"inputs": [
 				{"name":"need","type":"uint8"}
@@ -147,7 +177,8 @@
 			"name": "updateCode",
 			"inputs": [
 				{"name":"newcode","type":"cell"},
-				{"name":"cell","type":"cell"}
+				{"name":"cell","type":"cell"},
+				{"name":"newversion","type":"string"}
 			],
 			"outputs": [
 			]
@@ -191,7 +222,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"components":[{"name":"index","type":"uint128"},{"name":"expiredAt","type":"uint128"},{"name":"mask","type":"uint32"},{"name":"signsReceived","type":"uint8"},{"name":"pubkey","type":"optional(uint256)"},{"name":"walletsystemcontract","type":"optional(address)"},{"name":"name","type":"optional(string)"},{"name":"previous","type":"optional(address)"},{"name":"newneed","type":"optional(uint8)"},{"name":"time","type":"optional(uint128)"},{"name":"pubmembers","type":"optional(address[])"}],"name":"value0","type":"map(uint64,tuple)"}
+				{"components":[{"name":"index","type":"uint128"},{"name":"expiredAt","type":"uint128"},{"name":"mask","type":"uint32"},{"name":"signsReceived","type":"uint8"},{"name":"pubkey","type":"optional(uint256)"},{"name":"walletsystemcontract","type":"optional(address)"},{"name":"name","type":"optional(string)"},{"name":"namerepo","type":"optional(string)"},{"name":"previous","type":"optional(address)"},{"name":"newneed","type":"optional(uint8)"},{"name":"time","type":"optional(uint128)"},{"name":"pubmembers","type":"optional(address[])"}],"name":"value0","type":"map(uint64,tuple)"}
 			]
 		},
 		{
@@ -258,6 +289,7 @@
 		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
 		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
 		{"name":"__value","type":"uint256"},
+		{"name":"version","type":"string"},
 		{"name":"_code","type":"map(uint8,cell)"},
 		{"name":"_versioncontroller","type":"address"},
 		{"name":"_name","type":"string"},
@@ -265,7 +297,7 @@
 		{"name":"_flag","type":"bool"},
 		{"name":"_owners","type":"map(uint256,uint8)"},
 		{"name":"_index","type":"map(uint8,uint256)"},
-		{"components":[{"name":"index","type":"uint128"},{"name":"expiredAt","type":"uint128"},{"name":"mask","type":"uint32"},{"name":"signsReceived","type":"uint8"},{"name":"pubkey","type":"optional(uint256)"},{"name":"walletsystemcontract","type":"optional(address)"},{"name":"name","type":"optional(string)"},{"name":"previous","type":"optional(address)"},{"name":"newneed","type":"optional(uint8)"},{"name":"time","type":"optional(uint128)"},{"name":"pubmembers","type":"optional(address[])"}],"name":"_messages","type":"map(uint64,tuple)"},
+		{"components":[{"name":"index","type":"uint128"},{"name":"expiredAt","type":"uint128"},{"name":"mask","type":"uint32"},{"name":"signsReceived","type":"uint8"},{"name":"pubkey","type":"optional(uint256)"},{"name":"walletsystemcontract","type":"optional(address)"},{"name":"name","type":"optional(string)"},{"name":"namerepo","type":"optional(string)"},{"name":"previous","type":"optional(address)"},{"name":"newneed","type":"optional(uint8)"},{"name":"time","type":"optional(uint128)"},{"name":"pubmembers","type":"optional(address[])"}],"name":"_messages","type":"map(uint64,tuple)"},
 		{"name":"_custodians","type":"uint8"},
 		{"name":"_needcustodians","type":"uint8"},
 		{"name":"_expTime","type":"uint128"},
