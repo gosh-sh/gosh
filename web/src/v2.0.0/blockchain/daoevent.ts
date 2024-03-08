@@ -1,14 +1,14 @@
 import { TonClient } from '@eversdk/core'
-import { BaseContract } from '../../blockchain/contract'
-import SmvEventABI from './abi/smvproposal.abi.json'
-import { DaoEventType, MAX_PARALLEL_READ, SYSTEM_TAG } from '../../constants'
-import { DaoWallet } from './daowallet'
-import { EDaoEventType } from '../../types/common.types'
-import { GoshError } from '../../errors'
-import { executeByChunk, sleep } from '../../utils'
-import { AppConfig } from '../../appconfig'
 import _ from 'lodash'
+import { BaseContract } from '../../blockchain/contract'
+import { DaoEventType, MAX_PARALLEL_READ, SYSTEM_TAG } from '../../constants'
+import { GoshError } from '../../errors'
+import { EDaoEventType } from '../../types/common.types'
+import { executeByChunk, sleep } from '../../utils'
 import { TDaoEventReviewer, TTaskGrantPair } from '../types/dao.types'
+import SmvEventABI from './abi/smvproposal.abi.json'
+import { DaoWallet } from './daowallet'
+import { getSystemContract } from './helpers'
 
 export class DaoEvent extends BaseContract {
   constructor(client: TonClient, address: string) {
@@ -147,11 +147,12 @@ export class DaoEvent extends BaseContract {
   }
 
   async parseMemberAddEventParams(data: any) {
+    const sc = getSystemContract()
     const members = await executeByChunk<string, any>(
       data.pubaddr,
       MAX_PARALLEL_READ,
       async (item: any) => {
-        const profile = await AppConfig.goshroot.getUserProfile({
+        const profile = await sc.getUserProfile({
           address: item.member,
         })
         return {
@@ -165,11 +166,12 @@ export class DaoEvent extends BaseContract {
   }
 
   async parseMemberDeleteEventParams(data: any) {
+    const sc = getSystemContract()
     const members = await executeByChunk<string, any>(
       data.pubaddr,
       MAX_PARALLEL_READ,
       async (address) => {
-        const profile = await AppConfig.goshroot.getUserProfile({ address })
+        const profile = await sc.getUserProfile({ address })
         return {
           username: await profile.getName(),
           profile: address,
@@ -180,11 +182,12 @@ export class DaoEvent extends BaseContract {
   }
 
   async parseMemberUpdateEventParams(data: any) {
+    const sc = getSystemContract()
     const members = await executeByChunk<string, any>(
       data.pubaddr,
       MAX_PARALLEL_READ,
       async (address, index) => {
-        const profile = await AppConfig.goshroot.getUserProfile({ address })
+        const profile = await sc.getUserProfile({ address })
         return {
           username: await profile.getName(),
           profile: address,
@@ -201,7 +204,8 @@ export class DaoEvent extends BaseContract {
   }
 
   async parseAddVotingTokensEventParams(data: any) {
-    const profile = await AppConfig.goshroot.getUserProfile({ address: data.pubaddr })
+    const sc = getSystemContract()
+    const profile = await sc.getUserProfile({ address: data.pubaddr })
     const username = await profile.getName()
     return {
       ...data,
@@ -211,7 +215,8 @@ export class DaoEvent extends BaseContract {
   }
 
   async parseAddRegularTokensEventParams(data: any) {
-    const profile = await AppConfig.goshroot.getUserProfile({ address: data.pubaddr })
+    const sc = getSystemContract()
+    const profile = await sc.getUserProfile({ address: data.pubaddr })
     const username = await profile.getName()
     return {
       ...data,

@@ -1,11 +1,11 @@
 import { KeyPair, TonClient } from '@eversdk/core'
 import _ from 'lodash'
 import { BaseContract } from '../../blockchain/contract'
-import { UserProfile } from '../../blockchain/userprofile'
 import { TDaoDetailsMemberItem } from '../types/dao.types'
 import DaoABI from './abi/dao.abi.json'
 import { DaoEvent } from './daoevent'
 import { DaoWallet } from './daowallet'
+import { UserProfile } from './userprofile'
 
 export class Dao extends BaseContract {
   constructor(client: TonClient, address: string) {

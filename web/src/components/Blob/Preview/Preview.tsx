@@ -9,7 +9,6 @@ import { toast } from 'react-toastify'
 import rehypeRaw from 'rehype-raw'
 import remarkGfm from 'remark-gfm'
 import { useBlobComments } from '../../../hooks/codecomment.hooks'
-import { TDaoLayoutOutletContext } from '../../../pages/DaoLayout'
 import { ToastError } from '../../Toast'
 import LineContent from './LineContent'
 import LineNumber from './LineNumber'
@@ -32,7 +31,7 @@ const BlobPreview = (props: TBlobPreviewProps) => {
     className,
     commentsOn = false,
   } = props
-  const { dao } = useOutletContext<TDaoLayoutOutletContext>()
+  const { dao } = useOutletContext<any>()
   const {
     threads,
     selectedLines,

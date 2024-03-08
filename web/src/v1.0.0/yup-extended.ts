@@ -1,8 +1,8 @@
 import { debounce } from 'lodash'
 import * as yup from 'yup'
 import { AnyObject, Maybe } from 'yup/lib/types'
-import { validateDaoName, validateRepoName, validateUsername } from './validators'
 import { AppConfig } from '../appconfig'
+import { validateDaoName, validateRepoName, validateUsername } from './validators'
 
 const _debounceDaoExists = debounce(async (value, resolve) => {
   try {
@@ -40,7 +40,7 @@ yup.addMethod<yup.StringSchema>(yup.string, 'daoname', function () {
 })
 
 yup.addMethod<yup.StringSchema>(yup.string, 'daoexists', function () {
-  return this.test('test-daoexists', 'DAO name is already taken', async (value) => {
+  return this.test('test-daoexists', 'DAO name is already taken', (value) => {
     if (!value) {
       return true
     }

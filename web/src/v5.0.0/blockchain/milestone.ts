@@ -1,6 +1,8 @@
 import { TonClient } from '@eversdk/core'
+import _ from 'lodash'
 import { BaseContract } from '../../blockchain/contract'
-import MilestoneABI from './abi/milestone.abi.json'
+import { MILESTONE_TAG } from '../../constants'
+import { executeByChunk } from '../../utils'
 import {
   EDaoMemberType,
   TMilestoneTaskDetails,
@@ -9,11 +11,8 @@ import {
   TTaskGrantPair,
   TTaskGrantTotal,
 } from '../types/dao.types'
-import { MILESTONE_TAG } from '../../constants'
+import MilestoneABI from './abi/milestone.abi.json'
 import { getSystemContract } from './helpers'
-import _ from 'lodash'
-import { AppConfig } from '../../appconfig'
-import { executeByChunk } from '../../utils'
 
 export class Milestone extends BaseContract {
   constructor(client: TonClient, address: string) {
@@ -71,7 +70,7 @@ export class Milestone extends BaseContract {
       },
     )
 
-    const manager = await AppConfig.goshroot.getUserProfile({
+    const manager = await sc.getUserProfile({
       address: Object.keys(data.candidates[0].pubaddrmanager)[0],
     })
     const team: TTaskDetails['team'] = {

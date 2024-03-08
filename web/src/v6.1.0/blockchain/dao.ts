@@ -1,12 +1,12 @@
 import { KeyPair, TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
-import DaoABI from './abi/dao.abi.json'
-import { EDaoMemberType, TDaoDetailsMemberItem } from '../types/dao.types'
-import { UserProfile } from '../../blockchain/userprofile'
-import { DaoWallet } from './daowallet'
-import { DaoEvent } from './daoevent'
-import { getDaoOrProfile } from './helpers'
 import { GoshError } from '../../errors'
+import { EDaoMemberType, TDaoDetailsMemberItem } from '../types/dao.types'
+import DaoABI from './abi/dao.abi.json'
+import { DaoEvent } from './daoevent'
+import { DaoWallet } from './daowallet'
+import { getDaoOrProfile } from './helpers'
+import { UserProfile } from './userprofile'
 
 export class Dao extends BaseContract {
   constructor(client: TonClient, address: string) {

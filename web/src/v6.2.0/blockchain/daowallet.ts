@@ -1,7 +1,6 @@
 import { KeyPair, ResultOfProcessMessage, TonClient } from '@eversdk/core'
 import { AppConfig } from '../../appconfig'
 import { BaseContract } from '../../blockchain/contract'
-import { UserProfile } from '../../blockchain/userprofile'
 import {
   MAX_PARALLEL_READ,
   MILESTONE_TAG,
@@ -17,6 +16,7 @@ import WalletABI from './abi/daowallet.abi.json'
 import { SmvClient } from './smvclient'
 import { SmvLocker } from './smvlocker'
 import { GoshShapshot } from './snapshot'
+import { UserProfile } from './userprofile'
 
 export class DaoWallet extends BaseContract {
   constructor(client: TonClient, address: string, keys?: KeyPair) {

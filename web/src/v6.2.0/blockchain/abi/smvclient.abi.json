@@ -1,184 +1,246 @@
 {
-  "ABI version": 2,
-  "version": "2.3",
-  "header": ["pubkey", "time", "expire"],
-  "functions": [
-    {
-      "name": "initialize",
-      "inputs": [
-        { "name": "success", "type": "bool" },
-        { "name": "finishTime", "type": "uint32" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "amount_locked",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "uint128" }]
-    },
-    {
-      "name": "performAction",
-      "inputs": [
-        { "name": "amountToLock", "type": "uint128" },
-        { "name": "total_votes_", "type": "uint128" },
-        { "name": "inputCell", "type": "cell" },
-        { "name": "goshdao", "type": "address" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "onProposalVoted",
-      "inputs": [{ "name": "success", "type": "bool" }],
-      "outputs": []
-    },
-    {
-      "name": "_getLockedAmount",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "uint128" }]
-    },
-    {
-      "name": "continueUpdateHead",
-      "inputs": [{ "name": "_platform_id", "type": "uint256" }],
-      "outputs": []
-    },
-    {
-      "name": "isCompletedCallback",
-      "inputs": [
-        { "name": "value0", "type": "uint256" },
-        { "name": "completed", "type": "optional(bool)" },
-        { "name": "value2", "type": "cell" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "updateHead",
-      "inputs": [],
-      "outputs": []
-    },
-    {
-      "name": "setRightBro",
-      "inputs": [
-        { "name": "answerId", "type": "uint32" },
-        { "name": "_platform_id", "type": "uint256" },
-        { "name": "rb", "type": "optional(address)" },
-        { "name": "ra", "type": "optional(uint128)" }
-      ],
-      "outputs": [{ "name": "value0", "type": "uint256" }]
-    },
-    {
-      "name": "setLeftBro",
-      "inputs": [
-        { "name": "answerId", "type": "uint32" },
-        { "name": "_platform_id", "type": "uint256" },
-        { "name": "lb", "type": "optional(address)" }
-      ],
-      "outputs": [{ "name": "value0", "type": "uint256" }]
-    },
-    {
-      "name": "onClientInserted",
-      "inputs": [
-        { "name": "_platform_id", "type": "uint256" },
-        { "name": "leftClient", "type": "optional(address)" },
-        { "name": "rightClient", "type": "optional(address)" },
-        { "name": "rightAmount_", "type": "optional(uint128)" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "nothing",
-      "inputs": [{ "name": "_platform_id", "type": "uint256" }],
-      "outputs": []
-    },
-    {
-      "name": "insertClient",
-      "inputs": [
-        { "name": "_platform_id", "type": "uint256" },
-        { "name": "newClient", "type": "address" },
-        { "name": "amount", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "getLockedAmount",
-      "inputs": [{ "name": "answerId", "type": "uint32" }],
-      "outputs": [{ "name": "value0", "type": "uint128" }]
-    },
-    {
-      "name": "onSetRightBro",
-      "inputs": [{ "name": "_platform_id", "type": "uint256" }],
-      "outputs": []
-    },
-    {
-      "name": "onSetLeftBro",
-      "inputs": [{ "name": "_platform_id", "type": "uint256" }],
-      "outputs": []
-    },
-    {
-      "name": "constructor",
-      "inputs": [],
-      "outputs": []
-    },
-    {
-      "name": "tokenLocker",
-      "inputs": [],
-      "outputs": [{ "name": "tokenLocker", "type": "address" }]
-    },
-    {
-      "name": "platform_id",
-      "inputs": [],
-      "outputs": [{ "name": "platform_id", "type": "uint256" }]
-    },
-    {
-      "name": "leftBro",
-      "inputs": [],
-      "outputs": [{ "name": "leftBro", "type": "optional(address)" }]
-    },
-    {
-      "name": "rightBro",
-      "inputs": [],
-      "outputs": [{ "name": "rightBro", "type": "optional(address)" }]
-    },
-    {
-      "name": "rightAmount",
-      "inputs": [],
-      "outputs": [{ "name": "rightAmount", "type": "optional(uint128)" }]
-    },
-    {
-      "name": "initialized",
-      "inputs": [],
-      "outputs": [{ "name": "initialized", "type": "bool" }]
-    },
-    {
-      "name": "inserted",
-      "inputs": [],
-      "outputs": [{ "name": "inserted", "type": "bool" }]
-    }
-  ],
-  "data": [{ "key": 1, "name": "platform_id", "type": "uint256" }],
-  "events": [],
-  "fields": [
-    { "name": "_pubkey", "type": "uint256" },
-    { "name": "_timestamp", "type": "uint64" },
-    { "name": "_constructorFlag", "type": "bool" },
-    { "name": "tokenLocker", "type": "address" },
-    { "name": "platform_id", "type": "uint256" },
-    { "name": "_isTag", "type": "string[]" },
-    { "name": "_goshdao", "type": "address" },
-    { "name": "_pubaddr", "type": "address" },
-    { "name": "platformCodeHash", "type": "uint256" },
-    { "name": "platformCodeDepth", "type": "uint16" },
-    { "name": "leftBro", "type": "optional(address)" },
-    { "name": "rightBro", "type": "optional(address)" },
-    { "name": "rightAmount", "type": "optional(uint128)" },
-    { "name": "currentHead", "type": "optional(address)" },
-    { "name": "initialized", "type": "bool" },
-    { "name": "inserted", "type": "bool" },
-    { "name": "votes", "type": "optional(cell)" },
-    { "name": "propFinishTime", "type": "uint32" },
-    { "name": "smvProposal", "type": "address" },
-    { "name": "currentChoice", "type": "bool" },
-    { "name": "currentAmount", "type": "uint128" },
-    { "name": "currentCell", "type": "cell" },
-    { "name": "total_votes", "type": "uint128" }
-  ]
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "initialize",
+			"inputs": [
+				{"name":"success","type":"bool"},
+				{"name":"finishTime","type":"uint32"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "amount_locked",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"}
+			]
+		},
+		{
+			"name": "performAction",
+			"inputs": [
+				{"name":"amountToLock","type":"uint128"},
+				{"name":"total_votes_","type":"uint128"},
+				{"name":"inputCell","type":"cell"},
+				{"name":"goshdao","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onProposalVoted",
+			"inputs": [
+				{"name":"success","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "_getLockedAmount",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"}
+			]
+		},
+		{
+			"name": "continueUpdateHead",
+			"inputs": [
+				{"name":"_platform_id","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "isCompletedCallback",
+			"inputs": [
+				{"name":"value0","type":"uint256"},
+				{"name":"completed","type":"optional(bool)"},
+				{"name":"value2","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateHead",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setRightBro",
+			"inputs": [
+				{"name":"answerId","type":"uint32"},
+				{"name":"_platform_id","type":"uint256"},
+				{"name":"rb","type":"optional(address)"},
+				{"name":"ra","type":"optional(uint128)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
+			"name": "setLeftBro",
+			"inputs": [
+				{"name":"answerId","type":"uint32"},
+				{"name":"_platform_id","type":"uint256"},
+				{"name":"lb","type":"optional(address)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
+			"name": "onClientInserted",
+			"inputs": [
+				{"name":"_platform_id","type":"uint256"},
+				{"name":"leftClient","type":"optional(address)"},
+				{"name":"rightClient","type":"optional(address)"},
+				{"name":"rightAmount_","type":"optional(uint128)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "nothing",
+			"inputs": [
+				{"name":"_platform_id","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "insertClient",
+			"inputs": [
+				{"name":"_platform_id","type":"uint256"},
+				{"name":"newClient","type":"address"},
+				{"name":"amount","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getLockedAmount",
+			"inputs": [
+				{"name":"answerId","type":"uint32"}
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"}
+			]
+		},
+		{
+			"name": "onSetRightBro",
+			"inputs": [
+				{"name":"_platform_id","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onSetLeftBro",
+			"inputs": [
+				{"name":"_platform_id","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "constructor",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "tokenLocker",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"tokenLocker","type":"address"}
+			]
+		},
+		{
+			"name": "platform_id",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"platform_id","type":"uint256"}
+			]
+		},
+		{
+			"name": "leftBro",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"leftBro","type":"optional(address)"}
+			]
+		},
+		{
+			"name": "rightBro",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"rightBro","type":"optional(address)"}
+			]
+		},
+		{
+			"name": "rightAmount",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"rightAmount","type":"optional(uint128)"}
+			]
+		},
+		{
+			"name": "initialized",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"initialized","type":"bool"}
+			]
+		},
+		{
+			"name": "inserted",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"inserted","type":"bool"}
+			]
+		}
+	],
+	"data": [
+		{"key":1,"name":"platform_id","type":"uint256"}
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestamp","type":"uint64"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"tokenLocker","type":"address"},
+		{"name":"platform_id","type":"uint256"},
+		{"name":"_isTag","type":"string[]"},
+		{"name":"_goshdao","type":"address"},
+		{"name":"_pubaddr","type":"address"},
+		{"name":"platformCodeHash","type":"uint256"},
+		{"name":"platformCodeDepth","type":"uint16"},
+		{"name":"leftBro","type":"optional(address)"},
+		{"name":"rightBro","type":"optional(address)"},
+		{"name":"rightAmount","type":"optional(uint128)"},
+		{"name":"currentHead","type":"optional(address)"},
+		{"name":"initialized","type":"bool"},
+		{"name":"inserted","type":"bool"},
+		{"name":"votes","type":"optional(cell)"},
+		{"name":"propFinishTime","type":"uint32"},
+		{"name":"smvProposal","type":"address"},
+		{"name":"currentChoice","type":"bool"},
+		{"name":"currentAmount","type":"uint128"},
+		{"name":"currentCell","type":"cell"},
+		{"name":"total_votes","type":"uint128"}
+	]
 }

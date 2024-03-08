@@ -5,7 +5,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { GoshAdapterFactory, sleep } from 'react-gosh'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { AppConfig } from '../../appconfig'
-import { UserProfile } from '../../blockchain/userprofile'
 import { getAllAccounts, getPaginatedAccounts } from '../../blockchain/utils'
 import {
   DAO_TOKEN_TRANSFER_TAG,
@@ -33,6 +32,7 @@ import { getSystemContract } from '../blockchain/helpers'
 import { GoshRepository } from '../blockchain/repository'
 import { SystemContract } from '../blockchain/systemcontract'
 import { Task } from '../blockchain/task'
+import { UserProfile } from '../blockchain/userprofile'
 import {
   daoDetailsSelector,
   daoEventListSelector,
@@ -1351,9 +1351,7 @@ export function useCreateDaoMember() {
             let profile
             const daonames = []
             if (user.type === EDaoMemberType.User) {
-              profile = await AppConfig.goshroot.getUserProfile({
-                username,
-              })
+              profile = await sc.getUserProfile({ username })
               daonames.push(null)
             } else if (user.type === EDaoMemberType.Dao) {
               profile = await sc.getDao({ name: username })
@@ -1476,9 +1474,7 @@ export function useDeleteDaoMember() {
         if (usertype === EDaoMemberType.Dao) {
           profile = await sc.getDao({ name: username.toLowerCase() })
         } else if (usertype === EDaoMemberType.User) {
-          profile = await AppConfig.goshroot.getUserProfile({
-            username: username.toLowerCase(),
-          })
+          profile = await sc.getUserProfile({ username: username.toLowerCase() })
         }
 
         if (!profile || !(await profile.isDeployed())) {
@@ -1615,9 +1611,7 @@ export function useUpdateDaoMember() {
           if (item.usertype === EDaoMemberType.Dao) {
             profile = await sc.getDao({ name: username })
           } else if (item.usertype === EDaoMemberType.User) {
-            profile = await AppConfig.goshroot.getUserProfile({
-              username,
-            })
+            profile = await sc.getUserProfile({ username })
           }
           if (!profile || !(await profile.isDeployed())) {
             throw new GoshError('Profile error', {
@@ -2754,9 +2748,7 @@ export function useSendDaoTokens() {
         if (usertype === EDaoMemberType.Dao) {
           profile = await sc.getDao({ name: username.toLowerCase() })
         } else if (usertype === EDaoMemberType.User) {
-          profile = await AppConfig.goshroot.getUserProfile({
-            username: username.toLowerCase(),
-          })
+          profile = await sc.getUserProfile({ username: username.toLowerCase() })
         }
         if (!profile || !(await profile.isDeployed())) {
           throw new GoshError('Profile error', {
@@ -2884,9 +2876,7 @@ export function useSendMemberTokens() {
           if (usertype === EDaoMemberType.Dao) {
             profile = await sc.getDao({ name: username })
           } else if (usertype === EDaoMemberType.User) {
-            profile = await AppConfig.goshroot.getUserProfile({
-              username: username.toLowerCase(),
-            })
+            profile = await sc.getUserProfile({ username: username.toLowerCase() })
           }
 
           if (!profile || !(await profile.isDeployed())) {

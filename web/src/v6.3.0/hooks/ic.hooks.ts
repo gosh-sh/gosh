@@ -505,7 +505,7 @@ export function useIssueICToken(params: {
           reponame: repo_details.name,
           token: { ...token, description: token },
           grant: recipients.map(({ user, amount }) => ({
-            pubkey: `0x${user.value.address.slice(2)}`,
+            pubaddr: user.value.address,
             amount,
           })),
         },

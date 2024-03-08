@@ -1,9 +1,9 @@
 import { atom, selectorFamily } from 'recoil'
 import { contextVersion } from '../constants'
 import {
-  TUserNotificationSettings,
   TDaoNotificationSettings,
   TUserNotificationList,
+  TUserNotificationSettings,
 } from '../types/notification.types'
 
 export const userSettingsAtom = atom<TUserNotificationSettings>({
@@ -13,6 +13,7 @@ export const userSettingsAtom = atom<TUserNotificationSettings>({
     data: {
       email: null,
       email_enabled: null,
+      app_enabled: null,
     },
   },
 })

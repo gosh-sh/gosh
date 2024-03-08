@@ -1,7 +1,6 @@
 import { KeyPair, ResultOfProcessMessage, TonClient } from '@eversdk/core'
 import { AppConfig } from '../../appconfig'
 import { BaseContract } from '../../blockchain/contract'
-import { UserProfile } from '../../blockchain/userprofile'
 import {
   MAX_PARALLEL_READ,
   MILESTONE_TAG,
@@ -17,6 +16,7 @@ import WalletABI from './abi/daowallet.abi.json'
 import { SmvClient } from './smvclient'
 import { SmvLocker } from './smvlocker'
 import { GoshShapshot } from './snapshot'
+import { UserProfile } from './userprofile'
 
 export class DaoWallet extends BaseContract {
   constructor(client: TonClient, address: string, keys?: KeyPair) {
@@ -1169,7 +1169,7 @@ export class DaoWallet extends BaseContract {
       decimals: number
       description: object
     }
-    grant: { pubkey: string; amount: number }[]
+    grant: { pubaddr: string; amount: number }[]
     reviewers?: string[]
     comment?: string
     cell?: boolean
@@ -1182,7 +1182,7 @@ export class DaoWallet extends BaseContract {
       name: token.name,
       symbol: token.symbol,
       decimals: token.decimals,
-      tokengrants: grant.map(({ pubkey, amount }) => ({ pubkey, value: amount })),
+      tokengrants: grant.map(({ pubaddr, amount }) => ({ pubaddr, value: amount })),
       comment,
     }
 

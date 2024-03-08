@@ -1,5 +1,6 @@
 import { TonClient } from '@eversdk/core'
-import { EGoshError, GoshError } from '../errors'
+import { GoshError } from '../errors'
+import { TSystemContract } from '../types/blockchain.types'
 import { SystemContract as SystemContract1 } from '../v1.0.0/blockchain/systemcontract'
 import { SystemContract as SystemContract2 } from '../v2.0.0/blockchain/systemcontract'
 import { SystemContract as SystemContract3 } from '../v3.0.0/blockchain/systemcontract'
@@ -13,7 +14,6 @@ import { SystemContract as SystemContract6_3 } from '../v6.3.0/blockchain/system
 import VersionControllerABI from './abi/versioncontroller.abi.json'
 import { BaseContract } from './contract'
 import { DaoProfile } from './daoprofile'
-import { UserProfile } from './userprofile'
 import { UserProfileIndex } from './userprofileindex'
 import { getAllAccounts } from './utils'
 
@@ -25,7 +25,7 @@ export class VersionController extends BaseContract {
     this.versions = versions
   }
 
-  getSystemContract(version?: string) {
+  getSystemContract(version?: string): TSystemContract {
     const versions = Object.keys(this.versions)
     version = version || versions[versions.length - 1]
     const address = this.versions[version]
@@ -70,24 +70,6 @@ export class VersionController extends BaseContract {
       { useCachedBoc: true },
     )
     return value0
-  }
-
-  async getUserProfile(params: { username?: string; address?: string }) {
-    const { username, address } = params
-    if (address) {
-      return new UserProfile(this.client, address)
-    }
-
-    if (!username) {
-      throw new GoshError(EGoshError.USER_NAME_UNDEFINED)
-    }
-    const { value0 } = await this.runLocal(
-      'getProfileAddr',
-      { name: username },
-      undefined,
-      { useCachedBoc: true },
-    )
-    return new UserProfile(this.client, value0)
   }
 
   async getUserProfileIndex(params: {

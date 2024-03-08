@@ -14,12 +14,13 @@ import {
 import { AppConfig } from '../../appconfig'
 import { EGoshError, GoshError } from '../../errors'
 import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
-import { userAtom, userPersistAtom, userProfileSelector } from '../../store/user.state'
+import { userAtom, userPersistAtom } from '../../store/user.state'
 import { supabase } from '../../supabase'
 import { TUserPersist } from '../../types/user.types'
 import { validatePhrase } from '../../validators'
 import { getSystemContract } from '../blockchain/helpers'
 import { userSignupAtom } from '../store/signup.state'
+import { userProfileSelector } from '../store/user.state'
 import { EDaoInviteStatus } from '../types/dao.types'
 import { validateOnboardingDao, validateUsername } from '../validators'
 import { useCreateDao } from './dao.hooks'
@@ -74,10 +75,11 @@ export function useUser() {
   }
 
   const signin = async (params: { username: string; phrase: string }) => {
+    const sc = getSystemContract()
     await _validateCredentials(params)
 
     const { username, phrase } = params
-    const profile = await AppConfig.goshroot.getUserProfile({ username })
+    const profile = await sc.getUserProfile({ username })
     if (!(await profile.isDeployed())) {
       throw new GoshError(EGoshError.PROFILE_NOT_EXIST)
     }
@@ -97,11 +99,12 @@ export function useUser() {
   }
 
   const signup = async (params: { username: string; phrase: string }) => {
+    const sc = getSystemContract()
     await _validateCredentials(params)
 
     const { phrase } = params
     const username = params.username.trim().toLowerCase()
-    const profile = await AppConfig.goshroot.getUserProfile({ username })
+    const profile = await sc.getUserProfile({ username })
     if (await profile.isDeployed()) {
       throw new GoshError(
         EGoshError.PROFILE_EXISTS,
@@ -192,12 +195,13 @@ export function useUserSignup(options: { initialize?: boolean } = {}) {
   }
 
   const submitUsernameStep = async (params: { email: string; username: string }) => {
+    const sc = getSystemContract()
     const email = params.email.toLowerCase()
 
     try {
       // Validate username
       const username = params.username.trim().toLowerCase()
-      const profile = await AppConfig.goshroot.getUserProfile({ username })
+      const profile = await sc.getUserProfile({ username })
       if (await profile.isDeployed()) {
         throw new GoshError(EGoshError.PROFILE_EXISTS, `GOSH username is already taken`)
       }

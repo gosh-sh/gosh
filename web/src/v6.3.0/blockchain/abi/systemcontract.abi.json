@@ -12,6 +12,74 @@
 			]
 		},
 		{
+			"name": "transferFromWallet",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"namedao","type":"string"},
+				{"name":"namerepo","type":"string"},
+				{"name":"value","type":"uint128"},
+				{"name":"pubaddr","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "transferFromWalletAgain",
+			"inputs": [
+				{"name":"namedao","type":"string"},
+				{"name":"namerepo","type":"string"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"from","type":"address"},
+				{"name":"to","type":"address"},
+				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployWalletForRepo",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"namedao","type":"string"},
+				{"name":"namerepo","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "turnOnPubkeyFromProfile",
+			"inputs": [
+				{"name":"namedao","type":"string"},
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "turnOffPubkeyFromProfile",
+			"inputs": [
+				{"name":"namedao","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateCodeForProfile",
+			"inputs": [
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateCodeForProfileExt",
+			"inputs": [
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "sendToken",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
