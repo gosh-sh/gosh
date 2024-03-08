@@ -68,12 +68,12 @@ contract SystemContract is Modifiers {
         Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), namerepo)).deployWalletForRepo{value: FEE_DEPLOY_TOKEN_WALLET + 1 ton, flag: 1}(msg.sender);
     }
 
-    function turnOnPubkeyFromProfile(string namedao, uint256 pubkey) public view senderIs(_versionController) accept {
-        GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), msg.sender, 0)).turnOnPubkey{value: 0.1 ton, flag : 1}(pubkey);
+    function turnOnPubkeyFromProfile(address pubaddr, string namedao, uint256 pubkey) public view senderIs(_versionController) accept {
+        GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), pubaddr, 0)).turnOnPubkey{value: 0.1 ton, flag : 1}(pubkey);
     }
 
-    function turnOffPubkeyFromProfile(string namedao) public view senderIs(_versionController) accept {
-        GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), msg.sender, 0)).turnOffPubkey{value: 0.1 ton, flag : 1}();
+    function turnOffPubkeyFromProfile(address pubaddr, string namedao) public view senderIs(_versionController) accept {
+        GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), pubaddr, 0)).turnOffPubkey{value: 0.1 ton, flag : 1}();
     }
 
     function updateCodeForProfile(string name) public view senderIs(GoshLib.calculateProfileAddress(_code[m_ProfileCode], _versionController, name)) accept {

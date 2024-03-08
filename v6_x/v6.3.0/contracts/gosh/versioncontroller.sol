@@ -44,12 +44,12 @@ contract VersionController is Modifiers {
 
     function turnOnPubkeyFromProfile(string name, string namedao, uint256 pubkey, string version) public view senderIs(GoshLib.calculateProfileAddress(_code[m_ProfileCode], address(this), name)) accept {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
-        SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey())).turnOnPubkeyFromProfile{value: 0.1 ton, flag : 1}(namedao, pubkey);
+        SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey())).turnOnPubkeyFromProfile{value: 0.1 ton, flag : 1}(msg.sender, namedao, pubkey);
     }
 
     function turnOffPubkeyFromProfile(string name, string namedao, string version) public view senderIs(GoshLib.calculateProfileAddress(_code[m_ProfileCode], address(this), name)) accept {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
-        SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey())).turnOffPubkeyFromProfile{value: 0.1 ton, flag : 1}(namedao);
+        SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(version)].Value, tvm.pubkey())).turnOffPubkeyFromProfile{value: 0.1 ton, flag : 1}(msg.sender, namedao);
     }
 
     function returnTokenToGosh(uint256 pubkey, address pubaddr, uint128 value, string version) public view senderIs(GoshLib.calculateCCWalletAddress(_code[m_CCWalletCode], address(this), pubkey)) accept {
