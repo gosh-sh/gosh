@@ -2,7 +2,7 @@ import { Field, Form, Formik } from 'formik'
 import { Button } from '../../../../components/Form'
 import { BaseField } from '../../../../components/Formik'
 import { UserSelect } from '../../../components/UserSelect'
-import { useCreateIC } from '../../../hooks/ic.hooks'
+import { useCreateICFlow } from '../../../hooks/ic.hooks'
 import { TUserSelectOption } from '../../../types/form.types'
 import yup from '../../../yup-extended'
 
@@ -13,7 +13,7 @@ type TFormValues = {
 }
 
 const Roles = () => {
-  const { state, submitRoles } = useCreateIC()
+  const { state, submitRoles } = useCreateICFlow()
 
   const onFormSubmit = (values: TFormValues) => {
     submitRoles({ roles: values })

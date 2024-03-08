@@ -54,7 +54,10 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"tokendescription","type":"string"},
-				{"components":[{"name":"pubkey","type":"uint256"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"tuple[]"},
+				{"name":"name","type":"string"},
+				{"name":"symbol","type":"string"},
+				{"name":"decimals","type":"uint8"},
+				{"components":[{"name":"pubaddr","type":"address"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"tuple[]"},
 				{"name":"comment","type":"string"},
 				{"name":"time","type":"optional(uint32)"}
 			],

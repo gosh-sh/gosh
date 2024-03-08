@@ -29,6 +29,7 @@ import { RedeployTaskCompleteEvent } from '../RedeployTaskCompleteEvent/Redeploy
 import { RedeployTaskEvent } from '../RedeployTaskEvent/RedeployTaskEvent'
 import { RepositoryCreateEvent } from '../RepositoryCreateEvent/RepositoryCreateEvent'
 import { RepositoryDescriptionEvent } from '../RepositoryDescriptionEvent/RepositoryDescriptionEvent'
+import { RepositoryIssueTokenEvent } from '../RepositoryIssueTokenEvent/RepositoryIssueTokenEvent'
 import { RepositoryMetadataEvent } from '../RepositoryMetadataEvent/RepositoryMetadataEvent'
 import { RepositoryTagAddEvent } from '../RepositoryTagAddEvent/RepositoryTagAddEvent'
 import { RepositoryTagDeleteEvent } from '../RepositoryTagDeleteEvent/RepositoryTagDeleteEvent'
@@ -156,6 +157,9 @@ const MultiEvent = (props: TMultiEventProps) => {
             )}
             {item.type === EDaoEventType.REPO_UPDATE_METADATA && (
               <RepositoryMetadataEvent key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.REPO_ISSUE_TOKEN && (
+              <RepositoryIssueTokenEvent key={index} data={item.data} />
             )}
           </div>
         ))}

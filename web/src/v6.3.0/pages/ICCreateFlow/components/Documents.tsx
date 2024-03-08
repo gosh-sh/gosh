@@ -1,11 +1,11 @@
 import classNames from 'classnames'
 import { useDropzone } from 'react-dropzone'
 import { Button } from '../../../../components/Form'
-import { useCreateIC } from '../../../hooks/ic.hooks'
+import { useCreateICFlow } from '../../../hooks/ic.hooks'
 import { EICCreateStep } from '../../../types/ic.types'
 
 const Documents = () => {
-  const { state, setStep, sumbitDocuments } = useCreateIC()
+  const { state, setStep, sumbitDocuments } = useCreateICFlow()
   const { getRootProps, getInputProps, isDragActive, acceptedFiles } = useDropzone({
     disabled: false,
     noClick: state.documents.length > 0,

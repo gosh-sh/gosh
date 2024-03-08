@@ -42,7 +42,7 @@ const FieldsEditor = (props: TFieldsEditorProps) => {
       })}
       onSubmit={onFormSubmit}
     >
-      {({ isSubmitting, errors }) => (
+      {({ errors }) => (
         <Form>
           <div>
             <Field
@@ -107,6 +107,7 @@ const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
                   component={FormikInput}
                   placeholder="Field label"
                   autoComplete="off"
+                  disabled={item.static}
                 />
                 {Array.isArray(form.errors.fields) && (
                   <ErrorMessage
@@ -122,6 +123,7 @@ const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
                   name={`fields.${index}.type`}
                   component={FormikSelect}
                   placeholder="Field type"
+                  disabled={item.static}
                 >
                   <option value="text">text</option>
                   <option value="textarea">textarea</option>
@@ -142,6 +144,7 @@ const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
                   name={`fields.${index}.required`}
                   inputProps={{
                     label: 'Required',
+                    disabled: item.static,
                   }}
                 />
               </div>
@@ -150,7 +153,8 @@ const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
                 <Button
                   type="button"
                   variant="custom"
-                  className="!p-1"
+                  className="!p-1 disabled:invisible"
+                  disabled={item.static}
                   onClick={() => remove(index)}
                 >
                   <FontAwesomeIcon icon={faTimes} size="xl" />

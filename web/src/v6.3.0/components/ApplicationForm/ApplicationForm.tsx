@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Dialog } from '@headlessui/react'
 import { Field, Form, Formik, FormikHelpers, FormikProps } from 'formik'
 import React, { ChangeEvent, useRef } from 'react'
-import { useSetRecoilState } from 'recoil'
+import { useRecoilState, useResetRecoilState } from 'recoil'
 import { Button } from '../../../components/Form'
 import { ModalCloseButton } from '../../../components/Modal'
 import { appModalStateAtom } from '../../../store/app.state'
@@ -24,7 +24,8 @@ type TApplicationFormProps = {
 const ApplicationForm = (props: TApplicationFormProps) => {
   const { children, form, onTemplateChange, onValuesChange, onSubmit } = props
   const form_ref = useRef<FormikProps<any>>(null)
-  const setModal = useSetRecoilState(appModalStateAtom)
+  const [modal, setModal] = useRecoilState(appModalStateAtom)
+  const resetModal = useResetRecoilState(appModalStateAtom)
 
   const getFormInitialValues = () => {
     const fields = form.fields.map((field) => [field.name, field.value || ''])
@@ -41,23 +42,44 @@ const ApplicationForm = (props: TApplicationFormProps) => {
     return yup.object().shape(Object.fromEntries(fields))
   }
 
-  const onFormTemplateEditClick = () => {
-    setModal({
-      static: false,
-      isOpen: true,
-      element: (
-        <Dialog.Panel className="relative rounded-xl bg-white p-10 w-full max-w-xl overflow-hidden">
-          <ModalCloseButton />
-          <FieldsEditor
-            form={form}
-            onSubmit={async (updated) => {
-              await onTemplateChange(updated)
-              setModal((state) => ({ ...state, isOpen: false }))
-            }}
-          />
-        </Dialog.Panel>
-      ),
-    })
+  const openFormTemplateEditor = () => {
+    const prev_element = modal.element
+    const show_timeout = prev_element ? 300 : 0
+
+    setModal((state) => ({ ...state, isOpen: false }))
+    setTimeout(() => {
+      setModal({
+        static: true,
+        isOpen: true,
+        element: (
+          <Dialog.Panel className="relative rounded-xl bg-white p-10 w-full max-w-xl overflow-hidden">
+            <ModalCloseButton
+              close_custom
+              onClose={async () => closeFormTemplateEditor(prev_element)}
+            />
+            <FieldsEditor
+              form={form}
+              onSubmit={async (updated) => {
+                await onTemplateChange(updated)
+                closeFormTemplateEditor(prev_element)
+              }}
+            />
+          </Dialog.Panel>
+        ),
+      })
+    }, show_timeout)
+  }
+
+  const closeFormTemplateEditor = (prev_element?: any) => {
+    setModal((state) => ({ ...state, isOpen: false }))
+
+    if (prev_element) {
+      setTimeout(() => {
+        setModal({ static: true, isOpen: true, element: prev_element })
+      }, 300)
+    } else {
+      setTimeout(resetModal, 300)
+    }
   }
 
   const onFieldChange = (e: ChangeEvent<any>) => {
@@ -68,7 +90,7 @@ const ApplicationForm = (props: TApplicationFormProps) => {
     }
   }
 
-  const onFormSubmit = async (values: any, helpers: FormikHelpers<any>) => {
+  const submit = async (values: any, helpers: FormikHelpers<any>) => {
     try {
       await onSubmit(values)
     } catch {
@@ -82,7 +104,7 @@ const ApplicationForm = (props: TApplicationFormProps) => {
       initialValues={getFormInitialValues()}
       validationSchema={getFormValidationSchema()}
       enableReinitialize
-      onSubmit={onFormSubmit}
+      onSubmit={submit}
     >
       {(props) => (
         <ApplicationFormContext.Provider value={{ form, formik: props, onFieldChange }}>
@@ -94,7 +116,7 @@ const ApplicationForm = (props: TApplicationFormProps) => {
                 variant="link-secondary"
                 className="text-xs"
                 disabled={props.isSubmitting}
-                onClick={onFormTemplateEditClick}
+                onClick={openFormTemplateEditor}
               >
                 <FontAwesomeIcon icon={faPencil} className="mr-1" />
                 Edit form
@@ -118,7 +140,7 @@ ApplicationForm.Fields = () => {
         name={field.name}
         label={field.label}
         autoComplete="off"
-        disabled={formik.isSubmitting}
+        disabled={formik.isSubmitting || field.disabled}
         onChange={onFieldChange}
         {...getFormFieldProps(field.type)}
       />

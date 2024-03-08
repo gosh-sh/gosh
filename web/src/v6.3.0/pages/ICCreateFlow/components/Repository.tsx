@@ -1,7 +1,7 @@
 import { Field, Form, Formik } from 'formik'
 import { Button } from '../../../../components/Form'
 import { FormikInput, FormikTextarea } from '../../../../components/Formik'
-import { useCreateIC } from '../../../hooks/ic.hooks'
+import { useCreateICFlow } from '../../../hooks/ic.hooks'
 import { EICCreateStep } from '../../../types/ic.types'
 import yup from '../../../yup-extended'
 
@@ -11,7 +11,7 @@ type TFormValues = {
 }
 
 const Repository = () => {
-  const { state, setStep, submitRepository } = useCreateIC()
+  const { state, setStep, submitRepository } = useCreateICFlow()
 
   const onFormSubmit = (values: TFormValues) => {
     submitRepository(values)

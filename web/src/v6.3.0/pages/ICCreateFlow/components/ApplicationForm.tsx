@@ -3,7 +3,7 @@ import {
   ApplicationForm as ApplicationFormCommon,
   useApplicationFormContext,
 } from '../../../components/ApplicationForm'
-import { useCreateIC } from '../../../hooks/ic.hooks'
+import { useCreateICFlow } from '../../../hooks/ic.hooks'
 import { EICCreateStep } from '../../../types/ic.types'
 
 const ApplicationForm = (props: { index: number }) => {
@@ -14,7 +14,7 @@ const ApplicationForm = (props: { index: number }) => {
     updateApplicationFormFields,
     updateApplicationFormValues,
     submitApplicationForm,
-  } = useCreateIC()
+  } = useCreateICFlow()
   const app_form = state.forms[index]
 
   const onBackClick = () => {

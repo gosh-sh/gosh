@@ -1,6 +1,13 @@
 import isUtf8 from 'isutf8'
 import { useEffect } from 'react'
-import { GoshAdapterFactory, sha1, unixtimeWithTz } from 'react-gosh'
+import {
+  GoshAdapterFactory,
+  TDao,
+  sha1,
+  unixtimeWithTz,
+  useMergeRequest,
+} from 'react-gosh'
+import { IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { useNavigate } from 'react-router-dom'
 import { useRecoilState, useResetRecoilState } from 'recoil'
 import { ZERO_COMMIT } from '../../constants'
@@ -11,22 +18,23 @@ import { readFileAsBuffer } from '../../utils'
 import { getSystemContract } from '../blockchain/helpers'
 import { ic_create_atom } from '../store/ic.state'
 import { TTaskAssignerData } from '../types/dao.types'
-import { EICCreateStep, TICCreateState, TICCreateStateForm } from '../types/ic.types'
-import { useCreateTask, useDao, useDaoMember } from './dao.hooks'
+import { TApplicationForm, TUserSelectOption } from '../types/form.types'
+import { EICCreateStep, TICCreateState } from '../types/ic.types'
+import { useCreateTask, useDao, useDaoHelpers, useDaoMember } from './dao.hooks'
 import { useUser } from './user.hooks'
 
-export function useCreateIC(params: { initialize?: boolean } = {}) {
+export function useCreateICFlow(params: { initialize?: boolean } = {}) {
   const working_branch = 'dev'
   const { initialize } = params
-
   const [state, setState] = useRecoilState(ic_create_atom)
   const resetState = useResetRecoilState(ic_create_atom)
   const navigate = useNavigate()
+  const { beforeCreateEvent } = useDaoHelpers()
   const { getCalculatedGrant } = useCreateTask()
   const { user } = useUser()
   const dao = useDao()
   const member = useDaoMember()
-  const [status, setStatus] = useRecoilState(appToastStatusSelector('__createic'))
+  const [status, setStatus] = useRecoilState(appToastStatusSelector('__createicflow'))
 
   const setStep = (step: EICCreateStep, params?: Object) => {
     setState((state) => ({ ...state, step: { name: step, params: params || {} } }))
@@ -63,7 +71,7 @@ export function useCreateIC(params: { initialize?: boolean } = {}) {
     }))
   }
 
-  const updateApplicationFormFields = (form: TICCreateStateForm, index: number) => {
+  const updateApplicationFormFields = (form: TApplicationForm, index: number) => {
     setState((state) => ({
       ...state,
       forms: state.forms.map((f, i) => (i !== index ? f : form)),
@@ -109,9 +117,18 @@ export function useCreateIC(params: { initialize?: boolean } = {}) {
   }
 
   const submitFlow = async () => {
-    const branch_name = 'dev'
-
     try {
+      // Prepare balance for create event
+      await beforeCreateEvent(20, { onPendingCallback: setStatus })
+
+      // Get create task cell params
+      setStatus((state) => ({
+        ...state,
+        type: 'pending',
+        data: 'Generate create task cell',
+      }))
+      const create_task_params = await _getCreateTaskCellParams()
+
       // Get create repository cell params
       setStatus((state) => ({
         ...state,
@@ -126,15 +143,9 @@ export function useCreateIC(params: { initialize?: boolean } = {}) {
         type: 'pending',
         data: 'Generate update repository metadata cell',
       }))
-      const update_repo_metadata_params = await _getUpdateRepositoryMetadataCellParams()
-
-      // Get create task cell params
-      setStatus((state) => ({
-        ...state,
-        type: 'pending',
-        data: 'Generate create task cell',
-      }))
-      const create_task_params = await _getCreateTaskCellParams()
+      const update_repo_metadata_params = await _getUpdateRepositoryMetadataCellParams({
+        task_addr: create_task_params.address,
+      })
 
       // Push commit and get PR cell params
       setStatus((state) => ({
@@ -154,7 +165,7 @@ export function useCreateIC(params: { initialize?: boolean } = {}) {
         proposals: [
           ...create_repo_params,
           update_repo_metadata_params,
-          create_task_params,
+          create_task_params.cell_params,
           { type: EDaoEventType.DELAY, params: {} },
           push_repo_params,
         ],
@@ -223,7 +234,10 @@ export function useCreateIC(params: { initialize?: boolean } = {}) {
     ]
   }
 
-  const _getUpdateRepositoryMetadataCellParams = async () => {
+  const _getUpdateRepositoryMetadataCellParams = async (params: {
+    task_addr: string
+  }) => {
+    const { task_addr } = params
     const { repository, roles } = state
 
     if (!repository) {
@@ -235,13 +249,17 @@ export function useCreateIC(params: { initialize?: boolean } = {}) {
       params: {
         reponame: repository.name,
         metadata: {
-          ic: true,
-          roles: {
-            scientist: roles.scientist.map(({ value }) => value.address),
-            developer: roles.developer.map(({ value }) => value.address),
-            issuer: roles.issuer.map(({ value }) => value.address),
+          token_issue: {
+            ic: true,
+            ic_roles: {
+              scientist: roles.scientist.map(({ value }) => value.address),
+              developer: roles.developer.map(({ value }) => value.address),
+              issuer: roles.issuer.map(({ value }) => value.address),
+            },
+            ic_task: task_addr,
           },
-          working_branch,
+          forms: true,
+          forms_branch: working_branch,
         },
       },
     }
@@ -291,14 +309,17 @@ export function useCreateIC(params: { initialize?: boolean } = {}) {
     }
 
     return {
-      type: EDaoEventType.TASK_CREATE,
-      params: {
-        reponame: repository.name,
-        taskname: task.name,
-        config: grant,
-        team,
-        tags: [],
-        comment: task.comment,
+      address: account.address,
+      cell_params: {
+        type: EDaoEventType.TASK_CREATE,
+        params: {
+          reponame: repository.name,
+          taskname: task.name,
+          config: grant,
+          team,
+          tags: [],
+          comment: task.comment,
+        },
       },
     }
   }
@@ -444,4 +465,159 @@ export function useCreateIC(params: { initialize?: boolean } = {}) {
     submitApplicationForm,
     submitFlow,
   }
+}
+
+export function useIssueICToken(params: {
+  dao_details: TDao
+  repo_adapter: IGoshRepositoryAdapter
+}) {
+  const { dao_details, repo_adapter } = params
+  const member = useDaoMember()
+  const { beforeCreateEvent } = useDaoHelpers()
+  const { build, push } = useMergeRequest(dao_details, repo_adapter, {})
+  const [status, setStatus] = useRecoilState(appToastStatusSelector('__issueictoken'))
+
+  const issue = async (params: {
+    token: { name: string; symbol: string; decimals: number }
+    recipients: { user: TUserSelectOption; amount: string }[]
+  }) => {
+    const { token, recipients } = params
+
+    try {
+      const sc = getSystemContract()
+      const repo_details = await repo_adapter.getDetails()
+      if (!repo_details.metadata) {
+        throw new GoshError('RepositoryMetadata', 'Metadata is undefined')
+      }
+
+      // Prepare balance for create event
+      await beforeCreateEvent(20, { onPendingCallback: setStatus })
+
+      // Prepare token issue event params
+      setStatus((state) => ({
+        ...state,
+        type: 'pending',
+        data: 'Prepare token issue params',
+      }))
+      const issue_token_params = {
+        type: EDaoEventType.REPO_ISSUE_TOKEN,
+        params: {
+          reponame: repo_details.name,
+          token: { ...token, description: token },
+          grant: recipients.map(({ user, amount }) => ({
+            pubkey: `0x${user.value.address.slice(2)}`,
+            amount,
+          })),
+        },
+      }
+
+      // Prepare task data
+      setStatus((state) => ({
+        ...state,
+        type: 'pending',
+        data: 'Prepare task complete params',
+      }))
+      const task_account = await sc.getTask({
+        address: repo_details.metadata.token_issue.ic_task,
+      })
+      const task_details = await task_account.getDetails()
+      if (!task_details.team) {
+        throw new GoshError('TaskData', 'Team is undefined')
+      }
+
+      const task_config = {
+        task: task_details.name,
+        assigners: task_details.team.assigners.map(({ username, usertype }) => ({
+          name: username,
+          type: usertype,
+        })),
+        reviewers: task_details.team.reviewers.map(({ username, usertype }) => ({
+          name: username,
+          type: usertype,
+        })),
+        managers: task_details.team.managers.map(({ username, usertype }) => ({
+          name: username,
+          type: usertype,
+        })),
+      }
+
+      // Generate branches diff
+      setStatus((state) => ({
+        ...state,
+        type: 'pending',
+        data: 'Build branches diff',
+      }))
+      const { src_branch, diff_items } = await build(
+        repo_details.metadata.forms_branch,
+        'main',
+      )
+
+      // Push commit without setCommit and get event params
+      setStatus((state) => ({
+        ...state,
+        type: 'pending',
+        data: 'Push changes',
+      }))
+      const _set_commit_params: any = await push('Complete issue token task', {
+        isPullRequest: true,
+        task: task_config,
+        src_branch,
+        diff_items,
+        cell: true,
+      })
+      const set_commit_params = {
+        type: EDaoEventType.PULL_REQUEST,
+        params: {
+          repo_name: repo_details.name,
+          branch_name: _set_commit_params.branchName,
+          commit_name: _set_commit_params.commit,
+          num_files: _set_commit_params.numberChangedFiles,
+          num_commits: _set_commit_params.numberCommits,
+          task: _set_commit_params.task,
+          comment: 'Complete IC issue token task',
+        },
+      }
+
+      // Update repository metadata params
+      setStatus((state) => ({
+        ...state,
+        type: 'pending',
+        data: 'Prepare update repository metadata params',
+      }))
+      const update_metadata_params = {
+        type: EDaoEventType.REPO_UPDATE_METADATA,
+        params: {
+          reponame: repo_details.name,
+          metadata: { ...repo_details.metadata, token_issued: true },
+        },
+      }
+
+      // Create multi event
+      setStatus((state) => ({
+        ...state,
+        type: 'pending',
+        data: 'Create DAO event',
+      }))
+      const eventaddr = await member.wallet!.createMultiEvent({
+        proposals: [set_commit_params, issue_token_params, update_metadata_params],
+        comment: `Issue IC token`,
+      })
+
+      setStatus((state) => ({
+        ...state,
+        type: 'success',
+        data: {
+          title: 'Issue IC token',
+          content: 'DAO event created',
+        },
+      }))
+
+      return { eventaddr }
+    } catch (e: any) {
+      setStatus((state) => ({ ...state, type: 'error', data: e }))
+      throw e
+    }
+  }
+
+  return { status, issue }
 }
