@@ -28,6 +28,27 @@
 			]
 		},
 		{
+			"name": "turnOnPubkeyFromProfile",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"namedao","type":"string"},
+				{"name":"pubkey","type":"uint256"},
+				{"name":"version","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "turnOffPubkeyFromProfile",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"namedao","type":"string"},
+				{"name":"version","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "returnTokenToGosh",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},

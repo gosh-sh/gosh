@@ -118,7 +118,8 @@
 			"name": "turnOn",
 			"inputs": [
 				{"name":"namedao","type":"string"},
-				{"name":"pubkey","type":"uint256"}
+				{"name":"pubkey","type":"uint256"},
+				{"name":"versionwallet","type":"string"}
 			],
 			"outputs": [
 			]
@@ -126,7 +127,8 @@
 		{
 			"name": "turnOff",
 			"inputs": [
-				{"name":"namedao","type":"string"}
+				{"name":"namedao","type":"string"},
+				{"name":"versionwallet","type":"string"}
 			],
 			"outputs": [
 			]
@@ -222,7 +224,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"components":[{"name":"index","type":"uint128"},{"name":"expiredAt","type":"uint128"},{"name":"mask","type":"uint32"},{"name":"signsReceived","type":"uint8"},{"name":"pubkey","type":"optional(uint256)"},{"name":"walletsystemcontract","type":"optional(address)"},{"name":"name","type":"optional(string)"},{"name":"namerepo","type":"optional(string)"},{"name":"previous","type":"optional(address)"},{"name":"newneed","type":"optional(uint8)"},{"name":"time","type":"optional(uint128)"},{"name":"pubmembers","type":"optional(address[])"}],"name":"value0","type":"map(uint64,tuple)"}
+				{"components":[{"name":"index","type":"uint128"},{"name":"expiredAt","type":"uint128"},{"name":"mask","type":"uint32"},{"name":"signsReceived","type":"uint8"},{"name":"pubkey","type":"optional(uint256)"},{"name":"walletsystemcontract","type":"optional(address)"},{"name":"name","type":"optional(string)"},{"name":"namerepo","type":"optional(string)"},{"name":"previous","type":"optional(address)"},{"name":"newneed","type":"optional(uint8)"},{"name":"time","type":"optional(uint128)"},{"name":"pubmembers","type":"optional(address[])"},{"name":"version","type":"optional(string)"}],"name":"value0","type":"map(uint64,tuple)"}
 			]
 		},
 		{
@@ -297,7 +299,7 @@
 		{"name":"_flag","type":"bool"},
 		{"name":"_owners","type":"map(uint256,uint8)"},
 		{"name":"_index","type":"map(uint8,uint256)"},
-		{"components":[{"name":"index","type":"uint128"},{"name":"expiredAt","type":"uint128"},{"name":"mask","type":"uint32"},{"name":"signsReceived","type":"uint8"},{"name":"pubkey","type":"optional(uint256)"},{"name":"walletsystemcontract","type":"optional(address)"},{"name":"name","type":"optional(string)"},{"name":"namerepo","type":"optional(string)"},{"name":"previous","type":"optional(address)"},{"name":"newneed","type":"optional(uint8)"},{"name":"time","type":"optional(uint128)"},{"name":"pubmembers","type":"optional(address[])"}],"name":"_messages","type":"map(uint64,tuple)"},
+		{"components":[{"name":"index","type":"uint128"},{"name":"expiredAt","type":"uint128"},{"name":"mask","type":"uint32"},{"name":"signsReceived","type":"uint8"},{"name":"pubkey","type":"optional(uint256)"},{"name":"walletsystemcontract","type":"optional(address)"},{"name":"name","type":"optional(string)"},{"name":"namerepo","type":"optional(string)"},{"name":"previous","type":"optional(address)"},{"name":"newneed","type":"optional(uint8)"},{"name":"time","type":"optional(uint128)"},{"name":"pubmembers","type":"optional(address[])"},{"name":"version","type":"optional(string)"}],"name":"_messages","type":"map(uint64,tuple)"},
 		{"name":"_custodians","type":"uint8"},
 		{"name":"_needcustodians","type":"uint8"},
 		{"name":"_expTime","type":"uint128"},

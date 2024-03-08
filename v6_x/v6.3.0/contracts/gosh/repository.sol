@@ -137,7 +137,7 @@ contract Repository is Modifiers{
 
     function startGrantToken(Grants[] tokengrants, uint128 index) public senderIs(this) accept {
         if (index >= tokengrants.length) { return; }      
-        TokenRoot(_tokenroot.get()).deployWallet{value: FEE_DEPLOY_TOKEN_WALLET + 0.2 ton, flag: 1, callback: Repository.getWalletAddr}(tokengrants[index].pubaddr, tokengrants[index].value);
+        TokenRoot(_tokenroot.get()).deployWallet{value: FEE_DEPLOY_TOKEN_WALLET + 0.5 ton, flag: 1, callback: Repository.getWalletAddr}(tokengrants[index].pubaddr, tokengrants[index].value);
         if (_supply.hasValue() == false) {
             _supply = tokengrants[index].value;
         }
