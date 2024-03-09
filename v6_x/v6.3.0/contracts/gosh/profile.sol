@@ -146,7 +146,7 @@ contract ProfileNew is Modifiers {
         _messages[_generateId()] = MessageProfileNew(8, block.timestamp + _expTime, mask, 1, null, null, null, null, null, null, time, null, null);
     }
 
-    function transferFromWallet(string namedao, string namerepo, uint128 value, address pubaddr) public onlyOwnerPubkeyList  accept saveMsg {
+    function transferFromRepoWallet(string namedao, string namerepo, uint128 value, address pubaddr) public onlyOwnerPubkeyList  accept saveMsg {
         getMoney();
         this.clearExpired{value: 0.1 ton, flag: 1}(0);
         if (_needcustodians == 1) { 
@@ -164,11 +164,11 @@ contract ProfileNew is Modifiers {
 
     function transferFromWalletAgain(address from, address to, uint128 value) public view senderIs(_systemcontract) accept {
         TvmCell b;
-        TokenWallet(from).transfer{value: 0.5 ton, flag: 1}(value, to, FEE_DEPLOY_TOKEN_WALLET, address(this), false, b);
+        TokenWallet(from).transfer{value: FEE_DEPLOY_TOKEN_WALLET + 1 ton, flag: 1}(value, to, FEE_DEPLOY_TOKEN_WALLET, address(this), false, b);
     }
 
-    function deployWalletForRepo(string namedao, string namerepo) public onlyOwnerPubkeyList  accept saveMsg {
-        SystemContract(_systemcontract).deployWalletForRepo{value: 0.1 ton, flag: 1}(_name, namedao, namerepo);
+    function SendTokenToWalletForRepo(string namedao, string namerepo) public onlyOwnerPubkeyList  accept saveMsg {
+        SystemContract(_systemcontract).sendTokenToWalletForRepo{value: 0.1 ton, flag: 1}(_name, namedao, namerepo);
     }
 
     function setNewNeedCustodians(uint8 need) public onlyOwnerPubkeyList  accept saveMsg {

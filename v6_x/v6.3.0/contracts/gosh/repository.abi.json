@@ -61,14 +61,6 @@
 			]
 		},
 		{
-			"name": "deployWalletForRepo",
-			"inputs": [
-				{"name":"pubaddr","type":"address"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "checkUpdateRepo4",
 			"inputs": [
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"prev","type":"tuple"},

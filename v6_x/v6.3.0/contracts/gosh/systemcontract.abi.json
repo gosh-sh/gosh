@@ -37,7 +37,7 @@
 			]
 		},
 		{
-			"name": "deployWalletForRepo",
+			"name": "sendTokenToWalletForRepo",
 			"inputs": [
 				{"name":"name","type":"string"},
 				{"name":"namedao","type":"string"},

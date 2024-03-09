@@ -64,8 +64,8 @@ contract SystemContract is Modifiers {
        ProfileNew(pubaddr).transferFromWalletAgain{value: 0.1 ton, flag: 1}(from, to, value);
     }
 
-    function deployWalletForRepo(string name, string namedao, string namerepo) public view senderIs(GoshLib.calculateProfileAddress(_code[m_ProfileCode], _versionController, name)) accept {
-        Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), namerepo)).deployWalletForRepo{value: FEE_DEPLOY_TOKEN_WALLET + 1 ton, flag: 1}(msg.sender);
+    function sendTokenToWalletForRepo(string name, string namedao, string namerepo) public view senderIs(GoshLib.calculateProfileAddress(_code[m_ProfileCode], _versionController, name)) accept {
+        GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), namerepo).transfer(4*FEE_DEPLOY_TOKEN_WALLET + 1 ton);
     }
 
     function turnOnPubkeyFromProfile(address pubaddr, string namedao, uint256 pubkey) public view senderIs(_versionController) accept {

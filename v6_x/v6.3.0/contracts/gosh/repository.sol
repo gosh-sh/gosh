@@ -154,11 +154,6 @@ contract Repository is Modifiers{
         SystemContract(_systemcontract).transferFromWalletAgain{value: 0.1 ton, flag: 1}(_nameDao, _name, pubaddr, from, to, value);
     }
 
-    function deployWalletForRepo(address pubaddr) public view senderIs(_systemcontract) accept {
-        TvmCell b;   
-        TokenRoot(_tokenroot.get()).mint{value: FEE_DEPLOY_TOKEN_WALLET + 0.5 ton, flag: 1}(0, pubaddr, FEE_DEPLOY_TOKEN_WALLET, address(this), false, b);
-    }
-
     function checkUpdateRepo4(AddrVersion prev, address answer) public view senderIs(_systemcontract) accept {
         TvmCell a;
         if (prev.addr != address(this)) {
