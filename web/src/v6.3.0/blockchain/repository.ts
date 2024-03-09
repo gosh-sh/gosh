@@ -1,5 +1,6 @@
 import { TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
+import { TIP3WalletBroxus } from '../../blockchain/tip3wallet-broxus'
 import { GoshError } from '../../errors'
 import { TGoshBranch } from '../types/repository.types'
 import RepositoryABI from './abi/repository.abi.json'
@@ -32,6 +33,14 @@ export class GoshRepository extends BaseContract {
       tags: Object.values(data.hashtag) as string[],
       isReady: data.ready,
       metadata: data.metadata ? JSON.parse(data.metadata) : {},
+      token: data.tokenroot
+        ? {
+            description: JSON.parse(data.tokendescription),
+            grant: data.tokengrants,
+            supply: parseInt(data.tokensupply),
+            root_addr: data.tokenroot,
+          }
+        : null,
     }
   }
 
@@ -138,5 +147,11 @@ export class GoshRepository extends BaseContract {
     }
 
     return new GoshShapshot(this.client, _address!)
+  }
+
+  async getTokenWallet(params: { profile_addr: string }) {
+    const { profile_addr } = params
+    const { value0 } = await this.runLocal('getRepoWalletAddr', { pubaddr: profile_addr })
+    return new TIP3WalletBroxus(this.client, value0)
   }
 }

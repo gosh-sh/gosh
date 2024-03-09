@@ -2,7 +2,8 @@ import { createDockerDesktopClient } from '@docker/extension-api-client'
 import { NetworkQueriesProtocol, TonClient } from '@eversdk/core'
 import { SupabaseClient, createClient } from '@supabase/supabase-js'
 import { AppConfig as _AppConfig } from 'react-gosh'
-import { TIP3Root } from './blockchain/tip3root'
+import { TIP3RootBroxus } from './blockchain/tip3root-broxus'
+import { TIP3RootFlex } from './blockchain/tip3root-flex'
 import { VersionController } from './blockchain/versioncontroller'
 import { DISABLED_VERSIONS } from './constants'
 import { GoshError } from './errors'
@@ -92,8 +93,12 @@ export class AppConfig {
       .filter((v) => DISABLED_VERSIONS.indexOf(v) < 0)[0]
   }
 
-  static getTIP3Root(address: string) {
-    return new TIP3Root(AppConfig.goshclient, address)
+  static getTIP3RootFlex(address: string) {
+    return new TIP3RootFlex(AppConfig.goshclient, address)
+  }
+
+  static getTIP3RootBroxus(address: string) {
+    return new TIP3RootBroxus(AppConfig.goshclient, address)
   }
 
   /**

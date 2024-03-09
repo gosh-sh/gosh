@@ -164,7 +164,11 @@ export function useCreateDao() {
         data: { profile: profile.address },
         keys: user.keys,
       })) as DaoWallet
-      await profile.turnOn(wallet.address, user.keys.public)
+      await profile.turnOn({
+        dao_name: name,
+        dao_version: version,
+        pubkey: user.keys.public,
+      })
 
       // Mint tokens
       if (supply > 20) {
@@ -820,6 +824,10 @@ export function useDaoMember(params: { initialize?: boolean; subscribe?: boolean
 
   const activate = async (profile: UserProfile, wallet: DaoWallet) => {
     try {
+      if (!dao.name || !dao.version) {
+        throw new GoshError('ActivateDaoWallet', 'DAO details undefined')
+      }
+
       // Deploy limited wallet
       if (!(await wallet.isDeployed())) {
         setStatus0((state) => ({
@@ -844,7 +852,11 @@ export function useDaoMember(params: { initialize?: boolean; subscribe?: boolean
           type: 'pending',
           data: 'Activating DAO wallet',
         }))
-        await profile.turnOn(wallet.address, user.keys!.public)
+        await profile.turnOn({
+          dao_name: dao.name,
+          dao_version: dao.version,
+          pubkey: user.keys!.public,
+        })
       }
 
       setStatus0((state) => ({ ...state, type: 'dismiss' }))

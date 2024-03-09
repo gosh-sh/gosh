@@ -1,6 +1,7 @@
 """
 Copy contracts ABIs to project.
 """
+
 import json
 from pathlib import Path
 
@@ -256,7 +257,15 @@ def main():
             key = contract.replace("gosh/", "").replace("smv/", "").lower()
 
             if key in CONTRACTS[""] or key == "versioncontroller":
-                abis[key] = json.load(open(src, encoding="utf8"))
+                if key == "profile":
+                    _path = Path("")
+                    if "6.3.0" in str(SRC_CONTRACTS_PATH):
+                        _path = Path("../v6_x/v6.3.0/contracts/gosh")
+
+                    _path = _path / f"{contract}.abi.json"
+                    abis[key] = json.load(open(_path, encoding="utf8"))
+                else:
+                    abis[key] = json.load(open(src, encoding="utf8"))
             else:
                 abis[version][key] = json.load(open(src, encoding="utf8"))
 

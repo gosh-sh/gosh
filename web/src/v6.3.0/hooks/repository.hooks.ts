@@ -1,17 +1,25 @@
 import _ from 'lodash'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { TDao } from 'react-gosh'
+import { IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { useRecoilState, useSetRecoilState } from 'recoil'
+import { AppConfig } from '../../appconfig'
 import { getPaginatedAccounts } from '../../blockchain/utils'
 import { MAX_PARALLEL_READ } from '../../constants'
 import { EGoshError, GoshError } from '../../errors'
 import { appToastStatusSelector } from '../../store/app.state'
-import { executeByChunk, whileFinite } from '../../utils'
+import { executeByChunk, setLockableInterval, toBigint, whileFinite } from '../../utils'
 import { getSystemContract } from '../blockchain/helpers'
 import { GoshRepository } from '../blockchain/repository'
-import { daoRepositoryListSelector } from '../store/repository.state'
+import {
+  daoRepositoryListSelector,
+  repoTokenWalletSelector,
+} from '../store/repository.state'
+import { TUserSelectOption } from '../types/form.types'
 import { TGoshRepositoryListItem } from '../types/repository.types'
 import { validateRepoName } from '../validators'
 import { useDao, useDaoHelpers, useDaoMember } from './dao.hooks'
+import { useProfile } from './user.hooks'
 
 export function useCreateRepository() {
   const { details: dao } = useDao()
@@ -376,4 +384,159 @@ export function useUpdateRepositoryDescription() {
   )
 
   return { update, status }
+}
+
+export function useRepoTokenWallet(params: {
+  initialize?: boolean
+  subscribe?: boolean
+  _rm: { dao_details: TDao; repo_name: string; repo_adapter: IGoshRepositoryAdapter }
+}) {
+  const { initialize, subscribe, _rm } = params
+  const repo_path = `${_rm.dao_details.name}/${_rm.repo_name}`
+  const profile = useProfile()
+  const [data, setData] = useRecoilState(repoTokenWalletSelector(repo_path))
+  const [is_deployed, setIsDeployed] = useState<boolean>(false)
+
+  const getTokenWallet = useCallback(async () => {
+    const sc = getSystemContract()
+    const repo_acc = await sc.getRepository({
+      address: _rm.repo_adapter.getAddress(),
+    })
+    const repo_details = await repo_acc.getDetails()
+
+    // Set common token data
+    if (!repo_details.token?.root_addr) {
+      setData(null)
+      return
+    }
+    const root_acc = AppConfig.getTIP3RootBroxus(repo_details.token.root_addr)
+    const token_details = await root_acc.getDetails()
+    const token_data = {
+      name: token_details.name,
+      symbol: token_details.symbol,
+      decimals: token_details.decimals,
+      root_addr: repo_details.token!.root_addr,
+    }
+    setData((state) => ({
+      ...state,
+      wallet: null,
+      token: token_data,
+      balance: BigInt(0),
+    }))
+
+    // Get token wallet and update state
+    if (profile) {
+      const wallet_acc = await repo_acc.getTokenWallet({ profile_addr: profile.address })
+      const wallet_deployed = await wallet_acc.isDeployed()
+      const balance = wallet_deployed ? await wallet_acc.getBalance() : BigInt(0)
+
+      setData((state) => ({
+        ...state!,
+        wallet: wallet_acc,
+        balance,
+      }))
+      setIsDeployed(wallet_deployed)
+    }
+  }, [repo_path])
+
+  const getBalance = useCallback(async () => {
+    if (!data?.wallet) {
+      return
+    }
+
+    const balance = is_deployed ? await data.wallet.getBalance() : BigInt(0)
+    setData((state) => (state ? { ...state, balance } : state))
+  }, [repo_path, is_deployed])
+
+  useEffect(() => {
+    if (initialize) {
+      getTokenWallet()
+    }
+  }, [initialize, getTokenWallet])
+
+  useEffect(() => {
+    if (!subscribe || !data?.wallet) {
+      return
+    }
+
+    // Periodic update while account is not deployed
+    const interval = setLockableInterval(async () => {
+      console.debug('interval')
+      await getBalance()
+      const check_deployed = await data.wallet?.isDeployed()
+      if (check_deployed) {
+        console.debug('clear interval')
+        setIsDeployed(true)
+        clearInterval(interval)
+      }
+    }, 5000)
+
+    // Subscribe for wallet account BOC change
+    if (is_deployed) {
+      console.debug('subscribe')
+      data.wallet.account.subscribeAccount('boc', async () => {
+        await getBalance()
+      })
+    }
+
+    return () => {
+      data.wallet!.account.free()
+      clearInterval(interval)
+    }
+  }, [getBalance, data?.wallet?.address, subscribe])
+
+  return data
+}
+
+export function useSendRepoTokens(params: { dao_name: string; repo_addr: string }) {
+  const { dao_name, repo_addr } = params
+  const profile = useProfile()
+  const [status, setStatus] = useRecoilState(appToastStatusSelector('__sendrepotokens'))
+
+  const send = async (params: { recipient: TUserSelectOption; value: string }) => {
+    const { recipient, value } = params
+    const sc = getSystemContract()
+    console.debug('recipient: ', recipient)
+
+    try {
+      if (!profile) {
+        throw new GoshError('SendRepositoryTokens', 'Sender profile undefined')
+      }
+
+      // Get token info
+      setStatus((state) => ({
+        ...state,
+        type: 'pending',
+        data: 'Get token info',
+      }))
+      const repo_acc = await sc.getRepository({ address: repo_addr })
+      const repo_details = await repo_acc.getDetails()
+      if (!repo_details.token?.root_addr) {
+        throw new GoshError('SendRepositoryTokens', 'Token data undefined')
+      }
+
+      const root_acc = AppConfig.getTIP3RootBroxus(repo_details.token.root_addr)
+      const token_data = await root_acc.getDetails()
+
+      // Send tokens
+      setStatus((state) => ({
+        ...state,
+        type: 'pending',
+        data: 'Send tokens',
+      }))
+      await profile.sendRepoTokens({
+        dao_name,
+        repo_name: repo_details.name,
+        recipient_profile_addr: recipient.value.address,
+        value: toBigint(value, token_data.decimals),
+      })
+
+      setStatus((state) => ({ ...state, type: 'dismiss' }))
+    } catch (e) {
+      setStatus((state) => ({ ...state, type: 'error', data: e }))
+      throw e
+    }
+  }
+
+  return { status, send }
 }

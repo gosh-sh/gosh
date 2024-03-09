@@ -30,7 +30,11 @@ import Loader from '../../components/Loader'
 import { ModalCloseButton } from '../../components/Modal'
 import { onExternalLinkClick } from '../../helpers'
 import { appModalStateAtom } from '../../store/app.state'
-import { ApplicationFormList, IssueICToken } from '../../v6.3.0/components/Repository'
+import {
+  ApplicationFormList,
+  IssueICToken,
+  RepoTokenWallet,
+} from '../../v6.3.0/components/Repository'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import RepoReadme from './Readme'
 
@@ -279,27 +283,31 @@ const RepoPage = () => {
           )}
         </div>
 
-        {dao.details.version >= '6.3.0' && repository.details.metadata?.forms && (
-          <div className="sticky top-3 bg-white border border-gray-e6edff rounded-lg p-4">
-            <h3 className="text-lg font-medium mb-2">
-              {repository.details.metadata.token_issue.ic
-                ? 'IC Application Forms'
-                : 'Application Forms'}
-            </h3>
-            <ApplicationFormList
-              dao_details={dao.details}
-              repo_address={repository.details.address}
-              repo_adapter={repository.adapter}
-              branch={repository.details.metadata!.forms_branch}
-            />
+        {dao.details.version >= '6.3.0' &&
+          repository.details.metadata?.forms &&
+          !repository.details.metadata?.token_issued && (
+            <div className="sticky top-3 bg-white border border-gray-e6edff rounded-lg p-4">
+              <h3 className="text-lg font-medium mb-2">
+                {repository.details.metadata.token_issue.ic
+                  ? 'IC Application Forms'
+                  : 'Application Forms'}
+              </h3>
+              <ApplicationFormList />
 
-            {repository.details.metadata?.token_issue.ic && (
-              <div className="mt-4">
-                <Button className="w-full" onClick={openIssueICTokenForm}>
-                  Issue tokens
-                </Button>
-              </div>
-            )}
+              {repository.details.metadata?.token_issue.ic && (
+                <div className="mt-4">
+                  <Button className="w-full" onClick={openIssueICTokenForm}>
+                    Issue tokens
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+        {dao.details.version >= '6.3.0' && repository.details.metadata?.token_issued && (
+          <div className="sticky top-3 bg-white border border-gray-e6edff rounded-lg p-4">
+            <h3 className="text-lg font-medium mb-2">Repository token</h3>
+            <RepoTokenWallet />
           </div>
         )}
       </div>

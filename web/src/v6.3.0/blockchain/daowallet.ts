@@ -1169,7 +1169,7 @@ export class DaoWallet extends BaseContract {
       decimals: number
       description: object
     }
-    grant: { pubaddr: string; amount: number }[]
+    grant: { pubaddr: string; amount: BigInt }[]
     reviewers?: string[]
     comment?: string
     cell?: boolean
@@ -1182,7 +1182,10 @@ export class DaoWallet extends BaseContract {
       name: token.name,
       symbol: token.symbol,
       decimals: token.decimals,
-      tokengrants: grant.map(({ pubaddr, amount }) => ({ pubaddr, value: amount })),
+      tokengrants: grant.map(({ pubaddr, amount }) => ({
+        pubaddr,
+        value: amount.toString(),
+      })),
       comment,
     }
 

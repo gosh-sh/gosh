@@ -59,7 +59,8 @@ TREE_CODE=$(tonos-cli -j decode stateinit --tvc $GOSH_PATH/tree.tvc | tr -d ' ",
 TAG_CODE=$(tonos-cli -j decode stateinit --tvc $GOSH_PATH/tag.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 CONTENTSIG_CODE=$(tonos-cli -j decode stateinit --tvc $GOSH_PATH/content-signature.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 TASK_CODE=$(tonos-cli -j decode stateinit --tvc $GOSH_PATH/task.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
-PROFILE_CODE=$(tonos-cli -j decode stateinit --tvc $GOSH_PATH/../profile.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+PROFILE_BASE_CODE=$(tonos-cli -j decode stateinit --tvc $GOSH_PATH/profile.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
+PROFILE_CODE=$(tonos-cli -j decode stateinit --tvc $GOSH_PATH/profile.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 PROFILEINDEX_CODE=$(tonos-cli -j decode stateinit --tvc $GOSH_PATH/../profileindex.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 PROFILEDAO_CODE=$(tonos-cli -j decode stateinit --tvc $GOSH_PATH/../profiledao.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
 DAO_TAG_CODE=$(tonos-cli -j decode stateinit --tvc $GOSH_PATH/daotag.tvc | tr -d ' ",' | sed -n '/code:/s/code://p')
@@ -85,9 +86,9 @@ echo $VERSIONCONTROLLER_ADDR > $GOSH_PATH/VersionController.addr
 # Deploy VersionController and SystemContract
 # ############################################################
 # Send tokens for deploy VersionController
-echo "========== Send 2000 tons for deploy VersionController"
-everdev contract run $GIVER_ABI submitTransaction --input "{\"dest\": \"$VERSIONCONTROLLER_ADDR\", \"value\": 2000000000000, \"bounce\": false, \"allBalance\": false, \"payload\": \"\"}" --network $NETWORK --signer $GIVER_SIGNER --address $GIVER_ADDR > /dev/null || exit 1
-wait_account_balance $VERSIONCONTROLLER_ADDR 1998000000000
+echo "========== Send 1kk tons for deploy VersionController"
+everdev contract run $GIVER_ABI submitTransaction --input "{\"dest\": \"$VERSIONCONTROLLER_ADDR\", \"value\": 1000000000000000, \"bounce\": false, \"allBalance\": false, \"payload\": \"\"}" --network $NETWORK --signer $GIVER_SIGNER --address $GIVER_ADDR > /dev/null || exit 1
+wait_account_balance $VERSIONCONTROLLER_ADDR 999995000000000
 
 # Deploy VersionController
 echo "========== Deploy VersionController"
@@ -101,8 +102,10 @@ wait_account_active $VERSIONCONTROLLER_ADDR
 echo "========== Run VersionController setters"
 echo "     ====> Run setSystemContractCode"
 everdev contract run $VERSIONCONTROLLER_ABI setSystemContractCode --input "{\"code\": \"$SYSTEMCONTRACT_CODE\", \"version\": \"$GOSH_VERSION\"}" --network $NETWORK --signer $SIGNER --address $VERSIONCONTROLLER_ADDR > /dev/null || exit 1
+echo "     ====> Run setProfileBase"
+everdev contract run $VERSIONCONTROLLER_ABI setCode --input "{\"code\": \"$PROFILE_BASE_CODE\", \"id\": 10}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 echo "     ====> Run setProfile"
-everdev contract run $VERSIONCONTROLLER_ABI setCode --input "{\"code\": \"$PROFILE_CODE\", \"id\": 10}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+everdev contract run $VERSIONCONTROLLER_ABI setCode --input "{\"code\": \"$PROFILE_CODE\", \"id\": 28}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 echo "     ====> Run setProfileIndex"
 everdev contract run $VERSIONCONTROLLER_ABI setCode --input "{\"code\": \"$PROFILEINDEX_CODE\", \"id\": 12}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
 echo "     ====> Run setProfileDao"

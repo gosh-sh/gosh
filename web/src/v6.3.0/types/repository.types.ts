@@ -1,3 +1,5 @@
+import { TIP3WalletBroxus } from '../../blockchain/tip3wallet-broxus'
+import { TTIP3Token } from '../../types/common.types'
 import { GoshRepository } from '../blockchain/repository'
 
 export type TGoshRepositoryListItem = {
@@ -79,4 +81,10 @@ export type TGoshCommitTag = {
   }
   is_hack?: boolean
   branch_name?: string
+}
+
+export type TRepoTokenWallet = {
+  wallet: TIP3WalletBroxus | null
+  token: TTIP3Token
+  balance: bigint
 }

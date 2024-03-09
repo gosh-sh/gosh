@@ -88,10 +88,28 @@ export class UserProfile extends BaseContract {
   //     await this.run('setNewSystemContract', { systemcontract: address })
   // }
 
-  async turnOn(wallet: string, pubkey: string): Promise<void> {
-    if (!pubkey.startsWith('0x')) {
-      pubkey = `0x${pubkey}`
-    }
-    await this.run('turnOn', { wallet, pubkey })
+  async turnOn(params: {
+    dao_name: string
+    dao_version: string
+    pubkey: string
+  }): Promise<void> {
+    const { dao_name, dao_version, ...rest } = params
+    const pubkey = !rest.pubkey.startsWith('0x') ? `0x${rest.pubkey}` : rest.pubkey
+    await this.run('turnOn', { namedao: dao_name, versionwallet: dao_version, pubkey })
+  }
+
+  async sendRepoTokens(params: {
+    dao_name: string
+    repo_name: string
+    recipient_profile_addr: string
+    value: bigint
+  }) {
+    const { dao_name, repo_name, recipient_profile_addr, value } = params
+    await this.run('transferFromRepoWallet', {
+      namedao: dao_name,
+      namerepo: repo_name,
+      pubaddr: recipient_profile_addr,
+      value: value.toString(),
+    })
   }
 }

@@ -37,7 +37,7 @@
 			]
 		},
 		{
-			"name": "deployWalletForRepo",
+			"name": "sendTokenToWalletForRepo",
 			"inputs": [
 				{"name":"name","type":"string"},
 				{"name":"namedao","type":"string"},
@@ -49,6 +49,7 @@
 		{
 			"name": "turnOnPubkeyFromProfile",
 			"inputs": [
+				{"name":"pubaddr","type":"address"},
 				{"name":"namedao","type":"string"},
 				{"name":"pubkey","type":"uint256"}
 			],
@@ -58,6 +59,7 @@
 		{
 			"name": "turnOffPubkeyFromProfile",
 			"inputs": [
+				{"name":"pubaddr","type":"address"},
 				{"name":"namedao","type":"string"}
 			],
 			"outputs": [
