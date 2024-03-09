@@ -138,7 +138,7 @@ contract Repository is Modifiers{
     function startGrantToken(Grants[] tokengrants, uint128 index) public senderIs(this) accept {
         if (index >= tokengrants.length) { return; }   
         TvmCell b;   
-        TokenRoot(_tokenroot.get()).mint{value: FEE_DEPLOY_TOKEN_WALLET + 0.5 ton, flag: 1}(tokengrants[index].value, GoshLib.calculateRepoRootWalletAddress(_code[m_TokenRepoWalletCode], _tokenroot.get(), tokengrants[index].pubaddr), FEE_DEPLOY_TOKEN_WALLET, address(this), false, b);
+        TokenRoot(_tokenroot.get()).mint{value: FEE_DEPLOY_TOKEN_WALLET + 0.5 ton, flag: 1}(tokengrants[index].value, tokengrants[index].pubaddr, FEE_DEPLOY_TOKEN_WALLET, address(this), false, b);
         if (_supply.hasValue() == false) {
             _supply = tokengrants[index].value;
         }
@@ -148,10 +148,6 @@ contract Repository is Modifiers{
         this.startGrantToken{value: 0.1 ton, flag: 1}(tokengrants, index + 1);
     }
 
-    function getWalletAddr(address wallet) public view senderIs(_tokenroot.get()) accept {
-        wallet;
-    }
-
     function transferFromWallet(address pubaddr, uint128 value, address pubaddr2) public view senderIs(_systemcontract) accept {
         address to = GoshLib.calculateRepoRootWalletAddress(_code[m_TokenRepoWalletCode], _tokenroot.get(), pubaddr2);
         address from = GoshLib.calculateRepoRootWalletAddress(_code[m_TokenRepoWalletCode], _tokenroot.get(), pubaddr);
@@ -159,7 +155,8 @@ contract Repository is Modifiers{
     }
 
     function deployWalletForRepo(address pubaddr) public view senderIs(_systemcontract) accept {
-        TokenRoot(_tokenroot.get()).deployWallet{value: FEE_DEPLOY_TOKEN_WALLET + 0.2 ton, flag: 1, callback: Repository.getWalletAddr}(pubaddr, 0);
+        TvmCell b;   
+        TokenRoot(_tokenroot.get()).mint{value: FEE_DEPLOY_TOKEN_WALLET + 0.5 ton, flag: 1}(0, pubaddr, FEE_DEPLOY_TOKEN_WALLET, address(this), false, b);
     }
 
     function checkUpdateRepo4(AddrVersion prev, address answer) public view senderIs(_systemcontract) accept {

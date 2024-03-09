@@ -51,14 +51,6 @@
 			]
 		},
 		{
-			"name": "getWalletAddr",
-			"inputs": [
-				{"name":"wallet","type":"address"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "transferFromWallet",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
