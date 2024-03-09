@@ -7,8 +7,6 @@ set -o pipefail
 ## -- empty --
 
 # envs
-SIGNER="__gosh" # will be created automatically
-GIVER_SIGNER="__giver" # will be created automatically
 GOSH_PATH="../../gosh"
 SMV_PATH="$GOSH_PATH/smv"
 VERSIONCONTROLLER_ABI="$GOSH_PATH/versioncontroller.abi.json"
@@ -18,25 +16,22 @@ GOSH_REPO_ROOT_PATH=/opt/gosh/contracts
 GOSH_BALANCE=400000000000000
 
 GOSH_VERSION=$(grep -r 'string constant version' $GOSH_PATH/systemcontract.sol | sed 's/^.*[^0-9]\([0-9]*\.[0-9]*\.[0-9]*\).*$/\1/')
-echo "========== Gosh version: $GOSH_VERSION"
+echo -e "> Gosh version:\t$GOSH_VERSION"
 export GOSH_VERSION=$GOSH_VERSION
 
 # Set network
 NETWORK=`cat /tmp/Giver.network`
-everdev network add $NETWORK $NETWORK
-echo "========== Network: $NETWORK"
+echo -e "> Network:\t$NETWORK"
 
 # Generate keys
-echo "========== Generate keys for VersionController"
+echo "> Generate keys for VersionController"
 tonos-cli genphrase > $GOSH_PATH/$VERSIONCONTROLLER_SEED_FILE_OUT
 seed=`cat $GOSH_PATH/$VERSIONCONTROLLER_SEED_FILE_OUT| grep -o '".*"' | tr -d '"'`
-everdev signer add $SIGNER "$seed"
 
 # Prepare giver
 GIVER_ABI="../../multisig/MultisigWallet.abi.json"
 GIVER_ADDR=`cat /tmp/Giver.addr`
 GIVER_SEED=`cat /tmp/Giver.seed`
-everdev signer add $GIVER_SIGNER "$GIVER_SEED"
 
 
 # ############################################################
@@ -75,114 +70,112 @@ TAG_SUPPLY_CODE=$(tonos-cli -j decode stateinit --tvc $GOSH_PATH/tagsupply.tvc |
 # Calculate VersionController address
 # ############################################################
 VERSIONCONTROLLER_TVC="$GOSH_PATH/versioncontroller.tvc"
-echo "========== Generate VC address"
+echo "> Generate VC address"
 VERSIONCONTROLLER_ADDR=$(tonos-cli -j genaddr --abi $VERSIONCONTROLLER_ABI --setkey "$seed" --save $VERSIONCONTROLLER_TVC | jq -M ".raw_address" | cut -d '"' -f 2)
-
-#VERSIONCONTROLLER_ADDR=$(everdev contract info $VERSIONCONTROLLER_ABI --signer $SIGNER --network $NETWORK | sed -nr 's/Address:[[:space:]]+(.*)[[:space:]]+\(.*/\1/p')
-echo "========== VersionController address: $VERSIONCONTROLLER_ADDR"
+echo -e "> VersionController address:\t$VERSIONCONTROLLER_ADDR"
 echo $VERSIONCONTROLLER_ADDR > $GOSH_PATH/VersionController.addr
 
 # ############################################################
 # Deploy VersionController and SystemContract
 # ############################################################
 # Send tokens for deploy VersionController
-echo "========== Send 1kk tons for deploy VersionController"
-everdev contract run $GIVER_ABI submitTransaction --input "{\"dest\": \"$VERSIONCONTROLLER_ADDR\", \"value\": 1000000000000000, \"bounce\": false, \"allBalance\": false, \"payload\": \"\"}" --network $NETWORK --signer $GIVER_SIGNER --address $GIVER_ADDR > /dev/null || exit 1
+echo "> Send 1kk tons for deploy VersionController"
+tonos-cli -u $NETWORK callx --abi $GIVER_ABI --addr $GIVER_ADDR --keys "$GIVER_SEED" -m submitTransaction "{\"dest\": \"$VERSIONCONTROLLER_ADDR\", \"value\": 1000000000000000, \"bounce\": false, \"allBalance\": false, \"payload\": \"\"}"
 wait_account_balance $VERSIONCONTROLLER_ADDR 999995000000000
 
 # Deploy VersionController
-echo "========== Deploy VersionController"
-#everdev contract deploy $VERSIONCONTROLLER_ABI --input "" --network $NETWORK --signer $SIGNER > /dev/null || exit 1
+echo "> Deploy VersionController"
 tonos-cli -u $NETWORK deploy --abi $VERSIONCONTROLLER_ABI --sign "$seed" $VERSIONCONTROLLER_TVC "{}"
 
-echo "***** awaiting VersionController deploy *****"
+echo "> Awaiting VersionController deploy"
 wait_account_active $VERSIONCONTROLLER_ADDR
 
 # Apply VersionController setters
-echo "========== Run VersionController setters"
-echo "     ====> Run setSystemContractCode"
-everdev contract run $VERSIONCONTROLLER_ABI setSystemContractCode --input "{\"code\": \"$SYSTEMCONTRACT_CODE\", \"version\": \"$GOSH_VERSION\"}" --network $NETWORK --signer $SIGNER --address $VERSIONCONTROLLER_ADDR > /dev/null || exit 1
-echo "     ====> Run setProfileBase"
-everdev contract run $VERSIONCONTROLLER_ABI setCode --input "{\"code\": \"$PROFILE_BASE_CODE\", \"id\": 10}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setProfile"
-everdev contract run $VERSIONCONTROLLER_ABI setCode --input "{\"code\": \"$PROFILE_CODE\", \"id\": 28}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setProfileIndex"
-everdev contract run $VERSIONCONTROLLER_ABI setCode --input "{\"code\": \"$PROFILEINDEX_CODE\", \"id\": 12}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setProfileDao"
-everdev contract run $VERSIONCONTROLLER_ABI setCode --input "{\"code\": \"$PROFILEDAO_CODE\", \"id\": 11}" --address $VERSIONCONTROLLER_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "> Run VersionController setters"
+echo "> Run setSystemContractCode"
+tonos-cli -u $NETWORK callx --abi $VERSIONCONTROLLER_ABI --addr $VERSIONCONTROLLER_ADDR --keys "$seed" -m setSystemContractCode "{\"code\": \"$SYSTEMCONTRACT_CODE\", \"version\": \"$GOSH_VERSION\"}"
+echo "> Run setProfileBase"
+tonos-cli -u $NETWORK callx --abi $VERSIONCONTROLLER_ABI --addr $VERSIONCONTROLLER_ADDR --keys "$seed" -m setCode "{\"code\": \"$PROFILE_BASE_CODE\", \"id\": 10}"
+echo "> Run setProfile"
+tonos-cli -u $NETWORK callx --abi $VERSIONCONTROLLER_ABI --addr $VERSIONCONTROLLER_ADDR --keys "$seed" -m setCode "{\"code\": \"$PROFILE_CODE\", \"id\": 28}"
+echo "> Run setProfileIndex"
+tonos-cli -u $NETWORK callx --abi $VERSIONCONTROLLER_ABI --addr $VERSIONCONTROLLER_ADDR --keys "$seed" -m setCode "{\"code\": \"$PROFILEINDEX_CODE\", \"id\": 12}"
+echo "> Run setProfileDao"
+tonos-cli -u $NETWORK callx --abi $VERSIONCONTROLLER_ABI --addr $VERSIONCONTROLLER_ADDR --keys "$seed" -m setCode "{\"code\": \"$PROFILEDAO_CODE\", \"id\": 11}"
 
 # Deploy SystemContract
-echo "========== Deploy SystemContract"
-everdev contract run $VERSIONCONTROLLER_ABI deploySystemContract --input "{\"version\": \"$GOSH_VERSION\"}" --network $NETWORK --signer $SIGNER --address $VERSIONCONTROLLER_ADDR > /dev/null || exit 1
+echo "> Deploy SystemContract"
+tonos-cli -u $NETWORK callx --abi $VERSIONCONTROLLER_ABI --addr $VERSIONCONTROLLER_ADDR --keys "$seed" -m deploySystemContract "{\"version\": \"$GOSH_VERSION\"}"
 
 # Get SystemContract address
-echo "========== Get SystemContract address"
-SYSTEMCONTRACT_ADDR=$(everdev contract run-local $VERSIONCONTROLLER_ABI getSystemContractAddr --input "{\"version\": \"$GOSH_VERSION\"}" --network $NETWORK --address $VERSIONCONTROLLER_ADDR | sed -nr 's/.*"value0":[[:space:]]+"(.*)"/\1/p')
-echo "     ====> SystemContract address: $SYSTEMCONTRACT_ADDR"
+echo "> Get SystemContract address"
+SYSTEMCONTRACT_ADDR=$(tonos-cli -u $NETWORK -j runx --abi $VERSIONCONTROLLER_ABI --addr $VERSIONCONTROLLER_ADDR -m getSystemContractAddr "{\"version\": \"$GOSH_VERSION\"}" | sed -nr 's/.*"value0":[[:space:]]+"(.*)"/\1/p')
+echo -e "> SystemContract address:\t$SYSTEMCONTRACT_ADDR"
 echo $SYSTEMCONTRACT_ADDR > $GOSH_PATH/SystemContract.addr
 echo $SYSTEMCONTRACT_ADDR > $GOSH_PATH/SystemContract-${GOSH_VERSION}.addr
 
-echo "***** awaiting SystemContract deploy *****"
+echo "> Awaiting SystemContract deploy"
 wait_account_active $SYSTEMCONTRACT_ADDR
 
 # Send tokens to SystemContract
-echo "     ====> Send tokens to SystemContract"
-everdev contract run $GIVER_ABI submitTransaction --input "{\"dest\": \"$SYSTEMCONTRACT_ADDR\", \"value\": $GOSH_BALANCE, \"bounce\": false, \"allBalance\": false, \"payload\": \"\"}" --network $NETWORK --signer $GIVER_SIGNER --address $GIVER_ADDR > /dev/null || exit 1
+echo "> Send tokens to SystemContract"
+tonos-cli -u $NETWORK callx --abi $GIVER_ABI --addr $GIVER_ADDR --keys "$GIVER_SEED" -m submitTransaction "{\"dest\": \"$SYSTEMCONTRACT_ADDR\", \"value\": $GOSH_BALANCE, \"bounce\": false, \"allBalance\": false, \"payload\": \"\"}"
 
 # Set flag to true (enable code setters)
-echo "========== Run SystemContract setFlag (true)"
-everdev contract run $SYSTEMCONTRACT_ABI setFlag --input "{\"flag\":\"true\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "> Run SystemContract setFlag (true)"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setFlag "{\"flag\":\"true\"}"
 
 # Run SystemContract setters
-echo "========== Run SystemContract setters"
-echo "     ====> Run setTokenRoot"
-everdev contract run $SYSTEMCONTRACT_ABI setTokenRoot --input "{\"code\":\"$TOKEN_ROOT_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setTokenWallet"
-everdev contract run $SYSTEMCONTRACT_ABI setTokenWallet --input "{\"code\":\"$TOKEN_WALLET_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setTokenLocker"
-everdev contract run $SYSTEMCONTRACT_ABI setTokenLocker --input "{\"code\":\"$TOKEN_LOCKER_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setSMVPlatform"
-everdev contract run $SYSTEMCONTRACT_ABI setSMVPlatform --input "{\"code\":\"$LOCKER_PLATFORM_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setSMVClient"
-everdev contract run $SYSTEMCONTRACT_ABI setSMVClient --input "{\"code\":\"$SMV_CLIENT_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setSMVProposal"
-everdev contract run $SYSTEMCONTRACT_ABI setSMVProposal --input "{\"code\":\"$SMV_PROPOSAL_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setDiff"
-everdev contract run $SYSTEMCONTRACT_ABI setDiff --input "{\"code\":\"$DIFF_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setRepository"
-everdev contract run $SYSTEMCONTRACT_ABI setRepository --input "{\"code\":\"$REPO_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setCommit"
-everdev contract run $SYSTEMCONTRACT_ABI setCommit --input "{\"code\":\"$COMMIT_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setSnapshot"
-everdev contract run $SYSTEMCONTRACT_ABI setSnapshot --input "{\"code\":\"$SNAPSHOT_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setcontentSignature"
-everdev contract run $SYSTEMCONTRACT_ABI setcontentSignature --input "{\"code\":\"$CONTENTSIG_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setWallet"
-everdev contract run $SYSTEMCONTRACT_ABI setWallet --input "{\"code\":\"$WALLET_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setDao"
-everdev contract run $SYSTEMCONTRACT_ABI setDao --input "{\"code\":\"$DAO_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setTree"
-everdev contract run $SYSTEMCONTRACT_ABI setTree --input "{\"code\":\"$TREE_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setTag"
-everdev contract run $SYSTEMCONTRACT_ABI setTag --input "{\"code\":\"$TAG_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setTask"
-everdev contract run $SYSTEMCONTRACT_ABI setTask --input "{\"code\":\"$TASK_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setDaoTag"
-everdev contract run $SYSTEMCONTRACT_ABI setDaoTag --input "{\"code\":\"$DAO_TAG_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setHelpTag"
-everdev contract run $SYSTEMCONTRACT_ABI setHelpTag --input "{\"code\":\"$HELP_TAG_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setTopic"
-everdev contract run $SYSTEMCONTRACT_ABI setTopic --input "{\"code\":\"$TOPIC_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setBigTask"
-everdev contract run $SYSTEMCONTRACT_ABI setBigTask --input "{\"code\":\"$BIGTASK_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setGrant"
-everdev contract run $SYSTEMCONTRACT_ABI setGrant --input "{\"code\":\"$GRANT_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
-echo "     ====> Run setTagSupplyTask"
-everdev contract run $SYSTEMCONTRACT_ABI setTagSupplyTask --input "{\"code\":\"$TAG_SUPPLY_CODE\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "> Run SystemContract setters"
+echo "> Run setTokenRoot"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setTokenRoot "{\"code\":\"$TOKEN_ROOT_CODE\"}"
+echo "> Run setTokenWallet"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setTokenWallet "{\"code\":\"$TOKEN_WALLET_CODE\"}"
+echo "> Run setTokenLocker"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setTokenLocker "{\"code\":\"$TOKEN_LOCKER_CODE\"}"
+echo "> Run setSMVPlatform"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setSMVPlatform "{\"code\":\"$LOCKER_PLATFORM_CODE\"}"
+echo "> Run setSMVClient"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setSMVClient "{\"code\":\"$SMV_CLIENT_CODE\"}"
+echo "> Run setSMVProposal"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setSMVProposal "{\"code\":\"$SMV_PROPOSAL_CODE\"}"
+echo "> Run setDiff"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setDiff "{\"code\":\"$DIFF_CODE\"}"
+echo "> Run setRepository"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setRepository "{\"code\":\"$REPO_CODE\"}"
+echo "> Run setCommit"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setCommit "{\"code\":\"$COMMIT_CODE\"}"
+echo "> Run setSnapshot"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setSnapshot "{\"code\":\"$SNAPSHOT_CODE\"}"
+echo "> Run setcontentSignature"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setcontentSignature "{\"code\":\"$CONTENTSIG_CODE\"}"
+echo "> Run setWallet"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setWallet "{\"code\":\"$WALLET_CODE\"}"
+echo "> Run setDao"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setDao "{\"code\":\"$DAO_CODE\"}"
+echo "> Run setTree"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setTree "{\"code\":\"$TREE_CODE\"}"
+echo "> Run setTag"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setTag "{\"code\":\"$TAG_CODE\"}"
+echo "> Run setTask"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setTask "{\"code\":\"$TASK_CODE\"}"
+echo "> Run setDaoTag"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setDaoTag "{\"code\":\"$DAO_TAG_CODE\"}"
+echo "> Run setHelpTag"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setHelpTag "{\"code\":\"$HELP_TAG_CODE\"}"
+echo "> Run setTopic"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setTopic "{\"code\":\"$TOPIC_CODE\"}"
+echo "> Run setBigTask"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setBigTask "{\"code\":\"$BIGTASK_CODE\"}"
+echo "> Run setGrant"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setGrant "{\"code\":\"$GRANT_CODE\"}"
+echo "> Run setTagSupplyTask"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setTagSupplyTask "{\"code\":\"$TAG_SUPPLY_CODE\"}"
 
 # Set flag to false (disable code setters)
-echo "========== Run SystemContract setFlag (false)"
-everdev contract run $SYSTEMCONTRACT_ABI setFlag --input "{\"flag\":\"false\"}" --address $SYSTEMCONTRACT_ADDR --signer $SIGNER --network $NETWORK > /dev/null || exit 1
+echo "> Run SystemContract setFlag (false)"
+tonos-cli -u $NETWORK callx --abi $SYSTEMCONTRACT_ABI --addr $SYSTEMCONTRACT_ADDR --keys "$seed" -m setFlag "{\"flag\":\"false\"}"
 
 # Destroy giver
-everdev contract run $GIVER_ABI TheBigBang -i "{\"returnMoney\": \"$SYSTEMCONTRACT_ADDR\"}" -a $GIVER_ADDR -s $GIVER_SIGNER -n $NETWORK > /dev/null || exit 1
+echo "> Destroy giver"
+tonos-cli -u $NETWORK callx --abi $GIVER_ABI --addr $GIVER_ADDR --keys "$GIVER_SEED" -m TheBigBang "{\"returnMoney\": \"$SYSTEMCONTRACT_ADDR\"}"
