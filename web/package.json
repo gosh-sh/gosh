@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "wasm": "cp ./node_modules/@eversdk/lib-web/eversdk.wasm ./public",
+    "wasm": "cp ./eversdk/lib-web/eversdk.wasm ./public",
     "start": "bun run wasm && bun run start:dev",
     "start:ci": "dotenv -e .env.ci bun env.json.js && dotenv -e .env.ci vite",
     "start:dev": "dotenv -e .env.development bun env.json.js && dotenv -e .env.development vite",
@@ -42,7 +42,6 @@
     "@emotion/styled": "^11.11.0",
     "@eversdk/appkit": "^0.3.8",
     "@eversdk/core": "1.44.4",
-    "@eversdk/lib-web": "1.44.4",
     "@fortawesome/fontawesome-svg-core": "^6.4.2",
     "@fortawesome/free-brands-svg-icons": "^6.4.2",
     "@fortawesome/free-regular-svg-icons": "^6.4.2",
