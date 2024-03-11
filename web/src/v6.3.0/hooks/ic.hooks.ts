@@ -1,3 +1,4 @@
+import { Buffer } from 'buffer'
 import isUtf8 from 'isutf8'
 import { useEffect } from 'react'
 import {
