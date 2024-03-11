@@ -4037,8 +4037,8 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Deploy diffs
         let diffCounter = 0
-        await this._runMultiwallet(blobsData, async (wallet, { data }, index) => {
-            if (data.patch || data.isGoingIpfs || data.isGoingOnchain) {
+        await this._runMultiwallet(blobsData, async (wallet, { status, data }, index) => {
+            if (data.patch || (status === 1 && data.isGoingIpfs) || data.isGoingOnchain) {
                 await this._deployDiff(branch, commitHash, data, index, wallet)
             }
             cb({ diffsDeploy: { count: ++diffCounter } })
@@ -4058,8 +4058,10 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
 
         // Set commit or start PR proposal
         const signer = this.auth.wallet0.account.signer as any
-        const patched = blobsData.filter(({ data }) => {
-            return !!data.patch || data.isGoingIpfs || data.isGoingOnchain
+        const patched = blobsData.filter(({ status, data }) => {
+            return (
+                !!data.patch || (status === 1 && data.isGoingIpfs) || data.isGoingOnchain
+            )
         })
         if (!isPullRequest) {
             await this._setCommit(branch, commitHash, patched.length, false, task)
