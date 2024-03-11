@@ -1,3 +1,4 @@
+import { Buffer } from 'buffer'
 import moment from 'moment'
 import { GoshError } from './errors'
 
