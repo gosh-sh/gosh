@@ -3,6 +3,13 @@ export type TToastStatus = {
   data: any
 }
 
+export type TTIP3Token = {
+  name: string
+  symbol: string
+  decimals: number
+  root_addr: string
+}
+
 export enum EDaoEventType {
   PULL_REQUEST = 1,
   BRANCH_LOCK = 2,

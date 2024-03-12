@@ -61,7 +61,7 @@
 			]
 		},
 		{
-			"name": "transferFromWallet",
+			"name": "transferFromRepoWallet",
 			"inputs": [
 				{"name":"namedao","type":"string"},
 				{"name":"namerepo","type":"string"},
@@ -82,7 +82,7 @@
 			]
 		},
 		{
-			"name": "deployWalletForRepo",
+			"name": "SendTokenToWalletForRepo",
 			"inputs": [
 				{"name":"namedao","type":"string"},
 				{"name":"namerepo","type":"string"}

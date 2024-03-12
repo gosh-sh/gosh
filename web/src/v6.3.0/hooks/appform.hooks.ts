@@ -25,15 +25,20 @@ export function useApplicationFormList(params: {
     const forms = await Promise.all(
       tree.tree.forms.map(async (item) => {
         const filename = `${item.path}/${item.name}`
-        const blob = await repo_adapter.getBlob({
+        const snapshot = await repo_adapter._getSnapshot({
           fullpath: `${item.commit}/${filename}`,
         })
+        const { current } = await repo_adapter.getCommitBlob(
+          snapshot.address,
+          filename,
+          commit.name,
+        )
         return {
           repo_adapter,
           branch,
           application_form: {
             filename,
-            form: JSON.parse(blob.content as string),
+            form: JSON.parse(current as string),
           },
         }
       }),
@@ -70,14 +75,19 @@ export function useApplicationForm(params: {
       return filename === form_filename
     })
     if (!!tree_item) {
-      const blob = await repo_adapter.getBlob({
+      const snapshot = await repo_adapter._getSnapshot({
         fullpath: `${tree_item.commit}/${form_filename}`,
       })
+      const { current } = await repo_adapter.getCommitBlob(
+        snapshot.address,
+        form_filename,
+        commit.name,
+      )
       setState((state) => ({
         ...state,
         application_form: {
           filename: form_filename,
-          form: JSON.parse(blob.content as string),
+          form: JSON.parse(current as string),
         },
       }))
     }

@@ -1,3 +1,4 @@
+import { Buffer } from 'buffer'
 import isUtf8 from 'isutf8'
 import { useEffect } from 'react'
 import {
@@ -14,7 +15,7 @@ import { ZERO_COMMIT } from '../../constants'
 import { GoshError } from '../../errors'
 import { appToastStatusSelector } from '../../store/app.state'
 import { EDaoEventType } from '../../types/common.types'
-import { readFileAsBuffer } from '../../utils'
+import { readFileAsBuffer, toBigint } from '../../utils'
 import { getSystemContract } from '../blockchain/helpers'
 import { ic_create_atom } from '../store/ic.state'
 import { TTaskAssignerData } from '../types/dao.types'
@@ -506,7 +507,7 @@ export function useIssueICToken(params: {
           token: { ...token, description: token },
           grant: recipients.map(({ user, amount }) => ({
             pubaddr: user.value.address,
-            amount,
+            amount: toBigint(amount, token.decimals),
           })),
         },
       }

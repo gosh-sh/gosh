@@ -1,10 +1,10 @@
 import { KeyPair, TonClient } from '@eversdk/core'
-import { BaseContract } from './contract'
-import TIP3RootABI from './abi/tip3root.abi.json'
-import { TIP3Wallet } from './tip3wallet'
 import { GoshError } from '../errors'
+import TIP3RootABI from './abi/tip3root-flex.abi.json'
+import { BaseContract } from './contract'
+import { TIP3WalletFlex } from './tip3wallet-flex'
 
-export class TIP3Root extends BaseContract {
+export class TIP3RootFlex extends BaseContract {
   constructor(client: TonClient, address: string) {
     super(client, TIP3RootABI, address)
   }
@@ -21,7 +21,7 @@ export class TIP3Root extends BaseContract {
     }
 
     if (address) {
-      return new TIP3Wallet(this.client, address, keys)
+      return new TIP3WalletFlex(this.client, address, keys)
     }
 
     const { value0 } = await this.runLocal(
@@ -33,6 +33,6 @@ export class TIP3Root extends BaseContract {
       undefined,
       { useCachedBoc: true },
     )
-    return new TIP3Wallet(this.client, value0, keys)
+    return new TIP3WalletFlex(this.client, value0, keys)
   }
 }

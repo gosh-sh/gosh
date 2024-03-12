@@ -51,27 +51,11 @@
 			]
 		},
 		{
-			"name": "getWalletAddr",
-			"inputs": [
-				{"name":"wallet","type":"address"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "transferFromWallet",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
 				{"name":"value","type":"uint128"},
 				{"name":"pubaddr2","type":"address"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "deployWalletForRepo",
-			"inputs": [
-				{"name":"pubaddr","type":"address"}
 			],
 			"outputs": [
 			]

@@ -1,6 +1,6 @@
 import { atom, selectorFamily } from 'recoil'
 import { contextVersion } from '../constants'
-import { TGoshRepositoryList } from '../types/repository.types'
+import { TGoshRepositoryList, TRepoTokenWallet } from '../types/repository.types'
 
 export const daoRepositoryListAtom = atom<{ [daoname: string]: TGoshRepositoryList }>({
   key: `DaoRepositoryListAtom_${contextVersion}`,
@@ -34,4 +34,34 @@ export const daoRepositoryListSelector = selectorFamily<
         }))
       }
     },
+})
+
+export const repo_token_wallet_atom = atom<{ [repo_path: string]: TRepoTokenWallet }>({
+  key: `repo_token_wallet_atom-${contextVersion}`,
+  default: {},
+  dangerouslyAllowMutability: true,
+})
+
+export const repoTokenWalletSelector = selectorFamily<
+  TRepoTokenWallet | null,
+  string | undefined
+>({
+  key: `repo_token_wallet_selector-${contextVersion}`,
+  get:
+    (repo_path) =>
+    ({ get }) => {
+      const atom = get(repo_token_wallet_atom)
+      return repo_path ? atom[repo_path] : null
+    },
+  set:
+    (repo_path) =>
+    ({ set }, newvalue) => {
+      if (repo_path) {
+        set(repo_token_wallet_atom, (state) => ({
+          ...state,
+          [repo_path]: newvalue as TRepoTokenWallet,
+        }))
+      }
+    },
+  dangerouslyAllowMutability: true,
 })
