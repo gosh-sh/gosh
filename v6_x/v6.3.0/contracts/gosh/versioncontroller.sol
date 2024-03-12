@@ -63,7 +63,7 @@ contract VersionController is Modifiers {
         tvm.accept();
         token *= CURRENCIES_DECIMALS;
         if (token > address(this).currencies[CURRENCIES_ID]) {
-            SystemContract(msg.sender).returnTokenToGosh{value: 0.3 ton, flag: 1}(pubaddr, token);
+            SystemContract(msg.sender).returnTokenToGosh{value: 0.3 ton, flag: 1}(pubaddr, token / CURRENCIES_DECIMALS);
             return;
         }
         address answer = _deployNewCCWallet(pubkey);
@@ -74,7 +74,6 @@ contract VersionController is Modifiers {
                 if (_investors[pubkey] == 0) {
                     delete _investors[pubkey];
                 }
-                return;
             }
             else {
                 token -= _investors[pubkey];
@@ -82,13 +81,11 @@ contract VersionController is Modifiers {
                 ExtraCurrencyCollection data;
                 data[CURRENCIES_ID] = token;
                 answer.transfer({value: 0.1 ton, currencies: data});
-                return;
             }           
         } else {
             ExtraCurrencyCollection data;
             data[CURRENCIES_ID] = token;
             answer.transfer({value: 0.1 ton, currencies: data});
-            return;
         }
     }
 

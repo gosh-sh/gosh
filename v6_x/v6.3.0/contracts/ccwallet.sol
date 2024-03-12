@@ -81,6 +81,7 @@ contract CCWallet is Modifiers {
 
     //Money part
     function getMoney() private {
+        if (_wallettype != LOCK_CCWALLET) { return; }
         if (address(this).balance > 100 ton) { return; }
         if (block.timestamp - timeMoney > 3600) { _flag = false; }
         if (_flag == true) { return; }
