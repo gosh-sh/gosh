@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
-import { TApplicationForm } from '../types/form.types'
+import { TApplicationForm, TFormGeneratorForm } from '../types/form.types'
 
 export function useApplicationFormList(params: {
+  initialize?: boolean
   repo_address: string
   repo_adapter: IGoshRepositoryAdapter
-  branch: string
+  branch?: string
 }) {
-  const { repo_address, repo_adapter, branch } = params
+  const { initialize, repo_address, repo_adapter, branch } = params
   const [state, setState] = useState<{
     is_fetching: boolean
     forms: {
@@ -17,41 +18,56 @@ export function useApplicationFormList(params: {
     }[]
   }>({ is_fetching: false, forms: [] })
 
-  const getFormList = useCallback(async () => {
+  const getForms = useCallback(
+    async (params: { branch_name: string }) => {
+      const { branch_name } = params
+      const commit = (await repo_adapter.getBranch(branch_name)).commit
+      const tree = await repo_adapter.getTree(commit, 'forms')
+      return await Promise.all(
+        tree.tree.forms.map(async (item) => {
+          const filename = `${item.path}/${item.name}`
+          const snapshot = await repo_adapter._getSnapshot({
+            fullpath: `${item.commit}/${filename}`,
+          })
+          const { current } = await repo_adapter.getCommitBlob(
+            snapshot.address,
+            filename,
+            commit.name,
+          )
+          return {
+            repo_adapter,
+            branch: branch_name,
+            application_form: {
+              filename,
+              form: JSON.parse(current as string) as TFormGeneratorForm,
+            },
+          }
+        }),
+      )
+    },
+    [repo_address],
+  )
+
+  const updateFormList = useCallback(async () => {
     setState((state) => ({ ...state, is_fetching: true }))
 
-    const commit = (await repo_adapter.getBranch(branch)).commit
-    const tree = await repo_adapter.getTree(commit, 'forms')
-    const forms = await Promise.all(
-      tree.tree.forms.map(async (item) => {
-        const filename = `${item.path}/${item.name}`
-        const snapshot = await repo_adapter._getSnapshot({
-          fullpath: `${item.commit}/${filename}`,
-        })
-        const { current } = await repo_adapter.getCommitBlob(
-          snapshot.address,
-          filename,
-          commit.name,
-        )
-        return {
-          repo_adapter,
-          branch,
-          application_form: {
-            filename,
-            form: JSON.parse(current as string),
-          },
-        }
-      }),
-    )
+    let branch_name = branch
+    if (!branch_name) {
+      const repo_details = await repo_adapter.getDetails()
+      branch_name = repo_details.metadata!.forms_branch
+    }
+    const forms = await getForms({ branch_name: branch_name! })
 
     setState((state) => ({ ...state, forms, is_fetching: false }))
-  }, [repo_address, branch])
+  }, [repo_address])
 
   useEffect(() => {
-    getFormList()
-  }, [getFormList])
+    if (initialize) {
+      updateFormList()
+    }
+  }, [initialize, updateFormList])
 
-  return { data: state, getFormList }
+  return { data: state, getForms, updateFormList }
 }
 
 export function useApplicationForm(params: {

@@ -103,6 +103,11 @@ contract Repository is Modifiers{
         if (_tokendescription.hasValue()) { return; }
         _tokendescription = tokendescription;
         _tokengrants = tokengrants;
+        TvmBuilder b;
+        b.store("Biodiversity");
+        TvmCell data = tvm.setCodeSalt(_code[m_TokenRepoRootCode], b.toCell());
+        b.store(_name);
+        TvmCell data1 = tvm.setCodeSalt(_code[m_TokenRepoWalletCode], b.toCell());
         TvmCell stateInit = tvm.buildStateInit({
             contr: TokenRoot,
             varInit: {
@@ -112,9 +117,9 @@ contract Repository is Modifiers{
                 symbol_: symbol,
                 decimals_: decimals,
                 rootOwner_: address(this),
-                walletCode_: _code[m_TokenRepoWalletCode]
+                walletCode_: data1
             },
-            code: _code[m_TokenRepoRootCode],
+            code: data,
             pubkey: 0
         });
 
@@ -149,7 +154,7 @@ contract Repository is Modifiers{
     }
 
     function transferFromWallet(address pubaddr, uint128 value, address pubaddr2) public view senderIs(_systemcontract) accept {
-        address from = GoshLib.calculateRepoRootWalletAddress(_code[m_TokenRepoWalletCode], _tokenroot.get(), pubaddr);
+        address from = GoshLib.calculateRepoRootWalletAddress(_code[m_TokenRepoWalletCode], _name, _tokenroot.get(), pubaddr);
         SystemContract(_systemcontract).transferFromWalletAgain{value: 0.1 ton, flag: 1}(_nameDao, _name, pubaddr, from, pubaddr2, value);
     }
 
@@ -459,7 +464,7 @@ contract Repository is Modifiers{
     }
 
     function getRepoWalletAddr(address pubaddr) external view returns(address) {
-        return GoshLib.calculateRepoRootWalletAddress(_code[m_TokenRepoWalletCode], _tokenroot.get(), pubaddr);
+        return GoshLib.calculateRepoRootWalletAddress(_code[m_TokenRepoWalletCode], _name, _tokenroot.get(), pubaddr);
     }
 
     function getTreeAddr(uint256 shainnertree) external view returns(address) {
@@ -542,6 +547,12 @@ contract Repository is Modifiers{
     function getTaskCode() external view returns(TvmCell) {
         return GoshLib.buildTaskCode(_code[m_TaskCode], address(this), version);
     }
+
+    function getTokenRootCode() external view returns(TvmCell) {
+        TvmBuilder b;
+        b.store("Biodiversity");
+        return tvm.setCodeSalt(_code[m_TokenRepoRootCode], b.toCell());
+    }    
 
     function getDetails() external view returns(string description, string name, Item[] alladress, string head, mapping(uint256 => string) hashtag, bool ready, optional(string) tokendescription, optional(Grants[]) tokengrants, optional(uint128) tokensupply, optional(address) tokenroot, string metadata)
     {
