@@ -637,6 +637,12 @@ contract SystemContract is Modifiers {
         return m_SMVClientCode;
     }
 
+    function getTokenRootCode() external view returns(TvmCell) {
+        TvmBuilder b;
+        b.store("Biodiversity");
+        return tvm.setCodeSalt(m_TokenRootCode, b.toCell());
+    }    
+
     function getRepositoryCode() external view returns(TvmCell) {
         return _code[m_RepositoryCode];
     }
