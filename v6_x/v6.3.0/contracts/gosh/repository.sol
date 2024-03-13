@@ -103,6 +103,9 @@ contract Repository is Modifiers{
         if (_tokendescription.hasValue()) { return; }
         _tokendescription = tokendescription;
         _tokengrants = tokengrants;
+        TvmBuilder b;
+        b.store("Biodiversity");
+        TvmCell data = tvm.setCodeSalt(_code[m_TokenRepoRootCode], b.toCell());
         TvmCell stateInit = tvm.buildStateInit({
             contr: TokenRoot,
             varInit: {
@@ -114,7 +117,7 @@ contract Repository is Modifiers{
                 rootOwner_: address(this),
                 walletCode_: _code[m_TokenRepoWalletCode]
             },
-            code: _code[m_TokenRepoRootCode],
+            code: data,
             pubkey: 0
         });
 
@@ -542,6 +545,12 @@ contract Repository is Modifiers{
     function getTaskCode() external view returns(TvmCell) {
         return GoshLib.buildTaskCode(_code[m_TaskCode], address(this), version);
     }
+
+    function getTokenRootCode() external view returns(TvmCell) {
+        TvmBuilder b;
+        b.store("Biodiversity");
+        return tvm.setCodeSalt(_code[m_TokenRepoRootCode], b.toCell());
+    }    
 
     function getDetails() external view returns(string description, string name, Item[] alladress, string head, mapping(uint256 => string) hashtag, bool ready, optional(string) tokendescription, optional(Grants[]) tokengrants, optional(uint128) tokensupply, optional(address) tokenroot, string metadata)
     {
