@@ -226,7 +226,7 @@ const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
           onClick={onFieldAdd}
         >
           <FontAwesomeIcon icon={faPlus} className="mr-2" />
-          Add field
+          Add recipient
         </Button>
       </div>
     </>

@@ -528,6 +528,14 @@
 			]
 		},
 		{
+			"name": "getTokenRootCode",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "getDetails",
 			"inputs": [
 			],
