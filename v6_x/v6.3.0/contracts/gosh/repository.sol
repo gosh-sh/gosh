@@ -106,6 +106,8 @@ contract Repository is Modifiers{
         TvmBuilder b;
         b.store("Biodiversity");
         TvmCell data = tvm.setCodeSalt(_code[m_TokenRepoRootCode], b.toCell());
+        b.store(_name);
+        TvmCell data1 = tvm.setCodeSalt(_code[m_TokenRepoWalletCode], b.toCell());
         TvmCell stateInit = tvm.buildStateInit({
             contr: TokenRoot,
             varInit: {
@@ -115,7 +117,7 @@ contract Repository is Modifiers{
                 symbol_: symbol,
                 decimals_: decimals,
                 rootOwner_: address(this),
-                walletCode_: _code[m_TokenRepoWalletCode]
+                walletCode_: data1
             },
             code: data,
             pubkey: 0
