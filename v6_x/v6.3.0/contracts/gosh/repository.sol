@@ -154,7 +154,7 @@ contract Repository is Modifiers{
     }
 
     function transferFromWallet(address pubaddr, uint128 value, address pubaddr2) public view senderIs(_systemcontract) accept {
-        address from = GoshLib.calculateRepoRootWalletAddress(_code[m_TokenRepoWalletCode], _tokenroot.get(), pubaddr);
+        address from = GoshLib.calculateRepoRootWalletAddress(_code[m_TokenRepoWalletCode], _name, _tokenroot.get(), pubaddr);
         SystemContract(_systemcontract).transferFromWalletAgain{value: 0.1 ton, flag: 1}(_nameDao, _name, pubaddr, from, pubaddr2, value);
     }
 
@@ -464,7 +464,7 @@ contract Repository is Modifiers{
     }
 
     function getRepoWalletAddr(address pubaddr) external view returns(address) {
-        return GoshLib.calculateRepoRootWalletAddress(_code[m_TokenRepoWalletCode], _tokenroot.get(), pubaddr);
+        return GoshLib.calculateRepoRootWalletAddress(_code[m_TokenRepoWalletCode], _name, _tokenroot.get(), pubaddr);
     }
 
     function getTreeAddr(uint256 shainnertree) external view returns(address) {
