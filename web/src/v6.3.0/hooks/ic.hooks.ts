@@ -21,6 +21,7 @@ import { ic_create_atom } from '../store/ic.state'
 import { TTaskAssignerData } from '../types/dao.types'
 import { TApplicationForm, TUserSelectOption } from '../types/form.types'
 import { EICCreateStep, TICCreateState } from '../types/ic.types'
+import { useApplicationFormList } from './appform.hooks'
 import { useCreateTask, useDao, useDaoHelpers, useDaoMember } from './dao.hooks'
 import { useUser } from './user.hooks'
 
@@ -474,6 +475,11 @@ export function useIssueICToken(params: {
 }) {
   const { dao_details, repo_adapter } = params
   const member = useDaoMember()
+  const { getForms } = useApplicationFormList({
+    repo_address: repo_adapter.getAddress(),
+    repo_adapter,
+    branch: 'dev',
+  })
   const { beforeCreateEvent } = useDaoHelpers()
   const { build, push } = useMergeRequest(dao_details, repo_adapter, {})
   const [status, setStatus] = useRecoilState(appToastStatusSelector('__issueictoken'))
@@ -585,11 +591,25 @@ export function useIssueICToken(params: {
         type: 'pending',
         data: 'Prepare update repository metadata params',
       }))
+      const forms = await getForms({ branch_name: repo_details.metadata.forms_branch })
+      const forms_data: { [key: string]: any } = {}
+      forms.forEach(({ application_form: { form } }) => {
+        form.fields.forEach((field) => {
+          forms_data[field.name] = field.value
+        })
+      })
       const update_metadata_params = {
         type: EDaoEventType.REPO_UPDATE_METADATA,
         params: {
           reponame: repo_details.name,
-          metadata: { ...repo_details.metadata, token_issued: true },
+          metadata: {
+            ...repo_details.metadata,
+            token_issue: {
+              ...repo_details.metadata.token_issue,
+              ic_registry: forms_data,
+            },
+            token_issued: true,
+          },
         },
       }
 

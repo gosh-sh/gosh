@@ -15,7 +15,8 @@ const ApplicationFormList = () => {
   const setModal = useSetRecoilState(appModalStateAtom)
   const resetApplicationForm = useResetRecoilState(appform_atom)
   const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
-  const { data, getFormList } = useApplicationFormList({
+  const { data, updateFormList } = useApplicationFormList({
+    initialize: true,
     repo_address: repository.details.address,
     repo_adapter: repository.adapter,
     branch: repository.details.metadata!.forms_branch,
@@ -35,7 +36,7 @@ const ApplicationFormList = () => {
             application_form={form}
             onSubmit={() => {
               closeApplicationForm()
-              getFormList()
+              updateFormList()
             }}
           />
         </Dialog.Panel>
