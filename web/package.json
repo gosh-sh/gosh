@@ -14,7 +14,7 @@
     "build:prod": "dotenv -e .env.production bun env.json.js && dotenv -e .env.production vite build",
     "build:dockerdev": "dotenv -e .env.docker.development -- vite build --base=./",
     "build:dockerprod": "dotenv -e .env.docker.production -- vite build --base=./",
-    "update-react-gosh": "cd ../react-gosh && rm -rf dist && bun run build && cd - && pnpm update react-gosh"
+    "update-react-gosh": "cd ../react-gosh && rm -rf dist && bun run build && cd - && bun update react-gosh"
   },
   "eslintConfig": {
     "extends": [
@@ -34,6 +34,10 @@
       "last 1 safari version"
     ]
   },
+  "trustedDependencies": [
+    "@eversdk/lib-web",
+    "react-gosh"
+  ],
   "dependencies": {
     "@dicebear/collection": "^7.0.1",
     "@dicebear/core": "^7.0.1",
