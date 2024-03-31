@@ -19,7 +19,8 @@ contract ValidatorContractRoot is Modifiers {
 
     mapping(uint8 => TvmCell) _code;
     uint128 _minStake;
-    uint64 _epocheDuration;
+    uint64 _epocheDuration = 1000;
+    uint64 _epocheCliff = 1000;
 
     uint128 _numberOfActiveValidators = 0;
 
@@ -33,9 +34,10 @@ contract ValidatorContractRoot is Modifiers {
         _minStake = minStake;
     }
 
-    function setConfig(uint128 minStake, uint64 epocheDuration) public onlyOwnerPubkey(tvm.pubkey()) accept {
+    function setConfig(uint128 minStake, uint64 epocheDuration, uint64 epocheCliff) public onlyOwnerPubkey(tvm.pubkey()) accept {
         _minStake = minStake;
         _epocheDuration = epocheDuration;
+        _epocheCliff = epocheCliff;
     }
 
     function deployAchiNakiValidatorNodeWallet(uint256 pubkey) public view minValue(25 ton) accept {
@@ -44,8 +46,8 @@ contract ValidatorContractRoot is Modifiers {
     }
 
     function deployValidatorContract(uint256 pubkey, varUint32 stake, bytes[48] bls_pubkey) private view {
-        uint64 SeqNoStart = block.logicaltime + 1000; //Change to SeqNo
-        uint64 SeqNoFinish = SeqNoStart + _epocheDuration; //Change to SeqNo
+        uint64 SeqNoStart = block.seqno + _epocheCliff; 
+        uint64 SeqNoFinish = SeqNoStart + _epocheDuration; 
         TvmCell data = ValidatorLib.composeValidatorEpocheStateInit(_code[m_ValidatorEpocheCode], address(this), pubkey, SeqNoStart);
         mapping(uint32 => varUint32) data_cur;
         data_cur[CURRENCIES_ID] = stake;
