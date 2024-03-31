@@ -1,0 +1,105 @@
+{
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"validatorEpocheCode","type":"cell"},
+				{"name":"achiNakiValidatorNodeWalletCode","type":"cell"},
+				{"name":"minStake","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setConfig",
+			"inputs": [
+				{"name":"minStake","type":"uint128"},
+				{"name":"epocheDuration","type":"uint64"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployAchiNakiValidatorNodeWallet",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "increaseActiveValidatorNumber",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"seqNoStart","type":"uint64"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "decreaseActiveValidatorNumber",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"seqNoStart","type":"uint64"},
+				{"name":"seqNoFinish","type":"uint64"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "receiveValidatorRequestWithStakeFromWallet",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"bls_pubkey","type":"bytes[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getAchiNakiValidatorNodeWalletAddress",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getValidatorEpocheAddress",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"SeqNoStart","type":"uint64"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getDetails",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"minStake","type":"uint128"},
+				{"name":"numberOfActiveValidators","type":"uint128"}
+			]
+		}
+	],
+	"data": [
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
+		{"name":"_code","type":"map(uint8,cell)"},
+		{"name":"_minStake","type":"uint128"},
+		{"name":"_epocheDuration","type":"uint64"},
+		{"name":"_numberOfActiveValidators","type":"uint128"}
+	]
+}
