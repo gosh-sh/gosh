@@ -1,7 +1,4 @@
-import { useRecoilState, useResetRecoilState, useSetRecoilState } from 'recoil'
-import { blobCommentsAtom, blobsCommentsAiAtom } from '../store/comments.state'
-import { IGoshDaoAdapter, IGoshTopic } from 'react-gosh/dist/gosh/interfaces'
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import {
   GoshError,
   MAX_PARALLEL_READ,
@@ -10,21 +7,23 @@ import {
   getAllAccounts,
   useUser,
 } from 'react-gosh'
+import { IGoshDaoAdapter, IGoshTopic } from 'react-gosh/dist/gosh/interfaces'
+import { useRecoilState, useResetRecoilState } from 'recoil'
+import { blobCommentsAtom } from '../store/comments.state'
 
 export function useBlobComments(params: {
   dao: IGoshDaoAdapter
   filename: string
   objectAddress?: string
   commits?: string[]
-  multiple?: boolean
+  initialize?: boolean
 }) {
-  const { dao, objectAddress, filename, commits = [], multiple } = params
+  const { dao, objectAddress, filename, commits = [], initialize } = params
   const { user } = useUser()
   const [threads, setThreads] = useRecoilState(blobCommentsAtom)
   const resetThreads = useResetRecoilState(blobCommentsAtom)
-  const setAiComments = useSetRecoilState(blobsCommentsAiAtom)
 
-  const getThreads = async () => {
+  const getThreads = useCallback(async () => {
     if (!objectAddress || !commits.length) {
       return
     }
@@ -59,7 +58,6 @@ export function useBlobComments(params: {
       const createdBy = await dao.getGosh().getUserByAddress(thread.createdBy)
       return { thread, createdBy, comments }
     })
-    console.debug('Items', items)
 
     setThreads((state) => ({
       ...state,
@@ -69,14 +67,17 @@ export function useBlobComments(params: {
           isFetching: false,
           items: items
             .sort((a, b) => {
-              return a.thread.metadata.startLine - b.thread.metadata.endLine
+              const aNode = a.thread.metadata.md_metadata.md_nodes[0]
+              const aNum = aNode.start.line + aNode.start.column
+              const bNode = b.thread.metadata.md_metadata.md_nodes[0]
+              const bNum = bNode.start.line + bNode.start.column
+              return aNum - bNum
             })
             .map(({ thread, createdBy, comments }, index) => ({
               id: thread.address,
               snapshot: thread.metadata.snapshot,
               commit: thread.metadata.commit,
-              startLine: thread.metadata.startLine,
-              endLine: thread.metadata.endLine,
+              md_metadata: thread.metadata.md_metadata,
               prev: items[index - 1]?.thread.address,
               next: items[index + 1]?.thread.address,
               isResolved: thread.isResolved,
@@ -98,7 +99,7 @@ export function useBlobComments(params: {
         },
       },
     }))
-  }
+  }, [objectAddress, commits.length])
 
   const hoverThread = (id: string, hover: boolean) => {
     const thread = threads[filename].threads.items.find((item) => item.id === id)
@@ -106,7 +107,7 @@ export function useBlobComments(params: {
       return
     }
 
-    const lines = _getThreadLines({ start: thread.startLine, end: thread.endLine })
+    const lines = [0, 0] //_getThreadLines({ start: thread.startLine, end: thread.endLine })
     const hasOpenedThreads = Object.keys(threads).some((filename) => {
       return threads[filename].threads.items.some((v) => v.isOpen)
     })
@@ -114,9 +115,6 @@ export function useBlobComments(params: {
       ...state,
       [filename]: {
         ...state[filename],
-        selectedLines: hasOpenedThreads
-          ? state[filename].selectedLines
-          : { commit: thread.commit, lines: hover ? lines : [] },
         threads: {
           ...state[filename].threads,
           items: state[filename].threads.items.map((item) => {
@@ -136,7 +134,7 @@ export function useBlobComments(params: {
       return
     }
 
-    const lines = _getThreadLines({ start: thread.startLine, end: thread.endLine })
+    const lines = [0, 0] // _getThreadLines({ start: thread.startLine, end: thread.endLine })
     setThreads((state) => ({
       ...state,
       [filename]: {
@@ -154,61 +152,6 @@ export function useBlobComments(params: {
             return { ...item, isOpen: !item.isOpen, isActive: !item.isActive }
           }),
         },
-      },
-    }))
-  }
-
-  const toggleLineSelection = (
-    line: number,
-    commit: string,
-    options?: { multiple?: boolean },
-  ) => {
-    const { multiple } = options || {}
-    if (multiple) {
-      setThreads((state) => ({
-        ...state,
-        [filename]: {
-          ...state[filename],
-          selectedLines: {
-            commit,
-            lines: [...state[filename].selectedLines.lines, line],
-          },
-        },
-      }))
-    } else {
-      setThreads((state) => ({
-        ...state,
-        [filename]: {
-          ...state[filename],
-          selectedLines: { commit, lines: [line] },
-        },
-      }))
-    }
-  }
-
-  const toggleLineForm = (line: number, commit: string) => {
-    const foundIndex = threads[filename].selectedLines.lines.findIndex((v) => v === line)
-    const position = foundIndex >= 0 ? threads[filename].selectedLines.lines[0] : line
-    setThreads((state) => ({
-      ...state,
-      [filename]: {
-        ...state[filename],
-        selectedLines: {
-          commit,
-          lines: foundIndex < 0 ? [position] : state[filename].selectedLines.lines,
-        },
-        commentFormLine: { commit, line: position },
-      },
-    }))
-  }
-
-  const resetLinesSelection = () => {
-    setThreads((state) => ({
-      ...state,
-      [filename]: {
-        ...state[filename],
-        selectedLines: { commit: '', lines: [] },
-        commentFormLine: { commit: '', line: 0 },
       },
     }))
   }
@@ -307,8 +250,7 @@ export function useBlobComments(params: {
                 id: thread.address,
                 snapshot: metadata.snapshot,
                 commit: metadata.commit,
-                startLine: metadata?.startLine || 0,
-                endLine: metadata?.endLine || 0,
+                md_metadata: metadata.md_metadata,
                 prev: state[filename].threads.items.slice(-1)[0]?.id || null,
                 next: null,
                 isResolved: false,
@@ -330,37 +272,6 @@ export function useBlobComments(params: {
           },
         },
       }))
-      resetLinesSelection()
-    }
-
-    // Add new comments to separate storage
-    // Used for commenting multiple files for AI
-    if (multiple) {
-      const item = { filename, comment: content }
-      let meta: any
-      if (id) {
-        const thread = threads[filename].threads.items.find((item) => item.id === id)
-        if (thread) {
-          meta = {
-            snapshot: thread.snapshot,
-            thread: _thread,
-            startLine: thread.startLine,
-            endLine: thread.endLine,
-          }
-        }
-      } else if (metadata) {
-        meta = {
-          snapshot: metadata.snapshot,
-          thread: _thread,
-          startLine: metadata.startLine,
-          endLine: metadata.endLine,
-        }
-      }
-
-      // Update AI comments
-      if (meta) {
-        setAiComments((state) => [...state, { ...item, ...meta }])
-      }
     }
   }
 
@@ -446,15 +357,6 @@ export function useBlobComments(params: {
     return { items: comments, cursor, hasNext }
   }
 
-  const _getThreadLines = (params: { start: number; end: number }) => {
-    const { start, end } = params
-    const lines: number[] = []
-    for (let i = start; i <= end; i++) {
-      lines.push(i)
-    }
-    return lines
-  }
-
   useEffect(() => {
     const hasState = Object.keys(threads).indexOf(filename) >= 0
     if (!hasState) {
@@ -462,27 +364,32 @@ export function useBlobComments(params: {
         ...state,
         [filename]: {
           ...state[filename],
-          selectedLines: { commit: '', lines: [] },
-          commentFormLine: { commit: '', line: 0 },
           threads: { isFetching: true, items: [] },
         },
       }))
     }
   }, [filename])
 
+  useEffect(() => {
+    if (initialize) {
+      getThreads()
+    }
+
+    return () => {
+      if (initialize) {
+        resetThreads()
+      }
+    }
+  }, [initialize, getThreads])
+
   return {
     threads: threads[filename]?.threads || { isFetching: false, items: [] },
-    selectedLines: threads[filename]?.selectedLines || {},
-    commentFormLine: threads[filename]?.commentFormLine || 0,
     getThreads,
     hoverThread,
     toggleThread,
     resolveThread,
     getCommentsNext,
     submitComment,
-    toggleLineSelection,
-    toggleLineForm,
-    resetLinesSelection,
     resetThreads,
   }
 }

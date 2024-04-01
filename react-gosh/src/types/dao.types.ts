@@ -489,8 +489,7 @@ type TCodeCommentThreadCreateParams = {
     content: string
     object: string
     metadata: {
-        startLine: number
-        endLine: number
+        md_metadata: any
         commit: string
         snapshot: string
     }
