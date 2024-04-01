@@ -1,31 +1,34 @@
-import React, { useEffect } from 'react'
-import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import { TRepoLayoutOutletContext } from '../RepoLayout'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faFile } from '@fortawesome/free-regular-svg-icons'
 import {
-  faClockRotateLeft,
-  faCodeBranch,
-  faFolder,
-  faRightLong,
-  faMagnifyingGlass,
-  faFileCirclePlus,
-  faCode,
   faChevronDown,
+  faClockRotateLeft,
+  faCode,
+  faCodeBranch,
+  faFileCirclePlus,
+  faFolder,
+  faMagnifyingGlass,
+  faRightLong,
   faTerminal,
 } from '@fortawesome/free-solid-svg-icons'
-import { AppConfig, classNames, splitByPath, useBranches, useTree } from 'react-gosh'
-import { faFile } from '@fortawesome/free-regular-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Menu, Transition } from '@headlessui/react'
-import CopyClipboard from '../../components/CopyClipboard'
-import { shortString } from 'react-gosh'
+import React, { useEffect } from 'react'
+import {
+  AppConfig,
+  classNames,
+  shortString,
+  splitByPath,
+  useBranches,
+  useTree,
+} from 'react-gosh'
+import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { BranchSelect } from '../../components/Branches'
-import RepoReadme from './Readme'
-import { onExternalLinkClick } from '../../helpers'
+import CopyClipboard from '../../components/CopyClipboard'
 import { Button, ButtonLink } from '../../components/Form'
 import Loader from '../../components/Loader'
-import AiReview from '../../components/AiReview/AiReview'
-import { useRecoilValue } from 'recoil'
-import { blobsCommentsAiAtom } from '../../store/comments.state'
+import { onExternalLinkClick } from '../../helpers'
+import { TRepoLayoutOutletContext } from '../RepoLayout'
+import RepoReadme from './Readme'
 
 const RepoPage = () => {
   const treepath = useParams()['*'] || ''
@@ -34,7 +37,6 @@ const RepoPage = () => {
   const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
   const { branches, branch, updateBranch } = useBranches(repository.adapter, branchName)
   const { subtree, blobs } = useTree(daoName!, repoName!, branch?.commit, treepath)
-  const aiComments = useRecoilValue(blobsCommentsAiAtom)
 
   const [dirUp] = splitByPath(treepath)
 
@@ -249,14 +251,6 @@ const RepoPage = () => {
           />
         )}
       </div>
-
-      {dao.details.version >= '5.0.0' && aiComments.length > 0 && (
-        <div className="pl-5">
-          <div className="sticky top-3 shrink-0 w-72 bg-white">
-            <AiReview dao={dao.details} />
-          </div>
-        </div>
-      )}
     </div>
   )
 }

@@ -4,7 +4,6 @@ import * as Diff2Html from 'diff2html'
 import { useEffect, useMemo, useState } from 'react'
 import { TCommit } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
-import { useBlobComments } from '../../../hooks/codecomment.hooks'
 import { Button } from '../../Form'
 import { CodeComments } from '../Comments'
 import LinesBlock from './LinesBlock'
@@ -41,13 +40,13 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
     commit,
     getDiff,
   } = props
-  const { getThreads } = useBlobComments({
-    dao,
-    objectAddress: commentsObject,
-    filename,
-    commits:
-      commit && commit.parents.length ? [commit.parents[0].name, commit.name] : undefined,
-  })
+  // const { getThreads } = useBlobComments({
+  //   dao,
+  //   objectAddress: commentsObject,
+  //   filename,
+  //   commits:
+  //     commit && commit.parents.length ? [commit.parents[0].name, commit.name] : undefined,
+  // })
   const [isDiffShort, setIsDiffShort] = useState<boolean>(true)
   const [mouseDown, setMouseDown] = useState<boolean>(false)
 
@@ -84,7 +83,7 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
 
   useEffect(() => {
     if (commentsOn && isDiffLoaded) {
-      getThreads()
+      // getThreads()
     }
   }, [commentsOn, isDiffLoaded])
 

@@ -1,6 +1,7 @@
-import Spinner from '../../components/Spinner'
-import BlobDiffPreview from '../../components/Blob/DiffPreview'
 import { TCommit } from 'react-gosh'
+import { useOutletContext } from 'react-router-dom'
+import BlobDiffPreview from '../../components/Blob/DiffPreview'
+import Spinner from '../../components/Spinner'
 
 type TCommitBlobsType = {
   className?: string
@@ -21,6 +22,7 @@ type TCommitBlobsType = {
 const CommitBlobs = (props: TCommitBlobsType) => {
   const { className, blobs } = props
   const { isFetching, items, getDiff } = blobs
+  const { dao } = useOutletContext<any>()
 
   return (
     <div className={className}>
@@ -34,6 +36,7 @@ const CommitBlobs = (props: TCommitBlobsType) => {
       {items.map(({ treepath, showDiff, current, previous, isFetching }, index) => (
         <div key={index} className="my-5">
           <BlobDiffPreview
+            dao={dao.adapter}
             filename={treepath}
             modified={current}
             original={previous}

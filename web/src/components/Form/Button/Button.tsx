@@ -1,10 +1,15 @@
 import classNames from 'classnames'
-import Spinner from '../../Spinner'
 import { forwardRef } from 'react'
+import Spinner from '../../Spinner'
 
 export type TButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   isLoading?: boolean
-  variant?: 'default' | 'custom' | 'outline-danger' | 'outline-secondary'
+  variant?:
+    | 'default'
+    | 'custom'
+    | 'outline-danger'
+    | 'outline-secondary'
+    | 'link-secondary'
   size?: 'default' | 'sm' | 'lg' | 'xl'
   testId?: string
 }
@@ -29,6 +34,9 @@ const styles: { [key: string]: string[] } = {
     '!border-gray-e6edff',
     'hover:text-black',
     'disabled:text-gray-e6edff',
+  ],
+  'link-secondary': [
+    'bg-transparent text-gray-53596d !border-0 hover:text-black disabled:text-gray-e6edff',
   ],
 }
 

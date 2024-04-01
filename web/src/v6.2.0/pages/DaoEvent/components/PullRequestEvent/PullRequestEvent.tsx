@@ -141,7 +141,7 @@ const PullRequestEvent = (props: TPullRequestEventProps) => {
         <div key={index} className="my-5 relative">
           <BlobDiffPreview
             dao={dao.details._adapter!}
-            commentsOn={dao.details.version! >= '5.0.0'}
+            commentsOn={false}
             filename={item.treepath}
             modified={current}
             original={previous}
