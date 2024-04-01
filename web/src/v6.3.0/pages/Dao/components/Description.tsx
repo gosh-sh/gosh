@@ -1,8 +1,8 @@
 import classNames from 'classnames'
-import { useDao, useDaoMember } from '../../../hooks/dao.hooks'
 import ReactMarkdown from 'react-markdown'
 import rehypeRaw from 'rehype-raw'
 import remarkGfm from 'remark-gfm'
+import { useDao, useDaoMember } from '../../../hooks/dao.hooks'
 
 type TDaoDescriptionProps = React.HTMLAttributes<HTMLDivElement>
 
