@@ -12,7 +12,7 @@ import { Field } from 'formik'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useState } from 'react'
 import { BaseField } from '../../../../components/Formik'
-import { Editor } from '../../../components/Hackathon'
+import { SunEditor } from '../../../components/Editors'
 
 const data: {
   [k: string]: { title: string; field_name: string; icon: IconDefinition; hint: string }
@@ -88,7 +88,7 @@ const DescriptionFileField = (props: TDescriptionFileFieldProps) => {
             exit={{ height: 0 }}
           >
             <Field name={data[type].field_name} component={BaseField}>
-              <Editor
+              <SunEditor
                 className="sun-editor--noborder"
                 defaultValue={value}
                 onChange={onChange}
