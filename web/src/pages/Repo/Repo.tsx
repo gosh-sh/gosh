@@ -46,6 +46,12 @@ const RepoPage = () => {
     return `gosh://${goshstr}/${daoName}/${repoName}`
   }
 
+  const editors = [
+    { to: `code`, title: 'Code', subtitle: '', className: 'text-gray-050a15' },
+    { to: `md`, title: 'Markdown', subtitle: '.md', className: 'text-gray-050a15' },
+    { to: `odt`, title: 'Office Doc', subtitle: '.odt', className: 'text-gray-050a15' },
+  ]
+
   useEffect(() => {
     if (!branchName) {
       navigate(`/o/${daoName}/r/${repoName}/tree/${repository.details.head}`)
@@ -97,7 +103,7 @@ const RepoPage = () => {
               <FontAwesomeIcon icon={faMagnifyingGlass} />
               <span className="hidden sm:inline-block ml-2">Go to file</span>
             </ButtonLink>
-            {!branch?.isProtected && dao.details.isAuthMember && (
+            {/* {!branch?.isProtected && dao.details.isAuthMember && (
               <ButtonLink
                 to={`/o/${daoName}/r/${repoName}/blobs/create/${branch?.name}${
                   treepath && `/${treepath}`
@@ -107,6 +113,46 @@ const RepoPage = () => {
                 <FontAwesomeIcon icon={faFileCirclePlus} />
                 <span className="hidden sm:inline-block ml-2">Add file</span>
               </ButtonLink>
+            )} */}
+            {!branch?.isProtected && dao.details.isAuthMember && (
+              <Menu as="div" className="relative">
+                <Menu.Button>
+                  <Button test-id="btn-clone-trigger">
+                    <FontAwesomeIcon icon={faFileCirclePlus} />
+                    <span className="hidden sm:inline-block ml-2">Add file</span>
+                  <FontAwesomeIcon icon={faChevronDown} size="xs" className="ml-2" />
+                  </Button>
+                </Menu.Button>
+                <Transition
+                  as={React.Fragment}
+                  enter="transition ease-out duration-100"
+                  enterFrom="transform opacity-0 scale-95"
+                  enterTo="transform opacity-100 scale-100"
+                  leave="transition ease-in duration-75"
+                  leaveFrom="transform opacity-100 scale-100"
+                  leaveTo="transform opacity-0 scale-95"
+                >
+                  <Menu.Items className="absolute origin-top-right right-0 bg-white border border-gray-e6edff min-w-full rounded-lg mt-2 z-50 py-2">
+                    {editors.map((item, index) => (
+                      <Menu.Item key={index}>
+                        {({ active }) => (
+                          <Link
+                            to={`/o/${daoName}/r/${repoName}/blobs/create/${branch?.name}${treepath && `/${treepath}`}#${item.to}`}
+                            className={classNames(
+                              'flex justify-between text-right py-1 px-4 text-gray-53596d hover:text-black min-w-[160px]',
+                              active ? 'text-black' : null,
+                              item.className,
+                            )}
+                          >
+                            <div>{item.title}</div>
+                            <div className='text-gray-400'>{item.subtitle}</div>
+                          </Link>
+                        )}
+                      </Menu.Item>
+                    ))}
+                  </Menu.Items>
+                </Transition>
+              </Menu>
             )}
             <Menu as="div" className="relative">
               <Menu.Button as="div">

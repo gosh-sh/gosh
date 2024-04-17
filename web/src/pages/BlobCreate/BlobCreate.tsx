@@ -1,21 +1,31 @@
-import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
+import { Navigate, useNavigate, useLocation, useOutletContext, useParams } from 'react-router-dom'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import { usePush } from 'react-gosh'
 import { toast } from 'react-toastify'
 import { ToastError } from '../../components/Toast'
 import { BlobCommitForm, TBlobCommitFormValues } from '../../components/Commit'
+import { useEffect, useState } from 'react'
 
 const BlobCreatePage = () => {
   const treepath = useParams()['*']
   const navigate = useNavigate()
+  const { hash, pathname} = useLocation()
   const { daoName, repoName, branchName = 'main' } = useParams()
   const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
+  const [filetype, setFiletype] = useState<string>("")
   const { push, progress: pushProgress } = usePush(
     dao.details,
     repository.adapter,
     branchName,
   )
 
+  useEffect(() => {
+    if(!["#md", "#odt"].includes(hash)) {
+      navigate(pathname, { replace: true })
+    }
+    setFiletype(hash.substring(1))
+  }, [hash])
+  
   const urlBack = `/o/${daoName}/r/${repoName}/tree/${branchName}${
     treepath && `/${treepath}`
   }`
@@ -73,6 +83,7 @@ const BlobCreatePage = () => {
     <div>
       <BlobCommitForm
         dao={dao}
+        filetype={filetype}
         repository={repository}
         branch={branchName}
         treepath={treepath!}
