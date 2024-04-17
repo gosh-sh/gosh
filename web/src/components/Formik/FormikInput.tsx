@@ -6,7 +6,7 @@ interface IFormikInputProps extends IBaseFieldProps {
 }
 
 const FormikInput = (props: IFormikInputProps) => {
-  const { inputProps = {}, field, form, ...rest } = props
+  const { inputProps = {}, field, form, errorEnabled, ...rest } = props
 
   return (
     <BaseField {...props}>

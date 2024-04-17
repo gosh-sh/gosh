@@ -21,6 +21,8 @@ import { Button } from '../Form'
 import { CommitFields } from './CommitFields/CommitFields'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
 import yup from '../../v1.0.0/yup-extended'
+import { SunEditor } from '../../v6.2.0/components/Editors/SunEditor'
+import { JoditEditor } from '../../v6.2.0/components/Editors/JoditEditor'
 
 export type TBlobCommitFormValues = {
   name: string
@@ -37,6 +39,7 @@ export type TBlobCommitFormValues = {
 
 type TBlobCommitFormProps = {
   className?: string
+  filetype?: string
   dao: {
     adapter: IGoshDaoAdapter
     details: TDao
@@ -60,6 +63,7 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
   const {
     className,
     dao,
+    filetype,
     repository,
     branch,
     treepath,
@@ -189,13 +193,15 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
     // Formik `handleBlur` event
     handleBlur(e)
 
-    // Resolve file code language by it's extension and update editor
-    const language = getCodeLanguageFromFilename(monaco, e.target.value)
-    setCodeLanguage(language)
+    // Resolve file code language by it's extension and update editor if it's code mode
+    if (!filetype) {
+      const language = getCodeLanguageFromFilename(monaco, e.target.value)
+      setCodeLanguage(language)
+    }
 
     // Set commit title
     if (!values.title) {
-      setFieldValue('title', `Create ${e.target.value}`)
+      setFieldValue('title', `Create ${e.target.value}${filetype ? `.${filetype}` : ''}`)
     }
   }
 
@@ -224,19 +230,25 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                   pathName={!isUpdate ? treepath : splitByPath(treepath)[0]}
                   isBlob={false}
                 />
-                <div>
+
+                <div className={`relative !max-w-[400px]`}>
                   <Field
                     name="name"
                     component={FormikInput}
                     errorEnabled={false}
                     autoComplete="off"
-                    placeholder="Name of new file"
+                    placeholder="New file name"
                     disabled={isSubmitting || !monaco || activeTab === 1}
                     onBlur={(e: any) => {
                       onFilenameBlur(e, values, handleBlur, setFieldValue)
                     }}
                     test-id="input-file-name"
+                    className={filetype && "pr-7"}
                   />
+                  {values.name && <div className="flex mt-[-2.375rem] pointer-events-none top-0 right-0 w-full overflow-hidden leading-9 border border-transparent text-black/30 px-4 text-sm mx-[1px]">
+                    <div className="grow-1 shrink-0 text-transparent max-w-[calc(100%-1.75rem)]">{values.name}</div>
+                    <div className={`grow-0 shrink-0 ${filetype && "w-[1.75rem]"}`}>{filetype && `.${filetype}`}</div>
+                  </div>}
                 </div>
                 <span className="mx-2">in</span>
                 <span>{branch}</span>
@@ -253,12 +265,12 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
               )}
             </div>
 
-            <div className="mt-5 border border-gray-e6edff rounded-xl overflow-hidden">
+            <div className="mt-5 border border-gray-e6edff rounded-md overflow-hidden">
               <Tab.Group
                 defaultIndex={activeTab}
                 onChange={(index) => setActiveTab(index)}
               >
-                <Tab.List>
+                {!filetype && <Tab.List>
                   <Tab
                     className={({ selected }) =>
                       classNames(
@@ -285,17 +297,42 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                     <FontAwesomeIcon icon={faEye} size="sm" className="mr-1" />
                     Preview
                   </Tab>
-                </Tab.List>
+                </Tab.List>}
                 <Tab.Panels className="-mt-[1px] border-t">
                   <Tab.Panel>
-                    <BlobEditor
-                      language={codeLanguage}
-                      value={values.content}
-                      disabled={isSubmitting}
-                      onChange={(value) => {
-                        setFieldValue('content', value)
-                      }}
-                    />
+                  {(() => {
+                    switch (filetype) {
+                      case 'md':
+                        return <SunEditor
+                        className="sun-editor--noborder"
+                        defaultValue={values.content}
+                        disable={isSubmitting}
+                        onChange={(value) => {
+                          setFieldValue('content', value)
+                        }}
+                      />;
+                      case 'html':
+                        return <JoditEditor
+                        language={codeLanguage}
+                        value={values.content}
+                        disabled={isSubmitting}
+                        onChange={(value) => {
+                          setFieldValue('content', value)
+                        }}
+                      />;;
+                      case 'odt':
+                        return <></>;
+                      default:
+                        return <BlobEditor
+                        language={codeLanguage}
+                        value={values.content}
+                        disabled={isSubmitting}
+                        onChange={(value) => {
+                          setFieldValue('content', value)
+                        }}
+                      />;
+                    }
+                  })()}
                   </Tab.Panel>
                   <Tab.Panel>
                     <BlobPreview

@@ -1,15 +1,15 @@
 import classNames from 'classnames'
-import SunEditor from 'suneditor-react'
+import SunEditorReact from 'suneditor-react'
 import { SunEditorReactProps } from 'suneditor-react/dist/types/SunEditorReactProps'
 
-type TEditorProps = React.HTMLAttributes<HTMLDivElement> & SunEditorReactProps
+export type TSunEditorProps = React.HTMLAttributes<HTMLDivElement> & SunEditorReactProps
 
-const Editor = (props: TEditorProps) => {
+const SunEditor = (props: TSunEditorProps) => {
   const { className, ...rest } = props
 
   return (
     <div className={classNames(className)}>
-      <SunEditor
+      <SunEditorReact
         height="30rem"
         setOptions={{
           buttonList: [
@@ -29,4 +29,4 @@ const Editor = (props: TEditorProps) => {
   )
 }
 
-export { Editor }
+export { SunEditor }
