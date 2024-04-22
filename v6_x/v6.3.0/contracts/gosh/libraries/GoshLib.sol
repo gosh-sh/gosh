@@ -53,12 +53,12 @@ contract IRootToken {
 library GoshLib {
     string constant versionLib = "6.3.0";
 
-    function calculateRepoRootWalletAddress(TvmCell code, string repo, address root, address walletowner) public returns(address) {
+    function calculateRepoRootWalletAddress(TvmCell code, address repo, address root, address walletowner) public returns(address) {
         TvmCell s1 = composeRepoWalletInitData(code, repo, root, walletowner);
         return address.makeAddrStd(0, tvm.hash(s1));
     }
 
-    function composeRepoWalletInitData(TvmCell code, string repo, address root, address walletowner) private returns (TvmCell) {
+    function composeRepoWalletInitData(TvmCell code, address repo, address root, address walletowner) private returns (TvmCell) {
         TvmBuilder b;
         b.store("Biodiversity");
         b.store(repo);

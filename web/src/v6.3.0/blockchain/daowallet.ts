@@ -70,7 +70,7 @@ export class DaoWallet extends BaseContract {
     return {
       regular: details.balance.pseudodao,
       voting: balance.total,
-      locked: balance.locked + details.balance.locked,
+      locked: Math.max(balance.locked, details.balance.locked),
       allowance: balance.total + details.balance.pseudodaovote,
     }
   }

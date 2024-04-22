@@ -1,25 +1,25 @@
-import { getIdenticonAvatar } from '../../helpers'
-import classNames from 'classnames'
-import { Button } from '../Form'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCheckCircle } from '@fortawesome/free-regular-svg-icons'
 import {
   faArrowUp,
   faChevronLeft,
   faChevronRight,
   faTimes,
 } from '@fortawesome/free-solid-svg-icons'
-import { useBlobComments } from '../../hooks/codecomment.hooks'
-import { useParams } from 'react-router-dom'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import classNames from 'classnames'
 import { Field, Form, Formik, FormikHelpers } from 'formik'
-import { toast } from 'react-toastify'
-import { ToastError } from '../Toast'
-import { FormikTextarea } from '../Formik'
-import { useRef, useState } from 'react'
-import { faCheckCircle } from '@fortawesome/free-regular-svg-icons'
-import { Tooltip } from 'react-tooltip'
-import Loader from '../Loader/Loader'
 import moment from 'moment'
+import { useRef, useState } from 'react'
 import { useDao } from 'react-gosh'
+import { useParams } from 'react-router-dom'
+import { toast } from 'react-toastify'
+import { Tooltip } from 'react-tooltip'
+import { getIdenticonAvatar } from '../../helpers'
+import { useBlobComments } from '../../hooks/codecomment.hooks'
+import { Button } from '../Form'
+import { FormikTextarea } from '../Formik'
+import Loader from '../Loader/Loader'
+import { ToastError } from '../Toast'
 
 const CommentBlock = (props: any) => {
   const { comment, className } = props
@@ -40,28 +40,22 @@ const CommentBlock = (props: any) => {
       </div>
       <div className="grow">
         <div className="text-sm font-medium">{comment.username}</div>
-        <div
-          className="text-xs text-gray-7c8db5 my-1"
-          data-tooltip-id="tip-datetime"
-          data-tooltip-content={new Date(comment.datetime).toLocaleString()}
-        >
+        <div className="text-xs text-gray-7c8db5 my-1">
           {moment(comment.datetime).format('D MMM, H:mm')}
         </div>
         <div className="text-sm">{comment.content}</div>
       </div>
-      <Tooltip id="tip-datetime" clickable className="z-50" />
     </div>
   )
 }
 
 type TCodeCommentsProps = {
   filename: string
-  multiple?: boolean
 }
 
 const CodeComments = (props: TCodeCommentsProps) => {
   const urlparams = useParams()
-  const { filename, multiple } = props
+  const { filename } = props
   const dao = useDao(urlparams.daoname || urlparams.daoName || '')
   const {
     threads,
@@ -73,7 +67,6 @@ const CodeComments = (props: TCodeCommentsProps) => {
   } = useBlobComments({
     dao: dao.adapter!,
     filename,
-    multiple,
   })
   const commentRefs = useRef<{ [threadId: string]: HTMLDivElement | null }>({})
   const [isTextareaFocus, setTextareaFocus] = useState<boolean>(false)
@@ -275,7 +268,7 @@ const CodeComments = (props: TCodeCommentsProps) => {
                           component={FormikTextarea}
                           placeholder="Say something"
                           autoComplete="off"
-                          resize={false}
+                          autoResize={false}
                           maxRows={6}
                           minRows={isTextareaFocus ? 2 : 1}
                           onFocus={() => {
