@@ -322,7 +322,14 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                       case 'odt':
                         return <></>;
                       default:
-                        return 
+                        return <BlobEditor
+                        language={codeLanguage}
+                        value={values.content}
+                        disabled={isSubmitting}
+                        onChange={(value) => {
+                          setFieldValue('content', value)
+                        }}
+                      />;
                     }
                   })()}
                   </Tab.Panel>
