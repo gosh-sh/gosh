@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "wasm": "cp ./node_modules/@eversdk/lib-web/eversdk.wasm ./public",
+    "wasm": "cp ./eversdk/lib-web/eversdk.wasm ./public",
     "start": "bun run wasm && bun run start:dev",
     "start:ci": "source .env.ci && dotenv -e .env.ci bun env.json.js && dotenv -e .env.ci vite",
     "start:dev": "source .env.development && dotenv -e .env.development bun env.json.js && dotenv -e .env.development vite",

@@ -306,20 +306,20 @@ export function useUserSignup(options: { initialize?: boolean } = {}) {
       })
 
       // Create DB record for user
-      setStatus((state) => ({
-        ...state,
-        type: 'pending',
-        data: 'Update database',
-      }))
-      const dbUser = await getDbUser(oauth.session.user.id)
-      if (!dbUser) {
-        await createDbUser({
-          auth_id: oauth.session.user.id,
-          username: data.username,
-          pubkey: keys.public,
-          email: data.email,
-        })
-      }
+      // setStatus((state) => ({
+      //   ...state,
+      //   type: 'pending',
+      //   data: 'Update database',
+      // }))
+      // const dbUser = await getDbUser(oauth.session.user.id)
+      // if (!dbUser) {
+      //   await createDbUser({
+      //     auth_id: oauth.session.user.id,
+      //     username: data.username,
+      //     pubkey: keys.public,
+      //     email: data.email,
+      //   })
+      // }
 
       setStatus((state) => ({ ...state, type: 'dismiss', data: null }))
     } catch (e: any) {
