@@ -49,7 +49,8 @@ const RepoPage = () => {
   const editors = [
     { to: `code`, title: 'Code', subtitle: '', className: 'text-gray-050a15' },
     { to: `md`, title: 'Markdown', subtitle: '.md', className: 'text-gray-050a15' },
-    { to: `odt`, title: 'Office Doc', subtitle: '.odt', className: 'text-gray-050a15' },
+    { to: `html`, title: 'Rich Text', subtitle: '.html', className: 'text-gray-050a15' },
+    // { to: `odt`, title: 'Office Doc', subtitle: '.odt', className: 'text-gray-050a15' },
   ]
 
   useEffect(() => {

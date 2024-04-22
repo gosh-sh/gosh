@@ -20,7 +20,7 @@ const BlobCreatePage = () => {
   )
 
   useEffect(() => {
-    if(!["#md", "#odt"].includes(hash)) {
+    if(!["#md", "#odt", "#html"].includes(hash)) {
       navigate(pathname, { replace: true })
     }
     setFiletype(hash.substring(1))

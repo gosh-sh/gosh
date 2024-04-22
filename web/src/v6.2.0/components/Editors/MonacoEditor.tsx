@@ -1,7 +1,7 @@
 import Editor from '@monaco-editor/react'
 import classNames from 'classnames'
 
-type TEditorPanelProps = {
+export type TMonacoEditorPanelProps = {
   language?: string
   value?: string
   className?: string
@@ -10,7 +10,7 @@ type TEditorPanelProps = {
   onChange?(value: string | undefined): void
 }
 
-const MonacoEditor = (props: TEditorPanelProps) => {
+const MonacoEditor = (props: TMonacoEditorPanelProps) => {
   const { className, disabled, editorClassName, ...rest } = props
 
   return (

@@ -22,6 +22,7 @@ import { CommitFields } from './CommitFields/CommitFields'
 import { IGoshDaoAdapter, IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/interfaces'
 import yup from '../../v1.0.0/yup-extended'
 import { SunEditor } from '../../v6.2.0/components/Editors/SunEditor'
+import { JoditEditor } from '../../v6.2.0/components/Editors/JoditEditor'
 
 export type TBlobCommitFormValues = {
   name: string
@@ -309,17 +310,19 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                           setFieldValue('content', value)
                         }}
                       />;
+                      case 'html':
+                        return <JoditEditor
+                        language={codeLanguage}
+                        value={values.content}
+                        disabled={isSubmitting}
+                        onChange={(value) => {
+                          setFieldValue('content', value)
+                        }}
+                      />;;
                       case 'odt':
                         return <></>;
                       default:
-                        return <BlobEditor
-                          language={codeLanguage}
-                          value={values.content}
-                          disabled={isSubmitting}
-                          onChange={(value) => {
-                            setFieldValue('content', value)
-                          }}
-                        />;
+                        return 
                     }
                   })()}
                   </Tab.Panel>
