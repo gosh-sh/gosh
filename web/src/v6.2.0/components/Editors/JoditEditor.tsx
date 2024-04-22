@@ -8,17 +8,17 @@ type DeepPartial<T> = T extends object
 	  }
 	: T;
 
-  export type TMonacoEditorPanelProps = {
+  export type TJoditEditorPanelProps = {
     language?: string
     value?: string
     className?: string
     disabled?: boolean
     editorClassName?: string
     onChange?(value: string | undefined): void
-    config: DeepPartial<Config>
+    config?: DeepPartial<Config>
   }
 
-export const JoditEditor = ({config, className, value, onChange, ...rest}: TMonacoEditorPanelProps) => {
+export const JoditEditor = ({config, className, value, onChange, ...rest}: TJoditEditorPanelProps) => {
 	const editor = useRef(null);
 
 	return (
@@ -28,6 +28,7 @@ export const JoditEditor = ({config, className, value, onChange, ...rest}: TMona
 			value={value || ""}
 			config={config}
 			onBlur={onChange} // preferred to use only this option to update the content for performance reasons
+      {...rest}
 		/>
 	);
 };
