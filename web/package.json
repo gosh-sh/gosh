@@ -73,6 +73,7 @@
     "highlight.js": "^11.9.0",
     "is-mobile": "^4.0.0",
     "isutf8": "^4.0.0",
+    "jodit-react": "^4.0.25",
     "libsodium": "^0.7.13",
     "libsodium-wrappers": "^0.7.13",
     "lodash": "^4.17.21",
