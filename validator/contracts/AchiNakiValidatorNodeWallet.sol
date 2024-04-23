@@ -32,6 +32,25 @@ contract AchiNakiValidatorNodeWallet is Modifiers {
         _code[m_ValidatorEpocheCode] = ValidatorEpocheCode;
     }
 
+    function getMoney() private view {
+        if (address(this).balance > 20 ton) { return; }
+        ValidatorContractRoot(_root).askMoney{value : 0.2 ton, flag: 1}(_pubkey, 20 ton);
+    }
+
+    function slash(uint256 pubkey, uint64 seqNoStart, uint64 seqNoFinish) public senderIs(ValidatorLib.calculateValidatorEpocheAddress(_code[m_ValidatorEpocheCode], _root, pubkey, seqNoStart)) accept {
+        if (_pubkey != pubkey) { return; }
+        TvmBuilder b;
+        b.store(seqNoStart);
+        b.store(seqNoFinish);
+        uint256 hash = tvm.hash(b.toCell());
+        _lock -= _lockData[hash];
+        address  burn = address.makeAddrStd(0, 0);
+        mapping(uint32 => varUint32) data;
+        data[CURRENCIES_ID] = varUint32(_lockData[hash]);
+        delete _lockData[hash];
+        burn.transfer({value: 0.1 ton, currencies: data, flag: 1});
+    } 
+
     function setLockStake(uint64 SeqNoStart, uint64 SeqNoFinish, uint256 stake) public internalMsg senderIs(_root) accept {
         _lock += stake;
         TvmBuilder b;

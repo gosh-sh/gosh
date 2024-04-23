@@ -14,6 +14,10 @@ import "./libraries/ValidatorLib.sol";
 import "./AchiNakiValidatorNodeWallet.sol";
 import "./ValidatorEpocheContract.sol";
 
+interface Giver {
+    function askMoney(uint128 value) external;
+}
+
 contract ValidatorContractRoot is Modifiers {
     string constant version = "1.0.0";
 
@@ -21,26 +25,40 @@ contract ValidatorContractRoot is Modifiers {
     uint128 _minStake;
     uint64 _epocheDuration = 1000;
     uint64 _epocheCliff = 1000;
+    address _giver;
 
     uint128 _numberOfActiveValidators = 0;
 
     constructor (
         TvmCell validatorEpocheCode,
         TvmCell achiNakiValidatorNodeWalletCode,
-        uint128 minStake
+        uint128 minStake,
+        address giver
     ) {
         _code[m_ValidatorEpocheCode] = validatorEpocheCode;
         _code[m_AchiNakiValidatorNodeWalletCode] = achiNakiValidatorNodeWalletCode;
         _minStake = minStake;
+        _giver = giver;
+    }
+
+    function askMoney(uint256 pubkey, uint128 value) public view senderIs(ValidatorLib.calculateValidatorWalletAddress(_code[m_AchiNakiValidatorNodeWalletCode] ,address(this), pubkey)) {
+        msg.sender.transfer(value);
+    }
+
+    function getMoney() private view {
+        if (address(this).balance > 1000000 ton) { return; }
+        Giver(_giver).askMoney{value : 0.2 ton, flag: 1}(1000000 ton);
     }
 
     function setConfig(uint128 minStake, uint64 epocheDuration, uint64 epocheCliff) public onlyOwnerPubkey(tvm.pubkey()) accept {
+        getMoney();
         _minStake = minStake;
         _epocheDuration = epocheDuration;
         _epocheCliff = epocheCliff;
     }
 
-    function deployAchiNakiValidatorNodeWallet(uint256 pubkey) public view minValue(25 ton) accept {
+    function deployAchiNakiValidatorNodeWallet(uint256 pubkey) public view accept {
+        getMoney();
         TvmCell data = ValidatorLib.composeValidatorWalletStateInit(_code[m_AchiNakiValidatorNodeWalletCode], address(this), pubkey);
         new AchiNakiValidatorNodeWallet {stateInit: data, value: FEE_DEPLOY_VALIDATOR_WALLET, wid: 0, flag: 1}(address(this), _code[m_ValidatorEpocheCode]);
     }
@@ -62,10 +80,12 @@ contract ValidatorContractRoot is Modifiers {
     }
 
     function increaseActiveValidatorNumber(uint256 pubkey, uint64 seqNoStart) public internalMsg senderIs(ValidatorLib.calculateValidatorEpocheAddress(_code[m_ValidatorEpocheCode], address(this), pubkey, seqNoStart)) accept {
+        getMoney();
         _numberOfActiveValidators += 1;
     }
 
     function decreaseActiveValidatorNumber(uint256 pubkey, uint64 seqNoStart, uint64 seqNoFinish) public internalMsg senderIs(ValidatorLib.calculateValidatorEpocheAddress(_code[m_ValidatorEpocheCode], address(this), pubkey, seqNoStart)) accept {
+        getMoney();
         _numberOfActiveValidators -= 1;
         address wallet = ValidatorLib.calculateValidatorWalletAddress(_code[m_AchiNakiValidatorNodeWalletCode] ,address(this), pubkey);
         AchiNakiValidatorNodeWallet(wallet).unlockStake{value: 0.2 ton, flag: 1}(seqNoStart, seqNoFinish);
@@ -78,6 +98,19 @@ contract ValidatorContractRoot is Modifiers {
         }
         deployValidatorContract(pubkey, msg.currencies[CURRENCIES_ID], bls_pubkey);
     } 
+
+    function setNewCode(uint8 id, TvmCell code) public onlyOwner accept saveMsg { 
+        _code[id] = code;
+    }
+
+    function updateCode(TvmCell newcode, TvmCell cell) public onlyOwner accept saveMsg {
+        tvm.setcode(newcode);
+        tvm.setCurrentCode(newcode);
+        onCodeUpgrade(cell);
+    }
+
+    function onCodeUpgrade(TvmCell cell) private pure {
+    }
 
 /*
     function receiveValidatorRequestWithStake(uint256 pubkey, uint256 stake) private view {

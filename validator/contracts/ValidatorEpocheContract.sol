@@ -12,6 +12,7 @@ pragma AbiHeader pubkey;
 import "./modifiers/modifiers.sol";
 import "./libraries/ValidatorLib.sol";
 import "./ValidatorContractRoot.sol";
+import "./AchiNakiValidatorNodeWallet.sol";
 
 contract ValidatorEpoche is Modifiers {
     string constant version = "1.0.0";
@@ -45,6 +46,12 @@ contract ValidatorEpoche is Modifiers {
     function getBLSPrivateKey(bytes[48] key) public view internalMsg minValue(0.2 ton) senderIs(ValidatorLib.calculateValidatorWalletAddress(_code[m_AchiNakiValidatorNodeWalletCode] , _root, _pubkey)) accept {
         key;
         //SEND TO SLASHING SYSTEM
+    }
+
+    function slash() public  accept {
+        AchiNakiValidatorNodeWallet(_owner).slash{value: 0.1 ton, flag: 1}(_pubkey, _SeqNoStart, _SeqNoFinish);
+        ValidatorContractRoot(_root).decreaseActiveValidatorNumber{value: 0.3 ton, flag: 1}(_pubkey, _SeqNoStart, _SeqNoFinish);   
+        selfdestruct(_root);   
     }
 
     function destroy() private accept {

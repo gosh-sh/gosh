@@ -13,6 +13,16 @@
 			]
 		},
 		{
+			"name": "slash",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"seqNoStart","type":"uint64"},
+				{"name":"seqNoFinish","type":"uint64"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "setLockStake",
 			"inputs": [
 				{"name":"SeqNoStart","type":"uint64"},

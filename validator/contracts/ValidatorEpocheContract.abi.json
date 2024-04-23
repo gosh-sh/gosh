@@ -25,6 +25,13 @@
 			]
 		},
 		{
+			"name": "slash",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getDetails",
 			"inputs": [
 			],

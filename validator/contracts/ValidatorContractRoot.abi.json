@@ -8,7 +8,17 @@
 			"inputs": [
 				{"name":"validatorEpocheCode","type":"cell"},
 				{"name":"achiNakiValidatorNodeWalletCode","type":"cell"},
-				{"name":"minStake","type":"uint128"}
+				{"name":"minStake","type":"uint128"},
+				{"name":"giver","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "askMoney",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"},
+				{"name":"value","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -60,6 +70,24 @@
 			]
 		},
 		{
+			"name": "setNewCode",
+			"inputs": [
+				{"name":"id","type":"uint8"},
+				{"name":"code","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateCode",
+			"inputs": [
+				{"name":"newcode","type":"cell"},
+				{"name":"cell","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getAchiNakiValidatorNodeWalletAddress",
 			"inputs": [
 				{"name":"pubkey","type":"uint256"}
@@ -102,6 +130,7 @@
 		{"name":"_minStake","type":"uint128"},
 		{"name":"_epocheDuration","type":"uint64"},
 		{"name":"_epocheCliff","type":"uint64"},
+		{"name":"_giver","type":"address"},
 		{"name":"_numberOfActiveValidators","type":"uint128"}
 	]
 }
