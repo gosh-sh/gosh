@@ -27,14 +27,17 @@ contract ValidatorEpoche is Modifiers {
     bytes[48] _bls_pubkey;
 
     constructor (
-        address root,
         uint64 SeqNoFinish,
         address owner,
         uint8 vtype,
         bytes[48] bls_pubkey,
         TvmCell AchiNakiValidatorNodeWalletCode
     ) internalMsg {
+        TvmCell data = tvm.codeSalt(tvm.code()).get();
+        (uint256 hash, address root) = abi.decode(data, (uint256, address));
+        hash;
         _root = root;
+        require(msg.sender == _root, ERR_SENDER_NO_ALLOWED);
         _SeqNoFinish = SeqNoFinish;
         _owner = owner;
         _type = vtype;

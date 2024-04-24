@@ -19,16 +19,19 @@ contract AchiNakiValidatorNodeWallet is Modifiers {
     mapping(uint8 => TvmCell) _code;
 
     uint256 static _pubkey;
-    address static _root; 
+    address _root; 
     uint256 _lock = 0;
 
     mapping(uint256 => uint256) _lockData;
 
     constructor (
-        address root,
         TvmCell ValidatorEpocheCode
     ) internalMsg {
+        TvmCell data = tvm.codeSalt(tvm.code()).get();
+        (uint256 hash, address root) = abi.decode(data, (uint256, address));
+        hash;
         _root = root;
+        require(msg.sender == _root, ERR_SENDER_NO_ALLOWED);
         _code[m_ValidatorEpocheCode] = ValidatorEpocheCode;
     }
 

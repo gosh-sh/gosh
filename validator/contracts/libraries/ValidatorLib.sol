@@ -19,21 +19,23 @@ library ValidatorLib {
 
     function composeValidatorWalletStateInit(TvmCell code, address root, uint256 pubkey) public returns(TvmCell) {
         return tvm.buildStateInit({
-            code: buildValidatorWalletCode(code),
+            code: buildValidatorWalletCode(code, root),
             contr: AchiNakiValidatorNodeWallet,
             pubkey: pubkey,
-            varInit: { _pubkey : pubkey, _root : root }
+            varInit: { _pubkey : pubkey }
         });
     }
 
     function buildValidatorWalletCode(
-        TvmCell originalCode
+        TvmCell originalCode,
+        address root
     ) public returns (TvmCell) {
         TvmBuilder b;
         b.store(versionLib);
         uint256 hash = tvm.hash(b.toCell());
         delete b;
         b.store(hash);
+        b.store(root);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
 
@@ -57,10 +59,10 @@ library ValidatorLib {
     ) public returns (TvmCell) {
         TvmBuilder b;
         b.store(versionLib);
-        b.store(root);
         uint256 hash = tvm.hash(b.toCell());
         delete b;
         b.store(hash);
+        b.store(root);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
 }

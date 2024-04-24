@@ -6,7 +6,6 @@
 		{
 			"name": "constructor",
 			"inputs": [
-				{"name":"root","type":"address"},
 				{"name":"ValidatorEpocheCode","type":"cell"}
 			],
 			"outputs": [
@@ -81,8 +80,7 @@
 		}
 	],
 	"data": [
-		{"key":1,"name":"_pubkey","type":"uint256"},
-		{"key":2,"name":"_root","type":"address"}
+		{"key":1,"name":"_pubkey","type":"uint256"}
 	],
 	"events": [
 	],

@@ -60,7 +60,7 @@ contract ValidatorContractRoot is Modifiers {
     function deployAchiNakiValidatorNodeWallet(uint256 pubkey) public view accept {
         getMoney();
         TvmCell data = ValidatorLib.composeValidatorWalletStateInit(_code[m_AchiNakiValidatorNodeWalletCode], address(this), pubkey);
-        new AchiNakiValidatorNodeWallet {stateInit: data, value: FEE_DEPLOY_VALIDATOR_WALLET, wid: 0, flag: 1}(address(this), _code[m_ValidatorEpocheCode]);
+        new AchiNakiValidatorNodeWallet {stateInit: data, value: FEE_DEPLOY_VALIDATOR_WALLET, wid: 0, flag: 1}(_code[m_ValidatorEpocheCode]);
     }
 
     function deployValidatorContract(uint256 pubkey, varUint32 stake, bytes[48] bls_pubkey) private view {
@@ -74,7 +74,7 @@ contract ValidatorContractRoot is Modifiers {
             value: FEE_DEPLOY_VALIDATOR_EPOCHE_WALLET, 
             wid: 0, 
             flag: 1
-        } (address(this), SeqNoFinish, ValidatorLib.calculateValidatorWalletAddress(_code[m_AchiNakiValidatorNodeWalletCode] ,address(this), pubkey), TYPE_VALIDATOR, bls_pubkey, _code[m_AchiNakiValidatorNodeWalletCode]);
+        } (SeqNoFinish, ValidatorLib.calculateValidatorWalletAddress(_code[m_AchiNakiValidatorNodeWalletCode] ,address(this), pubkey), TYPE_VALIDATOR, bls_pubkey, _code[m_AchiNakiValidatorNodeWalletCode]);
         address wallet = ValidatorLib.calculateValidatorWalletAddress(_code[m_AchiNakiValidatorNodeWalletCode] ,address(this), pubkey);
         AchiNakiValidatorNodeWallet(wallet).setLockStake{value: 0.1 ton, currencies: data_cur, flag: 1}(SeqNoStart, SeqNoFinish, stake);
     }

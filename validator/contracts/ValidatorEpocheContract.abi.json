@@ -6,7 +6,6 @@
 		{
 			"name": "constructor",
 			"inputs": [
-				{"name":"root","type":"address"},
 				{"name":"SeqNoFinish","type":"uint64"},
 				{"name":"owner","type":"address"},
 				{"name":"vtype","type":"uint8"},
