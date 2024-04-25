@@ -95,7 +95,7 @@ contract Repository is Modifiers{
         _creator = msg.sender;
         if (_previousversion.hasValue()) { SystemContract(_systemcontract).checkUpdateRepo1{value: 0.3 ton, bounce: true, flag: 1}(_name, _nameDao, _previousversion.get(), address(this)); return; }
         _ready = true;
-        _Branches[tvm.hash("main")] = Item("main", GoshLib.calculateCommitAddress(_code[m_CommitCode], address(this), "0000000000000000000000000000000000000000"), version);
+        _Branches[tvm.hash("main")] = Item("main", GoshLib.calculateCommitAddress(_code[m_CommitCode], address(this), "0000000000000000000000000000000000000000", _code[m_WalletCode]), version);
         _head = "main";
     }
 
@@ -480,7 +480,7 @@ contract Repository is Modifiers{
     }
 
     function getSnapCode() external view returns(TvmCell) {
-        return GoshLib.buildSnapshotCode(_code[m_SnapshotCode], address(this), version);
+        return GoshLib.buildSnapshotCode(_code[m_SnapshotCode], address(this), version, _code[m_WalletCode]);
     }
 
     function getAddrBranch(string name) external view returns(Item) {
@@ -497,11 +497,11 @@ contract Repository is Modifiers{
     }
 
     function getSnapshotAddr(string commitsha, string name) external view returns(address) {
-        return GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], this, commitsha, name);
+        return GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], this, commitsha, name, _code[m_WalletCode]);
     }
 
     function getDiffAddr (string commitName, uint128 index1, uint128 index2) external view returns(address) {
-        return GoshLib.calculateDiffAddress(_code[m_DiffCode], address(this), commitName, index1, index2);
+        return GoshLib.calculateDiffAddress(_code[m_DiffCode], address(this), commitName, index1, index2, _code[m_WalletCode]);
     }
 
     function getTags() external view returns(mapping(uint256 => string)) {
@@ -529,7 +529,7 @@ contract Repository is Modifiers{
     }
 
     function getCommitAddr(string nameCommit) public view returns(address)  {
-        return GoshLib.calculateCommitAddress(_code[m_CommitCode], address(this), nameCommit);
+        return GoshLib.calculateCommitAddress(_code[m_CommitCode], address(this), nameCommit, _code[m_WalletCode]);
     }
 
     function getVersion() external pure returns(string, string) {

@@ -285,6 +285,7 @@
 		{"name":"_waitForUpdate","type":"bool"},
 		{"name":"_previousVersionAddr","type":"address"},
 		{"name":"_previousVersion","type":"string"},
+		{"name":"_revert","type":"bool"},
 		{"name":"_bigtask","type":"optional(string)"}
 	]
 }

@@ -76,6 +76,10 @@ contract Commit is Modifiers {
         _pubaddr = pubaddr;
         require(_nameCommit != "", ERR_NO_DATA);
         tvm.accept();
+        TvmCell dataSalt = tvm.codeSalt(tvm.code()).get();
+        (uint256 codehash, uint256 hash) = abi.decode(dataSalt, (uint256, uint256));
+        hash;
+        require(codehash == tvm.hash(WalletCode), ERR_SENDER_NO_ALLOWED);
         _code[m_WalletCode] = WalletCode;
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         _parents = parents;
@@ -144,7 +148,7 @@ contract Commit is Modifiers {
     function sendCommitSetCorrect(
         string namecommit,
         uint128 time) public {
-        require(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, namecommit) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, namecommit, _code[m_WalletCode]) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         getMoney();
         if (_isCorrect == true) { return; }
@@ -194,7 +198,7 @@ contract Commit is Modifiers {
                 }
                 return;
             }
-            DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0)).allCorrect{value : 0.2 ton, flag: 1}(branch);
+            DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0, _code[m_WalletCode])).allCorrect{value : 0.2 ton, flag: 1}(branch);
             index += 1;
         }
         this._acceptCommitRepo{value: 0.2 ton, bounce: true, flag: 1}(index, number, branch);
@@ -202,7 +206,7 @@ contract Commit is Modifiers {
 
     function cancelCommit(string namecommit, uint128 number) public {
         tvm.accept();
-        require(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, namecommit) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, namecommit, _code[m_WalletCode]) == msg.sender, ERR_SENDER_NO_ALLOWED);
         getMoney();
         Repository(_rootRepo).commitCanceled{value: 0.1 ton, flag: 1}(_nameCommit);
         _task = null;
@@ -219,7 +223,7 @@ contract Commit is Modifiers {
                 return;
             }
             if (address(this).balance < 5 ton) { _saved = PauseCommit(false, "", address.makeAddrNone(), index, number); return; }
-            DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0)).cancelCommit{value : 0.2 ton, flag: 1}();
+            DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0, _code[m_WalletCode])).cancelCommit{value : 0.2 ton, flag: 1}();
             index += 1;
         }
         this._cancelAllDiff{value: 0.2 ton, bounce: true, flag: 1}(index, number);
@@ -324,28 +328,28 @@ contract Commit is Modifiers {
         }
         for (uint128 i = 0; i < BATCH_SIZE_COMMIT; i++){
             if (index >= number) { return; }
-            DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0)).sendDiffAll{value: 0.5 ton, bounce: true, flag: 1}(branch, branchcommit);
+            DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0, _code[m_WalletCode])).sendDiffAll{value: 0.5 ton, bounce: true, flag: 1}(branch, branchcommit);
             index += 1;
         }
         this._sendAllDiff{value: 0.2 ton, bounce: true, flag: 1}(branch, branchcommit, index, number);
     }
 
-    function getAcceptedDiff(Diff value0, uint128 index1, uint128 index2, string branch) public senderIs(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index1, index2)){
+    function getAcceptedDiff(Diff value0, uint128 index1, uint128 index2, string branch) public senderIs(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index1, index2, _code[m_WalletCode])){
         value0;
         branch;
         getMoney();
     }
 
     function getAcceptedContent(uint256 value0, string path) public {
-        if (msg.sender != GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _rootRepo, _nameCommit, path)) {
-            require(msg.sender == GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _rootRepo, "//PINTAG//" + _nameCommit, path), ERR_INVALID_SENDER);
+        if (msg.sender != GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _rootRepo, _nameCommit, path, _code[m_WalletCode])) {
+            require(msg.sender == GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _rootRepo, "//PINTAG//" + _nameCommit, path, _code[m_WalletCode]), ERR_INVALID_SENDER);
         }
         getMoney();
         tvm.accept();
         Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, value0));
     }
 
-    function getAcceptedContentDiff(string nameCommit, uint256 value0, string path, uint128 index1, uint128 index2) public senderIs(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, nameCommit, index1, index2)) accept {
+    function getAcceptedContentDiff(string nameCommit, uint256 value0, string path, uint128 index1, uint128 index2) public senderIs(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, nameCommit, index1, index2, _code[m_WalletCode])) accept {
         getMoney();
         Tree(_tree).getShaInfoCommit{value: 0.23 ton, bounce: true, flag: 1}(_nameCommit, Request(msg.sender, path, path, value0));
     }
@@ -377,7 +381,7 @@ contract Commit is Modifiers {
 
     function addCommitCheckNumber(
         string nameCommit) public {
-        require(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, nameCommit) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, nameCommit, _code[m_WalletCode]) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         _numcommits = _numcommits + 1;
         getMoney();
@@ -406,7 +410,7 @@ contract Commit is Modifiers {
     }
 
 
-    function abortDiff(string branch, address branchCommit, uint128 index, uint128 index2) public senderIs(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, index2)) {
+    function abortDiff(string branch, address branchCommit, uint128 index, uint128 index2) public senderIs(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, index2, _code[m_WalletCode])) {
         tvm.accept();
         _continueDiff = false;
         _diffcheck = false;
@@ -416,7 +420,7 @@ contract Commit is Modifiers {
         this.acceptAll{value: 0.15 ton, bounce: true, flag: 1}(branch, branchCommit);
     }
 
-    function DiffCheckCommit(string branch, address branchCommit, uint128 index) public senderIs(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0)) {
+    function DiffCheckCommit(string branch, address branchCommit, uint128 index) public senderIs(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0, _code[m_WalletCode])) {
         tvm.accept();
         getMoney();
         _approved += 1;
@@ -430,7 +434,7 @@ contract Commit is Modifiers {
     }
 
     function ChainAccept(string name, string branchName, address branchCommit, address newC) public {
-        require(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, name) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, name, _code[m_WalletCode]) == msg.sender, ERR_SENDER_NO_ALLOWED);
         require(newC == address(this), ERR_WRONG_DATA);
         tvm.accept();
         getMoney();
@@ -444,7 +448,7 @@ contract Commit is Modifiers {
 
 
     function NotCorrect(string branch, address branchCommit, string commit) public {
-        if (msg.sender != GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, commit)){ return; }
+        if (msg.sender != GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, commit, _code[m_WalletCode])){ return; }
         tvm.accept();
         _continueChain = false;
         _commitcheck = false;
@@ -486,7 +490,7 @@ contract Commit is Modifiers {
                 _diffcheck = false;
                 return;
             }
-            DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0)).cancelCommit{value : 0.2 ton, flag: 1}();
+            DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0, _code[m_WalletCode])).cancelCommit{value : 0.2 ton, flag: 1}();
             index += 1;
         }
         this._cancelCommitRepo{value: 0.2 ton, bounce: true, flag: 1}(index, number);
@@ -500,7 +504,7 @@ contract Commit is Modifiers {
         uint128 numcommits,
         bool save,
         uint32 timecommit) public {
-        require(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, nameCommit) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, nameCommit, _code[m_WalletCode]) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if ((branchCommit  != address(this)) && (save == true)) { require(_initupgrade == false, ERR_WRONG_COMMIT_ADDR); }
         if (save == true) { _save[newC] = true; }
@@ -508,7 +512,7 @@ contract Commit is Modifiers {
         getMoney();
     }
 
-    function canDelete(address newcommit, string basecommit, string path) public view senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _rootRepo, basecommit, path)) accept {
+    function canDelete(address newcommit, string basecommit, string path) public view senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _rootRepo, basecommit, path, _code[m_WalletCode])) accept {
         if (_save[newcommit] != true) { Snapshot(msg.sender).canDelete{value: 0.1 ton, flag: 1}(); }
     }
 
@@ -523,7 +527,7 @@ contract Commit is Modifiers {
         getMoney();
         for (uint128 i = 0; i < BATCH_SIZE_COMMIT; i++){
             if (index >= _number) { return; }
-            if (sender == GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0)) {
+            if (sender == GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index, 0, _code[m_WalletCode])) {
                 _continueDiff = false;
                 _diffcheck = false;
                 _approved = 0;
@@ -604,7 +608,7 @@ contract Commit is Modifiers {
     }
 
     function getDiffAddress(uint128 index1, uint128 index2) external view returns(address) {
-        return GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index1, index2);
+        return GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, index1, index2, _code[m_WalletCode]);
     }
 
     function getCommit() external view returns (

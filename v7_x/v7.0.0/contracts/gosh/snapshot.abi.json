@@ -9,7 +9,6 @@
 				{"name":"pubaddr","type":"address"},
 				{"name":"rootgosh","type":"address"},
 				{"name":"goshdao","type":"address"},
-				{"name":"rootrepo","type":"address"},
 				{"name":"codeSnapshot","type":"cell"},
 				{"name":"codeCommit","type":"cell"},
 				{"name":"codeDiff","type":"cell"},

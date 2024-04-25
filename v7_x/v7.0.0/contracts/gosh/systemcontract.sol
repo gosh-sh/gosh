@@ -578,7 +578,7 @@ contract SystemContract is Modifiers {
     }
 
     function getCommitAddr(address repo_addr, string commit_name) public view returns(address)  {
-        return GoshLib.calculateCommitAddress(_code[m_CommitCode], repo_addr, commit_name);
+        return GoshLib.calculateCommitAddress(_code[m_CommitCode], repo_addr, commit_name, _code[m_WalletCode]);
     }
 
     function getTreeAddr(address repo_addr, uint256 tree_hash) public view returns(address)  {
@@ -586,7 +586,7 @@ contract SystemContract is Modifiers {
     }
 
     function getSnapshotAddr(address repo_addr, string commit_name, string name) external view returns(address) {
-        return GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], repo_addr, commit_name, name);
+        return GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], repo_addr, commit_name, name, _code[m_WalletCode]);
     }
 
     function getProfileAddr(string name) external view returns(address) {

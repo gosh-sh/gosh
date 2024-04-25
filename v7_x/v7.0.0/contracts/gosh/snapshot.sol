@@ -43,7 +43,6 @@ contract Snapshot is Modifiers {
         address pubaddr,
         address rootgosh,
         address goshdao,
-        address rootrepo,
         TvmCell codeSnapshot,
         TvmCell codeCommit,
         TvmCell codeDiff,
@@ -56,8 +55,12 @@ contract Snapshot is Modifiers {
         optional(string) ipfsdata
     ) {
         tvm.accept();
+        TvmCell dataSalt = tvm.codeSalt(tvm.code()).get();
+        (uint256 codehash, address repo, uint256 hash) = abi.decode(dataSalt, (uint256, address, uint256));
+        hash;
+        _rootRepo = repo;
+        require(codehash == tvm.hash(WalletCode), ERR_SENDER_NO_ALLOWED);
         _pubaddr = pubaddr;
-        _rootRepo = rootrepo;
         _code[m_SnapshotCode] = codeSnapshot;
         _code[m_CommitCode] = codeCommit;
         _code[m_DiffCode] = codeDiff;
@@ -83,7 +86,7 @@ contract Snapshot is Modifiers {
             //ignore ipfs snapshot check
             if (ipfsdata.hasValue() == true) { _ready = true; return; }
             
-            Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits))
+            Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits, _code[m_WalletCode]))
                 .getAcceptedContent{value : 0.2 ton, flag: 1}(tvm.hash(gosh.unzip(_oldsnapshot)), NameOfFile);
         }
         getMoney();
@@ -134,11 +137,11 @@ contract Snapshot is Modifiers {
         tvm.accept();
         getMoney();
         uint256 empty;
-        if ((_applying == true) && (msg.sender != GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _pushcommit, index1, index2))) {
+        if ((_applying == true) && (msg.sender != GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _pushcommit, index1, index2, _code[m_WalletCode]))) {
             DiffC(msg.sender).approveDiff{value: 0.1 ton, flag: 1}(false, namecommit, empty);
             return;
         } else {
-            require(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, namecommit, index1, index2) == msg.sender, ERR_SENDER_NO_ALLOWED);
+            require(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, namecommit, index1, index2, _code[m_WalletCode]) == msg.sender, ERR_SENDER_NO_ALLOWED);
             _applying = true; 
             _commits = diff.commit;
             _pushcommit = namecommit;
@@ -192,7 +195,7 @@ contract Snapshot is Modifiers {
 
     function cancelDiff(uint128 index1, uint128 index2, string commit) public {
         commit;
-        require(msg.sender == GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _pushcommit, index1, index2), ERR_SENDER_NO_ALLOWED);
+        require(msg.sender == GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _pushcommit, index1, index2, _code[m_WalletCode]), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         _snapshot = _oldsnapshot;
         _ipfs = _ipfsold;
@@ -203,7 +206,7 @@ contract Snapshot is Modifiers {
 
     function approve(uint128 index1, uint128 index2, Diff diff) public {
         diff;
-        require(msg.sender == GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _pushcommit, index1, index2), ERR_SENDER_NO_ALLOWED);
+        require(msg.sender == GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _pushcommit, index1, index2, _code[m_WalletCode]), ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         _oldsnapshot = _snapshot;
         _oldcommits = _commits;
@@ -211,7 +214,7 @@ contract Snapshot is Modifiers {
         _applying = false;
 //        this.sendContent{value: 0.1 ton, flag: 1}(_snapshot, _ipfsold, _commits);
         if ((_oldsnapshot.empty()) && (_ipfsold.hasValue() == false)) { selfdestruct(_systemcontract); return; }
-        Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits)).canDelete{value: 0.1 ton, flag: 1}(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _pushcommit), _baseCommit, NameOfFile);
+        Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits, _code[m_WalletCode])).canDelete{value: 0.1 ton, flag: 1}(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _pushcommit, _code[m_WalletCode]), _baseCommit, NameOfFile);
         _pushcommit = _commits;
     }
 
@@ -220,13 +223,13 @@ contract Snapshot is Modifiers {
         return;
     }
 
-    function canDelete() public senderIs(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits)) accept {
+    function canDelete() public senderIs(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits, _code[m_WalletCode])) accept {
         selfdestruct(_systemcontract);
     }
 
     //Private getters
     function getSnapshotAddr(string name) private view returns(address) {
-        TvmCell deployCode = GoshLib.buildSnapshotCode(_code[m_SnapshotCode], _rootRepo, version);
+        TvmCell deployCode = GoshLib.buildSnapshotCode(_code[m_SnapshotCode], _rootRepo, version, _code[m_WalletCode]);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: name}});
         address addr = address.makeAddrStd(0, tvm.hash(stateInit));
         return addr;
@@ -240,11 +243,11 @@ contract Snapshot is Modifiers {
     
     onBounce(TvmSlice body) external {
         body;
-        if (msg.sender == GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits)) { selfdestruct(_systemcontract); }
+        if (msg.sender == GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits, _code[m_WalletCode])) { selfdestruct(_systemcontract); }
     }
     
     fallback() external {
-        if (msg.sender == GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits)) { selfdestruct(_systemcontract); }
+        if (msg.sender == GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _oldcommits, _code[m_WalletCode])) { selfdestruct(_systemcontract); }
     }
 
     //Selfdestruct

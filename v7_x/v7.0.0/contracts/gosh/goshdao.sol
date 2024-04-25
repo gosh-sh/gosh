@@ -430,7 +430,7 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
     }
     
     function sendMoneyDiff(address repo, string commit, uint128 index1, uint128 index2) public {
-        address addr = GoshLib.calculateDiffAddress(_code[m_DiffCode], repo, commit, index1, index2);
+        address addr = GoshLib.calculateDiffAddress(_code[m_DiffCode], repo, commit, index1, index2, _code[m_WalletCode]);
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (address(this).balance < 20 ton) { _volunteerdiff.push(msg.sender); getMoney(); return; }
@@ -438,7 +438,7 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
         getMoney();
     }
     
-    function sendMoneySnap(string commitSha, address repo, string name) public senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], repo, commitSha, name)) {
+    function sendMoneySnap(string commitSha, address repo, string name) public senderIs(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], repo, commitSha, name, _code[m_WalletCode])) {
         tvm.accept();
         if (address(this).balance < 2000 ton) { _volunteersnap.push(msg.sender); getMoney(); return; }
         msg.sender.transfer(103 ton);
@@ -505,7 +505,7 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
     }
     
     function sendMoneyCommit(address repo, string commit) public {
-        address addr = GoshLib.calculateCommitAddress(_code[m_CommitCode], repo, commit);
+        address addr = GoshLib.calculateCommitAddress(_code[m_CommitCode], repo, commit, _code[m_WalletCode]);
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (address(this).balance < 2000 ton) { _volunteercommit.push(msg.sender); getMoney(); return; }

@@ -116,14 +116,14 @@ library GoshLib {
         return address.makeAddrStd(0, tvm.hash(stateInit));
     }
 
-    function calculateSnapshotAddress(TvmCell code, address repo, string commitsha, string name) public returns(address) {
-        TvmCell deployCode = buildSnapshotCode(code, repo, versionLib);
+    function calculateSnapshotAddress(TvmCell code, address repo, string commitsha, string name, TvmCell WalletCode) public returns(address) {
+        TvmCell deployCode = buildSnapshotCode(code, repo, versionLib, WalletCode);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: name, _baseCommit: commitsha}});
         return address.makeAddrStd(0, tvm.hash(stateInit));
     }
 
-    function composeSnapshotStateInit(TvmCell code, address repo, string commitsha, string name) public returns(TvmCell) {
-        TvmCell deployCode = buildSnapshotCode(code, repo, versionLib);
+    function composeSnapshotStateInit(TvmCell code, address repo, string commitsha, string name, TvmCell WalletCode) public returns(TvmCell) {
+        TvmCell deployCode = buildSnapshotCode(code, repo, versionLib, WalletCode);
         return tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: name, _baseCommit: commitsha}});
     }
 
@@ -141,9 +141,10 @@ library GoshLib {
     function calculateCommitAddress(
         TvmCell code,
         address repo,
-        string commit
+        string commit,
+        TvmCell WalletCode
     ) public returns(address) {
-        TvmCell deployCode = buildCommitCode(code, repo, versionLib);
+        TvmCell deployCode = buildCommitCode(code, repo, versionLib, WalletCode);
         TvmCell state = tvm.buildStateInit({
             code: deployCode,
             contr: Commit,
@@ -162,8 +163,8 @@ library GoshLib {
         return address.makeAddrStd(0, tvm.hash(s1));
     }   
 
-    function calculateDiffAddress(TvmCell code, address repo, string commit, uint128 index1, uint128 index2) public returns(address) {
-        TvmCell deployCode = buildCommitCode(code, repo, versionLib);
+    function calculateDiffAddress(TvmCell code, address repo, string commit, uint128 index1, uint128 index2, TvmCell walletcode) public returns(address) {
+        TvmCell deployCode = buildDiffCode(code, repo, versionLib, walletcode);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: DiffC, varInit: {_nameCommit: commit, _index1: index1, _index2: index2}});  
         return  address(tvm.hash(s1));
     }
@@ -316,14 +317,14 @@ library GoshLib {
         return stateInit;
     }
 
-    function composeCommitStateInit(TvmCell code, string commit, address repo) public returns(TvmCell) {
-        TvmCell deployCode = buildCommitCode(code, repo, versionLib);
+    function composeCommitStateInit(TvmCell code, string commit, address repo, TvmCell WalletCode) public returns(TvmCell) {
+        TvmCell deployCode = buildCommitCode(code, repo, versionLib, WalletCode);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Commit, varInit: {_nameCommit: commit}});
         return stateInit;
     }
 
-    function composeDiffStateInit(TvmCell code, string commit, address repo, uint128 index1, uint128 index2) public returns(TvmCell) {
-        TvmCell deployCode = buildCommitCode(code, repo, versionLib);
+    function composeDiffStateInit(TvmCell code, string commit, address repo, uint128 index1, uint128 index2, TvmCell WalletCode) public returns(TvmCell) {
+        TvmCell deployCode = buildDiffCode(code, repo, versionLib, WalletCode);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: DiffC, varInit: {_nameCommit: commit, _index1: index1, _index2: index2}});
         return stateInit;
     }
@@ -563,9 +564,13 @@ library GoshLib {
     function buildSnapshotCode(
         TvmCell originalCode,
         address repo,
-        string version
+        string version,
+        TvmCell WalletCode
     ) public returns (TvmCell) {
         TvmBuilder b;
+        TvmBuilder d;
+        d.store(WalletCode);
+        b.store(tvm.hash(d.toCell()));
         b.store(repo);
         b.store(version);
         return tvm.setCodeSalt(originalCode, b.toCell());
@@ -574,13 +579,17 @@ library GoshLib {
     function buildCommitCode(
         TvmCell originalCode,
         address repo,
-        string version
+        string version,
+        TvmCell WalletCode
     ) public returns (TvmCell) {
         TvmBuilder b;
         b.store(repo);
         b.store(version);
         uint256 hash = tvm.hash(b.toCell());
         delete b;
+        TvmBuilder d;
+        d.store(WalletCode);
+        b.store(tvm.hash(d.toCell()));
         b.store(hash);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
@@ -588,13 +597,17 @@ library GoshLib {
     function buildDiffCode(
         TvmCell originalCode,
         address repo,
-        string version
+        string version,
+        TvmCell WalletCode
     ) public returns (TvmCell) {
         TvmBuilder b;
         b.store(repo);
         b.store(version);
         uint256 hash = tvm.hash(b.toCell());
         delete b;
+        TvmBuilder d;
+        d.store(WalletCode);
+        b.store(tvm.hash(d.toCell()));
         b.store(hash);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }

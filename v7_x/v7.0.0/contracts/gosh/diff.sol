@@ -65,6 +65,10 @@ contract DiffC is Modifiers {
         ) {
         require(_nameCommit != "", ERR_NO_DATA);
         tvm.accept();
+        TvmCell dataSalt = tvm.codeSalt(tvm.code()).get();
+        (uint256 codehash, uint256 hash) = abi.decode(dataSalt, (uint256, uint256));
+        hash;
+        require(codehash == tvm.hash(WalletCode), ERR_SENDER_NO_ALLOWED);
         _code[m_TreeCode] = TreeCode;
         _code[m_WalletCode] = WalletCode;         
         _systemcontract = rootGosh;
@@ -79,7 +83,7 @@ contract DiffC is Modifiers {
         _code[m_CommitCode] = CommitCode;
         _diff = diffs;
         _last = last;
-        Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _diff[0].commit))
+        Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _diff[0].commit, _code[m_WalletCode]))
                 .getAcceptedContentDiff{value : 0.2 ton, flag: 1}(_nameCommit, _diff[0].sha256, _diff[0].nameSnap, _index1, _index2);
         getMoney();
     }
@@ -107,9 +111,9 @@ contract DiffC is Modifiers {
     
     function checkAllAccess(address sender) private view returns(bool) {
         if (address(this) == sender) { return true; }
-        if (GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit) == sender) { return true; }
+        if (GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit, _code[m_WalletCode]) == sender) { return true; }
         if (_index2 == 0) { return false; }
-        if (GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, _index2 - 1) == sender) { return true; }
+        if (GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, _index2 - 1, _code[m_WalletCode]) == sender) { return true; }
         return false;
     }
     
@@ -136,7 +140,7 @@ contract DiffC is Modifiers {
         require(_entry == false, ERR_DIFF_ALREADY_USED);
         require(checkAllAccess(msg.sender), ERR_SENDER_NO_ALLOWED);
         if (branch != _nameBranch) { 
-            Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(branch, branchcommit, _index1, _index2);
+            Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit, _code[m_WalletCode])).abortDiff{value: 0.1 ton, flag: 1}(branch, branchcommit, _index1, _index2);
             return;
         }
         if ((_index2 == 0) && (_last != true)) { _index2max = 1e25; }
@@ -144,7 +148,7 @@ contract DiffC is Modifiers {
         _entry = true;
         _branchcommit = branchcommit;
         if (_isCorrect == false) {
-            Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(branch, branchcommit, _index1, _index2);
+            Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit, _code[m_WalletCode])).abortDiff{value: 0.1 ton, flag: 1}(branch, branchcommit, _index1, _index2);
             return; 
         }
         if (_diff.length != 0) { 
@@ -152,8 +156,8 @@ contract DiffC is Modifiers {
             getMoney();
             return;
         }
-        if (_index2 == 0) { Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(branch, _branchcommit, _index1);  } 
-        else { DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, 0)).approveDiffDiff{value: 0.1 ton, flag: 1}(true, _index2, _last);  }
+        if (_index2 == 0) { Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit, _code[m_WalletCode])).DiffCheckCommit{value: 0.1 ton, flag: 1}(branch, _branchcommit, _index1);  } 
+        else { DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, 0, _code[m_WalletCode])).approveDiffDiff{value: 0.1 ton, flag: 1}(true, _index2, _last);  }
         getMoney();
     }
     
@@ -165,7 +169,7 @@ contract DiffC is Modifiers {
         if (index > _diff.length) { return; }
         if (index == _diff.length) { 
             if (_last == false) { 
-                DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, _index2 + 1)).sendDiffAll{value : 0.2 ton, flag: 1}(_nameBranch, branchcommit);
+                DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, _index2 + 1, _code[m_WalletCode])).sendDiffAll{value : 0.2 ton, flag: 1}(_nameBranch, branchcommit);
             }
             return; 
         }
@@ -184,8 +188,8 @@ contract DiffC is Modifiers {
         getMoney();
         if (isIt == false) { return; }
         if (res != true) { 
-            if (_index2 == 0) { Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(_nameBranch, _branchcommit, _index1, _index2); }
-            else { DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, 0)).approveDiffDiff{value: 0.1 ton, flag: 1}(false, _index2, _last); }
+            if (_index2 == 0) { Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit, _code[m_WalletCode])).abortDiff{value: 0.1 ton, flag: 1}(_nameBranch, _branchcommit, _index1, _index2); }
+            else { DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, 0, _code[m_WalletCode])).approveDiffDiff{value: 0.1 ton, flag: 1}(false, _index2, _last); }
             return; 
         }
         this.approveDiffFinal{value: 0.2 ton, flag: 1}(true);
@@ -199,20 +203,20 @@ contract DiffC is Modifiers {
         _approved += 1;
         uint256 need = _diff.length;
         if (_approved == need + _index2max) {
-            if (_index2 == 0) { Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_nameBranch, _branchcommit, _index1);  } 
-            else { DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, 0)).approveDiffDiff{value: 0.1 ton, flag: 1}(true, _index2, _last);  }
+            if (_index2 == 0) { Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit, _code[m_WalletCode])).DiffCheckCommit{value: 0.1 ton, flag: 1}(_nameBranch, _branchcommit, _index1);  } 
+            else { DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, 0, _code[m_WalletCode])).approveDiffDiff{value: 0.1 ton, flag: 1}(true, _index2, _last);  }
         }
         getMoney();
     }
     
-    function approveDiffDiff(bool res, uint128 index, bool last) public senderIs(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, index)) {
+    function approveDiffDiff(bool res, uint128 index, bool last) public senderIs(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, index, _code[m_WalletCode])) {
         if (res != true) { 
             if (_index2 == 0) { 
-                Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(_nameBranch, _branchcommit, _index1, _index2); 
+                Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit, _code[m_WalletCode])).abortDiff{value: 0.1 ton, flag: 1}(_nameBranch, _branchcommit, _index1, _index2); 
                 _isCancel = true;
                 this.cancelDiff{value: 0.1 ton, flag: 1}(0); 
             }
-            else { DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, 0)).approveDiffDiff{value: 0.1 ton, flag: 1}(false, _index2, _last); }
+            else { DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, 0, _code[m_WalletCode])).approveDiffDiff{value: 0.1 ton, flag: 1}(false, _index2, _last); }
             return; 
         }
         getMoney();
@@ -220,8 +224,8 @@ contract DiffC is Modifiers {
         _approved += 1;
         uint256 need = _diff.length;
         if (_approved == need + _index2max) {
-            if (_index2 == 0) { Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit)).DiffCheckCommit{value: 0.1 ton, flag: 1}(_nameBranch, _branchcommit, _index1);  } 
-            else { DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, 0)).approveDiffDiff{value: 0.1 ton, flag: 1}(true, _index2, _last); }
+            if (_index2 == 0) { Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit, _code[m_WalletCode])).DiffCheckCommit{value: 0.1 ton, flag: 1}(_nameBranch, _branchcommit, _index1);  } 
+            else { DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, 0, _code[m_WalletCode])).approveDiffDiff{value: 0.1 ton, flag: 1}(true, _index2, _last); }
         }
         getMoney();
     }
@@ -232,11 +236,11 @@ contract DiffC is Modifiers {
         if (address(this).balance < 5 ton) { _saved = PauseDiff(1, address.makeAddrNone(), index); return; }
         if (index > _diff.length) { delete _diff; return; }
         if (index == _diff.length) { 
-            if (_last == false) { DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, _index2 + 1)).allCorrect{value : 0.2 ton, flag: 1}(branch); }
-            selfdestruct(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit)); return;
+            if (_last == false) { DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, _index2 + 1, _code[m_WalletCode])).allCorrect{value : 0.2 ton, flag: 1}(branch); }
+            selfdestruct(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit, _code[m_WalletCode])); return;
         }
         Snapshot(_diff[index].snap).approve{value : 0.2 ton, flag: 1}(_index1, _index2, _diff[index]); 
-        Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _diff[index].commit)).getAcceptedDiff{value : 0.2 ton, flag: 1}(_diff[index], _index1, index, _nameBranch);
+        Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _diff[index].commit, _code[m_WalletCode])).getAcceptedDiff{value : 0.2 ton, flag: 1}(_diff[index], _index1, index, _nameBranch);
         this.applyDiff{value: 0.2 ton, flag: 1}(index + 1, _timebranch);
     }
     
@@ -244,11 +248,11 @@ contract DiffC is Modifiers {
         tvm.accept();
         getMoney();
         if (address(this).balance < 5 ton) { _saved = PauseDiff(2, address.makeAddrNone(), index); return; }
-        if (_last == false) { DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, _index2 + 1)).cancelCommit{value : 0.2 ton, flag: 1}(); }
+        if (_last == false) { DiffC(GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, _index2 + 1, _code[m_WalletCode])).cancelCommit{value : 0.2 ton, flag: 1}(); }
         if (index > _diff.length) { delete _diff; _approved = 0; return; }
         if (index == _diff.length) { 
             _approved = 0;
-            selfdestruct(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit)); return;
+            selfdestruct(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit, _code[m_WalletCode])); return;
         }
         Snapshot(_diff[index].snap).cancelDiff{value : 0.2 ton, flag: 1}(_index1, _index2, _diff[index].commit);
         this.cancelDiff{value: 0.2 ton, flag: 1}(index + 1);
@@ -256,7 +260,7 @@ contract DiffC is Modifiers {
     
     function checkSender(uint128 index, address sender) public view senderIs(address(this)) {
         if (index >= _diff.length) { return; }
-        if (_diff[index].snap == sender) { Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit)).abortDiff{value: 0.1 ton, flag: 1}(_nameBranch, _branchcommit, _index1, _index2); return; }
+        if (_diff[index].snap == sender) { Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode], _rootRepo, _nameCommit, _code[m_WalletCode])).abortDiff{value: 0.1 ton, flag: 1}(_nameBranch, _branchcommit, _index1, _index2); return; }
         this.checkSender{value: 0.2 ton, flag: 1}(index + 1, msg.sender);
     }
     
@@ -302,7 +306,7 @@ contract DiffC is Modifiers {
     }
 
     function getNextAddress() external view returns(address) {
-        return GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, _index2 + 1);
+        return GoshLib.calculateDiffAddress(_code[m_DiffCode], _rootRepo, _nameCommit, _index1, _index2 + 1, _code[m_WalletCode]);
     }
 
     function getStatus() external view returns(bool) {

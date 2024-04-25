@@ -139,14 +139,14 @@ contract Tree is Modifiers {
         _isReady = true;   
     }
 
-    function SendDiff2(string namecommit, string branch, address branchcommit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task, bool isUpgrade) public senderIs(GoshLib.calculateCommitAddress(_code[m_CommitCode], _repo, namecommit)){
+    function SendDiff2(string namecommit, string branch, address branchcommit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task, bool isUpgrade) public senderIs(GoshLib.calculateCommitAddress(_code[m_CommitCode], _repo, namecommit, _code[m_WalletCode])){
         tvm.accept();
         getMoney();        
         require(_isReady == true, ERR_PROCCESS_END);
         Commit(msg.sender).SendDiff3{value: 0.1 ton, flag: 1}(branch, branchcommit, number, numberCommits, task, isUpgrade);
     }
 
-    function checkFull(string namecommit, optional(string) branch, address repo, string commitsha, uint128 typer, optional(address) branchcommit) public senderIs(GoshLib.calculateCommitAddress(_code[m_CommitCode], repo, namecommit)) {
+    function checkFull(string namecommit, optional(string) branch, address repo, string commitsha, uint128 typer, optional(address) branchcommit) public senderIs(GoshLib.calculateCommitAddress(_code[m_CommitCode], repo, namecommit, _code[m_WalletCode])) {
         if (_isCorrect == true) {
             if (typer == TYPE_SET_COMMIT) 
             {
@@ -191,12 +191,12 @@ contract Tree is Modifiers {
                 else if ((obj.mode == "100644") || (obj.mode == "100664") || (obj.mode == "100755") || (obj.mode == "120000")) {
                     _needAnswer += 1;
                     if ((typer == TYPE_INITUPGRADE) || (typer == TYPE_DESTROY_BRANCH) || (typer == TYPE_SET_COMMIT)) {
-                        if (path != "" ) { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, obj.commit, path + obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.tvmshafile.get(), branchcommit, typer); }
-                        else { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, obj.commit, obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.tvmshafile.get(), branchcommit, typer); }
+                        if (path != "" ) { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, obj.commit, path + obj.name, _code[m_WalletCode])).isReady{value: 0.2 ton, flag: 1}(obj.tvmshafile.get(), branchcommit, typer); }
+                        else { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, obj.commit, obj.name, _code[m_WalletCode])).isReady{value: 0.2 ton, flag: 1}(obj.tvmshafile.get(), branchcommit, typer); }
                     }
                     else {
-                        if (path != "" ) { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, commitsha, path + obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.tvmshafile.get(), branchcommit, typer); }
-                        else { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, commitsha, obj.name)).isReady{value: 0.2 ton, flag: 1}(obj.tvmshafile.get(), branchcommit, typer); }
+                        if (path != "" ) { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, commitsha, path + obj.name, _code[m_WalletCode])).isReady{value: 0.2 ton, flag: 1}(obj.tvmshafile.get(), branchcommit, typer); }
+                        else { Snapshot(GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, commitsha, obj.name, _code[m_WalletCode])).isReady{value: 0.2 ton, flag: 1}(obj.tvmshafile.get(), branchcommit, typer); }
                     }
                 }
             }
@@ -221,8 +221,8 @@ contract Tree is Modifiers {
     }
 
     function answerIs(string name, bool _ready, optional(address) branchcommit, uint128 typer, string baseCommit) public {
-        if (msg.sender != GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, baseCommit, name)) {
-            require(msg.sender == GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, "//PINTAG//" + baseCommit, name), ERR_INVALID_SENDER);
+        if (msg.sender != GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, baseCommit, name, _code[m_WalletCode])) {
+            require(msg.sender == GoshLib.calculateSnapshotAddress(_code[m_SnapshotCode], _repo, "//PINTAG//" + baseCommit, name, _code[m_WalletCode]), ERR_INVALID_SENDER);
         }
         tvm.accept();
         getMoney();
@@ -311,7 +311,7 @@ contract Tree is Modifiers {
         _needAnswer = 0;
     }
 
-    function setCorrect(string namecommit) public senderIs(GoshLib.calculateCommitAddress(_code[m_CommitCode], _repo, namecommit)) accept {
+    function setCorrect(string namecommit) public senderIs(GoshLib.calculateCommitAddress(_code[m_CommitCode], _repo, namecommit, _code[m_WalletCode])) accept {
         _isCorrect = true;
         this.checkTree{value: 0.2 ton, flag: 1}(0, "", TYPE_SET_CORRECT, "", null);
     }
@@ -367,14 +367,14 @@ contract Tree is Modifiers {
     }
 
     function getShaInfoDiff(string commit, uint128 index1, uint128 index2, Request value0) public {
-        require(GoshLib.calculateDiffAddress(_code[m_DiffCode], _repo, commit, index1, index2) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateDiffAddress(_code[m_DiffCode], _repo, commit, index1, index2, _code[m_WalletCode]) == msg.sender, ERR_SENDER_NO_ALLOWED);
         require(_isReady == true, ERR_PROCCESS_END);
         tvm.accept();
         getShaInfo(value0);
         getMoney();
     }
 
-    function getShaInfoCommit(string commit, Request value0) public senderIs(GoshLib.calculateCommitAddress(_code[m_CommitCode], _repo, commit)) {
+    function getShaInfoCommit(string commit, Request value0) public senderIs(GoshLib.calculateCommitAddress(_code[m_CommitCode], _repo, commit, _code[m_WalletCode])) {
         require(_isReady == true, ERR_PROCCESS_END);
         tvm.accept();
         getShaInfo(value0);
