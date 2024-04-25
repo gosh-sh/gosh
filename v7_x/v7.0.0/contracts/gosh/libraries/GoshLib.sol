@@ -110,8 +110,8 @@ library GoshLib {
         return address.makeAddrStd(0, tvm.hash(stateInit));    
     }   
 
-    function calculateTreeAddress(TvmCell code, uint256 shainnertree, address rootRepo) public returns(address) {
-        TvmCell deployCode = buildTreeCode(code, versionLib);
+    function calculateTreeAddress(TvmCell code, uint256 shainnertree, address rootRepo, TvmCell WalletCode) public returns(address) {
+        TvmCell deployCode = buildTreeCode(code, versionLib, WalletCode);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Tree, varInit: {_shaInnerTree: shainnertree, _repo: rootRepo}});
         return address.makeAddrStd(0, tvm.hash(stateInit));
     }
@@ -179,8 +179,8 @@ library GoshLib {
         return address.makeAddrStd(0, tvm.hash(s1));
     }
 
-    function calculateDaoTagAddress(TvmCell code, address versionController, address goshdao, string daotag) public returns(address){        
-        TvmCell deployCode = buildDaoTagCode(code, daotag, versionController);
+    function calculateDaoTagAddress(TvmCell code, address versionController, address goshdao, string daotag, TvmCell WalletCode) public returns(address){        
+        TvmCell deployCode = buildDaoTagCode(code, daotag, versionController, WalletCode);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: DaoTag, varInit: {_goshdao: goshdao}});
         return address.makeAddrStd(0, tvm.hash(s1));
     }
@@ -247,8 +247,8 @@ library GoshLib {
         return address.makeAddrStd(0, tvm.hash(s1));
     }
 
-    function calculateTagAddress(TvmCell code, address repo, string nametag) public returns(address){        
-        TvmCell deployCode = composeTagStateInit(code, repo, nametag);
+    function calculateTagAddress(TvmCell code, address repo, string nametag, TvmCell WalletCode) public returns(address){        
+        TvmCell deployCode = composeTagStateInit(code, repo, nametag, WalletCode);
         return address.makeAddrStd(0, tvm.hash(deployCode));
     }
 
@@ -263,8 +263,8 @@ library GoshLib {
         return address.makeAddrStd(0, tvm.hash(s1));
     }
 
-    function calculateTagHackAddress(TvmCell code, address repo, string nametag) public returns(address){        
-        TvmCell deployCode = composeTagStateInit(code, repo, nametag);
+    function calculateTagHackAddress(TvmCell code, address repo, string branchname, string nametag) public returns(address){        
+        TvmCell deployCode = composeTagHackStateInit(code, repo, branchname, nametag);
         return address.makeAddrStd(0, tvm.hash(deployCode));
     } 
 
@@ -311,8 +311,8 @@ library GoshLib {
         return _contract;
     }
     
-    function composeTreeStateInit(TvmCell code, uint256 shainnertree, address repo) public returns(TvmCell) {
-        TvmCell deployCode = buildTreeCode(code, versionLib);
+    function composeTreeStateInit(TvmCell code, uint256 shainnertree, address repo, TvmCell WalletCode) public returns(TvmCell) {
+        TvmCell deployCode = buildTreeCode(code, versionLib, WalletCode);
         TvmCell stateInit = tvm.buildStateInit({code: deployCode, contr: Tree, varInit: {_shaInnerTree: shainnertree, _repo: repo}});
         return stateInit;
     }
@@ -394,8 +394,8 @@ library GoshLib {
         });
     }
 
-    function composeTagStateInit(TvmCell code, address repo, string nametag) public returns(TvmCell) {
-        TvmCell deployCode = buildTagCode(code, repo, versionLib);
+    function composeTagStateInit(TvmCell code, address repo, string nametag, TvmCell WalletCode) public returns(TvmCell) {
+        TvmCell deployCode = buildTagCode(code, repo, versionLib, WalletCode);
         return tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag}});
     }
 
@@ -519,12 +519,16 @@ library GoshLib {
     
     function buildTreeCode(
         TvmCell originalCode,
-        string version
+        string version,
+        TvmCell WalletCode
     ) public returns (TvmCell) {
         TvmBuilder b;
         b.store(version);
         uint256 hash = tvm.hash(b.toCell());
         delete b;
+        TvmBuilder d;
+        d.store(WalletCode);
+        b.store(tvm.hash(d.toCell()));
         b.store(hash);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
@@ -615,13 +619,17 @@ library GoshLib {
     function buildTagCode(
         TvmCell originalCode,
         address repo,
-        string version
+        string version,
+        TvmCell WalletCode
     ) public returns (TvmCell) {
         TvmBuilder b;
         b.store(repo);
         b.store(version);
         uint256 hash = tvm.hash(b.toCell());
         delete b;
+        TvmBuilder d;
+        d.store(WalletCode);
+        b.store(tvm.hash(d.toCell()));
         b.store(hash);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
@@ -646,13 +654,17 @@ library GoshLib {
     function buildDaoTagCode(
         TvmCell originalCode,
         string tag,
-        address versionc
+        address versionc,
+        TvmCell WalletCode
     ) public returns (TvmCell) {
         TvmBuilder b;
         b.store(tag);
         b.store(versionc);
         uint256 hash = tvm.hash(b.toCell());
         delete b;
+        TvmBuilder d;
+        d.store(WalletCode);
+        b.store(tvm.hash(d.toCell()));
         b.store(hash);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }

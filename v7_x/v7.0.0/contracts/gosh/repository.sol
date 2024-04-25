@@ -472,7 +472,7 @@ contract Repository is Modifiers{
     }
 
     function getTreeAddr(uint256 shainnertree) external view returns(address) {
-        return GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnertree, address(this));
+        return GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnertree, address(this), _code[m_WalletCode]);
     }
 
     function getProtectedBranch() external view returns(mapping(uint256 => bool)) {
@@ -513,7 +513,7 @@ contract Repository is Modifiers{
     }
 
     function getTagCode() external view returns(TvmCell) {
-        return GoshLib.buildTagCode(_code[m_TagCode], address(this), version);
+        return GoshLib.buildTagCode(_code[m_TagCode], address(this), version, _code[m_WalletCode]);
     }
 
     function getGoshAddress() external view returns(address) {

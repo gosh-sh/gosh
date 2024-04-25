@@ -532,7 +532,7 @@ contract SystemContract is Modifiers {
     ) private view returns(address) {
         address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), daoName);
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, repoName, _code[m_WalletCode]);
-        return GoshLib.calculateTagAddress(_code[m_TagCode], repo, nametag);
+        return GoshLib.calculateTagAddress(_code[m_TagCode], repo, nametag, _code[m_WalletCode]);
     }
 
     function getGrantCode(string daoName) external view returns(TvmCell) {
@@ -582,7 +582,7 @@ contract SystemContract is Modifiers {
     }
 
     function getTreeAddr(address repo_addr, uint256 tree_hash) public view returns(address)  {
-        return GoshLib.calculateTreeAddress(_code[m_TreeCode], tree_hash, repo_addr);
+        return GoshLib.calculateTreeAddress(_code[m_TreeCode], tree_hash, repo_addr, _code[m_WalletCode]);
     }
 
     function getSnapshotAddr(address repo_addr, string commit_name, string name) external view returns(address) {
@@ -598,7 +598,7 @@ contract SystemContract is Modifiers {
     }
 
     function getDaoTagCode(string hashtag) external view returns(TvmCell) {
-        return GoshLib.buildDaoTagCode(_code[m_DaoTagCode], hashtag, _versionController);
+        return GoshLib.buildDaoTagCode(_code[m_DaoTagCode], hashtag, _versionController, _code[m_WalletCode]);
     }
 
     function getRepoTagGoshCode(string repotag) external view returns(TvmCell) {

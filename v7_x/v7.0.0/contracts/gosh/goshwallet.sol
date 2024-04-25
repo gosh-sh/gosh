@@ -490,7 +490,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         if (index >= repoName.length) { return; }
         this._tagUpgrade2{value:0.12 ton, flag: 1}(repoName, nametag, newversion, index + 1);
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName[index], _code[m_WalletCode]);
-        TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version);
+        TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version, _code[m_WalletCode]);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag[index]}});
         address addr = address.makeAddrStd(0, tvm.hash(s1));
         Tag(addr).upgradeToVersion{value: 2.3 ton, flag: 1}(_pubaddr, _index, newversion); 
@@ -1025,7 +1025,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         bool upgrade
     ) internal {
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
-        address tree = GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnertree, repo);
+        address tree = GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnertree, repo, _code[m_WalletCode]);
         TvmCell s1 = GoshLib.composeCommitStateInit(_code[m_CommitCode], commitName, repo, _code[m_WalletCode]);
         new Commit {stateInit: s1, value: FEE_DEPLOY_COMMIT, bounce: true, flag: 1, wid: 0}(
             _goshdao, _systemcontract, _pubaddr, repoName, fullCommit, parents, repo, _code[m_WalletCode], _code[m_CommitCode], _code[m_DiffCode], _code[m_SnapshotCode], tree, _index, upgrade);
@@ -1158,7 +1158,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         }
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         TvmCell deployCode;
-        if (isHack == false) { deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version); }
+        if (isHack == false) { deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version, _code[m_WalletCode]); }
         else { 
             deployCode = GoshLib.buildTagHackCode(_code[m_TagCode], branchname.get(), repo, version); 
         }
@@ -1177,7 +1177,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string content
     ) public senderIs(_goshdao)  accept saveMsg {
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
-        TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version);
+        TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version, _code[m_WalletCode]);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag}});
         new Tag{
             stateInit: s1, value: FEE_DEPLOY_TAG, wid: 0, bounce: true, flag: 1
@@ -1190,7 +1190,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
-        TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version);
+        TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version, _code[m_WalletCode]);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag}});
         address tagaddr = address.makeAddrStd(0, tvm.hash(s1));
         Tag(tagaddr).destroy{
@@ -1212,7 +1212,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        TvmCell deployCode = GoshLib.buildDaoTagCode(_code[m_DaoTagCode], daotag, _versionController);
+        TvmCell deployCode = GoshLib.buildDaoTagCode(_code[m_DaoTagCode], daotag, _versionController, _code[m_WalletCode]);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: DaoTag, varInit: {_goshdao: _goshdao}});
         new DaoTag{
             stateInit: s1, value: FEE_DEPLOY_DAO_TAG, wid: 0, bounce: true, flag: 1
@@ -1261,7 +1261,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        DaoTag(GoshLib.calculateDaoTagAddress(_code[m_DaoTagCode], _versionController, _goshdao, daotag)).destroy { value: 0.1 ton, flag: 1}(_pubaddr, _index);
+        DaoTag(GoshLib.calculateDaoTagAddress(_code[m_DaoTagCode], _versionController, _goshdao, daotag, _code[m_WalletCode])).destroy { value: 0.1 ton, flag: 1}(_pubaddr, _index);
         getMoney();
     }
     
@@ -1801,7 +1801,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnerTree, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]))).destroy{value: 0.2 ton, flag: 1}(_pubaddr, _index);
+        Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnerTree, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]), _code[m_WalletCode])).destroy{value: 0.2 ton, flag: 1}(_pubaddr, _index);
     }
 
     function deployAddTree(
@@ -1811,7 +1811,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnerTree, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]))).addTree{value: 0.2 ton, flag: 1}(_pubaddr, _index, datatree);
+        Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnerTree, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]), _code[m_WalletCode])).addTree{value: 0.2 ton, flag: 1}(_pubaddr, _index, datatree);
     }
 
     function _deployTree(
@@ -1822,7 +1822,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint128  number
     ) internal {
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
-        TvmCell s1 = GoshLib.composeTreeStateInit(_code[m_TreeCode], shainnerTree, repo);
+        TvmCell s1 = GoshLib.composeTreeStateInit(_code[m_TreeCode], shainnerTree, repo, _code[m_WalletCode]);
         new Tree{
             stateInit: s1, value: FEE_DEPLOY_TREE, wid: 0, bounce: true, flag: 1
         }(_pubaddr, datatree, _systemcontract, _goshdao, _code[m_WalletCode], _code[m_DiffCode], _code[m_TreeCode], _code[m_CommitCode], _code[m_SnapshotCode], shaTree, number, _index);

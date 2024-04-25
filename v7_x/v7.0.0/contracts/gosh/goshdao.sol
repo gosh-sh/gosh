@@ -514,7 +514,7 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
     }
     
     function sendMoneyTree(address repo, uint256 shainnertree) public {
-        address addr = GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnertree, repo);
+        address addr = GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnertree, repo, _code[m_WalletCode]);
         require(addr == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (address(this).balance < 2000 ton) { _volunteertree.push(msg.sender); getMoney(); return; }
@@ -1570,7 +1570,7 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
     }
          
     function getDaoTagAddr(string daotag) external view returns(address) {
-        return GoshLib.calculateDaoTagAddress(_code[m_DaoTagCode], _versionController, address(this), daotag);
+        return GoshLib.calculateDaoTagAddress(_code[m_DaoTagCode], _versionController, address(this), daotag, _code[m_WalletCode]);
     }
     
     function getAddrWallet(address pubaddr, uint128 index) external view returns(address) {
