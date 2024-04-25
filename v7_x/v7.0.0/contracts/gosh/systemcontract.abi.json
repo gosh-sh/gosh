@@ -1014,7 +1014,8 @@
 		{
 			"name": "getDaoWalletCode",
 			"inputs": [
-				{"name":"pubaddr","type":"address"}
+				{"name":"pubaddr","type":"address"},
+				{"name":"goshdao","type":"address"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}

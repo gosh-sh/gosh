@@ -83,8 +83,7 @@
 		}
 	],
 	"data": [
-		{"key":1,"name":"_namehash","type":"uint256"},
-		{"key":2,"name":"_goshdao","type":"address"}
+		{"key":1,"name":"_namehash","type":"uint256"}
 	],
 	"events": [
 	],

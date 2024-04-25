@@ -40,7 +40,7 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
     address[] _volunteerdiff;
     address[] _volunteertree;
     address[] _volunteercommit;
-    address static _systemcontract;
+    address _systemcontract;
     address _pubaddr;
     address _profiledao;
     string _nameDao;
@@ -123,8 +123,13 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
         TvmCell TokenRootCode,
         TvmCell TokenWalletCode,
         ////////////////////////
-        optional(address) previous) TokenRootOwner (TokenRootCode, TokenWalletCode) senderIs(_systemcontract) {
+        optional(address) previous) TokenRootOwner (TokenRootCode, TokenWalletCode) {
         tvm.accept();
+        TvmCell data = tvm.codeSalt(tvm.code()).get();
+        (address systemcontract, uint256 hash) = abi.decode(data, (address, uint256));
+        hash;
+        _systemcontract = systemcontract;
+        require(msg.sender == _systemcontract, ERR_SENDER_NO_ALLOWED);
         _profiledao = profiledao;
         _versionController = versionController;
         _pubaddr = pubaddr;
@@ -715,9 +720,9 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
     	require(_tombstone == false, ERR_TOMBSTONE);
     	require(_isTaskRedeployed == false, ERR_WRONG_DATA);
         require(_previousversion == "2.0.0", ERR_WRONG_DATA);
-    	address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName);
-        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
-        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});
+    	address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName, _code[m_WalletCode]);
+        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version, address(this));
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
         optional(TvmCell) data1;
     	mapping(uint8 => TvmCell) code;
     	code[m_WalletCode] = _code[m_WalletCode];
@@ -734,9 +739,9 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
     
     function upgradeTask (address pub, uint128 index, string nametask, string repoName, string oldversion, address oldtask, string[] hashtag) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pub, index))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
-    	address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName);
-        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
-        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});
+    	address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName, _code[m_WalletCode]);
+        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version, address(this));
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
         optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], hashtag, oldversion, oldtask);
         optional(TvmCell) data1;
         new Task{
@@ -748,9 +753,9 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
 
     function upgradeBigTask (address pub, uint128 index, string nametask, string repoName, string oldversion, address oldtask, string[] hashtag) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pub, index))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);
-    	address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName);
-        TvmCell deployCode = GoshLib.buildTaskCode(_code[m_BigTaskCode], repo, version);
-        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});
+    	address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName, _code[m_WalletCode]);
+        TvmCell deployCode = GoshLib.buildBigTaskCode(_code[m_BigTaskCode], repo, version, address(this));
+        TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: BigTask, varInit: {_nametask: nametask}});
         optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_TaskCode], hashtag, oldversion, oldtask);
         optional(TvmCell) data1;
         new BigTask{
@@ -1426,10 +1431,10 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
         require(_reserve >= balance + freebalance, ERR_LOW_TOKEN_RESERVE);
         if (bigtask.hasValue()) { require(value == balance, ERR_WRONG_LOCK); }
         if ((bigtask.hasValue() == false) || (num == 1)) { _reserve -= balance + freebalance; }
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName, _code[m_WalletCode]);
         if (num == 1) {
-            TvmCell deployCode = GoshLib.buildBigTaskCode(_code[m_BigTaskCode], repo, version);
-            TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: BigTask, varInit: {_nametask: nametask, _goshdao: address(this)}});
+            TvmCell deployCode = GoshLib.buildBigTaskCode(_code[m_BigTaskCode], repo, version, address(this));
+            TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: BigTask, varInit: {_nametask: nametask}});
             optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_TaskCode], grant, balance, freebalance, hashtag, commit);
             optional(TvmCell) data1;
             new BigTask{
@@ -1437,8 +1442,8 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
             }(data, data1);
             this.deployTaskTag{value:0.1 ton, flag: 1}(repo, address.makeAddrStd(0, tvm.hash(s1)), hashtag, sender);
         } else {
-            TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
-            TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: address(this)}});            
+            TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version, address(this));
+            TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});            
             optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], grant, balance, balance, hashtag, bigtask, workers);
             if (bigtask.hasValue()) { data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], grant, uint128(0), balance, hashtag, bigtask, workers); }
             optional(TvmCell) data1;
@@ -1472,21 +1477,21 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
         }
     }
     
-    function checkOldTaskVersion (string nametask, string repo, string previous, address previousaddr) public view senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repo), nametask))  accept {        
+    function checkOldTaskVersion (string nametask, string repo, string previous, address previousaddr) public view senderIs(GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repo, _code[m_WalletCode]), nametask))  accept {        
         SystemContract(_systemcontract).checkOldTaskVersion2{value : 0.2 ton, flag: 1}(_nameDao, nametask, repo, previous, previousaddr, msg.sender);
     }
 
-    function checkOldBigTaskVersion (string nametask, string repo, string previous, address previousaddr) public view senderIs(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], address(this), GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repo), nametask))  accept {        
+    function checkOldBigTaskVersion (string nametask, string repo, string previous, address previousaddr) public view senderIs(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], address(this), GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repo, _code[m_WalletCode]), nametask))  accept {        
         SystemContract(_systemcontract).checkOldBigTaskVersion2{value : 0.2 ton, flag: 1}(_nameDao, nametask, repo, previous, previousaddr, msg.sender);
     }
     
     function checkOldTaskVersion5 (string nametask, string repo, address previous, address answer) public view senderIs(_systemcontract)  accept {       
-        require(previous ==  GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repo), nametask), ERR_WRONG_DATA);
+        require(previous ==  GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repo, _code[m_WalletCode]), nametask), ERR_WRONG_DATA);
         Task(previous).sendData{value:0.2 ton, flag: 1}(answer);
     }
 
     function checkOldBigTaskVersion5 (string nametask, string repo, address previous, address answer) public view senderIs(_systemcontract)  accept {       
-        require(previous ==  GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], address(this), GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repo), nametask), ERR_WRONG_DATA);
+        require(previous ==  GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], address(this), GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repo, _code[m_WalletCode]), nametask), ERR_WRONG_DATA);
         BigTask(previous).sendData{value:0.2 ton, flag: 1}(answer);
     }
     
@@ -1545,22 +1550,22 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
 
     //Getters    
     function getTaskCode(string repoName) external view returns(TvmCell) {
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName);
-        return GoshLib.buildTaskCode(_code[m_TaskCode], repo, version);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName, _code[m_WalletCode]);
+        return GoshLib.buildTaskCode(_code[m_TaskCode], repo, version, address(this));
     }
 
     function getTaskAddr(string nametask, string repoName) external view returns(address) {
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName, _code[m_WalletCode]);
         return GoshLib.calculateTaskAddress(_code[m_TaskCode], address(this), repo, nametask);
     }
 
     function getBigTaskCode(string repoName) external view returns(TvmCell) {
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName);
-        return GoshLib.buildBigTaskCode(_code[m_BigTaskCode], repo, version);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName, _code[m_WalletCode]);
+        return GoshLib.buildBigTaskCode(_code[m_BigTaskCode], repo, version, address(this));
     }
 
     function getBigTaskAddr(string nametask, string repoName) external view returns(address) {
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), repoName, _code[m_WalletCode]);
         return GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], address(this), repo, nametask);
     }
          
@@ -1585,7 +1590,7 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
     }
     
     function getAddrRepository(string name) external view returns(address) {
-        return GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), name);
+        return GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, address(this), name, _code[m_WalletCode]);
     }
        
     function getTombstone() external view returns(bool) {

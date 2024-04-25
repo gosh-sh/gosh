@@ -84,13 +84,19 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                         tvm.hash(clientCode), clientCode.depth(), tvm.hash(proposalCode),
                         proposalCode.depth(), tokenforperson, _tip3Root
     ) {
+        if (_index == 0) {
+            TvmCell data = tvm.codeSalt(tvm.code()).get();
+            (address goshdao, uint256 hash) = abi.decode(data, (address, uint256));
+            hash;
+            _goshdao = goshdao;
+            require(msg.sender == _goshdao, ERR_SENDER_NO_ALLOWED);
+        }
         _versions = versions;
         _versionController = versionController;
         _rootpubaddr = rootpubaddr;
         _nameDao = nameDao;
         _code[m_DaoCode] = codeDao;
         _code[m_WalletCode] = WalletCode;
-        if (_index == 0) { require(msg.sender == _goshdao, ERR_SENDER_NO_ALLOWED); }
         if (_index != 0) { require(msg.sender == GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, 0), ERR_SENDER_NO_ALLOWED); }
         _code[m_CommitCode] = commitCode;
         _code[m_RepositoryCode] = repositoryCode;
@@ -144,7 +150,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string symbol,
         uint8 decimals,
         Grants[] tokengrants) private view {
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         Repository(repo).startToken{value: 0.1 ton, flag: 1}(_pubaddr, tokendescription, name, symbol, decimals, tokengrants);
     }
 
@@ -286,8 +292,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
-        TvmCell deployCode = GoshLib.buildSignatureCode(_code[m_contentSignature], repo, version);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
+        TvmCell deployCode = GoshLib.buildSignatureCode(_code[m_contentSignature], repo, version, _code[m_WalletCode]);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: ContentSignature, varInit: {_commit : commit, _label : label, _systemcontract : _systemcontract, _goshdao : _goshdao}});
         new ContentSignature{
             stateInit: s1, value: 5 ton, wid: 0, flag: 1
@@ -483,7 +489,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public senderIs(address(this))  accept saveMsg {
         if (index >= repoName.length) { return; }
         this._tagUpgrade2{value:0.12 ton, flag: 1}(repoName, nametag, newversion, index + 1);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName[index]);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName[index], _code[m_WalletCode]);
         TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag[index]}});
         address addr = address.makeAddrStd(0, tvm.hash(s1));
@@ -731,7 +737,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function deployTopic(string name, string content, address object) public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        TvmCell s1 = GoshLib.composeTopicStateInit(_code[m_TopicCode], _goshdao, name, content, object);
+        TvmCell s1 = GoshLib.composeTopicStateInit(_code[m_TopicCode], _goshdao, name, content, object, _code[m_WalletCode]);
         new Topic {stateInit: s1, value: FEE_DEPLOY_TOPIC, wid: 0, flag: 1}(
             _pubaddr, _index, _systemcontract, _goshdao, object, _code[m_WalletCode]);
     }
@@ -739,7 +745,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function deployComment(string name, string content, address object, optional(string) metadata, optional(string) commit, optional(string) nameoffile) public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        TvmCell s1 = GoshLib.composeCommentStateInit(_code[m_TopicCode], _goshdao, name, content, object, metadata, commit, nameoffile);
+        TvmCell s1 = GoshLib.composeCommentStateInit(_code[m_TopicCode], _goshdao, name, content, object, metadata, commit, nameoffile, _code[m_WalletCode]);
         new Topic {stateInit: s1, value: FEE_DEPLOY_TOPIC, wid: 0, flag: 1}(
             _pubaddr, _index, _systemcontract, _goshdao, object, _code[m_WalletCode]);
     }
@@ -801,7 +807,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function _destroyRepository(string nameRepo) private {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);        
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, nameRepo);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, nameRepo, _code[m_WalletCode]);
         Repository(repo).destroyRepo{value: 0.1 ton, flag: 1}(_pubaddr, _index);
         getMoney();
     }
@@ -815,7 +821,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         if (previous.hasValue() == false) {
             _deployCommit(nameRepo, "0000000000000000000000000000000000000000", "", emptyArr, emptySha, false);
         }
-        TvmCell s1 = GoshLib.composeRepositoryStateInit(_code[m_RepositoryCode], _systemcontract, _goshdao, nameRepo);
+        TvmCell s1 = GoshLib.composeRepositoryStateInit(_code[m_RepositoryCode], _systemcontract, _goshdao, nameRepo, _code[m_WalletCode]);
         new Repository {stateInit: s1, value: FEE_DEPLOY_REPO, wid: 0, flag: 1}(
             _pubaddr, nameRepo, _nameDao, _goshdao, _systemcontract, descr, _code[m_CommitCode], _code[m_WalletCode], _code[m_TagCode], _code[m_SnapshotCode], _code[m_TreeCode], _code[m_DiffCode], _code[m_contentSignature], _code[m_TokenRepoRootCode], _code[m_TokenRepoWalletCode], _versions, _index, previous);
         getMoney();
@@ -823,7 +829,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function _updateRepoMetadata(string nameRepo, string metadata) private {
         require(_tombstone == false, ERR_TOMBSTONE);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, nameRepo);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, nameRepo, _code[m_WalletCode]);
         Repository(repo).updateRepoMetadata{value: 0.1 ton, flag: 1}(_pubaddr, _index, metadata);
         getMoney();
     }    
@@ -855,7 +861,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) private {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         address taskaddr = GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, repo, nametask);
         BigTask(taskaddr).approveReady{value:1 ton}(_pubaddr, _index);
         getMoney();
@@ -979,7 +985,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint128 index2,
         bool last
     ) internal {
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         TvmCell s1 = GoshLib.composeDiffStateInit(_code[m_DiffCode], commitName, repo, index1, index2);
         new DiffC {stateInit: s1, value: FEE_DEPLOY_DIFF, bounce: true, flag: 1, wid: 0}(
             _goshdao, _systemcontract, _pubaddr, repoName, branchName, repo, _code[m_WalletCode], _code[m_DiffCode], _code[m_CommitCode], _code[m_TreeCode], diffs, _index, last);
@@ -993,7 +999,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode],  GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName), commitName)).setPinned{value:0.75 ton, flag: 1}(_pubaddr, _index);
+        Commit(GoshLib.calculateCommitAddress(_code[m_CommitCode],  GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]), commitName)).setPinned{value:0.75 ton, flag: 1}(_pubaddr, _index);
     }
 
     function deployCommit(
@@ -1018,7 +1024,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 shainnertree,
         bool upgrade
     ) internal {
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         address tree = GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnertree, repo);
         TvmCell s1 = GoshLib.composeCommitStateInit(_code[m_CommitCode], commitName, repo);
         new Commit {stateInit: s1, value: FEE_DEPLOY_COMMIT, bounce: true, flag: 1, wid: 0}(
@@ -1038,7 +1044,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_limited == false, ERR_WALLET_LIMITED);
         tvm.accept();
         optional(ConfigCommit) task;
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         address addrC = GoshLib.calculateCommitAddress(_code[m_CommitCode], repo, commit);
         isProposalNeeded(repoName, branchName, addrC, numberChangedFiles, numberCommits, task, isUpgrade);
         tvm.accept();
@@ -1056,7 +1062,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
         require(checkNameBranch(newName), ERR_WRONG_NAME);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         Repository(repo).deployBranch{
             value: FEE_DEPLOY_BRANCH, bounce: true, flag: 1
         }(_pubaddr, newName, fromCommit, _index);
@@ -1082,7 +1088,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
         require(checkNameBranch(newName), ERR_WRONG_NAME);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         Repository(repo).deployBranch{
             value: FEE_DEPLOY_BRANCH, bounce: true, flag: 1
         }(_pubaddr, newName, fromCommit, _index);
@@ -1095,7 +1101,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         Repository(repo).deleteBranch{
             value: FEE_DESTROY_BRANCH, bounce: true, flag: 1
         }(_pubaddr, Name, _index);
@@ -1117,7 +1123,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         Repository(repo).changeDescription{
             value: 0.17 ton, bounce: true, flag: 1
         }(_pubaddr, descr, _index);
@@ -1130,7 +1136,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         Repository(repo).setHEAD{value: 1 ton, bounce: true, flag: 1}(_pubaddr, branchName, _index);
         getMoney();
     }
@@ -1150,7 +1156,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         if (isHack == false) { 
             require(_limited == false, ERR_WALLET_LIMITED); 
         }
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         TvmCell deployCode;
         if (isHack == false) { deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version); }
         else { 
@@ -1170,7 +1176,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address commit,
         string content
     ) public senderIs(_goshdao)  accept saveMsg {
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag}});
         new Tag{
@@ -1183,7 +1189,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         require(_limited == false, ERR_WALLET_LIMITED);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         TvmCell deployCode = GoshLib.buildTagCode(_code[m_TagCode], repo, version);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Tag, varInit: {_nametag: nametag}});
         address tagaddr = address.makeAddrStd(0, tvm.hash(s1));
@@ -1217,7 +1223,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function deployRepoTag(
         string repoName,
         string repotag
-    ) public senderIs(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName)) accept saveMsg {
+    ) public senderIs(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode])) accept saveMsg {
         _deployRepoTag(msg.sender, repotag);
         getMoney();
     }
@@ -1262,7 +1268,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function destroyRepoTag(
         string repoName,
         string daotag
-    ) public senderIs(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName)) accept saveMsg {
+    ) public senderIs(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode])) accept saveMsg {
         _destroyRepoTag(msg.sender, daotag);
         getMoney();
     }
@@ -1289,7 +1295,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access) accept {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        BigTask(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).approveSmallTask{value: 1 ton, flag: 1}(_pubaddr, _index, taskindex, commit);
+        BigTask(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]))).approveSmallTask{value: 1 ton, flag: 1}(_pubaddr, _index, taskindex, commit);
         getMoney();
     }
 
@@ -1302,7 +1308,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         ConfigGrant grant,
         uint128 value,
         optional(ConfigCommitBase) workers
-    ) public senderIs(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))) accept {
+    ) public senderIs(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]))) accept {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
         GoshDao(_goshdao).deployTask{value: 1 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, value, namebigtask, workers);
@@ -1320,7 +1326,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        BigTask(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).deploySubTask{value: 1 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, value, workers);
+        BigTask(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]))).deploySubTask{value: 1 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, value, workers);
         getMoney();
     }
 
@@ -1331,7 +1337,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg  {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        BigTask(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).destroySubTask{value: 1 ton, flag: 1}(_pubaddr, _index, index);
+        BigTask(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]))).destroySubTask{value: 1 ton, flag: 1}(_pubaddr, _index, index);
         getMoney();
     }
 
@@ -1420,7 +1426,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) private {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         address taskaddr = GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, repo, nametask);
         Task(taskaddr).destroy{value:0.4 ton, flag: 1}(_pubaddr, _index);
         getMoney();
@@ -1432,7 +1438,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) private {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         address taskaddr = GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, repo, nametask);
         BigTask(taskaddr).destroy{value:0.4 ton, flag: 1}(_pubaddr, _index);
         getMoney();
@@ -1445,7 +1451,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         address taskaddr = GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, repo, nametask);
         Task(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, typegrant, _index);
         getMoney();
@@ -1457,7 +1463,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         address taskaddr = GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, repo, nametask);
         Task(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, 1, _index);
         Task(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, 2, _index);
@@ -1472,7 +1478,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         address taskaddr = GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, repo, nametask);
         BigTask(taskaddr).getGrant{value:2 ton, flag: 1}(_pubaddr, typegrant, _index);
         getMoney();
@@ -1484,7 +1490,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         address taskaddr = GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, repo, nametask);
         BigTask(taskaddr).getGrant{value:1 ton, flag: 1}(_pubaddr, 1, _index);
         BigTask(taskaddr).getGrant{value:1 ton, flag: 1}(_pubaddr, 2, _index);
@@ -1498,7 +1504,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerAddress(_pubaddr)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         address taskaddr = GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, repo, nametask);
         Task(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, 1, _index);
         Task(taskaddr).getGrant{value:0.3 ton, flag: 1}(_pubaddr, 2, _index);
@@ -1790,7 +1796,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnerTree, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).destroy{value: 0.2 ton, flag: 1}(_pubaddr, _index);
+        Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnerTree, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]))).destroy{value: 0.2 ton, flag: 1}(_pubaddr, _index);
     }
 
     function deployAddTree(
@@ -1800,7 +1806,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public onlyOwnerPubkeyOptional(_access)  accept saveMsg {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnerTree, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName))).addTree{value: 0.2 ton, flag: 1}(_pubaddr, _index, datatree);
+        Tree(GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnerTree, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]))).addTree{value: 0.2 ton, flag: 1}(_pubaddr, _index, datatree);
     }
 
     function _deployTree(
@@ -1810,7 +1816,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         mapping(uint256 => TreeObject) datatree,
         uint128  number
     ) internal {
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
         TvmCell s1 = GoshLib.composeTreeStateInit(_code[m_TreeCode], shainnerTree, repo);
         new Tree{
             stateInit: s1, value: FEE_DEPLOY_TREE, wid: 0, bounce: true, flag: 1
@@ -1830,7 +1836,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
        require(_limited == false, ERR_WALLET_LIMITED);
        uint128 value = numberChangedFiles * 1 ton;
        if (value > 1000 ton) { value = 1000 ton; }
-       Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName)).isNotProtected{value:value + 1 ton, flag: 1}(_pubaddr, branchName, commit, numberChangedFiles, numberCommits, task, isUpgrade, _index);
+       Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode])).isNotProtected{value:value + 1 ton, flag: 1}(_pubaddr, branchName, commit, numberChangedFiles, numberCommits, task, isUpgrade, _index);
     }
 
     //SMV part
@@ -2404,10 +2410,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 require(_tombstone == false, ERR_TOMBSTONE);
                 (, string repoName, string branchName, string commit, uint128 numberChangedFiles, uint128 numberCommits, optional(ConfigCommit) task, , ) =
                     abi.decode(propData,(uint256, string, string, string, uint128, uint128, optional(ConfigCommit), string, uint32));
-                address addrC = GoshLib.calculateCommitAddress(_code[m_CommitCode], GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName), commit);
+                address addrC = GoshLib.calculateCommitAddress(_code[m_CommitCode], GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]), commit);
                 uint128 value = numberChangedFiles * 1 ton;
                 if (value > 1000 ton) { value = 1000 ton; }
-                Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName)).SendDiffSmv{value: value + 1 ton, bounce: true, flag: 1}(_pubaddr, _index, branchName, addrC, numberChangedFiles, numberCommits, task);
+                Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode])).SendDiffSmv{value: value + 1 ton, bounce: true, flag: 1}(_pubaddr, _index, branchName, addrC, numberChangedFiles, numberCommits, task);
             } else
             if (kind == UPGRADE_CODE_PROPOSAL_KIND) {
                 (, TvmCell UpgradeCode, TvmCell cell,,) = abi.decode(propData, (uint256, TvmCell, TvmCell, string, uint32));
@@ -2416,12 +2422,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == ADD_PROTECTED_BRANCH_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
                 (, string repoName, string branchName,) = abi.decode(propData,(uint256, string, string, uint32));
-                Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName)).addProtectedBranch{value:0.19 ton, flag: 1}(_pubaddr, branchName, _index);
+                Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode])).addProtectedBranch{value:0.19 ton, flag: 1}(_pubaddr, branchName, _index);
             } else
             if (kind == DELETE_PROTECTED_BRANCH_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
                 (, string repoName, string branchName,) = abi.decode(propData,(uint256, string, string, uint32));
-                Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName)).deleteProtectedBranch{value:0.19 ton, flag: 1}(_pubaddr, branchName, _index);
+                Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode])).deleteProtectedBranch{value:0.19 ton, flag: 1}(_pubaddr, branchName, _index);
             } else
             if (kind == SET_TOMBSTONE_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
@@ -2489,11 +2495,11 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             }  else
             if (kind == REPOTAG_PROPOSAL_KIND) {
                 (, string[] tag, string repo, ) = abi.decode(propData,(uint256, string[], string, uint32));
-                Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repo)).smvdeployrepotag{value: 0.13 ton, flag: 1}(_pubaddr, _index, tag);
+                Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repo, _code[m_WalletCode])).smvdeployrepotag{value: 0.13 ton, flag: 1}(_pubaddr, _index, tag);
             }  else
             if (kind == REPOTAG_DESTROY_PROPOSAL_KIND) {
                 (, string[] tag, string repo, ) = abi.decode(propData,(uint256, string[], string, uint32));
-                Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repo)).smvdestroyrepotag{value: 0.13 ton, flag: 1}(_pubaddr, _index, tag);
+                Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repo, _code[m_WalletCode])).smvdestroyrepotag{value: 0.13 ton, flag: 1}(_pubaddr, _index, tag);
             }  else
             if (kind == CHANGE_DESCRIPTION_PROPOSAL_KIND) {
                 (, string repo, string descr, ,) = abi.decode(propData,(uint256, string, string, string, uint32));
@@ -2772,19 +2778,19 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     //Getters
         
     function getContentCode(string repoName) external view returns(TvmCell) {
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
-        return GoshLib.buildSignatureCode(_code[m_contentSignature], repo, version);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
+        return GoshLib.buildSignatureCode(_code[m_contentSignature], repo, version, _code[m_WalletCode]);
     }
 
     function getContentAddress(string repoName,
         string commit,
         string label) external view returns(address) {
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName);
-        return GoshLib.calculateContentAddress(_code[m_contentSignature], _systemcontract, _goshdao, repo, commit, label);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]);
+        return GoshLib.calculateContentAddress(_code[m_contentSignature], _systemcontract, _goshdao, repo, commit, label, _code[m_WalletCode]);
     }
 
     function getDiffAddr(string reponame, string commitName, uint128 index1, uint128 index2) external view returns(address) {
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, reponame);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, reponame, _code[m_WalletCode]);
         return  GoshLib.calculateDiffAddress(_code[m_DiffCode], repo, commitName, index1, index2);
     }
 
@@ -2793,12 +2799,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     function getTaskAddr(string nametask, string reponame) external view returns(address) {
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, reponame);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, reponame, _code[m_WalletCode]);
         return GoshLib.calculateTaskAddress(_code[m_TaskCode], _goshdao, repo, nametask);
     }
 
     function getBigTaskAddr(string nametask, string reponame) external view returns(address) {
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, reponame);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, reponame, _code[m_WalletCode]);
         return GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, repo, nametask);
     }
 

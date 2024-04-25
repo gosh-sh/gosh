@@ -24,7 +24,7 @@ contract BigTask is Modifiers{
     address _repo;
     bool _ready = false;
     address _systemcontract;
-    address static _goshdao;
+    address _goshdao;
     mapping(uint8 => TvmCell) _code;
 
     mapping(address => uint128) _assigners;
@@ -71,19 +71,24 @@ contract BigTask is Modifiers{
     constructor(
         optional(TvmCell) defaultData,
         optional(TvmCell) previousVersion
-        ) senderIs(_goshdao) {
+        ) {
+        TvmCell data = tvm.codeSalt(tvm.code()).get();
+        (address goshdao, uint256 hash) = abi.decode(data, (address, uint256));
+        hash;
+        _goshdao = goshdao;
+        require(msg.sender == _goshdao, ERR_SENDER_NO_ALLOWED);
         require(_nametask != "", ERR_NO_DATA);
         tvm.accept();
         if (defaultData.hasValue()) {
             ConfigCommit commit;
             (_repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_TaskCode], _grant, _balance, _freebalance, _hashtag, commit) = abi.decode(defaultData.get(),(string, address, TvmCell, TvmCell, TvmCell, TvmCell, ConfigGrant, uint128, uint128, string[], ConfigCommit));
-            _repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, _repoName);
+            _repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, _repoName, _code[m_WalletCode]);
             this.isReady{value: 0.1 ton, flag: 1}(commit);
             return;
         }
         require(previousVersion.hasValue() == true, ERR_WRONG_DATA);
         (_repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_TaskCode], _hashtag, _previousVersion, _previousVersionAddr) = abi.decode(previousVersion.get(),(string, address, TvmCell, TvmCell, TvmCell, TvmCell, string[], string, address));
-        _repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, _repoName);
+        _repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, _repoName, _code[m_WalletCode]);
         GoshDao(_goshdao).checkOldBigTaskVersion{value: 0.2 ton, flag: 1}(_nametask, _repoName, _previousVersion, _previousVersionAddr);
         _waitForUpdate = true;
     }
@@ -99,7 +104,7 @@ contract BigTask is Modifiers{
             string name;
             (name, _repoName, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _fullSubtask, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _subtaskfull, _assigncomplete, _reviewcomplete, _managercomplete, _subtaskcomplete, _allassign, _allreview, _allmanager, _allsubtask, _lastassign, _lastreview, _lastmanager, _lastsubtask, _balance, _freebalance, _subtask, _subtasskbalance, _subtaskgranted, _fullSubtaskValue, _subtasksize, _destroyedSubTask, _approvedSubTask) = 
             abi.decode(data, (string, string, bool, ConfigCommit[], ConfigGrant, uint128, uint128, uint128, uint128, uint128, uint128,  mapping(address => uint128), mapping(address => uint128), mapping(address => uint128), uint128, uint128, uint128, uint128,  uint128, uint128, uint128, uint128, bool, bool, bool, bool, uint128, uint128, uint128, uint128, uint128, uint128, mapping(uint128 => Subtask), uint128, uint128, uint128, uint128, uint128, uint128));
-            _repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, _repoName);
+            _repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, _repoName, _code[m_WalletCode]);
             address zero;
             if (_ready == true) {
                 this.checkdaoMember{value:0.1 ton, flag: 1}(_candidates[_indexFinal].daoMembers, zero);

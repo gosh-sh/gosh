@@ -127,9 +127,9 @@ library GoshLib {
         return tvm.buildStateInit({code: deployCode, contr: Snapshot, varInit: {NameOfFile: name, _baseCommit: commitsha}});
     }
 
-    function calculateRepositoryAddress(TvmCell code, address systemcontract, address goshdao, string name) public returns (address) {
+    function calculateRepositoryAddress(TvmCell code, address systemcontract, address goshdao, string name, TvmCell walletcode) public returns (address) {
         TvmCell deployCode = buildRepositoryCode(
-            code, systemcontract, goshdao, versionLib
+            code, systemcontract, goshdao, versionLib, walletcode
         );
         return address(tvm.hash(tvm.buildStateInit({
             code: deployCode,
@@ -153,11 +153,11 @@ library GoshLib {
     }
 
     function calculateWalletAddress(TvmCell code, address systemcontract, address goshdao, address pubaddr, uint128 index) public returns(address) {
-        TvmCell deployCode = buildWalletCode(code, pubaddr, versionLib);
+        TvmCell deployCode = buildWalletCode(code, pubaddr, versionLib, goshdao);
         TvmCell s1 = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,
-            varInit: { _systemcontract: systemcontract, _goshdao: goshdao, _index: index}
+            varInit: { _systemcontract: systemcontract, _index: index}
         });
         return address.makeAddrStd(0, tvm.hash(s1));
     }   
@@ -169,11 +169,11 @@ library GoshLib {
     }
     
     function calculateDaoAddress(TvmCell code, address systemcontract, string name) public returns(address) {
-        TvmCell deployCode = buildDaoCode(code, name, versionLib);
+        TvmCell deployCode = buildDaoCode(code, name, versionLib, systemcontract);
         TvmCell s1 = tvm.buildStateInit({
             code: deployCode,
             contr: GoshDao,
-            varInit: { _systemcontract : systemcontract }
+            varInit: { }
         });
         return address.makeAddrStd(0, tvm.hash(s1));
     }
@@ -189,19 +189,20 @@ library GoshLib {
         address goshdao,
         address repo,
         string commit,
-        string label) public returns(address) {
-        TvmCell deployCode = buildSignatureCode(code, repo, versionLib);
+        string label,
+        TvmCell walletcode) public returns(address) {
+        TvmCell deployCode = buildSignatureCode(code, repo, versionLib, walletcode);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: ContentSignature, varInit: {_commit : commit, _label : label, _systemcontract : systemcontract, _goshdao : goshdao}});
         return address.makeAddrStd(0, tvm.hash(s1));
     }
 
-    function calculateTopicAddress(TvmCell code, address goshdao, string name, string content, address object) public returns(address) {
-        TvmCell s1 = composeTopicStateInit(code, goshdao, name, content, object);
+    function calculateTopicAddress(TvmCell code, address goshdao, string name, string content, address object, TvmCell walletcode) public returns(address) {
+        TvmCell s1 = composeTopicStateInit(code, goshdao, name, content, object, walletcode);
         return address.makeAddrStd(0, tvm.hash(s1));
     }
 
-    function calculateCommentAddress(TvmCell code, address goshdao, string name, string content, address object, optional(string) metadata, optional(string) commit, optional(string) nameoffile) public returns(address) {
-        TvmCell s1 = composeCommentStateInit(code, goshdao, name, content, object, metadata, commit, nameoffile);
+    function calculateCommentAddress(TvmCell code, address goshdao, string name, string content, address object, optional(string) metadata, optional(string) commit, optional(string) nameoffile, TvmCell walletcode) public returns(address) {
+        TvmCell s1 = composeCommentStateInit(code, goshdao, name, content, object, metadata, commit, nameoffile, walletcode);
         return address.makeAddrStd(0, tvm.hash(s1));
     }
 
@@ -281,13 +282,13 @@ library GoshLib {
     }
 
     function composeTaskStateInit(TvmCell code, address goshdao, address repo, string nametask) public returns(TvmCell) {
-        TvmCell deployCode = buildTaskCode(code, repo, versionLib);
-        return tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: goshdao}});
+        TvmCell deployCode = buildTaskCode(code, repo, versionLib, goshdao);
+        return tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});
     }  
 
     function composeBigTaskStateInit(TvmCell code, address goshdao, address repo, string nametask) public returns(TvmCell) {
-        TvmCell deployCode = buildBigTaskCode(code, repo, versionLib);
-        return tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask, _goshdao: goshdao}});
+        TvmCell deployCode = buildBigTaskCode(code, repo, versionLib, goshdao);
+        return tvm.buildStateInit({code: deployCode, contr: BigTask, varInit: {_nametask: nametask}});
     }        
 
     function composeProfileDaoStateInit(TvmCell code, address versionController, string name) public returns(TvmCell) {
@@ -300,11 +301,11 @@ library GoshLib {
     }
 
     function composeWalletStateInit(TvmCell code, address systemcontract, address goshdao, address pubaddr, uint128 index) public returns(TvmCell) {
-        TvmCell deployCode = buildWalletCode(code, pubaddr, versionLib);
+        TvmCell deployCode = buildWalletCode(code, pubaddr, versionLib, goshdao);
         TvmCell _contract = tvm.buildStateInit({
             code: deployCode,
             contr: GoshWallet,
-            varInit: {_systemcontract : systemcontract, _goshdao: goshdao, _index: index}
+            varInit: {_systemcontract : systemcontract, _index: index}
         });
         return _contract;
     }
@@ -328,9 +329,9 @@ library GoshLib {
     }
 
     
-    function composeRepositoryStateInit(TvmCell code, address systemcontract, address goshdao, string name) public returns(TvmCell) {
+    function composeRepositoryStateInit(TvmCell code, address systemcontract, address goshdao, string name, TvmCell walletcode) public returns(TvmCell) {
         TvmCell deployCode = buildRepositoryCode(
-            code, systemcontract, goshdao, versionLib
+            code, systemcontract, goshdao, versionLib, walletcode
         );
         return tvm.buildStateInit({
             code: deployCode,
@@ -351,19 +352,19 @@ library GoshLib {
     }
 
     function composeTagSupplyStateInit(TvmCell code, address goshdao, uint256 namehash) public returns(TvmCell) {
-        TvmCell deployCode = buildGrantsCode(
-            code, goshdao, versionLib
+        TvmCell deployCode = buildTagSupplyCode(
+            code, goshdao, versionLib, goshdao
         );
         return tvm.buildStateInit({
             code: deployCode,
             contr: TagSupply,
-            varInit: {_namehash: namehash, _goshdao: goshdao}
+            varInit: {_namehash: namehash}
         });
     }
 
-    function composeTopicStateInit(TvmCell code, address goshdao, string name, string content, address object) public returns(TvmCell) {
+    function composeTopicStateInit(TvmCell code, address goshdao, string name, string content, address object, TvmCell walletcode) public returns(TvmCell) {
         TvmCell deployCode = buildTopicCode(
-            code, goshdao, versionLib
+            code, goshdao, versionLib, walletcode
         );
         return tvm.buildStateInit({
             code: deployCode,
@@ -372,9 +373,9 @@ library GoshLib {
         });
     }
 
-    function composeCommentStateInit(TvmCell code, address goshdao, string name, string content, address object, optional(string) metadata, optional(string) commit, optional(string) nameoffile) public returns(TvmCell) {
+    function composeCommentStateInit(TvmCell code, address goshdao, string name, string content, address object, optional(string) metadata, optional(string) commit, optional(string) nameoffile, TvmCell walletcode) public returns(TvmCell) {
         TvmCell deployCode = buildCommentCode(
-            code, goshdao, object, commit, nameoffile, versionLib
+            code, goshdao, object, commit, nameoffile, versionLib, walletcode
         );
         return tvm.buildStateInit({
             code: deployCode,
@@ -384,11 +385,11 @@ library GoshLib {
     }
 
     function composeDaoStateInit(TvmCell code, address systemcontract, string name) public returns(TvmCell) {
-        TvmCell deployCode = buildDaoCode(code, name, versionLib);
+        TvmCell deployCode = buildDaoCode(code, name, versionLib, systemcontract);
         return tvm.buildStateInit({
             code: deployCode,
             contr: GoshDao,
-            varInit: { _systemcontract : systemcontract }
+            varInit: { }
         });
     }
 
@@ -439,12 +440,14 @@ library GoshLib {
     function buildDaoCode(
         TvmCell originalCode, 
         string name, 
-        string version) public returns(TvmCell) {
+        string version,
+        address systemcontract) public returns(TvmCell) {
         TvmBuilder b;
         b.store(name);
         b.store(version);
         uint256 hash = tvm.hash(b.toCell());
         delete b;
+        b.store(systemcontract);
         b.store(hash);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
@@ -452,13 +455,15 @@ library GoshLib {
     function buildSignatureCode(
         TvmCell originalCode,
         address repo,
-        string version
+        string version,
+        TvmCell walletcode
     ) public returns (TvmCell) {
         TvmBuilder b;
         b.store(version);
         b.store(repo);
         uint256 hash = tvm.hash(b.toCell());
         delete b;
+        b.store(tvm.hash(walletcode));
         b.store(hash);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
@@ -466,13 +471,15 @@ library GoshLib {
     function buildWalletCode(
         TvmCell originalCode,
         address pubaddr,
-        string version
+        string version,
+        address goshdao
     ) public returns (TvmCell) {
         TvmBuilder b;
         b.store(pubaddr);
         b.store(version);
         uint256 hash = tvm.hash(b.toCell());
         delete b;
+        b.store(goshdao);
         b.store(hash);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
@@ -495,7 +502,8 @@ library GoshLib {
         TvmCell originalCode,
         address goshaddr,
         address dao,
-        string version
+        string version,
+        TvmCell walletcode
     ) public returns (TvmCell) {
         TvmBuilder b;
         b.store(goshaddr);
@@ -503,6 +511,7 @@ library GoshLib {
         b.store(version);
         uint256 hash = tvm.hash(b.toCell());
         delete b;
+        b.store(tvm.hash(walletcode));
         b.store(hash);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
@@ -522,13 +531,15 @@ library GoshLib {
     function buildTaskCode(
         TvmCell originalCode,
         address repo,
-        string version
+        string version,
+        address goshdao
     ) public returns (TvmCell) {
         TvmBuilder b;
         b.store(repo);
         b.store(version);
         uint256 hash = tvm.hash(b.toCell());
         delete b;
+        b.store(goshdao);
         b.store(hash);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
@@ -536,13 +547,15 @@ library GoshLib {
     function buildBigTaskCode(
         TvmCell originalCode,
         address repo,
-        string version
+        string version,
+        address goshdao
     ) public returns (TvmCell) {
         TvmBuilder b;
         b.store(repo);
         b.store(version);
         uint256 hash = tvm.hash(b.toCell());
         delete b;
+        b.store(goshdao);
         b.store(hash);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
@@ -730,7 +743,8 @@ library GoshLib {
     function buildTopicCode(
         TvmCell originalCode,
         address dao,
-        string versionc
+        string versionc,
+        TvmCell walletcode
     ) public returns (TvmCell) {
         TvmBuilder b;
         b.store("TOPIC");
@@ -738,6 +752,7 @@ library GoshLib {
         b.store(versionc);
         uint256 hash = tvm.hash(b.toCell());
         delete b;
+        b.store(tvm.hash(walletcode));
         b.store(hash);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
@@ -748,7 +763,8 @@ library GoshLib {
         address file,
         optional(string) commit,
         optional(string) name,
-        string versionc
+        string versionc,
+        TvmCell walletcode
     ) public returns (TvmCell) {
         TvmBuilder b;
         b.store("COMMENT");
@@ -759,6 +775,7 @@ library GoshLib {
         b.store(versionc);
         uint256 hash = tvm.hash(b.toCell());
         delete b;
+        b.store(tvm.hash(walletcode));
         b.store(hash);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }
@@ -781,7 +798,8 @@ library GoshLib {
     function buildTagSupplyCode(
         TvmCell originalCode,
         address dao,
-        string versionc
+        string versionc,
+        address goshdao
     ) public returns (TvmCell) {
         TvmBuilder b;
         b.store("TAGSUPPLY");
@@ -789,6 +807,7 @@ library GoshLib {
         b.store(versionc);
         uint256 hash = tvm.hash(b.toCell());
         delete b;
+        b.store(goshdao);
         b.store(hash);
         return tvm.setCodeSalt(originalCode, b.toCell());
     }

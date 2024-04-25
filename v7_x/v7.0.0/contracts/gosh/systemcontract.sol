@@ -57,15 +57,15 @@ contract SystemContract is Modifiers {
     }
 
     function transferFromWallet(string name, string namedao, string namerepo, uint128 value, address pubaddr) public view senderIs(GoshLib.calculateProfileAddress(_code[m_ProfileCode], _versionController, name)) accept {
-        Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), namerepo)).transferFromWallet{value: 0.1 ton, flag: 1}(msg.sender, value, pubaddr);
+        Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), namerepo, _code[m_WalletCode])).transferFromWallet{value: 0.1 ton, flag: 1}(msg.sender, value, pubaddr);
     }
 
-    function transferFromWalletAgain(string namedao, string namerepo, address pubaddr, address from, address to, uint128 value) public view senderIs(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), namerepo)) accept {
+    function transferFromWalletAgain(string namedao, string namerepo, address pubaddr, address from, address to, uint128 value) public view senderIs(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), namerepo, _code[m_WalletCode])) accept {
        ProfileNew(pubaddr).transferFromWalletAgain{value: 0.1 ton, flag: 1}(from, to, value);
     }
 
     function sendTokenToWalletForRepo(string name, string namedao, string namerepo) public view senderIs(GoshLib.calculateProfileAddress(_code[m_ProfileCode], _versionController, name)) accept {
-        GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), namerepo).transfer(4*FEE_DEPLOY_TOKEN_WALLET + 1 ton);
+        GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), namerepo, _code[m_WalletCode]).transfer(4*FEE_DEPLOY_TOKEN_WALLET + 1 ton);
     }
 
     function turnOnPubkeyFromProfile(address pubaddr, string namedao, uint256 pubkey) public view senderIs(_versionController) accept {
@@ -170,14 +170,14 @@ contract SystemContract is Modifiers {
 
     function fromInitUpgrade3(string name, string namedao, string nameCommit, address commit, string ver, string branch, address newcommit) public view {
         address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao);
-        require(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, name) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, name, _code[m_WalletCode]) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         VersionController(_versionController).fromInitUpgrade4{value : 0.3 ton, flag: 1}(name, namedao, nameCommit, commit, ver, branch, newcommit, version);
     }
 
     function fromInitUpgrade5(string name, string namedao, string nameCommit, address commit, string branch, address newcommit) public view senderIs(_versionController) accept {
         address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao);
-        Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, name)).fromInitUpgrade6{value : 0.3 ton, flag: 1}(nameCommit, commit, branch, newcommit);
+        Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, name, _code[m_WalletCode])).fromInitUpgrade6{value : 0.3 ton, flag: 1}(nameCommit, commit, branch, newcommit);
     }
 
     function upgradeDao1(string namedao, string newversion) public view {
@@ -189,14 +189,14 @@ contract SystemContract is Modifiers {
 
     function checkUpdateRepo1(string name, string namedao, AddrVersion prev, address answer) public view {
         address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao);
-        require(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, name) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        require(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, name, _code[m_WalletCode]) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         VersionController(_versionController).checkUpdateRepo2{value : 0.15 ton, flag: 1}(name, namedao, version, prev, answer);
     }
 
     function checkUpdateRepo3(string name, string namedao, AddrVersion prev, address answer) public view senderIs(_versionController) accept {
         address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, name);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, name, _code[m_WalletCode]);
         Repository(repo).checkUpdateRepo4{value : 0.15 ton, flag: 1}(prev, answer);
     }
 
@@ -483,7 +483,7 @@ contract SystemContract is Modifiers {
     //Getters
     function getTopicCode(address dao) external view returns(TvmCell) {
         return GoshLib.buildTopicCode(
-            _code[m_TopicCode], dao, version
+            _code[m_TopicCode], dao, version, _code[m_WalletCode]
         );
     }
 
@@ -494,28 +494,28 @@ contract SystemContract is Modifiers {
 
     function getCommentCode(address dao, address object, optional(string) commit, optional(string) nameoffile) external view returns(TvmCell) {
         return GoshLib.buildCommentCode(
-            _code[m_TopicCode], dao, object, commit, nameoffile, version
+            _code[m_TopicCode], dao, object, commit, nameoffile, version, _code[m_WalletCode]
         );
     }
 
     function getTopicAddr(string name, string content, address object, address dao) external view returns(address) {
-        return GoshLib.calculateTopicAddress(_code[m_TopicCode], dao, name, content, object);
+        return GoshLib.calculateTopicAddress(_code[m_TopicCode], dao, name, content, object, _code[m_WalletCode]);
     }
 
     function getCommentAddr(string name, string content, address object, address dao, optional(string) metadata, optional(string) commit, optional(string) nameoffile) external view returns(address) {
-        return GoshLib.calculateCommentAddress(_code[m_TopicCode], dao, name, content, object, metadata, commit, nameoffile);
+        return GoshLib.calculateCommentAddress(_code[m_TopicCode], dao, name, content, object, metadata, commit, nameoffile, _code[m_WalletCode]);
     }
 
     function getTaskAddr(string nametask, string dao, string repoName) external view returns(address) {
         address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), dao);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, repoName, _code[m_WalletCode]);
         address taskaddr = GoshLib.calculateTaskAddress(_code[m_TaskCode], addr, repo, nametask);
         return taskaddr;
     }
 
     function getBigTaskAddr(string nametask, string dao, string repoName) external view returns(address) {
         address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), dao);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, repoName, _code[m_WalletCode]);
         address taskaddr = GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], addr, repo, nametask);
         return taskaddr;
     }
@@ -531,7 +531,7 @@ contract SystemContract is Modifiers {
         string nametag
     ) private view returns(address) {
         address addr = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), daoName);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, repoName);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), addr, repoName, _code[m_WalletCode]);
         return GoshLib.calculateTagAddress(_code[m_TagCode], repo, nametag);
     }
 
@@ -555,12 +555,12 @@ contract SystemContract is Modifiers {
         string commit,
         string label) external view returns(address) {
         address dao = GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), daoName);
-        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), dao, repoName);
-        return GoshLib.calculateContentAddress(_code[m_contentSignature], address(this), dao, repo, commit, label);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), dao, repoName, _code[m_WalletCode]);
+        return GoshLib.calculateContentAddress(_code[m_contentSignature], address(this), dao, repo, commit, label, _code[m_WalletCode]);
     }
 
     function getAddrRepository(string name, string dao) external view returns(address) {
-        return GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), dao), name);
+        return GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), dao), name, _code[m_WalletCode]);
     }
 
     function getAddrDao(string name) external view returns(address) {
@@ -573,7 +573,7 @@ contract SystemContract is Modifiers {
 
     function getRepoDaoCode(address dao) external view returns(TvmCell) {
         return GoshLib.buildRepositoryCode(
-            _code[m_RepositoryCode], address(this), dao, version
+            _code[m_RepositoryCode], address(this), dao, version, _code[m_WalletCode]
         );
     }
 
@@ -621,8 +621,8 @@ contract SystemContract is Modifiers {
         return GoshLib.buildTaskTagRepoCode(_code[m_RepoTagCode], tag, dao, repo, _versionController);
     }
 
-    function getDaoWalletCode(address pubaddr) external view returns(TvmCell) {
-        return GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version);
+    function getDaoWalletCode(address pubaddr, address goshdao) external view returns(TvmCell) {
+        return GoshLib.buildWalletCode(_code[m_WalletCode], pubaddr, version, goshdao);
     }
 
     function getSMVProposalCode() external view returns(TvmCell) {

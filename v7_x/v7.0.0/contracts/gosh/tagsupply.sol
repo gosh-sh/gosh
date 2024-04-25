@@ -16,15 +16,19 @@ contract TagSupply is Modifiers {
     string constant version = "7.0.0";
     
     uint256 static _namehash;
-    address static _goshdao;
+    address _goshdao;
     uint128 _supply;
     uint128 _multiples;
 
     constructor(
         uint128 multiples
     ) onlyOwner {
+        TvmCell data = tvm.codeSalt(tvm.code()).get();
+        (address goshdao, uint256 hash) = abi.decode(data, (address, uint256));
+        hash;
+        _goshdao = goshdao;
+        require(msg.sender == _goshdao, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        require(_goshdao == msg.sender, ERR_SENDER_NO_ALLOWED);
         _multiples = multiples;
     }
 

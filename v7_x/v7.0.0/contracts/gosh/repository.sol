@@ -68,6 +68,10 @@ contract Repository is Modifiers{
         uint128 index,
         optional(AddrVersion) previousversion
         ) {
+        TvmCell data = tvm.codeSalt(tvm.code()).get();
+        (uint256 codehash, uint256 hash) = abi.decode(data, (uint256, uint256));
+        hash;
+        require(codehash == tvm.hash(WalletCode), ERR_SENDER_NO_ALLOWED);
         require(_name != "", ERR_NO_DATA);
         tvm.accept();
         _description = desc;
@@ -448,7 +452,7 @@ contract Repository is Modifiers{
     //Getters
     function getContentAddress(string commit, string label) external view returns(address) {
         address repo = address(this);
-        TvmCell deployCode = GoshLib.buildSignatureCode(_code[m_contentSignature], repo, version);
+        TvmCell deployCode = GoshLib.buildSignatureCode(_code[m_contentSignature], repo, version, _code[m_WalletCode]);
         TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: ContentSignature, varInit: {_commit : commit, _label : label, _systemcontract : _systemcontract, _goshdao : _goshdao}});
        return address.makeAddrStd(0, tvm.hash(s1));
     }
@@ -545,7 +549,7 @@ contract Repository is Modifiers{
     }
       
     function getTaskCode() external view returns(TvmCell) {
-        return GoshLib.buildTaskCode(_code[m_TaskCode], address(this), version);
+        return GoshLib.buildTaskCode(_code[m_TaskCode], address(this), version, _goshdao);
     }
 
     function getTokenRootCode() external view returns(TvmCell) {

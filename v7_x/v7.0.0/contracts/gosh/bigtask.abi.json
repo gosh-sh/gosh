@@ -303,8 +303,7 @@
 		}
 	],
 	"data": [
-		{"key":1,"name":"_nametask","type":"string"},
-		{"key":2,"name":"_goshdao","type":"address"}
+		{"key":1,"name":"_nametask","type":"string"}
 	],
 	"events": [
 	],

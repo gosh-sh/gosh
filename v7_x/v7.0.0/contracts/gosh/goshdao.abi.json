@@ -1620,8 +1620,7 @@
 		}
 	],
 	"data": [
-		{"key":1,"name":"nonce","type":"uint256"},
-		{"key":2,"name":"_systemcontract","type":"address"}
+		{"key":1,"name":"nonce","type":"uint256"}
 	],
 	"events": [
 	],
