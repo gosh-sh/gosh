@@ -74,7 +74,7 @@ contract Task is Modifiers{
         tvm.accept();
         if (defaultData.hasValue()) {
             optional(ConfigCommitBase) workers;
-            (_repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], _grant, _balance, _needbalance, _hashtag, _bigtask, workers) = abi.decode(defaultData.get(),(string, address, TvmCell, TvmCell, TvmCell, TvmCell, ConfigGrant, uint128, uint128, string[], optional(string), optional(ConfigCommitBase)));
+            (_repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], _grant, _balance, _needbalance, _hashtag, _bigtask, workers, _revert) = abi.decode(defaultData.get(),(string, address, TvmCell, TvmCell, TvmCell, TvmCell, ConfigGrant, uint128, uint128, string[], optional(string), optional(ConfigCommitBase), bool));
             _repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, _repoName, _code[m_WalletCode]);
             if (workers.hasValue()) {
 //                require((_bigtask.hasValue() == true), ERR_WRONG_DATA);
@@ -106,16 +106,27 @@ contract Task is Modifiers{
     }
 
     function sendData(address toSend) public senderIs(_goshdao) accept {
-        TvmCell data = abi.encode (_nametask, _repoName, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance, _needbalance, _bigtask);
+        TvmCell data = abi.encode (_nametask, _repoName, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance, _needbalance, _bigtask, _revert);
         Task(toSend).getUpgradeDataVersion{value: 0.1 ton, flag: 1}(data, version);
         GoshDao(_goshdao).destroyTaskTag{value: 0.21 ton, flag: 1}(_nametask, _repo, _hashtag);
         selfdestruct(_systemcontract);
     }
 
     function getUpgradeDataVersion(TvmCell data, string ver) public senderIs(_previousVersionAddr) accept {
-            if ((ver == "5.0.0") || (ver == "5.1.0") || (ver == "6.0.0") || (ver == "6.1.0") || (ver == "6.2.0") || (ver == "7.0.0")) {
+            if ((ver == "5.0.0") || (ver == "5.1.0") || (ver == "6.0.0") || (ver == "6.1.0") || (ver == "6.2.0")) {
                 string name;
                 (name, _repoName, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance, _needbalance, _bigtask) = abi.decode(data, (string, string, bool, ConfigCommitBase[], ConfigGrant, uint128, uint128, uint128, uint128, uint128, mapping(address => uint128), mapping(address => uint128), mapping(address => uint128), uint128, uint128, uint128, uint128, uint128, uint128, bool, bool, bool, uint128, uint128, uint128, uint128, uint128, optional(string)));
+                _repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, _repoName, _code[m_WalletCode]);
+                address zero;
+                if (_ready == true) {
+                    this.checkdaoMember{value:0.1 ton, flag: 1}(_candidates[_indexFinal].daoMembers, zero);
+                }
+                else { _waitForUpdate = false; }
+                require(name == _nametask, ERR_WRONG_DATA);
+            }
+            if (ver == "7.0.0") {
+                string name;
+                (name, _repoName, _ready, _candidates, _grant, _indexFinal, _locktime, _fullAssign, _fullReview, _fullManager, _assigners, _reviewers, _managers, _assignfull, _reviewfull, _managerfull, _assigncomplete, _reviewcomplete, _managercomplete, _allassign, _allreview, _allmanager, _lastassign, _lastreview, _lastmanager, _balance, _needbalance, _bigtask, _revert) = abi.decode(data, (string, string, bool, ConfigCommitBase[], ConfigGrant, uint128, uint128, uint128, uint128, uint128, mapping(address => uint128), mapping(address => uint128), mapping(address => uint128), uint128, uint128, uint128, uint128, uint128, uint128, bool, bool, bool, uint128, uint128, uint128, uint128, uint128, optional(string), bool));
                 _repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, _repoName, _code[m_WalletCode]);
                 address zero;
                 if (_ready == true) {
@@ -376,7 +387,6 @@ contract Task is Modifiers{
 
     function destroyBig() public {
         require(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get()) == msg.sender, ERR_SENDER_NO_ALLOWED);
-        require(_ready == false, ERR_TASK_COMPLETED);
         tvm.accept();
         if (_assignfull + _reviewfull + _managerfull > 0) {
             BigTask(GoshLib.calculateBigTaskAddress(_code[m_BigTaskCode], _goshdao, _repo, _bigtask.get())).destroySubTaskFinal{value: 0.2 ton, flag: 1}(_nametask, true);

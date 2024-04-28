@@ -249,6 +249,7 @@
 				{"name":"tag","type":"string[]"},
 				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
 				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"},
+				{"name":"isrevert","type":"bool"},
 				{"name":"comment","type":"string"}
 			]
 		},
@@ -504,7 +505,8 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"taskname","type":"string"},
-				{"name":"repoName","type":"string"}
+				{"name":"repoName","type":"string"},
+				{"name":"isrevert","type":"bool"}
 			]
 		},
 		{
@@ -515,7 +517,8 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"taskname","type":"string"},
-				{"name":"repoName","type":"string"}
+				{"name":"repoName","type":"string"},
+				{"name":"isrevert","type":"bool"}
 			]
 		},
 		{
@@ -1134,6 +1137,7 @@
 				{"name":"tag","type":"string[]"},
 				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
 				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"},
+				{"name":"isrevert","type":"bool"},
 				{"name":"comment","type":"string"}
 			]
 		},

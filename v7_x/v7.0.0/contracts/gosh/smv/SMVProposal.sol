@@ -400,9 +400,9 @@ function getGoshDestroyBigTaskProposalParams () external view
 }
 
 function getGoshDeployTaskProposalParams () external view
-         returns( uint256  proposalKind, string reponame, string taskname, string[] tag, ConfigGrant grant, optional(ConfigCommitBase) workers, string comment)
+         returns( uint256  proposalKind, string reponame, string taskname, string[] tag, ConfigGrant grant, optional(ConfigCommitBase) workers, bool isrevert, string comment)
 {
-    (proposalKind, reponame, taskname, tag, grant, workers, comment,) = abi.decode(propData, (uint256, string, string, string[], ConfigGrant, optional(ConfigCommitBase), string, uint32));
+    (proposalKind, reponame, taskname, tag, grant, workers, isrevert, comment,) = abi.decode(propData, (uint256, string, string, string[], ConfigGrant, optional(ConfigCommitBase), bool, string, uint32));
 }
 
 function getGoshDeployRepoProposalParams () external view
@@ -540,15 +540,15 @@ function getBigTaskUpgradeProposalParamsData (TvmCell Data) external pure
 }
 
 function getBigTaskProposalParams () external view
-         returns(uint proposalKind, string taskname, string repoName)
+         returns(uint proposalKind, string taskname, string repoName, bool isrevert)
 {
-        (proposalKind, taskname, repoName,) = abi.decode(propData,(uint256, string, string, uint32));
+        (proposalKind, taskname, repoName,isrevert,) = abi.decode(propData,(uint256, string, string, bool, uint32));
 }
 
 function getBigTaskParamsData (TvmCell Data) external pure
-         returns(uint proposalKind, string taskname, string repoName)
+         returns(uint proposalKind, string taskname, string repoName, bool isrevert)
 {
-        (proposalKind, taskname, repoName,) = abi.decode(Data,(uint256, string, string, uint32));
+        (proposalKind, taskname, repoName,isrevert,) = abi.decode(Data,(uint256, string, string, bool, uint32));
 }
 
 function getCreateDaoMembersTagParams () external view
@@ -863,9 +863,9 @@ function getSendReviewProposalParamsData (TvmCell Data) external pure
 }
 
 function getGoshDeployTaskProposalParamsData (TvmCell Data) external pure
-         returns( uint256  proposalKind, string reponame, string taskname, string[] tag, ConfigGrant grant, optional(ConfigCommitBase) workers, string comment)
+         returns( uint256  proposalKind, string reponame, string taskname, string[] tag, ConfigGrant grant, optional(ConfigCommitBase) workers, bool isrevert, string comment)
 {
-    (proposalKind, reponame, taskname, tag, grant, workers, comment,) = abi.decode(Data, (uint256, string, string, string[], ConfigGrant, optional(ConfigCommitBase), string, uint32));
+    (proposalKind, reponame, taskname, tag, grant, workers, isrevert, comment,) = abi.decode(Data, (uint256, string, string, string[], ConfigGrant, optional(ConfigCommitBase), bool, string, uint32));
 }
 
 function getUpgradeTaskProposalParamsData (TvmCell Data) external pure

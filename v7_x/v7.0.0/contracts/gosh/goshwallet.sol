@@ -1311,7 +1311,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     ) public senderIs(getBigTaskAddr(namebigtask, GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode]))) accept {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        GoshDao(_goshdao).deployTask{value: 1 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, value, namebigtask, workers);
+        GoshDao(_goshdao).deployTask{value: 1 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, value, namebigtask, workers, false);
         getMoney();
     }
 
@@ -1346,11 +1346,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string nametask,
         string[] hashtag,
         ConfigGrant grant,
-        optional(ConfigCommitBase) workers
+        optional(ConfigCommitBase) workers,
+        bool isrevert
     ) private {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        GoshDao(_goshdao).deployTask{value: 0.3 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, 0, null, workers);
+        GoshDao(_goshdao).deployTask{value: 0.3 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, 0, null, workers, isrevert);
         getMoney();
     }
 
@@ -1360,11 +1361,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string[] hashtag,
         ConfigGrant grant,
         ConfigCommit commit,
-        uint128 freebalance
+        uint128 freebalance,
+        bool isRevert
     ) private {
         require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
         require(_tombstone == false, ERR_TOMBSTONE);
-        GoshDao(_goshdao).deployBigTask{value: 0.3 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, commit, freebalance);
+        GoshDao(_goshdao).deployBigTask{value: 0.3 ton, flag: 1}(_pubaddr, _index, repoName, nametask, hashtag, grant, commit, freebalance,isRevert);
         getMoney();
     }
     
@@ -2357,11 +2359,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         ConfigGrant grant,
         ConfigCommit assignersdata,
         uint128 freebalance,
+        bool isrevert,
         string comment,
         optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = BIGTASK_DEPLOY_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
-        return abi.encode(proposalKind, repoName, taskName, tag, grant, assignersdata, freebalance, comment, time.get());
+        return abi.encode(proposalKind, repoName, taskName, tag, grant, assignersdata, freebalance, isrevert, comment, time.get());
     }
     
     function getCellTaskDeploy(
@@ -2370,11 +2373,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         string[] tag,
         ConfigGrant grant,
         optional(ConfigCommitBase) workers,
+        bool isrevert,
         string comment,
         optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = TASK_DEPLOY_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
-        return abi.encode(proposalKind, repoName, taskName, tag, grant, workers, comment, time.get());
+        return abi.encode(proposalKind, repoName, taskName, tag, grant, workers, isrevert, comment, time.get());
     }
     
     function getCellDeleteProtectedBranch(string repoName,
@@ -2463,8 +2467,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 _destroyTask(taskName, repoName);
             }  else
             if (kind == TASK_DEPLOY_PROPOSAL_KIND) {
-                (, string taskName, string repoName, string[] tag, ConfigGrant grant, optional(ConfigCommitBase) workers,,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, optional(ConfigCommitBase), string, uint32));
-                _deployTask(taskName, repoName, tag, grant, workers);
+                (, string taskName, string repoName, string[] tag, ConfigGrant grant, optional(ConfigCommitBase) workers, bool isrevert,,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, optional(ConfigCommitBase), bool, string, uint32));
+                _deployTask(taskName, repoName, tag, grant, workers, isrevert);
             }  else
 
             if (kind == DEPLOY_REPO_PROPOSAL_KIND) {
@@ -2587,8 +2591,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
                 _confirmTask(taskName, repoName);
             } else 
             if (kind == BIGTASK_DEPLOY_PROPOSAL_KIND) {
-                (, string repoName, string taskName, string[] tag, ConfigGrant grant, ConfigCommit commit, uint128 freebalance, ,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, ConfigCommit, uint128, string, uint32));
-                _deployBigTask(repoName, taskName, tag, grant, commit, freebalance);
+                (, string repoName, string taskName, string[] tag, ConfigGrant grant, ConfigCommit commit, uint128 freebalance, bool isRevert, ,) = abi.decode(propData,(uint256, string, string, string[], ConfigGrant, ConfigCommit, uint128, bool, string, uint32));
+                _deployBigTask(repoName, taskName, tag, grant, commit, freebalance, isRevert);
             } else
             if (kind == BIGTASK_DESTROY_PROPOSAL_KIND) {
                 (, string taskName, string repoName,) = abi.decode(propData,(uint256, string, string, uint32));
@@ -2887,10 +2891,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return abi.encode(nametask, repoName, ready, _systemcontract, _goshdao, candidates, grant, hashtag, indexFinal, locktime, fullAssign, fullReview, fullManager, assigners, reviewers, managers, assignfull, reviewfull, managerfull, assigncomplete, reviewcomplete, managercomplete, allassign, allreview, allmanager, lastassign, lastreview, lastmanager, balance);
     }
     
-    function getCellForRedeployTask(string reponame, string nametask,  string[] hashtag, TvmCell data, optional(uint32) time) external pure returns(TvmCell) {
+    function getCellForRedeployTask(string reponame, string nametask,  string[] hashtag, TvmCell data, optional(uint32) time, bool isrevert) external pure returns(TvmCell) {
         uint256 proposalKind = TASK_REDEPLOY_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
-        return abi.encode(proposalKind, reponame, nametask, hashtag, data, time.get());
+        return abi.encode(proposalKind, reponame, nametask, hashtag, data, time.get(), isrevert);
     }
     
     function getCellForRedeployedTask(optional(uint32) time) external pure returns(TvmCell) {

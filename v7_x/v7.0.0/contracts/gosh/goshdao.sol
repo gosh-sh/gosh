@@ -1311,12 +1311,13 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
         ConfigGrant grant,
         uint128 value,
         optional(string) bigtask,
-        optional(ConfigCommitBase) workers
+        optional(ConfigCommitBase) workers,
+        bool isRevert
     ) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index)) accept saveMsg {
         uint128 balance = 0; 
         ConfigCommit commit;
         uint128 freebalance;
-        this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, msg.sender, 0, value, bigtask, workers);
+        this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, msg.sender, 0, value, bigtask, workers, isRevert);
      }   
 
      function deployBigTask(
@@ -1327,10 +1328,11 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
         string[] hashtag,
         ConfigGrant grant,
         ConfigCommit commit,
-        uint128 freebalance
+        uint128 freebalance,
+        bool isRevert
     ) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index)) accept saveMsg {
         uint128 balance = 0; 
-        this.calculateBalanceSubtask{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, msg.sender, 1, 0, null, null);
+        this.calculateBalanceSubtask{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, msg.sender, 1, 0, null, null, isRevert);
      }  
 
      function calculateBalanceSubtask(string repoName,
@@ -1345,18 +1347,19 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
         uint8 num,
         uint128 value,
         optional(string) bigtask,
-        optional(ConfigCommitBase) workers) public pure senderIs(address(this)) accept {
+        optional(ConfigCommitBase) workers,
+        bool isRevert) public pure senderIs(address(this)) accept {
         uint128 check = 0;
         for (uint128 i = index; i < grant.subtask.length; i++){
             check += 1;
-            if (check == 3) { this.calculateBalanceSubtask{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, i, sender, num, value, bigtask, workers); return; }
+            if (check == 3) { this.calculateBalanceSubtask{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, i, sender, num, value, bigtask, workers, isRevert); return; }
             balance += grant.subtask[i].grant;
             if (i != 0) { require(grant.subtask[i].lock > grant.subtask[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.subtask.length) { require(grant.subtask[i].grant != 0, ERR_ZERO_GRANT); }
         }       
         if (balance != freebalance) { return; }
         balance = 0;
-        this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, sender, num, value, bigtask, workers);
+        this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, sender, num, value, bigtask, workers, isRevert);
      } 
      
      function calculateBalanceAssign(string repoName,
@@ -1371,16 +1374,17 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
         uint8 num,
         uint128 value,
         optional(string) bigtask,
-        optional(ConfigCommitBase) workers) public pure senderIs(address(this)) accept {
+        optional(ConfigCommitBase) workers,
+        bool isRevert) public pure senderIs(address(this)) accept {
         uint128 check = 0;
         for (uint128 i = index; i < grant.assign.length; i++){
             check += 1;
-            if (check == 3) { this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, i, sender, num, value, bigtask, workers); return; }
+            if (check == 3) { this.calculateBalanceAssign{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, i, sender, num, value, bigtask, workers, isRevert); return; }
             balance += grant.assign[i].grant;
             if (i != 0) { require(grant.assign[i].lock > grant.assign[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.assign.length) { require(grant.assign[i].grant != 0, ERR_ZERO_GRANT); }
         }       
-        this.calculateBalanceReview{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, sender, num, value, bigtask, workers);
+        this.calculateBalanceReview{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, sender, num, value, bigtask, workers, isRevert);
      }
      
      function calculateBalanceReview(string repoName,
@@ -1395,16 +1399,17 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
         uint8 num,
         uint128 value,
         optional(string) bigtask,
-        optional(ConfigCommitBase) workers) public pure senderIs(address(this)) accept {
+        optional(ConfigCommitBase) workers,
+        bool isRevert) public pure senderIs(address(this)) accept {
         uint128 check = 0;
         for (uint128 i = index; i < grant.review.length; i++){
             check += 1;
-            if (check == 3) { this.calculateBalanceReview{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, i, sender, num, value, bigtask, workers); return; }
+            if (check == 3) { this.calculateBalanceReview{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, i, sender, num, value, bigtask, workers, isRevert); return; }
             balance += grant.review[i].grant;
             if (i != 0) { require(grant.review[i].lock > grant.review[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.review.length) { require(grant.review[i].grant != 0, ERR_ZERO_GRANT); }
         }       
-        this.calculateBalanceManager{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, sender, num, value, bigtask, workers);
+        this.calculateBalanceManager{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, 0, sender, num, value, bigtask, workers,isRevert);
       }
       
       function calculateBalanceManager(string repoName,
@@ -1419,11 +1424,12 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
         uint8 num,      
         uint128 value,
         optional(string) bigtask,
-        optional(ConfigCommitBase) workers) public senderIs(address(this)) accept {
+        optional(ConfigCommitBase) workers,
+        bool isRevert) public senderIs(address(this)) accept {
         uint128 check = 0;
         for (uint128 i = index; i < grant.manager.length; i++){
             check += 1;
-            if (check == 3) { this.calculateBalanceManager{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, i, sender, num, value, bigtask, workers); return; }
+            if (check == 3) { this.calculateBalanceManager{value:0.1 ton, flag: 1}(repoName, nametask, grant, balance, commit, freebalance, hashtag, i, sender, num, value, bigtask, workers, isRevert); return; }
             balance += grant.manager[i].grant;
             if (i != 0) { require(grant.manager[i].lock > grant.manager[i - 1].lock, ERR_WRONG_LOCK); }
             if (i == grant.manager.length) { require(grant.manager[i].grant != 0, ERR_ZERO_GRANT); }
@@ -1444,7 +1450,7 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
         } else {
             TvmCell deployCode = GoshLib.buildTaskCode(_code[m_TaskCode], repo, version, address(this));
             TvmCell s1 = tvm.buildStateInit({code: deployCode, contr: Task, varInit: {_nametask: nametask}});            
-            optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], grant, balance, balance, hashtag, bigtask, workers);
+            optional(TvmCell) data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], grant, balance, balance, hashtag, bigtask, workers, isRevert);
             if (bigtask.hasValue()) { data = abi.encode(repoName, _systemcontract, _code[m_WalletCode], _code[m_DaoCode], _code[m_RepositoryCode], _code[m_BigTaskCode], grant, uint128(0), balance, hashtag, bigtask, workers); }
             optional(TvmCell) data1;
             new Task{

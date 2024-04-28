@@ -320,6 +320,7 @@
 		{"name":"_systemcontract","type":"address"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_code","type":"map(uint8,cell)"},
+		{"name":"_isRevert","type":"bool"},
 		{"name":"_assigners","type":"map(address,uint128)"},
 		{"name":"_reviewers","type":"map(address,uint128)"},
 		{"name":"_managers","type":"map(address,uint128)"},
