@@ -1346,6 +1346,17 @@
 			]
 		},
 		{
+			"name": "getChangeFreeAccessProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"result","type":"bool"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
 			"name": "getDestroyRepositoryProposalParamsData",
 			"inputs": [
 				{"name":"Data","type":"cell"}

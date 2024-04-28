@@ -344,6 +344,17 @@
 			]
 		},
 		{
+			"name": "getCellSetFreeAccess",
+			"inputs": [
+				{"name":"res","type":"bool"},
+				{"name":"comment","type":"string"},
+				{"name":"time","type":"optional(uint32)"}
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "getCellSetAllowDiscussion",
 			"inputs": [
 				{"name":"res","type":"bool"},
@@ -497,6 +508,13 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "FreeDeployWalletDao",
+			"inputs": [
+			],
+			"outputs": [
 			]
 		},
 		{

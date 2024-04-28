@@ -452,6 +452,13 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, res, comment, time.get());
     }
+
+    function getCellSetFreeAccess(bool res,
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
+        uint256 proposalKind = CHANGE_FREE_ACCESS_PROPOSAL_KIND;
+        if (time.hasValue() == false) { time = block.timestamp; }
+        return abi.encode(proposalKind, res, comment, time.get());
+    }
     
     function getCellSetAllowDiscussion(bool res,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
@@ -615,6 +622,13 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         uint256 proposalKind = ADD_REGULAR_TOKEN_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, pubaddr, token, comment, time.get());       
+    }
+
+    function FreeDeployWalletDao() public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        require(address(this).balance > 200 ton, ERR_TOO_LOW_BALANCE);
+        tvm.accept();
+        GoshDao(_goshdao).isFree{value: 0.13 ton, flag: 1}(_pubaddr);
     }
 
     function startProposalForDeployWalletDao(
@@ -2517,6 +2531,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == CHANGE_HIDE_VOTING_PROPOSAL_KIND) {
                 (, bool result, ,) = abi.decode(propData,(uint256, bool, string, uint32));               
                GoshDao(_goshdao).changeHideVotingResult{value: 0.133 ton, flag: 1}(_pubaddr, _index, result);
+            } else
+            if (kind == CHANGE_FREE_ACCESS_PROPOSAL_KIND) {
+                (, bool result, ,) = abi.decode(propData,(uint256, bool, string, uint32));               
+               GoshDao(_goshdao).changeFreeAccess{value: 0.133 ton, flag: 1}(_pubaddr, _index, result);
             } else
             if (kind == CHANGE_ALLOW_DISCUSSION_PROPOSAL_KIND) {
                (, bool result, ,) = abi.decode(propData,(uint256, bool, string, uint32));

@@ -72,6 +72,7 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
     bool public _allowMint = true;
     bool public _hide_voting_results = false;
     bool public _allow_discussion_on_proposals = true;
+    bool public _isFreeAccess = false;
     
     uint128 timeMoney = 0;
     optional(MemberToken[]) saveaddr;
@@ -217,7 +218,7 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
     function getPreviousInfo(string name) public internalMsg view {
         require(_nameDao == name, ERR_WRONG_DAO);
         tvm.accept();
-        TvmCell a = abi.encode(_allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _wallets, _hashtag, _my_wallets, _daoMembers, _reserve, _allbalance, _totalsupply, _versions, _paidMembership, _daoMembersTag, _daoTagData, _approved_proposal_with_tags);
+        TvmCell a = abi.encode(_allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, _wallets, _hashtag, _my_wallets, _daoMembers, _reserve, _allbalance, _totalsupply, _versions, _paidMembership, _daoMembersTag, _daoTagData, _approved_proposal_with_tags, _isFreeAccess);
         GoshDao(msg.sender).getPreviousInfoVersion{value: 0.1 ton, flag: 1}(version, a);
     }
     
@@ -259,10 +260,18 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
             uint256 zero;
             this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
         } 
-        if ((ver == "6.2.0") || (ver == "7.0.0")) {
+        if (ver == "6.2.0") {
             mapping(uint256 => MemberToken) wallets;
             mapping(uint256 => string) hashtag;
             ( _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, wallets, hashtag, _my_wallets, _daoMembers, _reserve, , _totalsupply , _versions, _paidMembership, _daoMembersTag, _daoTagData, _approved_proposal_with_tags) = abi.decode(a, (bool, bool, bool, bool, mapping(uint256 => MemberToken), mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string), mapping(uint8 => PaidMember), mapping(uint256 => mapping(uint256 => bool)), mapping(uint256 => Multiples), mapping(uint256 => bool)));
+            _versions[tvm.hash(version)] = version;
+            uint256 zero;
+            this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
+        } 
+        if (ver == "7.0.0") {
+            mapping(uint256 => MemberToken) wallets;
+            mapping(uint256 => string) hashtag;
+            ( _allowMint, _hide_voting_results, _allow_discussion_on_proposals, _abilityInvite, wallets, hashtag, _my_wallets, _daoMembers, _reserve, , _totalsupply , _versions, _paidMembership, _daoMembersTag, _daoTagData, _approved_proposal_with_tags, _isFreeAccess) = abi.decode(a, (bool, bool, bool, bool, mapping(uint256 => MemberToken), mapping(uint256 => string), mapping(uint256 => address), mapping(uint256 => string), uint128, uint128, uint128, mapping(uint256 => string), mapping(uint8 => PaidMember), mapping(uint256 => mapping(uint256 => bool)), mapping(uint256 => Multiples), mapping(uint256 => bool), bool));
             _versions[tvm.hash(version)] = version;
             uint256 zero;
             this.returnWalletsVersion{value: 0.1 ton, flag: 1}(ver, zero, wallets, hashtag);
@@ -421,6 +430,11 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
     
     function changeHideVotingResult (address pub, uint128 index, bool res) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pub, index))  accept {
         _hide_voting_results = res;
+        getMoney();
+    }
+
+    function changeFreeAccess (address pub, uint128 index, bool res) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pub, index))  accept {
+        _isFreeAccess = res;
         getMoney();
     }
     
@@ -1225,6 +1239,11 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
         else { deployWalletIn(pubmem[index]); } 
         index += 1;
         this.deployWallets{value: 0.1 ton, flag: 1}(pubmem, dao, index);
+    }
+
+    function isFree(address pubaddr) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, 0)) accept {
+        MemberToken data = MemberToken(pubaddr, 0, 0);
+        deployWalletIn(data);
     }
     
     function deployWalletIn(MemberToken pubaddr) private {

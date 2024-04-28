@@ -986,6 +986,12 @@ function getChangeHideVotingResultProposalParamsData (TvmCell Data) external pur
     (proposalKind, result, comment, ) = abi.decode(Data, (uint256, bool, string, uint32));
 }
 
+function getChangeFreeAccessProposalParamsData (TvmCell Data) external pure
+         returns(uint256  proposalKind,  bool result, string comment)
+{
+    (proposalKind, result, comment, ) = abi.decode(Data, (uint256, bool, string, uint32));
+}
+
 function getDestroyRepositoryProposalParamsData (TvmCell Data) external pure
          returns(uint256  proposalKind,  string repoName, string comment)
 {
