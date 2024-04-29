@@ -7,6 +7,7 @@
 			"name": "constructor",
 			"inputs": [
 				{"name":"SeqNoFinish","type":"uint64"},
+				{"name":"waitStep","type":"uint64"},
 				{"name":"owner","type":"address"},
 				{"name":"vtype","type":"uint8"},
 				{"name":"bls_pubkey","type":"bytes[]"},
@@ -25,6 +26,13 @@
 		},
 		{
 			"name": "slash",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "touch",
 			"inputs": [
 			],
 			"outputs": [
@@ -62,6 +70,7 @@
 		{"name":"_root","type":"address"},
 		{"name":"_SeqNoStart","type":"uint64"},
 		{"name":"_SeqNoFinish","type":"uint64"},
+		{"name":"_waitStep","type":"uint64"},
 		{"name":"_owner","type":"address"},
 		{"name":"_type","type":"uint8"},
 		{"name":"_bls_pubkey","type":"bytes[]"}

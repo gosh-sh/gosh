@@ -25,6 +25,7 @@ contract ValidatorContractRoot is Modifiers {
     uint128 _minStake;
     uint64 _epocheDuration = 1000;
     uint64 _epocheCliff = 1000;
+    uint64 _waitStep = 1000;
     address _giver;
 
     uint128 _numberOfActiveValidators = 0;
@@ -50,11 +51,12 @@ contract ValidatorContractRoot is Modifiers {
         Giver(_giver).askMoney{value : 0.2 ton, flag: 1}(1000000 ton);
     }
 
-    function setConfig(uint128 minStake, uint64 epocheDuration, uint64 epocheCliff) public onlyOwnerPubkey(tvm.pubkey()) accept {
+    function setConfig(uint128 minStake, uint64 epocheDuration, uint64 epocheCliff, uint64 waitStep) public onlyOwnerPubkey(tvm.pubkey()) accept {
         getMoney();
         _minStake = minStake;
         _epocheDuration = epocheDuration;
         _epocheCliff = epocheCliff;
+        _waitStep = waitStep;
     }
 
     function deployAchiNakiValidatorNodeWallet(uint256 pubkey) public view accept {
@@ -74,7 +76,7 @@ contract ValidatorContractRoot is Modifiers {
             value: FEE_DEPLOY_VALIDATOR_EPOCHE_WALLET, 
             wid: 0, 
             flag: 1
-        } (SeqNoFinish, ValidatorLib.calculateValidatorWalletAddress(_code[m_AchiNakiValidatorNodeWalletCode] ,address(this), pubkey), TYPE_VALIDATOR, bls_pubkey, _code[m_AchiNakiValidatorNodeWalletCode]);
+        } (SeqNoFinish, _waitStep, ValidatorLib.calculateValidatorWalletAddress(_code[m_AchiNakiValidatorNodeWalletCode] ,address(this), pubkey), TYPE_VALIDATOR, bls_pubkey, _code[m_AchiNakiValidatorNodeWalletCode]);
         address wallet = ValidatorLib.calculateValidatorWalletAddress(_code[m_AchiNakiValidatorNodeWalletCode] ,address(this), pubkey);
         AchiNakiValidatorNodeWallet(wallet).setLockStake{value: 0.1 ton, currencies: data_cur, flag: 1}(SeqNoStart, SeqNoFinish, stake);
     }
@@ -84,11 +86,13 @@ contract ValidatorContractRoot is Modifiers {
         _numberOfActiveValidators += 1;
     }
 
-    function decreaseActiveValidatorNumber(uint256 pubkey, uint64 seqNoStart, uint64 seqNoFinish) public internalMsg senderIs(ValidatorLib.calculateValidatorEpocheAddress(_code[m_ValidatorEpocheCode], address(this), pubkey, seqNoStart)) accept {
+    function decreaseActiveValidatorNumber(uint256 pubkey, uint64 seqNoStart, uint64 seqNoFinish, bool isSlash) public internalMsg senderIs(ValidatorLib.calculateValidatorEpocheAddress(_code[m_ValidatorEpocheCode], address(this), pubkey, seqNoStart)) accept {
         getMoney();
         _numberOfActiveValidators -= 1;
-        address wallet = ValidatorLib.calculateValidatorWalletAddress(_code[m_AchiNakiValidatorNodeWalletCode] ,address(this), pubkey);
-        AchiNakiValidatorNodeWallet(wallet).unlockStake{value: 0.2 ton, flag: 1}(seqNoStart, seqNoFinish);
+        if (isSlash == false) {
+            address wallet = ValidatorLib.calculateValidatorWalletAddress(_code[m_AchiNakiValidatorNodeWalletCode] ,address(this), pubkey);
+            AchiNakiValidatorNodeWallet(wallet).unlockStake{value: 0.2 ton, flag: 1}(seqNoStart, seqNoFinish);
+        }
     }
 
     function receiveValidatorRequestWithStakeFromWallet(uint256 pubkey, bytes[48] bls_pubkey) public view internalMsg minValue(15 ton) senderIs(ValidatorLib.calculateValidatorWalletAddress(_code[m_AchiNakiValidatorNodeWalletCode] ,address(this), pubkey)) accept {

@@ -22,12 +22,14 @@ contract ValidatorEpoche is Modifiers {
     address _root; 
     uint64 static _SeqNoStart;
     uint64 _SeqNoFinish;
+    uint64 _waitStep;
     address static _owner;
     uint8 _type;
     bytes[48] _bls_pubkey;
 
     constructor (
         uint64 SeqNoFinish,
+        uint64 waitStep,
         address owner,
         uint8 vtype,
         bytes[48] bls_pubkey,
@@ -40,6 +42,7 @@ contract ValidatorEpoche is Modifiers {
         require(msg.sender == _root, ERR_SENDER_NO_ALLOWED);
         _SeqNoFinish = SeqNoFinish;
         _owner = owner;
+        _waitStep = waitStep;
         _type = vtype;
         _bls_pubkey = bls_pubkey;
         _code[m_AchiNakiValidatorNodeWalletCode]  = AchiNakiValidatorNodeWalletCode;
@@ -53,13 +56,17 @@ contract ValidatorEpoche is Modifiers {
 
     function slash() public  accept {
         AchiNakiValidatorNodeWallet(_owner).slash{value: 0.1 ton, flag: 1}(_pubkey, _SeqNoStart, _SeqNoFinish);
-        ValidatorContractRoot(_root).decreaseActiveValidatorNumber{value: 0.3 ton, flag: 1}(_pubkey, _SeqNoStart, _SeqNoFinish);   
+        destroy(true);
         selfdestruct(_root);   
     }
 
-    function destroy() private accept {
-        require(block.logicaltime > _SeqNoFinish, ERR_NOT_READY);
-        ValidatorContractRoot(_root).decreaseActiveValidatorNumber{value: 0.3 ton, flag: 1}(_pubkey, _SeqNoStart, _SeqNoFinish);   
+    function touch() public saveMsg {
+        if (_SeqNoFinish + _waitStep < block.seqno) { tvm.accept(); }
+        else { return; }
+        destroy(false);
+    }
+    function destroy(bool isSlash) private accept {
+        ValidatorContractRoot(_root).decreaseActiveValidatorNumber{value: 0.3 ton, flag: 1}(_pubkey, _SeqNoStart, _SeqNoFinish, isSlash);   
         selfdestruct(_root);   
     } 
     

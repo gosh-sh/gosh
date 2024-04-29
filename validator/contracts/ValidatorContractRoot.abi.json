@@ -28,7 +28,8 @@
 			"inputs": [
 				{"name":"minStake","type":"uint128"},
 				{"name":"epocheDuration","type":"uint64"},
-				{"name":"epocheCliff","type":"uint64"}
+				{"name":"epocheCliff","type":"uint64"},
+				{"name":"waitStep","type":"uint64"}
 			],
 			"outputs": [
 			]
@@ -55,7 +56,8 @@
 			"inputs": [
 				{"name":"pubkey","type":"uint256"},
 				{"name":"seqNoStart","type":"uint64"},
-				{"name":"seqNoFinish","type":"uint64"}
+				{"name":"seqNoFinish","type":"uint64"},
+				{"name":"isSlash","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -130,6 +132,7 @@
 		{"name":"_minStake","type":"uint128"},
 		{"name":"_epocheDuration","type":"uint64"},
 		{"name":"_epocheCliff","type":"uint64"},
+		{"name":"_waitStep","type":"uint64"},
 		{"name":"_giver","type":"address"},
 		{"name":"_numberOfActiveValidators","type":"uint128"}
 	]
