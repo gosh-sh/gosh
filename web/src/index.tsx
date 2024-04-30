@@ -1,22 +1,22 @@
+import { BinaryLibrary, TonClient } from '@eversdk/core'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, HashRouter } from 'react-router-dom'
-import reportWebVitals from './reportWebVitals'
-import { TonClient, BinaryLibrary } from '@eversdk/core'
-import { libWeb, libWebSetup } from '@eversdk/lib-web'
-import Dispatcher from './Dispatcher'
 import { RecoilRoot } from 'recoil'
+import { libWeb, libWebSetup } from '../tvmsdk/lib-web/tvmsdk.wasm.js'
+import Dispatcher from './Dispatcher'
 import './assets/scss/style.scss'
+import reportWebVitals from './reportWebVitals'
 
 // Check for docker extension flag
 let ConditionedRouter = BrowserRouter
 if (import.meta.env.REACT_APP_ISDOCKEREXT === 'true') {
   ConditionedRouter = HashRouter
   libWebSetup({
-    binaryURL: `./eversdk.wasm?v=${Math.random().toString(36).slice(2, 8)}`,
+    binaryURL: `./tvmsdk.wasm?v=${Math.random().toString(36).slice(2, 8)}`,
   })
 } else {
   libWebSetup({
-    binaryURL: `/eversdk.wasm?v=8aiwbx`,
+    binaryURL: `/tvmsdk.wasm?v=8aiwbx`,
   })
 }
 
