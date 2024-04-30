@@ -8,6 +8,7 @@ import { DISABLED_VERSIONS } from './constants'
 import { GoshError } from './errors'
 
 export class AppConfig {
+  static devmode: boolean
   static endpoints: string[]
   static goshroot: VersionController
   static goshclient: TonClient
@@ -39,6 +40,7 @@ export class AppConfig {
       throw new GoshError('IPFS url is undefined')
     }
 
+    AppConfig.devmode = import.meta.env.REACT_APP_DEVMODE === 'true'
     AppConfig.endpoints = endpoints
     AppConfig.goshclient = new TonClient({
       network: {
@@ -65,14 +67,18 @@ export class AppConfig {
       'https://auth.gosh.sh',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkaHNrdnN6dGVwYnlpc2Jxc2pqIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzA0MTMwNTEsImV4cCI6MTk4NTk4OTA1MX0._6KcFBYmSUfJqTJsKkWcMoIQBv3tuInic9hvEHuFpJg',
     )
-    AppConfig.maintenance = parseInt(import.meta.env.REACT_APP_MAINTENANCE || '0')
+    AppConfig.maintenance = parseInt(
+      import.meta.env.REACT_APP_MAINTENANCE || '0',
+    )
     AppConfig.elockaddr = import.meta.env.REACT_APP_ELOCKADDR
 
     // TODO: Remove this after git part refactor
     AppConfig._setupReactGosh()
   }
 
-  static getVersions(options: { reverse?: boolean; withDisabled?: boolean } = {}) {
+  static getVersions(
+    options: { reverse?: boolean; withDisabled?: boolean } = {},
+  ) {
     const { reverse, withDisabled } = options
 
     let versions = Object.keys(AppConfig.versions)

@@ -1,6 +1,9 @@
 import { KeyPair } from '@eversdk/core'
 import { useCallback, useEffect } from 'react'
-import { userAtom as _userAtom, userPersistAtom as _userPersistAtom } from 'react-gosh'
+import {
+  userAtom as _userAtom,
+  userPersistAtom as _userPersistAtom,
+} from 'react-gosh'
 import { useNavigate } from 'react-router-dom'
 import {
   snapshot_UNSTABLE,
@@ -14,7 +17,11 @@ import {
 import { AppConfig } from '../../appconfig'
 import { EGoshError, GoshError } from '../../errors'
 import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
-import { userAtom, userPersistAtom, userProfileSelector } from '../../store/user.state'
+import {
+  userAtom,
+  userPersistAtom,
+  userProfileSelector,
+} from '../../store/user.state'
 import { supabase } from '../../supabase'
 import { TUserPersist } from '../../types/user.types'
 import { validatePhrase } from '../../validators'
@@ -50,10 +57,14 @@ export function useUser() {
       throw new GoshError(EGoshError.PHRASE_INVALID, { reason })
     }
 
-    const derived = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
-      phrase,
-    })
-    const indexes = await AppConfig.goshroot.getUserProfileIndexes(`0x${derived.public}`)
+    const derived = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys(
+      {
+        phrase,
+      },
+    )
+    const indexes = await AppConfig.goshroot.getUserProfileIndexes(
+      `0x${derived.public}`,
+    )
     if (!indexes.length) {
       throw new GoshError(EGoshError.PROFILE_NOT_EXIST)
     }
@@ -81,18 +92,28 @@ export function useUser() {
     if (!(await profile.isDeployed())) {
       throw new GoshError(EGoshError.PROFILE_NOT_EXIST)
     }
-    const derived = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
-      phrase,
-    })
+    const derived = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys(
+      {
+        phrase,
+      },
+    )
     if (!(await profile.isOwnerPubkey(`0x${derived.public}`))) {
       throw new GoshError(EGoshError.PROFILE_PUBKEY_INVALID)
     }
     resetUserPersist()
-    setUserPersist((state) => ({ ...state, username, profile: profile.address }))
+    setUserPersist((state) => ({
+      ...state,
+      username,
+      profile: profile.address,
+    }))
 
     // TODO: for react-gosh; REMOVE after refactor
     _resetUserPersist()
-    _setUserPersist((state) => ({ ...state, username, profile: profile.address }))
+    _setUserPersist((state) => ({
+      ...state,
+      username,
+      profile: profile.address,
+    }))
     // /TODO: for react-gosh; REMOVE after refactor
   }
 
@@ -109,16 +130,26 @@ export function useUser() {
       )
     }
 
-    const derived = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys({
-      phrase,
-    })
+    const derived = await AppConfig.goshclient.crypto.mnemonic_derive_sign_keys(
+      {
+        phrase,
+      },
+    )
     await getSystemContract().createUserProfile(username, `0x${derived.public}`)
     resetUserPersist()
-    setUserPersist((state) => ({ ...state, username, profile: profile.address }))
+    setUserPersist((state) => ({
+      ...state,
+      username,
+      profile: profile.address,
+    }))
 
     // TODO: for react-gosh; REMOVE after refactor
     _resetUserPersist()
-    _setUserPersist((state) => ({ ...state, username, profile: profile.address }))
+    _setUserPersist((state) => ({
+      ...state,
+      username,
+      profile: profile.address,
+    }))
     // /TODO: for react-gosh; REMOVE after refactor
 
     return {
@@ -172,7 +203,9 @@ export function useUserSignup(options: { initialize?: boolean } = {}) {
   const { createDao } = useCreateDao()
   const [data, setData] = useRecoilState(userSignupAtom)
   const reset = useResetRecoilState(userSignupAtom)
-  const [status, setStatus] = useRecoilState(appToastStatusSelector('__signupuser'))
+  const [status, setStatus] = useRecoilState(
+    appToastStatusSelector('__signupuser'),
+  )
 
   const setStep = (step: 'username' | 'daoinvite' | 'phrase' | 'complete') => {
     setData((state) => ({ ...state, step }))
@@ -191,7 +224,10 @@ export function useUserSignup(options: { initialize?: boolean } = {}) {
     }))
   }
 
-  const submitUsernameStep = async (params: { email: string; username: string }) => {
+  const submitUsernameStep = async (params: {
+    email: string
+    username: string
+  }) => {
     const email = params.email.toLowerCase()
 
     try {
@@ -199,18 +235,26 @@ export function useUserSignup(options: { initialize?: boolean } = {}) {
       const username = params.username.trim().toLowerCase()
       const profile = await AppConfig.goshroot.getUserProfile({ username })
       if (await profile.isDeployed()) {
-        throw new GoshError(EGoshError.PROFILE_EXISTS, `GOSH username is already taken`)
+        throw new GoshError(
+          EGoshError.PROFILE_EXISTS,
+          `GOSH username is already taken`,
+        )
       }
 
       // Check for DAO name = username
       const { valid } = await validateOnboardingDao(username)
       if (!valid) {
-        throw new GoshError('Value error', `GOSH username is already taken or incorrect`)
+        throw new GoshError(
+          'Value error',
+          `GOSH username is already taken or incorrect`,
+        )
       }
 
       // Get DAO invites, generate random phrase and update state
       const daoinvites = await getDaoInvites(email)
-      const { phrase } = await AppConfig.goshclient.crypto.mnemonic_from_random({})
+      const { phrase } = await AppConfig.goshclient.crypto.mnemonic_from_random(
+        {},
+      )
       setData((state) => ({
         ...state,
         email: params.email.toLowerCase(),
@@ -306,19 +350,21 @@ export function useUserSignup(options: { initialize?: boolean } = {}) {
       })
 
       // Create DB record for user
-      setStatus((state) => ({
-        ...state,
-        type: 'pending',
-        data: 'Update database',
-      }))
-      const dbUser = await getDbUser(oauth.session.user.id)
-      if (!dbUser) {
-        await createDbUser({
-          auth_id: oauth.session.user.id,
-          username: data.username,
-          pubkey: keys.public,
-          email: data.email,
-        })
+      if (!AppConfig.devmode) {
+        setStatus((state) => ({
+          ...state,
+          type: 'pending',
+          data: 'Update database',
+        }))
+        const dbUser = await getDbUser(oauth.session.user.id)
+        if (!dbUser) {
+          await createDbUser({
+            auth_id: oauth.session.user.id,
+            username: data.username,
+            pubkey: keys.public,
+            email: data.email,
+          })
+        }
       }
 
       setStatus((state) => ({ ...state, type: 'dismiss', data: null }))
