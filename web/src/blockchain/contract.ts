@@ -9,12 +9,12 @@ import {
   KeyPair,
   ResultOfProcessMessage,
   ResultOfRunTvm,
+  TonClient,
   signerKeys,
   signerNone,
-  TonClient,
 } from '@eversdk/core'
-import { sleep, retry } from '../utils'
 import { GoshError } from '../errors'
+import { retry, sleep } from '../utils'
 
 class BaseContract {
   private cachedBoc?: string
@@ -81,9 +81,14 @@ class BaseContract {
   }
 
   async getTypeVersion(): Promise<{ type: string; version: string }> {
-    const { value0, value1 } = await this.runLocal('getVersion', {}, undefined, {
-      useCachedBoc: true,
-    })
+    const { value0, value1 } = await this.runLocal(
+      'getVersion',
+      {},
+      undefined,
+      {
+        useCachedBoc: true,
+      },
+    )
     return { type: value0, version: value1 }
   }
 
@@ -190,7 +195,7 @@ class BaseContract {
     options?: AccountRunOptions,
     settings?: { logging?: boolean; retries?: number },
   ): Promise<ResultOfProcessMessage> {
-    const { logging = true, retries = 3 } = settings ?? {}
+    const { logging = false, retries = 3 } = settings ?? {}
 
     if (logging) {
       console.debug('[Run]', { functionName, input })
@@ -211,7 +216,11 @@ class BaseContract {
     options?: AccountRunLocalOptions,
     settings?: { logging?: boolean; retries?: number; useCachedBoc?: boolean },
   ): Promise<any> {
-    const { logging = true, retries = 2, useCachedBoc = false } = settings ?? {}
+    const {
+      logging = false,
+      retries = 2,
+      useCachedBoc = false,
+    } = settings ?? {}
 
     const result = await retry(async () => {
       try {

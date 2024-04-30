@@ -1,17 +1,18 @@
-import { atom, selectorFamily } from 'recoil'
 import _ from 'lodash'
+import { atom, selectorFamily } from 'recoil'
 import { contextVersion } from '../constants'
 import {
   TDaoDetails,
-  TDaoEventList,
   TDaoEventDetails,
+  TDaoEventList,
+  TDaoInviteList,
+  TDaoIsMemberOfList,
   TDaoMember,
   TDaoMemberList,
-  TUserDaoList,
-  TDaoInviteList,
   TDaoTaskList,
-  TTaskDetails,
   TMilestoneTaskDetails,
+  TTaskDetails,
+  TUserDaoList,
 } from '../types/dao.types'
 
 export const partnerDaoListAtom = atom<TUserDaoList>({
@@ -36,7 +37,10 @@ export const daoDetailsAtom = atom<{ [daoname: string]: TDaoDetails }>({
   dangerouslyAllowMutability: true,
 })
 
-export const daoDetailsSelector = selectorFamily<TDaoDetails, string | undefined>({
+export const daoDetailsSelector = selectorFamily<
+  TDaoDetails,
+  string | undefined
+>({
   key: `DaoDetailsSelector_${contextVersion}`,
   get:
     (daoname) =>
@@ -66,38 +70,40 @@ export const daoMemberAtom = atom<{ [daoname: string]: TDaoMember }>({
   dangerouslyAllowMutability: true,
 })
 
-export const daoMemberSelector = selectorFamily<TDaoMember, string | undefined>({
-  key: `DaoMemberSelector_${contextVersion}`,
-  get:
-    (daoname) =>
-    ({ get }) => {
-      const atom = get(daoMemberAtom)
-      const empty = {
-        profile: null,
-        wallet: null,
-        allowance: null,
-        balance: null,
-        vesting: null,
-        isFetched: false,
-        isMember: false,
-        isLimited: false,
-        isReady: false,
-      }
+export const daoMemberSelector = selectorFamily<TDaoMember, string | undefined>(
+  {
+    key: `DaoMemberSelector_${contextVersion}`,
+    get:
+      (daoname) =>
+      ({ get }) => {
+        const atom = get(daoMemberAtom)
+        const empty = {
+          profile: null,
+          wallet: null,
+          allowance: null,
+          balance: null,
+          vesting: null,
+          isFetched: false,
+          isMember: false,
+          isLimited: false,
+          isReady: false,
+        }
 
-      return (daoname ? atom[daoname] : empty) || empty
-    },
-  set:
-    (daoname) =>
-    ({ set }, newvalue) => {
-      if (daoname) {
-        set(daoMemberAtom, (state) => ({
-          ...state,
-          [daoname]: newvalue as TDaoMember,
-        }))
-      }
-    },
-  dangerouslyAllowMutability: true,
-})
+        return (daoname ? atom[daoname] : empty) || empty
+      },
+    set:
+      (daoname) =>
+      ({ set }, newvalue) => {
+        if (daoname) {
+          set(daoMemberAtom, (state) => ({
+            ...state,
+            [daoname]: newvalue as TDaoMember,
+          }))
+        }
+      },
+    dangerouslyAllowMutability: true,
+  },
+)
 
 export const daoMemberListAtom = atom<{ [daoname: string]: TDaoMemberList }>({
   key: `DaoMemberListAtom_${contextVersion}`,
@@ -121,7 +127,9 @@ export const daoMemberListSelector = selectorFamily<
         ...data,
         items: [...data.items]
           .filter(({ username }) => {
-            return search ? username.startsWith(search.toLowerCase()) : !!username
+            return search
+              ? username.startsWith(search.toLowerCase())
+              : !!username
           })
           .sort((a, b) => (a.username > b.username ? 1 : -1)),
       }
@@ -145,7 +153,10 @@ export const daoEventListAtom = atom<{ [daoname: string]: TDaoEventList }>({
   dangerouslyAllowMutability: true,
 })
 
-export const daoEventListSelector = selectorFamily<TDaoEventList, string | undefined>({
+export const daoEventListSelector = selectorFamily<
+  TDaoEventList,
+  string | undefined
+>({
   key: `DaoEventListSelector_${contextVersion}`,
   get:
     (daoname) =>
@@ -177,7 +188,10 @@ export const daoEventListSelector = selectorFamily<TDaoEventList, string | undef
   dangerouslyAllowMutability: true,
 })
 
-export const daoEventSelector = selectorFamily<TDaoEventDetails | undefined, string>({
+export const daoEventSelector = selectorFamily<
+  TDaoEventDetails | undefined,
+  string
+>({
   key: `DaoEventSelector_${contextVersion}`,
   get:
     (address) =>
@@ -203,7 +217,10 @@ export const daoTaskListAtom = atom<{ [daoname: string]: TDaoTaskList }>({
   dangerouslyAllowMutability: true,
 })
 
-export const daoTaskListSelector = selectorFamily<TDaoTaskList, string | undefined>({
+export const daoTaskListSelector = selectorFamily<
+  TDaoTaskList,
+  string | undefined
+>({
   key: `DaoTaskListSelector_${contextVersion}`,
   get:
     (daoname) =>
@@ -253,6 +270,46 @@ export const daoTaskSelector = selectorFamily<
         }
       }
       return task
+    },
+  dangerouslyAllowMutability: true,
+})
+
+export const daoIsMemberOfAtom = atom<{
+  [daoname: string]: TDaoIsMemberOfList
+}>({
+  key: `DaoIsMemberOfAtom_${contextVersion}`,
+  default: {},
+  dangerouslyAllowMutability: true,
+})
+
+export const daoIsMemberOfSelector = selectorFamily<
+  TDaoIsMemberOfList,
+  string | undefined
+>({
+  key: `DaoIsMemberOfSelector_${contextVersion}`,
+  get:
+    (daoname) =>
+    ({ get }) => {
+      const atom = get(daoIsMemberOfAtom)
+      const empty = { is_fetching: false, items: [] }
+      const data = (daoname ? atom[daoname] : empty) || empty
+
+      return {
+        ...data,
+        items: [...data.items].sort((a, b) =>
+          a.dao_name > b.dao_name ? 1 : -1,
+        ),
+      }
+    },
+  set:
+    (daoname) =>
+    ({ set }, newvalue) => {
+      if (daoname) {
+        set(daoIsMemberOfAtom, (state) => ({
+          ...state,
+          [daoname]: newvalue as TDaoIsMemberOfList,
+        }))
+      }
     },
   dangerouslyAllowMutability: true,
 })

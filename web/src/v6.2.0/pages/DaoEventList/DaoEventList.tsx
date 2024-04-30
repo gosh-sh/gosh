@@ -1,7 +1,11 @@
 import classNames from 'classnames'
 import { useEffect, useState } from 'react'
 import { matchPath } from 'react-router-dom'
+import { useSetRecoilState } from 'recoil'
+import { Button } from '../../../components/Form'
 import Loader from '../../../components/Loader'
+import { appModalStateAtom } from '../../../store/app.state'
+import { CreateExternalDaoEvent } from '../../components/CreateExternalDaoEvent'
 import { DaoMemberWallet, DaoMembers, DaoSupply } from '../../components/Dao'
 import { useDaoEventList, useDaoMember } from '../../hooks/dao.hooks'
 import DaoEventPage from '../DaoEvent/DaoEvent'
@@ -10,10 +14,22 @@ import { ListBoundary } from './components'
 const DaoEventListPage = () => {
   const member = useDaoMember()
   const [eventOpened, setEventOpened] = useState<string>()
+  const setModal = useSetRecoilState(appModalStateAtom)
   const eventList = useDaoEventList()
 
+  const openCreateExternalEvent = () => {
+    setModal({
+      static: true,
+      isOpen: true,
+      element: <CreateExternalDaoEvent />,
+    })
+  }
+
   useEffect(() => {
-    const matched = matchPath('/o/:dao/events/:address', document.location.pathname)
+    const matched = matchPath(
+      '/o/:dao/events/:address',
+      document.location.pathname,
+    )
     if (matched?.params.address) {
       eventList.openItem(matched.params.address)
       setEventOpened(matched.params.address)
@@ -28,8 +44,19 @@ const DaoEventListPage = () => {
       <div className="row flex-wrap">
         <div className="col !basis-full md:!basis-0 !w-0">
           <div className="flex items-center justify-between pb-2 mb-4 gap-4">
-            <h3 className="text-xl font-medium">DAO events</h3>
-            {eventList.isFetching && <Loader className="text-xs">Updating...</Loader>}
+            <h3 className="text-xl font-medium flex items-center gap-x-4">
+              DAO events
+              <Button
+                size="sm"
+                variant="outline-secondary"
+                onClick={openCreateExternalEvent}
+              >
+                Create event
+              </Button>
+            </h3>
+            {eventList.isFetching && (
+              <Loader className="text-xs">Updating...</Loader>
+            )}
           </div>
 
           <ListBoundary />

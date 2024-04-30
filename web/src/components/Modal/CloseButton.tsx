@@ -8,19 +8,31 @@ import { Button } from '../Form'
 type TModalCloseButtonProps = React.HTMLAttributes<HTMLDivElement> & {
   disabled?: boolean
   two_factor?: boolean // Used for 2-factor closing
+  close?: () => void // Custom close handler
   onClose?: () => Promise<void>
   twoFactorCallback?: () => void
 }
 
 const ModalCloseButton = (props: TModalCloseButtonProps) => {
-  const { className, disabled, two_factor = false, onClose, twoFactorCallback } = props
+  const {
+    className,
+    disabled,
+    two_factor = false,
+    close,
+    onClose,
+    twoFactorCallback,
+  } = props
   const setModal = useSetRecoilState(appModalStateAtom)
 
   const onModalReset = async () => {
     if (two_factor && twoFactorCallback) {
       twoFactorCallback()
     } else {
-      setModal((state) => ({ ...state, isOpen: false }))
+      if (close) {
+        close()
+      } else {
+        setModal((state) => ({ ...state, isOpen: false }))
+      }
       onClose && (await onClose())
     }
   }

@@ -11,8 +11,16 @@ import Skeleton from '../../../components/Skeleton'
 import { useBodyScrollLock } from '../../../hooks/common.hooks'
 import { EDaoEventType } from '../../../types/common.types'
 import { getDurationDelta, shortString } from '../../../utils'
-import { DaoEventProgressBar, DaoEventStatusBadge } from '../../components/DaoEvent'
-import { useDao, useDaoEvent, useDaoEventList, useDaoMember } from '../../hooks/dao.hooks'
+import {
+  DaoEventProgressBar,
+  DaoEventStatusBadge,
+} from '../../components/DaoEvent'
+import {
+  useDao,
+  useDaoEvent,
+  useDaoEventList,
+  useDaoMember,
+} from '../../hooks/dao.hooks'
 import { useUser } from '../../hooks/user.hooks'
 import {
   AddRegularTokensEvent,
@@ -47,10 +55,12 @@ import {
   MintTokensEvent,
   MultiEvent,
   PullRequestEvent,
+  ReceiveTaskRewardAsDao,
   RepositoryCreateEvent,
   RepositoryDescriptionEvent,
   RepositoryTagAddEvent,
   RepositoryTagDeleteEvent,
+  SendTokensAsDao,
   ShowDaoEventProgressEvent,
   UpgradeTaskEvent,
 } from './components'
@@ -71,7 +81,11 @@ const DaoEventPageInner = (props: { address: string }) => {
   })
 
   const onItemClose = useCallback(() => {
-    window.history.replaceState(null, document.title, `/o/${dao.details.name}/events`)
+    window.history.replaceState(
+      null,
+      document.title,
+      `/o/${dao.details.name}/events`,
+    )
     eventList.closeItems()
   }, [dao.details.name])
 
@@ -90,7 +104,9 @@ const DaoEventPageInner = (props: { address: string }) => {
 
       // Click outside event block, but need to check click on event list item
       const items = document.getElementsByClassName('dao-eventlist-item')
-      const itemClicked = Array.from(items).some((item) => item.contains(target))
+      const itemClicked = Array.from(items).some((item) =>
+        item.contains(target),
+      )
       if (!itemClicked) {
         onItemClose()
       }
@@ -124,7 +140,10 @@ const DaoEventPageInner = (props: { address: string }) => {
             <CopyClipboard
               className="text-sm text-gray-7c8db5"
               label={
-                <span data-tooltip-id="common-tip" data-tooltip-content="Event address">
+                <span
+                  data-tooltip-id="common-tip"
+                  data-tooltip-content="Event address"
+                >
                   {shortString(event.address)}
                 </span>
               }
@@ -292,6 +311,12 @@ const DaoEventPageInner = (props: { address: string }) => {
               {event.type === EDaoEventType.HACKATHON_APPS_APPROVE && (
                 <HackathonAppsApproveEvent data={event.data} />
               )}
+              {event.type === EDaoEventType.DAO_RECEIVE_BOUNTY && (
+                <ReceiveTaskRewardAsDao data={event.data} />
+              )}
+              {event.type === EDaoEventType.DAO_TOKEN_DAO_SEND && (
+                <SendTokensAsDao data={event.data} />
+              )}
               {event.type === EDaoEventType.MULTI_PROPOSAL && (
                 <MultiEvent event={event} />
               )}
@@ -307,12 +332,14 @@ const DaoEventPageInner = (props: { address: string }) => {
             />
           </div>
 
-          {!event.status.completed && member.isMember && !event.reviewers.length && (
-            <div className="mt-5 border border-gray-e6edff rounded-xl p-5">
-              <h3 className="mb-4 text-xl font-medium">Your vote</h3>
-              <DaoEventVotingForm event={event} />
-            </div>
-          )}
+          {!event.status.completed &&
+            member.isMember &&
+            !event.reviewers.length && (
+              <div className="mt-5 border border-gray-e6edff rounded-xl p-5">
+                <h3 className="mb-4 text-xl font-medium">Your vote</h3>
+                <DaoEventVotingForm event={event} />
+              </div>
+            )}
 
           {!!event.reviewers.length && (
             <div className="mt-5 border border-gray-e6edff rounded-xl p-5">
@@ -334,7 +361,9 @@ const DaoEventPageInner = (props: { address: string }) => {
                 </ul>
               </div>
 
-              {event.reviewers.find(({ username }) => username === user.username) && (
+              {event.reviewers.find(
+                ({ username }) => username === user.username,
+              ) && (
                 <div className="mt-3">
                   <DaoEventReviewForm event={event} />
                 </div>

@@ -1,9 +1,13 @@
 import classNames from 'classnames'
-import { useDao, useDaoMember } from '../../hooks/dao.hooks'
 import { useSetRecoilState } from 'recoil'
-import { appModalStateAtom } from '../../../store/app.state'
 import { Button } from '../../../components/Form'
-import { DaoMemberOfModal, DaoTokenMintModal, DaoTokenSendModal } from '../Modal'
+import { appModalStateAtom } from '../../../store/app.state'
+import { useDao, useDaoMember } from '../../hooks/dao.hooks'
+import {
+  DaoMemberOfModal,
+  DaoTokenMintModal,
+  DaoTokenSendModal,
+} from '../Modal'
 
 type TDaoSupplyProps = React.HTMLAttributes<HTMLDivElement>
 
@@ -38,7 +42,12 @@ const DaoSupply = (props: TDaoSupplyProps) => {
   }
 
   return (
-    <div className={classNames('border border-gray-e6edff rounded-xl p-5', className)}>
+    <div
+      className={classNames(
+        'border border-gray-e6edff rounded-xl p-5',
+        className,
+      )}
+    >
       <div>
         <div className="mb-1 text-gray-7c8db5 text-sm">DAO total supply</div>
         <div className="text-3xl font-medium">

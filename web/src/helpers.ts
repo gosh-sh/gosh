@@ -48,7 +48,9 @@ export const getIdenticonAvatar = (options: any) => {
   })
 }
 
-export const getUsernameByEmail = async (email: string): Promise<string[] | null> => {
+export const getUsernameByEmail = async (
+  email: string,
+): Promise<string[] | null> => {
   const { data, error } = await supabase.client
     .from('users')
     .select('gosh_username')
@@ -130,6 +132,7 @@ export const Select2ClassNames = {
   },
   valueContainer: () => '!px-4 !py-1',
   placeholder: () => '!text-black/40',
+  menu: () => '!z-[2]',
   menuList: () => '!py-0',
   noOptionsMessage: () => '!text-sm',
   option: () => '!text-sm',

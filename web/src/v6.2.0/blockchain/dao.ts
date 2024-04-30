@@ -1,8 +1,8 @@
-import { KeyPair, TonClient } from '@eversdk/core'
+import type { KeyPair, TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
 import { UserProfile } from '../../blockchain/userprofile'
 import { GoshError } from '../../errors'
-import { EDaoMemberType, TDaoDetailsMemberItem } from '../types/dao.types'
+import { EDaoMemberType, type TDaoDetailsMemberItem } from '../types/dao.types'
 import DaoABI from './abi/dao.abi.json'
 import { DaoEvent } from './daoevent'
 import { DaoWallet } from './daowallet'
@@ -56,6 +56,7 @@ export class Dao extends BaseContract {
 
   async getMembers(options: {
     parse?: {
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       wallets: { [pubaddr: string]: any }
       daomembers: { [address: string]: string }
       expert_tags: {
@@ -96,7 +97,10 @@ export class Dao extends BaseContract {
       Object.keys(toparse.wallets).map(async (key) => {
         const testaddr = `0:${key.slice(2)}`
 
-        const resolved: { type: EDaoMemberType; account: UserProfile | Dao } = {
+        const resolved: {
+          type: EDaoMemberType
+          account: UserProfile | Dao
+        } = {
           type: EDaoMemberType.User,
           account: new UserProfile(this.client, testaddr),
         }
@@ -106,7 +110,9 @@ export class Dao extends BaseContract {
           resolved.account = account
         } else {
           resolved.type =
-            daoaddr.indexOf(testaddr) >= 0 ? EDaoMemberType.Dao : EDaoMemberType.User
+            daoaddr.indexOf(testaddr) >= 0
+              ? EDaoMemberType.Dao
+              : EDaoMemberType.User
           resolved.account =
             resolved.type === EDaoMemberType.Dao
               ? new Dao(this.client, testaddr)
@@ -121,16 +127,22 @@ export class Dao extends BaseContract {
           if (dao_expert_tag && enabled) {
             expert_tags.push({
               name: dao_expert_tag.name,
-              multiplier: parseInt(dao_expert_tag.value),
+              multiplier: Number.parseInt(dao_expert_tag.value),
             })
           }
         }
 
+        // Get wallet depending on parsing type
+        const walletAddr = isDaoMemberOf
+          ? toparse.wallets[key]
+          : toparse.wallets[key].member
+        const wallet = new DaoWallet(this.client, walletAddr)
+
         return {
           usertype: resolved.type,
           profile: resolved.account,
-          wallet: new DaoWallet(this.client, toparse.wallets[key].member),
-          allowance: parseInt(toparse.wallets[key].count),
+          wallet,
+          allowance: Number.parseInt(toparse.wallets[key].count),
           daomembers: toparse.daomembers,
           expert_tags,
         }
@@ -156,6 +168,7 @@ export class Dao extends BaseContract {
 
     let _address = address
     if (!_address) {
+      // biome-ignore lint/style/noNonNullAssertion: <explanation>
       const { profile, index = 0 } = data!
       const { value0 } = await this.runLocal(
         'getAddrWallet',
@@ -166,6 +179,7 @@ export class Dao extends BaseContract {
       _address = value0
     }
 
+    // biome-ignore lint/style/noNonNullAssertion: <explanation>
     return new DaoWallet(this.client, _address!, keys)
   }
 
@@ -205,9 +219,14 @@ export class Dao extends BaseContract {
   }
 
   async getPrevious() {
-    const { value0 } = await this.runLocal('getPreviousDaoAddr', {}, undefined, {
-      useCachedBoc: true,
-    })
+    const { value0 } = await this.runLocal(
+      'getPreviousDaoAddr',
+      {},
+      undefined,
+      {
+        useCachedBoc: true,
+      },
+    )
     return (value0 as string) || null
   }
 
