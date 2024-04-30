@@ -20,7 +20,9 @@ const HackathonUpdateEvent = (props: THackathonUpdateEventProps) => {
       </div>
       {data.metadata.description.brief && (
         <div className="flex flex-wrap items-center gap-x-6">
-          <div className="basis-full text-xs text-gray-53596d">Short description</div>
+          <div className="basis-full text-xs text-gray-53596d">
+            Short description
+          </div>
 
           <div className="text-sm">{data.metadata.description.brief}</div>
         </div>
@@ -61,7 +63,7 @@ const HackathonUpdateEvent = (props: THackathonUpdateEventProps) => {
           </div>
           <div className="text-sm flex flex-wrap items-center gap-3">
             {data.tags.map((tag: string) => (
-              <BadgeExpertTag key={tag} content={tag} />
+              <BadgeExpertTag key={tag} seed={tag} content={tag} />
             ))}
           </div>
         </div>

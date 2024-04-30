@@ -1135,6 +1135,9 @@ export function useDaoMember(
     vesting: dao.members?.find((item) => {
       return item.profile.address === user.profile
     })?.vesting,
+    expert_tags: dao.members?.find(
+      (item) => item.profile.address === user.profile,
+    )?.expert_tags,
   }
 }
 

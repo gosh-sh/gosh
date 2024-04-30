@@ -12,11 +12,17 @@ import { Button } from '../../../../../components/Form'
 import { BaseField, FormikInput } from '../../../../../components/Formik'
 import Skeleton from '../../../../../components/Skeleton'
 import { Select2ClassNames } from '../../../../../helpers'
-import { useDao, useDaoMember, useDeleteDaoMember } from '../../../../hooks/dao.hooks'
+import { BadgeExpertTag } from '../../../../components/Badge'
+import {
+  useDao,
+  useDaoMember,
+  useDeleteDaoMember,
+} from '../../../../hooks/dao.hooks'
 import { EDaoMemberType, TDaoMemberListItem } from '../../../../types/dao.types'
 
 const basis = {
-  contaner: 'flex items-center flex-wrap xl:flex-nowrap px-3 py-2 gap-x-6 gap-y-2',
+  contaner:
+    'flex items-center flex-wrap xl:flex-nowrap px-3 py-2 gap-x-6 gap-y-2',
   name: 'basis-full lg:basis-full xl:!basis-2/12',
   expert_tags: 'basis-full lg:basis-4/12',
   allowance: 'basis-full md:basis-5/12 lg:!basis-2/12',
@@ -29,7 +35,10 @@ const ListItemSkeleton = () => {
   return (
     <div className="flex px-5 py-2 gap-x-4">
       {Array.from(new Array(6)).map((_, i) => (
-        <div key={i} className={classNames(i === 0 ? basis.name : basis.buttons)}>
+        <div
+          key={i}
+          className={classNames(i === 0 ? basis.name : basis.buttons)}
+        >
           <Skeleton className="py-2" skeleton={{ height: 10 }}>
             <rect x="0" y="0" rx="6" ry="6" width="100%" height="10" />
           </Skeleton>
@@ -53,8 +62,12 @@ const ListItemHeader = (props: React.HTMLAttributes<HTMLDivElement>) => {
       <div className={basis.name}>name</div>
       <div className={basis.expert_tags}>karma tags</div>
       <div className={basis.allowance}>karma</div>
-      <div className={classNames(basis.balance, 'whitespace-nowrap')}>token balance</div>
-      <div className={classNames(basis.vesting, 'whitespace-nowrap')}>vesting</div>
+      <div className={classNames(basis.balance, 'whitespace-nowrap')}>
+        token balance
+      </div>
+      <div className={classNames(basis.vesting, 'whitespace-nowrap')}>
+        vesting
+      </div>
       <div className={basis.buttons}></div>
     </div>
   )
@@ -73,7 +86,10 @@ const ListItem = (props: TListItemProps) => {
   const member = useDaoMember()
   const { deleteMember } = useDeleteDaoMember()
 
-  const onDelete = async (user: { username: string; usertype: EDaoMemberType }) => {
+  const onDelete = async (user: {
+    username: string
+    usertype: EDaoMemberType
+  }) => {
     if (window.confirm('Delete member?')) {
       try {
         const { eventaddr } = await deleteMember([user])
@@ -92,7 +108,12 @@ const ListItem = (props: TListItemProps) => {
           'overflow-hidden whitespace-nowrap text-ellipsis',
         )}
       >
-        <MemberIcon type={item.usertype} className="mr-2" size="sm" fixedWidth />
+        <MemberIcon
+          type={item.usertype}
+          className="mr-2"
+          size="sm"
+          fixedWidth
+        />
         {item.username}
       </div>
       <div className={basis.expert_tags}>
@@ -156,7 +177,15 @@ const ListItem = (props: TListItemProps) => {
             />
           </Field>
         ) : (
-          'todo'
+          <div className="flex flex-wrap gap-1">
+            {item.expert_tags.map((item, index) => (
+              <BadgeExpertTag
+                key={index}
+                seed={item.name}
+                content={item.name}
+              />
+            ))}
+          </div>
         )}
       </div>
       <div className={classNames(basis.allowance, 'font-light')}>
@@ -176,7 +205,9 @@ const ListItem = (props: TListItemProps) => {
               inputProps={{
                 after: (
                   <div className="text-xs text-gray-7c8db5 pr-3 lg:hidden">
-                    <div className="whitespace-nowrap leading-5 py-2">Karma</div>
+                    <div className="whitespace-nowrap leading-5 py-2">
+                      Karma
+                    </div>
                   </div>
                 ),
               }}
@@ -208,13 +239,18 @@ const ListItem = (props: TListItemProps) => {
               inputProps={{
                 after: (
                   <div className="flex flex-nowrap items-center text-xs text-gray-7c8db5 pr-3 lg:hidden">
-                    <div className="whitespace-nowrap leading-5 py-2">Balance</div>
+                    <div className="whitespace-nowrap leading-5 py-2">
+                      Balance
+                    </div>
                     {item.allowance > item.balance && (
                       <div
                         className="text-xs text-red-dd3a3a py-2.5"
                         data-tooltip-id={`member-balance-tip-${item.profile}`}
                       >
-                        <FontAwesomeIcon icon={faQuestionCircle} className="ml-1" />
+                        <FontAwesomeIcon
+                          icon={faQuestionCircle}
+                          className="ml-1"
+                        />
                       </div>
                     )}
                   </div>
@@ -227,7 +263,10 @@ const ListItem = (props: TListItemProps) => {
               name={`items.${index}.balance`}
             />
             <Tooltip id={`member-balance-tip-${item.profile}`} clickable>
-              <div>Member might have untransferred tokens from previous DAO versions</div>
+              <div>
+                Member might have untransferred tokens from previous DAO
+                versions
+              </div>
             </Tooltip>
           </>
         ) : (
@@ -252,7 +291,9 @@ const ListItem = (props: TListItemProps) => {
                 usertype: item.usertype,
               })
             }}
-            disabled={item.isFetching || item.profile.address === dao.details.owner}
+            disabled={
+              item.isFetching || item.profile.address === dao.details.owner
+            }
             isLoading={item.isFetching}
           >
             <FontAwesomeIcon icon={faTimes} size="lg" />

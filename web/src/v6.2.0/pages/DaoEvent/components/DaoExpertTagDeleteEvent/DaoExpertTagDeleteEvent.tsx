@@ -15,7 +15,12 @@ const DaoExpertTagDeleteEvent = (props: TDaoExpertTagDeleteEventProps) => {
         </div>
         <div className="flex items-center gap-x-2">
           {data.tags.map((tag, index) => (
-            <BadgeExpertTag key={index} content={tag} className="py-2 px-4" />
+            <BadgeExpertTag
+              key={index}
+              seed={tag}
+              content={tag}
+              className="py-2 px-4"
+            />
           ))}
         </div>
       </div>
