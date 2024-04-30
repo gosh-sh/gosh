@@ -25,6 +25,22 @@ const BaseField = (props: IBaseFieldProps) => {
     form,
   } = props
 
+  let error: any = form.errors
+  for (const key of field.name.split('.')) {
+    if (!error || typeof error === 'string') {
+      break
+    } else if (typeof error === 'object') {
+      error = (error as any)[key]
+    }
+  }
+
+  let touched: any = form.touched
+  for (const key of field.name.split('.')) {
+    if (typeof error === 'object') {
+      touched = touched[key]
+    }
+  }
+
   return (
     <>
       {label && (
@@ -43,11 +59,16 @@ const BaseField = (props: IBaseFieldProps) => {
       )}
       {children}
       {help && (
-        <div className={classNames('text-xs text-gray-7c8db5 mt-2 px-1', helpClassName)}>
+        <div
+          className={classNames(
+            'text-xs text-gray-7c8db5 mt-2 px-1',
+            helpClassName,
+          )}
+        >
           {help}
         </div>
       )}
-      {errorEnabled && form.touched[field.name] && form.errors[field.name] && (
+      {errorEnabled && touched && error && (
         <div className={classNames('relative', errorClassName)}>
           <ErrorMessage
             className="text-xs bg-rose-100 text-rose-500 mt-1 px-2 py-1 rounded absolute z-[1]"
