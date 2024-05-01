@@ -47,7 +47,9 @@ const Preloader = (props: React.HTMLAttributes<HTMLDivElement>) => {
   const { children } = props
   return (
     <div className="fixed w-screen h-screen left-0 top-0">
-      <div className="flex items-center justify-center w-full h-full">{children}</div>
+      <div className="flex items-center justify-center w-full h-full">
+        {children}
+      </div>
     </div>
   )
 }
@@ -154,5 +156,7 @@ const Dispatcher = () => {
 }
 
 export default withErrorBoundary(Dispatcher, {
-  fallbackRender: ({ error }) => <Alert variant="danger">{error.message}</Alert>,
+  fallbackRender: ({ error }) => (
+    <Alert variant="danger">{error.message}</Alert>
+  ),
 })

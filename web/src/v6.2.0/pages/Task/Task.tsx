@@ -33,7 +33,11 @@ const TaskPageInner = (props: { address: string }) => {
   })
 
   const onItemClose = useCallback(() => {
-    window.history.replaceState(null, document.title, `/o/${dao.details.name}/tasks`)
+    window.history.replaceState(
+      null,
+      document.title,
+      `/o/${dao.details.name}/tasks`,
+    )
     taskList.closeItems()
   }, [dao.details.name])
 
@@ -58,7 +62,9 @@ const TaskPageInner = (props: { address: string }) => {
 
       // Click outside task block, but need to check click on task list item
       const items = document.getElementsByClassName('dao-tasklist-item')
-      const itemClicked = Array.from(items).some((item) => item.contains(target))
+      const itemClicked = Array.from(items).some((item) =>
+        item.contains(target),
+      )
       if (!itemClicked) {
         onItemClose()
       }
@@ -92,7 +98,10 @@ const TaskPageInner = (props: { address: string }) => {
             <CopyClipboard
               className="text-sm text-gray-7c8db5"
               label={
-                <span data-tooltip-id="common-tip" data-tooltip-content="Event address">
+                <span
+                  data-tooltip-id="common-tip"
+                  data-tooltip-content="Task address"
+                >
                   {shortString(task.address)}
                 </span>
               }

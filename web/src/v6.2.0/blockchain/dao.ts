@@ -6,7 +6,6 @@ import { EDaoMemberType, type TDaoDetailsMemberItem } from '../types/dao.types'
 import DaoABI from './abi/dao.abi.json'
 import { DaoEvent } from './daoevent'
 import { DaoWallet } from './daowallet'
-import { getDaoOrProfile } from './helpers'
 
 export class Dao extends BaseContract {
   constructor(client: TonClient, address: string) {
@@ -105,9 +104,8 @@ export class Dao extends BaseContract {
           account: new UserProfile(this.client, testaddr),
         }
         if (isDaoMemberOf) {
-          const { type, account } = await getDaoOrProfile(testaddr)
-          resolved.type = type
-          resolved.account = account
+          resolved.type = EDaoMemberType.Dao
+          resolved.account = new Dao(this.client, testaddr)
         } else {
           resolved.type =
             daoaddr.indexOf(testaddr) >= 0

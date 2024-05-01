@@ -1234,7 +1234,7 @@ export function useDaoIsMemberOfList(params: { initialize?: boolean } = {}) {
 
   const getIsMemberOfList = useCallback(async () => {
     try {
-      setData((state) => ({ ...state, is_fetching: true }))
+      setData((state) => ({ ...state, error: null, is_fetching: true }))
 
       const items = await executeByChunk<
         TDaoDetailsMemberItem,

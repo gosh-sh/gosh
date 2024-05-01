@@ -267,6 +267,7 @@ export type TDBDaoInvite = {
 export type TDaoIsMemberOfList = {
   is_fetching: boolean
   items: TDaoIsMemberOfListItem[]
+  error?: any
 }
 
 export type TDaoIsMemberOfListItem = {

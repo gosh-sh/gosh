@@ -2,67 +2,42 @@ import { faChevronDown, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Dialog, Menu, Transition } from '@headlessui/react'
 import classNames from 'classnames'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
 import { Fragment } from 'react/jsx-runtime'
 import { useSetRecoilState } from 'recoil'
+import Alert from '../../../../components/Alert'
 import { Button } from '../../../../components/Form'
 import Loader from '../../../../components/Loader'
 import BaseModal from '../../../../components/Modal/BaseModal'
 import { appModalStateAtom } from '../../../../store/app.state'
 import { useDaoIsMemberOfList } from '../../../hooks/dao.hooks'
-import { TDaoIsMemberOfListItem } from '../../../types/dao.types'
+import {
+  TDaoIsMemberOfList,
+  TDaoIsMemberOfListItem,
+} from '../../../types/dao.types'
 import { SendExternalDaoTokens } from '../../SendExternalDaoTokens'
 
-const DaoMemberOfModal = () => {
-  const setModal = useSetRecoilState(appModalStateAtom)
-  const isMemberOfData = useDaoIsMemberOfList({ initialize: true })
-  const [subModal, setSubModal] = useState<{
-    static?: boolean
-    isOpen: boolean
-    element: React.ReactElement | null
-  }>({ isOpen: false, element: null })
+const DaoMemberOfModalBoundary = withErrorBoundary(
+  (props: {
+    data: TDaoIsMemberOfList
+    openSubModal(item: TDaoIsMemberOfListItem): void
+  }) => {
+    const { data, openSubModal } = props
+    const { showBoundary } = useErrorBoundary()
 
-  const closeModal = () => {
-    setModal((state) => ({ ...state, isOpen: false }))
-  }
+    useEffect(() => {
+      if (!data.is_fetching && data.error) {
+        showBoundary(data.error)
+      }
+    }, [data.is_fetching, data.error])
 
-  const openSubModal = (item: TDaoIsMemberOfListItem) => {
-    setSubModal((state) => ({
-      ...state,
-      element: (
-        <SendExternalDaoTokens
-          item={item}
-          close={closeSubModal}
-          onSuccess={closeModal}
-        />
-      ),
-      isOpen: true,
-    }))
-  }
-
-  const closeSubModal = () => {
-    setSubModal((state) => ({
-      ...state,
-      isOpen: false,
-    }))
-  }
-
-  return (
-    <Dialog.Panel className="relative rounded-xl bg-white p-10 w-full max-w-xl">
-      <div className="absolute right-2 top-2">
-        <button className="px-3 py-2 text-gray-7c8db5" onClick={closeModal}>
-          <FontAwesomeIcon icon={faTimes} size="lg" />
-        </button>
-      </div>
-      <Dialog.Title className="mb-6 text-3xl text-center font-medium">
-        Wallet's Owner
-      </Dialog.Title>
-
-      <div>
+    return (
+      <>
         <div
           className={classNames(
             'text-end',
-            isMemberOfData.is_fetching ? 'visible' : 'invisible',
+            data.is_fetching ? 'visible' : 'invisible',
           )}
         >
           <Loader className="text-xs">Updating...</Loader>
@@ -79,15 +54,29 @@ const DaoMemberOfModal = () => {
           </thead>
 
           <tbody>
-            {isMemberOfData.is_fetching && !isMemberOfData.items.length && (
+            {data.is_fetching && !data.items.length && (
               <tr>
                 <td colSpan={4} className="py-1.5">
                   <Loader className="py-2 text-xs">Loading data...</Loader>
                 </td>
               </tr>
             )}
+            {!data.is_fetching && !data.items.length && (
+              <tr>
+                <td colSpan={4} className="py-1.5 text-xs text-gray-400">
+                  Nothing was found
+                </td>
+              </tr>
+            )}
+            {data.error && (
+              <tr>
+                <td colSpan={4} className="py-1.5 text-xs text-gray-400">
+                  <Alert variant="danger">{data.error.message}</Alert>
+                </td>
+              </tr>
+            )}
 
-            {isMemberOfData.items.map((item, index) => (
+            {data.items.map((item, index) => (
               <tr
                 key={index}
                 className="text-xs border-b border-dashed block md:table-row py-1 md:py-0
@@ -141,6 +130,69 @@ const DaoMemberOfModal = () => {
             ))}
           </tbody>
         </table>
+      </>
+    )
+  },
+  {
+    fallbackRender: ({ error }) => (
+      <Alert variant="danger">
+        <h3 className="font-medium">Fetch tokens error</h3>
+        <div>{error.message}</div>
+      </Alert>
+    ),
+  },
+)
+
+const DaoMemberOfModal = () => {
+  const setModal = useSetRecoilState(appModalStateAtom)
+  const isMemberOfData = useDaoIsMemberOfList({ initialize: true })
+  const [subModal, setSubModal] = useState<{
+    static?: boolean
+    isOpen: boolean
+    element: React.ReactElement | null
+  }>({ isOpen: false, element: null })
+
+  const closeModal = () => {
+    setModal((state) => ({ ...state, isOpen: false }))
+  }
+
+  const openSubModal = (item: TDaoIsMemberOfListItem) => {
+    setSubModal((state) => ({
+      ...state,
+      element: (
+        <SendExternalDaoTokens
+          item={item}
+          close={closeSubModal}
+          onSuccess={closeModal}
+        />
+      ),
+      isOpen: true,
+    }))
+  }
+
+  const closeSubModal = () => {
+    setSubModal((state) => ({
+      ...state,
+      isOpen: false,
+    }))
+  }
+
+  return (
+    <Dialog.Panel className="relative rounded-xl bg-white p-10 w-full max-w-xl">
+      <div className="absolute right-2 top-2">
+        <button className="px-3 py-2 text-gray-7c8db5" onClick={closeModal}>
+          <FontAwesomeIcon icon={faTimes} size="lg" />
+        </button>
+      </div>
+      <Dialog.Title className="mb-6 text-3xl text-center font-medium">
+        Wallet's Owner
+      </Dialog.Title>
+
+      <div>
+        <DaoMemberOfModalBoundary
+          data={isMemberOfData}
+          openSubModal={openSubModal}
+        />
       </div>
 
       <BaseModal modal={subModal} resetModal={closeSubModal} />
