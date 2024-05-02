@@ -115,7 +115,11 @@ const CreateExternalDaoEvent = () => {
 
             <div className="mt-6 flex flex-col gap-y-4">
               <div className="relative">
-                <Field name="dao" component={BaseField}>
+                <Field
+                  name="dao"
+                  component={BaseField}
+                  help="Your DAO should be the same version as external DAO"
+                >
                   <UserSelect
                     placeholder="External DAO name"
                     isDisabled={isSubmitting}
