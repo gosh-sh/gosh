@@ -27,7 +27,7 @@
       "last 1 safari version"
     ]
   },
-  "trustedDependencies": ["@eversdk/lib-web", "react-gosh"],
+  "trustedDependencies": ["react-gosh"],
   "dependencies": {
     "@dicebear/collection": "^7.0.1",
     "@dicebear/core": "^7.0.1",
