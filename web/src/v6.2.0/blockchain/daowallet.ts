@@ -1155,6 +1155,48 @@ export class DaoWallet extends BaseContract {
     }
   }
 
+  async transferTokensAsDao(params: {
+    src_wallet: string
+    src_version: string
+    dst_wallet: string
+    amount: number
+    comment?: string
+    reviewers?: string[]
+    cell?: boolean
+  }) {
+    const {
+      src_wallet,
+      src_version,
+      dst_wallet,
+      amount,
+      comment = '',
+      reviewers = [],
+      cell,
+    } = params
+
+    const cellParams = {
+      wallet: src_wallet,
+      oldversion: src_version,
+      newwallet: dst_wallet,
+      grant: amount,
+      comment,
+    }
+
+    if (cell) {
+      const { value0 } = await this.runLocal(
+        'getCellDaoTransferTokens',
+        cellParams,
+      )
+      return value0 as string
+    } else {
+      const cell: any = await this.transferTokensAsDao({
+        ...params,
+        cell: true,
+      })
+      return await this.createSingleEvent({ cell, reviewers })
+    }
+  }
+
   async upgradeVersionController(params: {
     code: string
     data: string

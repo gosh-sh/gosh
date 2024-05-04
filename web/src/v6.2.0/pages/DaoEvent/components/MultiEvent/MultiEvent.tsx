@@ -34,6 +34,7 @@ import { RepositoryTagAddEvent } from '../RepositoryTagAddEvent/RepositoryTagAdd
 import { RepositoryTagDeleteEvent } from '../RepositoryTagDeleteEvent/RepositoryTagDeleteEvent'
 import { SendTokensAsDao } from '../SendTokensAsDao/SendTokensAsDao'
 import { ShowDaoEventProgressEvent } from '../ShowDaoEventProgressEvent/ShowDaoEventProgressEvent'
+import { TransferTokensAsDao } from '../TransferTokensAsDao/TransferTokensAsDao'
 import { UpgradeTaskEvent } from '../UpgradeTaskEvent/UpgradeTaskEvent'
 
 type TMultiEventProps = {
@@ -162,6 +163,9 @@ const MultiEvent = (props: TMultiEventProps) => {
             )}
             {item.type === EDaoEventType.DAO_TOKEN_DAO_SEND && (
               <SendTokensAsDao key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.DAO_TOKEN_TRANSFER_FROM_PREV && (
+              <TransferTokensAsDao key={index} data={item.data} />
             )}
           </div>
         ))}

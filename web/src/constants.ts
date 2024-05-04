@@ -62,7 +62,7 @@ export const DaoEventType: { [key: number]: string } = {
   36: 'Redeploy task',
   37: 'Redeployed task',
   38: 'Upgrade task',
-  39: 'DAO transfer tokens from previous version',
+  39: 'Transfer tokens as DAO',
   42: 'Delete milestone',
   43: 'Create milestone',
   44: 'Upgrade milestone',

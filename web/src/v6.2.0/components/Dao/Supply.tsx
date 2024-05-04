@@ -1,4 +1,5 @@
 import classNames from 'classnames'
+import { useMemo } from 'react'
 import { useSetRecoilState } from 'recoil'
 import { Button } from '../../../components/Form'
 import { appModalStateAtom } from '../../../store/app.state'
@@ -16,6 +17,11 @@ const DaoSupply = (props: TDaoSupplyProps) => {
   const setModal = useSetRecoilState(appModalStateAtom)
   const dao = useDao()
   const member = useDaoMember()
+
+  const isMemberOfCount = useMemo(() => {
+    const names = new Set(dao.details.isMemberOf?.map(({ name }) => name))
+    return Array.from(names).length
+  }, [dao.details.isMemberOf?.length])
 
   const onDaoTokenSendClick = () => {
     setModal({
@@ -54,7 +60,7 @@ const DaoSupply = (props: TDaoSupplyProps) => {
           {dao.details.supply?.total.toLocaleString()}
         </div>
       </div>
-      {!!dao.details.isMemberOf?.length && (
+      {isMemberOfCount > 0 && (
         <div className="mt-4">
           <div className="mb-1 text-gray-7c8db5 text-sm">Has tokens of</div>
           <div>
@@ -63,7 +69,7 @@ const DaoSupply = (props: TDaoSupplyProps) => {
               className="text-blue-348eff !p-0"
               onClick={onDaoMemberOfClick}
             >
-              {dao.details.isMemberOf.length} organizations
+              {isMemberOfCount} organizations
             </Button>
           </div>
         </div>

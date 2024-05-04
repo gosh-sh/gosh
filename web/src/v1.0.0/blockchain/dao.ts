@@ -1,5 +1,6 @@
 import { KeyPair, TonClient } from '@eversdk/core'
 import _ from 'lodash'
+import { AppConfig } from '../../appconfig'
 import { BaseContract } from '../../blockchain/contract'
 import { UserProfile } from '../../blockchain/userprofile'
 import { TDaoDetailsMemberItem } from '../types/dao.types'
@@ -27,7 +28,9 @@ export class Dao extends BaseContract {
   async getDetails() {
     const { value0 } = await this.runLocal('getWalletsFull', {})
     return {
-      totalsupply: _.sum(Object.values(value0).map((item: any) => parseInt(item.count))),
+      totalsupply: _.sum(
+        Object.values(value0).map((item: any) => parseInt(item.count)),
+      ),
       wallets: value0,
     }
   }
@@ -51,7 +54,11 @@ export class Dao extends BaseContract {
     return members
   }
 
-  async getMemberWallet(params: { profile: string; index?: number; keys?: KeyPair }) {
+  async getMemberWallet(params: {
+    profile: string
+    index?: number
+    keys?: KeyPair
+  }) {
     const { profile, index = 0, keys } = params
     const { value0 } = await this.runLocal(
       'getAddrWallet',
@@ -76,5 +83,21 @@ export class Dao extends BaseContract {
   async getEvent(params: { address: string }): Promise<DaoEvent> {
     const { address } = params
     return new DaoEvent(this.client, address)
+  }
+
+  async getNext() {
+    const name = await this.getName()
+    const curVersion = await this.getVersion()
+    const nextVersions = Object.keys(AppConfig.getVersions()).filter(
+      (k) => k > curVersion,
+    )
+    for (const version of nextVersions) {
+      const sc = AppConfig.goshroot.getSystemContract(version)
+      const account = await sc.getDao({ name })
+      if (await account.isDeployed()) {
+        return { account, version }
+      }
+    }
+    return null
   }
 }

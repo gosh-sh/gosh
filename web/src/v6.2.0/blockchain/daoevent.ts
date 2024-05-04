@@ -173,6 +173,9 @@ export class DaoEvent extends BaseContract {
     } else if (type === EDaoEventType.DAO_TOKEN_DAO_SEND) {
       fn = 'getDaoSendTokenProposalParams'
       parser = this.parseSendTokensAsDaoParams
+    } else if (type === EDaoEventType.DAO_TOKEN_TRANSFER_FROM_PREV) {
+      fn = 'getDaoTransferTokenProposalParams'
+      parser = this.parseTransferTokensAsDaoParams
     } else if (type === EDaoEventType.MULTI_PROPOSAL) {
       const { num, data0 } = await this.runLocal(
         'getDataFirst',
@@ -431,12 +434,17 @@ export class DaoEvent extends BaseContract {
   }
 
   async parseSendTokensAsDaoParams(data: any) {
-    const sc = getSystemContract()
-    const srcWallet = await new DaoWallet(
+    let sc = getSystemContract()
+    const version = await new DaoWallet(
       sc.account.client,
       data.wallet,
+    ).getVersion()
+
+    const srcSc = AppConfig.goshroot.getSystemContract(version)
+    const srcWallet = await (
+      srcSc.getDaoWallet({ address: data.wallet }) as DaoWallet
     ).getDetails()
-    const srcDao = await sc.getDao({ address: srcWallet.daoaddr })
+    const srcDao = await srcSc.getDao({ address: srcWallet.daoaddr })
     const daoDetails = await srcDao.getDetails()
 
     let dstUser = null
@@ -452,6 +460,21 @@ export class DaoEvent extends BaseContract {
       grant: Number.parseInt(data.grant),
       src_dao_name: daoDetails.nameDao,
       dst: dstUser,
+    }
+  }
+
+  async parseTransferTokensAsDaoParams(data: any) {
+    const srcSc = AppConfig.goshroot.getSystemContract(data.oldversion)
+    const srcWalletDetails = await (
+      srcSc.getDaoWallet({ address: data.wallet }) as DaoWallet
+    ).getDetails()
+    const srcDao = await srcSc.getDao({ address: srcWalletDetails.daoaddr })
+    const srcDaoDetails = await srcDao.getDetails()
+
+    return {
+      ...data,
+      grant: Number.parseInt(data.grant),
+      src_dao_name: srcDaoDetails.nameDao,
     }
   }
 
@@ -601,6 +624,9 @@ export class DaoEvent extends BaseContract {
     } else if (type === EDaoEventType.DAO_TOKEN_DAO_SEND) {
       fn = 'getDaoSendTokenProposalParamsData'
       parser = this.parseSendTokensAsDaoParams
+    } else if (type === EDaoEventType.DAO_TOKEN_TRANSFER_FROM_PREV) {
+      fn = 'getDaoTransferTokenProposalParamsData'
+      parser = this.parseTransferTokensAsDaoParams
     } else if (type === EDaoEventType.DELAY) {
       return { type, label: DaoEventType[type], data: {} }
     } else {

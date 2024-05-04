@@ -12,7 +12,11 @@ export const getSystemContract = () => {
 
 export const getDaoOrProfile = async (address: string) => {
   const sc = getSystemContract()
-  const account = new BaseContract(sc.client, sc.account.abi.value as object, address)
+  const account = new BaseContract(
+    sc.client,
+    sc.account.abi.value as object,
+    address,
+  )
 
   try {
     const { type, version } = await account.getTypeVersion()

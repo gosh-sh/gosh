@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import classNames from 'classnames'
+import copyClipboard from 'copy-to-clipboard'
 import {
   ErrorMessage,
   Field,
@@ -7,29 +10,30 @@ import {
   Form,
   Formik,
 } from 'formik'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useState } from 'react'
+import AsyncCreatableSelect from 'react-select/async-creatable'
+import { toast } from 'react-toastify'
+import { AppConfig } from '../../../../../appconfig'
+import successImage from '../../../../../assets/images/success.png'
+import Alert from '../../../../../components/Alert/Alert'
 import { Button } from '../../../../../components/Form'
+import {
+  BaseField,
+  FormikInput,
+  FormikTextarea,
+} from '../../../../../components/Formik'
+import { ToastError } from '../../../../../components/Toast'
+import { UserSelectOption } from '../../../../../components/UserSelect'
 import {
   Select2ClassNames,
   ToastOptionsShortcuts,
   getUsernameByEmail,
 } from '../../../../../helpers'
-import { ToastError } from '../../../../../components/Toast'
-import AsyncCreatableSelect from 'react-select/async-creatable'
-import yup from '../../../../yup-extended'
-import successImage from '../../../../../assets/images/success.png'
-import { AppConfig } from '../../../../../appconfig'
-import { AnimatePresence, motion } from 'framer-motion'
-import { useDao, useCreateDaoMember } from '../../../../hooks/dao.hooks'
-import { BaseField, FormikInput, FormikTextarea } from '../../../../../components/Formik'
 import { validateEmail } from '../../../../../validators'
-import classNames from 'classnames'
-import { toast } from 'react-toastify'
-import copyClipboard from 'copy-to-clipboard'
-import Alert from '../../../../../components/Alert/Alert'
-import { MemberIcon } from '../../../../../components/Dao'
 import { getSystemContract } from '../../../../blockchain/helpers'
+import { useCreateDaoMember, useDao } from '../../../../hooks/dao.hooks'
+import yup from '../../../../yup-extended'
 
 const getUsernameOptions = async (input: string) => {
   if (input.indexOf('@') >= 0) {
@@ -56,9 +60,14 @@ const getUsernameOptions = async (input: string) => {
 
   const daoQuery = await getSystemContract().getDao({ name: input })
   if (await daoQuery.isDeployed()) {
+    const next = await daoQuery.getNext()
     options.push({
       label: input,
       value: { name: input, type: 'dao' },
+      isDisabled: !!next,
+      hint: !!next ? (
+        <UserSelectOption.IncompatibleHint version={next.version} />
+      ) : null,
     })
   }
 
@@ -105,14 +114,9 @@ const FieldArrayForm = (props: FieldArrayRenderProps | string | void) => {
                     cacheOptions={false}
                     defaultOptions={false}
                     loadOptions={getUsernameOptions}
-                    formatOptionLabel={(data) => {
-                      return (
-                        <div>
-                          <MemberIcon type={data.value.type} size="sm" className="mr-2" />
-                          {data.label}
-                        </div>
-                      )
-                    }}
+                    formatOptionLabel={(data) => (
+                      <UserSelectOption data={data} />
+                    )}
                     formatCreateLabel={(input) => {
                       return `Send invitation to ${input}`
                     }}
@@ -223,7 +227,10 @@ type TFormValues = {
 const MemberAddForm = () => {
   const dao = useDao()
   const { createMember, createInvitation } = useCreateDaoMember()
-  const [transition, setTransition] = useState<{ form: boolean; success: boolean }>({
+  const [transition, setTransition] = useState<{
+    form: boolean
+    success: boolean
+  }>({
     form: true,
     success: false,
   })
@@ -329,8 +336,8 @@ const MemberAddForm = () => {
 
                     {!dao.details.isAskMembershipOn && (
                       <Alert variant="warning" className="mt-2 text-xs">
-                        Enable "Allow external users to request DAO membership" option in
-                        DAO settings to enable invites by email/link
+                        Enable "Allow external users to request DAO membership"
+                        option in DAO settings to enable invites by email/link
                       </Alert>
                     )}
                   </Form>
@@ -358,13 +365,16 @@ const MemberAddForm = () => {
                 <img src={successImage} alt="Success" className="w-full" />
               </div>
               <div className="mt-6">
-                <h3 className="text-xl font-medium text-center mb-4">Success</h3>
+                <h3 className="text-xl font-medium text-center mb-4">
+                  Success
+                </h3>
                 <p className="text-gray-7c8db5 text-sm mb-3">
                   Users invited by email will receive invitation email message
                 </p>
 
                 <p className="text-gray-7c8db5 text-sm">
-                  Users invited by GOSH username are added to event and waiting for voting
+                  Users invited by GOSH username are added to event and waiting
+                  for voting
                 </p>
               </div>
             </div>

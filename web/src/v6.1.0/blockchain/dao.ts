@@ -1,12 +1,13 @@
 import { KeyPair, TonClient } from '@eversdk/core'
+import { AppConfig } from '../../appconfig'
 import { BaseContract } from '../../blockchain/contract'
-import DaoABI from './abi/dao.abi.json'
-import { EDaoMemberType, TDaoDetailsMemberItem } from '../types/dao.types'
 import { UserProfile } from '../../blockchain/userprofile'
-import { DaoWallet } from './daowallet'
-import { DaoEvent } from './daoevent'
-import { getDaoOrProfile } from './helpers'
 import { GoshError } from '../../errors'
+import { EDaoMemberType, TDaoDetailsMemberItem } from '../types/dao.types'
+import DaoABI from './abi/dao.abi.json'
+import { DaoEvent } from './daoevent'
+import { DaoWallet } from './daowallet'
+import { getDaoOrProfile } from './helpers'
 
 export class Dao extends BaseContract {
   constructor(client: TonClient, address: string) {
@@ -35,12 +36,14 @@ export class Dao extends BaseContract {
     const { _isTaskRedeployed } = await this.runLocal('_isTaskRedeployed', {})
 
     // Fix contracts bug with `isUpgraded` flag
+    details.isReady = details.isUpgraded
+    details.isUpgraded = details.isRepoUpgraded && _isTaskRedeployed
     const prev_addr = await this.getPrevious()
     if (prev_addr) {
       const prev_dao = new Dao(this.client, prev_addr)
       const prev_ver = await prev_dao.getVersion()
       if (prev_ver === '1.0.0') {
-        details.isUpgraded = true
+        details.isReady = true
       }
     }
 
@@ -94,7 +97,9 @@ export class Dao extends BaseContract {
           resolved.account = account
         } else {
           resolved.type =
-            daoaddr.indexOf(testaddr) >= 0 ? EDaoMemberType.Dao : EDaoMemberType.User
+            daoaddr.indexOf(testaddr) >= 0
+              ? EDaoMemberType.Dao
+              : EDaoMemberType.User
           resolved.account =
             resolved.type === EDaoMemberType.Dao
               ? new Dao(this.client, testaddr)
@@ -178,9 +183,14 @@ export class Dao extends BaseContract {
   }
 
   async getPrevious() {
-    const { value0 } = await this.runLocal('getPreviousDaoAddr', {}, undefined, {
-      useCachedBoc: true,
-    })
+    const { value0 } = await this.runLocal(
+      'getPreviousDaoAddr',
+      {},
+      undefined,
+      {
+        useCachedBoc: true,
+      },
+    )
     return (value0 as string) || null
   }
 
@@ -189,5 +199,21 @@ export class Dao extends BaseContract {
       pubmem: [{ member: profile, count: 0, expired: 0 }],
       index: 0,
     })
+  }
+
+  async getNext() {
+    const name = await this.getName()
+    const curVersion = await this.getVersion()
+    const nextVersions = Object.keys(AppConfig.getVersions()).filter(
+      (k) => k > curVersion,
+    )
+    for (const version of nextVersions) {
+      const sc = AppConfig.goshroot.getSystemContract(version)
+      const account = await sc.getDao({ name })
+      if (await account.isDeployed()) {
+        return { account, version }
+      }
+    }
+    return null
   }
 }

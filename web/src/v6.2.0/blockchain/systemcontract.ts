@@ -1,4 +1,4 @@
-import { TonClient } from '@eversdk/core'
+import { KeyPair, TonClient } from '@eversdk/core'
 import { AppConfig } from '../../appconfig'
 import { BaseContract } from '../../blockchain/contract'
 import { DaoProfile } from '../../blockchain/daoprofile'
@@ -8,6 +8,7 @@ import { whileFinite } from '../../utils'
 import GoshABI from './abi/systemcontract.abi.json'
 import { GoshCommitTag } from './committag'
 import { Dao } from './dao'
+import { DaoWallet } from './daowallet'
 import { GoshTag } from './goshtag'
 import { Hackathon } from './hackathon'
 import { Milestone } from './milestone'
@@ -52,9 +53,14 @@ export class SystemContract extends BaseContract {
   }
 
   async getDaoProfile(name: string) {
-    const { value0 } = await this.runLocal('getProfileDaoAddr', { name }, undefined, {
-      useCachedBoc: true,
-    })
+    const { value0 } = await this.runLocal(
+      'getProfileDaoAddr',
+      { name },
+      undefined,
+      {
+        useCachedBoc: true,
+      },
+    )
     return new DaoProfile(this.account.client, value0)
   }
 
@@ -66,13 +72,22 @@ export class SystemContract extends BaseContract {
     }
 
     if (name) {
-      const { value0 } = await this.runLocal('getAddrDao', { name }, undefined, {
-        useCachedBoc: true,
-      })
+      const { value0 } = await this.runLocal(
+        'getAddrDao',
+        { name },
+        undefined,
+        {
+          useCachedBoc: true,
+        },
+      )
       return new Dao(this.client, value0)
     }
 
     throw new GoshError('DAO name or address required')
+  }
+
+  getDaoWallet(params: { address: string; keys?: KeyPair }) {
+    return new DaoWallet(this.client, params.address, params.keys)
   }
 
   async getRepository(options: { path?: string; address?: string }) {
@@ -116,7 +131,10 @@ export class SystemContract extends BaseContract {
     return hash
   }
 
-  async getDaoRepositoryTagCodeHash(daoaddr: string, tag: string): Promise<string> {
+  async getDaoRepositoryTagCodeHash(
+    daoaddr: string,
+    tag: string,
+  ): Promise<string> {
     const { value0 } = await this.runLocal(
       'getRepoTagDaoCode',
       { dao: daoaddr, repotag: tag },

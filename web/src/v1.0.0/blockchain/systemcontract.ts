@@ -1,13 +1,14 @@
-import { TonClient } from '@eversdk/core'
-import { BaseContract } from '../../blockchain/contract'
-import GoshABI from './abi/systemcontract.abi.json'
-import { GoshError } from '../../errors'
-import { Dao } from './dao'
-import { GoshRepository } from './repository'
+import { KeyPair, TonClient } from '@eversdk/core'
 import { AppConfig } from '../../appconfig'
-import { VersionController } from '../../blockchain/versioncontroller'
-import { whileFinite } from '../../utils'
+import { BaseContract } from '../../blockchain/contract'
 import { DaoProfile } from '../../blockchain/daoprofile'
+import { VersionController } from '../../blockchain/versioncontroller'
+import { GoshError } from '../../errors'
+import { whileFinite } from '../../utils'
+import GoshABI from './abi/systemcontract.abi.json'
+import { Dao } from './dao'
+import { DaoWallet } from './daowallet'
+import { GoshRepository } from './repository'
 
 export class SystemContract extends BaseContract {
   versionController: VersionController
@@ -18,9 +19,14 @@ export class SystemContract extends BaseContract {
   }
 
   async getDaoProfile(name: string) {
-    const { value0 } = await this.runLocal('getProfileDaoAddr', { name }, undefined, {
-      useCachedBoc: true,
-    })
+    const { value0 } = await this.runLocal(
+      'getProfileDaoAddr',
+      { name },
+      undefined,
+      {
+        useCachedBoc: true,
+      },
+    )
     return new DaoProfile(this.account.client, value0)
   }
 
@@ -32,13 +38,22 @@ export class SystemContract extends BaseContract {
     }
 
     if (name) {
-      const { value0 } = await this.runLocal('getAddrDao', { name }, undefined, {
-        useCachedBoc: true,
-      })
+      const { value0 } = await this.runLocal(
+        'getAddrDao',
+        { name },
+        undefined,
+        {
+          useCachedBoc: true,
+        },
+      )
       return new Dao(this.client, value0)
     }
 
     throw new GoshError('DAO name or address required')
+  }
+
+  getDaoWallet(params: { address: string; keys?: KeyPair }) {
+    return new DaoWallet(this.client, params.address, params.keys)
   }
 
   async getRepository(options: { path?: string; address?: string }) {

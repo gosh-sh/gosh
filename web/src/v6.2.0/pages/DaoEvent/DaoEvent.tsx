@@ -62,6 +62,7 @@ import {
   RepositoryTagDeleteEvent,
   SendTokensAsDao,
   ShowDaoEventProgressEvent,
+  TransferTokensAsDao,
   UpgradeTaskEvent,
 } from './components'
 
@@ -316,6 +317,9 @@ const DaoEventPageInner = (props: { address: string }) => {
               )}
               {event.type === EDaoEventType.DAO_TOKEN_DAO_SEND && (
                 <SendTokensAsDao data={event.data} />
+              )}
+              {event.type === EDaoEventType.DAO_TOKEN_TRANSFER_FROM_PREV && (
+                <TransferTokensAsDao data={event.data} />
               )}
               {event.type === EDaoEventType.MULTI_PROPOSAL && (
                 <MultiEvent event={event} />

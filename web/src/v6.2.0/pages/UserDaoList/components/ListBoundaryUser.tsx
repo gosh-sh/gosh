@@ -1,11 +1,11 @@
+import { useEffect } from 'react'
 import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
+import { toast } from 'react-toastify'
 import Alert from '../../../../components/Alert'
+import { Button } from '../../../../components/Form'
+import { ToastError } from '../../../../components/Toast'
 import { useUserDaoList } from '../../../hooks/dao.hooks'
 import { ListItem, ListItemSkeleton } from './ListItem'
-import { Button } from '../../../../components/Form'
-import { toast } from 'react-toastify'
-import { ToastError } from '../../../../components/Toast'
-import { useEffect } from 'react'
 
 const ListBoundaryInner = () => {
   const userDaoList = useUserDaoList({ count: 6, initialize: true })

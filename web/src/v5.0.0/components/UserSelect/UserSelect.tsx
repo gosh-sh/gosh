@@ -1,8 +1,8 @@
 import AsyncSelect, { AsyncProps } from 'react-select/async'
 import { AppConfig } from '../../../appconfig'
-import { getSystemContract } from '../../blockchain/helpers'
+import { UserSelectOption } from '../../../components/UserSelect'
 import { Select2ClassNames } from '../../../helpers'
-import { MemberIcon } from '../../../components/Dao'
+import { getSystemContract } from '../../blockchain/helpers'
 import { EDaoMemberType } from '../../types/dao.types'
 
 type TUserSelectProps = AsyncProps<any, any, any> & {
@@ -32,9 +32,14 @@ const UserSelect = (props: TUserSelectProps) => {
     if (searchDao) {
       const query = await getSystemContract().getDao({ name: input })
       if (await query.isDeployed()) {
+        const next = await query.getNext()
         options.push({
           label: input,
           value: { name: input, type: EDaoMemberType.Dao },
+          isDisabled: !!next,
+          hint: !!next ? (
+            <UserSelectOption.IncompatibleHint version={next.version} />
+          ) : null,
         })
       }
     }
@@ -49,14 +54,10 @@ const UserSelect = (props: TUserSelectProps) => {
       cacheOptions={false}
       defaultOptions={false}
       loadOptions={getUsernameOptions}
-      formatOptionLabel={(data) => {
-        return (
-          <div>
-            <MemberIcon type={data.value.type} size="sm" className="mr-2" />
-            {data.label}
-          </div>
-        )
-      }}
+      noOptionsMessage={({ inputValue }) => (
+        <UserSelectOption.NoOptions input={inputValue} />
+      )}
+      formatOptionLabel={(data) => <UserSelectOption data={data} />}
       {...rest}
     />
   )

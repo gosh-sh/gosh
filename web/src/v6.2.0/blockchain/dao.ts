@@ -1,4 +1,5 @@
 import type { KeyPair, TonClient } from '@eversdk/core'
+import { AppConfig } from '../../appconfig'
 import { BaseContract } from '../../blockchain/contract'
 import { UserProfile } from '../../blockchain/userprofile'
 import { GoshError } from '../../errors'
@@ -34,12 +35,14 @@ export class Dao extends BaseContract {
     const { _isTaskRedeployed } = await this.runLocal('_isTaskRedeployed', {})
 
     // Fix contracts bug with `isUpgraded` flag
+    details.isReady = details.isUpgraded
+    details.isUpgraded = details.isRepoUpgraded && _isTaskRedeployed
     const prev_addr = await this.getPrevious()
     if (prev_addr) {
       const prev_dao = new Dao(this.client, prev_addr)
       const prev_ver = await prev_dao.getVersion()
       if (prev_ver === '1.0.0') {
-        details.isUpgraded = true
+        details.isReady = true
       }
     }
 
@@ -105,7 +108,11 @@ export class Dao extends BaseContract {
         }
         if (isDaoMemberOf) {
           resolved.type = EDaoMemberType.Dao
-          resolved.account = new Dao(this.client, testaddr)
+          const ver = await new Dao(this.client, testaddr).getVersion()
+          const sc = AppConfig.goshroot.getSystemContract(ver)
+          resolved.account = (await sc.getDao({
+            address: resolved.account.address,
+          })) as Dao
         } else {
           resolved.type =
             daoaddr.indexOf(testaddr) >= 0
@@ -131,12 +138,17 @@ export class Dao extends BaseContract {
         }
 
         // Get wallet depending on parsing type
-        const walletAddr = isDaoMemberOf
-          ? toparse.wallets[key]
-          : toparse.wallets[key].member
-        const wallet = new DaoWallet(this.client, walletAddr)
+        let wallet: DaoWallet
+        if (isDaoMemberOf) {
+          wallet = await (resolved.account as Dao).getMemberWallet({
+            address: toparse.wallets[key],
+          })
+        } else {
+          wallet = new DaoWallet(this.client, toparse.wallets[key].member)
+        }
 
         return {
+          name: await resolved.account.getName(),
           usertype: resolved.type,
           profile: resolved.account,
           wallet,
@@ -233,5 +245,21 @@ export class Dao extends BaseContract {
       pubmem: [{ member: profile, count: 0, expired: 0 }],
       index: 0,
     })
+  }
+
+  async getNext() {
+    const name = await this.getName()
+    const curVersion = await this.getVersion()
+    const nextVersions = Object.keys(AppConfig.getVersions()).filter(
+      (k) => k > curVersion,
+    )
+    for (const version of nextVersions) {
+      const sc = AppConfig.goshroot.getSystemContract(version)
+      const account = await sc.getDao({ name })
+      if (await account.isDeployed()) {
+        return { account, version }
+      }
+    }
+    return null
   }
 }

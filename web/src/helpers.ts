@@ -134,6 +134,13 @@ export const Select2ClassNames = {
   placeholder: () => '!text-black/40',
   menu: () => '!z-[2]',
   menuList: () => '!py-0',
-  noOptionsMessage: () => '!text-sm',
-  option: () => '!text-sm',
+  noOptionsMessage: () => '!text-xs',
+  option: (props: any) => {
+    const classNames = ['!text-sm']
+    if (props.isDisabled) {
+      classNames.push('!bg-transparent')
+    }
+
+    return classNames.join(' ')
+  },
 }

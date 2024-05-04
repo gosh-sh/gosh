@@ -27,6 +27,13 @@ export class DaoWallet extends BaseContract {
     return _limited
   }
 
+  async getDetails() {
+    const { value0: daoAddr } = await this.runLocal('getAddrDao', {})
+    return {
+      daoaddr: daoAddr,
+    }
+  }
+
   async getProfile() {
     const { value0 } = await this.runLocal('getWalletOwner', {}, undefined, {
       useCachedBoc: true,
@@ -35,15 +42,23 @@ export class DaoWallet extends BaseContract {
   }
 
   async getSmvLocker() {
-    const { tip3VotingLocker } = await this.runLocal('tip3VotingLocker', {}, undefined, {
-      useCachedBoc: true,
-    })
+    const { tip3VotingLocker } = await this.runLocal(
+      'tip3VotingLocker',
+      {},
+      undefined,
+      {
+        useCachedBoc: true,
+      },
+    )
     return new SmvLocker(this.client, tip3VotingLocker)
   }
 
   async getBalance() {
     const { m_pseudoDAOBalance } = await this.runLocal('m_pseudoDAOBalance', {})
-    const { m_pseudoDAOVoteBalance } = await this.runLocal('m_pseudoDAOVoteBalance', {})
+    const { m_pseudoDAOVoteBalance } = await this.runLocal(
+      'm_pseudoDAOVoteBalance',
+      {},
+    )
     const balance = await this.smvLockerBalance()
     return {
       regular: parseInt(m_pseudoDAOBalance),
@@ -124,7 +139,11 @@ export class DaoWallet extends BaseContract {
     return parseInt(locked)
   }
 
-  async smvVote(params: { platformId: string; choice: boolean; amount: number }) {
+  async smvVote(params: {
+    platformId: string
+    choice: boolean
+    amount: number
+  }) {
     const { platformId, choice, amount } = params
     await this.run('voteFor', {
       platform_id: platformId,
@@ -165,7 +184,10 @@ export class DaoWallet extends BaseContract {
     const cellParams = { ...aloneParams, comment }
 
     if (cell) {
-      const { value0 } = await this.runLocal('getCellDeployWalletDao', cellParams)
+      const { value0 } = await this.runLocal(
+        'getCellDeployWalletDao',
+        cellParams,
+      )
       return value0
     } else if (alone) {
       await this.run('AloneDeployWalletDao', aloneParams)
@@ -189,7 +211,10 @@ export class DaoWallet extends BaseContract {
     const cellParams = { pubaddr: profile, comment }
 
     if (cell) {
-      const { value0 } = await this.runLocal('getCellDeleteWalletDao', cellParams)
+      const { value0 } = await this.runLocal(
+        'getCellDeleteWalletDao',
+        cellParams,
+      )
       return value0
     } else {
       await this.run('startProposalForDeleteWalletDao', {
@@ -220,7 +245,10 @@ export class DaoWallet extends BaseContract {
     }
 
     if (cell) {
-      const { value0 } = await this.runLocal('getCellChangeAllowance', cellParams)
+      const { value0 } = await this.runLocal(
+        'getCellChangeAllowance',
+        cellParams,
+      )
       return value0
     } else {
       await this.run('startProposalForChangeAllowance', {
@@ -334,7 +362,10 @@ export class DaoWallet extends BaseContract {
     const cellParams = { res: decision, comment }
 
     if (cell) {
-      const { value0 } = await this.runLocal('getCellSetAbilityInvite', cellParams)
+      const { value0 } = await this.runLocal(
+        'getCellSetAbilityInvite',
+        cellParams,
+      )
       return value0
     } else {
       await this.run('startProposalForSetAbilityInvite', {
@@ -356,7 +387,10 @@ export class DaoWallet extends BaseContract {
     const cellParams = { res: !decision, comment }
 
     if (cell) {
-      const { value0 } = await this.runLocal('getCellSetHideVotingResult', cellParams)
+      const { value0 } = await this.runLocal(
+        'getCellSetHideVotingResult',
+        cellParams,
+      )
       return value0
     } else {
       await this.run('startProposalForSetHideVotingResult', {
@@ -378,7 +412,10 @@ export class DaoWallet extends BaseContract {
     const cellParams = { res: allow, comment }
 
     if (cell) {
-      const { value0 } = await this.runLocal('getCellSetAllowDiscussion', cellParams)
+      const { value0 } = await this.runLocal(
+        'getCellSetAllowDiscussion',
+        cellParams,
+      )
       return value0
     } else {
       await this.run('startProposalForSetAllowDiscussion', {
@@ -447,7 +484,14 @@ export class DaoWallet extends BaseContract {
     alone?: boolean | undefined
     cell?: boolean | undefined
   }) {
-    const { profile, amount, comment = '', reviewers = [], alone, cell } = params
+    const {
+      profile,
+      amount,
+      comment = '',
+      reviewers = [],
+      alone,
+      cell,
+    } = params
 
     const cellParams = { pubaddr: profile, token: amount, comment }
 
@@ -473,12 +517,22 @@ export class DaoWallet extends BaseContract {
     alone?: boolean | undefined
     cell?: boolean | undefined
   }) {
-    const { profile, amount, comment = '', reviewers = [], alone, cell } = params
+    const {
+      profile,
+      amount,
+      comment = '',
+      reviewers = [],
+      alone,
+      cell,
+    } = params
 
     const cellParams = { pubaddr: profile, token: amount, comment }
 
     if (cell) {
-      const { value0 } = await this.runLocal('getCellAddRegularToken', cellParams)
+      const { value0 } = await this.runLocal(
+        'getCellAddRegularToken',
+        cellParams,
+      )
       return value0
     } else if (alone) {
       await this.run('AloneAddTokenDao', { grant: amount })
@@ -500,7 +554,10 @@ export class DaoWallet extends BaseContract {
   }
 
   async sendTokensToUpgradedDao(amount: number, version: string) {
-    await this.run('sendTokenToNewVersion', { grant: amount, newversion: version })
+    await this.run('sendTokenToNewVersion', {
+      grant: amount,
+      newversion: version,
+    })
   }
 
   async createDaoTag(params: {
@@ -673,7 +730,10 @@ export class DaoWallet extends BaseContract {
       balance: accountData._balance,
     }
 
-    const { value0: cell } = await this.runLocal('getCellForTask', constructorParams)
+    const { value0: cell } = await this.runLocal(
+      'getCellForTask',
+      constructorParams,
+    )
     const { value0 } = await this.runLocal('getCellForRedeployTask', {
       reponame: constructorParams.repoName,
       nametask: constructorParams.nametask,
@@ -719,7 +779,10 @@ export class DaoWallet extends BaseContract {
     const cellParams = { repo: reponame, tag: tags, comment }
 
     if (cell) {
-      const { value0 } = await this.runLocal('getCellDestroyRepoTag', cellParams)
+      const { value0 } = await this.runLocal(
+        'getCellDestroyRepoTag',
+        cellParams,
+      )
       return value0
     } else {
       await this.run('startProposalForDestroyRepoTag', {
@@ -742,7 +805,10 @@ export class DaoWallet extends BaseContract {
     const cellParams = { repoName: reponame, descr: description, comment }
 
     if (cell) {
-      const { value0 } = await this.runLocal('getCellChangeDescription', cellParams)
+      const { value0 } = await this.runLocal(
+        'getCellChangeDescription',
+        cellParams,
+      )
       return value0
     } else {
       await this.run('startProposalForChangeDescription', {
@@ -806,7 +872,8 @@ export class DaoWallet extends BaseContract {
     content: string
     ipfs_url?: string
   }) {
-    const { branch, commit_name, repo_addr, filename, content, ipfs_url } = params
+    const { branch, commit_name, repo_addr, filename, content, ipfs_url } =
+      params
     await this.run('deployNewSnapshot', {
       branch,
       commit: commit_name,
@@ -820,7 +887,9 @@ export class DaoWallet extends BaseContract {
   /**
    * Private methods
    */
-  private async createMultiEventData(proposals: { type: EDaoEventType; params: any }[]) {
+  private async createMultiEventData(
+    proposals: { type: EDaoEventType; params: any }[],
+  ) {
     // Prepare cells
     const cells = await executeByChunk(
       proposals,

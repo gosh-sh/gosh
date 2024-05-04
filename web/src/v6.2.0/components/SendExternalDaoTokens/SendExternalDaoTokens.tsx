@@ -30,7 +30,11 @@ const SendExternalDaoTokens = (props: TSendExternalDaoTokensProps) => {
   const submit = async (values: TFormValues) => {
     try {
       const { eventaddr } = await sendTokens({
-        external_dao: { name: item.dao_name, src_wallet: item.wallet.address },
+        src_dao: {
+          name: item.name,
+          wallet: item.wallet.address,
+          version: item.version,
+        },
         dst: values.dst!,
         amount: Number.parseInt(values.amount),
       })

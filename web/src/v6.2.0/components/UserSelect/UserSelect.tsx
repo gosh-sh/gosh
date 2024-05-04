@@ -1,6 +1,6 @@
 import AsyncSelect, { AsyncProps } from 'react-select/async'
 import { AppConfig } from '../../../appconfig'
-import { MemberIcon } from '../../../components/Dao'
+import { UserSelectOption } from '../../../components/UserSelect'
 import { Select2ClassNames } from '../../../helpers'
 import { getSystemContract } from '../../blockchain/helpers'
 import { EDaoMemberType } from '../../types/dao.types'
@@ -23,6 +23,7 @@ const UserSelect = (props: TUserSelectProps) => {
   } = props
 
   const getUsernameOptions = async (input: string) => {
+    const sc = getSystemContract()
     input = input.toLowerCase()
     const options: TUserSelectOption[] = []
 
@@ -43,13 +44,22 @@ const UserSelect = (props: TUserSelectProps) => {
     }
 
     if (searchDao) {
-      const query = await getSystemContract().getDao({ name: input })
-      const option = {
-        label: input,
-        value: { name: input, address: query.address, type: EDaoMemberType.Dao },
-      }
-
+      const query = await sc.getDao({ name: input })
       if (await query.isDeployed()) {
+        const next = await query.getNext()
+        const option = {
+          label: input,
+          value: {
+            name: input,
+            address: query.address,
+            type: EDaoMemberType.Dao,
+            version: await sc.getVersion(),
+          },
+          isDisabled: !!next,
+          hint: !!next ? (
+            <UserSelectOption.IncompatibleHint version={next.version} />
+          ) : null,
+        }
         if (!searchDaoIsMember) {
           options.push(option)
         } else if (await query.isMember(searchDaoIsMember)) {
@@ -99,14 +109,10 @@ const UserSelect = (props: TUserSelectProps) => {
       cacheOptions={false}
       defaultOptions={false}
       loadOptions={getUsernameOptions}
-      formatOptionLabel={(data) => {
-        return (
-          <div>
-            <MemberIcon type={data.value.type} size="sm" className="mr-2" />
-            {data.label}
-          </div>
-        )
-      }}
+      noOptionsMessage={({ inputValue }) => (
+        <UserSelectOption.NoOptions input={inputValue} />
+      )}
+      formatOptionLabel={(data) => <UserSelectOption data={data} />}
       {...rest}
     />
   )

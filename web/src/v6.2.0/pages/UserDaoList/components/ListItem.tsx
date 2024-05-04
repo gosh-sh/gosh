@@ -23,10 +23,13 @@ const ListItemSkeleton = (props: TListItemSkeletonProps) => {
 
   return (
     <Skeleton
-      className={classNames('p-5 border border-gray-e6edff rounded-xl', className)}
+      className={classNames(
+        'p-5 border border-gray-e6edff rounded-xl',
+        className,
+      )}
       skeleton={{ height: 78 }}
     >
-      <rect x="78%" y="0" rx="12" ry="12" width="76" height="76" />
+      <rect x="76%" y="0" rx="12" ry="12" width="76" height="76" />
       <rect x="0" y="10" rx="6" ry="6" width="60%" height="20" />
       <rect x="0" y="45" rx="4" ry="4" width="60%" height="8" />
       <rect x="0" y="60" rx="4" ry="4" width="60%" height="8" />
@@ -47,7 +50,9 @@ const ListItem = (props: TListItemProps) => {
     daoname: item.name,
   })
 
-  const hasEnabledSettings = Object.values(daoSettings.data?.types || {}).some((v) => !!v)
+  const hasEnabledSettings = Object.values(daoSettings.data?.types || {}).some(
+    (v) => !!v,
+  )
 
   const onItemClick = () => {
     if (item.address) {
@@ -55,7 +60,9 @@ const ListItem = (props: TListItemProps) => {
     }
   }
 
-  const onSingleNotificationChange = async (e: ChangeEvent<HTMLInputElement>) => {
+  const onSingleNotificationChange = async (
+    e: ChangeEvent<HTMLInputElement>,
+  ) => {
     try {
       await updateDaoSettings({
         daoname: item.name,
@@ -87,7 +94,10 @@ const ListItem = (props: TListItemProps) => {
       )}
     >
       <div
-        className={classNames('row !flex-nowrap', item.address ? 'cursor-pointer' : null)}
+        className={classNames(
+          'row !flex-nowrap',
+          item.address ? 'cursor-pointer' : null,
+        )}
         test-id={`daoitem-${item.name}`}
         onClick={onItemClick}
       >
