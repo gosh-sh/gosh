@@ -41,7 +41,9 @@ const PullRequestEvent = (props: TPullRequestEventProps) => {
           </div>
         </div>
         <div className="flex items-center gap-6">
-          <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">Branch</div>
+          <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
+            Branch
+          </div>
           <div className="text-sm">{data.branchName}</div>
         </div>
         {!isFetching && commit && (
@@ -90,7 +92,7 @@ const PullRequestEvent = (props: TPullRequestEventProps) => {
                     to={`/o/${dao.details.name}/tasks/milestone/${data.task.milestone_address}?subtask=${data.task.address}`}
                     className="block text-blue-2b89ff max-w-[320px] truncate"
                   >
-                    {data.task.name} {data.task.name} {data.task.name}
+                    {data.task.name}
                   </Link>
                 ) : (
                   <Link
@@ -106,7 +108,9 @@ const PullRequestEvent = (props: TPullRequestEventProps) => {
               <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
                 Reward
               </div>
-              <div className="text-sm">{data.task.balance.toLocaleString()}</div>
+              <div className="text-sm">
+                {data.task.balance.toLocaleString()}
+              </div>
             </div>
             <div className="flex items-center gap-6">
               <div className="basis-5/12 xl:basis-2/12 text-xs text-gray-53596d">
@@ -125,7 +129,8 @@ const PullRequestEvent = (props: TPullRequestEventProps) => {
                     .format('MMM D, YYYY HH:mm:ss')
                 ) : (
                   <>
-                    {lockToStr(data.task.grant.assign[0].lock)} after proposal is accepted
+                    {lockToStr(data.task.grant.assign[0].lock)} after proposal
+                    is accepted
                   </>
                 )}
               </div>
@@ -135,26 +140,30 @@ const PullRequestEvent = (props: TPullRequestEventProps) => {
       </div>
 
       <h4 className="mt-10 mb-3 text-lg font-medium">Pull request diff</h4>
-      {blobs.isFetching && <Loader className="text-sm">Loading commit diff...</Loader>}
+      {blobs.isFetching && (
+        <Loader className="text-sm">Loading commit diff...</Loader>
+      )}
 
-      {blobs.items.map(({ item, current, previous, showDiff, isFetching }, index) => (
-        <div key={index} className="my-5 relative">
-          <BlobDiffPreview
-            dao={dao.details._adapter!}
-            commentsOn={false}
-            filename={item.treepath}
-            modified={current}
-            original={previous}
-            commit={commit!}
-            commentsObject={urlparams.address}
-            snapshotAddress={item.address}
-            isDiffLoaded={showDiff}
-            isDiffFetching={isFetching}
-            isAuthMember={member.isMember}
-            getDiff={() => blobs.getDiff(index)}
-          />
-        </div>
-      ))}
+      {blobs.items.map(
+        ({ item, current, previous, showDiff, isFetching }, index) => (
+          <div key={index} className="my-5 relative">
+            <BlobDiffPreview
+              dao={dao.details._adapter!}
+              commentsOn={false}
+              filename={item.treepath}
+              modified={current}
+              original={previous}
+              commit={commit!}
+              commentsObject={urlparams.address}
+              snapshotAddress={item.address}
+              isDiffLoaded={showDiff}
+              isDiffFetching={isFetching}
+              isAuthMember={member.isMember}
+              getDiff={() => blobs.getDiff(index)}
+            />
+          </div>
+        ),
+      )}
     </div>
   )
 }
