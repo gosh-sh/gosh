@@ -1278,7 +1278,7 @@ export function useDaoIsMemberOfList(params: { initialize?: boolean } = {}) {
     }
   }, [getIsMemberOfList, initialize])
 
-  return data
+  return { ...data, updateList: getIsMemberOfList }
 }
 
 export function useDaoHelpers() {
@@ -5806,41 +5806,34 @@ export function useTransferTokensAsDao() {
           )
         }
 
-        // Resolve dst wallet address
+        // Resolve dst wallet (get src DAO of current version and get/create dst DAO wallet)
         const srcDao = await sc.getDao({ name: src_dao.name })
         const { wallet: dstWallet } = await checkDaoWallet(
           dao.details.address,
           { dao: srcDao },
         )
 
-        // Create event
-        await beforeCreateEvent(20, { onPendingCallback: setStatus })
-        setStatus((state) => ({
-          ...state,
-          type: 'pending',
-          data: 'Creating event',
-        }))
-        const eventaddr = await member.wallet.transferTokensAsDao({
-          src_wallet: src_dao.wallet,
-          src_version: src_dao.version,
-          dst_wallet: dstWallet.address,
-          amount,
-        })
+        // Resolve src DAO wallet of src DAO version
+        const srcWallet = AppConfig.goshroot
+          .getSystemContract(src_dao.version)
+          .getDaoWallet({ address: src_dao.wallet }) as DaoWallet
 
-        // Event post create
-        await afterCreateEvent(
-          { label: 'Transfer tokens as DAO', eventaddr },
-          { onPendingCallback: setStatus },
-        )
-        setStatus((state) => ({
-          ...state,
-          type: 'success',
-          data: {
-            title: 'Transfer tokens',
-            content: 'Transfer tokens as DAO event created',
-          },
-        }))
-        return { eventaddr }
+        // Use auto transfer for non limited wallets and DAO event for limited
+        if (!(await srcWallet.isLimited())) {
+          await transferForUnlimitedWallet({
+            src_wallet: srcWallet,
+            dst_wallet: dstWallet.address,
+          })
+          return { eventaddr: null }
+        } else {
+          const eventAddr = await transferForLimitedWallet({
+            src_wallet: src_dao.wallet,
+            src_version: src_dao.version,
+            dst_wallet: dstWallet.address,
+            amount,
+          })
+          return { eventaddr: eventAddr }
+        }
       } catch (e: any) {
         setStatus((state) => ({ ...state, type: 'error', data: e }))
         throw e
@@ -5848,6 +5841,76 @@ export function useTransferTokensAsDao() {
     },
     [member.isReady],
   )
+
+  const transferForUnlimitedWallet = async (params: {
+    src_wallet: DaoWallet
+    dst_wallet: string
+  }) => {
+    const { src_wallet, dst_wallet } = params
+    const success = await whileFinite(
+      async () => {
+        const { voting, locked, regular } = await src_wallet.getBalance()
+        const untransferred = Math.max(voting, locked) + regular
+        await member.wallet!.transferTokensAsDaoAuto({
+          dst_wallet,
+        })
+        return untransferred === 0
+      },
+      2000,
+      60000,
+    )
+    if (!success) {
+      throw new GoshError(
+        'Timeout error',
+        'Transfer DAO tokens timeout. Please, try again or contact support',
+      )
+    }
+
+    setStatus((state) => ({
+      ...state,
+      type: 'success',
+      data: {
+        title: 'Transfer tokens',
+        content: 'Transfer tokens as DAO completed',
+      },
+    }))
+  }
+
+  const transferForLimitedWallet = async (params: {
+    src_wallet: string
+    src_version: string
+    dst_wallet: string
+    amount: number
+  }) => {
+    // Create event
+    await beforeCreateEvent(20, { onPendingCallback: setStatus })
+    setStatus((state) => ({
+      ...state,
+      type: 'pending',
+      data: 'Creating event',
+    }))
+    const eventaddr = await member.wallet!.transferTokensAsDao({
+      src_wallet: params.src_wallet,
+      src_version: params.src_version,
+      dst_wallet: params.dst_wallet,
+      amount: params.amount,
+    })
+
+    // Event post create
+    await afterCreateEvent(
+      { label: 'Transfer tokens as DAO', eventaddr },
+      { onPendingCallback: setStatus },
+    )
+    setStatus((state) => ({
+      ...state,
+      type: 'success',
+      data: {
+        title: 'Transfer tokens',
+        content: 'Transfer tokens as DAO event created',
+      },
+    }))
+    return eventaddr
+  }
 
   return { transferTokens, status }
 }

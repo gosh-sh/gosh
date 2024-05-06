@@ -6,7 +6,11 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Fragment } from 'react/jsx-runtime'
 import { Button, ButtonLink } from '../../../../components/Form'
-import { useDao, useTransferTokensAsDao } from '../../../hooks/dao.hooks'
+import {
+  useDao,
+  useDaoIsMemberOfList,
+  useTransferTokensAsDao,
+} from '../../../hooks/dao.hooks'
 import { TDaoIsMemberOfListItem } from '../../../types/dao.types'
 
 type TListItemProps = {
@@ -19,6 +23,7 @@ const ListItem = (props: TListItemProps) => {
   const { item, openSubModal, closeModal } = props
   const navigate = useNavigate()
   const dao = useDao()
+  const { updateList } = useDaoIsMemberOfList()
   const { transferTokens } = useTransferTokensAsDao()
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
 
@@ -36,8 +41,10 @@ const ListItem = (props: TListItemProps) => {
 
       if (eventaddr) {
         navigate(`/o/${dao.details.name}/events/${eventaddr}`)
+        closeModal()
+      } else {
+        await updateList()
       }
-      closeModal()
     } catch (e: any) {
       console.error(e.message)
     } finally {
@@ -116,19 +123,21 @@ const ListItem = (props: TListItemProps) => {
                     transferTokensAsDao(item)
                   }}
                 >
-                  <span
-                    className={classNames(
-                      !item.has_current ? 'opacity-50' : 'opacity-100',
+                  <div>
+                    <span
+                      className={classNames(
+                        !item.has_current ? 'opacity-50' : 'opacity-100',
+                      )}
+                    >
+                      Transfer to current version
+                    </span>
+                    {!item.has_current && (
+                      <p className="text-yellow-500 text-[0.7rem]">
+                        DAO {item.name} should be upgraded to{' '}
+                        {dao.details.version}
+                      </p>
                     )}
-                  >
-                    Transfer to current version
-                  </span>
-                  {!item.has_current && (
-                    <p className="text-yellow-500 text-[0.7rem]">
-                      DAO {item.name} should be upgraded to{' '}
-                      {dao.details.version}
-                    </p>
-                  )}
+                  </div>
                 </Menu.Item>
               ) : (
                 <>

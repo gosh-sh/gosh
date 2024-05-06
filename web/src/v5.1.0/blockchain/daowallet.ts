@@ -944,6 +944,12 @@ export class DaoWallet extends BaseContract {
     })
   }
 
+  async transferTokensAsDaoAuto(params: { dst_wallet: string }) {
+    await this.run('daoSendTokenToNewVersionAuto', {
+      wallet: params.dst_wallet,
+    })
+  }
+
   /**
    * Private methods
    */

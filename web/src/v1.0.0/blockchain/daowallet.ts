@@ -14,6 +14,10 @@ export class DaoWallet extends BaseContract {
     return !!value0
   }
 
+  async isLimited() {
+    return false
+  }
+
   async getDetails() {
     const { value0: daoAddr } = await this.runLocal('getAddrDao', {})
     return {
@@ -38,7 +42,9 @@ export class DaoWallet extends BaseContract {
     const balance = await this.smvLockerBalance()
     return {
       regular: parseInt(m_pseudoDAOBalance),
-      ...balance,
+      voting: balance.total,
+      locked: balance.locked,
+      allowance: balance.total,
     }
   }
 
