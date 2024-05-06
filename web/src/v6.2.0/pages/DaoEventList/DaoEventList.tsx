@@ -3,11 +3,12 @@ import { useEffect, useState } from 'react'
 import { matchPath } from 'react-router-dom'
 import Loader from '../../../components/Loader'
 import { DaoMemberWallet, DaoMembers, DaoSupply } from '../../components/Dao'
-import { useDaoEventList, useDaoMember } from '../../hooks/dao.hooks'
+import { useDao, useDaoEventList, useDaoMember } from '../../hooks/dao.hooks'
 import DaoEventPage from '../DaoEvent/DaoEvent'
 import { ListBoundary } from './components'
 
 const DaoEventListPage = () => {
+  const dao = useDao()
   const member = useDaoMember()
   const [eventOpened, setEventOpened] = useState<string>()
   const eventList = useDaoEventList()
@@ -17,14 +18,16 @@ const DaoEventListPage = () => {
       '/o/:dao/events/:address',
       document.location.pathname,
     )
-    if (matched?.params.address) {
-      eventList.openItem(matched.params.address)
-      setEventOpened(matched.params.address)
+    if (dao.details.name === matched?.params.dao) {
+      if (matched?.params.address) {
+        eventList.openItem(matched.params.address)
+        setEventOpened(matched.params.address)
+      }
     } else {
       eventList.closeItems()
       setEventOpened(undefined)
     }
-  }, [document.location.pathname])
+  }, [document.location.pathname, dao.details.name])
 
   return (
     <>
