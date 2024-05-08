@@ -107,7 +107,9 @@ export class Dao extends BaseContract {
           const extWallet = await extDao.getMemberWallet({
             data: { profile: this.address },
           })
-          toparse.wallets[extDaoKey] = extWallet.address
+          if (await extWallet.isDeployed()) {
+            toparse.wallets[extDaoKey] = extWallet.address
+          }
         }
       }
     }
