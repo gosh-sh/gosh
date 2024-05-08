@@ -60,7 +60,9 @@ export class Task extends BaseContract {
     const tags = data.hashtag.filter((item: string) => {
       return [SYSTEM_TAG, MILESTONE_TASK_TAG].indexOf(item) < 0
     })
-    const repository = await getSystemContract().getRepository({ address: data.repo })
+    const repository = await getSystemContract().getRepository({
+      address: data.repo,
+    })
 
     const candidate = data.candidates.length ? data.candidates[0] : null
     let team: TTaskDetails['team'] = null
@@ -68,29 +70,31 @@ export class Task extends BaseContract {
       // Resolve team users
       const daomembers = Object.keys(candidate.daoMembers)
       const users = await Promise.all(
-        ['pubaddrassign', 'pubaddrreview', 'pubaddrmanager'].map(async (key) => {
-          return await Promise.all(
-            Object.keys(candidate[key]).map(async (profile: string) => {
-              const user = { name: '', type: EDaoMemberType.User }
-              if (daomembers.indexOf(profile) >= 0) {
-                user.name = candidate.daoMembers[profile]
-                user.type = EDaoMemberType.Dao
-              } else {
-                const account = await AppConfig.goshroot.getUserProfile({
-                  address: profile,
-                })
-                user.name = await account.getName()
-                user.type = EDaoMemberType.User
-              }
+        ['pubaddrassign', 'pubaddrreview', 'pubaddrmanager'].map(
+          async (key) => {
+            return await Promise.all(
+              Object.keys(candidate[key]).map(async (profile: string) => {
+                const user = { name: '', type: EDaoMemberType.User }
+                if (daomembers.indexOf(profile) >= 0) {
+                  user.name = candidate.daoMembers[profile]
+                  user.type = EDaoMemberType.Dao
+                } else {
+                  const account = await AppConfig.goshroot.getUserProfile({
+                    address: profile,
+                  })
+                  user.name = await account.getName()
+                  user.type = EDaoMemberType.User
+                }
 
-              return {
-                username: user.name,
-                usertype: user.type,
-                profile,
-              } as TTaskTeamMember
-            }),
-          )
-        }),
+                return {
+                  username: user.name,
+                  usertype: user.type,
+                  profile,
+                } as TTaskTeamMember
+              }),
+            )
+          },
+        ),
       )
 
       // Get commit data

@@ -1162,10 +1162,8 @@ export function useDaoMemberList(
           TDaoDetailsMemberItem,
           TDaoMemberListItem
         >(members_slice, MAX_PARALLEL_READ, async (item) => {
-          const { profile, daomembers } = item
-
-          const name = daomembers[profile.address] || (await profile.getName())
-          const { voting, locked, regular } = await item.wallet.getBalance()
+          const { name, wallet } = item
+          const { voting, locked, regular } = await wallet.getBalance()
           return {
             ...item,
             username: name,

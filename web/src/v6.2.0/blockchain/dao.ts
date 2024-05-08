@@ -7,6 +7,7 @@ import { EDaoMemberType, type TDaoDetailsMemberItem } from '../types/dao.types'
 import DaoABI from './abi/dao.abi.json'
 import { DaoEvent } from './daoevent'
 import { DaoWallet } from './daowallet'
+import { getSystemContract } from './helpers'
 
 export class Dao extends BaseContract {
   constructor(client: TonClient, address: string) {
@@ -69,6 +70,7 @@ export class Dao extends BaseContract {
     isDaoMemberOf?: boolean
   }): Promise<TDaoDetailsMemberItem[]> {
     const { parse, isDaoMemberOf } = options
+    const sc = getSystemContract()
 
     const toparse = parse || {
       wallets: {},
@@ -94,6 +96,22 @@ export class Dao extends BaseContract {
       delete toparse.daomembers[key]
     }
 
+    // Force insert wallet in another DAO for current DAO,
+    // when isDaoMemberOf=true and wallet of some version in another DAO exists
+    if (isDaoMemberOf) {
+      for (const key of [...Object.keys(toparse.wallets)]) {
+        let extDao = await sc.getDao({ address: `0:${key.slice(2)}` })
+        extDao = await sc.getDao({ name: await extDao.getName() })
+        const extDaoKey = `0x${extDao.address.slice(2)}`
+        if ((await extDao.isDeployed()) && !toparse.wallets[extDaoKey]) {
+          const extWallet = await extDao.getMemberWallet({
+            data: { profile: this.address },
+          })
+          toparse.wallets[extDaoKey] = extWallet.address
+        }
+      }
+    }
+
     const daoaddr = Object.keys(toparse.daomembers).map((key) => key)
     const members = await Promise.all(
       Object.keys(toparse.wallets).map(async (key) => {
@@ -102,9 +120,11 @@ export class Dao extends BaseContract {
         const resolved: {
           type: EDaoMemberType
           account: UserProfile | Dao
+          name: string
         } = {
           type: EDaoMemberType.User,
           account: new UserProfile(this.client, testaddr),
+          name: '',
         }
         if (isDaoMemberOf) {
           resolved.type = EDaoMemberType.Dao
@@ -113,15 +133,19 @@ export class Dao extends BaseContract {
           resolved.account = (await sc.getDao({
             address: resolved.account.address,
           })) as Dao
+          resolved.name = await resolved.account.getName()
         } else {
           resolved.type =
             daoaddr.indexOf(testaddr) >= 0
               ? EDaoMemberType.Dao
               : EDaoMemberType.User
-          resolved.account =
-            resolved.type === EDaoMemberType.Dao
-              ? new Dao(this.client, testaddr)
-              : new UserProfile(this.client, testaddr)
+          if (resolved.type === EDaoMemberType.Dao) {
+            resolved.account = new Dao(this.client, testaddr)
+            resolved.name = toparse.daomembers[resolved.account.address]
+          } else if (resolved.type === EDaoMemberType.User) {
+            resolved.account = new UserProfile(this.client, testaddr)
+            resolved.name = await resolved.account.getName()
+          }
         }
 
         // Parse DAO member expert tags
@@ -148,7 +172,7 @@ export class Dao extends BaseContract {
         }
 
         return {
-          name: await resolved.account.getName(),
+          name: resolved.name,
           usertype: resolved.type,
           profile: resolved.account,
           wallet,
