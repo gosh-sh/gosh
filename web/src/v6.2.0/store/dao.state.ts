@@ -298,7 +298,7 @@ export const daoIsMemberOfSelector = selectorFamily<
         ...data,
         items: [...data.items]
           .filter(({ balance }) => balance > 0)
-          .sort((a, b) => (a.name > b.name ? 1 : -1))
+          .sort((a, b) => (a.name > b.name ? -1 : 1))
           .sort((a, b) => (a.version > b.version ? 1 : -1)),
       }
     },
