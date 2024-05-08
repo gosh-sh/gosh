@@ -171,16 +171,6 @@ export class Dao extends BaseContract {
           wallet = new DaoWallet(this.client, toparse.wallets[key].member)
         }
 
-        // Get wallet depending on parsing type
-        let wallet: DaoWallet
-        if (isDaoMemberOf) {
-          wallet = await (resolved.account as Dao).getMemberWallet({
-            address: toparse.wallets[key],
-          })
-        } else {
-          wallet = new DaoWallet(this.client, toparse.wallets[key].member)
-        }
-
         return {
           name: resolved.name,
           usertype: resolved.type,
