@@ -43,19 +43,7 @@ import { GoshRepository } from '../blockchain/repository'
 import { SystemContract } from '../blockchain/systemcontract'
 import { Task } from '../blockchain/task'
 import { getGrantMapping } from '../components/Task'
-import {
-  daoDetailsSelector,
-  daoEventListSelector,
-  daoEventSelector,
-  daoInviteListAtom,
-  daoIsMemberOfSelector,
-  daoMemberListSelector,
-  daoMemberSelector,
-  daoTaskListSelector,
-  daoTaskSelector,
-  partnerDaoListAtom,
-  userDaoListAtom,
-} from '../store/dao.state'
+import {} from '../store/dao.state'
 import {
   EDaoInviteStatus,
   EDaoMemberType,

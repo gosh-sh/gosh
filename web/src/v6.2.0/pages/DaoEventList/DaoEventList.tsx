@@ -1,7 +1,10 @@
 import classNames from 'classnames'
 import { useEffect, useState } from 'react'
 import { matchPath } from 'react-router-dom'
+import { useSetRecoilState } from 'recoil'
 import Loader from '../../../components/Loader'
+import { appModalStateAtom } from '../../../store/app.state'
+import { CreateExternalDaoEvent } from '../../components/CreateExternalDaoEvent'
 import { DaoMemberWallet, DaoMembers, DaoSupply } from '../../components/Dao'
 import { useDao, useDaoEventList, useDaoMember } from '../../hooks/dao.hooks'
 import DaoEventPage from '../DaoEvent/DaoEvent'
@@ -11,7 +14,16 @@ const DaoEventListPage = () => {
   const dao = useDao()
   const member = useDaoMember()
   const [eventOpened, setEventOpened] = useState<string>()
+  const setModal = useSetRecoilState(appModalStateAtom)
   const eventList = useDaoEventList()
+
+  const openCreateExternalEvent = () => {
+    setModal({
+      static: true,
+      isOpen: true,
+      element: <CreateExternalDaoEvent />,
+    })
+  }
 
   useEffect(() => {
     const matched = matchPath(
