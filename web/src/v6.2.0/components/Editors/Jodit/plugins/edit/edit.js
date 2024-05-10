@@ -3,17 +3,10 @@
  * Released under MIT see LICENSE.txt in the project root for license information.
  * Copyright (c) 2013-2024 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
-import { Dom } from "jodit/esm/core/dom/dom.js";
-import { pluginSystem } from "jodit/esm/core/global.js";
-import { alignElement } from "jodit/esm/core/helpers/utils/align.js";
-import { camelCase } from "jodit/esm/core/helpers/string/camel-case.js";
-import { kebabCase } from "jodit/esm/core/helpers/string/kebab-case.js";
-import { ucfirst } from "jodit/esm/core/helpers/string/ucfirst.js";
-import { css } from "jodit/esm/core/helpers/utils/css.js";
-import { Icon } from "jodit/esm/core/ui/icon.js";
-import { findControlType } from "jodit/esm/core/ui/helpers/get-control-type.js";
+import { pluginSystem } from "../../jodit/esm/core/global.js";
+import { findControlType } from "../../jodit/esm/core/ui/helpers/get-control-type.js";
 
-import { Config } from "jodit/esm/config.js";
+import { Config } from "../../jodit/esm/config.js";
 
 Config.prototype.controls.editMenu = {
     name: 'editMenu',
@@ -27,7 +20,17 @@ Config.prototype.controls.editMenu = {
     // isActive: (editor) => !editor.s.isCollapsed(),
     defaultValue: [],
     // list: ['editUndo', 'editRedo', '|', 'find', 'find-replace', '\n', 'editPrint'],
-    list: ['editFind', 'editReplace', '\n', 'editPrint'],
+    list: [
+        'editSelectAll',
+        'editCopy',
+        'editCut',
+        'editPaste',
+        '|',
+        'editFind',
+        'editReplace',
+        '\n',
+        'editPrint'
+    ],
     isChildDisabled: (editor, button) => {},
     update(editor, button) {
         button.state.hasTrigger = false
@@ -38,7 +41,7 @@ Config.prototype.controls.editMenu = {
         // console.log(icon);
         // console.log(button);
         // console.log(value);
-        return '<div>Хер' + value + '</div>'
+        return '<div>' + value + '</div>'
     },
     // list: {
     //     fileImport: 'Import file',
@@ -76,6 +79,38 @@ Config.prototype.controls.editUndo = {
     // isActive: false,
     // isDisabled: true,
 };
+Config.prototype.controls.editCopy = {
+    command: 'copy',
+    text: 'Copy',
+    icon: 'copy',
+    template: (editor, key, value, button) => {
+        return '<div>' + value + '</div>'
+    },
+};
+Config.prototype.controls.editCut = {
+    command: 'cut',
+    text: 'Cut',
+    icon: 'cut',
+    template: (editor, key, value, button) => {
+        return '<div>' + value + '</div>'
+    },
+};
+Config.prototype.controls.editPaste = {
+    command: 'paste',
+    text: 'Paste',
+    icon: 'paste',
+    template: (editor, key, value, button) => {
+        return '<div>' + value + '</div>'
+    },
+};
+Config.prototype.controls.editSelectAll = {
+    command: 'selectAll',
+    text: 'Select All',
+    icon: 'selectall',
+    template: (editor, key, value, button) => {
+        return '<div>' + value + '</div>'
+    },
+};
 Config.prototype.controls.editRedo = {
     command: 'redo',
     text: 'Redo',
@@ -85,19 +120,12 @@ Config.prototype.controls.editRedo = {
 
         return '<div>' + value + '</div>'
     },
-    // isActive: false,
-    // isDisabled: true,
 };
 Config.prototype.controls.editPrint = {
     ...Config.prototype.controls.print,
     command: 'print',
     text: 'Print',
-    icon: 'print',
-    // isActive: false,
-    isDisabled: true,
-    update(editor, button) {
-        button.state.icon.name = 'print';
-    },
+    isDisabled: () => false,
     template: (editor, key, value) => {
         return `<div style="display: flex; align-items: center; padding-right: 3px;">
         <span style="width: 24px; display: inline-block; padding-left: 2px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1792 1792" class="jodit-icon_print jodit-icon"> <path d="M448 1536h896v-256h-896v256zm0-640h896v-384h-160q-40 0-68-28t-28-68v-160h-640v640zm1152 64q0-26-19-45t-45-19-45 19-19 45 19 45 45 19 45-19 19-45zm128 0v416q0 13-9.5 22.5t-22.5 9.5h-224v160q0 40-28 68t-68 28h-960q-40 0-68-28t-28-68v-160h-224q-13 0-22.5-9.5t-9.5-22.5v-416q0-79 56.5-135.5t135.5-56.5h64v-544q0-40 28-68t68-28h672q40 0 88 20t76 48l152 152q28 28 48 76t20 88v256h64q79 0 135.5 56.5t56.5 135.5z"></path></svg></span>
@@ -135,49 +163,6 @@ Config.prototype.controls.editReplace = {
         jodit.execCommand('openReplaceDialog');
     }
 };
-Config.prototype.controls.fileExportAs = {
-    command: 'file_export_as',
-    text: 'Export ...',
-    isDisabled: true,
-};
-Config.prototype.controls.fileSaveAsPDF = {
-    command: 'file_save_as_pdf',
-    text: 'Save as PDF',
-    isDisabled: () => true,
-};
-
-const edit = (htmlString, caseType) => {
-    // Create a temporary DOM element to hold the HTML
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = htmlString;
-
-    // Function to change the text nodes
-    function transformTextNodes(node) {
-        if (node.nodeType === 3) { // Node type 3 is a text node
-            switch (caseType) {
-                case 'uppercase':
-                    node.nodeValue = node.nodeValue.toUpperCase();
-                    break;
-                case 'lowercase':
-                    node.nodeValue = node.nodeValue.toLowerCase();
-                    break;
-                case 'titlecase':
-                    node.nodeValue = node.nodeValue.replace(/\w\S*/g, (txt) => {
-                        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-                    });
-                    break;
-            }
-        } else {
-            node.childNodes.forEach(transformTextNodes);
-        }
-    }
-
-    // Start transforming text nodes
-    transformTextNodes(tempDiv);
-
-    // Return the modified HTML
-    return tempDiv.innerHTML;
-}
 
 /**
  * Process commands: `uppercase`, `lowercase`, `capitalizedcase`

@@ -1,0 +1,29 @@
+/*!
+ * Jodit Editor (https://xdsoft.net/jodit/)
+ * Released under MIT see LICENSE.txt in the project root for license information.
+ * Copyright (c) 2013-2024 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ */
+import { Dom } from "../../../core/dom/index.js";
+import { loadItems } from "./load-items.js";
+/**
+ * Loads a list of directories
+ * @private
+ */
+export async function loadTree(fb) {
+    fb.tree.setMod('active', true);
+    Dom.detach(fb.tree.container);
+    const items = loadItems(fb);
+    if (fb.o.showFoldersPanel) {
+        fb.tree.setMod('loading', true);
+        const tree = fb.dataProvider
+            .tree(fb.state.currentPath, fb.state.currentSource)
+            .then(resp => {
+            fb.state.sources = resp;
+        })
+            .catch(fb.status)
+            .finally(() => fb.tree.setMod('loading', false));
+        return Promise.all([tree, items]);
+    }
+    fb.tree.setMod('active', false);
+    return items;
+}

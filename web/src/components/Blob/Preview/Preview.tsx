@@ -19,6 +19,7 @@ import { ToastError } from '../../Toast'
 import CommentForm, { TCommentFormValues } from '../CommentForm'
 import LineContent from './LineContent'
 import LineNumber from './LineNumber'
+import { Filetype } from '../../../pages/BlobCreate'
 
 const parseMarkdown = (value: string) => {
   const recursive = (
@@ -413,6 +414,26 @@ const BlobPreview = (props: TBlobPreviewProps) => {
               },
             }}
           />
+        </div>
+      </div>
+    )
+  }
+
+  if (extension === Filetype.DOCUMENT || extension === Filetype.DOCUMENT_OLD) {
+    return (
+      <div className={classNames(className)}>
+        <SelectionCommentBlock
+          show={selection.show}
+          position={selection.position}
+          onSubmit={submitCommentForm}
+        />
+
+        <div
+          className="jodit px-4 py-4"
+          onMouseUp={setTextSelection}
+          onMouseDown={resetTextSelection}
+          dangerouslySetInnerHTML={{__html: value   }}
+        >
         </div>
       </div>
     )

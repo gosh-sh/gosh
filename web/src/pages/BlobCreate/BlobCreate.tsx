@@ -6,6 +6,27 @@ import { ToastError } from '../../components/Toast'
 import { BlobCommitForm, TBlobCommitFormValues } from '../../components/Commit'
 import { useEffect, useState } from 'react'
 
+type TFiletype = {
+  CODE: 'code';
+  MARKDOWN: 'md';
+  DOCUMENT: 'gdoc';
+  DOCUMENT_OLD: 'html';
+  ODT: 'odt';
+};
+
+export const Filetype: Partial<TFiletype> & Iterable<[string, any]> = {
+  CODE: 'code',
+  MARKDOWN: 'md',
+  DOCUMENT: 'gdoc',
+  DOCUMENT_OLD: 'html',
+  ODT: 'odt',
+  [Symbol.iterator]: function* () {
+    for (const key of Object.keys(this) as (keyof TFiletype)[]) {
+      yield [key, this[key]];
+    }
+  },
+} as const;
+
 const BlobCreatePage = () => {
   const treepath = useParams()['*']
   const navigate = useNavigate()
@@ -20,7 +41,7 @@ const BlobCreatePage = () => {
   )
 
   useEffect(() => {
-    if(!["#md", "#odt", "#html"].includes(hash)) {
+    if(!Array.from(Filetype).map(([, val]) => val).includes(hash.replace('#',''))) {
       navigate(pathname, { replace: true })
     }
     setFiletype(hash.substring(1))
@@ -34,7 +55,7 @@ const BlobCreatePage = () => {
     try {
       const { name, content, title, message, tags, isPullRequest } = values
       const blobObject = {
-        treepath: ['', `${treepath ? `${treepath}/` : ''}${name}`],
+        treepath: ['', `${treepath ? `${treepath}/` : ''}${name.match(new RegExp(`\.${filetype}$`)) ? name : name.concat('.', filetype)}`],
         original: '',
         modified: content,
       }

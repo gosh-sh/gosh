@@ -3,14 +3,11 @@
  * Released under MIT see LICENSE.txt in the project root for license information.
  * Copyright (c) 2013-2024 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
-import { Dom } from "jodit/esm/core/dom/index.js";
-import { trimChars } from "jodit/esm/core/helpers/string/trim.js";
-import { css } from "jodit/esm/core/helpers/utils/css.js";
-import { Icon } from "jodit/esm/core/ui/icon.js";
-import fontIcon from "./icons/font.svg.js";
+import { Dom } from "../../jodit/esm/core/dom/index.js";
+import { css } from "../../jodit/esm/core/helpers/utils/css.js";
+import { Icon } from "../../jodit/esm/core/ui/icon.js";
 import fontsizeIcon from "./icons/fontsize.svg.js";
-import { Config } from "jodit/esm/config.js";
-import { faYoutubeSquare } from "@fortawesome/free-brands-svg-icons";
+import { Config } from "../../jodit/esm/config.js";
 /**
  * Default font-size points
  */

@@ -1,0 +1,19 @@
+/*!
+ * Jodit Editor (https://xdsoft.net/jodit/)
+ * Released under MIT see LICENSE.txt in the project root for license information.
+ * Copyright (c) 2013-2024 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ */
+/**
+ * @module helpers/checker
+ */
+import { isNumeric } from "./is-numeric.js";
+import { isString } from "./is-string.js";
+/**
+ * Check value is Int
+ */
+export function isInt(value) {
+    if (isString(value) && isNumeric(value)) {
+        value = parseFloat(value);
+    }
+    return typeof value === 'number' && Number.isFinite(value) && !(value % 1);
+}
