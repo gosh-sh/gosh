@@ -1,0 +1,25 @@
+/*!
+ * Jodit Editor (https://xdsoft.net/jodit/)
+ * Released under MIT see LICENSE.txt in the project root for license information.
+ * Copyright (c) 2013-2024 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ */
+import { Dom } from "../../../core/dom/dom.js";
+/**
+ * Checks whether the insertion of an element at the current location is allowed,
+ * if it is not allowed, it deletes an empty block element or moves the cursor after it
+ * @internal
+ */
+export function checkBlockNesting(jodit, node) {
+    if (Dom.isFragment(node)) {
+        node = node.firstChild;
+    }
+    if (jodit.o.dtd.checkBlockNesting && Dom.isBlock(node)) {
+        const parent = Dom.furthest(jodit.s.current(), Dom.isBlock, jodit.editor);
+        if (parent && !jodit.o.dtd.blockLimits[parent.tagName.toLowerCase()]) {
+            jodit.s.setCursorAfter(parent);
+            if (Dom.isEmpty(parent)) {
+                Dom.safeRemove(parent);
+            }
+        }
+    }
+}

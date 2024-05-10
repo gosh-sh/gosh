@@ -1,0 +1,11 @@
+/*!
+ * Jodit Editor (https://xdsoft.net/jodit/)
+ * Released under MIT see LICENSE.txt in the project root for license information.
+ * Copyright (c) 2013-2024 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ */
+import type { ICommitStyle, IJodit } from "../../../../types";
+/**
+ * Wrap text or inline elements inside Block element
+ * @private
+ */
+export declare function wrapUnwrappedText(style: ICommitStyle, elm: Node, jodit: IJodit): HTMLElement;
