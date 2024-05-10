@@ -29,6 +29,7 @@ import Loader from '../../components/Loader'
 import { onExternalLinkClick } from '../../helpers'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import RepoReadme from './Readme'
+import { Filetype } from '../BlobCreate'
 
 const RepoPage = () => {
   const treepath = useParams()['*'] || ''
@@ -48,8 +49,8 @@ const RepoPage = () => {
 
   const editors = [
     { to: `code`, title: 'Code', subtitle: '', className: 'text-gray-050a15' },
-    { to: `md`, title: 'Markdown', subtitle: '.md', className: 'text-gray-050a15' },
-    { to: `html`, title: 'Rich Text', subtitle: '.html', className: 'text-gray-050a15' },
+    { to: Filetype.MARKDOWN, title: 'Markdown', subtitle: `.${Filetype.MARKDOWN}`, className: 'text-gray-050a15' },
+    { to: Filetype.DOCUMENT, title: 'Rich Text', subtitle: `.${Filetype.DOCUMENT}`, className: 'text-gray-050a15' },
     // { to: `odt`, title: 'Office Doc', subtitle: '.odt', className: 'text-gray-050a15' },
   ]
 

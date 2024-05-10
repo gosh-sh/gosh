@@ -3,16 +3,9 @@
  * Released under MIT see LICENSE.txt in the project root for license information.
  * Copyright (c) 2013-2024 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
-import { Dom } from "jodit/esm/core/dom/dom.js";
-import { pluginSystem } from "jodit/esm/core/global.js";
-import { alignElement } from "jodit/esm/core/helpers/utils/align.js";
-import { camelCase } from "jodit/esm/core/helpers/string/camel-case.js";
-import { kebabCase } from "jodit/esm/core/helpers/string/kebab-case.js";
-import { ucfirst } from "jodit/esm/core/helpers/string/ucfirst.js";
-import { css } from "jodit/esm/core/helpers/utils/css.js";
-import { Icon } from "jodit/esm/core/ui/icon.js";
+import { pluginSystem } from "../../jodit/esm/core/global.js";
 
-import { Config } from "jodit/esm/config.js";
+import { Config } from "../../jodit/esm/config.js";
 
 Config.prototype.controls.fileMenu = {
     name: 'fileMenu',
@@ -41,7 +34,7 @@ Config.prototype.controls.fileMenu = {
 Config.prototype.controls.fileImport = {
     command: 'file_import',
     text: 'Import file',
-    isActive: true,
+    // isActive: () => true,
     isDisabled: () => false,
     template: (editor, key, value) => {
         return `<div style="display: flex; align-items: center; padding-right: 3px;">
@@ -75,6 +68,8 @@ Config.prototype.controls.fileImportGoogle = {
             </svg></span>
         ${value}</div>`
     },
+    exec: (jodit, _, { control }) => {
+    }
 }
 Config.prototype.controls.fileExportAs = {
     command: 'file_export_as',
@@ -84,6 +79,8 @@ Config.prototype.controls.fileExportAs = {
         return `<div style="display: flex; align-items: center; padding-right: 3px;">
         <i class="jodit_icon jodit_icon_image"></i>
         ${value}</div>`
+    },
+    exec: (jodit, _, { control }) => {
     }
 };
 Config.prototype.controls.fileSaveAsPDF = {
@@ -91,6 +88,8 @@ Config.prototype.controls.fileSaveAsPDF = {
     text: 'Save as PDF',
     isDisabled: () => true,
 
+    exec: (jodit, _, { control }) => {
+    }
 };
 
 /**
@@ -101,15 +100,24 @@ export function fileMenu(editor) {
         name: 'fileMenu',
         group: 'main'
     });
-    const callback = (command) => {
-        const range = editor.s.createRange();
-        // editor.s.insertHTML(changeHtmlCase(editor.s.html, command));
-        editor.s.remove();
-        editor.s.selectRange(range);
-        return true;
-    };
-    editor.registerCommand('file_import', callback);
-    editor.registerCommand('file_saveas', callback);
-    editor.registerCommand('file_share', callback);
+
+    editor.registerButton({
+        name: 'fileImport',
+        group: 'fileMenu'
+    });
+    editor.registerButton({
+        name: 'fileImportGoogle',
+        group: 'fileMenu'
+    });
+    // const callback = (command) => {
+    //     const range = editor.s.createRange();
+    //     // editor.s.insertHTML(changeHtmlCase(editor.s.html, command));
+    //     editor.s.remove();
+    //     editor.s.selectRange(range);
+    //     return true;
+    // };
+    // editor.registerCommand('file_import', callback);
+    // editor.registerCommand('file_saveas', callback);
+    // editor.registerCommand('file_share', callback);
 }
 pluginSystem.add('fileMenu', fileMenu);

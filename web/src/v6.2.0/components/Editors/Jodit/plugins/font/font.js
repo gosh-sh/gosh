@@ -3,8 +3,8 @@
  * Released under MIT see LICENSE.txt in the project root for license information.
  * Copyright (c) 2013-2024 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
-import { pluginSystem } from "jodit/esm/core/global.js";
-import { normalizeSize } from "jodit/esm/core/helpers/index.js";
+import { pluginSystem } from "../../jodit/esm/core/global.js";
+import { normalizeSize } from "../../jodit/esm/core/helpers/index.js";
 import "./config";
 /**
  * Process commands `font-size` and `font-family`

@@ -1,0 +1,8 @@
+/*!
+ * Jodit Editor (https://xdsoft.net/jodit/)
+ * Released under MIT see LICENSE.txt in the project root for license information.
+ * Copyright (c) 2013-2024 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ */
+export declare function isAtom(obj: unknown): boolean;
+export declare function markAsAtomic<T>(obj: T): T;
+export declare function fastClone<T>(object: T): T;

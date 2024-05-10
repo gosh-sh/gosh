@@ -1,0 +1,16 @@
+/*!
+ * Jodit Editor (https://xdsoft.net/jodit/)
+ * Released under MIT see LICENSE.txt in the project root for license information.
+ * Copyright (c) 2013-2024 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ */
+/**
+ * @module helpers/size
+ */
+export const innerWidth = (element, win) => {
+    const computedStyle = win.getComputedStyle(element);
+    let elementWidth = element.clientWidth; // width with padding
+    elementWidth -=
+        parseFloat(computedStyle.paddingLeft || '0') +
+            parseFloat(computedStyle.paddingRight || '0');
+    return elementWidth;
+};

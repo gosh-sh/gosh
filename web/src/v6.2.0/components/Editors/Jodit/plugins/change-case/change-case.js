@@ -1,18 +1,12 @@
 /*!
- * Jodit Editor (https://xdsoft.net/jodit/)
+ * Jodit Editor (https://xdsoft.net/../jodit_/)
  * Released under MIT see LICENSE.txt in the project root for license information.
  * Copyright (c) 2013-2024 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
-import { Dom } from "jodit/esm/core/dom/dom.js";
-import { pluginSystem } from "jodit/esm/core/global.js";
-import { alignElement } from "jodit/esm/core/helpers/utils/align.js";
-import { camelCase } from "jodit/esm/core/helpers/string/camel-case.js";
-import { kebabCase } from "jodit/esm/core/helpers/string/kebab-case.js";
-import { ucfirst } from "jodit/esm/core/helpers/string/ucfirst.js";
-import { css } from "jodit/esm/core/helpers/utils/css.js";
-import { Icon } from "jodit/esm/core/ui/icon.js";
+import { pluginSystem } from "../../jodit/esm/core/global.js";
+import { Icon } from "../../jodit/esm/core/ui/icon.js";
 import changeCaseIcon from "./change-case.svg.js";
-import { Config } from "jodit/esm/config.js";
+import { Config } from "../../jodit/esm/config.js";
 Icon.set('changeCase', changeCaseIcon);
 Config.prototype.controls.changeCase = {
     name: 'changeCase',
