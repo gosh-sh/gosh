@@ -238,7 +238,7 @@
 		{
 			"name": "getCellDaoTransferTokens",
 			"inputs": [
-				{"name":"wallet","type":"address"},
+				{"name":"newdao","type":"string"},
 				{"name":"newwallet","type":"address"},
 				{"name":"grant","type":"uint128"},
 				{"name":"oldversion","type":"string"},
@@ -252,7 +252,7 @@
 		{
 			"name": "getCellDaoVote",
 			"inputs": [
-				{"name":"wallet","type":"address"},
+				{"name":"newdao","type":"string"},
 				{"name":"platform_id","type":"uint256"},
 				{"name":"choice","type":"bool"},
 				{"name":"amount","type":"uint128"},
@@ -313,7 +313,7 @@
 		{
 			"name": "getCellForDaoReview",
 			"inputs": [
-				{"name":"wallet","type":"address"},
+				{"name":"newdao","type":"string"},
 				{"name":"propaddress","type":"address"},
 				{"name":"isAccept","type":"bool"},
 				{"name":"comment","type":"string"},
@@ -712,7 +712,7 @@
 		{
 			"name": "getCellForSendDaoToken",
 			"inputs": [
-				{"name":"wallet","type":"address"},
+				{"name":"newdao","type":"string"},
 				{"name":"pubaddr","type":"optional(address)"},
 				{"name":"grant","type":"uint128"},
 				{"name":"comment","type":"string"},
@@ -1216,7 +1216,7 @@
 		{
 			"name": "daoSendTokenToNewVersionAuto",
 			"inputs": [
-				{"name":"wallet","type":"address"}
+				{"name":"newdao","type":"string"}
 			],
 			"outputs": [
 			]
@@ -1294,6 +1294,17 @@
 			"inputs": [
 				{"name":"wallet","type":"address"},
 				{"name":"newwallet","type":"address"},
+				{"name":"grant","type":"uint128"},
+				{"name":"newversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendDaoTokenToNewVersionNew",
+			"inputs": [
+				{"name":"newdao","type":"string"},
+				{"name":"pubaddr","type":"address"},
 				{"name":"grant","type":"uint128"},
 				{"name":"newversion","type":"string"}
 			],
@@ -1399,7 +1410,7 @@
 		{
 			"name": "getCellForDaoAskGrant",
 			"inputs": [
-				{"name":"wallet","type":"address"},
+				{"name":"newdao","type":"string"},
 				{"name":"repoName","type":"string"},
 				{"name":"taskName","type":"string"},
 				{"name":"comment","type":"string"},
@@ -1412,7 +1423,7 @@
 		{
 			"name": "daoAskUnlockAfterTombstone",
 			"inputs": [
-				{"name":"wallet","type":"address"}
+				{"name":"newdao","type":"string"}
 			],
 			"outputs": [
 			]
@@ -1420,7 +1431,7 @@
 		{
 			"name": "getCellForDaoLockVote",
 			"inputs": [
-				{"name":"wallet","type":"address"},
+				{"name":"newdao","type":"string"},
 				{"name":"isLock","type":"bool"},
 				{"name":"grant","type":"uint128"},
 				{"name":"comment","type":"string"},
@@ -1671,7 +1682,7 @@
 		{
 			"name": "startMultiProposalAsDao",
 			"inputs": [
-				{"name":"wallet","type":"address"},
+				{"name":"newdao","type":"string"},
 				{"name":"number","type":"uint128"},
 				{"name":"proposals","type":"cell"},
 				{"name":"num_clients_base","type":"uint128"},
@@ -1685,7 +1696,7 @@
 		{
 			"name": "getCellTaskMultiAsDao",
 			"inputs": [
-				{"name":"wallet","type":"address"},
+				{"name":"newdao","type":"string"},
 				{"name":"number","type":"uint128"},
 				{"name":"proposals","type":"cell"},
 				{"name":"num_clients_base","type":"uint128"},

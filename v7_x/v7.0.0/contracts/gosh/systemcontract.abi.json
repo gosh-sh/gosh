@@ -502,6 +502,20 @@
 			]
 		},
 		{
+			"name": "DaoTransferToken4new",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"namedao","type":"string"},
+				{"name":"newdao","type":"string"},
+				{"name":"pubaddrnew","type":"address"},
+				{"name":"grant","type":"uint128"},
+				{"name":"newversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "getCode",
 			"inputs": [
 				{"name":"id","type":"uint8"},

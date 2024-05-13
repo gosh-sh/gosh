@@ -201,6 +201,14 @@ contract VersionController is Modifiers {
         tvm.accept();
         SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(oldversion)].Value, tvm.pubkey())).DaoTransferToken4{value : 0.15 ton, flag: 1}(pubaddr, index, namedao, wallet, newwallet, grant, newversion);
     }
+
+    function DaoTransferToken3new(address pubaddr, uint128 index, string namedao, string newdao, address pubaddrnew, uint128 grant, string oldversion, string newversion) public view {
+        require(_SystemContractCode.exists(tvm.hash(newversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        require(_SystemContractCode.exists(tvm.hash(oldversion)), ERR_SYSTEM_CONTRACT_BAD_VERSION);
+        require(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(newversion)].Value, tvm.pubkey()) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        tvm.accept();
+        SystemContract(GoshLib.calculateSystemContractAddress(_SystemContractCode[tvm.hash(oldversion)].Value, tvm.pubkey())).DaoTransferToken4new{value : 0.15 ton, flag: 1}(pubaddr, index, namedao, newdao, pubaddrnew, grant, newversion);
+    }
     
     function updateCodeDao(TvmCell newcode, TvmCell cell, string version) public accept saveMsg {
         require(_SystemContractCode.exists(tvm.hash(version)), ERR_SYSTEM_CONTRACT_BAD_VERSION);

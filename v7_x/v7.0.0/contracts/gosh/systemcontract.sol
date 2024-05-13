@@ -324,6 +324,11 @@ contract SystemContract is Modifiers {
         GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), pubaddr, index)).sendDaoTokenToNewVersion{value : 0.3 ton, flag: 1}(wallet, newwallet, grant, newversion);
     }
 
+    function DaoTransferToken4new(address pubaddr, uint128 index, string namedao, string newdao, address pubaddrnew, uint128 grant, string newversion) public view senderIs(_versionController) accept {
+        address wallet = GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), newdao), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), 0);
+        GoshWallet(GoshLib.calculateWalletAddress(_code[m_WalletCode], address(this), GoshLib.calculateDaoAddress(_code[m_DaoCode], address(this), namedao), pubaddr, index)).sendDaoTokenToNewVersion{value : 0.3 ton, flag: 1}(wallet, pubaddrnew, grant, newversion);
+    }
+
     function getCode(uint8 id, uint256 hash) public view minValue(0.2 ton) accept {
         if (hash == tvm.hash(_code[id])) { return; }
         GoshWallet(msg.sender).getCode{value: 0.1 ton, flag: 1}(id, _code[id]);

@@ -366,18 +366,20 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function getCellDaoTransferTokens(
-        address wallet, address newwallet, uint128 grant, string oldversion,
-        string comment, optional(uint32) time) external pure returns(TvmCell) {
+        string newdao, address newwallet, uint128 grant, string oldversion,
+        string comment, optional(uint32) time) external view returns(TvmCell) {
         if (time.hasValue() == false) { time = block.timestamp; }
         uint256 proposalKind = TRANSFER_TO_NEW_VERSION_PROPOSAL_KIND;
+        address wallet = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, GoshLib.calculateDaoAddress(_code[m_DaoCode], _systemcontract, newdao), _goshdao, 0);
         return abi.encode(proposalKind, wallet, newwallet, grant, oldversion, comment, time.get());
     }
     
     function getCellDaoVote(
-        address wallet, uint256 platform_id, bool choice, uint128 amount, uint128 num_clients_base, string note,
-        string comment, optional(uint32) time) external pure returns(TvmCell) {
+        string newdao, uint256 platform_id, bool choice, uint128 amount, uint128 num_clients_base, string note,
+        string comment, optional(uint32) time) external view returns(TvmCell) {
         uint256 proposalKind = DAO_VOTE_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
+        address wallet = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, GoshLib.calculateDaoAddress(_code[m_DaoCode], _systemcontract, newdao), _goshdao, 0);
         return abi.encode(proposalKind, wallet, platform_id, choice, amount, num_clients_base, note, comment, time.get());
     }
     
@@ -424,13 +426,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return abi.encode(proposalKind, description, comment, time.get());
     }
         
-    function getCellForDaoReview(address wallet,
+    function getCellForDaoReview(string newdao,
         address propaddress,
         bool isAccept,
         string comment,
-        optional(uint32) time) external pure returns(TvmCell) {
+        optional(uint32) time) external view returns(TvmCell) {
         uint256 proposalKind = REVIEW_CODE_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
+        address wallet = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, GoshLib.calculateDaoAddress(_code[m_DaoCode], _systemcontract, newdao), _goshdao, 0);
         return abi.encode(proposalKind, wallet, propaddress, isAccept, comment, time.get());
     }
     
@@ -893,13 +896,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return abi.encode(proposalKind, nametask, reponame, oldversion, oldtask, hashtag, comment, time.get());      
     }
 
-    function getCellForSendDaoToken(address wallet,
+    function getCellForSendDaoToken(string newdao,
         optional(address) pubaddr,
         uint128 grant,
         string comment,
-        optional(uint32) time) external pure returns(TvmCell) {
+        optional(uint32) time) external view returns(TvmCell) {
         uint256 proposalKind = SEND_TOKEN_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
+        address wallet = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, GoshLib.calculateDaoAddress(_code[m_DaoCode], _systemcontract, newdao), _goshdao, 0);
         return abi.encode(proposalKind, wallet, pubaddr, grant, comment, time.get());      
     }
     
@@ -1684,8 +1688,9 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         getMoney();
     }
 
-    function daoSendTokenToNewVersionAuto(address wallet) public onlyOwnerPubkeyOptional(_access)  accept saveMsg { 
+    function daoSendTokenToNewVersionAuto(string newdao) public onlyOwnerPubkeyOptional(_access)  accept saveMsg { 
         require(_tombstone == false, ERR_TOMBSTONE);
+        address wallet = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, GoshLib.calculateDaoAddress(_code[m_DaoCode], _systemcontract, newdao), _goshdao, 0);
         GoshDao(_goshdao).daoSendTokenToNewVersionAuto1{value: 0.2 ton, flag: 1}(_pubaddr, _index, wallet);
         getMoney();
     }
@@ -1758,6 +1763,15 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
 
     function sendDaoTokenToNewVersion(address wallet, address newwallet, uint128 grant, string newversion) public senderIs(_systemcontract) accept saveMsg {
         require(_limited == false, ERR_WALLET_LIMITED);
+        optional(address) neww = newwallet;
+        GoshDao(_goshdao).daoSendTokenToNewVersion{value : 0.2 ton, flag: 1}(_pubaddr, _index, wallet, neww, grant, newversion);
+        getMoney();
+    }
+
+    function sendDaoTokenToNewVersionNew(string newdao, address pubaddr, uint128 grant, string newversion) public senderIs(_systemcontract) accept saveMsg {
+        require(_limited == false, ERR_WALLET_LIMITED);
+        address wallet = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, GoshLib.calculateDaoAddress(_code[m_DaoCode], _systemcontract, newdao), _goshdao, 0);
+        address newwallet = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, GoshLib.calculateDaoAddress(_code[m_DaoCode], _systemcontract, newdao), pubaddr, 0);
         optional(address) neww = newwallet;
         GoshDao(_goshdao).daoSendTokenToNewVersion{value : 0.2 ton, flag: 1}(_pubaddr, _index, wallet, neww, grant, newversion);
         getMoney();
@@ -2008,26 +2022,29 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         return abi.encode(proposalKind, repoName, branchName, commit, numberChangedFiles, numberCommits, task, comment, time.get());
     }
     
-    function getCellForDaoAskGrant(address wallet, string repoName, string taskName,
-        string comment, optional(uint32) time) external pure returns(TvmCell) {
+    function getCellForDaoAskGrant(string newdao, string repoName, string taskName,
+        string comment, optional(uint32) time) external view returns(TvmCell) {
         uint256 proposalKind = ASK_TASK_GRANT_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
+        address wallet = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, GoshLib.calculateDaoAddress(_code[m_DaoCode], _systemcontract, newdao), _goshdao, 0);
         return abi.encode(proposalKind, wallet, repoName, taskName, comment, time.get());  
     }
     
-    function daoAskUnlockAfterTombstone(address wallet) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
+    function daoAskUnlockAfterTombstone(string newdao) public onlyOwnerPubkeyOptional(_access) accept saveMsg {
         require(_limited == false, ERR_WALLET_LIMITED);
+        address wallet = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, GoshLib.calculateDaoAddress(_code[m_DaoCode], _systemcontract, newdao), _goshdao, 0);
         GoshDao(_goshdao).daoAskLockTomb{value: 0.1 ton, flag: 1}(_pubaddr, _index, wallet);
     }
     
     function getCellForDaoLockVote(
-        address wallet,
+        string newdao,
         bool isLock,
         uint128 grant,
         string comment,
-        optional(uint32) time) external pure returns(TvmCell) {
+        optional(uint32) time) external view returns(TvmCell) {
         uint256 proposalKind = DAO_LOCK_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
+        address wallet = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, GoshLib.calculateDaoAddress(_code[m_DaoCode], _systemcontract, newdao), _goshdao, 0);
         return abi.encode(proposalKind, wallet, isLock, grant, comment, time.get());
     }
     
@@ -2320,7 +2337,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
     
     function startMultiProposalAsDao(
-        address wallet,
+        string newdao,
         uint128 number,
         TvmCell proposals,
         uint128 num_clients_base, 
@@ -2332,6 +2349,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         require(_limited == false, ERR_WALLET_LIMITED);
         require(number <= 50, ERR_TOO_MANY_PROPOSALS);
         require(number > 1, ERR_TOO_FEW_PROPOSALS);
+        address wallet = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, GoshLib.calculateDaoAddress(_code[m_DaoCode], _systemcontract, newdao), _goshdao, 0);
         tvm.accept();
         _saveMsg();
         uint256 proposalKind = MULTI_AS_DAO_PROPOSAL_KIND;
@@ -2343,14 +2361,15 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     
     
     function getCellTaskMultiAsDao(
-        address wallet,
+        string newdao,
         uint128 number,
         TvmCell proposals,
         uint128 num_clients_base, 
         address[] reviewers_base,
-        optional(uint32) time) external pure returns(TvmCell) {
+        optional(uint32) time) external view returns(TvmCell) {
         uint256 proposalKind = MULTI_AS_DAO_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
+        address wallet = GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, GoshLib.calculateDaoAddress(_code[m_DaoCode], _systemcontract, newdao), _goshdao, 0);
         return abi.encode(proposalKind, wallet, number, proposals, num_clients_base, reviewers_base, time.get());
     }
     
