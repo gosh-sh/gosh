@@ -8,7 +8,7 @@
  * @packageDocumentation
  * @module plugins/fonts
  */
-import type { IJodit } from "jodit/esm/types";
+import type { IJodit } from "../../jodit/esm/types";
 import "./config";
 /**
  * Process commands `font-size` and `font-family`

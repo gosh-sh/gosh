@@ -3,10 +3,8 @@
  * Released under MIT see LICENSE.txt in the project root for license information.
  * Copyright (c) 2013-2024 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
-import { Dom } from "jodit/esm/core/dom/index.js";
-import { Icon } from "jodit/esm/core/ui/icon.js";
-import paragraphIcon from "./paragraph.svg.js";
-import { Config } from "jodit/esm/config.js";
+
+import { Config } from "../../jodit/esm/config.js";
 
 Config.prototype.controls.paragraphpro = {
     ...Config.prototype.controls.paragraph,

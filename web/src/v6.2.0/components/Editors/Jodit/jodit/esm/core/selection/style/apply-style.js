@@ -1,0 +1,41 @@
+/*!
+ * Jodit Editor (https://xdsoft.net/jodit/)
+ * Released under MIT see LICENSE.txt in the project root for license information.
+ * Copyright (c) 2013-2024 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ */
+import { FiniteStateMachine } from "./api/index.js";
+import { INITIAL } from "./constants.js";
+import { states, transactions } from "./transactions.js";
+/** @internal */
+export function ApplyStyle(jodit, cs) {
+    const { s: sel, editor } = jodit;
+    // sel.save();
+    editor.firstChild?.normalize(); // FF fix for test "commandsTest - Exec command "bold"
+    const fakes = sel.fakes();
+    const gen = jodit.s.wrapInTagGen(fakes);
+    let font = gen.next();
+    if (font.done) {
+        return;
+    }
+    let state = {
+        collapsed: sel.isCollapsed(),
+        mode: INITIAL,
+        element: font.value,
+        next: states.START,
+        jodit,
+        style: cs
+    };
+    while (font && !font.done) {
+        const machine = new FiniteStateMachine(states.START, transactions);
+        state.element = font.value;
+        // machine.disableSilent();
+        while (machine.getState() !== states.END) {
+            // console.log(machine.getState(), state);
+            state = machine.dispatch('exec', state);
+        }
+        // console.log('-------------------');
+        font = gen.next();
+    }
+    // sel.restore();
+    sel.restoreFakes(fakes);
+}

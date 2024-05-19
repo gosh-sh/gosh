@@ -1,0 +1,13 @@
+/*!
+ * Jodit Editor (https://xdsoft.net/jodit/)
+ * Released under MIT see LICENSE.txt in the project root for license information.
+ * Copyright (c) 2013-2024 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ */
+import { Dom } from "../../../dom/dom.js";
+/**
+ * Check if FONT inside STYLE or SCRIPT element
+ * @private
+ */
+export function isInsideInvisibleElement(font, root) {
+    return Boolean(Dom.closest(font, ['style', 'script'], root));
+}

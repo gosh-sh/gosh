@@ -8,7 +8,7 @@
  * @packageDocumentation
  * @module plugins/format-block
  */
-import type { IJodit } from "jodit/esm/types";
+import type { IJodit } from "../../jodit/esm/types";
 import "./config";
 /**
  * Process command - `formatblock`

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import { EGoshError, splitByPath, useBlob, usePush } from 'react-gosh'
@@ -19,6 +19,7 @@ const BlobUpdatePage = () => {
     repository.adapter,
     branchName,
   )
+  const [filetype, setFiletype] = useState<string>('');
 
   const urlBack = `/o/${daoName}/r/${repoName}/blobs/view/${branchName}/${treepath}`
 
@@ -77,6 +78,13 @@ const BlobUpdatePage = () => {
     }
   }, [blob.content, navigate, urlBack])
 
+  useEffect(() => {
+    if (treepath && treepath.match(/\.(\w+)$/)?.length) {
+      setFiletype(treepath.match(/\.(\w+)$/)?.pop()!);
+    } else 
+      setFiletype('')
+  }, [treepath])
+
   if (!dao.details.isAuthMember) {
     return <Navigate to={urlBack} />
   }
@@ -93,6 +101,7 @@ const BlobUpdatePage = () => {
         <BlobCommitForm
           dao={dao}
           repository={repository}
+          filetype={filetype}
           branch={branchName}
           treepath={treepath!}
           initialValues={{

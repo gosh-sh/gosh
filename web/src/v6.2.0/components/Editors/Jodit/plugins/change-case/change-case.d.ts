@@ -8,7 +8,7 @@
  * @packageDocumentation
  * @module plugins/changeCase
  */
-import type { IJodit } from "jodit/esm/types";
+import type { IJodit } from "../../jodit/esm/types";
 /**
  * Process commands: `uppercase`, `lowercase`, `capitalizedcase`
  */

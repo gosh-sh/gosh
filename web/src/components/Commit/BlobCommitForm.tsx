@@ -23,6 +23,7 @@ import { IGoshDaoAdapter, IGoshRepositoryAdapter } from 'react-gosh/dist/gosh/in
 import yup from '../../v1.0.0/yup-extended'
 import { SunEditor } from '../../v6.2.0/components/Editors/SunEditor'
 import { JoditEditor } from '../../v6.2.0/components/Editors/JoditEditor'
+import { Filetype } from '../../pages/BlobCreate'
 
 export type TBlobCommitFormValues = {
   name: string
@@ -238,7 +239,7 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                     errorEnabled={false}
                     autoComplete="off"
                     placeholder="New file name"
-                    disabled={isSubmitting || !monaco || activeTab === 1}
+                    disabled={isSubmitting || activeTab === 1}
                     onBlur={(e: any) => {
                       onFilenameBlur(e, values, handleBlur, setFieldValue)
                     }}
@@ -301,8 +302,9 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                 <Tab.Panels className="-mt-[1px] border-t">
                   <Tab.Panel>
                   {(() => {
+                    console.log(filetype)
                     switch (filetype) {
-                      case 'md':
+                      case Filetype.MARKDOWN:
                         return <SunEditor
                         className="sun-editor--noborder"
                         defaultValue={values.content}
@@ -311,16 +313,17 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                           setFieldValue('content', value)
                         }}
                       />;
-                      case 'html':
+                      case Filetype.DOCUMENT:
+                      case Filetype.DOCUMENT_OLD:
                         return <JoditEditor
                         language={codeLanguage}
                         value={values.content}
                         disabled={isSubmitting}
-                        onChange={(value) => {
+                        onBlur={(value) => {
                           setFieldValue('content', value)
                         }}
                       />;;
-                      case 'odt':
+                      case Filetype.ODT:
                         return <></>;
                       default:
                         return <BlobEditor

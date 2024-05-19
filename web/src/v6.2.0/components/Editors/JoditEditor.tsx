@@ -1,32 +1,73 @@
-import { useEffect, useRef, forwardRef, useLayoutEffect, ChangeEventHandler } from 'react';
-import { Jodit } from 'jodit';
+import { useEffect, useRef, forwardRef, useLayoutEffect, ChangeEventHandler, useState } from 'react';
+import { Jodit } from './Jodit/jodit';
+
+import './Jodit/jodit/es5/jodit.fat.min.css';
+// import JoditCore from 'jodit';
 import { Config } from 'jodit/config';
-import 'jodit/es2021/jodit.fat.min.css';
-import 'jodit/esm/plugins/add-new-line/add-new-line';
-import 'jodit/esm/plugins/fullsize/fullsize';
-import 'jodit/esm/plugins/justify/justify';
-import 'jodit/esm/plugins/video/video';
-import 'jodit/esm/plugins/font/font';
-import 'jodit/esm/plugins/backspace/backspace';
-import 'jodit/esm/plugins/source/source';
-import 'jodit/esm/plugins/format-block/format-block';
-import 'jodit/esm/plugins/image-properties/image-properties';
-import 'jodit/esm/plugins/image/image';
-import 'jodit/esm/plugins/image-processor/image-processor';
-import 'jodit/esm/plugins/clean-html/clean-html';
-import 'jodit/esm/plugins/indent/indent';
-import 'jodit/esm/plugins/line-height/line-height';
-import 'jodit/esm/plugins/hr/hr';
-import 'jodit/esm/plugins/spellcheck/spellcheck';
-import 'jodit/esm/plugins/clipboard/clipboard';
-import 'jodit/esm/plugins/ordered-list/ordered-list';
-import 'jodit/esm/plugins/symbols/symbols';
-import 'jodit/esm/plugins/ai-assistant/ai-assistant';
-import 'jodit/esm/plugins/search/search';
-import 'jodit/esm/plugins/preview/preview';
-import 'jodit/esm/plugins/source/source';
-import 'jodit/esm/plugins/print/print';
-import 'jodit/esm/plugins/resizer/resizer';
+
+import "./Jodit/jodit/esm/plugins/add-new-line/add-new-line";
+import "./Jodit/jodit/esm/plugins/backspace/backspace";
+import "./Jodit/jodit/esm/plugins/delete/delete";
+import "./Jodit/jodit/esm/plugins/bold/bold";
+import "./Jodit/jodit/esm/plugins/class-span/class-span";
+import "./Jodit/jodit/esm/plugins/clean-html/clean-html";
+import "./Jodit/jodit/esm/plugins/clipboard/clipboard";
+import "./Jodit/jodit/esm/plugins/color/color";
+import "./Jodit/jodit/esm/plugins/copy-format/copy-format";
+import "./Jodit/jodit/esm/plugins/drag-and-drop/drag-and-drop";
+import "./Jodit/jodit/esm/plugins/drag-and-drop-element/drag-and-drop-element";
+import "./Jodit/jodit/esm/plugins/enter/enter";
+import "./Jodit/jodit/esm/plugins/file/file";
+import "./Jodit/jodit/esm/plugins/focus/focus";
+import "./Jodit/jodit/esm/plugins/font/font";
+import "./Jodit/jodit/esm/plugins/format-block/format-block";
+import "./Jodit/jodit/esm/plugins/fullsize/fullsize";
+import "./Jodit/jodit/esm/plugins/hotkeys/hotkeys";
+import "./Jodit/jodit/esm/plugins/hr/hr";
+import "./Jodit/jodit/esm/plugins/iframe/iframe";
+import "./Jodit/jodit/esm/plugins/image/image";
+import "./Jodit/jodit/esm/plugins/image-processor/image-processor";
+import "./Jodit/jodit/esm/plugins/image-properties/image-properties";
+import "./Jodit/jodit/esm/plugins/indent/indent";
+import "./Jodit/jodit/esm/plugins/inline-popup/inline-popup";
+import "./Jodit/jodit/esm/plugins/justify/justify";
+import "./Jodit/jodit/esm/plugins/key-arrow-outside/key-arrow-outside";
+import "./Jodit/jodit/esm/plugins/limit/limit";
+import "./Jodit/jodit/esm/plugins/line-height/line-height";
+import "./Jodit/jodit/esm/plugins/link/link";
+import "./Jodit/jodit/esm/plugins/media/media";
+import "./Jodit/jodit/esm/plugins/mobile/mobile";
+import "./Jodit/jodit/esm/plugins/ordered-list/ordered-list";
+import "./Jodit/jodit/esm/plugins/paste/paste";
+import "./Jodit/jodit/esm/plugins/paste-from-word/paste-from-word";
+import "./Jodit/jodit/esm/plugins/paste-storage/paste-storage";
+import "./Jodit/jodit/esm/plugins/placeholder/placeholder";
+import "./Jodit/jodit/esm/plugins/powered-by-jodit/powered-by-jodit";
+import "./Jodit/jodit/esm/plugins/preview/preview";
+import "./Jodit/jodit/esm/plugins/print/print";
+import "./Jodit/jodit/esm/plugins/redo-undo/redo-undo";
+import "./Jodit/jodit/esm/plugins/resize-cells/resize-cells";
+import "./Jodit/jodit/esm/plugins/resize-handler/resize-handler";
+import "./Jodit/jodit/esm/plugins/resizer/resizer";
+import "./Jodit/jodit/esm/plugins/search/search";
+import "./Jodit/jodit/esm/plugins/select/select";
+import "./Jodit/jodit/esm/plugins/select-cells/select-cells";
+import "./Jodit/jodit/esm/plugins/size/size";
+import "./Jodit/jodit/esm/plugins/source/source";
+import "./Jodit/jodit/esm/plugins/spellcheck/spellcheck";
+import "./Jodit/jodit/esm/plugins/stat/stat";
+import "./Jodit/jodit/esm/plugins/sticky/sticky";
+import "./Jodit/jodit/esm/plugins/symbols/symbols";
+import "./Jodit/jodit/esm/plugins/ai-assistant/ai-assistant";
+import "./Jodit/jodit/esm/plugins/tab/tab";
+import "./Jodit/jodit/esm/plugins/table/table";
+import "./Jodit/jodit/esm/plugins/table-keyboard-navigation/table-keyboard-navigation";
+import "./Jodit/jodit/esm/plugins/video/video";
+import "./Jodit/jodit/esm/plugins/wrap-nodes/wrap-nodes";
+import "./Jodit/jodit/esm/plugins/dtd/dtd";
+import "./Jodit/jodit/esm/plugins/xpath/xpath";
+
+
 import { Pandoc } from "./pandoc-wasm";
 
 import './Jodit/plugins/change-case/change-case';
@@ -34,7 +75,9 @@ import './Jodit/plugins/font/font';
 import './Jodit/plugins/file/file';
 import './Jodit/plugins/edit/edit';
 import './Jodit/plugins/format-block/format-block';
-import { MODE_WYSIWYG } from "jodit/esm/core/constants.js";
+import { MODE_WYSIWYG } from "./Jodit/jodit/esm/core/constants.js";
+import Loader from '../../../components/Loader';
+import './Jodit/plugins/outdent/outdent';
 
 const { isFunction } = Jodit.modules.Helpers;
 
@@ -77,6 +120,7 @@ const JoditEditor = forwardRef<HTMLTextAreaElement, TJoditEditorPanelProps>(
 	) => {
 		const editorElement = useRef<HTMLTextAreaElement>(null);
 		const editorInstance = useRef<Jodit>();
+    const [disabled, setDisabled] = useState<boolean>(false);
 
 		useLayoutEffect(() => {
 			if (ref) {
@@ -91,24 +135,25 @@ const JoditEditor = forwardRef<HTMLTextAreaElement, TJoditEditorPanelProps>(
 		useEffect(() => {
 			const element = editorElement.current;
   
-
-      const jodit = editorInstance.current ? null : Jodit.make(element as HTMLElement, {
+      
+      const jodit = Jodit.make(element as HTMLElement, {
 
         uploader: {
           insertImageAsBase64URI: true,
           imagesExtensions: ['jpg', 'png', 'jpeg', 'gif']
         },
-        height: 650,
+        height: 1200,
         // toolbarButtonSize: 'large', // Use 'large' for larger, more accessible buttons (Fat Mode)
-        toolbarSticky: true,
-        toolbarAdaptive: false,
-        showCharsCounter: true,
+        // toolbarSticky: true,
+        // toolbarAdaptive: false,
+        // showCharsCounter: true,
         showWordsCounter: true,
         showXPathInStatusbar: true,
-        askBeforePasteHTML: true,
+        askBeforePasteHTML: false,
         askBeforePasteFromWord: true,
         
-        safeMode: false,
+        // safeMode: false,
+        // autofocus: true,
         defaultMode: MODE_WYSIWYG,
         observer: {
             timeout: 100
@@ -152,8 +197,8 @@ const JoditEditor = forwardRef<HTMLTextAreaElement, TJoditEditorPanelProps>(
             buttons: []
           },
           {
-            group: 'media',
-            buttons: []
+            group: 'medias',
+            buttons: ['image', 'video']
           },
           {
             group: 'insertion',
@@ -178,14 +223,12 @@ const JoditEditor = forwardRef<HTMLTextAreaElement, TJoditEditorPanelProps>(
       ] 
     });
 
-      if (jodit) {
 
-        editorInstance.current = jodit;
-        
-        if (isFunction(editorRef)) {
-          editorRef(jodit);
-        }
-      }
+      editorInstance.current = jodit;
+
+			if (isFunction(editorRef)) {
+				editorRef(jodit);
+			}
 
 			return () => {
 				if (jodit) {
@@ -195,28 +238,28 @@ const JoditEditor = forwardRef<HTMLTextAreaElement, TJoditEditorPanelProps>(
 			};
 		}, []);
 
-		const previousClassName = usePrevious(className);
+		// const previousClassName = usePrevious(className);
 
-		useEffect(() => {
-			const classList = editorInstance.current?.container?.classList;
+		// useEffect(() => {
+		// 	const classList = editorInstance.current?.container?.classList;
 
-			if (
-				previousClassName !== className &&
-				typeof previousClassName === 'string'
-			) {
-				previousClassName.split(/\s+/).forEach(cl => classList?.remove(cl));
-			}
+		// 	if (
+		// 		previousClassName !== className &&
+		// 		typeof previousClassName === 'string'
+		// 	) {
+		// 		previousClassName.split(/\s+/).forEach(cl => classList?.remove(cl));
+		// 	}
 
-			if (className && typeof className === 'string') {
-				className.split(/\s+/).forEach(cl => classList?.add(cl));
-			}
-		}, [className, previousClassName]);
+		// 	if (className && typeof className === 'string') {
+		// 		className.split(/\s+/).forEach(cl => classList?.add(cl));
+		// 	}
+		// }, [className, previousClassName]);
 
-		useEffect(() => {
-			if (editorInstance.current?.workplace) {
-				editorInstance.current.workplace.tabIndex = tabIndex || -1;
-			}
-		}, [tabIndex]);
+		// useEffect(() => {
+		// 	if (editorInstance.current?.workplace) {
+		// 		editorInstance.current.workplace.tabIndex = tabIndex || -1;
+		// 	}
+		// }, [tabIndex]);
 
 		useEffect(() => {
 			if (!editorInstance.current?.events || (!onBlur && !onChange)) {
@@ -282,6 +325,10 @@ const JoditEditor = forwardRef<HTMLTextAreaElement, TJoditEditorPanelProps>(
 
     const handleFileChange: ChangeEventHandler<HTMLInputElement> = (event) => {
       if (event.target.files && event.target.files[0]) {
+        editorInstance.current!.e.fire('focus');
+        editorInstance.current!.o.disabled = true;
+        editorInstance.current!.focus();
+        setDisabled(true);
         const file = event.target.files[0];
         const filename = file.name.split('.').slice(-1)[0] || "txt";
         
@@ -304,8 +351,9 @@ const JoditEditor = forwardRef<HTMLTextAreaElement, TJoditEditorPanelProps>(
                   // },
                   options: { from: filename, to: "html", "embed-resources": true },
                 });
-                console.log(result);
 
+                editorInstance.current!.o.disabled = false;
+                setDisabled(false);
                 if (editorInstance.current) {
                   editorInstance.current.editor.lastChild 
                     && editorInstance.current.s.setCursorAfter(editorInstance.current.editor.lastChild)
@@ -331,6 +379,7 @@ const JoditEditor = forwardRef<HTMLTextAreaElement, TJoditEditorPanelProps>(
 		return (
       <>
 			<div className={'jodit-react-container'}>
+			  <div className={`jodit-status ${disabled && "active"}`}><Loader/>Processing imported file...</div>
 				<textarea
 					defaultValue={value}
 					name={name}
