@@ -196,8 +196,13 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
 
     // Resolve file code language by it's extension and update editor if it's code mode
     if (!filetype) {
-      const language = getCodeLanguageFromFilename(monaco, e.target.value)
-      setCodeLanguage(language)
+      try {
+        const language = getCodeLanguageFromFilename(monaco, e.target.value)
+        setCodeLanguage(language)
+      } catch (error) {
+        setCodeLanguage('plaintext')
+        console.error(error)
+      }
     }
 
     // Set commit title
@@ -207,9 +212,12 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
   }
 
   useEffect(() => {
-    if (monaco && treepath) {
+    try {
       const language = getCodeLanguageFromFilename(monaco, treepath)
       setCodeLanguage(language)
+    } catch (error) {
+      setCodeLanguage('plaintext')
+      console.error(error)
     }
   }, [monaco, treepath])
 
@@ -246,7 +254,7 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                     test-id="input-file-name"
                     className={filetype && "pr-7"}
                   />
-                  {values.name && <div className="flex mt-[-2.375rem] pointer-events-none top-0 right-0 w-full overflow-hidden leading-9 border border-transparent text-black/30 px-4 text-sm mx-[1px]">
+                  {values.name && filetype && !values.name.endsWith(filetype) && <div className="flex mt-[-2.375rem] pointer-events-none top-0 right-0 w-full overflow-hidden leading-9 border border-transparent text-black/30 px-4 text-sm mx-[1px]">
                     <div className="grow-1 shrink-0 text-transparent max-w-[calc(100%-1.75rem)]">{values.name}</div>
                     <div className={`grow-0 shrink-0 ${filetype && "w-[1.75rem]"}`}>{filetype && `.${filetype}`}</div>
                   </div>}
@@ -302,7 +310,6 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                 <Tab.Panels className="-mt-[1px] border-t">
                   <Tab.Panel>
                   {(() => {
-                    console.log(filetype)
                     switch (filetype) {
                       case Filetype.MARKDOWN:
                         return <SunEditor

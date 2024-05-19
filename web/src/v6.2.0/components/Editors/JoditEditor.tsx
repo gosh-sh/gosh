@@ -1,5 +1,6 @@
 import { useEffect, useRef, forwardRef, useLayoutEffect, ChangeEventHandler, useState } from 'react';
 import { Jodit } from './Jodit/jodit';
+import { toast } from 'react-toastify'
 
 import './Jodit/jodit/es5/jodit.fat.min.css';
 // import JoditCore from 'jodit';
@@ -78,6 +79,7 @@ import './Jodit/plugins/format-block/format-block';
 import { MODE_WYSIWYG } from "./Jodit/jodit/esm/core/constants.js";
 import Loader from '../../../components/Loader';
 import './Jodit/plugins/outdent/outdent';
+import './Jodit/plugins/ordered-list/ordered-list';
 
 const { isFunction } = Jodit.modules.Helpers;
 
@@ -332,49 +334,39 @@ const JoditEditor = forwardRef<HTMLTextAreaElement, TJoditEditorPanelProps>(
         const file = event.target.files[0];
         const filename = file.name.split('.').slice(-1)[0] || "txt";
         
-        console.log('Processing file:', file.name);
-        console.log('Filetype:', file.name.split('.').slice(-1)[0]);
-        
         const reader = new FileReader();
 
         const pandoc = new Pandoc();
-        reader.onload = (e: ProgressEvent<FileReader>) => {
-          const text = arrayBufferToBase64(e.target?.result as ArrayBuffer);
-          if (e.target?.result) {
-            pandoc.init().then(
-              async (pandoc) => {
-                console.log("init");  // Outputs the file contents in console
-                const result = await pandoc.run({
-                  text: text,
-                  // files: {
-                  //   [file.name]: e.target?.result || ''
-                  // },
-                  options: { from: filename, to: "html", "embed-resources": true },
-                });
-
-                editorInstance.current!.o.disabled = false;
-                setDisabled(false);
-                if (editorInstance.current) {
-                  editorInstance.current.editor.lastChild 
-                    && editorInstance.current.s.setCursorAfter(editorInstance.current.editor.lastChild)
-                  editorInstance.current.s.insertHTML(result);
+          reader.onload = (e: ProgressEvent<FileReader>) => {
+            const text = arrayBufferToBase64(e.target?.result as ArrayBuffer);
+            if (e.target?.result) {
+              pandoc.init().then(
+                async (pandoc) => {
+                  try {
+                    const result = await pandoc.run({
+                      text: text,
+                      options: { from: filename, to: "html", "embed-resources": true },
+                    });
+                    editorInstance.current!.o.disabled = false;
+                    setDisabled(false);
+                    if (editorInstance.current) {
+                      editorInstance.current.editor.lastChild 
+                        && editorInstance.current.s.setCursorAfter(editorInstance.current.editor.lastChild)
+                      editorInstance.current.s.insertHTML(result);
+                    }
+                  } catch (error) {
+                    editorInstance.current!.o.disabled = false;
+                    setDisabled(false);
+                    toast.warning('Oops, import failed...', { autoClose: 1500 })
+                  }
                 }
-              }
-            );
-          }
-        };
-        // reader.readAsText(file)
-        reader.readAsArrayBuffer(file)
+              );
+            }
+          };
+          reader.readAsArrayBuffer(file)
+
       }
     };
-  
-    // const handleClick = () => {
-    //   fileInputRef.current.click();  // Triggers the hidden file input
-    // };
-
-    // params.text = arrayBufferToBase64(await inputFile.files[0].arrayBuffer());
-    // // src/utils.ts
-
 
 		return (
       <>
@@ -395,7 +387,6 @@ const JoditEditor = forwardRef<HTMLTextAreaElement, TJoditEditorPanelProps>(
             ref={fileInputRef}
             onChange={handleFileChange}
           />
-          {/* <button onClick={handleClick}>Select File</button> */}
         </div>
       </>
 		);

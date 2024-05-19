@@ -10,7 +10,6 @@ import { getKey } from "../../jodit/esm/plugins/indent/helpers.js";
 
 Config.prototype.controls.outdent = {
     isDisabled: (editor) => {
-        console.log(1);
         const current = editor.s.current();
         if (current) {
             const currentBox = Dom.closest(current, Dom.isBlock, editor.editor);
@@ -22,6 +21,5 @@ Config.prototype.controls.outdent = {
             }
         }
         return true;
-    },
-    tooltip: 'Decrease Indent'
+    }
 };
