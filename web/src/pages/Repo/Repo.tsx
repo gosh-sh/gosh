@@ -51,7 +51,6 @@ const RepoPage = () => {
     { to: `code`, title: 'Code', subtitle: '', className: 'text-gray-050a15' },
     { to: Filetype.MARKDOWN, title: 'Markdown', subtitle: `.${Filetype.MARKDOWN}`, className: 'text-gray-050a15' },
     { to: Filetype.DOCUMENT, title: 'Rich Text', subtitle: `.${Filetype.DOCUMENT}`, className: 'text-gray-050a15' },
-    // { to: `odt`, title: 'Office Doc', subtitle: '.odt', className: 'text-gray-050a15' },
   ]
 
   useEffect(() => {

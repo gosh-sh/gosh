@@ -83,6 +83,11 @@ export const markdown2html = async (value: string) => {
   return rehyped.value.toString()
 }
 
+export const isHTML = (value: string) => {
+  const htmlPattern = /<([a-z][a-z0-9]*)\b[^>]*>(.*?)<\/\1>/i;
+  return htmlPattern.test(value);
+}
+
 /**
  * Toast shortcuts
  */

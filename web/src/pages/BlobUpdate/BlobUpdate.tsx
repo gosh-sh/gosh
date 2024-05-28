@@ -7,6 +7,8 @@ import { Buffer } from 'buffer'
 import { ToastError } from '../../components/Toast'
 import { BlobCommitForm, TBlobCommitFormValues } from '../../components/Commit'
 import Loader from '../../components/Loader'
+import { Filetype } from '../BlobCreate'
+import { html2markdown } from '../../helpers'
 
 const BlobUpdatePage = () => {
   const treepath = useParams()['*']
@@ -25,7 +27,8 @@ const BlobUpdatePage = () => {
 
   const onPush = async (values: TBlobCommitFormValues) => {
     try {
-      const { name, content, title, message, tags, isPullRequest } = values
+      const { name, title, message, tags, isPullRequest } = values
+      const content = filetype === Filetype.MARKDOWN ? await html2markdown(values.content) : values.content;
       const [path] = splitByPath(treepath!)
       const bPath = `${path ? `${path}/` : ''}${name}`
       const blobObject = {
