@@ -5,9 +5,10 @@ import { toast } from 'react-toastify'
 import { ToastError } from '../../components/Toast'
 import { BlobCommitForm, TBlobCommitFormValues } from '../../components/Commit'
 import { useEffect, useState } from 'react'
+import { html2markdown } from '../../helpers'
 
 type TFiletype = {
-  CODE: 'code';
+  CODE: '';
   MARKDOWN: 'md';
   DOCUMENT: 'gdoc';
   DOCUMENT_OLD: 'html';
@@ -15,7 +16,7 @@ type TFiletype = {
 };
 
 export const Filetype: Partial<TFiletype> & Iterable<[string, any]> = {
-  CODE: 'code',
+  CODE: '',
   MARKDOWN: 'md',
   DOCUMENT: 'gdoc',
   DOCUMENT_OLD: 'html',
@@ -53,7 +54,8 @@ const BlobCreatePage = () => {
 
   const onPush = async (values: TBlobCommitFormValues) => {
     try {
-      const { name, content, title, message, tags, isPullRequest } = values
+      const { name, title, message, tags, isPullRequest } = values
+      const content = filetype === Filetype.MARKDOWN ? await html2markdown(values.content) : values.content;
       const blobObject = {
         treepath: ['', `${treepath ? `${treepath}/` : ''}${name.match(new RegExp(`\.${filetype}$`)) ? name : name.concat('.', filetype)}`],
         original: '',

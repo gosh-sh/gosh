@@ -24,6 +24,7 @@ import yup from '../../v1.0.0/yup-extended'
 import { SunEditor } from '../../v6.2.0/components/Editors/SunEditor'
 import { JoditEditor } from '../../v6.2.0/components/Editors/JoditEditor'
 import { Filetype } from '../../pages/BlobCreate'
+import { html2markdown, isHTML, markdown2html } from '../../helpers'
 
 export type TBlobCommitFormValues = {
   name: string
@@ -81,8 +82,9 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<number>(0)
   const [codeLanguage, setCodeLanguage] = useState<string>('plaintext')
+  const [initialFormikValues, setInitialFormikValues] = useState<TBlobCommitFormValues>()
 
-  const getInitialValues = () => {
+  const getInitialValues = async () => {
     const version_1_0_0 = {}
     const version_2_0_0 = {
       task: '',
@@ -108,6 +110,16 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
       versionised = version_3_0_0
     } else {
       versionised = version_3_0_0
+    }
+
+    // file content processing as editors work in HTML
+    switch (filetype) {
+      case Filetype.MARKDOWN:
+        if (!isHTML(initialValues.content)) initialValues.content = await markdown2html(initialValues.content)
+        break;
+    
+      default:
+        break;
     }
 
     return { ...initialValues, ...versionised }
@@ -221,10 +233,19 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
     }
   }, [monaco, treepath])
 
+  useEffect(() => {
+    const  fetchInitialValues = async () => {
+      const values = await getInitialValues();
+      setInitialFormikValues(values);
+    };
+
+    fetchInitialValues();
+  }, []);
+
   return (
     <div className={classNames(className)}>
-      <Formik
-        initialValues={getInitialValues()}
+      {initialFormikValues && <Formik
+        initialValues={initialFormikValues}
         validationSchema={getValidationSchema()}
         onSubmit={onSubmit}
       >
@@ -316,7 +337,7 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                         className="sun-editor--noborder"
                         defaultValue={values.content}
                         disable={isSubmitting}
-                        onChange={(value) => {
+                        onBlur={(value) => {
                           setFieldValue('content', value)
                         }}
                       />;
@@ -365,7 +386,7 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
             />
           </Form>
         )}
-      </Formik>
+      </Formik>}
     </div>
   )
 }
