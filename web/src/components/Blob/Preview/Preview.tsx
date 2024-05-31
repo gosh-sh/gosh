@@ -24,7 +24,6 @@ import rehypeParse from 'rehype-parse'
 import rehypeStringify from 'rehype-stringify'
 import { Node, Parent } from 'unist'
 import { visit } from 'unist-util-visit';
-import file from './test';
 import rehypeRemark from 'rehype-remark'
 import remarkStringify from 'remark-stringify'
 import { isHTML } from '../../../helpers'
@@ -155,7 +154,7 @@ const parseHTML = (value: string) => {
 
         const wordsAndSpaces = node.value.split(/(\s+)/).filter(val => val);
         const children: Node[] = [];
-        const { start, end } = tree.position!;
+        const { start, end } = node.position!;
         for (const segment of wordsAndSpaces) {
           const columnEnd = start.column + segment.length
           const offsetEnd = (start.offset || 0) + segment.length
@@ -168,7 +167,7 @@ const parseHTML = (value: string) => {
               type: 'element',
               tagName: 'span',
               properties: {
-                'data-backref': JSON.stringify(node.position),
+                'data-backref': JSON.stringify(position),
                 'data-index': index,
               },
               children: [{ type: 'text', value: segment, position } as TextNode],
@@ -179,6 +178,9 @@ const parseHTML = (value: string) => {
           } else {
             children.push({ type: 'text', value: segment, position, index } as TextNode);
           }
+
+          start.column = columnEnd
+          start.offset = offsetEnd
         }
   
         parent.children.splice(idx, 1, ...children);
@@ -287,7 +289,7 @@ const BlobPreview = (props: TBlobPreviewProps) => {
   }
 
   const setTextSelection = (e: MouseEvent) => {
-    const position = [e.clientX, e.clientY]
+    const position = [e.pageX, e.pageY]
     selectionWindow.current = window.getSelection()
 
     /**

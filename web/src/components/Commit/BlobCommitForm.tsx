@@ -337,7 +337,7 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                         className="sun-editor--noborder"
                         defaultValue={values.content}
                         disable={isSubmitting}
-                        onBlur={(value) => {
+                        onChange={(value) => {
                           setFieldValue('content', value)
                         }}
                       />;
