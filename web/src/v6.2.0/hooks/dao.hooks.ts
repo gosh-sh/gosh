@@ -2112,6 +2112,22 @@ export function useUpdateDaoMember() {
           return aKarmaChange - bKarmaChange
         })
         for (const item of sortedProfiles) {
+          // Balance change
+          if (item.balance > item._balance) {
+            const delta = item.balance - item._balance
+            const _comment = `Add ${delta} regular tokens to ${item.username}`
+            events.push({
+              type: EDaoEventType.DAO_TOKEN_REGULAR_ADD,
+              params: {
+                profile: item.profile,
+                amount: delta,
+                comment: _comment,
+              },
+              fn: 'addDaoRegularTokens',
+            })
+            comments.push(_comment)
+          }
+
           // Allowance change
           if (item.allowance - item._allowance !== 0) {
             const delta = Math.abs(item.allowance - item._allowance)
@@ -2129,22 +2145,6 @@ export function useUpdateDaoMember() {
                 comment: _comment,
               },
               fn: 'updateDaoMemberAllowance',
-            })
-            comments.push(_comment)
-          }
-
-          // Balance change
-          if (item.balance > item._balance) {
-            const delta = item.balance - item._balance
-            const _comment = `Add ${delta} regular tokens to ${item.username}`
-            events.push({
-              type: EDaoEventType.DAO_TOKEN_REGULAR_ADD,
-              params: {
-                profile: item.profile,
-                amount: delta,
-                comment: _comment,
-              },
-              fn: 'addDaoRegularTokens',
             })
             comments.push(_comment)
           }
