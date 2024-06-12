@@ -2109,7 +2109,7 @@ export function useUpdateDaoMember() {
         const sortedProfiles = profiles.sort((a, b) => {
           const aKarmaChange = a._allowance - a.allowance
           const bKarmaChange = b._allowance - b.allowance
-          return aKarmaChange - bKarmaChange
+          return bKarmaChange - aKarmaChange
         })
         for (const item of sortedProfiles) {
           // Balance change
