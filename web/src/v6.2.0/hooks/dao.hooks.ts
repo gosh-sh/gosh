@@ -2107,7 +2107,9 @@ export function useUpdateDaoMember() {
         const events = []
         const comments = []
         const sortedProfiles = profiles.sort((a, b) => {
-          return a.allowance - b.allowance
+          const aKarmaChange = a._allowance - a.allowance
+          const bKarmaChange = b._allowance - b.allowance
+          return aKarmaChange - bKarmaChange
         })
         for (const item of sortedProfiles) {
           // Allowance change
