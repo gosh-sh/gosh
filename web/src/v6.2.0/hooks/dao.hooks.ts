@@ -2120,7 +2120,11 @@ export function useUpdateDaoMember() {
                     increase: item.allowance > item._allowance,
                     amount: delta,
                   },
-                ],
+                ].sort((a, b) => {
+                  const aIncrease = a.increase ? 1 : 0
+                  const bIncrease = b.increase ? 1 : 0
+                  return aIncrease - bIncrease
+                }),
                 comment: _comment,
               },
               fn: 'updateDaoMemberAllowance',
