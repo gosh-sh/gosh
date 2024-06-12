@@ -1743,11 +1743,7 @@ export function useCreateDaoMember() {
           .join('\n\n')
 
         // Create add DAO members multi event
-        // Skip `member.wallet` check, because `beforeCreate` checks it
-        // Prepare balance for create event
         let eventaddr: string | null = null
-        await beforeCreateEvent(0, { onPendingCallback: setStatus })
-
         const notification = {
           label: DaoEventType[EDaoEventType.DAO_MEMBER_ADD],
           comment,
@@ -1755,6 +1751,9 @@ export function useCreateDaoMember() {
         }
 
         if (requestMembership) {
+          // Prepare balance for create event
+          // Skip `member.wallet` check, because `beforeCreate` checks it
+          await beforeCreateEvent(0, { onPendingCallback: setStatus })
           const members = profiles.map(({ profile }) => {
             return { profile, allowance: 0, expired: 0 }
           })
@@ -1769,6 +1768,9 @@ export function useCreateDaoMember() {
             { onPendingCallback: setStatus },
           )
         } else if (profiles.length > 0) {
+          // Prepare balance for create event
+          // Skip `member.wallet` check, because `beforeCreate` checks it
+          await beforeCreateEvent(20, { onPendingCallback: setStatus })
           const memberAddCells = profiles.map(({ profile, daonames }) => ({
             type: EDaoEventType.DAO_MEMBER_ADD,
             params: {
@@ -2025,18 +2027,6 @@ export function useUpdateDaoMember() {
           })
         }
 
-        // Check total balance against DAO reserve
-        const balance = _.sum(items.map(({ balance }) => balance))
-        const reserve = dao.supply?.reserve || 0
-        if (balance > reserve) {
-          throw new GoshError('DAO reserve error', {
-            balance,
-            reserve,
-            message:
-              'Members total balance can not be greater than DAO reserve',
-          })
-        }
-
         // Filter only updated members
         const items_dirty = items.filter((item) => {
           const expert_tags_diff = _.xorWith(
@@ -2048,6 +2038,18 @@ export function useUpdateDaoMember() {
           const tokens_changed = item._balance !== item.balance
           return expert_tags_diff.length > 0 || karma_changed || tokens_changed
         })
+
+        // Check total updated balance against DAO reserve
+        const balance = _.sum(items_dirty.map(({ balance }) => balance))
+        const reserve = dao.supply?.reserve || 0
+        if (balance > reserve) {
+          throw new GoshError('DAO reserve error', {
+            balance,
+            reserve,
+            message:
+              'Members total balance can not be greater than DAO reserve',
+          })
+        }
 
         // Check if something was changed
         if (items_dirty.length === 0) {
