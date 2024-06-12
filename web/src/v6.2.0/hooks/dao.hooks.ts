@@ -2106,7 +2106,10 @@ export function useUpdateDaoMember() {
         // Prepare event data
         const events = []
         const comments = []
-        for (const item of profiles) {
+        const sortedProfiles = profiles.sort((a, b) => {
+          return a.allowance - b.allowance
+        })
+        for (const item of sortedProfiles) {
           // Allowance change
           if (item.allowance - item._allowance !== 0) {
             const delta = Math.abs(item.allowance - item._allowance)
@@ -2120,11 +2123,7 @@ export function useUpdateDaoMember() {
                     increase: item.allowance > item._allowance,
                     amount: delta,
                   },
-                ].sort((a, b) => {
-                  const aIncrease = a.increase ? 1 : 0
-                  const bIncrease = b.increase ? 1 : 0
-                  return aIncrease - bIncrease
-                }),
+                ],
                 comment: _comment,
               },
               fn: 'updateDaoMemberAllowance',
