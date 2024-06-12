@@ -2040,7 +2040,12 @@ export function useUpdateDaoMember() {
         })
 
         // Check total updated balance against DAO reserve
-        const balance = _.sum(items_dirty.map(({ balance }) => balance))
+        const balance = _.sum(
+          items_dirty.map(({ balance, _balance }) => {
+            const diff = balance - _balance
+            return diff > 0 ? diff : 0
+          }),
+        )
         const reserve = dao.supply?.reserve || 0
         if (balance > reserve) {
           throw new GoshError('DAO reserve error', {
@@ -2102,22 +2107,6 @@ export function useUpdateDaoMember() {
         const events = []
         const comments = []
         for (const item of profiles) {
-          // Balance change
-          if (item.balance > item._balance) {
-            const delta = item.balance - item._balance
-            const _comment = `Add ${delta} regular tokens to ${item.username}`
-            events.push({
-              type: EDaoEventType.DAO_TOKEN_REGULAR_ADD,
-              params: {
-                profile: item.profile,
-                amount: delta,
-                comment: _comment,
-              },
-              fn: 'addDaoRegularTokens',
-            })
-            comments.push(_comment)
-          }
-
           // Allowance change
           if (item.allowance - item._allowance !== 0) {
             const delta = Math.abs(item.allowance - item._allowance)
@@ -2135,6 +2124,22 @@ export function useUpdateDaoMember() {
                 comment: _comment,
               },
               fn: 'updateDaoMemberAllowance',
+            })
+            comments.push(_comment)
+          }
+
+          // Balance change
+          if (item.balance > item._balance) {
+            const delta = item.balance - item._balance
+            const _comment = `Add ${delta} regular tokens to ${item.username}`
+            events.push({
+              type: EDaoEventType.DAO_TOKEN_REGULAR_ADD,
+              params: {
+                profile: item.profile,
+                amount: delta,
+                comment: _comment,
+              },
+              fn: 'addDaoRegularTokens',
             })
             comments.push(_comment)
           }
