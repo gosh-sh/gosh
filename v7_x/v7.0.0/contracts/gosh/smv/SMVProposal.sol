@@ -346,9 +346,9 @@ function getGoshSetCommitProposalParams () external view
 }
 
 function getGoshAddProtectedBranchProposalParams () external view
-         returns( uint256  proposalKind,  string repoName, string  branchName, string comment)
+         returns( uint256  proposalKind,  string repoName, string  branchName, ProtectedBranch tags, string comment)
 {
-    (proposalKind,  repoName,  branchName, comment,) = abi.decode(propData, (uint256, string, string, string, uint32));
+    (proposalKind,  repoName,  branchName, tags, comment,) = abi.decode(propData, (uint256, string, string, ProtectedBranch, string, uint32));
 }
 
 function getGoshSetConfigDaoProposalParams () external view
@@ -742,9 +742,9 @@ function getGoshSetCommitProposalParamsData (TvmCell Data) external pure
 }
 
 function getGoshAddProtectedBranchProposalParamsData (TvmCell Data) external pure
-         returns( uint256  proposalKind,  string repoName, string  branchName, string comment)
+         returns( uint256  proposalKind,  string repoName, string  branchName, ProtectedBranch tags, string comment)
 {
-    (proposalKind,  repoName,  branchName, comment,) = abi.decode(Data, (uint256, string, string, string, uint32));
+    (proposalKind,  repoName,  branchName, tags, comment,) = abi.decode(Data, (uint256, string, string, ProtectedBranch, string, uint32));
 }
 
 function getGoshSetConfigDaoProposalParamsData (TvmCell Data) external pure

@@ -32,7 +32,7 @@ contract Repository is Modifiers{
     address public _goshdao;
     string _head;
     mapping(uint256 => Item) _Branches;
-    mapping(uint256 => bool) _protectedBranch;
+    mapping(uint256 => ProtectedBranch) _protectedBranch;
     mapping(uint256 => string) _hashtag;
     uint128 _limittag = 3;
     uint128 _counttag = 0;
@@ -173,43 +173,11 @@ contract Repository is Modifiers{
         Repository(answer).checkUpdateRepoVer5{value : 0.15 ton, flag: 1}(version, a);
     }
 
-    function checkUpdateRepo5(bool ans, mapping(uint256 => Item) Branches, mapping(uint256 => bool) protectedBranch, string head) public senderIs(_previousversion.get().addr) accept {
-        if (ans == false) { selfdestruct(_systemcontract); }
-        _Branches = Branches;
-        _protectedBranch = protectedBranch;
-        _head = head;
-        _ready = true;
-    }
-
     function checkUpdateRepoVer5(string ver, TvmCell a) public senderIs(_previousversion.get().addr) accept {
-        if (ver == "2.0.0"){
-            mapping(uint256 => string) hashtag;
-            bool ans;
-            (ans, _Branches, _protectedBranch, _head, hashtag) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => bool), string, mapping(uint256 => string)));
-            if (ans == false) { selfdestruct(_systemcontract); }
-            this.smvdeployrepotagin{value: 0.1 ton, flag: 1}(hashtag.values());
-            return;
-        }
-        if ((ver == "3.0.0")){
-            mapping(uint256 => string) hashtag;
-            bool ans;
-            (ans, _Branches, _protectedBranch, _head, hashtag) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => bool), string, mapping(uint256 => string)));
-            if (ans == false) { selfdestruct(_systemcontract); }
-            this.smvdeployrepotagin{value: 0.1 ton, flag: 1}(hashtag.values());
-            return;
-        }
-        if ((ver == "4.0.0") || (ver == "5.0.0") || (ver == "5.1.0") || (ver == "6.0.0") || (ver == "6.1.0") || (ver == "6.2.0")){
-            mapping(uint256 => string) hashtag;
-            bool ans;
-            (ans, _Branches, _protectedBranch, _head, hashtag, _description) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => bool), string, mapping(uint256 => string), string));
-            if (ans == false) { selfdestruct(_systemcontract); }
-            this.smvdeployrepotagin{value: 0.1 ton, flag: 1}(hashtag.values());
-            return;
-        }
         if (ver == "7.0.0") {
             mapping(uint256 => string) hashtag;
             bool ans;
-            (ans, _Branches, _protectedBranch, _head, hashtag, _description, _tokendescription, _tokengrants, _supply, _tokenroot, _metadata) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => bool), string, mapping(uint256 => string), string, optional(string), optional(Grants[]), optional(uint128), optional(address), string));
+            (ans, _Branches, _protectedBranch, _head, hashtag, _description, _tokendescription, _tokengrants, _supply, _tokenroot, _metadata) = abi.decode(a, (bool , mapping(uint256 => Item), mapping(uint256 => ProtectedBranch), string, mapping(uint256 => string), string, optional(string), optional(Grants[]), optional(uint128), optional(address), string));
             if (ans == false) { selfdestruct(_systemcontract); }
             this.smvdeployrepotagin{value: 0.1 ton, flag: 1}(hashtag.values());
             return;
@@ -248,7 +216,7 @@ contract Repository is Modifiers{
         tvm.accept();
         require(_Branches.exists(tvm.hash(name)), ERR_BRANCH_NOT_EXIST);
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
-        require(_protectedBranch[tvm.hash(name)] == false, ERR_BRANCH_PROTECTED);
+        require(_protectedBranch.exists(tvm.hash(name)) == false, ERR_BRANCH_PROTECTED);
         Commit(_Branches[tvm.hash(name)].commitaddr).cleanTree{value: 0.1 ton, flag: 1}();
         delete _Branches[tvm.hash(name)];
     }
@@ -310,6 +278,9 @@ contract Repository is Modifiers{
     function SendDiffSmv(address pubaddr, uint128 index, string branch, address commit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task) public view accept {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
+        if (_protectedBranch.exists(tvm.hash(branch)) == true) {
+            require(_protectedBranch[tvm.hash(branch)].tags.length == 0, ERR_BRANCH_PROTECTED);
+        }
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         uint128 valueton = number * 1 ton + 0.5 ton;
         if (valueton > 1000 ton) { valueton = 1000 ton; }
@@ -390,13 +361,13 @@ contract Repository is Modifiers{
 
     //Protected branch
 
-    function addProtectedBranch(address pubaddr, string branch, uint128 index) public {
+    function addProtectedBranch(address pubaddr, string branch, ProtectedBranch tags, uint128 index) public {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
+        require(tags.tags.length <= 4,ERR_TOO_MANY_TAGS);
         tvm.accept();
         require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
-        if (_protectedBranch[tvm.hash(branch)] == true) { return; }
-        _addProtectedBranch(branch);
+        _addProtectedBranch(branch, tags);
     }
 
     function deleteProtectedBranch(address pubaddr, string branch, uint128 index) public {
@@ -404,25 +375,32 @@ contract Repository is Modifiers{
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
         if (_protectedBranch.exists(tvm.hash(branch)) == false) { return; }
-        if (_protectedBranch[tvm.hash(branch)] == false) { return; }
         _deleteProtectedBranch(branch);
     }
 
-    function _addProtectedBranch(string branch) private {
-        _protectedBranch[tvm.hash(branch)] = true;
+    function _addProtectedBranch(string branch, ProtectedBranch tags) private {
+        _protectedBranch[tvm.hash(branch)] = tags;
     }
 
     function _deleteProtectedBranch(string branch) private {
         delete _protectedBranch[tvm.hash(branch)];
     }
 
-    function isNotProtected(address pubaddr, string branch, address commit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task, bool isUpgrade, uint128 index) public view {
+    function isNotProtected(address pubaddr, string branch, address commit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task, bool isUpgrade, mapping(uint256=> bool) membertag, uint128 index) public view {
         require(_ready == true, ERR_REPOSITORY_NOT_READY);
+        require(_Branches.exists(tvm.hash(branch)), ERR_BRANCH_NOT_EXIST);
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
         tvm.accept();
-        if ((_protectedBranch[tvm.hash(branch)] == false) || (isUpgrade == true)) {
+        if (isUpgrade == true) {
             this.SendDiff{value: 0.7 ton, bounce: true, flag: 1}(branch, commit, number, numberCommits, task, isUpgrade);
             return;
+        } else {
+            for (uint128 i = 0; i < _protectedBranch[tvm.hash(branch)].tags.length; i++){
+                if (membertag[tvm.hash(_protectedBranch[tvm.hash(branch)].tags[i])] == true) {
+                    this.SendDiff{value: 0.7 ton, bounce: true, flag: 1}(branch, commit, number, numberCommits, task, isUpgrade);
+                    return;
+                }
+            }    
         }
     }
 
@@ -457,14 +435,11 @@ contract Repository is Modifiers{
        return address.makeAddrStd(0, tvm.hash(s1));
     }
 
-    function isBranchProtected(string branch) external view returns(bool) {
+    function isBranchProtected(string branch) external view returns(optional(ProtectedBranch)) {
         if (_protectedBranch.exists(tvm.hash(branch)) == false) {
-            return false;
+            return null;
         }
-        if (_protectedBranch[tvm.hash(branch)] == false) {
-            return false;
-        }
-        return true;
+        return _protectedBranch[tvm.hash(branch)];
     }
 
     function getRepoWalletAddr(address pubaddr) external view returns(address) {
@@ -475,7 +450,7 @@ contract Repository is Modifiers{
         return GoshLib.calculateTreeAddress(_code[m_TreeCode], shainnertree, address(this), _code[m_WalletCode]);
     }
 
-    function getProtectedBranch() external view returns(mapping(uint256 => bool)) {
+    function getProtectedBranch() external view returns(mapping(uint256 => ProtectedBranch)) {
         return _protectedBranch;
     }
 

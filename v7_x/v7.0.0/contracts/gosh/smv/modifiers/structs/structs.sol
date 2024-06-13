@@ -199,3 +199,7 @@ struct SystemContractAddr {
     string Key;
     address Value;
 }
+
+struct ProtectedBranch {
+    string[] tags;
+}

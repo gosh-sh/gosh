@@ -686,6 +686,11 @@ contract GoshDao is Modifiers, TokenRootOwner, SMVConfiguration {
     	require(_tombstone == false, ERR_TOMBSTONE);
     	GoshWallet(wallet).daoSendTokenToNewVersionAuto2{value:0.2 ton, flag: 1}(_nameDao);   	
     }
+
+    function isNotProtected(address pubaddr, string repoName, string branch, address commit, uint128 number, uint128 numberCommits, optional(ConfigCommit) task, bool isUpgrade, uint128 index) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pubaddr, index)) accept view {
+        (, uint256 keyaddr) = pubaddr.unpack();
+        GoshWallet(msg.sender).isProposalNeededTag{value: 0.1 ton, flag: 1}(repoName, branch, commit, number, numberCommits, task, isUpgrade, _daoMembersTag[keyaddr]);
+    }
     
     function daoMulti (address pub, uint128 index, address wallet, uint128 number, TvmCell proposals, uint128 num_clients, address[] reviewers) public senderIs(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, address(this), pub, index))  accept {
     	require(_tombstone == false, ERR_TOMBSTONE);

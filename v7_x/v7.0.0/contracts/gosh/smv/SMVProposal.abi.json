@@ -148,6 +148,7 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
+				{"components":[{"name":"tags","type":"string[]"}],"name":"tags","type":"tuple"},
 				{"name":"comment","type":"string"}
 			]
 		},
@@ -887,6 +888,7 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
+				{"components":[{"name":"tags","type":"string[]"}],"name":"tags","type":"tuple"},
 				{"name":"comment","type":"string"}
 			]
 		},

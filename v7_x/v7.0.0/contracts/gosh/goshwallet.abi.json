@@ -1353,6 +1353,21 @@
 			]
 		},
 		{
+			"name": "isProposalNeededTag",
+			"inputs": [
+				{"name":"repoName","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"commit","type":"address"},
+				{"name":"numberChangedFiles","type":"uint128"},
+				{"name":"numberCommits","type":"uint128"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"task","type":"optional(tuple)"},
+				{"name":"isUpgrade","type":"bool"},
+				{"name":"membertag","type":"map(uint256,bool)"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "updateHead",
 			"inputs": [
 			],
@@ -1492,6 +1507,7 @@
 			"inputs": [
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
+				{"components":[{"name":"tags","type":"string[]"}],"name":"tags","type":"tuple"},
 				{"name":"comment","type":"string"},
 				{"name":"time","type":"optional(uint32)"}
 			],

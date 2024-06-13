@@ -1867,9 +1867,23 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         bool isUpgrade
     ) internal view  {
        require(_limited == false, ERR_WALLET_LIMITED);
+       GoshDao(_goshdao).isNotProtected{value:1 ton, flag: 1}(_pubaddr, repoName, branchName, commit, numberChangedFiles, numberCommits, task, isUpgrade, _index);
+    }
+
+    function isProposalNeededTag(
+        string repoName,
+        string branchName,
+        address commit,
+        uint128 numberChangedFiles,
+        uint128 numberCommits,
+        optional(ConfigCommit) task,
+        bool isUpgrade,
+        mapping(uint256=> bool) membertag
+    ) public senderIs(_goshdao) accept view  {
+       require(_limited == false, ERR_WALLET_LIMITED);
        uint128 value = numberChangedFiles * 1 ton;
        if (value > 1000 ton) { value = 1000 ton; }
-       Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode])).isNotProtected{value:value + 1 ton, flag: 1}(_pubaddr, branchName, commit, numberChangedFiles, numberCommits, task, isUpgrade, _index);
+       Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode])).isNotProtected{value:value + 1 ton, flag: 1}(_pubaddr, branchName, commit, numberChangedFiles, numberCommits, task, isUpgrade, membertag, _index);
     }
 
     //SMV part
@@ -2078,10 +2092,12 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         
     function getCellAddProtectedBranch(string repoName,
         string branchName,
+        ProtectedBranch tags,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = ADD_PROTECTED_BRANCH_PROPOSAL_KIND;
+        require(tags.tags.length <= 4,ERR_TOO_MANY_TAGS);
         if (time.hasValue() == false) { time = block.timestamp; }
-        return abi.encode(proposalKind, repoName, branchName, comment, time.get());
+        return abi.encode(proposalKind, repoName, branchName, tags, comment, time.get());
         
     }
 
@@ -2461,8 +2477,8 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             } else
             if (kind == ADD_PROTECTED_BRANCH_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
-                (, string repoName, string branchName,) = abi.decode(propData,(uint256, string, string, uint32));
-                Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode])).addProtectedBranch{value:0.19 ton, flag: 1}(_pubaddr, branchName, _index);
+                (, string repoName, string branchName,ProtectedBranch tags,,) = abi.decode(propData,(uint256, string, string, ProtectedBranch, string, uint32));
+                Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode])).addProtectedBranch{value:0.19 ton, flag: 1}(_pubaddr, branchName, tags, _index);
             } else
             if (kind == DELETE_PROTECTED_BRANCH_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);

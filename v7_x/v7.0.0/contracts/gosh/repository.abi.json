@@ -70,17 +70,6 @@
 			]
 		},
 		{
-			"name": "checkUpdateRepo5",
-			"inputs": [
-				{"name":"ans","type":"bool"},
-				{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"}],"name":"Branches","type":"map(uint256,tuple)"},
-				{"name":"protectedBranch","type":"map(uint256,bool)"},
-				{"name":"head","type":"string"}
-			],
-			"outputs": [
-			]
-		},
-		{
 			"name": "checkUpdateRepoVer5",
 			"inputs": [
 				{"name":"ver","type":"string"},
@@ -288,6 +277,7 @@
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
 				{"name":"branch","type":"string"},
+				{"components":[{"name":"tags","type":"string[]"}],"name":"tags","type":"tuple"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -313,6 +303,7 @@
 				{"name":"numberCommits","type":"uint128"},
 				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"task","type":"optional(tuple)"},
 				{"name":"isUpgrade","type":"bool"},
+				{"name":"membertag","type":"map(uint256,bool)"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -354,7 +345,7 @@
 				{"name":"branch","type":"string"}
 			],
 			"outputs": [
-				{"name":"value0","type":"bool"}
+				{"components":[{"name":"tags","type":"string[]"}],"name":"value0","type":"optional(tuple)"}
 			]
 		},
 		{
@@ -380,7 +371,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"name":"value0","type":"map(uint256,bool)"}
+				{"components":[{"name":"tags","type":"string[]"}],"name":"value0","type":"map(uint256,tuple)"}
 			]
 		},
 		{
@@ -605,7 +596,7 @@
 		{"name":"_goshdao","type":"address"},
 		{"name":"_head","type":"string"},
 		{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"}],"name":"_Branches","type":"map(uint256,tuple)"},
-		{"name":"_protectedBranch","type":"map(uint256,bool)"},
+		{"components":[{"name":"tags","type":"string[]"}],"name":"_protectedBranch","type":"map(uint256,tuple)"},
 		{"name":"_hashtag","type":"map(uint256,string)"},
 		{"name":"_limittag","type":"uint128"},
 		{"name":"_counttag","type":"uint128"},
