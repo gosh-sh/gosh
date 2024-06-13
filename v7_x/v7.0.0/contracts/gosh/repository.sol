@@ -367,7 +367,9 @@ contract Repository is Modifiers{
             if (priorities.length <= index + i) {
                 return;
             }
-            _Branches[tvm.hash(priorities[index + i].name)].priority = priorities[index + i].priority;
+            if (_Branches.exists(tvm.hash(priorities[index + i].name))) {
+                _Branches[tvm.hash(priorities[index + i].name)].priority = priorities[index + i].priority;
+            }
         }     
         this.updatePrioritiesIn{value: 0.1 ton, flag: 1}(priorities, index + 10);
     }
