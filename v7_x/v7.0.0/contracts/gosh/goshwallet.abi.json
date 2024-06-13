@@ -1519,7 +1519,7 @@
 			"name": "getCellChangeBranchPriorities",
 			"inputs": [
 				{"name":"repoName","type":"string"},
-				{"components":[{"name":"name","type":"string"},{"name":"priority","type":"uint128"}],"name":"priorities","type":"tuple"},
+				{"components":[{"name":"name","type":"string"},{"name":"priority","type":"uint128"}],"name":"priorities","type":"tuple[]"},
 				{"name":"comment","type":"string"},
 				{"name":"time","type":"optional(uint32)"}
 			],

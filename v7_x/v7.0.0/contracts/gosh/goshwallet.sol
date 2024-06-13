@@ -2109,7 +2109,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     }
 
     function getCellChangeBranchPriorities(string repoName,
-        BranchPriority priorities,
+        BranchPriority[] priorities,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = CHANGE_BRANCH_PRIORITIES_PROPOSAL_KIND;
         if (time.hasValue() == false) { time = block.timestamp; }
