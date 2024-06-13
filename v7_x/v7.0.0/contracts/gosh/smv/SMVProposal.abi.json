@@ -141,6 +141,17 @@
 			]
 		},
 		{
+			"name": "getGoshChangePrioritiesProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"components":[{"name":"name","type":"string"},{"name":"priority","type":"uint128"}],"name":"priorities","type":"tuple[]"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
 			"name": "getGoshAddProtectedBranchProposalParams",
 			"inputs": [
 			],
@@ -148,7 +159,7 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
-				{"components":[{"name":"tags","type":"string[]"}],"name":"tags","type":"tuple"},
+				{"name":"tags","type":"string[]"},
 				{"name":"comment","type":"string"}
 			]
 		},
@@ -888,7 +899,19 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
-				{"components":[{"name":"tags","type":"string[]"}],"name":"tags","type":"tuple"},
+				{"name":"tags","type":"string[]"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getGoshChangeBranchPrioritiesParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"components":[{"name":"name","type":"string"},{"name":"priority","type":"uint128"}],"name":"priorities","type":"tuple[]"},
 				{"name":"comment","type":"string"}
 			]
 		},

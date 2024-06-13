@@ -345,10 +345,16 @@ function getGoshSetCommitProposalParams () external view
     (proposalKind,  repoName,  branchName,  commit,,, task, comment,) = abi.decode(propData, (uint256, string, string, string, uint128, uint128, optional(ConfigCommit), string, uint32));
 }
 
-function getGoshAddProtectedBranchProposalParams () external view
-         returns( uint256  proposalKind,  string repoName, string  branchName, ProtectedBranch tags, string comment)
+function getGoshChangePrioritiesProposalParams () external view
+         returns( uint256  proposalKind,  string repoName, BranchPriority[] priorities, string comment)
 {
-    (proposalKind,  repoName,  branchName, tags, comment,) = abi.decode(propData, (uint256, string, string, ProtectedBranch, string, uint32));
+    (proposalKind,  repoName, priorities, comment,) = abi.decode(propData, (uint256, string, BranchPriority[], string, uint32));
+}
+
+function getGoshAddProtectedBranchProposalParams () external view
+         returns( uint256  proposalKind,  string repoName, string  branchName, string[] tags, string comment)
+{
+    (proposalKind,  repoName,  branchName, tags, comment,) = abi.decode(propData, (uint256, string, string, string[], string, uint32));
 }
 
 function getGoshSetConfigDaoProposalParams () external view
@@ -742,9 +748,15 @@ function getGoshSetCommitProposalParamsData (TvmCell Data) external pure
 }
 
 function getGoshAddProtectedBranchProposalParamsData (TvmCell Data) external pure
-         returns( uint256  proposalKind,  string repoName, string  branchName, ProtectedBranch tags, string comment)
+         returns( uint256  proposalKind,  string repoName, string  branchName, string[] tags, string comment)
 {
-    (proposalKind,  repoName,  branchName, tags, comment,) = abi.decode(Data, (uint256, string, string, ProtectedBranch, string, uint32));
+    (proposalKind,  repoName,  branchName, tags, comment,) = abi.decode(Data, (uint256, string, string, string[], string, uint32));
+}
+
+function getGoshChangeBranchPrioritiesParamsData (TvmCell Data) external pure
+         returns( uint256  proposalKind,  string repoName, BranchPriority[] priorities, string comment)
+{
+    (proposalKind,  repoName, priorities, comment,) = abi.decode(Data, (uint256, string, BranchPriority[], string, uint32));
 }
 
 function getGoshSetConfigDaoProposalParamsData (TvmCell Data) external pure

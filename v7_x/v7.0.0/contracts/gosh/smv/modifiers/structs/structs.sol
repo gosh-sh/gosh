@@ -102,12 +102,6 @@ struct Diff {
     uint256 sha256;
 }
 
-struct Item {
-    string branchname;
-    address commitaddr;
-    string commitversion;
-}
-
 struct AddrVersion {
     address addr;
     string version;
@@ -200,6 +194,16 @@ struct SystemContractAddr {
     address Value;
 }
 
-struct ProtectedBranch {
+struct Branch {
+    string branchname;
+    address commitaddr;
+    string commitversion;
+    bool isProtected;
     string[] tags;
+    uint128 priority;
+}
+
+struct BranchPriority {
+    string name;
+    uint128 priority;
 }

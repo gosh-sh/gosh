@@ -273,11 +273,30 @@
 			]
 		},
 		{
+			"name": "updatePriorities",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"components":[{"name":"name","type":"string"},{"name":"priority","type":"uint128"}],"name":"priorities","type":"tuple[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updatePrioritiesIn",
+			"inputs": [
+				{"components":[{"name":"name","type":"string"},{"name":"priority","type":"uint128"}],"name":"priorities","type":"tuple[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "addProtectedBranch",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
 				{"name":"branch","type":"string"},
-				{"components":[{"name":"tags","type":"string[]"}],"name":"tags","type":"tuple"},
+				{"name":"tags","type":"string[]"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -345,7 +364,7 @@
 				{"name":"branch","type":"string"}
 			],
 			"outputs": [
-				{"components":[{"name":"tags","type":"string[]"}],"name":"value0","type":"optional(tuple)"}
+				{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"},{"name":"isProtected","type":"bool"},{"name":"tags","type":"string[]"},{"name":"priority","type":"uint128"}],"name":"value0","type":"optional(tuple)"}
 			]
 		},
 		{
@@ -367,14 +386,6 @@
 			]
 		},
 		{
-			"name": "getProtectedBranch",
-			"inputs": [
-			],
-			"outputs": [
-				{"components":[{"name":"tags","type":"string[]"}],"name":"value0","type":"map(uint256,tuple)"}
-			]
-		},
-		{
 			"name": "getSnapCode",
 			"inputs": [
 			],
@@ -388,7 +399,7 @@
 				{"name":"name","type":"string"}
 			],
 			"outputs": [
-				{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"}],"name":"value0","type":"tuple"}
+				{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"},{"name":"isProtected","type":"bool"},{"name":"tags","type":"string[]"},{"name":"priority","type":"uint128"}],"name":"value0","type":"tuple"}
 			]
 		},
 		{
@@ -396,7 +407,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"}],"name":"value0","type":"tuple[]"}
+				{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"},{"name":"isProtected","type":"bool"},{"name":"tags","type":"string[]"},{"name":"priority","type":"uint128"}],"name":"value0","type":"tuple[]"}
 			]
 		},
 		{
@@ -533,7 +544,7 @@
 			"outputs": [
 				{"name":"description","type":"string"},
 				{"name":"name","type":"string"},
-				{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"}],"name":"alladress","type":"tuple[]"},
+				{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"},{"name":"isProtected","type":"bool"},{"name":"tags","type":"string[]"},{"name":"priority","type":"uint128"}],"name":"alladress","type":"tuple[]"},
 				{"name":"head","type":"string"},
 				{"name":"hashtag","type":"map(uint256,string)"},
 				{"name":"ready","type":"bool"},
@@ -595,8 +606,7 @@
 		{"name":"_nameDao","type":"string"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_head","type":"string"},
-		{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"}],"name":"_Branches","type":"map(uint256,tuple)"},
-		{"components":[{"name":"tags","type":"string[]"}],"name":"_protectedBranch","type":"map(uint256,tuple)"},
+		{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"},{"name":"isProtected","type":"bool"},{"name":"tags","type":"string[]"},{"name":"priority","type":"uint128"}],"name":"_Branches","type":"map(uint256,tuple)"},
 		{"name":"_hashtag","type":"map(uint256,string)"},
 		{"name":"_limittag","type":"uint128"},
 		{"name":"_counttag","type":"uint128"},

@@ -849,7 +849,14 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, nameRepo, _code[m_WalletCode]);
         Repository(repo).updateRepoMetadata{value: 0.1 ton, flag: 1}(_pubaddr, _index, metadata);
         getMoney();
-    }    
+    }  
+
+    function _updatePriorities(string nameRepo, BranchPriority[] priorities) private {
+        require(_tombstone == false, ERR_TOMBSTONE);
+        address repo = GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, nameRepo, _code[m_WalletCode]);
+        Repository(repo).updatePriorities{value: 0.1 ton, flag: 1}(_pubaddr, _index, priorities);
+        getMoney();
+    }      
 
     function getCellForTaskUpgrade(string nametask,
         string reponame,
@@ -2092,12 +2099,21 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
         
     function getCellAddProtectedBranch(string repoName,
         string branchName,
-        ProtectedBranch tags,
+        string[] tags,
         string comment, optional(uint32) time) external pure returns(TvmCell) {
         uint256 proposalKind = ADD_PROTECTED_BRANCH_PROPOSAL_KIND;
-        require(tags.tags.length <= 4,ERR_TOO_MANY_TAGS);
+        require(tags.length <= 4,ERR_TOO_MANY_TAGS);
         if (time.hasValue() == false) { time = block.timestamp; }
         return abi.encode(proposalKind, repoName, branchName, tags, comment, time.get());
+        
+    }
+
+    function getCellChangeBranchPriorities(string repoName,
+        BranchPriority priorities,
+        string comment, optional(uint32) time) external pure returns(TvmCell) {
+        uint256 proposalKind = CHANGE_BRANCH_PRIORITIES_PROPOSAL_KIND;
+        if (time.hasValue() == false) { time = block.timestamp; }
+        return abi.encode(proposalKind, repoName, priorities, comment, time.get());
         
     }
 
@@ -2477,7 +2493,7 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             } else
             if (kind == ADD_PROTECTED_BRANCH_PROPOSAL_KIND) {
                 require(_tombstone == false, ERR_TOMBSTONE);
-                (, string repoName, string branchName,ProtectedBranch tags,,) = abi.decode(propData,(uint256, string, string, ProtectedBranch, string, uint32));
+                (, string repoName, string branchName,string[] tags,,) = abi.decode(propData,(uint256, string, string, string[], string, uint32));
                 Repository(GoshLib.calculateRepositoryAddress(_code[m_RepositoryCode], _systemcontract, _goshdao, repoName, _code[m_WalletCode])).addProtectedBranch{value:0.19 ton, flag: 1}(_pubaddr, branchName, tags, _index);
             } else
             if (kind == DELETE_PROTECTED_BRANCH_PROPOSAL_KIND) {
@@ -2706,6 +2722,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
             if (kind == DEPLOY_REPO_METADATA_PROPOSAL_KIND) {
                 (,string repoName, string metadata,,) = abi.decode(propData,(uint256, string, string, string, uint32));
                 _updateRepoMetadata(repoName, metadata);
+            } else
+            if (kind == CHANGE_BRANCH_PRIORITIES_PROPOSAL_KIND) {
+                (, string reponame, BranchPriority[] priorities,,) = abi.decode(propData, (uint256, string, BranchPriority[], string, uint32));
+                _updatePriorities(reponame, priorities);
             }
         }
     }
