@@ -1,12 +1,12 @@
-import { KeyPair, TonClient } from '@eversdk/core'
+import type { KeyPair, TonClient } from '@eversdk/core'
+import { AppConfig } from '../../appconfig'
 import { BaseContract } from '../../blockchain/contract'
 import { GoshError } from '../../errors'
-import { EDaoMemberType, TDaoDetailsMemberItem } from '../types/dao.types'
+import { EDaoMemberType, type TDaoDetailsMemberItem } from '../types/dao.types'
 import DaoABI from './abi/dao.abi.json'
 import { DaoEvent } from './daoevent'
 import { DaoWallet } from './daowallet'
-import { getDaoOrProfile } from './helpers'
-import { UserProfile } from './userprofile'
+import { getSystemContract } from './helpers'
 
 export class Dao extends BaseContract {
   constructor(client: TonClient, address: string) {
@@ -35,12 +35,14 @@ export class Dao extends BaseContract {
     const { _isTaskRedeployed } = await this.runLocal('_isTaskRedeployed', {})
 
     // Fix contracts bug with `isUpgraded` flag
+    details.isReady = details.isUpgraded
+    details.isUpgraded = details.isRepoUpgraded && _isTaskRedeployed
     const prev_addr = await this.getPrevious()
     if (prev_addr) {
       const prev_dao = new Dao(this.client, prev_addr)
       const prev_ver = await prev_dao.getVersion()
       if (prev_ver === '1.0.0') {
-        details.isUpgraded = true
+        details.isReady = true
       }
     }
 
@@ -56,6 +58,7 @@ export class Dao extends BaseContract {
 
   async getMembers(options: {
     parse?: {
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       wallets: { [pubaddr: string]: any }
       daomembers: { [address: string]: string }
       expert_tags: {
@@ -66,6 +69,7 @@ export class Dao extends BaseContract {
     isDaoMemberOf?: boolean
   }): Promise<TDaoDetailsMemberItem[]> {
     const { parse, isDaoMemberOf } = options
+    const sc = getSystemContract()
 
     const toparse = parse || {
       wallets: {},
@@ -91,26 +95,58 @@ export class Dao extends BaseContract {
       delete toparse.daomembers[key]
     }
 
+    // Force insert wallet in another DAO for current DAO,
+    // when isDaoMemberOf=true and wallet of some version in another DAO exists
+    if (isDaoMemberOf) {
+      for (const key of [...Object.keys(toparse.wallets)]) {
+        let extDao = await sc.getDao({ address: `0:${key.slice(2)}` })
+        extDao = await sc.getDao({ name: await extDao.getName() })
+        const extDaoKey = `0x${extDao.address.slice(2)}`
+        if ((await extDao.isDeployed()) && !toparse.wallets[extDaoKey]) {
+          const extWallet = await extDao.getMemberWallet({
+            data: { profile: this.address },
+          })
+          if (await extWallet.isDeployed()) {
+            toparse.wallets[extDaoKey] = extWallet.address
+          }
+        }
+      }
+    }
+
     const daoaddr = Object.keys(toparse.daomembers).map((key) => key)
     const members = await Promise.all(
       Object.keys(toparse.wallets).map(async (key) => {
         const testaddr = `0:${key.slice(2)}`
 
-        const resolved: { type: EDaoMemberType; account: UserProfile | Dao } = {
+        const resolved: {
+          type: EDaoMemberType
+          account: UserProfile | Dao
+          name: string
+        } = {
           type: EDaoMemberType.User,
           account: new UserProfile(this.client, testaddr),
+          name: '',
         }
         if (isDaoMemberOf) {
-          const { type, account } = await getDaoOrProfile(testaddr)
-          resolved.type = type
-          resolved.account = account
+          resolved.type = EDaoMemberType.Dao
+          const ver = await new Dao(this.client, testaddr).getVersion()
+          const sc = AppConfig.goshroot.getSystemContract(ver)
+          resolved.account = (await sc.getDao({
+            address: resolved.account.address,
+          })) as Dao
+          resolved.name = await resolved.account.getName()
         } else {
           resolved.type =
-            daoaddr.indexOf(testaddr) >= 0 ? EDaoMemberType.Dao : EDaoMemberType.User
-          resolved.account =
-            resolved.type === EDaoMemberType.Dao
-              ? new Dao(this.client, testaddr)
-              : new UserProfile(this.client, testaddr)
+            daoaddr.indexOf(testaddr) >= 0
+              ? EDaoMemberType.Dao
+              : EDaoMemberType.User
+          if (resolved.type === EDaoMemberType.Dao) {
+            resolved.account = new Dao(this.client, testaddr)
+            resolved.name = toparse.daomembers[resolved.account.address]
+          } else if (resolved.type === EDaoMemberType.User) {
+            resolved.account = new UserProfile(this.client, testaddr)
+            resolved.name = await resolved.account.getName()
+          }
         }
 
         // Parse DAO member expert tags
@@ -121,16 +157,27 @@ export class Dao extends BaseContract {
           if (dao_expert_tag && enabled) {
             expert_tags.push({
               name: dao_expert_tag.name,
-              multiplier: parseInt(dao_expert_tag.value),
+              multiplier: Number.parseInt(dao_expert_tag.value),
             })
           }
         }
 
+        // Get wallet depending on parsing type
+        let wallet: DaoWallet
+        if (isDaoMemberOf) {
+          wallet = await (resolved.account as Dao).getMemberWallet({
+            address: toparse.wallets[key],
+          })
+        } else {
+          wallet = new DaoWallet(this.client, toparse.wallets[key].member)
+        }
+
         return {
+          name: resolved.name,
           usertype: resolved.type,
           profile: resolved.account,
-          wallet: new DaoWallet(this.client, toparse.wallets[key].member),
-          allowance: parseInt(toparse.wallets[key].count),
+          wallet,
+          allowance: Number.parseInt(toparse.wallets[key].count),
           daomembers: toparse.daomembers,
           expert_tags,
         }
@@ -156,6 +203,7 @@ export class Dao extends BaseContract {
 
     let _address = address
     if (!_address) {
+      // biome-ignore lint/style/noNonNullAssertion: <explanation>
       const { profile, index = 0 } = data!
       const { value0 } = await this.runLocal(
         'getAddrWallet',
@@ -166,6 +214,7 @@ export class Dao extends BaseContract {
       _address = value0
     }
 
+    // biome-ignore lint/style/noNonNullAssertion: <explanation>
     return new DaoWallet(this.client, _address!, keys)
   }
 
@@ -205,9 +254,14 @@ export class Dao extends BaseContract {
   }
 
   async getPrevious() {
-    const { value0 } = await this.runLocal('getPreviousDaoAddr', {}, undefined, {
-      useCachedBoc: true,
-    })
+    const { value0 } = await this.runLocal(
+      'getPreviousDaoAddr',
+      {},
+      undefined,
+      {
+        useCachedBoc: true,
+      },
+    )
     return (value0 as string) || null
   }
 
@@ -216,5 +270,21 @@ export class Dao extends BaseContract {
       pubmem: [{ member: profile, count: 0, expired: 0 }],
       index: 0,
     })
+  }
+
+  async getNext() {
+    const name = await this.getName()
+    const curVersion = await this.getVersion()
+    const nextVersions = Object.keys(AppConfig.getVersions()).filter(
+      (k) => k > curVersion,
+    )
+    for (const version of nextVersions) {
+      const sc = AppConfig.goshroot.getSystemContract(version)
+      const account = await sc.getDao({ name })
+      if (await account.isDeployed()) {
+        return { account, version }
+      }
+    }
+    return null
   }
 }

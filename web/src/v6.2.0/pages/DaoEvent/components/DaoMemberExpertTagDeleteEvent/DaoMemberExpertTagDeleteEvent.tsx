@@ -4,7 +4,9 @@ type TDaoMemberExpertTagDeleteEventProps = {
   data: { tag: string; pubaddr: { username: string; profile: string }[] }
 }
 
-const DaoMemberExpertTagDeleteEvent = (props: TDaoMemberExpertTagDeleteEventProps) => {
+const DaoMemberExpertTagDeleteEvent = (
+  props: TDaoMemberExpertTagDeleteEventProps,
+) => {
   const { data } = props
 
   return (
@@ -14,7 +16,11 @@ const DaoMemberExpertTagDeleteEvent = (props: TDaoMemberExpertTagDeleteEventProp
           {data.pubaddr[0].username}
         </div>
         <div className="text-sm">
-          <BadgeExpertTag content={data.tag} className="py-2 px-3" />
+          <BadgeExpertTag
+            seed={data.tag}
+            content={data.tag}
+            className="py-2 px-3"
+          />
         </div>
       </div>
     </div>

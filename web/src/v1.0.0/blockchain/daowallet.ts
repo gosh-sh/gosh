@@ -1,8 +1,8 @@
 import { KeyPair, TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
 import WalletABI from './abi/daowallet.abi.json'
-import { SmvLocker } from './smvlocker'
 import { SmvClient } from './smvclient'
+import { SmvLocker } from './smvlocker'
 
 export class DaoWallet extends BaseContract {
   constructor(client: TonClient, address: string, keys?: KeyPair) {
@@ -14,10 +14,26 @@ export class DaoWallet extends BaseContract {
     return !!value0
   }
 
+  async isLimited() {
+    return false
+  }
+
+  async getDetails() {
+    const { value0: daoAddr } = await this.runLocal('getAddrDao', {})
+    return {
+      daoaddr: daoAddr,
+    }
+  }
+
   async getSmvLocker() {
-    const { tip3VotingLocker } = await this.runLocal('tip3VotingLocker', {}, undefined, {
-      useCachedBoc: true,
-    })
+    const { tip3VotingLocker } = await this.runLocal(
+      'tip3VotingLocker',
+      {},
+      undefined,
+      {
+        useCachedBoc: true,
+      },
+    )
     return new SmvLocker(this.client, tip3VotingLocker)
   }
 
@@ -26,7 +42,9 @@ export class DaoWallet extends BaseContract {
     const balance = await this.smvLockerBalance()
     return {
       regular: parseInt(m_pseudoDAOBalance),
-      ...balance,
+      voting: balance.total,
+      locked: balance.locked,
+      allowance: balance.total,
     }
   }
 
@@ -73,7 +91,11 @@ export class DaoWallet extends BaseContract {
     return parseInt(locked)
   }
 
-  async smvVote(params: { platformId: string; choice: boolean; amount: number }) {
+  async smvVote(params: {
+    platformId: string
+    choice: boolean
+    amount: number
+  }) {
     const { platformId, choice, amount } = params
     await this.run('voteFor', {
       platform_id: platformId,

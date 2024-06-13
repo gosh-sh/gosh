@@ -1,20 +1,20 @@
-import { TonClient } from '@eversdk/core'
+import { KeyPair, TonClient } from '@eversdk/core'
 import { AppConfig } from '../../appconfig'
 import { BaseContract } from '../../blockchain/contract'
 import { DaoProfile } from '../../blockchain/daoprofile'
 import { getAllAccounts } from '../../blockchain/utils'
 import { VersionController } from '../../blockchain/versioncontroller'
 import { MAX_PARALLEL_READ } from '../../constants'
-import { EGoshError, GoshError } from '../../errors'
+import { GoshError } from '../../errors'
 import { executeByChunk, whileFinite } from '../../utils'
 import { contextVersion } from '../constants'
 import GoshABI from './abi/systemcontract.abi.json'
 import { GoshCommitTag } from './committag'
 import { Dao } from './dao'
+import { DaoWallet } from './daowallet'
 import { GoshTag } from './goshtag'
 import { GoshRepository } from './repository'
 import { Task } from './task'
-import { UserProfile } from './userprofile'
 
 export class SystemContract extends BaseContract {
   versionController: VersionController
@@ -55,11 +55,15 @@ export class SystemContract extends BaseContract {
       filters: [`code_hash: {eq:"${hash}"}`],
     })
 
-    const details = await executeByChunk(accounts, MAX_PARALLEL_READ, async ({ id }) => {
-      const account = new GoshCommitTag(this.client, id)
-      const details = await account.getDetails()
-      return { account, ...details }
-    })
+    const details = await executeByChunk(
+      accounts,
+      MAX_PARALLEL_READ,
+      async ({ id }) => {
+        const account = new GoshCommitTag(this.client, id)
+        const details = await account.getDetails()
+        return { account, ...details }
+      },
+    )
 
     const found = details.find(({ name }) => name === data!.tagname)
     return found?.account || null
@@ -84,9 +88,14 @@ export class SystemContract extends BaseContract {
   }
 
   async getDaoProfile(name: string) {
-    const { value0 } = await this.runLocal('getProfileDaoAddr', { name }, undefined, {
-      useCachedBoc: true,
-    })
+    const { value0 } = await this.runLocal(
+      'getProfileDaoAddr',
+      { name },
+      undefined,
+      {
+        useCachedBoc: true,
+      },
+    )
     return new DaoProfile(this.account.client, value0)
   }
 
@@ -101,10 +110,23 @@ export class SystemContract extends BaseContract {
       return new Dao(this.client, address)
     }
 
-    const { value0 } = await this.runLocal('getAddrDao', { name }, undefined, {
-      useCachedBoc: true,
-    })
-    return new Dao(this.client, value0)
+    if (name) {
+      const { value0 } = await this.runLocal(
+        'getAddrDao',
+        { name },
+        undefined,
+        {
+          useCachedBoc: true,
+        },
+      )
+      return new Dao(this.client, value0)
+    }
+
+    throw new GoshError('DAO name or address required')
+  }
+
+  getDaoWallet(params: { address: string; keys?: KeyPair }) {
+    return new DaoWallet(this.client, params.address, params.keys)
   }
 
   async getRepository(options: { path?: string; address?: string }) {

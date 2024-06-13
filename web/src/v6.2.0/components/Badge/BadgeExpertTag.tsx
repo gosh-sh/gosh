@@ -3,11 +3,12 @@ import randomColor from 'randomcolor'
 import React from 'react'
 
 type TBadgeExpertTagProps = React.HTMLAttributes<HTMLDivElement> & {
+  seed: string
   content: any
 }
 
 const BadgeExpertTag = (props: TBadgeExpertTagProps) => {
-  const { content, className, style } = props
+  const { seed, content, className, style } = props
 
   return (
     <div
@@ -17,11 +18,11 @@ const BadgeExpertTag = (props: TBadgeExpertTagProps) => {
       )}
       style={{
         color: randomColor({
-          seed: content,
+          seed,
           luminosity: 'dark',
         }),
         backgroundColor: randomColor({
-          seed: content,
+          seed,
           luminosity: 'light',
           format: 'rgba',
           alpha: 0.35,

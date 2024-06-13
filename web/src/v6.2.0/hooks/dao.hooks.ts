@@ -48,6 +48,7 @@ import {
   daoEventListSelector,
   daoEventSelector,
   daoInviteListAtom,
+  daoIsMemberOfSelector,
   daoMemberListSelector,
   daoMemberSelector,
   daoTaskListSelector,
@@ -62,12 +63,15 @@ import {
   TDaoEventDetails,
   TDaoExpertTag,
   TDaoInviteListItem,
+  TDaoIsMemberOfListItem,
   TDaoListItem,
+  TDaoMember,
   TDaoMemberListItem,
   TTaskDetails,
   TTaskGrant,
   TTaskGrantPair,
 } from '../types/dao.types'
+import { TUserSelectOption } from '../types/form.types'
 import { TGoshCommitTag } from '../types/repository.types'
 import { useProfile, useUser } from './user.hooks'
 
@@ -80,7 +84,10 @@ export function usePartnerDaoList(params: { initialize?: boolean } = {}) {
       setData((state) => ({ ...state, isFetching: true }))
 
       const items: TDaoListItem[] = []
-      const versions = AppConfig.getVersions({ reverse: true, withDisabled: true })
+      const versions = AppConfig.getVersions({
+        reverse: true,
+        withDisabled: true,
+      })
       for (const ver of Object.keys(versions)) {
         const sc = AppConfig.goshroot.getSystemContract(ver)
         const rest = PARTNER_DAO_NAMES.filter((name) => {
@@ -133,7 +140,9 @@ export function useCreateDao() {
   const profile = useProfile()
   const { user } = useUser()
   const setUserDaoList = useSetRecoilState(userDaoListAtom)
-  const [status, setStatus] = useRecoilState(appToastStatusSelector('__createdao'))
+  const [status, setStatus] = useRecoilState(
+    appToastStatusSelector('__createdao'),
+  )
 
   const createDao = async (params: {
     name: string
@@ -159,7 +168,11 @@ export function useCreateDao() {
       const version = await dao.getVersion()
 
       // Authorize DAO wallet
-      setStatus((state) => ({ ...state, type: 'pending', data: 'Authorize DAO' }))
+      setStatus((state) => ({
+        ...state,
+        type: 'pending',
+        data: 'Authorize DAO',
+      }))
       const wallet = (await dao.getMemberWallet({
         data: { profile: profile.address },
         keys: user.keys,
@@ -214,7 +227,10 @@ export function useCreateDao() {
         return await repository.isDeployed()
       })
       if (!wait) {
-        throw new GoshError('Timeout error', 'Create DAO reposirory timeout reached')
+        throw new GoshError(
+          'Timeout error',
+          'Create DAO reposirory timeout reached',
+        )
       }
 
       // Push description blob to DAO service repository
@@ -276,7 +292,9 @@ export function useCreateDao() {
   return { createDao, status }
 }
 
-export function useUserDaoList(params: { count?: number; initialize?: boolean } = {}) {
+export function useUserDaoList(
+  params: { count?: number; initialize?: boolean } = {},
+) {
   const { count = 10, initialize } = params
   const { user } = useUser()
   const profile = useProfile()
@@ -323,7 +341,11 @@ export function useUserDaoList(params: { count?: number; initialize?: boolean } 
     limit: number
     cursor?: string
     _items?: TDaoListItem[]
-  }): Promise<{ items: TDaoListItem[]; cursor?: string; hasNext?: boolean }> => {
+  }): Promise<{
+    items: TDaoListItem[]
+    cursor?: string
+    hasNext?: boolean
+  }> => {
     const { profile, limit, cursor, _items = [] } = params
     const {
       messages,
@@ -372,7 +394,12 @@ export function useUserDaoList(params: { count?: number; initialize?: boolean } 
     }
 
     if (_items.length < limit && hasNext) {
-      return await getBlockchainItems({ profile, limit, cursor: _cursor, _items })
+      return await getBlockchainItems({
+        profile,
+        limit,
+        cursor: _cursor,
+        _items,
+      })
     }
     return { items: _items, cursor: _cursor, hasNext }
   }
@@ -407,15 +434,17 @@ export function useUserDaoList(params: { count?: number; initialize?: boolean } 
       }
 
       // Get onboarding items
-      const onboarding = (await getOnboardingItems(user.username)).map((item) => ({
-        account: null,
-        name: item.name,
-        address: '',
-        version: '',
-        supply: -1,
-        members: -1,
-        onboarding: item.repos,
-      }))
+      const onboarding = (await getOnboardingItems(user.username)).map(
+        (item) => ({
+          account: null,
+          name: item.name,
+          address: '',
+          version: '',
+          supply: -1,
+          members: -1,
+          onboarding: item.repos,
+        }),
+      )
 
       /**
        * Get blockchain items
@@ -428,9 +457,13 @@ export function useUserDaoList(params: { count?: number; initialize?: boolean } 
       })
 
       // Compose all items together
-      const different = _.differenceWith(onboarding, blockchain.items, (a, b) => {
-        return a.name === b.name
-      })
+      const different = _.differenceWith(
+        onboarding,
+        blockchain.items,
+        (a, b) => {
+          return a.name === b.name
+        },
+      )
       const composed = [
         ...different,
         ...blockchain.items.map((item) => {
@@ -481,7 +514,9 @@ export function useUserDaoList(params: { count?: number; initialize?: boolean } 
   }
 }
 
-export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {}) {
+export function useDao(
+  params: { initialize?: boolean; subscribe?: boolean } = {},
+) {
   const { initialize, subscribe } = params
   const { daoname } = useRecoilValue(appContextAtom)
   const [data, setData] = useRecoilState(daoDetailsSelector(daoname))
@@ -596,8 +631,8 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
             isEventProgressOn: !details.hide_voting_results,
             isRepoUpgraded: details.isRepoUpgraded,
             isTaskUpgraded: details.isTaskUpgraded,
-            isUpgraded: details.isRepoUpgraded && details.isTaskUpgraded,
-            isReady: details.isUpgraded,
+            isUpgraded: details.isUpgraded,
+            isReady: details.isReady,
           },
         }
       })
@@ -608,7 +643,10 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
     }
   }
 
-  const getDetailsInterval = async (params: { dao: Dao; repository: GoshRepository }) => {
+  const getDetailsInterval = async (params: {
+    dao: Dao
+    repository: GoshRepository
+  }) => {
     const { dao, repository } = params
 
     try {
@@ -629,7 +667,10 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
     }
   }
 
-  const getDescription = async (daoname: string, repository: GoshRepository) => {
+  const getDescription = async (
+    daoname: string,
+    repository: GoshRepository,
+  ) => {
     if (!(await repository.isDeployed())) {
       return { summary: '', description: '' }
     }
@@ -721,23 +762,31 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
       await sc.getDaoTaskTagCodeHash(dao.address, MILESTONE_TAG),
       await sc.getDaoTaskTagCodeHash(dao.address, MILESTONE_TASK_TAG),
     ]
-    const result = await executeByChunk<string, any>(codes, 2, async (chunk) => {
-      return await getAllAccounts({
-        filters: [`code_hash: {in: ${JSON.stringify(chunk)}}`],
-        result: ['code_hash'],
-      })
-    })
+    const result = await executeByChunk<string, any>(
+      codes,
+      2,
+      async (chunk) => {
+        return await getAllAccounts({
+          filters: [`code_hash: {in: ${JSON.stringify(chunk)}}`],
+          result: ['code_hash'],
+        })
+      },
+    )
     const flattened = _.flatten(result)
-    const tasks = await executeByChunk(flattened, 30, async ({ id, code_hash }) => {
-      const tag = await sc.getGoshTag({ address: id })
-      const data = await tag.getDetails()
+    const tasks = await executeByChunk(
+      flattened,
+      30,
+      async ({ id, code_hash }) => {
+        const tag = await sc.getGoshTag({ address: id })
+        const data = await tag.getDetails()
 
-      const isMilestone = code_hash === codes[1]
-      const task = isMilestone
-        ? await sc.getMilestone({ address: data.task })
-        : await sc.getTask({ address: data.task })
-      return await task.getRawDetails()
-    })
+        const isMilestone = code_hash === codes[1]
+        const task = isMilestone
+          ? await sc.getMilestone({ address: data.task })
+          : await sc.getTask({ address: data.task })
+        return await task.getRawDetails()
+      },
+    )
 
     const mapping: { [profile: string]: number } = {}
     for (const task of tasks) {
@@ -808,14 +857,20 @@ export function useDao(params: { initialize?: boolean; subscribe?: boolean } = {
   return data
 }
 
-export function useDaoMember(params: { initialize?: boolean; subscribe?: boolean } = {}) {
+export function useDaoMember(
+  params: { initialize?: boolean; subscribe?: boolean } = {},
+) {
   const { initialize, subscribe } = params
   const { user } = useUser()
   const { details: dao } = useDao()
   const [data, setData] = useRecoilState(daoMemberSelector(dao.name))
   const [_wallet, _setWallet] = useState<DaoWallet | null>(null)
-  const setStatus0 = useSetRecoilState(appToastStatusSelector('__activatedaowallet'))
-  const setStatus1 = useSetRecoilState(appToastStatusSelector('__transferprevdaotokens'))
+  const setStatus0 = useSetRecoilState(
+    appToastStatusSelector('__activatedaowallet'),
+  )
+  const setStatus1 = useSetRecoilState(
+    appToastStatusSelector('__transferprevdaotokens'),
+  )
   const setStatus2 = useSetRecoilState(appToastStatusSelector('__waitdaoready'))
 
   const activate = async (profile: UserProfile, wallet: DaoWallet) => {
@@ -833,7 +888,10 @@ export function useDaoMember(params: { initialize?: boolean; subscribe?: boolean
           return await wallet.isDeployed()
         })
         if (!wait) {
-          throw new GoshError('Timeout error', 'Create DAO wallet timeout reached')
+          throw new GoshError(
+            'Timeout error',
+            'Create DAO wallet timeout reached',
+          )
         }
       }
 
@@ -891,7 +949,9 @@ export function useDaoMember(params: { initialize?: boolean; subscribe?: boolean
     }
 
     const client = getSystemContract().client
-    const found = dao.members.find(({ profile }) => profile.address === user.profile)
+    const found = dao.members.find(
+      ({ profile }) => profile.address === user.profile,
+    )
     const wallet = await dao.account.getMemberWallet({
       data: { profile: user.profile },
       keys: user.keys,
@@ -1076,6 +1136,9 @@ export function useDaoMember(params: { initialize?: boolean; subscribe?: boolean
     vesting: dao.members?.find((item) => {
       return item.profile.address === user.profile
     })?.vesting,
+    expert_tags: dao.members?.find(
+      (item) => item.profile.address === user.profile,
+    )?.expert_tags,
   }
 }
 
@@ -1095,22 +1158,19 @@ export function useDaoMemberList(
 
         to = to || from + count
         const members_slice = dao.members?.slice(from, to) || []
-        const items = await executeByChunk<TDaoDetailsMemberItem, TDaoMemberListItem>(
-          members_slice,
-          MAX_PARALLEL_READ,
-          async (item) => {
-            const { profile, daomembers } = item
-
-            const name = daomembers[profile.address] || (await profile.getName())
-            const { voting, locked, regular } = await item.wallet.getBalance()
-            return {
-              ...item,
-              username: name,
-              balance: Math.max(voting, locked) + regular,
-              isFetching: false,
-            }
-          },
-        )
+        const items = await executeByChunk<
+          TDaoDetailsMemberItem,
+          TDaoMemberListItem
+        >(members_slice, MAX_PARALLEL_READ, async (item) => {
+          const { name, wallet } = item
+          const { voting, locked, regular } = await wallet.getBalance()
+          return {
+            ...item,
+            username: name,
+            balance: Math.max(voting, locked) + regular,
+            isFetching: false,
+          }
+        })
 
         setData((state) => {
           const different = _.differenceWith(
@@ -1166,22 +1226,77 @@ export function useDaoMemberList(
   }
 }
 
+export function useDaoIsMemberOfList(params: { initialize?: boolean } = {}) {
+  const { initialize } = params
+  const { details: dao } = useDao()
+  const [data, setData] = useRecoilState(daoIsMemberOfSelector(dao.name))
+
+  const getIsMemberOfList = useCallback(async () => {
+    const sc = getSystemContract()
+
+    try {
+      setData((state) => ({ ...state, error: null, is_fetching: true }))
+
+      const items = await executeByChunk<
+        TDaoDetailsMemberItem,
+        TDaoIsMemberOfListItem
+      >(dao.isMemberOf || [], MAX_PARALLEL_READ, async (item) => {
+        const { profile, wallet } = item
+
+        const dao = profile as Dao
+        const daoDetails = await dao.getDetails()
+        const daoOfContextVer = await sc.getDao({ name: daoDetails.nameDao })
+        const { voting, locked, regular, allowance } = await wallet.getBalance()
+        return {
+          dao,
+          name: daoDetails.nameDao,
+          version: await profile.getVersion(),
+          wallet,
+          karma: allowance,
+          balance: Math.max(voting, locked) + regular,
+          has_current: await daoOfContextVer.isDeployed(),
+        }
+      })
+
+      setData((state) => ({
+        ...state,
+        items,
+        is_fetching: false,
+      }))
+    } catch (e: any) {
+      setData((state) => ({ ...state, error: e }))
+    } finally {
+      setData((state) => ({ ...state, is_fetching: false }))
+    }
+  }, [dao.isMemberOf?.length])
+
+  useEffect(() => {
+    if (initialize) {
+      getIsMemberOfList()
+    }
+  }, [getIsMemberOfList, initialize])
+
+  return { ...data, updateList: getIsMemberOfList }
+}
+
 export function useDaoHelpers() {
   const { user } = useUser()
   const { details: dao } = useDao()
-  const member = useDaoMember()
+  const curMember = useDaoMember()
 
   const nocallback = () => {}
 
   const beforeCreateEvent = async (
     min: number,
     options: {
+      member?: TDaoMember
       onPendingCallback?: (status: TToastStatus) => void
       onSuccessCallback?: (status: TToastStatus) => void
       onErrorCallback?: (status: TToastStatus) => void
     },
   ) => {
     const {
+      member = curMember,
       onPendingCallback = nocallback,
       onSuccessCallback = nocallback,
       onErrorCallback = nocallback,
@@ -1192,7 +1307,10 @@ export function useDaoHelpers() {
 
       // Check wallet readyness
       if (!member.wallet || !member.isReady) {
-        throw new GoshError('Access error', 'Wallet does not exist or not activated')
+        throw new GoshError(
+          'Access error',
+          'Wallet does not exist or not activated',
+        )
       }
 
       // Check for minimum tokens needed to create event
@@ -1238,7 +1356,10 @@ export function useDaoHelpers() {
           throw new GoshError('Timeout error', 'Lock tokens error')
         }
 
-        onSuccessCallback({ type: 'success', data: 'Prepare balances completed' })
+        onSuccessCallback({
+          type: 'success',
+          data: 'Prepare balances completed',
+        })
         return
       }
 
@@ -1271,25 +1392,28 @@ export function useDaoHelpers() {
       onPendingCallback({ type: 'pending', data: 'Prepare balances' })
 
       // Check wallet readyness
-      if (!member.wallet || !member.isReady) {
-        throw new GoshError('Access error', 'Wallet does not exist or not activated')
+      if (!curMember.wallet || !curMember.isReady) {
+        throw new GoshError(
+          'Access error',
+          'Wallet does not exist or not activated',
+        )
       }
 
       // Check for member allowance
-      if (member.allowance! < amount) {
+      if (curMember.allowance! < amount) {
         throw new GoshError('Karma error', {
           message: 'Not enough karma',
-          yours: member.allowance,
+          yours: curMember.allowance,
           wanted: amount,
         })
       }
 
       // Check locker status
-      if (await member.wallet.smvLockerBusy()) {
+      if (await curMember.wallet.smvLockerBusy()) {
         onPendingCallback({ type: 'pending', data: 'Wait for locker' })
 
         const wait = await whileFinite(async () => {
-          return !(await member.wallet!.smvLockerBusy())
+          return !(await curMember.wallet!.smvLockerBusy())
         })
         if (!wait) {
           throw new GoshError('Timeout error', 'Wait for locker ready timeout')
@@ -1298,8 +1422,8 @@ export function useDaoHelpers() {
 
       // Convert regular tokens to voting
       onPendingCallback({ type: 'pending', data: 'Moving tokens' })
-      const { voting, regular } = await member.wallet.getBalance()
-      const locked = await member.wallet.smvEventVotes(platformId)
+      const { voting, regular } = await curMember.wallet.getBalance()
+      const locked = await curMember.wallet.smvEventVotes(platformId)
       const unlocked = voting - locked
       if (unlocked < amount) {
         const delta = amount - unlocked
@@ -1309,9 +1433,9 @@ export function useDaoHelpers() {
           })
         }
 
-        await member.wallet.smvLockTokens(delta)
+        await curMember.wallet.smvLockTokens(delta)
         const check = await whileFinite(async () => {
-          const { voting } = await member.wallet!.getBalance()
+          const { voting } = await curMember.wallet!.getBalance()
           return voting >= amount
         })
         if (!check) {
@@ -1342,29 +1466,32 @@ export function useDaoHelpers() {
 
     try {
       // Check wallet readyness
-      if (!member.wallet || !member.isReady) {
-        throw new GoshError('Access error', 'Wallet does not exist or not activated')
+      if (!curMember.wallet || !curMember.isReady) {
+        throw new GoshError(
+          'Access error',
+          'Wallet does not exist or not activated',
+        )
       }
 
       // Check locker status
-      if (await member.wallet.smvLockerBusy()) {
+      if (await curMember.wallet.smvLockerBusy()) {
         onPendingCallback({ type: 'pending', data: 'Wait for locker' })
 
         const wait = await whileFinite(async () => {
-          return !(await member.wallet!.smvLockerBusy())
+          return !(await curMember.wallet!.smvLockerBusy())
         })
         if (!wait) {
           throw new GoshError('Timeout error', 'Wait for locker ready timeout')
         }
       }
 
-      const regular = member.balance?.regular || 0
+      const regular = curMember.balance?.regular || 0
       if (needed > regular) {
         const delta = needed - regular
-        await member.wallet.smvReleaseTokens()
-        await member.wallet.smvUnlockTokens(delta)
+        await curMember.wallet.smvReleaseTokens()
+        await curMember.wallet.smvUnlockTokens(delta)
         const check = await whileFinite(async () => {
-          const { regular } = await member.wallet!.getBalance()
+          const { regular } = await curMember.wallet!.getBalance()
           return regular >= needed
         })
         if (!check) {
@@ -1379,25 +1506,34 @@ export function useDaoHelpers() {
     }
   }
 
-  const checkDaoWallet = async (profile: string) => {
-    const isMember = await dao.account!.isMember(profile)
+  const checkDaoWallet = async (
+    profile: string,
+    options: { dao?: Dao } = {},
+  ) => {
+    const daoAccount = options.dao || dao.account!
+    const wallet = await daoAccount.getMemberWallet({ data: { profile } })
+
+    const isMember = await daoAccount.isMember(profile)
     if (!isMember) {
-      const wallet = await dao.account!.getMemberWallet({ data: { profile } })
-      await dao.account!.createLimitedWallet(profile)
+      await daoAccount.createLimitedWallet(profile)
       const wait = await whileFinite(async () => {
         return await wallet.isDeployed()
       })
       if (!wait) {
-        throw new GoshError('Timeout error', 'Create DAO wallet timeout reached')
+        throw new GoshError(
+          'Timeout error',
+          'Create DAO wallet timeout reached',
+        )
       }
     }
 
-    return { isMember }
+    return { isMember, wallet }
   }
 
   const afterCreateEvent = async (
     meta: object,
     options: {
+      dao_name?: string
       onPendingCallback?: (status: TToastStatus) => void
       onSuccessCallback?: (status: TToastStatus) => void
       onErrorCallback?: (status: TToastStatus) => void
@@ -1422,17 +1558,19 @@ export function useDaoHelpers() {
       }
 
       onPendingCallback({ type: 'pending', data: 'Finalizing' })
-      await NotificationsAPI.notifications.createNotificaton({
-        data: {
-          username: user.username,
-          payload: {
-            daoname: dao.name,
-            type: ENotificationType.DAO_EVENT_CREATED,
-            meta,
+      if (!AppConfig.devmode) {
+        await NotificationsAPI.notifications.createNotificaton({
+          data: {
+            username: user.username,
+            payload: {
+              daoname: options.dao_name || dao.name,
+              type: ENotificationType.DAO_EVENT_CREATED,
+              meta,
+            },
           },
-        },
-        keys: user.keys,
-      })
+          keys: user.keys,
+        })
+      }
       onSuccessCallback({ type: 'success', data: 'Completed' })
     } catch (e: any) {
       onErrorCallback({ type: 'error', data: e })
@@ -1455,7 +1593,9 @@ export function useCreateDaoMember() {
   const member = useDaoMember()
   const setInviteList = useSetRecoilState(daoInviteListAtom)
   const { beforeCreateEvent, afterCreateEvent } = useDaoHelpers()
-  const [status, setStatus] = useRecoilState(appToastStatusSelector('__createdaomember'))
+  const [status, setStatus] = useRecoilState(
+    appToastStatusSelector('__createdaomember'),
+  )
 
   const getInvitationToken = useCallback(() => {
     if (!dao.name) {
@@ -1601,11 +1741,7 @@ export function useCreateDaoMember() {
           .join('\n\n')
 
         // Create add DAO members multi event
-        // Skip `member.wallet` check, because `beforeCreate` checks it
-        // Prepare balance for create event
         let eventaddr: string | null = null
-        await beforeCreateEvent(0, { onPendingCallback: setStatus })
-
         const notification = {
           label: DaoEventType[EDaoEventType.DAO_MEMBER_ADD],
           comment,
@@ -1613,6 +1749,9 @@ export function useCreateDaoMember() {
         }
 
         if (requestMembership) {
+          // Prepare balance for create event
+          // Skip `member.wallet` check, because `beforeCreate` checks it
+          await beforeCreateEvent(0, { onPendingCallback: setStatus })
           const members = profiles.map(({ profile }) => {
             return { profile, allowance: 0, expired: 0 }
           })
@@ -1627,6 +1766,9 @@ export function useCreateDaoMember() {
             { onPendingCallback: setStatus },
           )
         } else if (profiles.length > 0) {
+          // Prepare balance for create event
+          // Skip `member.wallet` check, because `beforeCreate` checks it
+          await beforeCreateEvent(20, { onPendingCallback: setStatus })
           const memberAddCells = profiles.map(({ profile, daonames }) => ({
             type: EDaoEventType.DAO_MEMBER_ADD,
             params: {
@@ -1634,10 +1776,12 @@ export function useCreateDaoMember() {
               daonames,
             },
           }))
-          const memberAddVotingCells = profiles.map(({ profile, allowance }) => ({
-            type: EDaoEventType.DAO_TOKEN_VOTING_ADD,
-            params: { profile, amount: allowance },
-          }))
+          const memberAddVotingCells = profiles.map(
+            ({ profile, allowance }) => ({
+              type: EDaoEventType.DAO_TOKEN_VOTING_ADD,
+              params: { profile, amount: allowance },
+            }),
+          )
           eventaddr = await member.wallet!.createMultiEvent({
             proposals: [
               ...memberAddCells,
@@ -1687,9 +1831,13 @@ export function useCreateDaoMember() {
 export function useDeleteDaoMember() {
   const { details: dao } = useDao()
   const member = useDaoMember()
-  const setMemberList = useSetRecoilState(daoMemberListSelector({ daoname: dao.name }))
+  const setMemberList = useSetRecoilState(
+    daoMemberListSelector({ daoname: dao.name }),
+  )
   const { beforeCreateEvent, afterCreateEvent } = useDaoHelpers()
-  const [status, setStatus] = useRecoilState(appToastStatusSelector('__deletedaomember'))
+  const [status, setStatus] = useRecoilState(
+    appToastStatusSelector('__deletedaomember'),
+  )
 
   const deleteMember = async (
     users: { username: string; usertype: EDaoMemberType }[],
@@ -1714,53 +1862,64 @@ export function useDeleteDaoMember() {
         data: 'Resolve user profiles',
       }))
       const sc = getSystemContract()
-      const profiles = await executeByChunk(users, MAX_PARALLEL_READ, async (item) => {
-        const { username, usertype } = item
+      const profiles = await executeByChunk(
+        users,
+        MAX_PARALLEL_READ,
+        async (item) => {
+          const { username, usertype } = item
 
-        // Resolve profile by username and type
-        let profile
-        if (usertype === EDaoMemberType.Dao) {
-          profile = await sc.getDao({ name: username.toLowerCase() })
-        } else if (usertype === EDaoMemberType.User) {
-          profile = await sc.getUserProfile({ username: username.toLowerCase() })
-        }
+          // Resolve profile by username and type
+          let profile
+          if (usertype === EDaoMemberType.Dao) {
+            profile = await sc.getDao({ name: username.toLowerCase() })
+          } else if (usertype === EDaoMemberType.User) {
+            profile = await AppConfig.goshroot.getUserProfile({
+              username: username.toLowerCase(),
+            })
+          }
 
-        if (!profile || !(await profile.isDeployed())) {
-          throw new GoshError('Profile error', {
-            message: 'Profile does not exist',
-            username,
-          })
-        }
+          if (!profile || !(await profile.isDeployed())) {
+            throw new GoshError('Profile error', {
+              message: 'Profile does not exist',
+              username,
+            })
+          }
 
-        // Find profile in DAO members for allowance data
-        const address = profile.address
-        const member = dao.members?.find((v) => v.profile.address === address)
-        if (!member) {
-          throw new GoshError('Profile error', {
-            message: 'Member not found',
-            username,
-          })
-        }
+          // Find profile in DAO members for allowance data
+          const address = profile.address
+          const member = dao.members?.find((v) => v.profile.address === address)
+          if (!member) {
+            throw new GoshError('Profile error', {
+              message: 'Member not found',
+              username,
+            })
+          }
 
-        return {
-          profile: address,
-          allowance: member.allowance,
-          expert_tags: member.expert_tags,
-        }
-      })
+          return {
+            profile: address,
+            allowance: member.allowance,
+            expert_tags: member.expert_tags,
+          }
+        },
+      )
 
       comment =
-        comment || `Delete members ${users.map(({ username }) => username).join(', ')}`
+        comment ||
+        `Delete members ${users.map(({ username }) => username).join(', ')}`
 
       // Create delete DAO members multi event
       // Skip `member.wallet` check, because `beforeCreate` checks it
       // Prepare balance for create event
       await beforeCreateEvent(20, { onPendingCallback: setStatus })
 
-      const memberDeleteAllowanceCells = profiles.map(({ profile, allowance }) => ({
-        type: EDaoEventType.DAO_ALLOWANCE_CHANGE,
-        params: { members: [{ profile, increase: false, amount: allowance }] },
-      }))
+      const memberDeleteAllowanceCells = profiles.map(
+        ({ profile, allowance }) => ({
+          type: EDaoEventType.DAO_ALLOWANCE_CHANGE,
+          params: {
+            members: [{ profile, increase: false, amount: allowance }],
+          },
+        }),
+      )
       const memberDeleteCells = profiles.map(({ profile }) => ({
         type: EDaoEventType.DAO_MEMBER_DELETE,
         params: { profile: [profile] },
@@ -1829,7 +1988,9 @@ export function useUpdateDaoMember() {
   const { details: dao } = useDao()
   const member = useDaoMember()
   const { beforeCreateEvent, afterCreateEvent } = useDaoHelpers()
-  const [status, setStatus] = useRecoilState(appToastStatusSelector('__updatedaomember'))
+  const [status, setStatus] = useRecoilState(
+    appToastStatusSelector('__updatedaomember'),
+  )
 
   const updateMember = useCallback(
     async (
@@ -1859,18 +2020,8 @@ export function useUpdateDaoMember() {
           throw new GoshError('DAO supply error', {
             karma: allowance,
             supply,
-            message: 'Members total karma can not be greater than DAO total supply',
-          })
-        }
-
-        // Check total balance against DAO reserve
-        const balance = _.sum(items.map(({ balance }) => balance))
-        const reserve = dao.supply?.reserve || 0
-        if (balance > reserve) {
-          throw new GoshError('DAO reserve error', {
-            balance,
-            reserve,
-            message: 'Members total balance can not be greater than DAO reserve',
+            message:
+              'Members total karma can not be greater than DAO total supply',
           })
         }
 
@@ -1885,6 +2036,23 @@ export function useUpdateDaoMember() {
           const tokens_changed = item._balance !== item.balance
           return expert_tags_diff.length > 0 || karma_changed || tokens_changed
         })
+
+        // Check total updated balance against DAO reserve
+        const balance = _.sum(
+          items_dirty.map(({ balance, _balance }) => {
+            const diff = balance - _balance
+            return diff > 0 ? diff : 0
+          }),
+        )
+        const reserve = dao.supply?.reserve || 0
+        if (balance > reserve) {
+          throw new GoshError('DAO reserve error', {
+            balance,
+            reserve,
+            message:
+              'Members total balance can not be greater than DAO reserve',
+          })
+        }
 
         // Check if something was changed
         if (items_dirty.length === 0) {
@@ -1934,7 +2102,12 @@ export function useUpdateDaoMember() {
         // Prepare event data
         const events = []
         const comments = []
-        for (const item of profiles) {
+        const sortedProfiles = profiles.sort((a, b) => {
+          const aKarmaChange = a._allowance - a.allowance
+          const bKarmaChange = b._allowance - b.allowance
+          return bKarmaChange - aKarmaChange
+        })
+        for (const item of sortedProfiles) {
           // Balance change
           if (item.balance > item._balance) {
             const delta = item.balance - item._balance
@@ -2059,7 +2232,9 @@ export function useUpdateDaoMember() {
   }
 }
 
-export function useDaoEventList(params: { count?: number; initialize?: boolean } = {}) {
+export function useDaoEventList(
+  params: { count?: number; initialize?: boolean } = {},
+) {
   const { count = 10, initialize } = params
   const { details: dao } = useDao()
   const member = useDaoMember()
@@ -2222,7 +2397,9 @@ export function useDaoEvent(
 
       // Fetch event details from blockchain
       if (!found || !found.status.completed) {
-        const account = found ? found.account : await dao.account.getEvent({ address })
+        const account = found
+          ? found.account
+          : await dao.account.getEvent({ address })
         const details = await account.getDetails({ wallet: member.wallet })
         const accdata = await account.account.getAccount()
         found = {
@@ -2332,7 +2509,10 @@ export function useReviewDaoEvent() {
   const review = useCallback(
     async (params: { eventaddr: string; decision: boolean }) => {
       if (!member.isReady || !member.wallet) {
-        throw new GoshError('Access error', 'Wallet does not exist or not activated')
+        throw new GoshError(
+          'Access error',
+          'Wallet does not exist or not activated',
+        )
       }
 
       await member.wallet.sendDaoEventReview(params)
@@ -2346,7 +2526,9 @@ export function useReviewDaoEvent() {
 export function useVoteDaoEvent() {
   const member = useDaoMember()
   const { beforeVote } = useDaoHelpers()
-  const [status, setStatus] = useRecoilState(appToastStatusSelector('__voteforevent'))
+  const [status, setStatus] = useRecoilState(
+    appToastStatusSelector('__voteforevent'),
+  )
 
   const vote = async (params: {
     platformId: string
@@ -2387,7 +2569,9 @@ export function useUpgradeDao() {
   const [alert, setAlert] = useState<
     'isNotLatest' | 'isUpgradeAvailable' | 'isUpgradeUncompleted'
   >()
-  const [status, setStatus] = useRecoilState(appToastStatusSelector('__upgradedao'))
+  const [status, setStatus] = useRecoilState(
+    appToastStatusSelector('__upgradedao'),
+  )
 
   const getAvailableVersions = useCallback(() => {
     const all = Object.keys(AppConfig.versions)
@@ -2453,7 +2637,10 @@ export function useUpgradeDao() {
     async (version: string, comment: string) => {
       try {
         if (Object.keys(AppConfig.versions).indexOf(version) < 0) {
-          throw new GoshError('Upgrade error', `Gosh version ${version} is not supported`)
+          throw new GoshError(
+            'Upgrade error',
+            `Gosh version ${version} is not supported`,
+          )
         }
         if (!dao.details.account || !dao.details.name) {
           throw new GoshError('Upgrade error', 'DAO account undefined')
@@ -2611,7 +2798,9 @@ export function useUpgradeDaoComplete() {
         continue
       }
 
-      const sc = AppConfig.goshroot.getSystemContract(item.version) as SystemContract
+      const sc = AppConfig.goshroot.getSystemContract(
+        item.version,
+      ) as SystemContract
       const code = await sc.getHackathonAppIndexCodeHash(item.address)
       const accounts = await getAllAccounts({
         filters: [`code_hash: {eq:"${code}"}`],
@@ -2695,25 +2884,33 @@ export function useUpgradeDaoComplete() {
       })
       isEvent = !alone
     } else if (args.length > 1) {
-      await executeByChunk(splitByChunk(args, 50), MAX_PARALLEL_WRITE, async (chunk) => {
-        const comment = 'Upgrade repositories'
-        const eventaddr = await wallet.createMultiEvent({
-          proposals: chunk.map((p) => ({
-            type: EDaoEventType.REPO_CREATE,
-            params: p,
-          })),
-          comment,
-        })
-        await afterCreateEvent(
-          { label: comment, comment: `${comment} chunk`, eventaddr },
-          {},
-        )
-      })
+      await executeByChunk(
+        splitByChunk(args, 50),
+        MAX_PARALLEL_WRITE,
+        async (chunk) => {
+          const comment = 'Upgrade repositories'
+          const eventaddr = await wallet.createMultiEvent({
+            proposals: chunk.map((p) => ({
+              type: EDaoEventType.REPO_CREATE,
+              params: p,
+            })),
+            comment,
+          })
+          await afterCreateEvent(
+            { label: comment, comment: `${comment} chunk`, eventaddr },
+            {},
+          )
+        },
+      )
       isEvent = true
     }
 
     // Update DAO flag
-    setStatus((state) => ({ ...state, type: 'pending', data: 'Update DAO flag' }))
+    setStatus((state) => ({
+      ...state,
+      type: 'pending',
+      data: 'Update DAO flag',
+    }))
     await wallet.setRepositoriesUpgraded()
     return { isEvent }
   }
@@ -2735,7 +2932,11 @@ export function useUpgradeDaoComplete() {
     )
 
     // Get task code hash for each repository
-    setStatus((state) => ({ ...state, type: 'pending', data: 'Fetching milestones' }))
+    setStatus((state) => ({
+      ...state,
+      type: 'pending',
+      data: 'Fetching milestones',
+    }))
     const taskcode = await executeByChunk(
       repositories,
       MAX_PARALLEL_READ,
@@ -2746,8 +2947,14 @@ export function useUpgradeDaoComplete() {
     )
 
     // Transfer/upgrade milestones
-    setStatus((state) => ({ ...state, type: 'pending', data: 'Upgrade milestones' }))
-    const sc = AppConfig.goshroot.getSystemContract(daoprev.version) as SystemContract
+    setStatus((state) => ({
+      ...state,
+      type: 'pending',
+      data: 'Upgrade milestones',
+    }))
+    const sc = AppConfig.goshroot.getSystemContract(
+      daoprev.version,
+    ) as SystemContract
 
     // Prepare cells
     const cells: { type: number; params: any }[] = []
@@ -2756,20 +2963,24 @@ export function useUpgradeDaoComplete() {
         filters: [`code_hash: {eq:"${codehash}"}`],
         result: ['id'],
       })
-      const items = await executeByChunk(accounts, MAX_PARALLEL_READ, async ({ id }) => {
-        const task = await sc.getMilestone({ address: id })
-        const details = await task.getRawDetails()
-        const version = await task.getVersion()
-        return {
-          type: EDaoEventType.MILESTONE_UPGRADE,
-          params: {
-            reponame,
-            taskname: details.nametask,
-            taskprev: { address: id, version },
-            tags: details.hashtag,
-          },
-        }
-      })
+      const items = await executeByChunk(
+        accounts,
+        MAX_PARALLEL_READ,
+        async ({ id }) => {
+          const task = await sc.getMilestone({ address: id })
+          const details = await task.getRawDetails()
+          const version = await task.getVersion()
+          return {
+            type: EDaoEventType.MILESTONE_UPGRADE,
+            params: {
+              reponame,
+              taskname: details.nametask,
+              taskprev: { address: id, version },
+              tags: details.hashtag,
+            },
+          }
+        },
+      )
       cells.push(...items)
     }
 
@@ -2780,17 +2991,21 @@ export function useUpgradeDaoComplete() {
     if (cells.length === 1) {
       cells.push({ type: EDaoEventType.DELAY, params: {} })
     }
-    await executeByChunk(splitByChunk(cells, 50), MAX_PARALLEL_WRITE, async (chunk) => {
-      const comment = DaoEventType[EDaoEventType.MILESTONE_UPGRADE]
-      const eventaddr = await wallet.createMultiEvent({
-        proposals: chunk,
-        comment,
-      })
-      await afterCreateEvent(
-        { label: comment, comment: `${comment} chunk`, eventaddr },
-        {},
-      )
-    })
+    await executeByChunk(
+      splitByChunk(cells, 50),
+      MAX_PARALLEL_WRITE,
+      async (chunk) => {
+        const comment = DaoEventType[EDaoEventType.MILESTONE_UPGRADE]
+        const eventaddr = await wallet.createMultiEvent({
+          proposals: chunk,
+          comment,
+        })
+        await afterCreateEvent(
+          { label: comment, comment: `${comment} chunk`, eventaddr },
+          {},
+        )
+      },
+    )
 
     return { isEvent: true }
   }
@@ -2818,7 +3033,11 @@ export function useUpgradeDaoComplete() {
     )
 
     // Get task code hash for each repository
-    setStatus((state) => ({ ...state, type: 'pending', data: 'Fetching tasks' }))
+    setStatus((state) => ({
+      ...state,
+      type: 'pending',
+      data: 'Fetching tasks',
+    }))
     const taskcode = await executeByChunk(
       repositories,
       MAX_PARALLEL_READ,
@@ -2830,7 +3049,9 @@ export function useUpgradeDaoComplete() {
 
     // Transfer/upgrade tasks
     setStatus((state) => ({ ...state, type: 'pending', data: 'Upgrade tasks' }))
-    const sc = AppConfig.goshroot.getSystemContract(daoprev.version) as SystemContract
+    const sc = AppConfig.goshroot.getSystemContract(
+      daoprev.version,
+    ) as SystemContract
 
     // Prepare cells
     const cells: { type: number; params: any }[] = []
@@ -2877,17 +3098,21 @@ export function useUpgradeDaoComplete() {
 
     // Create multi event
     cells.push({ type: EDaoEventType.TASK_REDEPLOYED, params: {} })
-    await executeByChunk(splitByChunk(cells, 50), MAX_PARALLEL_WRITE, async (chunk) => {
-      const comment = DaoEventType[EDaoEventType.TASK_UPGRADE]
-      const eventaddr = await wallet.createMultiEvent({
-        proposals: chunk,
-        comment,
-      })
-      await afterCreateEvent(
-        { label: comment, comment: `${comment} chunk`, eventaddr },
-        {},
-      )
-    })
+    await executeByChunk(
+      splitByChunk(cells, 50),
+      MAX_PARALLEL_WRITE,
+      async (chunk) => {
+        const comment = DaoEventType[EDaoEventType.TASK_UPGRADE]
+        const eventaddr = await wallet.createMultiEvent({
+          proposals: chunk,
+          comment,
+        })
+        await afterCreateEvent(
+          { label: comment, comment: `${comment} chunk`, eventaddr },
+          {},
+        )
+      },
+    )
 
     return { isEvent: true }
   }
@@ -2967,7 +3192,9 @@ export function useUpgradeDaoComplete() {
       }))
 
       const gosh_lib = GoshAdapterFactory.create(hack_repo.version)
-      const gosh_repo = await gosh_lib.getRepository({ address: hack_repo.address })
+      const gosh_repo = await gosh_lib.getRepository({
+        address: hack_repo.address,
+      })
       const branch = await gosh_repo.getBranch('main')
       const commit = await gosh_repo.getCommit({
         address: branch.commit.address,
@@ -3085,7 +3312,11 @@ export function useUpgradeDaoComplete() {
       await Promise.all(
         blobs_data.flat().map(async ({ data }) => {
           const { treepath, content } = data
-          await main_repo.deploySnapshotOut(future_commit_hash, treepath, content)
+          await main_repo.deploySnapshotOut(
+            future_commit_hash,
+            treepath,
+            content,
+          )
         }),
       )
 
@@ -3321,7 +3552,10 @@ export function useUpdateDaoSettings() {
     }) => {
       try {
         if (!member.wallet || !member.isReady) {
-          throw new GoshError('Access error', 'Wallet does not exist or not activated')
+          throw new GoshError(
+            'Access error',
+            'Wallet does not exist or not activated',
+          )
         }
 
         // Future events params
@@ -3456,7 +3690,10 @@ export function useUpdateDaoExpertTags() {
     }) => {
       try {
         if (!member.wallet || !member.isReady) {
-          throw new GoshError('Access error', 'Wallet does not exist or not activated')
+          throw new GoshError(
+            'Access error',
+            'Wallet does not exist or not activated',
+          )
         }
 
         // Future events params
@@ -3540,7 +3777,9 @@ export function useMintDaoTokens() {
   const { details: dao } = useDao()
   const member = useDaoMember()
   const { beforeCreateEvent, afterCreateEvent } = useDaoHelpers()
-  const [status, setStatus] = useRecoilState(appToastStatusSelector('__mintdaotokens'))
+  const [status, setStatus] = useRecoilState(
+    appToastStatusSelector('__mintdaotokens'),
+  )
 
   const mint = useCallback(
     async (params: { amount: number; comment?: string }) => {
@@ -3558,10 +3797,16 @@ export function useMintDaoTokens() {
           throw new GoshError('Access error', 'Not a DAO member')
         }
         if (!member.isReady || !member.wallet) {
-          throw new GoshError('Access error', 'Wallet is missing or is not activated')
+          throw new GoshError(
+            'Access error',
+            'Wallet is missing or is not activated',
+          )
         }
         if (!dao.isMintOn) {
-          throw new GoshError('Minting error', 'Minting tokens is disabled for this DAO')
+          throw new GoshError(
+            'Minting error',
+            'Minting tokens is disabled for this DAO',
+          )
         }
 
         // Prepare balance for create event (if not alone)
@@ -3619,8 +3864,11 @@ export function useMintDaoTokens() {
 export function useSendDaoTokens() {
   const { details: dao } = useDao()
   const member = useDaoMember()
-  const { beforeCreateEvent, checkDaoWallet, afterCreateEvent } = useDaoHelpers()
-  const [status, setStatus] = useRecoilState(appToastStatusSelector('__senddaotokens'))
+  const { beforeCreateEvent, checkDaoWallet, afterCreateEvent } =
+    useDaoHelpers()
+  const [status, setStatus] = useRecoilState(
+    appToastStatusSelector('__senddaotokens'),
+  )
 
   const send = useCallback(
     async (params: {
@@ -3638,7 +3886,10 @@ export function useSendDaoTokens() {
           throw new GoshError('Access error', 'Not a DAO member')
         }
         if (!member.isReady || !member.wallet) {
-          throw new GoshError('Access error', 'Wallet is missing or is not activated')
+          throw new GoshError(
+            'Access error',
+            'Wallet is missing or is not activated',
+          )
         }
 
         // Resolve username -> profile
@@ -3651,7 +3902,9 @@ export function useSendDaoTokens() {
         if (usertype === EDaoMemberType.Dao) {
           profile = await sc.getDao({ name: username.toLowerCase() })
         } else if (usertype === EDaoMemberType.User) {
-          profile = await sc.getUserProfile({ username: username.toLowerCase() })
+          profile = await sc.getUserProfile({
+            username: username.toLowerCase(),
+          })
         }
         if (!profile || !(await profile.isDeployed())) {
           throw new GoshError('Profile error', {
@@ -3670,10 +3923,7 @@ export function useSendDaoTokens() {
 
         // Prepare balance for create event (if not alone)
         let eventaddr: string | null = null
-        const alone = dao.members?.length === 1
-        if (!alone) {
-          await beforeCreateEvent(20, { onPendingCallback: setStatus })
-        }
+        await beforeCreateEvent(20, { onPendingCallback: setStatus })
 
         // Send tokens
         setStatus((state) => ({
@@ -3688,14 +3938,15 @@ export function useSendDaoTokens() {
           profile: profile.address,
           amount,
           comment,
-          alone,
         }
         if (isVoting) {
           if (isMember) {
             eventaddr = await member.wallet.addDaoVotingTokens(kwargs)
           } else {
             const daonames =
-              usertype === EDaoMemberType.Dao ? [username.toLowerCase()] : [null]
+              usertype === EDaoMemberType.Dao
+                ? [username.toLowerCase()]
+                : [null]
             eventaddr = await member.wallet.createMultiEvent({
               proposals: [
                 {
@@ -3724,12 +3975,10 @@ export function useSendDaoTokens() {
         }
 
         // Event post create
-        if (!alone) {
-          await afterCreateEvent(
-            { label: 'Send DAO tokens', comment, eventaddr },
-            { onPendingCallback: setStatus },
-          )
-        }
+        await afterCreateEvent(
+          { label: 'Send DAO tokens', comment, eventaddr },
+          { onPendingCallback: setStatus },
+        )
 
         // Update status depending on alone
         setStatus((state) => ({
@@ -3737,7 +3986,7 @@ export function useSendDaoTokens() {
           type: 'success',
           data: {
             title: 'Send tokens',
-            content: alone ? 'Tokens sent' : 'Send tokens event created',
+            content: 'Send tokens event created',
           },
         }))
 
@@ -3757,7 +4006,9 @@ export function useSendMemberTokens() {
   const { details: dao } = useDao()
   const member = useDaoMember()
   const { voting2regular, checkDaoWallet } = useDaoHelpers()
-  const [status, setStatus] = useRecoilState(appToastStatusSelector('__sendmembertokens'))
+  const [status, setStatus] = useRecoilState(
+    appToastStatusSelector('__sendmembertokens'),
+  )
 
   const send = useCallback(
     async (params: { username: string; usertype: string; amount: number }) => {
@@ -3789,7 +4040,9 @@ export function useSendMemberTokens() {
           if (usertype === EDaoMemberType.Dao) {
             profile = await sc.getDao({ name: username })
           } else if (usertype === EDaoMemberType.User) {
-            profile = await sc.getUserProfile({ username: username.toLowerCase() })
+            profile = await sc.getUserProfile({
+              username: username.toLowerCase(),
+            })
           }
 
           if (!profile || !(await profile.isDeployed())) {
@@ -3838,7 +4091,9 @@ export function useDaoInviteList(params: { initialize?: boolean } = {}) {
   const { details: dao } = useDao()
   const [data, setData] = useRecoilState(daoInviteListAtom)
   const { createMember } = useCreateDaoMember()
-  const [status, setStatus] = useRecoilState(appToastStatusSelector('__createdaomember'))
+  const [status, setStatus] = useRecoilState(
+    appToastStatusSelector('__createdaomember'),
+  )
 
   const revoke = async (id: string) => {
     try {
@@ -3987,7 +4242,9 @@ export function useDaoInviteList(params: { initialize?: boolean } = {}) {
   }
 }
 
-export function useDaoTaskList(params: { count?: number; initialize?: boolean } = {}) {
+export function useDaoTaskList(
+  params: { count?: number; initialize?: boolean } = {},
+) {
   const { count = 10, initialize } = params
   const { details: dao } = useDao()
   const member = useDaoMember()
@@ -4013,33 +4270,32 @@ export function useDaoTaskList(params: { count?: number; initialize?: boolean } 
       lastId: cursor,
     })
 
-    const items = await executeByChunk<{ id: string; code_hash: string }, TTaskDetails>(
-      results,
-      MAX_PARALLEL_READ,
-      async ({ id, code_hash }) => {
-        const isMilestone = code_hash === codes[1]
-        const tag = await sc.getGoshTag({ address: id })
-        const { task: address } = await tag.getDetails()
+    const items = await executeByChunk<
+      { id: string; code_hash: string },
+      TTaskDetails
+    >(results, MAX_PARALLEL_READ, async ({ id, code_hash }) => {
+      const isMilestone = code_hash === codes[1]
+      const tag = await sc.getGoshTag({ address: id })
+      const { task: address } = await tag.getDetails()
 
-        let task: Milestone | Task
-        let details: any
-        if (isMilestone) {
-          task = await sc.getMilestone({ address })
-          details = await task.getDetails(daoname)
-        } else {
-          task = await sc.getTask({ address })
-          details = await task.getDetails()
-        }
+      let task: Milestone | Task
+      let details: any
+      if (isMilestone) {
+        task = await sc.getMilestone({ address })
+        details = await task.getDetails(daoname)
+      } else {
+        task = await sc.getTask({ address })
+        details = await task.getDetails()
+      }
 
-        return {
-          account: task,
-          address: task.address,
-          isMilestone,
-          isSubtask: false,
-          ...details,
-        }
-      },
-    )
+      return {
+        account: task,
+        address: task.address,
+        isMilestone,
+        isSubtask: false,
+        ...details,
+      }
+    })
     return { items, cursor: lastId, hasNext: !completed }
   }
 
@@ -4174,7 +4430,9 @@ export function useCreateMilestone() {
   const { details: dao } = useDao()
   const member = useDaoMember()
   const { beforeCreateEvent, afterCreateEvent } = useDaoHelpers()
-  const [status, setStatus] = useRecoilState(appToastStatusSelector('__createmilestone'))
+  const [status, setStatus] = useRecoilState(
+    appToastStatusSelector('__createmilestone'),
+  )
 
   const createMilestone = useCallback(
     async (params: {
@@ -4221,7 +4479,9 @@ export function useCreateMilestone() {
         }
 
         // Resolve manager username -> profile
-        const manager = await sc.getUserProfile({ username: params.manager.username })
+        const manager = await sc.getUserProfile({
+          username: params.manager.username,
+        })
         if (!(await manager.isDeployed())) {
           throw new GoshError('Profile error', {
             message: 'Manager profile does not exist',
@@ -4327,10 +4587,16 @@ export function useCreateMilestone() {
 export function useDeleteMilestone() {
   const member = useDaoMember()
   const { beforeCreateEvent, afterCreateEvent } = useDaoHelpers()
-  const [status, setStatus] = useRecoilState(appToastStatusSelector('__deletemilestone'))
+  const [status, setStatus] = useRecoilState(
+    appToastStatusSelector('__deletemilestone'),
+  )
 
   const deleteMilestone = useCallback(
-    async (params: { reponame: string; taskname: string; comment?: string }) => {
+    async (params: {
+      reponame: string
+      taskname: string
+      comment?: string
+    }) => {
       const comment = params.comment || `Delete milestone ${params.taskname}`
 
       try {
@@ -4392,7 +4658,11 @@ export function useCompleteMilestone() {
   )
 
   const completeMilestone = useCallback(
-    async (params: { reponame: string; taskname: string; comment?: string }) => {
+    async (params: {
+      reponame: string
+      taskname: string
+      comment?: string
+    }) => {
       const comment = params.comment || `Complete milestone ${params.taskname}`
 
       try {
@@ -4458,7 +4728,10 @@ export function useReceiveMilestoneReward() {
 
       try {
         if (!member.isReady || !member.wallet) {
-          throw new GoshError('Access error', 'Wallet does not exist or not activated')
+          throw new GoshError(
+            'Access error',
+            'Wallet does not exist or not activated',
+          )
         }
 
         setStatus((state) => ({
@@ -4696,7 +4969,9 @@ export function useCreateTask() {
   const { details: dao } = useDao()
   const member = useDaoMember()
   const { beforeCreateEvent } = useDaoHelpers()
-  const [status, setStatus] = useRecoilState(appToastStatusSelector('__createtask'))
+  const [status, setStatus] = useRecoilState(
+    appToastStatusSelector('__createtask'),
+  )
 
   const getTokenAmount = (cost: number, percent: number) => {
     return Math.round((cost * percent) / 100)
@@ -4711,7 +4986,12 @@ export function useCreateTask() {
     vesting: number
   }) => {
     const { cost, assign, review, manager, lock, vesting } = values
-    const struct: TTaskGrant = { assign: [], review: [], manager: [], subtask: [] }
+    const struct: TTaskGrant = {
+      assign: [],
+      review: [],
+      manager: [],
+      subtask: [],
+    }
 
     // Check sum of percent parts
     const percent_sum = assign + review + manager
@@ -4865,10 +5145,16 @@ export function useCreateTask() {
 export function useDeleteTask() {
   const member = useDaoMember()
   const { beforeCreateEvent } = useDaoHelpers()
-  const [status, setStatus] = useRecoilState(appToastStatusSelector('__deletetask'))
+  const [status, setStatus] = useRecoilState(
+    appToastStatusSelector('__deletetask'),
+  )
 
   const deleteTask = useCallback(
-    async (params: { reponame: string; taskname: string; comment?: string }) => {
+    async (params: {
+      reponame: string
+      taskname: string
+      comment?: string
+    }) => {
       const { reponame, taskname, comment } = params
 
       try {
@@ -4921,7 +5207,10 @@ export function useReceiveTaskReward() {
 
       try {
         if (!member.isReady || !member.wallet) {
-          throw new GoshError('Access error', 'Wallet does not exist or not activated')
+          throw new GoshError(
+            'Access error',
+            'Wallet does not exist or not activated',
+          )
         }
 
         setStatus((state) => ({
@@ -4975,7 +5264,8 @@ export function useTask(
             ...item,
             subtasks: item.subtasks.map((subitem) => ({
               ...subitem,
-              isOpen: subitem.address === account.address ? false : subitem.isOpen,
+              isOpen:
+                subitem.address === account.address ? false : subitem.isOpen,
               isDeleted: subitem.address === account.address,
             })),
           }
@@ -5249,4 +5539,385 @@ export function useMilestone(
   }, [dao.name, task?.address, subscribe])
 
   return { task, error }
+}
+
+export function useReceiveTaskRewardAsDao() {
+  const dao = useDao()
+  const profile = useProfile()
+  const { user } = useUser()
+  const member = useDaoMember()
+  const { beforeCreateEvent, afterCreateEvent, checkDaoWallet } =
+    useDaoHelpers()
+  const [status, setStatus] = useRecoilState(
+    appToastStatusSelector('__receivetaskrewardasdao'),
+  )
+
+  const receiveReward = useCallback(
+    async (params: {
+      dst_dao_addr: string
+      repo_name: string
+      task_name: string
+    }) => {
+      const { dst_dao_addr, repo_name, task_name } = params
+      const sc = getSystemContract()
+
+      try {
+        setStatus((state) => ({
+          ...state,
+          type: 'pending',
+          data: 'Validating data',
+        }))
+
+        if (!dao.details.version || !dao.details.account) {
+          throw new GoshError('Data error', 'Current DAO details undefined')
+        }
+        if (!profile) {
+          throw new GoshError('Access error', 'Current user is undefined')
+        }
+        if (!member.isReady || !member.wallet) {
+          throw new GoshError(
+            'Access error',
+            'Wallet does not exist or not activated',
+          )
+        }
+
+        // Check dst DAO to be the same version
+        const dstDao = await sc.getDao({ address: dst_dao_addr })
+        if (!(await dstDao.isDeployed())) {
+          throw new GoshError('Blockchain error', {
+            message: 'Destination DAO with the same version does not exist',
+            hint: `Both DAO should be the same versions (${dao.details.version})`,
+          })
+        }
+        // Check dst DAO has no next versions available
+        const dstDaoNext = await dstDao.getNext()
+        if (dstDaoNext) {
+          throw new GoshError('Version error', {
+            message: 'Destination DAO has more recent version',
+            hint: `DAO ${dao.details.name} should be upgraded to version ${dstDaoNext.version}`,
+          })
+        }
+
+        // Check if dst DAO has wallet in current DAO
+        const { wallet: dstDaoWallet } = await checkDaoWallet(dstDao.address)
+
+        // Check current user membership in dst dao
+        if (!(await dstDao.isMember(profile.address))) {
+          throw new GoshError(
+            'Access error',
+            'Current user is not a member of destination DAO',
+          )
+        }
+
+        // Prepare dst DAO user wallet to create event
+        const dstDaoUserWallet = await dstDao.getMemberWallet({
+          data: { profile: profile.address },
+          keys: user.keys,
+        })
+        const dstDaoUserWalletBalance = await dstDaoUserWallet.getBalance()
+        await beforeCreateEvent(20, {
+          onPendingCallback: setStatus,
+          member: {
+            profile,
+            wallet: dstDaoUserWallet,
+            balance: dstDaoUserWalletBalance,
+            allowance: dstDaoUserWalletBalance.allowance,
+            vesting: null,
+            isReady: true,
+            isMember: true,
+            isFetched: true,
+            isLimited: false,
+          },
+        })
+
+        // Create event
+        setStatus((state) => ({
+          ...state,
+          type: 'pending',
+          data: 'Creating event',
+        }))
+
+        const eventaddr = await dstDaoUserWallet.receiveTaskRewardAsDao({
+          wallet: dstDaoWallet.address,
+          reponame: repo_name,
+          taskname: task_name,
+        })
+
+        // Event post create
+        await afterCreateEvent(
+          { label: 'Receive task reward as DAO', eventaddr },
+          {
+            dao_name: await dstDao.getName(),
+            onPendingCallback: setStatus,
+          },
+        )
+
+        setStatus((state) => ({
+          ...state,
+          type: 'success',
+          data: {
+            title: 'Receive reward',
+            content: 'Receive task reward as DAO event created',
+          },
+        }))
+
+        return { eventaddr }
+      } catch (e: any) {
+        setStatus((state) => ({ ...state, type: 'error', data: e }))
+        throw e
+      }
+    },
+    [member.isReady],
+  )
+
+  return { receiveReward, status }
+}
+
+export function useSendTokensAsDao() {
+  const dao = useDao()
+  const member = useDaoMember()
+  const { beforeCreateEvent, afterCreateEvent, checkDaoWallet } =
+    useDaoHelpers()
+  const [status, setStatus] = useRecoilState(
+    appToastStatusSelector('__sendtokensasdao'),
+  )
+
+  const sendTokens = useCallback(
+    async (params: {
+      src_dao: {
+        name: string
+        wallet: string
+        version: string
+      }
+      dst: TUserSelectOption
+      amount: number
+    }) => {
+      const { src_dao, amount } = params
+
+      try {
+        setStatus((state) => ({
+          ...state,
+          type: 'pending',
+          data: 'Validating data',
+        }))
+
+        if (!dao.details.version || !dao.details.address) {
+          throw new GoshError('Data error', 'Current DAO details undefined')
+        }
+        if (!member.isReady || !member.wallet) {
+          throw new GoshError(
+            'Access error',
+            'Wallet does not exist or not activated',
+          )
+        }
+
+        // Check dst
+        const srcSc = AppConfig.goshroot.getSystemContract(src_dao.version)
+        const srcDao = (await srcSc.getDao({ name: src_dao.name })) as Dao
+
+        let dst: TUserSelectOption | null = params.dst
+        if (params.dst.value.type === EDaoMemberType.Dao) {
+          // Check sender DAO to be the same version as receiver DAO
+          if (dst.value.version !== src_dao.version) {
+            throw new GoshError(
+              'Version error',
+              'Receiver DAO should be the same version as sender DAO',
+            )
+          }
+
+          // If dst dao name equals src dao name, tokens will go to dst dao reserve
+          if (params.dst.value.name === src_dao.name) {
+            dst = null
+          }
+        }
+
+        // Check if dst has wallet in src DAO
+        if (dst) {
+          await checkDaoWallet(dst.value.address, { dao: srcDao })
+        }
+
+        // Create event
+        await beforeCreateEvent(20, { onPendingCallback: setStatus })
+        setStatus((state) => ({
+          ...state,
+          type: 'pending',
+          data: 'Creating event',
+        }))
+        const eventaddr = await member.wallet.sendTokensAsDao({
+          src_wallet: src_dao.wallet,
+          dst_addr: dst?.value.address,
+          amount,
+        })
+
+        // Event post create
+        await afterCreateEvent(
+          { label: 'Send tokens as DAO', eventaddr },
+          { onPendingCallback: setStatus },
+        )
+
+        setStatus((state) => ({
+          ...state,
+          type: 'success',
+          data: {
+            title: 'Send tokens',
+            content: 'Send tokens as DAO event created',
+          },
+        }))
+
+        return { eventaddr }
+      } catch (e: any) {
+        setStatus((state) => ({ ...state, type: 'error', data: e }))
+        throw e
+      }
+    },
+    [member.isReady],
+  )
+
+  return { sendTokens, status }
+}
+
+export function useTransferTokensAsDao() {
+  const dao = useDao()
+  const member = useDaoMember()
+  const { beforeCreateEvent, afterCreateEvent, checkDaoWallet } =
+    useDaoHelpers()
+  const [status, setStatus] = useRecoilState(
+    appToastStatusSelector('__transfertokensasdao'),
+  )
+
+  const transferTokens = useCallback(
+    async (params: {
+      src_dao: {
+        name: string
+        wallet: string
+        version: string
+      }
+      amount: number
+    }) => {
+      const { src_dao, amount } = params
+      const sc = getSystemContract()
+
+      try {
+        setStatus((state) => ({
+          ...state,
+          type: 'pending',
+          data: 'Validating data',
+        }))
+        if (!dao.details.address) {
+          throw new GoshError('Value error', 'DAO details are undefined')
+        }
+        if (!member.isReady || !member.wallet) {
+          throw new GoshError(
+            'Access error',
+            'Wallet does not exist or not activated',
+          )
+        }
+
+        // Resolve dst wallet (get src DAO of current version and get/create dst DAO wallet)
+        const srcDao = await sc.getDao({ name: src_dao.name })
+        const { wallet: dstWallet } = await checkDaoWallet(
+          dao.details.address,
+          { dao: srcDao },
+        )
+
+        // Resolve src DAO wallet of src DAO version
+        const srcWallet = AppConfig.goshroot
+          .getSystemContract(src_dao.version)
+          .getDaoWallet({ address: src_dao.wallet }) as DaoWallet
+
+        // Use auto transfer for non limited wallets and DAO event for limited
+        if (!(await srcWallet.isLimited())) {
+          await transferForUnlimitedWallet({
+            src_wallet: srcWallet,
+            dst_wallet: dstWallet.address,
+          })
+          return { eventaddr: null }
+        } else {
+          const eventAddr = await transferForLimitedWallet({
+            src_wallet: src_dao.wallet,
+            src_version: src_dao.version,
+            dst_wallet: dstWallet.address,
+            amount,
+          })
+          return { eventaddr: eventAddr }
+        }
+      } catch (e: any) {
+        setStatus((state) => ({ ...state, type: 'error', data: e }))
+        throw e
+      }
+    },
+    [member.isReady],
+  )
+
+  const transferForUnlimitedWallet = async (params: {
+    src_wallet: DaoWallet
+    dst_wallet: string
+  }) => {
+    const { src_wallet, dst_wallet } = params
+    const success = await whileFinite(
+      async () => {
+        const { voting, locked, regular } = await src_wallet.getBalance()
+        const untransferred = Math.max(voting, locked) + regular
+        await member.wallet!.transferTokensAsDaoAuto({
+          dst_wallet,
+        })
+        return untransferred === 0
+      },
+      2000,
+      60000,
+    )
+    if (!success) {
+      throw new GoshError(
+        'Timeout error',
+        'Transfer DAO tokens timeout. Please, try again or contact support',
+      )
+    }
+
+    setStatus((state) => ({
+      ...state,
+      type: 'success',
+      data: {
+        title: 'Transfer tokens',
+        content: 'Transfer tokens as DAO completed',
+      },
+    }))
+  }
+
+  const transferForLimitedWallet = async (params: {
+    src_wallet: string
+    src_version: string
+    dst_wallet: string
+    amount: number
+  }) => {
+    // Create event
+    await beforeCreateEvent(20, { onPendingCallback: setStatus })
+    setStatus((state) => ({
+      ...state,
+      type: 'pending',
+      data: 'Creating event',
+    }))
+    const eventaddr = await member.wallet!.transferTokensAsDao({
+      src_wallet: params.src_wallet,
+      src_version: params.src_version,
+      dst_wallet: params.dst_wallet,
+      amount: params.amount,
+    })
+
+    // Event post create
+    await afterCreateEvent(
+      { label: 'Transfer tokens as DAO', eventaddr },
+      { onPendingCallback: setStatus },
+    )
+    setStatus((state) => ({
+      ...state,
+      type: 'success',
+      data: {
+        title: 'Transfer tokens',
+        content: 'Transfer tokens as DAO event created',
+      },
+    }))
+    return eventaddr
+  }
+
+  return { transferTokens, status }
 }

@@ -47,35 +47,39 @@ const sizes: { [key: string]: string[] } = {
   xl: ['text-sm px-8 py-2.5'],
 }
 
-const Button = forwardRef<HTMLButtonElement, TButtonProps>((props: TButtonProps, ref) => {
-  const {
-    isLoading,
-    className,
-    children,
-    disabled,
-    variant = 'default',
-    size = 'default',
-    testId,
-    ...rest
-  } = props
+const Button = forwardRef<HTMLButtonElement, TButtonProps>(
+  (props: TButtonProps, ref) => {
+    const {
+      isLoading,
+      className,
+      children,
+      disabled,
+      variant = 'default',
+      size = 'default',
+      testId,
+      ...rest
+    } = props
 
-  return (
-    <button
-      className={classNames(
-        ...styles.base,
-        ...styles[variant],
-        ...sizes[size],
-        className,
-      )}
-      {...rest}
-      ref={ref}
-      disabled={disabled || isLoading}
-      test-id={testId}
-    >
-      {isLoading && <Spinner className={classNames(children ? 'mr-2' : null)} />}
-      {children}
-    </button>
-  )
-})
+    return (
+      <button
+        className={classNames(
+          ...styles.base,
+          ...styles[variant],
+          ...sizes[size],
+          className,
+        )}
+        {...rest}
+        ref={ref}
+        disabled={disabled}
+        test-id={testId}
+      >
+        {isLoading && (
+          <Spinner className={classNames(children ? 'mr-2' : null)} />
+        )}
+        {children}
+      </button>
+    )
+  },
+)
 
 export { Button }

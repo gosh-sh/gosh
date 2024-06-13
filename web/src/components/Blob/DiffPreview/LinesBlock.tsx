@@ -1,18 +1,17 @@
-import { DiffBlock, DiffLine } from 'diff2html/lib/types'
-import { useBlobComments } from '../../../hooks/codecomment.hooks'
-import classNames from 'classnames'
-import { getIdenticonAvatar } from '../../../helpers'
-import { Field, Form, Formik, FormikHelpers } from 'formik'
-import { FormikTextarea } from '../../Formik'
-import { Button } from '../../Form'
-import { toast } from 'react-toastify'
-import { ToastError } from '../../Toast'
-import commentBtn from '../../../assets/images/comment-add.png'
-import { GoshError, TCommit } from 'react-gosh'
-import { useEffect, useMemo, useRef } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowUp } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import classNames from 'classnames'
+import { DiffBlock, DiffLine } from 'diff2html/lib/types'
+import { Field, Form, Formik, FormikHelpers } from 'formik'
+import { useMemo, useRef } from 'react'
+import { GoshError, TCommit } from 'react-gosh'
 import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
+import { toast } from 'react-toastify'
+import commentBtn from '../../../assets/images/comment-add.png'
+import { getIdenticonAvatar } from '../../../helpers'
+import { Button } from '../../Form'
+import { FormikTextarea } from '../../Formik'
+import { ToastError } from '../../Toast'
 
 type TLinesBlockProps = {
   dao: IGoshDaoAdapter
@@ -55,23 +54,23 @@ const LinesBlock = (props: TLinesBlockProps) => {
     mouseDown,
     setMouseDown,
   } = props
-  const {
-    threads,
-    selectedLines,
-    commentFormLine,
-    toggleThread,
-    hoverThread,
-    toggleLineSelection,
-    resetLinesSelection,
-    toggleLineForm,
-    submitComment,
-  } = useBlobComments({
-    dao,
-    objectAddress: commentsObject,
-    filename,
-    commits:
-      commit && commit.parents.length ? [commit.parents[0].name, commit.name] : undefined,
-  })
+  // const {
+  //   threads,
+  //   selectedLines,
+  //   commentFormLine,
+  //   toggleThread,
+  //   hoverThread,
+  //   toggleLineSelection,
+  //   resetLinesSelection,
+  //   toggleLineForm,
+  //   submitComment,
+  // } = useBlobComments({
+  //   dao,
+  //   objectAddress: commentsObject,
+  //   filename,
+  //   commits:
+  //     commit && commit.parents.length ? [commit.parents[0].name, commit.name] : undefined,
+  // })
   const commentFormRefs = useRef<{ [line: number]: HTMLDivElement | null }>({})
 
   const commits = useMemo(() => {
@@ -90,44 +89,46 @@ const LinesBlock = (props: TLinesBlockProps) => {
   }
 
   const getLineThreads = (line: DiffLine) => {
-    const { number, commit } = getLineCommit(line)
-    return threads.items.filter((item) => {
-      return item.commit === commit && item.startLine === number
-    })
+    // const { number, commit } = getLineCommit(line)
+    // return threads.items.filter((item) => {
+    //   return item.commit === commit && item.startLine === number
+    // })
+    return []
   }
 
   const isLineSelected = (line: DiffLine) => {
-    if (!selectedLines.lines) {
-      return false
-    }
+    // if (!selectedLines.lines) {
+    //   return false
+    // }
 
-    const { commit, lines } = selectedLines
-    const { oldNumber = -1, newNumber = -1 } = line
-    const data = getLineCommit(line)
+    // const { commit, lines } = selectedLines
+    // const { oldNumber = -1, newNumber = -1 } = line
+    // const data = getLineCommit(line)
 
-    if (oldNumber === newNumber && lines.indexOf(oldNumber) >= 0) {
-      return true
-    }
-    if (commit === data.commit && lines.indexOf(data.number) >= 0) {
-      return true
-    }
+    // if (oldNumber === newNumber && lines.indexOf(oldNumber) >= 0) {
+    //   return true
+    // }
+    // if (commit === data.commit && lines.indexOf(data.number) >= 0) {
+    //   return true
+    // }
     return false
   }
 
   const isLineFormOpen = (line: DiffLine) => {
-    const { number, commit } = getLineCommit(line)
-    const { line: _number, commit: _commit } = commentFormLine
-    return isLineSelected(line) && commit === _commit && number === _number
+    // const { number, commit } = getLineCommit(line)
+    // const { line: _number, commit: _commit } = commentFormLine
+    // return isLineSelected(line) && commit === _commit && number === _number
+    return false
   }
 
   const onLineToggle = (line: DiffLine) => {
     const { number, commit } = getLineCommit(line)
-    toggleLineSelection(number, commit, { multiple: mouseDown })
+    // toggleLineSelection(number, commit, { multiple: mouseDown })
   }
 
   const onLineFormToggle = (line: DiffLine) => {
     const { number, commit } = getLineCommit(line)
-    toggleLineForm(number, commit)
+    // toggleLineForm(number, commit)
   }
 
   const onAddCommentSubmit = async (
@@ -139,15 +140,15 @@ const LinesBlock = (props: TLinesBlockProps) => {
         throw new GoshError('Add comment error', 'Blob address undefined')
       }
 
-      await submitComment({
-        content: values.comment,
-        metadata: {
-          startLine: selectedLines.lines[0],
-          endLine: selectedLines.lines.slice(-1)[0],
-          commit: selectedLines.commit,
-          snapshot: snapshotAddress,
-        },
-      })
+      // await submitComment({
+      //   content: values.comment,
+      //   metadata: {
+      //     startLine: selectedLines.lines[0],
+      //     endLine: selectedLines.lines.slice(-1)[0],
+      //     commit: selectedLines.commit,
+      //     snapshot: snapshotAddress,
+      //   },
+      // })
       helpers.resetForm()
     } catch (e: any) {
       console.error(e.message)
@@ -155,21 +156,21 @@ const LinesBlock = (props: TLinesBlockProps) => {
     }
   }
 
-  useEffect(() => {
-    const onClickOutsideCommentForm = (event: any) => {
-      const _ref = commentFormRefs.current[commentFormLine.line]
-      if (_ref && !_ref.contains(event.target)) {
-        console.log(`You clicked Outside the box!`)
-        resetLinesSelection()
-      } else {
-        console.log(`You clicked Inside the box!`)
-      }
-    }
-    document.addEventListener('click', onClickOutsideCommentForm, true)
-    return () => {
-      document.removeEventListener('click', onClickOutsideCommentForm, true)
-    }
-  }, [commentFormLine.line])
+  // useEffect(() => {
+  //   const onClickOutsideCommentForm = (event: any) => {
+  //     const _ref = commentFormRefs.current[commentFormLine.line]
+  //     if (_ref && !_ref.contains(event.target)) {
+  //       console.log(`You clicked Outside the box!`)
+  //       resetLinesSelection()
+  //     } else {
+  //       console.log(`You clicked Inside the box!`)
+  //     }
+  //   }
+  //   document.addEventListener('click', onClickOutsideCommentForm, true)
+  //   return () => {
+  //     document.removeEventListener('click', onClickOutsideCommentForm, true)
+  //   }
+  // }, [commentFormLine.line])
 
   return (
     <>
@@ -200,7 +201,7 @@ const LinesBlock = (props: TLinesBlockProps) => {
             >
               <div className="flex flex-nowrap items-center">
                 <div className="basis-1/3 flex flex-nowrap items-center justify-start">
-                  {threads.slice(0, 2).map((thread, i) => (
+                  {[].slice(0, 2).map((thread: any, i) => (
                     <div
                       key={i}
                       className={classNames(
@@ -215,13 +216,13 @@ const LinesBlock = (props: TLinesBlockProps) => {
                         src={getThreadAvatar(thread.content.username)}
                         className="w-full"
                         onClick={() => {
-                          toggleThread(thread.id)
+                          // toggleThread(thread.id)
                         }}
                         onMouseEnter={() => {
-                          hoverThread(thread.id, true)
+                          // hoverThread(thread.id, true)
                         }}
                         onMouseLeave={() => {
-                          hoverThread(thread.id, false)
+                          // hoverThread(thread.id, false)
                         }}
                       />
                     </div>

@@ -4,8 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "wasm": "cp ./node_modules/@eversdk/lib-web/eversdk.wasm ./public",
-    "start": "bun run wasm && bun run start:dev",
+    "eversdk": "cp ./tvmsdk/lib-web/tvmsdk.wasm ./public",
+    "pandoc": "cp ./node_modules/pandoc-wasm/dist/pandoc-wasm.wasm.gz ./public && cp ./node_modules/pandoc-wasm/dist/pandoc-data.data.gz ./public",
+    "wasm": "bun run eversdk && bun run pandoc",
+    "start": "bun run wasm && bun run pandoc && bun run start:dev",
     "start:ci": "dotenv -e .env.ci bun env.json.js && dotenv -e .env.ci vite",
     "start:dev": "dotenv -e .env.development bun env.json.js && dotenv -e .env.development vite",
     "start:prod": "dotenv -e .env.production bun env.json.js && dotenv -e .env.production vite",
@@ -17,27 +19,17 @@
     "update-react-gosh": "cd ../react-gosh && rm -rf dist && bun run build && cd - && bun update react-gosh"
   },
   "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+    "extends": ["react-app", "react-app/jest"]
   },
   "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
+    "production": [">0.2%", "not dead", "not op_mini all"],
     "development": [
       "last 1 chrome version",
       "last 1 firefox version",
       "last 1 safari version"
     ]
   },
-  "trustedDependencies": [
-    "@eversdk/lib-web",
-    "react-gosh"
-  ],
+  "trustedDependencies": ["react-gosh"],
   "dependencies": {
     "@dicebear/collection": "^7.0.1",
     "@dicebear/core": "^7.0.1",
@@ -46,7 +38,6 @@
     "@emotion/styled": "^11.11.0",
     "@eversdk/appkit": "^0.3.8",
     "@eversdk/core": "1.44.4",
-    "@eversdk/lib-web": "1.44.4",
     "@fortawesome/fontawesome-svg-core": "^6.4.2",
     "@fortawesome/free-brands-svg-icons": "^6.4.2",
     "@fortawesome/free-regular-svg-icons": "^6.4.2",
@@ -73,10 +64,12 @@
     "highlight.js": "^11.9.0",
     "is-mobile": "^4.0.0",
     "isutf8": "^4.0.0",
+    "jodit": "^4.2.14",
     "libsodium": "^0.7.13",
     "libsodium-wrappers": "^0.7.13",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
+    "pandoc-wasm": "^0.0.2",
     "randomcolor": "^0.6.2",
     "react": "^18.2.0",
     "react-content-loader": "^6.2.1",

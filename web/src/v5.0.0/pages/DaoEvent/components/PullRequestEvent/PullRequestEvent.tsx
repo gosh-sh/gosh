@@ -1,11 +1,11 @@
 import { getCommitTime, usePullRequestCommit } from 'react-gosh'
-import { useDao } from '../../../../hooks/dao.hooks'
-import CopyClipboard from '../../../../../components/CopyClipboard'
-import { shortString } from '../../../../../utils'
-import { Commiter } from '../../../../../components/Commit'
-import Loader from '../../../../../components/Loader'
-import BlobDiffPreview from '../../../../../components/Blob/DiffPreview'
 import { Link } from 'react-router-dom'
+import BlobDiffPreview from '../../../../../components/Blob/DiffPreview'
+import { Commiter } from '../../../../../components/Commit'
+import CopyClipboard from '../../../../../components/CopyClipboard'
+import Loader from '../../../../../components/Loader'
+import { shortString } from '../../../../../utils'
+import { useDao } from '../../../../hooks/dao.hooks'
 
 type TPullRequestEventProps = {
   data: { branchName: string; repoName: string; commit: string }
@@ -82,7 +82,7 @@ const PullRequestEvent = (props: TPullRequestEventProps) => {
         <div key={index} className="my-5 relative">
           <BlobDiffPreview
             dao={dao.details._adapter!}
-            commentsOn={dao.details.version! >= '5.0.0'}
+            commentsOn={false}
             filename={item.treepath}
             modified={current}
             original={previous}

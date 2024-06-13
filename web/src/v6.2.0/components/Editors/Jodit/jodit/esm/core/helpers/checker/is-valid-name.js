@@ -1,0 +1,17 @@
+/*!
+ * Jodit Editor (https://xdsoft.net/jodit/)
+ * Released under MIT see LICENSE.txt in the project root for license information.
+ * Copyright (c) 2013-2024 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ */
+/**
+ * @module helpers/checker
+ */
+/**
+ * Check if name has a normal format
+ */
+export function isValidName(name) {
+    if (!name.length) {
+        return false;
+    }
+    return !/[^0-9A-Za-zа-яА-ЯЁё\w\-_. ]/.test(name) && name.trim().length > 0;
+}

@@ -1,17 +1,13 @@
 import classNames from 'classnames'
-import { TTaskDetails } from '../../../../types/dao.types'
+import { Form, Formik } from 'formik'
+import { useNavigate } from 'react-router-dom'
+import { Button } from '../../../../../components/Form'
 import {
   useDao,
   useDaoMember,
   useDeleteTask,
-  useReceiveTaskReward,
 } from '../../../../hooks/dao.hooks'
-import { Form, Formik } from 'formik'
-import { Button } from '../../../../../components/Form'
-import { useUser } from '../../../../hooks/user.hooks'
-import { useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { isTaskTeamMember } from '../../../../components/Task'
+import { TTaskDetails } from '../../../../types/dao.types'
 
 type TTaskManageProps = {
   task: TTaskDetails
@@ -20,15 +16,9 @@ type TTaskManageProps = {
 const TaskManage = (props: TTaskManageProps) => {
   const { task } = props
   const navigate = useNavigate()
-  const { user } = useUser()
   const dao = useDao()
   const member = useDaoMember()
-  const { receiveReward } = useReceiveTaskReward()
   const { deleteTask } = useDeleteTask()
-
-  const isTeamMember = useMemo(() => {
-    return isTaskTeamMember(task.team, user.profile)
-  }, [user.profile, task.isReady])
 
   const onTaskDelete = async () => {
     if (!window.confirm('Delete task?')) {
@@ -40,14 +30,6 @@ const TaskManage = (props: TTaskManageProps) => {
         taskname: task.name,
       })
       navigate(`/o/${dao.details.name}/events/${eventaddr || ''}`)
-    } catch (e: any) {
-      console.error(e.message)
-    }
-  }
-
-  const onTaskClaim = async () => {
-    try {
-      await receiveReward({ reponame: task.repository.name, taskname: task.name })
     } catch (e: any) {
       console.error(e.message)
     }
@@ -70,7 +52,9 @@ const TaskManage = (props: TTaskManageProps) => {
         <div className="pt-4 flex flex-col gap-y-2">
           <div className="flex flex-wrap justify-between gap-2">
             <div className="text-gray-7c8db5 text-sm">Assigner</div>
-            <div className="font-medium">{task.grantTotal.assign.toLocaleString()}</div>
+            <div className="font-medium">
+              {task.grantTotal.assign.toLocaleString()}
+            </div>
           </div>
           <div className="flex flex-wrap justify-between gap-2">
             <div className="text-gray-7c8db5 text-sm">Reviewer</div>
@@ -82,9 +66,10 @@ const TaskManage = (props: TTaskManageProps) => {
           </div>
         </div>
       </div>
-      <div className="border-t border-gray-e6edff">
-        <div className="p-5">
-          {!task.isReady && member.isMember && (
+
+      {!task.isReady && member.isMember && (
+        <div className="border-t border-gray-e6edff">
+          <div className="p-5">
             <Formik initialValues={{}} onSubmit={onTaskDelete}>
               {({ isSubmitting }) => (
                 <Form>
@@ -100,26 +85,9 @@ const TaskManage = (props: TTaskManageProps) => {
                 </Form>
               )}
             </Formik>
-          )}
-
-          {task.isReady && isTeamMember && (
-            <Formik initialValues={{}} onSubmit={onTaskClaim}>
-              {({ isSubmitting }) => (
-                <Form>
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    isLoading={isSubmitting}
-                    disabled={isSubmitting}
-                  >
-                    Claim reward
-                  </Button>
-                </Form>
-              )}
-            </Formik>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

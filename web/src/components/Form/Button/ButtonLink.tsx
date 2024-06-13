@@ -1,4 +1,5 @@
 import classNames from 'classnames'
+import { forwardRef } from 'react'
 import { Link, LinkProps } from 'react-router-dom'
 
 type TButtonLinkProps = LinkProps & {
@@ -12,7 +13,9 @@ const styles: { [key: string]: string[] } = {
     'border border-transparent rounded-lg',
     'disabled:pointer-events-none',
   ],
-  default: ['bg-black text-white hover:text-white/75 disabled:text-gray-7c8db5'],
+  default: [
+    'bg-black text-white hover:text-white/75 disabled:text-gray-7c8db5',
+  ],
   custom: [],
   'outline-danger': [
     'bg-white text-red-ff3b30',
@@ -35,22 +38,31 @@ const sizes: { [key: string]: string[] } = {
   xl: ['text-sm px-8 py-2.5'],
 }
 
-const ButtonLink = (props: TButtonLinkProps) => {
-  const { className, children, variant = 'default', size = 'default', ...rest } = props
+const ButtonLink = forwardRef<HTMLAnchorElement, TButtonLinkProps>(
+  (props: TButtonLinkProps, ref) => {
+    const {
+      className,
+      children,
+      variant = 'default',
+      size = 'default',
+      ...rest
+    } = props
 
-  return (
-    <Link
-      className={classNames(
-        ...styles.base,
-        ...styles[variant],
-        ...sizes[size],
-        className,
-      )}
-      {...rest}
-    >
-      {children}
-    </Link>
-  )
-}
+    return (
+      <Link
+        className={classNames(
+          ...styles.base,
+          ...styles[variant],
+          ...sizes[size],
+          className,
+        )}
+        ref={ref}
+        {...rest}
+      >
+        {children}
+      </Link>
+    )
+  },
+)
 
 export { ButtonLink }

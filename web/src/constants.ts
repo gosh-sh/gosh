@@ -54,15 +54,15 @@ export const DaoEventType: { [key: number]: string } = {
   28: 'DAO vote',
   29: 'Multi proposal as DAO',
   30: 'Delay',
-  31: 'Dao token send',
+  31: 'Send tokens as DAO',
   32: 'Upgrade version controller',
   33: 'DAO reviewer',
-  34: 'DAO receive bounty',
+  34: 'Receive task reward as DAO',
   35: 'DAO token lock',
   36: 'Redeploy task',
   37: 'Redeployed task',
   38: 'Upgrade task',
-  39: 'DAO transfer tokens from previous version',
+  39: 'Transfer tokens as DAO',
   42: 'Delete milestone',
   43: 'Create milestone',
   44: 'Upgrade milestone',
@@ -84,7 +84,9 @@ export const NotificationType: { [key: string]: string } = {
   [ENotificationType.REPO_COMMIT_PUSHED]: 'New commit',
 }
 
-export const L2Web3Chains: { [key: string]: { name: string; iconpath: string } } = {
+export const L2Web3Chains: {
+  [key: string]: { name: string; iconpath: string }
+} = {
   '': {
     name: '',
     iconpath: '/images/tokens/ethereum.webp',

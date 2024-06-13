@@ -3,25 +3,31 @@ import { useEffect, useState } from 'react'
 import { matchPath } from 'react-router-dom'
 import Loader from '../../../components/Loader'
 import { DaoMemberWallet, DaoMembers, DaoSupply } from '../../components/Dao'
-import { useDaoEventList, useDaoMember } from '../../hooks/dao.hooks'
+import { useDao, useDaoEventList, useDaoMember } from '../../hooks/dao.hooks'
 import DaoEventPage from '../DaoEvent/DaoEvent'
 import { ListBoundary } from './components'
 
 const DaoEventListPage = () => {
+  const dao = useDao()
   const member = useDaoMember()
   const [eventOpened, setEventOpened] = useState<string>()
   const eventList = useDaoEventList()
 
   useEffect(() => {
-    const matched = matchPath('/o/:dao/events/:address', document.location.pathname)
-    if (matched?.params.address) {
-      eventList.openItem(matched.params.address)
-      setEventOpened(matched.params.address)
+    const matched = matchPath(
+      '/o/:dao/events/:address',
+      document.location.pathname,
+    )
+    if (dao.details.name === matched?.params.dao) {
+      if (matched?.params.address) {
+        eventList.openItem(matched.params.address)
+        setEventOpened(matched.params.address)
+      }
     } else {
       eventList.closeItems()
       setEventOpened(undefined)
     }
-  }, [document.location.pathname])
+  }, [document.location.pathname, dao.details.name])
 
   return (
     <>
@@ -29,7 +35,9 @@ const DaoEventListPage = () => {
         <div className="col !basis-full md:!basis-0 !w-0">
           <div className="flex items-center justify-between pb-2 mb-4 gap-4">
             <h3 className="text-xl font-medium">DAO events</h3>
-            {eventList.isFetching && <Loader className="text-xs">Updating...</Loader>}
+            {eventList.isFetching && (
+              <Loader className="text-xs">Updating...</Loader>
+            )}
           </div>
 
           <ListBoundary />

@@ -1,6 +1,6 @@
 {
   "config": {
-    "url": "http://local-evernode.gosh.sh/",
+    "url": "https://ackinacki-testnet.tvmlabs.dev/",
     "wc": 0,
     "addr": null,
     "method": null,
@@ -23,7 +23,7 @@
     "debug_fail": "None",
     "project_id": null,
     "access_key": null,
-    "endpoints": ["http://local-evernode.gosh.sh/"]
+    "endpoints": []
   },
   "endpoints_map": {
     "http://127.0.0.1/": [
@@ -31,19 +31,13 @@
       "http://127.0.0.1",
       "http://localhost"
     ],
-    "main.ton.dev": [
-      "https://eri01.main.everos.dev",
-      "https://gra01.main.everos.dev",
-      "https://gra02.main.everos.dev",
-      "https://lim01.main.everos.dev",
-      "https://rbx01.main.everos.dev"
+    "main.evercloud.dev": [
+      "https://mainnet.evercloud.dev"
     ],
-    "net.ton.dev": [
-      "https://eri01.net.everos.dev",
-      "https://rbx01.net.everos.dev",
-      "https://gra01.net.everos.dev"
+    "net.evercloud.dev": [
+      "https://devnet.evercloud.dev"
     ]
   },
   "aliases": {},
-  "path": "/home/sostrovskyi/gosh/gosh/tonos-cli.conf.json"
+  "path": "/Users/roman/Documents/GoogleDrive/rymka1989@gmail.com/Projects/gosh-app/tonos-cli.conf.json"
 }

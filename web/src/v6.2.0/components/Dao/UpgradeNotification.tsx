@@ -1,12 +1,12 @@
+import classNames from 'classnames'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useDao, useDaoMember, useUpgradeDao } from '../../hooks/dao.hooks'
-import Alert from '../../../components/Alert'
-import { AnimatePresence, motion } from 'framer-motion'
-import classNames from 'classnames'
-import { Button } from '../../../components/Form'
 import { useSetRecoilState } from 'recoil'
+import Alert from '../../../components/Alert'
+import { Button } from '../../../components/Form'
 import { appModalStateAtom } from '../../../store/app.state'
+import { useDao, useDaoMember, useUpgradeDao } from '../../hooks/dao.hooks'
 import { DaoUpgradeCompleteModal } from '../Modal'
 
 type TDaoNotificationProps = React.HTMLAttributes<HTMLDivElement>
@@ -61,13 +61,16 @@ const DaoUpgradeNotification = (props: TDaoNotificationProps) => {
               Please complete all proposals before upgrading.
               <br />
               <b>
-                All uncompleted proposals will be rejected and will not be transferred to
-                the upgraded version.
+                All uncompleted proposals will be rejected and will not be
+                transferred to the upgraded version.
               </b>
               <br />
-              Please check that a corresponding proposal does not exist before going to
-              the{' '}
-              <Link className="underline" to={`/o/${dao.details.name}/settings/upgrade`}>
+              Please check that a corresponding proposal does not exist before
+              going to the{' '}
+              <Link
+                className="underline"
+                to={`/o/${dao.details.name}/settings/upgrade`}
+              >
                 DAO upgrade
               </Link>{' '}
               page.
@@ -106,8 +109,8 @@ const DaoUpgradeNotification = (props: TDaoNotificationProps) => {
                   {!member.isReady
                     ? 'Wait for member wallet'
                     : !balance
-                    ? 'Not enough tokens or not transferred yet'
-                    : 'Complete upgrade'}
+                      ? 'Not enough tokens or not transferred yet'
+                      : 'Complete upgrade'}
                 </Button>
               </div>
             </Alert>

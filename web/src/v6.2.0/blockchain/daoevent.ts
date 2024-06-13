@@ -10,7 +10,11 @@ import {
 import { GoshError } from '../../errors'
 import { EDaoEventType } from '../../types/common.types'
 import { executeByChunk, sleep } from '../../utils'
-import { EDaoMemberType, TDaoEventReviewer, TTaskGrantPair } from '../types/dao.types'
+import {
+  EDaoMemberType,
+  TDaoEventReviewer,
+  TTaskGrantPair,
+} from '../types/dao.types'
 import SmvEventABI from './abi/smvproposal.abi.json'
 import { DaoWallet } from './daowallet'
 import { getDaoOrProfile, getSystemContract } from './helpers'
@@ -67,7 +71,10 @@ export class DaoEvent extends BaseContract {
     }
   }
 
-  async getData(type: number, options: { verbose?: boolean } = {}): Promise<any> {
+  async getData(
+    type: number,
+    options: { verbose?: boolean } = {},
+  ): Promise<any> {
     const { verbose } = options
 
     let fn: string = ''
@@ -159,10 +166,24 @@ export class DaoEvent extends BaseContract {
     } else if (type === EDaoEventType.HACKATHON_APPS_APPROVE) {
       fn = 'getSetGrantPubkeysParams'
       parser = this.parseApproveackathonAppsEventParams
+    } else if (type === EDaoEventType.DAO_RECEIVE_BOUNTY) {
+      fn = 'getDaoAskGrantProposalParams'
+      parser = this.parseReceiveTaskRewardAsDaoParams
+    } else if (type === EDaoEventType.DAO_TOKEN_DAO_SEND) {
+      fn = 'getDaoSendTokenProposalParams'
+      parser = this.parseSendTokensAsDaoParams
+    } else if (type === EDaoEventType.DAO_TOKEN_TRANSFER_FROM_PREV) {
+      fn = 'getDaoTransferTokenProposalParams'
+      parser = this.parseTransferTokensAsDaoParams
     } else if (type === EDaoEventType.MULTI_PROPOSAL) {
-      const { num, data0 } = await this.runLocal('getDataFirst', {}, undefined, {
-        useCachedBoc: true,
-      })
+      const { num, data0 } = await this.runLocal(
+        'getDataFirst',
+        {},
+        undefined,
+        {
+          useCachedBoc: true,
+        },
+      )
       return {
         details: null,
         items: await this.parseMultiEventCell({
@@ -175,7 +196,9 @@ export class DaoEvent extends BaseContract {
       throw new GoshError(`Event type "${type}" is unknown`)
     }
 
-    const decoded = await this.runLocal(fn, {}, undefined, { useCachedBoc: true })
+    const decoded = await this.runLocal(fn, {}, undefined, {
+      useCachedBoc: true,
+    })
     delete decoded.proposalKind
 
     if (verbose && parser) {
@@ -369,30 +392,90 @@ export class DaoEvent extends BaseContract {
     // Parse task data
     if (data.task) {
       const task_account = await sc.getTask({ address: data.task.task })
-      const task_details: any = { ...(await task_account.getDetails()) }
-      task_details.address = task_account.address
+      if (await task_account.isDeployed()) {
+        const task_details: any = { ...(await task_account.getDetails()) }
+        task_details.address = task_account.address
 
-      if (task_details.milestone_name) {
-        const repo_account = await sc.getRepository({
-          address: task_details.repository.address,
-        })
-        const repo_details = await repo_account.getDetails()
-        const dao_account = await sc.getDao({ address: repo_details.dao_address })
-        const dao_name = await dao_account.getName()
-        const milestone_account = await sc.getMilestone({
-          data: {
-            daoname: dao_name,
-            reponame: repo_details.name,
-            taskname: task_details.milestone_name,
-          },
-        })
-        task_details.milestone_address = milestone_account.address
+        if (task_details.milestone_name) {
+          const repo_account = await sc.getRepository({
+            address: task_details.repository.address,
+          })
+          const repo_details = await repo_account.getDetails()
+          const dao_account = await sc.getDao({
+            address: repo_details.dao_address,
+          })
+          const dao_name = await dao_account.getName()
+          const milestone_account = await sc.getMilestone({
+            data: {
+              daoname: dao_name,
+              reponame: repo_details.name,
+              taskname: task_details.milestone_name,
+            },
+          })
+          task_details.milestone_address = milestone_account.address
+        }
+
+        details.task = task_details
       }
-
-      details.task = task_details
     }
 
     return details
+  }
+
+  async parseReceiveTaskRewardAsDaoParams(data: any) {
+    const sc = getSystemContract()
+    const wallet = await new DaoWallet(
+      sc.account.client,
+      data.wallet,
+    ).getDetails()
+    const dao = await sc.getDao({ address: wallet.daoaddr })
+    const daoDetails = await dao.getDetails()
+    return { ...data, dao_name: daoDetails.nameDao }
+  }
+
+  async parseSendTokensAsDaoParams(data: any) {
+    let sc = getSystemContract()
+    const version = await new DaoWallet(
+      sc.account.client,
+      data.wallet,
+    ).getVersion()
+
+    const srcSc = AppConfig.goshroot.getSystemContract(version)
+    const srcWallet = await (
+      srcSc.getDaoWallet({ address: data.wallet }) as DaoWallet
+    ).getDetails()
+    const srcDao = await srcSc.getDao({ address: srcWallet.daoaddr })
+    const daoDetails = await srcDao.getDetails()
+
+    let dstUser = null
+    if (data.pubaddr) {
+      const result = await getDaoOrProfile(data.pubaddr)
+      dstUser = {
+        ...result,
+        name: await result.account.getName(),
+      }
+    }
+    return {
+      ...data,
+      grant: Number.parseInt(data.grant),
+      src_dao_name: daoDetails.nameDao,
+      dst: dstUser,
+    }
+  }
+
+  async parseTransferTokensAsDaoParams(data: any) {
+    const srcSc = AppConfig.goshroot.getSystemContract(data.oldversion)
+    const srcWalletDetails = await (
+      srcSc.getDaoWallet({ address: data.wallet }) as DaoWallet
+    ).getDetails()
+    const srcDao = await srcSc.getDao({ address: srcWalletDetails.daoaddr })
+    const srcDaoDetails = await srcDao.getDetails()
+
+    return {
+      ...data,
+      grant: Number.parseInt(data.grant),
+      src_dao_name: srcDaoDetails.nameDao,
+    }
   }
 
   private async parseMultiEventCell(params: {
@@ -535,6 +618,15 @@ export class DaoEvent extends BaseContract {
     } else if (type === EDaoEventType.HACKATHON_APPS_APPROVE) {
       fn = 'getSetGrantPubkeysParamsData'
       parser = this.parseApproveackathonAppsEventParams
+    } else if (type === EDaoEventType.DAO_RECEIVE_BOUNTY) {
+      fn = 'getDaoAskGrantProposalParamsData'
+      parser = this.parseReceiveTaskRewardAsDaoParams
+    } else if (type === EDaoEventType.DAO_TOKEN_DAO_SEND) {
+      fn = 'getDaoSendTokenProposalParamsData'
+      parser = this.parseSendTokensAsDaoParams
+    } else if (type === EDaoEventType.DAO_TOKEN_TRANSFER_FROM_PREV) {
+      fn = 'getDaoTransferTokenProposalParamsData'
+      parser = this.parseTransferTokensAsDaoParams
     } else if (type === EDaoEventType.DELAY) {
       return { type, label: DaoEventType[type], data: {} }
     } else {

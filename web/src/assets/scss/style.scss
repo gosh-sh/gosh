@@ -222,3 +222,399 @@ body,
 .sun-editor--noborder .sun-editor {
   @apply border-none;
 }
+
+.jodit-container {
+  border: none !important;
+}
+.jodit-react-container {
+  position: relative !important;
+}
+.jodit{
+  .jodit-ui-group {
+    padding: 0 0.5px;
+
+    &.jodit-ui-group_separated_true:not(:last-child):not(.jodit-ui-group_before-spacer_true):after {
+      border-right: 1px solid #e6edff;
+    }
+  }
+
+  .jodit-toolbar-button {
+    border-radius: 0.25rem !important;
+    box-sizing: border-box !important;
+
+    .jodit-toolbar-button__trigger:not([disabled]) {
+      background-color: transparent !important;
+      border-radius: 0 0.125rem 0.125rem 0 !important;
+      padding: 0 3px 0 0;
+      opacity: .3 !important;
+    }
+
+    &.jodit-toolbar-button_with-trigger_true:hover:not([disabled]) {
+      border-color: #d1d8e2 !important;
+      border-color: transparent !important;
+      box-sizing: border-box !important;
+      box-shadow: inset 0px 0px 0px 1px #97a8bf66;
+    }
+    .jodit-toolbar-button__button:hover:not([disabled]) {
+      background-color: #dfe4eb !important;
+    }
+    .jodit-toolbar-button__button:hover:not([disabled]) + .jodit-toolbar-button__trigger {
+      background-color: #dfe4eb !important;
+      opacity: 1 !important;
+    }
+    .jodit-toolbar-button__button[aria-pressed=true]:not([disabled]) {
+      background-color: #e9ecf1 !important;
+    }
+    .jodit-toolbar-button__button[aria-pressed=true]:not([disabled]) + .jodit-toolbar-button__trigger {
+      background-color: #dfe4eb !important;
+      opacity: .7 !important;
+    }
+  }
+  .jodit-toolbar-button__icon svg {
+    fill: black !important;
+  }
+}
+
+.jodit-ui-group_separated_true:not(:last-child):not(.jodit-ui-group_before-spacer_true):after {
+  border-right: 1px solid #d1d8e2 !important;
+}
+
+
+.jodit-toolbar__box:not(:empty) .jodit-toolbar-editor-collection:after {
+  background-color: #fff !important;
+  // content: none;
+}
+
+.jodit-toolbar-editor-collection_size_middle.jodit-toolbar-editor-collection_mode_horizontal {
+    background-image: repeating-linear-gradient(transparent 0, transparent 37px, #d1d8e2 38px) !important;
+}
+.jodit-toolbar__box:not(:empty) {
+  border-bottom: 1px solid #d7dde4 !important;
+}
+
+.jodit, .jodit *, .jodit-container, .jodit-container * {
+  font-family: sans-serif, -apple-system;
+  // font-family: initial;
+  // font: initial;
+}
+.jodit-popup {
+  border-radius: 5px !important;
+
+  .jodit-popup__content {
+    border-radius: 5px !important;
+    padding: 4px !important;
+    min-width: 100px !important;
+    max-height: 500px !important;
+    box-shadow: rgba(76, 76, 76, 0.02) 0px 4px 1px -2px, rgba(76, 76, 76, 0.05) 0px 3px 3px 0px, rgba(76, 76, 76, 0.03) 0px 1px 4px 0px, rgba(76, 76, 76, .3) 0px 10px 20px -3px !important;
+  }
+  .jodit-ui-separator {
+    border-left: 0;
+    border-right: 0;
+    border-top: 1px solid var(--jd-color-border);
+    opacity: 0.75;
+    cursor: default;
+    margin: 4px -5px;
+    padding: 0;
+  }
+  .jodit-ui-group.jodit-ui-group_line_true:not(:first-of-type) {
+    &:before {
+      content: '';
+      border-left: 0;
+      height: 1px;
+      width: calc(100% + 9px);
+      border-right: 0;
+      border-top: 1px solid var(--jd-color-border);
+      opacity: 0.75;
+      cursor: default;
+      margin: 4px -5px;
+      padding: 0;
+    }
+  }
+}
+.jodit {
+  h1 {
+    display: block;
+    font-size: 2em;
+    margin-top: 0.67em;
+    margin-bottom: 0.67em;
+    margin-left: 0;
+    margin-right: 0;
+    font-weight: bold;
+  }
+
+  h2 {
+    display: block;
+    font-size: 1.5em;
+    margin-top: 0.83em;
+    margin-bottom: 0.83em;
+    margin-left: 0;
+    margin-right: 0;
+    font-weight: bold;
+  }
+
+  h3 {
+    display: block;
+    font-size: 1.17em;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    margin-left: 0;
+    margin-right: 0;
+    font-weight: bold;
+  }
+
+  h4 {
+    display: block;
+    margin-top: 1.33em;
+    margin-bottom: 1.33em;
+    margin-left: 0;
+    margin-right: 0;
+    font-weight: bold;
+  }
+
+  h5 {
+    display: block;
+    font-size: .83em;
+    margin-top: 1.67em;
+    margin-bottom: 1.67em;
+    margin-left: 0;
+    margin-right: 0;
+    font-weight: bold;
+  }
+
+  h6 {
+    display: block;
+    font-size: .67em;
+    margin-top: 2.33em;
+    margin-bottom: 2.33em;
+    margin-left: 0;
+    margin-right: 0;
+    font-weight: bold;
+  }
+  blockquote {
+    border-left: 5px solid #ccc;
+    font-style: italic;
+    margin-top: .5em;
+    margin-bottom: 1em;
+    margin-left: 0;
+    margin-right: 0;
+    overflow: hidden;
+    padding-left: 1em;
+    padding-right: 1em;
+  }
+  code {
+    font-family: monospace;
+  }
+  pre {
+    display: block;
+    font-family: monospace;
+    white-space: pre;
+    margin: 1em 0;
+  }
+  ol, ul {
+    display: block;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    padding-inline-start: 40px;
+    unicode-bidi: isolate;
+
+    li {
+      display: list-item;
+    }
+  }
+  ul {
+    // @apply list-disc;
+    list-style-type: disc;
+    list-style-position: inside;
+
+    & > li {
+      display: list-item;
+
+      &::before { 
+        content: none;
+      }
+    }
+  }
+  ul ul {
+    // @apply list-circle;
+    list-style-type: circle;
+  }
+  ul ul ul {
+    // @apply list-square;
+    list-style-type: square;
+  }
+  ul ul ul ul {
+    // @apply list-disc;
+    list-style-type: disc;
+  }
+  ul ul ul ul ul {
+    // @apply list-circle;
+    list-style-type: circle;
+  }
+  ul ul ul ul ul ul {
+    // @apply list-square;
+    list-style-type: square;
+  }
+  ol { 
+    counter-reset: item;
+    list-style-position: inside;
+
+    & > li {
+      counter-increment: item;
+
+      &::before { 
+        content: counters(item, ".") ". ";
+        min-width: 25px;
+        padding-right: 10px;
+        display: inline-block;
+        font-variant-numeric: tabular-nums;
+      }
+      ol { 
+    
+        & > li {
+          &::marker { 
+            display: none;
+          }
+          &::marker { 
+            min-width: 35px;
+          }
+        }
+      }
+    }
+  }
+
+  ol ol ol {
+    list-style-type: none;
+
+    & > li {
+
+      &::marker { 
+        display: none;
+      }
+      &::before {
+        min-width: 25px;
+        content: counter(item, lower-latin) ". ";
+      }
+    }
+  }
+  ol ol ol ol {
+    & > li {
+
+      &::marker { 
+        display: none;
+      }
+      &::before {
+        content: counter(item, upper-roman) ". ";
+      }
+    }
+  }
+  ol ol ol ol ol {
+    & > li {
+
+      &::marker { 
+        display: none;
+      }
+
+      &::before {
+        content: counter(item, decimal) ". ";
+      }
+    }
+  }
+  ol[style*="list-style-type"] > li::before {
+    content: none;
+  }
+  
+  ol[style*="list-style-type"] > li {
+    list-style-type: inherit;
+  }
+
+  a {
+    color: #0091ff;
+    text-decoration: underline;
+    cursor: auto;
+  }
+}
+
+.jodit-status {
+  position: absolute;
+  opacity: 0;
+  top: 3px;
+  right: 3px;
+  align-items: center;
+  background: 0 0;
+  border: 0;
+  border-radius: 4px;
+  box-shadow: none;
+  box-sizing: border-box;
+  font-family: sans-serif, -apple-system;
+  font-size: 14px;
+  background-color: #dfe4eb !important;
+  cursor: pointer;
+  display: inline-flex;
+  font-style: normal;
+  justify-content: center;
+  outline: 0;
+  padding: 5px 10px 5px 5px;
+  text-align: center;
+  text-decoration: none;
+  text-transform: none;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: 0.35 cubic-bezier(0.375, 0.885, 0.6, 1) all;
+
+  &.active {
+    opacity: 1;
+  }
+
+  & > div {
+    transform: translateX(5px);
+  }
+}
+
+.jodit-ui-search {
+  font-size: 0.85rem;
+  .jodit-ui-search__buttons {
+    flex-basis: 100px;
+
+    button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 3px;
+      padding: 0 3px;
+
+      &:hover {
+        background-color: #dfe4eb !important;
+      }
+
+      svg {
+        width: 16px;
+      }
+
+      &[data-ref="cancel"] {
+        svg {
+          width: 12px;
+        }
+      }
+    }
+  }
+  .jodit-ui-search__inputs {
+    input {
+
+      &:focus {
+        box-shadow: none !important;
+        background-color: white;
+        border-radius: 4px;
+      }
+    }
+  }
+  .jodit-ui-search__counts {
+    border-left: 1px solid var(--jd-color-border);
+    border-left: none;
+  }
+}
+
+.jodit-preview {
+  padding: 1rem
+}

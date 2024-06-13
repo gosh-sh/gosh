@@ -18,7 +18,12 @@ import { useDao, useUpdateDaoExpertTags } from '../../hooks/dao.hooks'
 import yup from '../../yup-extended'
 
 type TFormValues = {
-  tags: { _motion_id: string; _disabled: boolean; name: string; multiplier: string }[]
+  tags: {
+    _motion_id: string
+    _disabled: boolean
+    name: string
+    multiplier: string
+  }[]
   comment: string
 }
 
@@ -50,7 +55,12 @@ const DaoExpertTagListPage = () => {
   }
 
   useEffect(() => {
-    const empty = { _motion_id: '0', _disabled: false, name: '', multiplier: '100' }
+    const empty = {
+      _motion_id: '0',
+      _disabled: false,
+      name: '',
+      multiplier: '100',
+    }
     const expert_tags =
       dao.details.expert_tags?.map((item) => ({
         _motion_id: item.name,
@@ -88,7 +98,8 @@ const DaoExpertTagListPage = () => {
           <div>
             <h3 className="text-xl font-medium">DAO karma tags</h3>
             <p className="mt-2.5 mb-6">
-              This works as a proof of specialization for the members' karma in this DAO!
+              This works as a proof of specialization for the members' karma in
+              this DAO!
             </p>
             <div className="p-4 border border-gray-e6edff rounded-xl bg-gray-fafafd">
               <FieldArray
@@ -112,7 +123,11 @@ const DaoExpertTagListPage = () => {
               />
             </div>
             <div className="mt-4">
-              <Button type="submit" disabled={isSubmitting} isLoading={isSubmitting}>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                isLoading={isSubmitting}
+              >
                 Save changes and create proposal
               </Button>
             </div>
@@ -157,6 +172,7 @@ const FieldArrayForm = (props: FieldArrayRenderProps) => {
                 <div className="basis-auto grow lg:basis-3/12 lg:grow-0 order-1">
                   {item._disabled ? (
                     <BadgeExpertTag
+                      seed={item.name}
                       content={item.name}
                       className="inline-flex items-center py-2 px-4"
                     />
@@ -187,7 +203,9 @@ const FieldArrayForm = (props: FieldArrayRenderProps) => {
                     autoComplete="off"
                     disabled={form.isSubmitting}
                     inputProps={{
-                      after: <div className="p-2 text-sm text-gray-7c8db5">%</div>,
+                      after: (
+                        <div className="p-2 text-sm text-gray-7c8db5">%</div>
+                      ),
                     }}
                     className="bg-white"
                   />

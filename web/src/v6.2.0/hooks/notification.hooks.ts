@@ -1,19 +1,22 @@
+import _ from 'lodash'
 import { useCallback, useEffect } from 'react'
-import { useUser } from './user.hooks'
 import { useRecoilState } from 'recoil'
+import { NotificationsAPI } from '../../apis/notifications'
+import { TSetUserDaoSettingsRequest } from '../../apis/notifications/types'
+import { AppConfig } from '../../appconfig'
+import { GoshError } from '../../errors'
+import { appToastStatusSelector } from '../../store/app.state'
+import { setLockableInterval } from '../../utils'
 import {
   daoSettingsSelector,
   userNotificationListAtom,
   userSettingsAtom,
 } from '../store/notification.state'
-import { appToastStatusSelector } from '../../store/app.state'
-import { GoshError } from '../../errors'
-import { NotificationsAPI } from '../../apis/notifications'
-import { TSetUserDaoSettingsRequest } from '../../apis/notifications/types'
-import _ from 'lodash'
-import { setLockableInterval } from '../../utils'
+import { useUser } from './user.hooks'
 
-export function useUserNotificationSettings(options: { initialize?: boolean } = {}) {
+export function useUserNotificationSettings(
+  options: { initialize?: boolean } = {},
+) {
   const { initialize } = options
   const { user } = useUser()
   const [userSettings, setUserSettings] = useRecoilState(userSettingsAtom)
@@ -22,6 +25,10 @@ export function useUserNotificationSettings(options: { initialize?: boolean } = 
   )
 
   const getUserSettings = useCallback(async () => {
+    if (AppConfig.devmode) {
+      console.warn('Notifications disabled in devmode')
+      return
+    }
     if (!user.username || !user.keys) {
       return
     }
@@ -61,6 +68,11 @@ export function useUserNotificationSettings(options: { initialize?: boolean } = 
       email_enabled?: boolean
       app_enabled?: boolean
     }) => {
+      if (AppConfig.devmode) {
+        console.warn('Notifications disabled in devmode')
+        return
+      }
+
       try {
         if (!user.username) {
           throw new GoshError('Value error', 'Username undefined')
@@ -111,12 +123,18 @@ export function useDaoNotificationSettings(
 ) {
   const { daoname, initialize } = options
   const { user } = useUser()
-  const [daoSettings, setDaoSettings] = useRecoilState(daoSettingsSelector(daoname))
+  const [daoSettings, setDaoSettings] = useRecoilState(
+    daoSettingsSelector(daoname),
+  )
   const [status, setStatus] = useRecoilState(
     appToastStatusSelector('__daonotificationsettings'),
   )
 
   const getDaoSettings = useCallback(async () => {
+    if (AppConfig.devmode) {
+      console.warn('Notifications disabled in devmode')
+      return
+    }
     if (!user.username || !daoname) {
       return
     }
@@ -144,6 +162,11 @@ export function useDaoNotificationSettings(
     daoname: string
     types: { [name: string]: boolean }
   }) => {
+    if (AppConfig.devmode) {
+      console.warn('Notifications disabled in devmode')
+      return
+    }
+
     const { types } = params
     const daoname = params.daoname.toLowerCase()
 
@@ -201,12 +224,18 @@ export function useDaoNotificationSettings(
   }
 }
 
-export function useUserNotificationList(options: { initialize?: boolean } = {}) {
+export function useUserNotificationList(
+  options: { initialize?: boolean } = {},
+) {
   const { initialize } = options
   const { user } = useUser()
   const [data, setData] = useRecoilState(userNotificationListAtom)
 
   const getUserNotifications = useCallback(async () => {
+    if (AppConfig.devmode) {
+      console.warn('Notifications disabled in devmode')
+      return
+    }
     if (!user.username) {
       return
     }
@@ -256,6 +285,11 @@ export function useUserNotificationList(options: { initialize?: boolean } = {}) 
   }, [user.username])
 
   const updateUserNotification = async (id: number, values: any) => {
+    if (AppConfig.devmode) {
+      console.warn('Notifications disabled in devmode')
+      return
+    }
+
     try {
       if (!user.username) {
         throw new GoshError('Value error', 'Username undefined')
@@ -296,7 +330,10 @@ export function useUserNotificationList(options: { initialize?: boolean } = {}) 
 
     if (initialize) {
       getUserNotifications()
-      interval = setLockableInterval(async () => await getUserNotifications(), 20000)
+      interval = setLockableInterval(
+        async () => await getUserNotifications(),
+        20000,
+      )
     }
 
     return () => {

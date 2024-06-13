@@ -1,9 +1,14 @@
 import classNames from 'classnames'
-import { useDao, useDaoMember } from '../../hooks/dao.hooks'
+import { useMemo } from 'react'
 import { useSetRecoilState } from 'recoil'
-import { appModalStateAtom } from '../../../store/app.state'
 import { Button } from '../../../components/Form'
-import { DaoMemberOfModal, DaoTokenMintModal, DaoTokenSendModal } from '../Modal'
+import { appModalStateAtom } from '../../../store/app.state'
+import { useDao, useDaoMember } from '../../hooks/dao.hooks'
+import {
+  DaoMemberOfModal,
+  DaoTokenMintModal,
+  DaoTokenSendModal,
+} from '../Modal'
 
 type TDaoSupplyProps = React.HTMLAttributes<HTMLDivElement>
 
@@ -12,6 +17,11 @@ const DaoSupply = (props: TDaoSupplyProps) => {
   const setModal = useSetRecoilState(appModalStateAtom)
   const dao = useDao()
   const member = useDaoMember()
+
+  const isMemberOfCount = useMemo(() => {
+    const names = new Set(dao.details.isMemberOf?.map(({ name }) => name))
+    return Array.from(names).length
+  }, [dao.details.isMemberOf?.length])
 
   const onDaoTokenSendClick = () => {
     setModal({
@@ -38,14 +48,19 @@ const DaoSupply = (props: TDaoSupplyProps) => {
   }
 
   return (
-    <div className={classNames('border border-gray-e6edff rounded-xl p-5', className)}>
+    <div
+      className={classNames(
+        'border border-gray-e6edff rounded-xl p-5',
+        className,
+      )}
+    >
       <div>
         <div className="mb-1 text-gray-7c8db5 text-sm">DAO total supply</div>
         <div className="text-3xl font-medium">
           {dao.details.supply?.total.toLocaleString()}
         </div>
       </div>
-      {!!dao.details.isMemberOf?.length && (
+      {isMemberOfCount > 0 && (
         <div className="mt-4">
           <div className="mb-1 text-gray-7c8db5 text-sm">Has tokens of</div>
           <div>
@@ -54,7 +69,7 @@ const DaoSupply = (props: TDaoSupplyProps) => {
               className="text-blue-348eff !p-0"
               onClick={onDaoMemberOfClick}
             >
-              {dao.details.isMemberOf.length} organizations
+              {isMemberOfCount} organizations
             </Button>
           </div>
         </div>

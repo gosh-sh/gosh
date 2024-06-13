@@ -48,7 +48,9 @@ export const getIdenticonAvatar = (options: any) => {
   })
 }
 
-export const getUsernameByEmail = async (email: string): Promise<string[] | null> => {
+export const getUsernameByEmail = async (
+  email: string,
+): Promise<string[] | null> => {
   const { data, error } = await supabase.client
     .from('users')
     .select('gosh_username')
@@ -79,6 +81,11 @@ export const markdown2html = async (value: string) => {
     .use(rehypeStringify)
     .process(value)
   return rehyped.value.toString()
+}
+
+export const isHTML = (value: string) => {
+  const htmlPattern = /<([a-z][a-z0-9]*)\b[^>]*>(.*?)<\/\1>/i;
+  return htmlPattern.test(value);
 }
 
 /**
@@ -131,7 +138,15 @@ export const Select2ClassNames = {
   menu: () => '!z-[2]',
   valueContainer: () => '!px-4 !py-1',
   placeholder: () => '!text-black/40',
+  menu: () => '!z-[2]',
   menuList: () => '!py-0',
-  noOptionsMessage: () => '!text-sm',
-  option: () => '!text-sm',
+  noOptionsMessage: () => '!text-xs',
+  option: (props: any) => {
+    const classNames = ['!text-sm']
+    if (props.isDisabled) {
+      classNames.push('!bg-transparent')
+    }
+
+    return classNames.join(' ')
+  },
 }

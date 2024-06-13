@@ -21,7 +21,7 @@ import { GoshError } from '../../../errors'
 import { html2markdown, markdown2html } from '../../../helpers'
 import { useDao, useDaoMember } from '../../hooks/dao.hooks'
 import { useHackathon, useUpdateHackathon } from '../../hooks/hackathon.hooks'
-import { Editor } from './Editor'
+import { SunEditor } from '../Editors/SunEditor'
 
 type DescriptionFileFormProps = {
   title: string
@@ -204,7 +204,7 @@ const HackathonDescriptionFileForm = (props: DescriptionFileFormProps) => {
                     {({ values, setFieldValue }) => (
                       <Form>
                         <Field name="modified" component={BaseField}>
-                          <Editor
+                          <SunEditor
                             className="sun-editor--noborder"
                             defaultValue={values.modified}
                             disable={formRef.current?.isSubmitting}

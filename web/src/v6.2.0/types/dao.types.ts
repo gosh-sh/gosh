@@ -39,6 +39,7 @@ export type TUserDaoList = {
 }
 
 export type TDaoDetailsMemberItem = {
+  name: string
   usertype: EDaoMemberType
   profile: UserProfile | Dao
   wallet: DaoWallet
@@ -262,4 +263,20 @@ export type TDBDaoInvite = {
   id: string
   daoname: string
   accepted: boolean | null
+}
+
+export type TDaoIsMemberOfList = {
+  is_fetching: boolean
+  items: TDaoIsMemberOfListItem[]
+  error?: any
+}
+
+export type TDaoIsMemberOfListItem = {
+  dao: Dao
+  name: string
+  version: string
+  wallet: DaoWallet
+  karma: number
+  balance: number
+  has_current: boolean
 }

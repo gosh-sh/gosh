@@ -25,13 +25,16 @@ import { MilestoneCreateEvent } from '../MilestoneCreateEvent/MilestoneCreateEve
 import { MilestoneDeleteEvent } from '../MilestoneDeleteEvent/MilestoneDeleteEvent'
 import { MilestoneUpgradeEvent } from '../MilestoneUpgradeEvent/MilestoneUpgradeEvent'
 import { MintTokensEvent } from '../MintTokensEvent/MintTokensEvent'
+import { ReceiveTaskRewardAsDao } from '../ReceiveTaskRewardAsDao/ReceiveTaskRewardAsDao'
 import { RedeployTaskCompleteEvent } from '../RedeployTaskCompleteEvent/RedeployTaskCompleteEvent'
 import { RedeployTaskEvent } from '../RedeployTaskEvent/RedeployTaskEvent'
 import { RepositoryCreateEvent } from '../RepositoryCreateEvent/RepositoryCreateEvent'
 import { RepositoryDescriptionEvent } from '../RepositoryDescriptionEvent/RepositoryDescriptionEvent'
 import { RepositoryTagAddEvent } from '../RepositoryTagAddEvent/RepositoryTagAddEvent'
 import { RepositoryTagDeleteEvent } from '../RepositoryTagDeleteEvent/RepositoryTagDeleteEvent'
+import { SendTokensAsDao } from '../SendTokensAsDao/SendTokensAsDao'
 import { ShowDaoEventProgressEvent } from '../ShowDaoEventProgressEvent/ShowDaoEventProgressEvent'
+import { TransferTokensAsDao } from '../TransferTokensAsDao/TransferTokensAsDao'
 import { UpgradeTaskEvent } from '../UpgradeTaskEvent/UpgradeTaskEvent'
 
 type TMultiEventProps = {
@@ -48,7 +51,9 @@ const MultiEvent = (props: TMultiEventProps) => {
         .map((item: any, index: number) => (
           <div className="py-3" key={index}>
             <h3 className="font-medium text-sm">{item.label}</h3>
-            {item.data.comment && <div className="mt-2 text-xs">{item.data.comment}</div>}
+            {item.data.comment && (
+              <div className="mt-2 text-xs">{item.data.comment}</div>
+            )}
 
             {item.type === EDaoEventType.REPO_CREATE && (
               <RepositoryCreateEvent
@@ -152,6 +157,15 @@ const MultiEvent = (props: TMultiEventProps) => {
             )}
             {item.type === EDaoEventType.HACKATHON_APPS_APPROVE && (
               <HackathonAppsApproveEvent key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.DAO_RECEIVE_BOUNTY && (
+              <ReceiveTaskRewardAsDao key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.DAO_TOKEN_DAO_SEND && (
+              <SendTokensAsDao key={index} data={item.data} />
+            )}
+            {item.type === EDaoEventType.DAO_TOKEN_TRANSFER_FROM_PREV && (
+              <TransferTokensAsDao key={index} data={item.data} />
             )}
           </div>
         ))}

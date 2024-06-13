@@ -30,6 +30,7 @@ bun.lockb
 !tests/node_se_scripts/local_giver.keys.json
 
 gosh-cli.conf.json
+tonos-cli.conf.json
 
 !GiverV2.keys.json
 

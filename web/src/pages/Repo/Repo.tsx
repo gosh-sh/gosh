@@ -11,7 +11,7 @@ import {
   faTerminal,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Dialog, Menu, Transition } from '@headlessui/react'
+import { Menu, Transition } from '@headlessui/react'
 import React, { useEffect } from 'react'
 import {
   AppConfig,
@@ -22,21 +22,14 @@ import {
   useTree,
 } from 'react-gosh'
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import { useSetRecoilState } from 'recoil'
 import { BranchSelect } from '../../components/Branches'
 import CopyClipboard from '../../components/CopyClipboard'
 import { Button, ButtonLink } from '../../components/Form'
 import Loader from '../../components/Loader'
-import { ModalCloseButton } from '../../components/Modal'
 import { onExternalLinkClick } from '../../helpers'
-import { appModalStateAtom } from '../../store/app.state'
-import {
-  ApplicationFormList,
-  IssueICToken,
-  RepoTokenWallet,
-} from '../../v6.3.0/components/Repository'
 import { TRepoLayoutOutletContext } from '../RepoLayout'
 import RepoReadme from './Readme'
+import { Filetype } from '../BlobCreate'
 
 const RepoPage = () => {
   const treepath = useParams()['*'] || ''
@@ -45,7 +38,6 @@ const RepoPage = () => {
   const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
   const { branches, branch, updateBranch } = useBranches(repository.adapter, branchName)
   const { subtree, blobs } = useTree(daoName!, repoName!, branch?.commit, treepath)
-  const setModal = useSetRecoilState(appModalStateAtom)
 
   const [dirUp] = splitByPath(treepath)
 
@@ -55,21 +47,11 @@ const RepoPage = () => {
     return `gosh://${goshstr}/${daoName}/${repoName}`
   }
 
-  const openIssueICTokenForm = () => {
-    setModal({
-      isOpen: true,
-      element: (
-        <Dialog.Panel className="relative rounded-xl bg-white p-10 w-full max-w-lg overflow-clip">
-          <ModalCloseButton />
-          <IssueICToken
-            dao_details={dao.details}
-            repo_adapter={repository.adapter}
-            repo_metadata={repository.details.metadata!}
-          />
-        </Dialog.Panel>
-      ),
-    })
-  }
+  const editors = [
+    { to: `code`, title: 'Code', subtitle: '', className: 'text-gray-050a15' },
+    { to: Filetype.MARKDOWN, title: 'Markdown', subtitle: `.${Filetype.MARKDOWN}`, className: 'text-gray-050a15' },
+    { to: Filetype.DOCUMENT, title: 'Rich Text', subtitle: `.${Filetype.DOCUMENT}`, className: 'text-gray-050a15' },
+  ]
 
   useEffect(() => {
     if (!branchName) {
@@ -113,44 +95,84 @@ const RepoPage = () => {
           </Link>
         </div>
 
-        <div className="flex grow gap-3 justify-end">
-          <ButtonLink
-            to={`/o/${daoName}/r/${repoName}/find/${branch?.name}`}
-            test-id="link-goto-file"
-          >
-            <FontAwesomeIcon icon={faMagnifyingGlass} />
-            <span className="hidden sm:inline-block ml-2">Go to file</span>
-          </ButtonLink>
-          {!branch?.isProtected && dao.details.isAuthMember && (
+          <div className="flex grow gap-3 justify-end">
             <ButtonLink
-              to={`/o/${daoName}/r/${repoName}/blobs/create/${branch?.name}${
-                treepath && `/${treepath}`
-              }`}
-              test-id="link-file-create"
+              to={`/o/${daoName}/r/${repoName}/find/${branch?.name}`}
+              test-id="link-goto-file"
             >
-              <FontAwesomeIcon icon={faFileCirclePlus} />
-              <span className="hidden sm:inline-block ml-2">Add file</span>
+              <FontAwesomeIcon icon={faMagnifyingGlass} />
+              <span className="hidden sm:inline-block ml-2">Go to file</span>
             </ButtonLink>
-          )}
-          <Menu as="div" className="relative">
-            <Menu.Button as="div">
-              <Button test-id="btn-clone-trigger">
-                <FontAwesomeIcon icon={faCode} />
-                <span className="hidden sm:inline-block ml-2">Clone</span>
-                <FontAwesomeIcon icon={faChevronDown} size="xs" className="ml-2" />
-              </Button>
-            </Menu.Button>
-            <Transition
-              as={React.Fragment}
-              enter="transition ease-out duration-100"
-              enterFrom="transform opacity-0 scale-95"
-              enterTo="transform opacity-100 scale-100"
-              leave="transition ease-in duration-75"
-              leaveFrom="transform opacity-100 scale-100"
-              leaveTo="transform opacity-0 scale-95"
-            >
-              <Menu.Items
-                className="dropdown-menu !bg-white px-6 !py-4 max-w-264px sm:max-w-none
+            {/* {!branch?.isProtected && dao.details.isAuthMember && (
+              <ButtonLink
+                to={`/o/${daoName}/r/${repoName}/blobs/create/${branch?.name}${
+                  treepath && `/${treepath}`
+                }`}
+                test-id="link-file-create"
+              >
+                <FontAwesomeIcon icon={faFileCirclePlus} />
+                <span className="hidden sm:inline-block ml-2">Add file</span>
+              </ButtonLink>
+            )} */}
+            {!branch?.isProtected && dao.details.isAuthMember && (
+              <Menu as="div" className="relative">
+                <Menu.Button>
+                  <Button test-id="btn-clone-trigger">
+                    <FontAwesomeIcon icon={faFileCirclePlus} />
+                    <span className="hidden sm:inline-block ml-2">Add file</span>
+                  <FontAwesomeIcon icon={faChevronDown} size="xs" className="ml-2" />
+                  </Button>
+                </Menu.Button>
+                <Transition
+                  as={React.Fragment}
+                  enter="transition ease-out duration-100"
+                  enterFrom="transform opacity-0 scale-95"
+                  enterTo="transform opacity-100 scale-100"
+                  leave="transition ease-in duration-75"
+                  leaveFrom="transform opacity-100 scale-100"
+                  leaveTo="transform opacity-0 scale-95"
+                >
+                  <Menu.Items className="absolute origin-top-right right-0 bg-white border border-gray-e6edff min-w-full rounded-lg mt-2 z-50 py-2">
+                    {editors.map((item, index) => (
+                      <Menu.Item key={index}>
+                        {({ active }) => (
+                          <Link
+                            to={`/o/${daoName}/r/${repoName}/blobs/create/${branch?.name}${treepath && `/${treepath}`}#${item.to}`}
+                            className={classNames(
+                              'flex justify-between text-right py-1 px-4 text-gray-53596d hover:text-black min-w-[160px]',
+                              active ? 'text-black' : null,
+                              item.className,
+                            )}
+                          >
+                            <div>{item.title}</div>
+                            <div className='text-gray-400'>{item.subtitle}</div>
+                          </Link>
+                        )}
+                      </Menu.Item>
+                    ))}
+                  </Menu.Items>
+                </Transition>
+              </Menu>
+            )}
+            <Menu as="div" className="relative">
+              <Menu.Button as="div">
+                <Button test-id="btn-clone-trigger">
+                  <FontAwesomeIcon icon={faCode} />
+                  <span className="hidden sm:inline-block ml-2">Clone</span>
+                  <FontAwesomeIcon icon={faChevronDown} size="xs" className="ml-2" />
+                </Button>
+              </Menu.Button>
+              <Transition
+                as={React.Fragment}
+                enter="transition ease-out duration-100"
+                enterFrom="transform opacity-0 scale-95"
+                enterTo="transform opacity-100 scale-100"
+                leave="transition ease-in duration-75"
+                leaveFrom="transform opacity-100 scale-100"
+                leaveTo="transform opacity-0 scale-95"
+              >
+                <Menu.Items
+                  className="dropdown-menu !bg-white px-6 !py-4 max-w-264px sm:max-w-none
                                     absolute top-full right-0 border border-gray-e6edff rounded-lg"
               >
                 <div>
@@ -272,46 +294,17 @@ const RepoPage = () => {
             </div>
           )}
 
-          {branch && (
-            <RepoReadme
-              className="border border-gray-e6edff rounded-xl overflow-hidden"
-              dao={daoName!}
-              repo={repoName!}
-              branch={branch.name}
-              blobs={blobs || []}
-            />
-          )}
-        </div>
-
-        {dao.details.version >= '6.3.0' &&
-          repository.details.metadata?.forms &&
-          !repository.details.metadata?.token_issued && (
-            <div className="sticky top-3 bg-white border border-gray-e6edff rounded-lg p-4">
-              <h3 className="text-lg font-medium mb-2">
-                {repository.details.metadata.token_issue.ic
-                  ? 'IC Application Forms'
-                  : 'Application Forms'}
-              </h3>
-              <ApplicationFormList />
-
-              {repository.details.metadata?.token_issue.ic && (
-                <div className="mt-4">
-                  <Button className="w-full" onClick={openIssueICTokenForm}>
-                    Issue tokens
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-
-        {dao.details.version >= '6.3.0' && repository.details.metadata?.token_issued && (
-          <div className="sticky top-3 bg-white border border-gray-e6edff rounded-lg p-4">
-            <h3 className="text-lg font-medium mb-2">Repository token</h3>
-            <RepoTokenWallet />
-          </div>
+        {branch && (
+          <RepoReadme
+            className="border border-gray-e6edff rounded-xl overflow-hidden"
+            dao={daoName!}
+            repo={repoName!}
+            branch={branch.name}
+            blobs={blobs || []}
+          />
         )}
       </div>
-    </>
+    </div>
   )
 }
 

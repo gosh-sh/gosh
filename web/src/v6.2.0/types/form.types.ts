@@ -13,5 +13,8 @@ export type TUserSelectOption = {
     name: string
     address: string
     type: EDaoMemberType
+    version?: string
   }
+  isDisabled?: boolean
+  hint?: string | React.ReactNode | null
 }

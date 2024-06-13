@@ -15,6 +15,7 @@ const DaoExpertTagCreateEvent = (props: TDaoExpertTagCreateEventProps) => {
           <div key={index} className="flex items-center gap-6 text-sm">
             <div className="basis-5/12 xl:basis-3/12">
               <BadgeExpertTag
+                seed={name}
                 content={name}
                 className="inline-flex items-center py-2 px-4"
               />

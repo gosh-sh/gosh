@@ -1,0 +1,39 @@
+/*!
+ * Jodit Editor (https://xdsoft.net/jodit/)
+ * Released under MIT see LICENSE.txt in the project root for license information.
+ * Copyright (c) 2013-2024 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ */
+import { isArray } from "../checker/is-array.js";
+import { isNumeric } from "../checker/is-numeric.js";
+import { isPlainObject } from "../checker/is-plain-object.js";
+import { isString } from "../checker/is-string.js";
+/**
+ * Safe access in tree object
+ *
+ * @example
+ * ```js
+ * const a = {}, b = {};
+ * Jodit.modules.Helpers.set('a.b.c.d.e', 1, a);
+ * console.log(a);// {a: {b: {c: {d: {e: 1}}}}}
+ *
+ * Jodit.modules.Helpers.set('a.0.e', 1, b);
+ * console.log(b);// {a: [{e: 1}]}
+ * ```
+ */
+export function set(chain, value, obj) {
+    if (!isString(chain) || !chain.length) {
+        return;
+    }
+    const parts = chain.split('.');
+    let result = obj, key = parts[0];
+    for (let i = 0; i < parts.length - 1; i += 1) {
+        key = parts[i];
+        if (!isArray(result[key]) && !isPlainObject(result[key])) {
+            result[key] = isNumeric(parts[i + 1]) ? [] : {};
+        }
+        result = result[key];
+    }
+    if (result) {
+        result[parts[parts.length - 1]] = value;
+    }
+}
