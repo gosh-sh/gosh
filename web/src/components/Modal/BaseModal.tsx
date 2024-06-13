@@ -1,20 +1,20 @@
 import { Dialog, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
-import { useRecoilValue, useResetRecoilState } from 'recoil'
+import { useRecoilState, useResetRecoilState } from 'recoil'
 import { appModalStateAtom } from '../../store/app.state'
 
-type TBaseModalProps = {
-  modal?: {
-    static?: boolean | undefined
-    isOpen: boolean
-    element: React.ReactElement | null
-  }
-  resetModal?(): void
+type TBaseModalCleanProps = {
+  is_open: boolean
+  is_static?: boolean
+  element: any
+  onClose?(): void
 }
 
-const BaseModal = (props: TBaseModalProps) => {
-  const modal = props.modal || useRecoilValue(appModalStateAtom)
-  const resetModal = props.resetModal || useResetRecoilState(appModalStateAtom)
+export const BaseModalClean = (props: TBaseModalCleanProps) => {
+  const { is_open, is_static, element } = props
+
+  const onCloseDefault = () => {}
+  const onClose = props.onClose || onCloseDefault
 
   return (
     <Transition show={is_open} as={Fragment}>

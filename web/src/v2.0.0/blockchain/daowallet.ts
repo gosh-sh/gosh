@@ -1,6 +1,6 @@
 import { KeyPair, TonClient } from "@eversdk/core";
 import { BaseContract } from "../../blockchain/contract";
-import { UserProfile } from "../../blockchain/userprofile";
+import { UserProfile } from "../blockchain/userprofile";
 import { MAX_PARALLEL_READ, SYSTEM_TAG } from "../../constants";
 import { EDaoEventType } from "../../types/common.types";
 import { executeByChunk, sleep } from "../../utils";

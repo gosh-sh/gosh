@@ -19,7 +19,6 @@
       "indentWidth": 2,
       "indentStyle": "space",
       "semicolons": "asNeeded",
-      "trailingComma": "all",
       "quoteStyle": "single",
       "jsxQuoteStyle": "double"
     }
