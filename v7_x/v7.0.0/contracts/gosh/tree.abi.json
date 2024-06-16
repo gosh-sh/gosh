@@ -1,0 +1,269 @@
+{
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"data","type":"map(uint256,tuple)"},
+				{"name":"rootGosh","type":"address"},
+				{"name":"goshdao","type":"address"},
+				{"name":"WalletCode","type":"cell"},
+				{"name":"codeDiff","type":"cell"},
+				{"name":"codeTree","type":"cell"},
+				{"name":"codeCommit","type":"cell"},
+				{"name":"SnapshotCode","type":"cell"},
+				{"name":"shaTree","type":"string"},
+				{"name":"number","type":"uint128"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addTree",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"tree1","type":"map(uint256,tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addTreeself",
+			"inputs": [
+				{"name":"index","type":"uint256"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"tree1","type":"map(uint256,tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "calculateInnerTreeHash",
+			"inputs": [
+				{"name":"key","type":"uint256"},
+				{"name":"finalhash","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "SendDiff2",
+			"inputs": [
+				{"name":"namecommit","type":"string"},
+				{"name":"branch","type":"string"},
+				{"name":"branchcommit","type":"address"},
+				{"name":"number","type":"uint128"},
+				{"name":"numberCommits","type":"uint128"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"task","type":"optional(tuple)"},
+				{"name":"isUpgrade","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkFull",
+			"inputs": [
+				{"name":"namecommit","type":"string"},
+				{"name":"branch","type":"optional(string)"},
+				{"name":"repo","type":"address"},
+				{"name":"commitsha","type":"string"},
+				{"name":"typer","type":"uint128"},
+				{"name":"branchcommit","type":"optional(address)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkTree",
+			"inputs": [
+				{"name":"index","type":"uint256"},
+				{"name":"path","type":"string"},
+				{"name":"typer","type":"uint128"},
+				{"name":"commitsha","type":"string"},
+				{"name":"branchcommit","type":"optional(address)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "answerIs",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"_ready","type":"bool"},
+				{"name":"branchcommit","type":"optional(address)"},
+				{"name":"typer","type":"uint128"},
+				{"name":"baseCommit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCheckTree",
+			"inputs": [
+				{"name":"shainnertree","type":"uint256"},
+				{"name":"commitsha","type":"string"},
+				{"name":"path","type":"string"},
+				{"name":"branchcommit","type":"optional(address)"},
+				{"name":"typer","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "gotCheckTree",
+			"inputs": [
+				{"name":"shainnertree","type":"uint256"},
+				{"name":"res","type":"bool"},
+				{"name":"branchcommit","type":"optional(address)"},
+				{"name":"typer","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setCorrect",
+			"inputs": [
+				{"name":"namecommit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setCorrectTree",
+			"inputs": [
+				{"name":"shainnertree","type":"uint256"},
+				{"name":"path","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getShaInfoDiff",
+			"inputs": [
+				{"name":"commit","type":"string"},
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"},
+				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getShaInfoCommit",
+			"inputs": [
+				{"name":"commit","type":"string"},
+				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getShaInfoTree",
+			"inputs": [
+				{"name":"shainnertree","type":"uint256"},
+				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroy",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getDetails",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"value1","type":"map(uint256,tuple)"},
+				{"name":"value2","type":"uint256"},
+				{"name":"value3","type":"string"},
+				{"name":"value4","type":"address"}
+			]
+		},
+		{
+			"name": "getTreeIn",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "gettree",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"value0","type":"map(uint256,tuple)"}
+			]
+		},
+		{
+			"name": "getsha",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint256"}
+			]
+		},
+		{
+			"name": "getVersion",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
+			]
+		},
+		{
+			"name": "getOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		}
+	],
+	"data": [
+		{"key":1,"name":"_shaInnerTree","type":"uint256"},
+		{"key":2,"name":"_repo","type":"address"}
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
+		{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"_tree","type":"map(uint256,tuple)"},
+		{"name":"_shaInnerTree","type":"uint256"},
+		{"name":"_repo","type":"address"},
+		{"name":"_pubaddr","type":"address"},
+		{"name":"_systemcontract","type":"address"},
+		{"name":"_goshdao","type":"address"},
+		{"name":"_code","type":"map(uint8,cell)"},
+		{"name":"_needAnswer","type":"uint128"},
+		{"name":"_check","type":"bool"},
+		{"name":"_root","type":"bool"},
+		{"name":"_commitsha","type":"string"},
+		{"name":"_checkaddr","type":"address"},
+		{"name":"_flag","type":"bool"},
+		{"components":[{"name":"index","type":"uint256"},{"name":"path","type":"string"},{"name":"typer","type":"uint128"},{"name":"branch","type":"string"},{"name":"branchcommit","type":"optional(address)"}],"name":"_saved","type":"optional(tuple)"},
+		{"name":"_branch","type":"optional(string)"},
+		{"name":"_shaTree","type":"string"},
+		{"name":"_isCorrect","type":"bool"},
+		{"name":"_number","type":"uint128"},
+		{"name":"_neednumber","type":"uint128"},
+		{"name":"_isReady","type":"bool"},
+		{"name":"timeMoney","type":"uint128"}
+	]
+}

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+echo "git-remote gosh called" >&2
+
+if [[ -z "$VSCODE_BIN" ]]; then
+    exec cargo run --bin git-remote-gosh "$@"
+else
+    if ! type -P "$VSCODE_BIN"; then
+        echo "'$VSCODE_BIN' is not found" >&2
+        exit 1
+    fi
+    exec cargo run --bin git-remote-gosh-vscode-debug "$@"
+fi
