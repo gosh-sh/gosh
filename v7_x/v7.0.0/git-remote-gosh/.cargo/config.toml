@@ -1,0 +1,2 @@
+[env]
+CONTRACTS_DIR = { value = "../contracts/gosh/", relative = true }

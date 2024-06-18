@@ -1,0 +1,67 @@
+# syntax=docker/dockerfile:1.5
+
+# FROM alpine:edge
+# RUN apk add git curl
+# RUN apk add pkgconfig openssl-dev gcc musl-dev rustup
+# RUN rustup-init -t x86_64-unknown-linux-musl --default-toolchain nightly --profile minimal -y
+# RUN git clone https://github.com/sfackler/rust-openssl /build
+# RUN cd /build && /root/.cargo/bin/cargo build --release
+
+# Base builder ---------------------------
+# FROM --platform=$BUILDPLATFORM rust:1.62-bullseye as rust-builder
+FROM --platform=$BUILDPLATFORM rust:1.66-alpine as rust-builder
+
+WORKDIR /build
+
+# RUN \
+#     apk add cmake openssl-dev musl-dev libc-dev zstd-dev zlib-dev
+# RUN \
+#     apk add cmake openssl-dev perl alpine-sdk
+
+RUN rustup target add \
+    x86_64-unknown-linux-musl aarch64-unknown-linux-musl
+# RUN rustup toolchain install \
+#     stable-x86_64-unknown-linux-musl stable-aarch64-unknown-linux-musl
+
+# amd64 build ----------------------------
+FROM --platform=$BUILDPLATFORM rust-builder AS build-amd64
+RUN \
+    apk add cmake openssl-dev perl alpine-sdk
+RUN \
+    --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    --mount=type=cache,target=/target,sharing=private \
+    --mount=type=bind,target=./ \
+    cargo install \
+    --path ./ \
+    --target x86_64-unknown-linux-musl \
+    --target-dir=/target
+
+# arm64 build ----------------------------
+FROM --platform=$BUILDPLATFORM rust-builder AS build-arm64
+RUN \
+    apk add cmake openssl-dev perl alpine-sdk
+RUN \
+    --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    --mount=type=cache,target=/target,sharing=private \
+    --mount=type=bind,target=./ \
+    cargo install \
+    --path ./ \
+    --target aarch64-unknown-linux-musl \
+    --target-dir=/target
+
+FROM alpine as final-base
+RUN apk add git
+
+FROM --platform=amd64 final-base as final-amd64
+COPY --from=build-amd64 --link /usr/local/cargo/bin/git-remote-gosh /usr/local/bin/git-remote-gosh
+
+FROM --platform=arm64 final-base as final-arm64
+COPY --from=build-arm64 --link /usr/local/cargo/bin/git-remote-gosh /usr/local/bin/git-remote-gosh
+
+FROM final-${TARGETARCH}
+# ENV GOSH_TRACE=1
+WORKDIR /workdir
+ENTRYPOINT [ "git" ]
+CMD [ "help" ]

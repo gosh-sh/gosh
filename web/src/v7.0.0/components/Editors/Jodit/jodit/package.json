@@ -1,0 +1,39 @@
+{
+	"name": "jodit",
+	"version": "4.2.14",
+	"description": "Jodit is an awesome and useful wysiwyg editor with filebrowser",
+	"main": "esm/index.js",
+	"types": "types/index.d.ts",
+	"scripts": {},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/xdan/jodit.git"
+	},
+	"keywords": [
+		"wysiwyg",
+		"wysiwyg editor",
+		"wysiwyg html editor",
+		"rich text",
+		"rich editor",
+		"rich text editor",
+		"html",
+		"text",
+		"editor",
+		"contenteditable",
+		"javascript",
+		"typescript",
+		"vanillajs",
+		"jodit"
+	],
+	"author": "Chupurnov <chupurnov@gmail.com> (https://xdsoft.net/jodit/)",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/xdan/jodit/issues"
+	},
+	"homepage": "https://xdsoft.net/jodit/",
+	"dependencies": {
+		"autobind-decorator": "^2.4.0"
+	},
+	"devDependencies": {},
+	"module": "esm/index.js"
+}

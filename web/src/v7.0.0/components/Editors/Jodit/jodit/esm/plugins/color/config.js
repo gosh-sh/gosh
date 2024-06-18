@@ -1,0 +1,154 @@
+/*!
+ * Jodit Editor (https://xdsoft.net/jodit/)
+ * Released under MIT see LICENSE.txt in the project root for license information.
+ * Copyright (c) 2013-2024 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ */
+import { Dom } from "../../core/dom/dom.js";
+import { css, dataBind, isJoditObject } from "../../core/helpers/index.js";
+import { Icon } from "../../core/ui/icon.js";
+import { ColorPickerWidget, TabsWidget } from "../../modules/widget/index.js";
+import brushIcon from "./brush.svg.js";
+import { Config } from "../../config.js";
+Icon.set('brush', brushIcon);
+Config.prototype.controls.brushCell = {
+    isVisible: (editor) => {
+        return !editor.o.disablePlugins.includes('color');
+    },
+    icon: 'brush',
+    popup: (editor, _, close) => {
+        if (!isJoditObject(editor)) {
+            return;
+        }
+        const tableModule = editor.getInstance('Table', editor.o), selected = tableModule.getAllSelectedCells();
+        if (!selected.length) {
+            return false;
+        }
+        const makeColorPicker = (key) => ColorPickerWidget(editor, (value) => {
+            selected.forEach(cell => {
+                css(cell, key, value);
+            });
+            editor.lock();
+            editor.synchronizeValues();
+            close();
+            editor.unlock();
+        }, css(selected[0], key));
+        return TabsWidget(editor, [
+            {
+                name: 'Background',
+                content: makeColorPicker('background-color')
+            },
+            { name: 'Text', content: makeColorPicker('color') },
+            { name: 'Border', content: makeColorPicker('border-color') }
+        ]);
+    },
+    tooltip: 'Background'
+};
+Config.prototype.controls.brush = {
+    isVisible: (editor) => {
+        return !editor.o.disablePlugins.includes('color');
+    },
+    update(editor, button) {
+        const color = dataBind(button, 'color');
+        const update = (key, value) => {
+            if (value && value !== css(editor.editor, key).toString()) {
+                button.state.icon.fill = value;
+                return;
+            }
+        };
+        if (color) {
+            const mode = dataBind(button, 'color');
+            update(mode === 'color' ? mode : 'background-color', color);
+            return;
+        }
+        const current = editor.s.current();
+        if (current && !button.state.disabled) {
+            const currentBpx = Dom.closest(current, Dom.isElement, editor.editor) || editor.editor;
+            update('color', css(currentBpx, 'color').toString());
+            update('background-color', css(currentBpx, 'background-color').toString());
+        }
+        button.state.icon.fill = '';
+        button.state.activated = false;
+    },
+    popup: (editor, current, close, button) => {
+        let colorHEX = '', bg_color = '', tabs = [], currentElement = null;
+        if (current && current !== editor.editor && Dom.isNode(current)) {
+            if (Dom.isElement(current) &&
+                editor.s.isCollapsed() &&
+                !Dom.isTag(current, new Set(['br', 'hr']))) {
+                currentElement = current;
+            }
+            Dom.up(current, (node) => {
+                if (Dom.isHTMLElement(node)) {
+                    const color = css(node, 'color', true), background = css(node, 'background-color', true);
+                    if (color) {
+                        colorHEX = color.toString();
+                        return true;
+                    }
+                    if (background) {
+                        bg_color = background.toString();
+                        return true;
+                    }
+                }
+            }, editor.editor);
+        }
+        const backgroundTag = ColorPickerWidget(editor, (value) => {
+            if (!currentElement) {
+                editor.execCommand('background', false, value);
+            }
+            else {
+                currentElement.style.backgroundColor = value;
+            }
+            dataBind(button, 'color', value);
+            dataBind(button, 'color-mode', 'background');
+            close();
+        }, bg_color);
+        const colorTab = ColorPickerWidget(editor, (value) => {
+            if (!currentElement) {
+                editor.execCommand('forecolor', false, value);
+            }
+            else {
+                currentElement.style.color = value;
+            }
+            dataBind(button, 'color', value);
+            dataBind(button, 'color-mode', 'color');
+            close();
+        }, colorHEX);
+        tabs = [
+            {
+                name: 'Background',
+                content: backgroundTag
+            },
+            {
+                name: 'Text',
+                content: colorTab
+            }
+        ];
+        if (editor.o.colorPickerDefaultTab !== 'background') {
+            tabs = tabs.reverse();
+        }
+        return TabsWidget(editor, tabs, currentElement);
+    },
+    exec(jodit, current, { button }) {
+        const mode = dataBind(button, 'color-mode'), color = dataBind(button, 'color');
+        if (!mode) {
+            return false;
+        }
+        if (current &&
+            current !== jodit.editor &&
+            Dom.isNode(current) &&
+            Dom.isElement(current)) {
+            switch (mode) {
+                case 'color':
+                    current.style.color = color;
+                    break;
+                case 'background':
+                    current.style.backgroundColor = color;
+                    break;
+            }
+        }
+        else {
+            jodit.execCommand(mode === 'background' ? mode : 'forecolor', false, color);
+        }
+    },
+    tooltip: 'Fill color or set the text color'
+};

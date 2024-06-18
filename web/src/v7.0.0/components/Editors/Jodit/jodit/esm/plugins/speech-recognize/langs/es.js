@@ -1,0 +1,14 @@
+"use strict";
+/*!
+ * Jodit Editor (https://xdsoft.net/jodit/)
+ * Released under MIT see LICENSE.txt in the project root for license information.
+ * Copyright (c) 2013-2024 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ */
+export default {
+    newline: 'nueva línea',
+    delete: 'eliminar',
+    space: 'espacio',
+    'Speech Recognize': 'Reconocimiento de Voz',
+    Sound: 'Sonido',
+    'Interim Results': 'Resultados Provisionales'
+};
