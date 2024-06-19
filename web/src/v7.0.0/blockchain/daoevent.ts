@@ -18,6 +18,7 @@ import {
 import SmvEventABI from './abi/smvproposal.abi.json'
 import { DaoWallet } from './daowallet'
 import { getDaoOrProfile, getSystemContract } from './helpers'
+import { AppConfig } from '../../appconfig'
 
 export class DaoEvent extends BaseContract {
   constructor(client: TonClient, address: string) {
@@ -91,6 +92,8 @@ export class DaoEvent extends BaseContract {
       fn = 'getGoshAddProtectedBranchProposalParams'
     } else if (type === EDaoEventType.BRANCH_UNLOCK) {
       fn = 'getGoshDeleteProtectedBranchProposalParams'
+    } else if (type === EDaoEventType.UPDATE_BRANCH_ORDER) {
+      fn = 'getGoshChangePrioritiesProposalParams'
     } else if (type === EDaoEventType.PULL_REQUEST) {
       fn = 'getGoshSetCommitProposalParams'
       parser = this.parsePullRequestParams
@@ -527,6 +530,8 @@ export class DaoEvent extends BaseContract {
       fn = 'getGoshAddProtectedBranchProposalParamsData'
     } else if (type === EDaoEventType.BRANCH_UNLOCK) {
       fn = 'getGoshDeleteProtectedBranchProposalParamsData'
+    } else if (type === EDaoEventType.UPDATE_BRANCH_ORDER) {
+      fn = 'getGoshChangeBranchPrioritiesParamsData'
     } else if (type === EDaoEventType.DAO_MEMBER_ADD) {
       fn = 'getGoshDeployWalletDaoProposalParamsData'
       parser = this.parseMemberAddEventParams

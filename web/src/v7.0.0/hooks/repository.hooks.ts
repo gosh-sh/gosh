@@ -18,7 +18,9 @@ export function useCreateRepository() {
   const member = useDaoMember()
   const setRepositories = useSetRecoilState(daoRepositoryListSelector(dao.name))
   const { beforeCreateEvent, afterCreateEvent } = useDaoHelpers()
-  const [status, setStatus] = useRecoilState(appToastStatusSelector('__createrepository'))
+  const [status, setStatus] = useRecoilState(
+    appToastStatusSelector('__createrepository'),
+  )
 
   const create = useCallback(
     async (name: string, description?: string, expert_tags?: string[]) => {
@@ -41,7 +43,10 @@ export function useCreateRepository() {
           throw new GoshError('Access error', 'Not a DAO member')
         }
         if (!member.isReady || !member.wallet) {
-          throw new GoshError('Access error', 'Wallet is missing or is not activated')
+          throw new GoshError(
+            'Access error',
+            'Wallet is missing or is not activated',
+          )
         }
 
         // Check if repository is already deployed
@@ -79,7 +84,10 @@ export function useCreateRepository() {
         if (alone) {
           const wait = await whileFinite(async () => await account.isDeployed())
           if (!wait) {
-            throw new GoshError('Timeout error', 'Create repository timeout reached')
+            throw new GoshError(
+              'Timeout error',
+              'Create repository timeout reached',
+            )
           }
 
           const version = await account.getVersion()
@@ -172,12 +180,20 @@ export function useDaoRepositoryList(
         limit: count,
       })
       setData((state) => {
-        const different = _.differenceWith(blockchain.items, state.items, (a, b) => {
-          return a.name === b.name
-        })
-        const intersect = _.intersectionWith(blockchain.items, state.items, (a, b) => {
-          return a.name === b.name
-        })
+        const different = _.differenceWith(
+          blockchain.items,
+          state.items,
+          (a, b) => {
+            return a.name === b.name
+          },
+        )
+        const intersect = _.intersectionWith(
+          blockchain.items,
+          state.items,
+          (a, b) => {
+            return a.name === b.name
+          },
+        )
         return {
           ...state,
           items: [...state.items, ...different].map((item) => {
@@ -240,7 +256,10 @@ export function useCreateRepositoryTag() {
     async (reponame: string, tags: string[], comment?: string) => {
       try {
         if (!member.isReady || !member.wallet) {
-          throw new GoshError('Access error', 'Wallet is missing or is not activated')
+          throw new GoshError(
+            'Access error',
+            'Wallet is missing or is not activated',
+          )
         }
 
         // Create add repository tags event
@@ -290,7 +309,10 @@ export function useDeleteRepositoryTag() {
     async (reponame: string, tags: string[], comment?: string) => {
       try {
         if (!member.isReady || !member.wallet) {
-          throw new GoshError('Access error', 'Wallet is missing or is not activated')
+          throw new GoshError(
+            'Access error',
+            'Wallet is missing or is not activated',
+          )
         }
 
         // Create delete repository tags event
@@ -340,7 +362,10 @@ export function useUpdateRepositoryDescription() {
     async (reponame: string, description: string, comment?: string) => {
       try {
         if (!member.isReady || !member.wallet) {
-          throw new GoshError('Access error', 'Wallet is missing or is not activated')
+          throw new GoshError(
+            'Access error',
+            'Wallet is missing or is not activated',
+          )
         }
 
         // Create update repository repository event
@@ -376,4 +401,160 @@ export function useUpdateRepositoryDescription() {
   )
 
   return { update, status }
+}
+
+export function useUpdateBranchConfig() {
+  const member = useDaoMember()
+  const { beforeCreateEvent } = useDaoHelpers()
+  const [status, setStatus] = useRecoilState(
+    appToastStatusSelector('__updaterepositorybranches'),
+  )
+
+  const addProtection = useCallback(
+    async (params: {
+      repo_name: string
+      branch: string
+      tags: string[]
+      comment?: string
+    }) => {
+      const { repo_name, branch, tags, comment } = params
+
+      try {
+        if (!member.isReady || !member.wallet) {
+          throw new GoshError(
+            'Access error',
+            'Wallet is missing or is not activated',
+          )
+        }
+
+        // Create update repository repository event
+        // Prepare balance for create event (if not alone)
+        await beforeCreateEvent(20, { onPendingCallback: setStatus })
+
+        setStatus((state) => ({
+          ...state,
+          type: 'pending',
+          data: 'Create event',
+        }))
+        const eventaddr = await member.wallet.lockRepositoryBranch({
+          repo_name,
+          branch_name: branch,
+          tags,
+          comment: comment || `Update ${repo_name} branch ${branch} protection`,
+        })
+        setStatus((state) => ({
+          ...state,
+          type: 'success',
+          data: {
+            title: 'Update branch protection',
+            content: 'Update repository branch protection event created',
+          },
+        }))
+
+        return { eventaddr }
+      } catch (e: any) {
+        setStatus((state) => ({ ...state, type: 'error', data: e }))
+        throw e
+      }
+    },
+    [member.isMember, member.isReady],
+  )
+
+  const removeProtection = useCallback(
+    async (params: {
+      repo_name: string
+      branch: string
+      comment?: string
+    }) => {
+      const { repo_name, branch, comment } = params
+
+      try {
+        if (!member.isReady || !member.wallet) {
+          throw new GoshError(
+            'Access error',
+            'Wallet is missing or is not activated',
+          )
+        }
+
+        // Create update repository repository event
+        // Prepare balance for create event (if not alone)
+        await beforeCreateEvent(20, { onPendingCallback: setStatus })
+
+        setStatus((state) => ({
+          ...state,
+          type: 'pending',
+          data: 'Create event',
+        }))
+        const eventaddr = await member.wallet.unlockRepositoryBranch({
+          repo_name,
+          branch_name: branch,
+          comment: comment || `Update ${repo_name} branch ${branch} protection`,
+        })
+        setStatus((state) => ({
+          ...state,
+          type: 'success',
+          data: {
+            title: 'Update branch protection',
+            content: 'Update repository branch protection event created',
+          },
+        }))
+
+        return { eventaddr }
+      } catch (e: any) {
+        setStatus((state) => ({ ...state, type: 'error', data: e }))
+        throw e
+      }
+    },
+    [member.isMember, member.isReady],
+  )
+
+  const updateOrder = useCallback(
+    async (params: {
+      repo_name: string
+      order: { name: string; priority: number }[]
+      comment?: string
+    }) => {
+      const { repo_name, order, comment } = params
+
+      try {
+        if (!member.isReady || !member.wallet) {
+          throw new GoshError(
+            'Access error',
+            'Wallet is missing or is not activated',
+          )
+        }
+
+        // Create update repository repository event
+        // Prepare balance for create event (if not alone)
+        await beforeCreateEvent(20, { onPendingCallback: setStatus })
+
+        setStatus((state) => ({
+          ...state,
+          type: 'pending',
+          data: 'Create event',
+        }))
+        const eventaddr = await member.wallet.updateRepositoryBranchOrder({
+          repo_name,
+          order,
+          comment: comment || `Update ${repo_name} branch order`,
+        })
+        setStatus((state) => ({
+          ...state,
+          type: 'success',
+          data: {
+            title: 'Update branch order',
+            content: 'Update repository branch order event created',
+          },
+        }))
+
+        return { eventaddr }
+      } catch (e: any) {
+        setStatus((state) => ({ ...state, type: 'error', data: e }))
+        throw e
+      }
+    },
+    [member.isMember, member.isReady],
+  )
+
+  return { addProtection, removeProtection, updateOrder, status }
 }

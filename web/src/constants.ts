@@ -77,6 +77,7 @@ export const DaoEventType: { [key: number]: string } = {
   56: 'Create repository branch',
   58: 'Issue repository token',
   59: 'Update repository metadata',
+  61: 'Update repository branch order',
 }
 
 export const NotificationType: { [key: string]: string } = {

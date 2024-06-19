@@ -1288,6 +1288,38 @@ export class DaoWallet extends BaseContract {
   async lockRepositoryBranch(params: {
     repo_name: string
     branch_name: string
+    tags: string[]
+    comment?: string
+    reviewers?: string[]
+    cell?: boolean | undefined
+  }) {
+    const { tags, comment = '', reviewers = [], cell } = params
+
+    const cellParams = {
+      repoName: params.repo_name,
+      branchName: params.branch_name,
+      tags,
+      comment,
+    }
+
+    if (cell) {
+      const { value0 } = await this.runLocal(
+        'getCellAddProtectedBranch',
+        cellParams,
+      )
+      return value0 as string
+    } else {
+      const cell: any = await this.lockRepositoryBranch({
+        ...params,
+        cell: true,
+      })
+      return await this.createSingleEvent({ cell, reviewers })
+    }
+  }
+
+  async unlockRepositoryBranch(params: {
+    repo_name: string
+    branch_name: string
     comment?: string
     reviewers?: string[]
     cell?: boolean | undefined
@@ -1302,12 +1334,42 @@ export class DaoWallet extends BaseContract {
 
     if (cell) {
       const { value0 } = await this.runLocal(
-        'getCellAddProtectedBranch',
+        'getCellDeleteProtectedBranch',
         cellParams,
       )
       return value0 as string
     } else {
-      const cell: any = await this.lockRepositoryBranch({
+      const cell: any = await this.unlockRepositoryBranch({
+        ...params,
+        cell: true,
+      })
+      return await this.createSingleEvent({ cell, reviewers })
+    }
+  }
+
+  async updateRepositoryBranchOrder(params: {
+    repo_name: string
+    order: { name: string; priority: number }[]
+    comment?: string
+    reviewers?: string[]
+    cell?: boolean | undefined
+  }) {
+    const { comment = '', reviewers = [], cell } = params
+
+    const cellParams = {
+      repoName: params.repo_name,
+      priorities: params.order,
+      comment,
+    }
+
+    if (cell) {
+      const { value0 } = await this.runLocal(
+        'getCellChangeBranchPriorities',
+        cellParams,
+      )
+      return value0 as string
+    } else {
+      const cell: any = await this.updateRepositoryBranchOrder({
         ...params,
         cell: true,
       })
@@ -1802,6 +1864,15 @@ export class DaoWallet extends BaseContract {
         }
         if (type === EDaoEventType.BRANCH_LOCK) {
           return await this.lockRepositoryBranch({ ...params, cell: true })
+        }
+        if (type === EDaoEventType.BRANCH_UNLOCK) {
+          return await this.unlockRepositoryBranch({ ...params, cell: true })
+        }
+        if (type === EDaoEventType.UPDATE_BRANCH_ORDER) {
+          return await this.updateRepositoryBranchOrder({
+            ...params,
+            cell: true,
+          })
         }
         if (type === EDaoEventType.DAO_EXPERT_TAG_CREATE) {
           return await this.createDaoExpertTag({ ...params, cell: true })
