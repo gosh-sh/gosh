@@ -14,13 +14,12 @@ const UserSelect = (props: TUserSelectProps) => {
   const { searchUser = true, searchDao = false, ...rest } = props
 
   const getUsernameOptions = async (input: string) => {
+    const sc = getSystemContract()
     input = input.toLowerCase()
     const options: any[] = []
 
     if (searchUser) {
-      const query = await AppConfig.goshroot.getUserProfile({
-        username: input,
-      })
+      const query = await sc.getUserProfile({ username: input })
       if (await query.isDeployed()) {
         options.push({
           label: input,
@@ -30,7 +29,7 @@ const UserSelect = (props: TUserSelectProps) => {
     }
 
     if (searchDao) {
-      const query = await getSystemContract().getDao({ name: input })
+      const query = await sc.getDao({ name: input })
       if (await query.isDeployed()) {
         const next = await query.getNext()
         options.push({

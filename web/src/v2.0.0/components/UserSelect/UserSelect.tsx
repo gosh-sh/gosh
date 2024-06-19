@@ -1,8 +1,7 @@
 import AsyncSelect, { AsyncProps } from 'react-select/async'
-import { AppConfig } from '../../../appconfig'
-import { getSystemContract } from '../../blockchain/helpers'
-import { Select2ClassNames } from '../../../helpers'
 import { MemberIcon } from '../../../components/Dao'
+import { Select2ClassNames } from '../../../helpers'
+import { getSystemContract } from '../../blockchain/helpers'
 
 type TUserSelectProps = AsyncProps<any, any, any> & {
   searchUser?: boolean
@@ -11,15 +10,14 @@ type TUserSelectProps = AsyncProps<any, any, any> & {
 
 const UserSelect = (props: TUserSelectProps) => {
   const { searchUser = true, searchDao = false, ...rest } = props
+  const sc = getSystemContract()
 
   const getUsernameOptions = async (input: string) => {
     input = input.toLowerCase()
     const options: any[] = []
 
     if (searchUser) {
-      const query = await AppConfig.goshroot.getUserProfile({
-        username: input,
-      })
+      const query = await sc.getUserProfile({ username: input })
       if (await query.isDeployed()) {
         options.push({
           label: input,
@@ -29,7 +27,7 @@ const UserSelect = (props: TUserSelectProps) => {
     }
 
     if (searchDao) {
-      const query = await getSystemContract().getDao({ name: input })
+      const query = await sc.getDao({ name: input })
       if (await query.isDeployed()) {
         options.push({
           label: input,

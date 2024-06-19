@@ -988,7 +988,7 @@ export function useSubmitHackathonApps() {
         const sc = getSystemContract()
         const pubkeys = await Promise.all(
           application_form.owners.map(async ({ address }) => {
-            const profile = await sc.versionController.getUserProfile({ address })
+            const profile = await sc.getUserProfile({ address })
             const keys = await profile.getPubkeys()
             return keys.map((key) => key.slice(2)) // Remove 0x
           }),

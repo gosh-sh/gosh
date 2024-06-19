@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import classNames from 'classnames'
+import copyClipboard from 'copy-to-clipboard'
 import {
   ErrorMessage,
   Field,
@@ -7,30 +10,29 @@ import {
   Form,
   Formik,
 } from 'formik'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useState } from 'react'
+import AsyncCreatableSelect from 'react-select/async-creatable'
+import { toast } from 'react-toastify'
+import successImage from '../../../../../assets/images/success.png'
+import Alert from '../../../../../components/Alert/Alert'
+import { MemberIcon } from '../../../../../components/Dao'
 import { Button } from '../../../../../components/Form'
+import { BaseField, FormikInput, FormikTextarea } from '../../../../../components/Formik'
+import { ToastError } from '../../../../../components/Toast'
 import {
   Select2ClassNames,
   ToastOptionsShortcuts,
   getUsernameByEmail,
 } from '../../../../../helpers'
-import { ToastError } from '../../../../../components/Toast'
-import AsyncCreatableSelect from 'react-select/async-creatable'
-import yup from '../../../../yup-extended'
-import successImage from '../../../../../assets/images/success.png'
-import { AppConfig } from '../../../../../appconfig'
-import { AnimatePresence, motion } from 'framer-motion'
-import { useDao, useCreateDaoMember } from '../../../../hooks/dao.hooks'
-import { BaseField, FormikInput, FormikTextarea } from '../../../../../components/Formik'
 import { validateEmail } from '../../../../../validators'
-import classNames from 'classnames'
-import { toast } from 'react-toastify'
-import copyClipboard from 'copy-to-clipboard'
-import Alert from '../../../../../components/Alert/Alert'
-import { MemberIcon } from '../../../../../components/Dao'
+import { getSystemContract } from '../../../../blockchain/helpers'
+import { useCreateDaoMember, useDao } from '../../../../hooks/dao.hooks'
+import yup from '../../../../yup-extended'
 
 const getUsernameOptions = async (input: string) => {
+  const sc = getSystemContract()
+
   if (input.indexOf('@') >= 0) {
     const username = await getUsernameByEmail(input)
     if (username) {
@@ -43,9 +45,7 @@ const getUsernameOptions = async (input: string) => {
   }
 
   const options: any[] = []
-  const profileQuery = await AppConfig.goshroot.getUserProfile({
-    username: input.toLowerCase(),
-  })
+  const profileQuery = await sc.getUserProfile({ username: input.toLowerCase() })
   if (await profileQuery.isDeployed()) {
     options.push({
       label: input.toLowerCase(),

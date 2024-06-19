@@ -3,6 +3,13 @@ export type TToastStatus = {
   data: any
 }
 
+export type TTIP3Token = {
+  name: string
+  symbol: string
+  decimals: number
+  root_addr: string
+}
+
 export enum EDaoEventType {
   PULL_REQUEST = 1,
   BRANCH_LOCK = 2,
@@ -56,4 +63,6 @@ export enum EDaoEventType {
   HACKATHON_APPS_APPROVE = 53,
   HACKATHON_UPDATE = 54,
   BRANCH_CREATE = 56,
+  REPO_ISSUE_TOKEN = 58,
+  REPO_UPDATE_METADATA = 59,
 }

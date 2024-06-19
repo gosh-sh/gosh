@@ -1,11 +1,11 @@
+import { faCodeFork } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Link } from 'react-router-dom'
 import { Tooltip } from 'react-tooltip'
-import { TRepositoryListItem } from '../../../types/repository.types'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCodeFork } from '@fortawesome/free-solid-svg-icons'
 import CopyClipboard from '../../../../components/CopyClipboard'
-import { shortString } from '../../../../utils'
 import Skeleton from '../../../../components/Skeleton'
+import { shortString } from '../../../../utils'
+import { TGoshRepositoryListItem } from '../../../types/repository.types'
 
 const ListItemSkeleton = () => {
   return (
@@ -19,7 +19,7 @@ const ListItemSkeleton = () => {
 type TRepositoryListItemProps = {
   daoName: string
   daoLink?: boolean
-  item: TRepositoryListItem
+  item: TGoshRepositoryListItem
 }
 
 const ListItem = (props: TRepositoryListItemProps) => {

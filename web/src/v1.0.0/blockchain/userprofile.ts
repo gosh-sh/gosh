@@ -1,10 +1,11 @@
 import { KeyPair, TonClient } from '@eversdk/core'
-import { BaseContract } from './contract'
-import { whileFinite } from '../utils'
+import { BaseContract } from '../../blockchain/contract'
+import { DaoProfile } from '../../blockchain/daoprofile'
+import { EGoshError, GoshError } from '../../errors'
+import { TSystemContract } from '../../types/blockchain.types'
+import { whileFinite } from '../../utils'
 import UserProfileABI from './abi/profile.abi.json'
-import { DaoProfile } from './daoprofile'
-import { EGoshError, GoshError } from '../errors'
-import { TSystemContract } from '../types/blockchain.types'
+import { Dao } from './dao'
 
 export class UserProfile extends BaseContract {
   static key: string = 'profile'
@@ -62,7 +63,7 @@ export class UserProfile extends BaseContract {
       }
     })
 
-    const dao = await systemcontract.getDao({ name })
+    const dao = (await systemcontract.getDao({ name })) as Dao
     await this.run('deployDao', {
       systemcontract: systemcontract.address,
       name,

@@ -24,6 +24,7 @@ export class Task extends BaseContract {
   }
 
   async getDetails() {
+    const sc = getSystemContract()
     const data = await this.getRawDetails()
 
     const grant_array: any[] = Object.values(data.grant).map((v) => v)

@@ -1,6 +1,9 @@
 import { TonClient } from '@eversdk/core'
+import _ from 'lodash'
+import { AppConfig } from '../../appconfig'
 import { BaseContract } from '../../blockchain/contract'
-import TaskABI from './abi/task.abi.json'
+import { SYSTEM_TAG } from '../../constants'
+import { getSystemContract } from '../blockchain/helpers'
 import {
   EDaoMemberType,
   TTaskDetails,
@@ -9,10 +12,7 @@ import {
   TTaskGrantTotal,
   TTaskTeamMember,
 } from '../types/dao.types'
-import { SYSTEM_TAG } from '../../constants'
-import { getSystemContract } from '../blockchain/helpers'
-import _ from 'lodash'
-import { AppConfig } from '../../appconfig'
+import TaskABI from './abi/task.abi.json'
 
 export class Task extends BaseContract {
   constructor(client: TonClient, address: string) {
@@ -20,6 +20,7 @@ export class Task extends BaseContract {
   }
 
   async getDetails() {
+    const sc = getSystemContract()
     const data = await this.runLocal('getStatus', {})
 
     const grant: { [key: string]: TTaskGrantPair[] } = {}
@@ -35,7 +36,7 @@ export class Task extends BaseContract {
     }
 
     const tags = data.hashtag.filter((item: string) => item !== SYSTEM_TAG)
-    const repository = await getSystemContract().getRepository({ address: data.repo })
+    const repository = await sc.getRepository({ address: data.repo })
 
     const candidate = data.candidates.length ? data.candidates[0] : null
     let team: TTaskDetails['team'] = null
@@ -51,9 +52,7 @@ export class Task extends BaseContract {
                 user.name = candidate.daoMembers[profile]
                 user.type = EDaoMemberType.Dao
               } else {
-                const account = await AppConfig.goshroot.getUserProfile({
-                  address: profile,
-                })
+                const account = await sc.getUserProfile({ address: profile })
                 user.name = await account.getName()
                 user.type = EDaoMemberType.User
               }

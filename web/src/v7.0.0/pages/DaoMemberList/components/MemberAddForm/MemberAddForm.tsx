@@ -15,7 +15,6 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AsyncCreatableSelect from 'react-select/async-creatable'
 import { toast } from 'react-toastify'
-import { AppConfig } from '../../../../../appconfig'
 import successImage from '../../../../../assets/images/success.png'
 import Alert from '../../../../../components/Alert/Alert'
 import { Button } from '../../../../../components/Form'
@@ -37,6 +36,8 @@ import { useCreateDaoMember, useDao } from '../../../../hooks/dao.hooks'
 import yup from '../../../../yup-extended'
 
 const getUsernameOptions = async (input: string) => {
+  const sc = getSystemContract()
+
   if (input.indexOf('@') >= 0) {
     const username = await getUsernameByEmail(input)
     if (username) {
@@ -49,9 +50,7 @@ const getUsernameOptions = async (input: string) => {
   }
 
   const options: any[] = []
-  const profileQuery = await AppConfig.goshroot.getUserProfile({
-    username: input.toLowerCase(),
-  })
+  const profileQuery = await sc.getUserProfile({ username: input.toLowerCase() })
   if (await profileQuery.isDeployed()) {
     options.push({
       label: input.toLowerCase(),
@@ -59,7 +58,7 @@ const getUsernameOptions = async (input: string) => {
     })
   }
 
-  const daoQuery = await getSystemContract().getDao({ name: input })
+  const daoQuery = await sc.getDao({ name: input })
   if (await daoQuery.isDeployed()) {
     const next = await daoQuery.getNext()
     options.push({

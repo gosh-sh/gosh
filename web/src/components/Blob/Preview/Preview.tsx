@@ -2,7 +2,15 @@ import { Buffer } from 'buffer'
 import { FormikHelpers } from 'formik'
 import { AnimatePresence, motion } from 'framer-motion'
 import hljs from 'highlight.js'
-import { Fragment, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  Fragment,
+  MouseEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { GoshError, classNames, getTreeItemFullPath } from 'react-gosh'
 import Markdown, { MdastRoot } from 'react-markdown'
 import { useOutletContext } from 'react-router-dom'
@@ -23,22 +31,21 @@ import { Filetype } from '../../../pages/BlobCreate'
 import rehypeParse from 'rehype-parse'
 import rehypeStringify from 'rehype-stringify'
 import { Node, Parent } from 'unist'
-import { visit } from 'unist-util-visit';
+import { visit } from 'unist-util-visit'
 import rehypeRemark from 'rehype-remark'
 import remarkStringify from 'remark-stringify'
 import { isHTML } from '../../../helpers'
 
-
 interface TextNode extends Node {
-  type: 'text';
-  value: string;
+  type: 'text'
+  value: string
 }
 
 interface ElementNode extends Node {
-  type: 'element';
-  tagName: string;
-  properties: { [key: string]: any };
-  children: Node[];
+  type: 'element'
+  tagName: string
+  properties: { [key: string]: any }
+  children: Node[]
 }
 
 const parseMarkdown = (value: string) => {
@@ -140,55 +147,72 @@ const parseText = (params: { value: string; extension?: string | null }) => {
 
 // Type guard to check if a node is a TextNode
 const isTextNode = (node: Node): node is TextNode => {
-  return node.type === 'text';
+  return node.type === 'text'
 }
 
 const parseHTML = (value: string) => {
-  let index = 0;
+  let index = 0
   function wrapTextWithSpans() {
     return (tree: Node) => {
       // @ts-ignore
-      visit(tree, ['text', 'element'], (node: TextNode, idx: number, parent: Parent) => {
+      visit(
+        tree,
+        ['text', 'element'],
+        (node: TextNode, idx: number, parent: Parent) => {
+          if (
+            !parent ||
+            !parent ||
+            !node.value ||
+            typeof idx !== 'number' ||
+            !isTextNode(node)
+          )
+            return
 
-        if (!parent || !parent || !node.value || typeof idx !== 'number' || !isTextNode(node)) return;
+          const wordsAndSpaces = node.value.split(/(\s+)/).filter((val) => val)
+          const children: Node[] = []
+          const { start, end } = node.position!
+          for (const segment of wordsAndSpaces) {
+            const columnEnd = start.column + segment.length
+            const offsetEnd = (start.offset || 0) + segment.length
+            const position = {
+              start: { ...start },
+              end: { ...end, column: columnEnd, offset: offsetEnd },
+            }
+            if (segment.trim()) {
+              children.push({
+                type: 'element',
+                tagName: 'span',
+                properties: {
+                  'data-backref': JSON.stringify(position),
+                  'data-index': index,
+                },
+                children: [
+                  { type: 'text', value: segment, position } as TextNode,
+                ],
+                position,
+                index: index,
+              } as ElementNode)
+              index++
+            } else {
+              children.push({
+                type: 'text',
+                value: segment,
+                position,
+                index,
+              } as TextNode)
+            }
 
-        const wordsAndSpaces = node.value.split(/(\s+)/).filter(val => val);
-        const children: Node[] = [];
-        const { start, end } = node.position!;
-        for (const segment of wordsAndSpaces) {
-          const columnEnd = start.column + segment.length
-          const offsetEnd = (start.offset || 0) + segment.length
-          const position = {
-            start: { ...start },
-            end: { ...end, column: columnEnd, offset: offsetEnd },
+            start.column = columnEnd
+            start.offset = offsetEnd
           }
-          if (segment.trim()) {
-            children.push({
-              type: 'element',
-              tagName: 'span',
-              properties: {
-                'data-backref': JSON.stringify(position),
-                'data-index': index,
-              },
-              children: [{ type: 'text', value: segment, position } as TextNode],
-              position,
-              index: index,
-            } as ElementNode);
-            index++;
-          } else {
-            children.push({ type: 'text', value: segment, position, index } as TextNode);
-          }
 
-          start.column = columnEnd
-          start.offset = offsetEnd
-        }
-  
-        parent.children.splice(idx, 1, ...children);
-        // // // To prevent infinite loop, skip over the newly added nodes in the tree traversal
+          parent.children.splice(idx, 1, ...children)
+          // // // To prevent infinite loop, skip over the newly added nodes in the tree traversal
 
-        return idx + children.length;
-      });
-    };
+          return idx + children.length
+        },
+      )
+    }
   }
 
   return unified()
@@ -198,7 +222,7 @@ const parseHTML = (value: string) => {
       quote: '"',
       quoteSmart: true,
       allowDangerousHtml: true,
-      allowDangerousCharacters: true
+      allowDangerousCharacters: true,
     })
     .processSync(value)
 }
@@ -222,14 +246,16 @@ const BlobPreview = (props: TBlobPreviewProps) => {
     commentsOn = false,
   } = props
   const { dao, repository } = useOutletContext<any>()
-  const selectionWindow = useRef<Selection | null>(null);
-  const { threads, toggleThread, hoverThread, submitComment } = useBlobComments({
-    dao: dao.adapter,
-    objectAddress: address,
-    filename,
-    commits: [commit],
-    initialize: commentsOn,
-  })
+  const selectionWindow = useRef<Selection | null>(null)
+  const { threads, toggleThread, hoverThread, submitComment } = useBlobComments(
+    {
+      dao: dao.adapter,
+      objectAddress: address,
+      filename,
+      commits: [commit],
+      initialize: commentsOn,
+    },
+  )
   const [selection, setSelection] = useState<{
     show: boolean
     position: number[]
@@ -240,14 +266,12 @@ const BlobPreview = (props: TBlobPreviewProps) => {
     metadata: null,
   })
 
-
   const extension = useMemo(() => {
     const splitted = filename.split('.')
     return splitted.length === 1 ? null : splitted.splice(-1)[0].toLowerCase()
   }, [filename])
 
   const html = useMemo(() => {
-    
     if (extension === Filetype.DOCUMENT || extension === Filetype.DOCUMENT_OLD)
       return parseHTML(value.toString())
     return extension
@@ -258,12 +282,16 @@ const BlobPreview = (props: TBlobPreviewProps) => {
       return null
     }
     if (extension === 'md') {
-      if (isHTML(value)) 
-        return parseMarkdown(String(unified()
-      .use(rehypeParse, { fragment: true })
-      .use(rehypeRemark)
-      .use(remarkStringify)
-      .processSync(value)))
+      if (isHTML(value))
+        return parseMarkdown(
+          String(
+            unified()
+              .use(rehypeParse, { fragment: true })
+              .use(rehypeRemark)
+              .use(remarkStringify)
+              .processSync(value),
+          ),
+        )
       return parseMarkdown(value)
     } else if (extension === 'gdoc') {
       // do nothing yay
@@ -279,10 +307,11 @@ const BlobPreview = (props: TBlobPreviewProps) => {
   const resetTextSelection = () => {
     getSelectedElements().forEach((element) => {
       if (element.parentElement) {
-        element.parentElement.innerHTML = element.parentElement.innerHTML.replace(
-          element.outerHTML,
-          element.textContent || '',
-        )
+        element.parentElement.innerHTML =
+          element.parentElement.innerHTML.replace(
+            element.outerHTML,
+            element.textContent || '',
+          )
       }
     })
     setSelection({ show: false, position: [], metadata: null })
@@ -305,33 +334,40 @@ const BlobPreview = (props: TBlobPreviewProps) => {
       const endElementIndex = endElement?.getAttribute('data-index')
 
       if (startElementIndex && endElementIndex) {
-        const indexRange = [parseInt(startElementIndex), parseInt(endElementIndex)].sort((a, b) => a - b)
-        const rangeReversed = parseInt(startElementIndex) > parseInt(endElementIndex)
+        const indexRange = [
+          parseInt(startElementIndex),
+          parseInt(endElementIndex),
+        ].sort((a, b) => a - b)
+        const rangeReversed =
+          parseInt(startElementIndex) > parseInt(endElementIndex)
         for (let i = indexRange[0]; i <= indexRange[1]; i++) {
-
           const element = document.querySelector(`[data-index="${i}"]`)
           if (!element || !element.textContent) {
             continue
           }
 
-          const backRef = JSON.parse(element.getAttribute('data-backref') || '{}')
+          const backRef = JSON.parse(
+            element.getAttribute('data-backref') || '{}',
+          )
           let sliceRange: number[] = [0, 0]
           if (i === indexRange[0]) {
             sliceRange = rangeReversed
-            ? [
-              selectionWindow.current.focusOffset,
-                indexRange[0] === indexRange[1]
-                  ? selectionWindow.current.anchorOffset
-                  : element.textContent.length,
-              ]
-            : [
-              selectionWindow.current.anchorOffset,
-                indexRange[0] === indexRange[1]
-                  ? selectionWindow.current.focusOffset
-                  : element.textContent.length,
-              ]
+              ? [
+                  selectionWindow.current.focusOffset,
+                  indexRange[0] === indexRange[1]
+                    ? selectionWindow.current.anchorOffset
+                    : element.textContent.length,
+                ]
+              : [
+                  selectionWindow.current.anchorOffset,
+                  indexRange[0] === indexRange[1]
+                    ? selectionWindow.current.focusOffset
+                    : element.textContent.length,
+                ]
           } else if (i === indexRange[1]) {
-            sliceRange = rangeReversed ? [0, selectionWindow.current.anchorOffset] : [0, selectionWindow.current.focusOffset]
+            sliceRange = rangeReversed
+              ? [0, selectionWindow.current.anchorOffset]
+              : [0, selectionWindow.current.focusOffset]
           } else {
             sliceRange = [0, element.textContent.length]
           }
@@ -372,7 +408,11 @@ const BlobPreview = (props: TBlobPreviewProps) => {
           const selected = element.querySelector('.comment')
           if (selectedTmp) {
             selectedTmp.classList.remove('comment-tmp', 'bg-yellow-400')
-            selectedTmp.classList.add('comment', 'bg-yellow-200', 'cursor-pointer')
+            selectedTmp.classList.add(
+              'comment',
+              'bg-yellow-200',
+              'cursor-pointer',
+            )
             selectedTmp.setAttribute('data-thread', id)
           } else if (selected) {
             if (isResolved && selected.textContent) {
@@ -382,7 +422,10 @@ const BlobPreview = (props: TBlobPreviewProps) => {
               )
             }
           } else {
-            const slice = element.textContent.slice(node.anchor_offset, node.focus_offset)
+            const slice = element.textContent.slice(
+              node.anchor_offset,
+              node.focus_offset,
+            )
             element.innerHTML = element.innerHTML.replace(
               slice,
               `<span class="comment bg-yellow-200 cursor-pointer" data-thread="${id}">${slice}</span>`,
@@ -391,7 +434,10 @@ const BlobPreview = (props: TBlobPreviewProps) => {
         }
       })
     })
-  }, [threads.items.length, threads.items.filter(({ isResolved }) => !isResolved).length])
+  }, [
+    threads.items.length,
+    threads.items.filter(({ isResolved }) => !isResolved).length,
+  ])
 
   const renderMdImages = useCallback(async () => {
     if (extension !== 'md') {
@@ -405,16 +451,25 @@ const BlobPreview = (props: TBlobPreviewProps) => {
         const src = element.getAttribute('src')
         if (src && src.startsWith(document.location.origin)) {
           const fullpath = decodeURI(src.split('/view/')[1])
-          const branch = await repository.adapter.getBranch(fullpath.split('/')[0])
+          const branch = await repository.adapter.getBranch(
+            fullpath.split('/')[0],
+          )
           const path = fullpath.replace(`${branch.name}/`, '')
-          const tree = await repository.adapter.getTree(branch.commit.name, path)
-          const item = tree.items.find((item: any) => getTreeItemFullPath(item) === path)
+          const tree = await repository.adapter.getTree(
+            branch.commit.name,
+            path,
+          )
+          const item = tree.items.find(
+            (item: any) => getTreeItemFullPath(item) === path,
+          )
           if (item) {
             const snapshot = await repository.adapter.getBlob({
               fullpath: `${item.commit}/${path}`,
               commit: branch.commit.name,
             })
-            const ext = (item.name.split('.').slice(-1)[0] || 'png').toLowerCase()
+            const ext = (
+              item.name.split('.').slice(-1)[0] || 'png'
+            ).toLowerCase()
             if (Buffer.isBuffer(snapshot.content)) {
               const base64 = `data:image/${ext};base64,${snapshot.content.toString('base64')}`
               element.setAttribute('src', base64)
@@ -488,7 +543,10 @@ const BlobPreview = (props: TBlobPreviewProps) => {
     // renderMdImages()
   }, [renderMdImages])
 
-  if (!semanticTree && !(extension === Filetype.DOCUMENT || extension === Filetype.DOCUMENT_OLD)) {
+  if (
+    !semanticTree &&
+    !(extension === Filetype.DOCUMENT || extension === Filetype.DOCUMENT_OLD)
+  ) {
     return <p className="text-gray-606060 p-3 text-sm">Binary data not shown</p>
   }
   if (extension === 'md') {
@@ -530,21 +588,21 @@ const BlobPreview = (props: TBlobPreviewProps) => {
   }
 
   if (extension === Filetype.DOCUMENT || extension === Filetype.DOCUMENT_OLD) {
-    return (<>
-      <SelectionCommentBlock
-        show={selection.show}
-        position={selection.position}
-        onSubmit={submitCommentForm}
-      />
-      <div 
-        onMouseUp={setTextSelection}
-        onMouseDown={resetTextSelection}
-        className="jodit jodit-preview" 
-      >
+    return (
+      <>
+        <SelectionCommentBlock
+          show={selection.show}
+          position={selection.position}
+          onSubmit={submitCommentForm}
+        />
         <div
-          dangerouslySetInnerHTML={{ __html: html || '' }}
-        ></div>
-        </div></>
+          onMouseUp={setTextSelection}
+          onMouseDown={resetTextSelection}
+          className="jodit jodit-preview"
+        >
+          <div dangerouslySetInnerHTML={{ __html: html || '' }}></div>
+        </div>
+      </>
     )
   }
   return (

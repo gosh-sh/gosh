@@ -1,3 +1,4 @@
+cp ../../../v5_x/v5.1.0/contracts/profile.abi.json ./blockchain/abi/profile.abi.json
 cp ../../../v5_x/v5.1.0/contracts/gosh/commit.abi.json ./blockchain/abi/commit.abi.json
 cp ../../../v5_x/v5.1.0/contracts/gosh/tag.abi.json ./blockchain/abi/committag.abi.json
 cp ../../../v5_x/v5.1.0/contracts/gosh/goshdao.abi.json ./blockchain/abi/dao.abi.json

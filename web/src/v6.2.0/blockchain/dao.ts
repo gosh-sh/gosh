@@ -1,7 +1,6 @@
 import type { KeyPair, TonClient } from '@eversdk/core'
 import { AppConfig } from '../../appconfig'
 import { BaseContract } from '../../blockchain/contract'
-import { UserProfile } from '../../blockchain/userprofile'
 import { GoshError } from '../../errors'
 import { EDaoMemberType, type TDaoDetailsMemberItem } from '../types/dao.types'
 import DaoABI from './abi/dao.abi.json'

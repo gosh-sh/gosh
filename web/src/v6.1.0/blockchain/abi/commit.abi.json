@@ -1,556 +1,536 @@
 {
-  "ABI version": 2,
-  "version": "2.3",
-  "header": ["pubkey", "time", "expire"],
-  "functions": [
-    {
-      "name": "constructor",
-      "inputs": [
-        { "name": "goshdao", "type": "address" },
-        { "name": "rootGosh", "type": "address" },
-        { "name": "pubaddr", "type": "address" },
-        { "name": "nameRepo", "type": "string" },
-        { "name": "commit", "type": "string" },
-        {
-          "components": [
-            { "name": "addr", "type": "address" },
-            { "name": "version", "type": "string" }
-          ],
-          "name": "parents",
-          "type": "tuple[]"
-        },
-        { "name": "repo", "type": "address" },
-        { "name": "WalletCode", "type": "cell" },
-        { "name": "CommitCode", "type": "cell" },
-        { "name": "codeDiff", "type": "cell" },
-        { "name": "SnapshotCode", "type": "cell" },
-        { "name": "tree", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "upgrade", "type": "bool" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "isCorrect",
-      "inputs": [{ "name": "newname", "type": "string" }],
-      "outputs": []
-    },
-    {
-      "name": "setPinned",
-      "inputs": [
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "cleanTree",
-      "inputs": [],
-      "outputs": []
-    },
-    {
-      "name": "allCorrect",
-      "inputs": [
-        { "name": "number", "type": "uint128" },
-        { "name": "branch", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "sendSetCorrect",
-      "inputs": [{ "name": "index", "type": "uint128" }],
-      "outputs": []
-    },
-    {
-      "name": "sendCommitSetCorrect",
-      "inputs": [
-        { "name": "namecommit", "type": "string" },
-        { "name": "time", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "fromInitUpgrade",
-      "inputs": [
-        { "name": "commit", "type": "address" },
-        { "name": "branch", "type": "string" },
-        { "name": "newcommit", "type": "address" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "continueUpgrade",
-      "inputs": [
-        { "name": "res", "type": "bool" },
-        { "name": "branch", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "stopUpgrade",
-      "inputs": [],
-      "outputs": []
-    },
-    {
-      "name": "_acceptCommitRepo",
-      "inputs": [
-        { "name": "index", "type": "uint128" },
-        { "name": "number", "type": "uint128" },
-        { "name": "branch", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "cancelCommit",
-      "inputs": [
-        { "name": "namecommit", "type": "string" },
-        { "name": "number", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "_cancelAllDiff",
-      "inputs": [
-        { "name": "index", "type": "uint128" },
-        { "name": "number", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "SendDiff",
-      "inputs": [
-        { "name": "branch", "type": "string" },
-        { "name": "branchcommit", "type": "address" },
-        { "name": "number", "type": "uint128" },
-        { "name": "numcommits", "type": "uint128" },
-        {
-          "components": [
-            { "name": "task", "type": "address" },
-            { "name": "pubaddrassign", "type": "map(address,bool)" },
-            { "name": "pubaddrreview", "type": "map(address,bool)" },
-            { "name": "pubaddrmanager", "type": "map(address,bool)" },
-            { "name": "daoMembers", "type": "map(address,string)" }
-          ],
-          "name": "task",
-          "type": "optional(tuple)"
-        },
-        { "name": "isUpgrade", "type": "bool" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "SendDiff3",
-      "inputs": [
-        { "name": "branch", "type": "string" },
-        { "name": "branchcommit", "type": "address" },
-        { "name": "number", "type": "uint128" },
-        { "name": "numcommits", "type": "uint128" },
-        {
-          "components": [
-            { "name": "task", "type": "address" },
-            { "name": "pubaddrassign", "type": "map(address,bool)" },
-            { "name": "pubaddrreview", "type": "map(address,bool)" },
-            { "name": "pubaddrmanager", "type": "map(address,bool)" },
-            { "name": "daoMembers", "type": "map(address,string)" }
-          ],
-          "name": "task",
-          "type": "optional(tuple)"
-        },
-        { "name": "isUpgrade", "type": "bool" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "SendDiffSmv",
-      "inputs": [
-        { "name": "branch", "type": "string" },
-        { "name": "branchcommit", "type": "address" },
-        { "name": "number", "type": "uint128" },
-        { "name": "numcommits", "type": "uint128" },
-        {
-          "components": [
-            { "name": "task", "type": "address" },
-            { "name": "pubaddrassign", "type": "map(address,bool)" },
-            { "name": "pubaddrreview", "type": "map(address,bool)" },
-            { "name": "pubaddrmanager", "type": "map(address,bool)" },
-            { "name": "daoMembers", "type": "map(address,string)" }
-          ],
-          "name": "task",
-          "type": "optional(tuple)"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "treeAccept",
-      "inputs": [
-        { "name": "commitsha", "type": "string" },
-        { "name": "branch", "type": "optional(string)" },
-        { "name": "branchcommit", "type": "optional(address)" },
-        { "name": "typer", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "_sendAllDiff",
-      "inputs": [
-        { "name": "branch", "type": "string" },
-        { "name": "branchcommit", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "number", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "getAcceptedDiff",
-      "inputs": [
-        {
-          "components": [
-            { "name": "snap", "type": "address" },
-            { "name": "nameSnap", "type": "string" },
-            { "name": "commit", "type": "string" },
-            { "name": "patch", "type": "optional(bytes)" },
-            { "name": "ipfs", "type": "optional(string)" },
-            { "name": "removeIpfs", "type": "bool" },
-            { "name": "sha1", "type": "string" },
-            { "name": "sha256", "type": "uint256" }
-          ],
-          "name": "value0",
-          "type": "tuple"
-        },
-        { "name": "index1", "type": "uint128" },
-        { "name": "index2", "type": "uint128" },
-        { "name": "branch", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "getAcceptedContent",
-      "inputs": [
-        { "name": "value0", "type": "uint256" },
-        { "name": "path", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "getAcceptedContentDiff",
-      "inputs": [
-        { "name": "nameCommit", "type": "string" },
-        { "name": "value0", "type": "uint256" },
-        { "name": "path", "type": "string" },
-        { "name": "index1", "type": "uint128" },
-        { "name": "index2", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "_checkChain",
-      "inputs": [
-        { "name": "branchName", "type": "string" },
-        { "name": "branchCommit", "type": "address" },
-        { "name": "newC", "type": "address" },
-        { "name": "numcommits", "type": "uint128" },
-        { "name": "save", "type": "bool" },
-        { "name": "timecommit", "type": "uint32" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "addCommitCheckNumber",
-      "inputs": [{ "name": "nameCommit", "type": "string" }],
-      "outputs": []
-    },
-    {
-      "name": "_sendCheckChainLoop",
-      "inputs": [
-        { "name": "branchName", "type": "string" },
-        { "name": "branchCommit", "type": "address" },
-        { "name": "newC", "type": "address" },
-        { "name": "numcommits", "type": "uint128" },
-        { "name": "index", "type": "uint128" },
-        { "name": "timecommit", "type": "uint32" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "abortDiff",
-      "inputs": [
-        { "name": "branch", "type": "string" },
-        { "name": "branchCommit", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "index2", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "DiffCheckCommit",
-      "inputs": [
-        { "name": "branch", "type": "string" },
-        { "name": "branchCommit", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "ChainAccept",
-      "inputs": [
-        { "name": "name", "type": "string" },
-        { "name": "branchName", "type": "string" },
-        { "name": "branchCommit", "type": "address" },
-        { "name": "newC", "type": "address" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "NotCorrect",
-      "inputs": [
-        { "name": "branch", "type": "string" },
-        { "name": "branchCommit", "type": "address" },
-        { "name": "commit", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "acceptAll",
-      "inputs": [
-        { "name": "branch", "type": "string" },
-        { "name": "branchCommit", "type": "address" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "treeAcceptAfterCommit",
-      "inputs": [
-        { "name": "branch", "type": "string" },
-        { "name": "branchCommit", "type": "address" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "NotCorrectRepo",
-      "inputs": [{ "name": "number", "type": "uint128" }],
-      "outputs": []
-    },
-    {
-      "name": "_cancelCommitRepo",
-      "inputs": [
-        { "name": "index", "type": "uint128" },
-        { "name": "number", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "CommitCheckCommit",
-      "inputs": [
-        { "name": "nameCommit", "type": "string" },
-        { "name": "branchName", "type": "string" },
-        { "name": "branchCommit", "type": "address" },
-        { "name": "newC", "type": "address" },
-        { "name": "numcommits", "type": "uint128" },
-        { "name": "save", "type": "bool" },
-        { "name": "timecommit", "type": "uint32" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "canDelete",
-      "inputs": [
-        { "name": "newcommit", "type": "address" },
-        { "name": "basecommit", "type": "string" },
-        { "name": "path", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "gotCount",
-      "inputs": [{ "name": "count", "type": "uint128" }],
-      "outputs": []
-    },
-    {
-      "name": "checkFallbackDiff",
-      "inputs": [
-        { "name": "index", "type": "uint128" },
-        { "name": "sender", "type": "address" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "destroy",
-      "inputs": [
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "gettree",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "address" }]
-    },
-    {
-      "name": "getParents",
-      "inputs": [],
-      "outputs": [
-        {
-          "components": [
-            { "name": "addr", "type": "address" },
-            { "name": "version", "type": "string" }
-          ],
-          "name": "value0",
-          "type": "tuple[]"
-        }
-      ]
-    },
-    {
-      "name": "getNameCommit",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "string" }]
-    },
-    {
-      "name": "getAddrRepository",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "address" }]
-    },
-    {
-      "name": "getPrevCommitVersion",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "optional(string)" }]
-    },
-    {
-      "name": "getDiffAddress",
-      "inputs": [
-        { "name": "index1", "type": "uint128" },
-        { "name": "index2", "type": "uint128" }
-      ],
-      "outputs": [{ "name": "value0", "type": "address" }]
-    },
-    {
-      "name": "getCommit",
-      "inputs": [],
-      "outputs": [
-        { "name": "time", "type": "uint128" },
-        { "name": "repo", "type": "address" },
-        { "name": "sha", "type": "string" },
-        {
-          "components": [
-            { "name": "addr", "type": "address" },
-            { "name": "version", "type": "string" }
-          ],
-          "name": "parents",
-          "type": "tuple[]"
-        },
-        { "name": "content", "type": "string" },
-        { "name": "initupgrade", "type": "bool" },
-        { "name": "isCorrectCommit", "type": "bool" },
-        { "name": "isPinned", "type": "bool" }
-      ]
-    },
-    {
-      "name": "getCommitIn",
-      "inputs": [],
-      "outputs": []
-    },
-    {
-      "name": "getCount",
-      "inputs": [],
-      "outputs": [
-        { "name": "value0", "type": "uint128" },
-        { "name": "value1", "type": "bool" }
-      ]
-    },
-    {
-      "name": "getVersion",
-      "inputs": [],
-      "outputs": [
-        { "name": "value0", "type": "string" },
-        { "name": "value1", "type": "string" }
-      ]
-    },
-    {
-      "name": "getOwner",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "address" }]
-    },
-    {
-      "name": "getInitUpgrade",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "bool" }]
-    }
-  ],
-  "data": [{ "key": 1, "name": "_nameCommit", "type": "string" }],
-  "events": [],
-  "fields": [
-    { "name": "_pubkey", "type": "uint256" },
-    { "name": "_constructorFlag", "type": "bool" },
-    { "name": "messages", "type": "map(uint32,map(uint256,bool))" },
-    {
-      "components": [
-        { "name": "messageHash", "type": "uint256" },
-        { "name": "expireAt", "type": "uint32" }
-      ],
-      "name": "lastMessage",
-      "type": "tuple"
-    },
-    { "name": "__value", "type": "uint256" },
-    { "name": "_pubaddr", "type": "address" },
-    { "name": "_rootRepo", "type": "address" },
-    { "name": "_goshdao", "type": "address" },
-    { "name": "_nameCommit", "type": "string" },
-    { "name": "_commit", "type": "string" },
-    { "name": "_name", "type": "string" },
-    { "name": "check", "type": "bool" },
-    { "name": "_code", "type": "map(uint8,cell)" },
-    {
-      "components": [
-        { "name": "addr", "type": "address" },
-        { "name": "version", "type": "string" }
-      ],
-      "name": "_parents",
-      "type": "tuple[]"
-    },
-    { "name": "_systemcontract", "type": "address" },
-    { "name": "_tree", "type": "address" },
-    { "name": "_branchCommit", "type": "address" },
-    { "name": "_count", "type": "uint128" },
-    { "name": "_countready", "type": "bool" },
-    { "name": "_check", "type": "map(address,int128)" },
-    { "name": "_save", "type": "map(address,bool)" },
-    { "name": "_diffcheck", "type": "bool" },
-    { "name": "_commitcheck", "type": "bool" },
-    { "name": "_continueChain", "type": "bool" },
-    { "name": "_continueDiff", "type": "bool" },
-    { "name": "_number", "type": "uint128" },
-    { "name": "_approved", "type": "uint128" },
-    { "name": "_flag", "type": "bool" },
-    {
-      "components": [
-        { "name": "send", "type": "bool" },
-        { "name": "branch", "type": "string" },
-        { "name": "branchcommit", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "number", "type": "uint128" }
-      ],
-      "name": "_saved",
-      "type": "optional(tuple)"
-    },
-    { "name": "_initupgrade", "type": "bool" },
-    { "name": "_prevversion", "type": "optional(string)" },
-    {
-      "components": [
-        { "name": "task", "type": "address" },
-        { "name": "pubaddrassign", "type": "map(address,bool)" },
-        { "name": "pubaddrreview", "type": "map(address,bool)" },
-        { "name": "pubaddrmanager", "type": "map(address,bool)" },
-        { "name": "daoMembers", "type": "map(address,string)" }
-      ],
-      "name": "_task",
-      "type": "optional(tuple)"
-    },
-    { "name": "_isCorrect", "type": "bool" },
-    { "name": "_numcommits", "type": "uint128" },
-    { "name": "_isPinned", "type": "bool" },
-    { "name": "_timeaccept", "type": "uint128" },
-    { "name": "_setCommit", "type": "map(address,uint32)" },
-    { "name": "timeMoney", "type": "uint128" }
-  ]
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"goshdao","type":"address"},
+				{"name":"rootGosh","type":"address"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"nameRepo","type":"string"},
+				{"name":"commit","type":"string"},
+				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"parents","type":"tuple[]"},
+				{"name":"repo","type":"address"},
+				{"name":"WalletCode","type":"cell"},
+				{"name":"CommitCode","type":"cell"},
+				{"name":"codeDiff","type":"cell"},
+				{"name":"SnapshotCode","type":"cell"},
+				{"name":"tree","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"upgrade","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "isCorrect",
+			"inputs": [
+				{"name":"newname","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setPinned",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "cleanTree",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "allCorrect",
+			"inputs": [
+				{"name":"number","type":"uint128"},
+				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendSetCorrect",
+			"inputs": [
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendCommitSetCorrect",
+			"inputs": [
+				{"name":"namecommit","type":"string"},
+				{"name":"time","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "fromInitUpgrade",
+			"inputs": [
+				{"name":"commit","type":"address"},
+				{"name":"branch","type":"string"},
+				{"name":"newcommit","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "continueUpgrade",
+			"inputs": [
+				{"name":"res","type":"bool"},
+				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "stopUpgrade",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "_acceptCommitRepo",
+			"inputs": [
+				{"name":"index","type":"uint128"},
+				{"name":"number","type":"uint128"},
+				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "cancelCommit",
+			"inputs": [
+				{"name":"namecommit","type":"string"},
+				{"name":"number","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "_cancelAllDiff",
+			"inputs": [
+				{"name":"index","type":"uint128"},
+				{"name":"number","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "SendDiff",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"branchcommit","type":"address"},
+				{"name":"number","type":"uint128"},
+				{"name":"numcommits","type":"uint128"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"task","type":"optional(tuple)"},
+				{"name":"isUpgrade","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "SendDiff3",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"branchcommit","type":"address"},
+				{"name":"number","type":"uint128"},
+				{"name":"numcommits","type":"uint128"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"task","type":"optional(tuple)"},
+				{"name":"isUpgrade","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "SendDiffSmv",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"branchcommit","type":"address"},
+				{"name":"number","type":"uint128"},
+				{"name":"numcommits","type":"uint128"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"task","type":"optional(tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "treeAccept",
+			"inputs": [
+				{"name":"commitsha","type":"string"},
+				{"name":"branch","type":"optional(string)"},
+				{"name":"branchcommit","type":"optional(address)"},
+				{"name":"typer","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "_sendAllDiff",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"branchcommit","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"number","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getAcceptedDiff",
+			"inputs": [
+				{"components":[{"name":"snap","type":"address"},{"name":"nameSnap","type":"string"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"removeIpfs","type":"bool"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"value0","type":"tuple"},
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"},
+				{"name":"branch","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getAcceptedContent",
+			"inputs": [
+				{"name":"value0","type":"uint256"},
+				{"name":"path","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getAcceptedContentDiff",
+			"inputs": [
+				{"name":"nameCommit","type":"string"},
+				{"name":"value0","type":"uint256"},
+				{"name":"path","type":"string"},
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "_checkChain",
+			"inputs": [
+				{"name":"branchName","type":"string"},
+				{"name":"branchCommit","type":"address"},
+				{"name":"newC","type":"address"},
+				{"name":"numcommits","type":"uint128"},
+				{"name":"save","type":"bool"},
+				{"name":"timecommit","type":"uint32"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "addCommitCheckNumber",
+			"inputs": [
+				{"name":"nameCommit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "_sendCheckChainLoop",
+			"inputs": [
+				{"name":"branchName","type":"string"},
+				{"name":"branchCommit","type":"address"},
+				{"name":"newC","type":"address"},
+				{"name":"numcommits","type":"uint128"},
+				{"name":"index","type":"uint128"},
+				{"name":"timecommit","type":"uint32"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "abortDiff",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"branchCommit","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"index2","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "DiffCheckCommit",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"branchCommit","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "ChainAccept",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"branchCommit","type":"address"},
+				{"name":"newC","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "NotCorrect",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"branchCommit","type":"address"},
+				{"name":"commit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "acceptAll",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"branchCommit","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "treeAcceptAfterCommit",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"branchCommit","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "NotCorrectRepo",
+			"inputs": [
+				{"name":"number","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "_cancelCommitRepo",
+			"inputs": [
+				{"name":"index","type":"uint128"},
+				{"name":"number","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "CommitCheckCommit",
+			"inputs": [
+				{"name":"nameCommit","type":"string"},
+				{"name":"branchName","type":"string"},
+				{"name":"branchCommit","type":"address"},
+				{"name":"newC","type":"address"},
+				{"name":"numcommits","type":"uint128"},
+				{"name":"save","type":"bool"},
+				{"name":"timecommit","type":"uint32"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "canDelete",
+			"inputs": [
+				{"name":"newcommit","type":"address"},
+				{"name":"basecommit","type":"string"},
+				{"name":"path","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "gotCount",
+			"inputs": [
+				{"name":"count","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkFallbackDiff",
+			"inputs": [
+				{"name":"index","type":"uint128"},
+				{"name":"sender","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroy",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "gettree",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getParents",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"value0","type":"tuple[]"}
+			]
+		},
+		{
+			"name": "getNameCommit",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
+			]
+		},
+		{
+			"name": "getAddrRepository",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getPrevCommitVersion",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"optional(string)"}
+			]
+		},
+		{
+			"name": "getDiffAddress",
+			"inputs": [
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getCommit",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"time","type":"uint128"},
+				{"name":"repo","type":"address"},
+				{"name":"sha","type":"string"},
+				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"parents","type":"tuple[]"},
+				{"name":"content","type":"string"},
+				{"name":"initupgrade","type":"bool"},
+				{"name":"isCorrectCommit","type":"bool"},
+				{"name":"isPinned","type":"bool"}
+			]
+		},
+		{
+			"name": "getCommitIn",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getCount",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"},
+				{"name":"value1","type":"bool"}
+			]
+		},
+		{
+			"name": "getVersion",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
+			]
+		},
+		{
+			"name": "getOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getInitUpgrade",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
+			]
+		}
+	],
+	"data": [
+		{"key":1,"name":"_nameCommit","type":"string"}
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
+		{"name":"_pubaddr","type":"address"},
+		{"name":"_rootRepo","type":"address"},
+		{"name":"_goshdao","type":"address"},
+		{"name":"_nameCommit","type":"string"},
+		{"name":"_commit","type":"string"},
+		{"name":"_name","type":"string"},
+		{"name":"check","type":"bool"},
+		{"name":"_code","type":"map(uint8,cell)"},
+		{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"_parents","type":"tuple[]"},
+		{"name":"_systemcontract","type":"address"},
+		{"name":"_tree","type":"address"},
+		{"name":"_branchCommit","type":"address"},
+		{"name":"_count","type":"uint128"},
+		{"name":"_countready","type":"bool"},
+		{"name":"_check","type":"map(address,int128)"},
+		{"name":"_save","type":"map(address,bool)"},
+		{"name":"_diffcheck","type":"bool"},
+		{"name":"_commitcheck","type":"bool"},
+		{"name":"_continueChain","type":"bool"},
+		{"name":"_continueDiff","type":"bool"},
+		{"name":"_number","type":"uint128"},
+		{"name":"_approved","type":"uint128"},
+		{"name":"_flag","type":"bool"},
+		{"components":[{"name":"send","type":"bool"},{"name":"branch","type":"string"},{"name":"branchcommit","type":"address"},{"name":"index","type":"uint128"},{"name":"number","type":"uint128"}],"name":"_saved","type":"optional(tuple)"},
+		{"name":"_initupgrade","type":"bool"},
+		{"name":"_prevversion","type":"optional(string)"},
+		{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"_task","type":"optional(tuple)"},
+		{"name":"_isCorrect","type":"bool"},
+		{"name":"_numcommits","type":"uint128"},
+		{"name":"_isPinned","type":"bool"},
+		{"name":"_timeaccept","type":"uint128"},
+		{"name":"_setCommit","type":"map(address,uint32)"},
+		{"name":"timeMoney","type":"uint128"}
+	]
 }

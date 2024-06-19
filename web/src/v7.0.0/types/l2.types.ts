@@ -1,6 +1,6 @@
 import Web3 from 'web3'
 import { RegisteredSubscription } from 'web3/lib/commonjs/eth.exports'
-import { TIP3Wallet } from '../../blockchain/tip3wallet'
+import { TIP3WalletFlex } from '../../blockchain/tip3wallet-flex'
 
 export enum EL2Network {
   ETH = 'eth',
@@ -46,7 +46,7 @@ export type TL2TransferData = {
     balance: bigint
   }
   gosh: {
-    instance: TIP3Wallet | null
+    instance: TIP3WalletFlex | null
     address: string
     token?: TL2Token | null
     balance: bigint

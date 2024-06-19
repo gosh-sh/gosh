@@ -135,9 +135,9 @@ export const Select2ClassNames = {
       props.isDisabled ? '!text-gray-7c8db5' : null,
     )
   },
+  menu: () => '!z-[2]',
   valueContainer: () => '!px-4 !py-1',
   placeholder: () => '!text-black/40',
-  menu: () => '!z-[2]',
   menuList: () => '!py-0',
   noOptionsMessage: () => '!text-xs',
   option: (props: any) => {

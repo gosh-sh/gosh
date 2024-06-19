@@ -10,6 +10,7 @@ import { GoshError } from '../../errors'
 import { appToastStatusSelector } from '../../store/app.state'
 import { supabase } from '../../supabase'
 import { fromBigint, setLockableInterval, toBigint, whileFinite } from '../../utils'
+import { getSystemContract } from '../blockchain/helpers'
 import { l2Tokens, l2TransferAtom } from '../store/l2.state'
 import { EL2Network, TL2Token, TL2TransferStatusItem, TL2User } from '../types/l2.types'
 import { useUser } from './user.hooks'
@@ -55,7 +56,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
   }
 
   const getGoshWallet = async (rootaddr: string, pubkey: string, keys?: KeyPair) => {
-    const wallet = await AppConfig.getTIP3Root(rootaddr).getWallet({
+    const wallet = await AppConfig.getTIP3RootFlex(rootaddr).getWallet({
       data: { pubkey: `0x${pubkey}` },
       keys,
     })
@@ -178,9 +179,8 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
   }
 
   const setSummaryUser = async (user: TL2User) => {
-    const profile = await AppConfig.goshroot.getUserProfile({
-      address: user.value.address,
-    })
+    const sc = getSystemContract()
+    const profile = await sc.getUserProfile({ address: user.value.address })
     const pubkey = (await profile.getPubkeys())[0]
 
     setData((state) => ({
@@ -316,7 +316,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
 
       // Prepare receiver wallet
       setSummaryProgress('prepare', 'pending')
-      const root = AppConfig.getTIP3Root(data.summary.to.token.rootaddr)
+      const root = AppConfig.getTIP3RootFlex(data.summary.to.token.rootaddr)
       const wallet = await root.getWallet({ address: data.summary.to.wallet })
       if (!(await wallet.isDeployed())) {
         await data.gosh.instance.createEmptyWallet({
@@ -475,7 +475,7 @@ export function useL2Transfer(options: { initialize?: boolean } = {}) {
       setSummaryProgress('receive', 'pending')
 
       const start = Math.round(Date.now() / 1000)
-      const token_root = AppConfig.getTIP3Root(data.summary.to.token.rootaddr)
+      const token_root = AppConfig.getTIP3RootFlex(data.summary.to.token.rootaddr)
       const wallet = await token_root.getWallet({ address: data.summary.to.wallet })
 
       // Wait deployed

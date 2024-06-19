@@ -1,229 +1,201 @@
 {
-  "ABI version": 2,
-  "version": "2.3",
-  "header": ["pubkey", "time", "expire"],
-  "functions": [
-    {
-      "name": "constructor",
-      "inputs": [
-        { "name": "pubaddr", "type": "address" },
-        { "name": "rootgosh", "type": "address" },
-        { "name": "goshdao", "type": "address" },
-        { "name": "rootrepo", "type": "address" },
-        { "name": "codeSnapshot", "type": "cell" },
-        { "name": "codeCommit", "type": "cell" },
-        { "name": "codeDiff", "type": "cell" },
-        { "name": "WalletCode", "type": "cell" },
-        { "name": "codeTree", "type": "cell" },
-        { "name": "index", "type": "uint128" },
-        { "name": "data", "type": "bytes" },
-        { "name": "isPin", "type": "bool" },
-        { "name": "commit", "type": "string" },
-        { "name": "ipfsdata", "type": "optional(string)" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "returnTreeAnswer",
-      "inputs": [
-        {
-          "components": [
-            { "name": "answer", "type": "address" },
-            { "name": "fullPath", "type": "string" },
-            { "name": "lastPath", "type": "string" },
-            { "name": "sha", "type": "uint256" }
-          ],
-          "name": "value0",
-          "type": "tuple"
-        },
-        {
-          "components": [
-            { "name": "flags", "type": "string" },
-            { "name": "mode", "type": "string" },
-            { "name": "typeObj", "type": "string" },
-            { "name": "name", "type": "string" },
-            { "name": "gitsha", "type": "string" },
-            { "name": "tvmshatree", "type": "optional(uint256)" },
-            { "name": "tvmshafile", "type": "optional(uint256)" },
-            { "name": "commit", "type": "string" }
-          ],
-          "name": "value1",
-          "type": "optional(tuple)"
-        },
-        { "name": "shainnertree", "type": "uint256" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "isReady",
-      "inputs": [
-        { "name": "sha1", "type": "uint256" },
-        { "name": "branchcommit", "type": "optional(address)" },
-        { "name": "typer", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "applyDiff",
-      "inputs": [
-        { "name": "namecommit", "type": "string" },
-        {
-          "components": [
-            { "name": "snap", "type": "address" },
-            { "name": "nameSnap", "type": "string" },
-            { "name": "commit", "type": "string" },
-            { "name": "patch", "type": "optional(bytes)" },
-            { "name": "ipfs", "type": "optional(string)" },
-            { "name": "removeIpfs", "type": "bool" },
-            { "name": "sha1", "type": "string" },
-            { "name": "sha256", "type": "uint256" }
-          ],
-          "name": "diff",
-          "type": "tuple"
-        },
-        { "name": "index1", "type": "uint128" },
-        { "name": "index2", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "cancelDiff",
-      "inputs": [
-        { "name": "index1", "type": "uint128" },
-        { "name": "index2", "type": "uint128" },
-        { "name": "commit", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "approve",
-      "inputs": [
-        { "name": "index1", "type": "uint128" },
-        { "name": "index2", "type": "uint128" },
-        {
-          "components": [
-            { "name": "snap", "type": "address" },
-            { "name": "nameSnap", "type": "string" },
-            { "name": "commit", "type": "string" },
-            { "name": "patch", "type": "optional(bytes)" },
-            { "name": "ipfs", "type": "optional(string)" },
-            { "name": "removeIpfs", "type": "bool" },
-            { "name": "sha1", "type": "string" },
-            { "name": "sha256", "type": "uint256" }
-          ],
-          "name": "diff",
-          "type": "tuple"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "sendContent",
-      "inputs": [
-        { "name": "snapshot", "type": "bytes" },
-        { "name": "ipfs", "type": "optional(string)" },
-        { "name": "commit", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "canDelete",
-      "inputs": [],
-      "outputs": []
-    },
-    {
-      "name": "destroy",
-      "inputs": [
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "getSnapshot",
-      "inputs": [],
-      "outputs": [
-        { "name": "temporaryCommit", "type": "string" },
-        { "name": "temporarySnapData", "type": "bytes" },
-        { "name": "temporaryIpfs", "type": "optional(string)" },
-        { "name": "approvedCommit", "type": "string" },
-        { "name": "approvedSnapData", "type": "bytes" },
-        { "name": "approvedIpfs", "type": "optional(string)" },
-        { "name": "baseCommit", "type": "string" },
-        { "name": "isSnapReady", "type": "bool" },
-        { "name": "isPin", "type": "bool" }
-      ]
-    },
-    {
-      "name": "getSnapshotIn",
-      "inputs": [],
-      "outputs": []
-    },
-    {
-      "name": "getName",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "string" }]
-    },
-    {
-      "name": "getAddrRepository",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "address" }]
-    },
-    {
-      "name": "getBaseCommit",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "string" }]
-    },
-    {
-      "name": "getVersion",
-      "inputs": [],
-      "outputs": [
-        { "name": "value0", "type": "string" },
-        { "name": "value1", "type": "string" }
-      ]
-    },
-    {
-      "name": "getOwner",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "address" }]
-    }
-  ],
-  "data": [
-    { "key": 1, "name": "_baseCommit", "type": "string" },
-    { "key": 2, "name": "NameOfFile", "type": "string" }
-  ],
-  "events": [],
-  "fields": [
-    { "name": "_pubkey", "type": "uint256" },
-    { "name": "_constructorFlag", "type": "bool" },
-    { "name": "messages", "type": "map(uint32,map(uint256,bool))" },
-    {
-      "components": [
-        { "name": "messageHash", "type": "uint256" },
-        { "name": "expireAt", "type": "uint32" }
-      ],
-      "name": "lastMessage",
-      "type": "tuple"
-    },
-    { "name": "__value", "type": "uint256" },
-    { "name": "_baseCommit", "type": "string" },
-    { "name": "_pubaddr", "type": "address" },
-    { "name": "_rootRepo", "type": "address" },
-    { "name": "_snapshot", "type": "bytes" },
-    { "name": "_oldsnapshot", "type": "bytes" },
-    { "name": "_systemcontract", "type": "address" },
-    { "name": "_goshdao", "type": "address" },
-    { "name": "_oldcommits", "type": "string" },
-    { "name": "_commits", "type": "string" },
-    { "name": "_ipfs", "type": "optional(string)" },
-    { "name": "_ipfsold", "type": "optional(string)" },
-    { "name": "_code", "type": "map(uint8,cell)" },
-    { "name": "NameOfFile", "type": "string" },
-    { "name": "_applying", "type": "bool" },
-    { "name": "_ready", "type": "bool" },
-    { "name": "_pushcommit", "type": "string" },
-    { "name": "timeMoney", "type": "uint128" },
-    { "name": "_flag", "type": "bool" },
-    { "name": "_isPin", "type": "bool" }
-  ]
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"rootgosh","type":"address"},
+				{"name":"goshdao","type":"address"},
+				{"name":"rootrepo","type":"address"},
+				{"name":"codeSnapshot","type":"cell"},
+				{"name":"codeCommit","type":"cell"},
+				{"name":"codeDiff","type":"cell"},
+				{"name":"WalletCode","type":"cell"},
+				{"name":"codeTree","type":"cell"},
+				{"name":"index","type":"uint128"},
+				{"name":"data","type":"bytes"},
+				{"name":"isPin","type":"bool"},
+				{"name":"commit","type":"string"},
+				{"name":"ipfsdata","type":"optional(string)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "returnTreeAnswer",
+			"inputs": [
+				{"components":[{"name":"answer","type":"address"},{"name":"fullPath","type":"string"},{"name":"lastPath","type":"string"},{"name":"sha","type":"uint256"}],"name":"value0","type":"tuple"},
+				{"components":[{"name":"flags","type":"string"},{"name":"mode","type":"string"},{"name":"typeObj","type":"string"},{"name":"name","type":"string"},{"name":"gitsha","type":"string"},{"name":"tvmshatree","type":"optional(uint256)"},{"name":"tvmshafile","type":"optional(uint256)"},{"name":"commit","type":"string"}],"name":"value1","type":"optional(tuple)"},
+				{"name":"shainnertree","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "isReady",
+			"inputs": [
+				{"name":"sha1","type":"uint256"},
+				{"name":"branchcommit","type":"optional(address)"},
+				{"name":"typer","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "applyDiff",
+			"inputs": [
+				{"name":"namecommit","type":"string"},
+				{"components":[{"name":"snap","type":"address"},{"name":"nameSnap","type":"string"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"removeIpfs","type":"bool"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"diff","type":"tuple"},
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "cancelDiff",
+			"inputs": [
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"},
+				{"name":"commit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "approve",
+			"inputs": [
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"},
+				{"components":[{"name":"snap","type":"address"},{"name":"nameSnap","type":"string"},{"name":"commit","type":"string"},{"name":"patch","type":"optional(bytes)"},{"name":"ipfs","type":"optional(string)"},{"name":"removeIpfs","type":"bool"},{"name":"sha1","type":"string"},{"name":"sha256","type":"uint256"}],"name":"diff","type":"tuple"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendContent",
+			"inputs": [
+				{"name":"snapshot","type":"bytes"},
+				{"name":"ipfs","type":"optional(string)"},
+				{"name":"commit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "canDelete",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroy",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getSnapshot",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"temporaryCommit","type":"string"},
+				{"name":"temporarySnapData","type":"bytes"},
+				{"name":"temporaryIpfs","type":"optional(string)"},
+				{"name":"approvedCommit","type":"string"},
+				{"name":"approvedSnapData","type":"bytes"},
+				{"name":"approvedIpfs","type":"optional(string)"},
+				{"name":"baseCommit","type":"string"},
+				{"name":"isSnapReady","type":"bool"},
+				{"name":"isPin","type":"bool"}
+			]
+		},
+		{
+			"name": "getSnapshotIn",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getName",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
+			]
+		},
+		{
+			"name": "getAddrRepository",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getBaseCommit",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
+			]
+		},
+		{
+			"name": "getVersion",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
+			]
+		},
+		{
+			"name": "getOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		}
+	],
+	"data": [
+		{"key":1,"name":"_baseCommit","type":"string"},
+		{"key":2,"name":"NameOfFile","type":"string"}
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
+		{"name":"_baseCommit","type":"string"},
+		{"name":"_pubaddr","type":"address"},
+		{"name":"_rootRepo","type":"address"},
+		{"name":"_snapshot","type":"bytes"},
+		{"name":"_oldsnapshot","type":"bytes"},
+		{"name":"_systemcontract","type":"address"},
+		{"name":"_goshdao","type":"address"},
+		{"name":"_oldcommits","type":"string"},
+		{"name":"_commits","type":"string"},
+		{"name":"_ipfs","type":"optional(string)"},
+		{"name":"_ipfsold","type":"optional(string)"},
+		{"name":"_code","type":"map(uint8,cell)"},
+		{"name":"NameOfFile","type":"string"},
+		{"name":"_applying","type":"bool"},
+		{"name":"_ready","type":"bool"},
+		{"name":"_pushcommit","type":"string"},
+		{"name":"timeMoney","type":"uint128"},
+		{"name":"_flag","type":"bool"},
+		{"name":"_isPin","type":"bool"}
+	]
 }

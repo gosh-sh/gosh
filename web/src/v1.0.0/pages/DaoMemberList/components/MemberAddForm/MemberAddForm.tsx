@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   ErrorMessage,
   Field,
@@ -7,21 +8,21 @@ import {
   Form,
   Formik,
 } from 'formik'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
-import { Button } from '../../../../../components/Form'
-import { Select2ClassNames } from '../../../../../helpers'
-import AsyncSelect from 'react-select/async'
-import yup from '../../../../yup-extended'
-import successImage from '../../../../../assets/images/success.png'
-import { AppConfig } from '../../../../../appconfig'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useCreateDaoMember } from '../../../../hooks/dao.hooks'
+import { useState } from 'react'
+import AsyncSelect from 'react-select/async'
+import successImage from '../../../../../assets/images/success.png'
+import { Button } from '../../../../../components/Form'
 import { BaseField } from '../../../../../components/Formik'
+import { Select2ClassNames } from '../../../../../helpers'
+import { getSystemContract } from '../../../../blockchain/helpers'
+import { useCreateDaoMember } from '../../../../hooks/dao.hooks'
+import yup from '../../../../yup-extended'
 
 const getUsernameOptions = async (input: string) => {
+  const sc = getSystemContract()
   const options: any[] = []
-  const profileQuery = await AppConfig.goshroot.getUserProfile({
+  const profileQuery = await sc.getUserProfile({
     username: input.toLowerCase(),
   })
   if (await profileQuery.isDeployed()) {

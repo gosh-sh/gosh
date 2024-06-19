@@ -69,6 +69,24 @@ export class SystemContract extends BaseContract {
     return found?.account || null
   }
 
+  async getUserProfile(params: { username?: string; address?: string }) {
+    const { username, address } = params
+    if (address) {
+      return new UserProfile(this.client, address)
+    }
+
+    if (!username) {
+      throw new GoshError(EGoshError.USER_NAME_UNDEFINED)
+    }
+    const { value0 } = await this.runLocal(
+      'getProfileAddr',
+      { name: username },
+      undefined,
+      { useCachedBoc: true },
+    )
+    return new UserProfile(this.client, value0)
+  }
+
   async getDaoProfile(name: string) {
     const { value0 } = await this.runLocal(
       'getProfileDaoAddr',
@@ -83,6 +101,10 @@ export class SystemContract extends BaseContract {
 
   async getDao(params: { name?: string; address?: string }) {
     const { name, address } = params
+
+    if (!name && !address) {
+      throw new GoshError('DAO name or address required')
+    }
 
     if (address) {
       return new Dao(this.client, address)
@@ -178,7 +200,7 @@ export class SystemContract extends BaseContract {
 
   async createUserProfile(username: string, pubkey: string) {
     // Get profile and check it's status
-    const profile = await this.versionController.getUserProfile({ username })
+    const profile = await this.getUserProfile({ username })
     if (await profile.isDeployed()) {
       return profile
     }

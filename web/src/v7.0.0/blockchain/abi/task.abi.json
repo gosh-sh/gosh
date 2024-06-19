@@ -1,363 +1,291 @@
 {
-  "ABI version": 2,
-  "version": "2.3",
-  "header": ["pubkey", "time", "expire"],
-  "functions": [
-    {
-      "name": "constructor",
-      "inputs": [
-        { "name": "defaultData", "type": "optional(cell)" },
-        { "name": "extraData", "type": "optional(cell)" },
-        { "name": "previousVersion", "type": "optional(cell)" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "sendData",
-      "inputs": [{ "name": "toSend", "type": "address" }],
-      "outputs": []
-    },
-    {
-      "name": "getUpgradeDataVersion",
-      "inputs": [
-        { "name": "data", "type": "cell" },
-        { "name": "ver", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "getUpgradeData",
-      "inputs": [{ "name": "data", "type": "cell" }],
-      "outputs": []
-    },
-    {
-      "name": "checkdaoMember",
-      "inputs": [
-        { "name": "daoMember", "type": "map(address,string)" },
-        { "name": "key", "type": "address" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "isReadyBig",
-      "inputs": [
-        {
-          "components": [
-            { "name": "task", "type": "address" },
-            { "name": "commit", "type": "optional(address)" },
-            { "name": "number_commit", "type": "optional(uint128)" },
-            { "name": "pubaddrassign", "type": "map(address,bool)" },
-            { "name": "pubaddrreview", "type": "map(address,bool)" },
-            { "name": "pubaddrmanager", "type": "map(address,bool)" },
-            { "name": "daoMembers", "type": "map(address,string)" }
-          ],
-          "name": "commit",
-          "type": "tuple"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "isReady",
-      "inputs": [
-        {
-          "components": [
-            { "name": "task", "type": "address" },
-            { "name": "commit", "type": "optional(address)" },
-            { "name": "number_commit", "type": "optional(uint128)" },
-            { "name": "pubaddrassign", "type": "map(address,bool)" },
-            { "name": "pubaddrreview", "type": "map(address,bool)" },
-            { "name": "pubaddrmanager", "type": "map(address,bool)" },
-            { "name": "daoMembers", "type": "map(address,string)" }
-          ],
-          "name": "commit",
-          "type": "tuple"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "isReadyBalance",
-      "inputs": [],
-      "outputs": []
-    },
-    {
-      "name": "calculateAssignLength",
-      "inputs": [{ "name": "index", "type": "uint128" }],
-      "outputs": []
-    },
-    {
-      "name": "calculateReviewLength",
-      "inputs": [
-        { "name": "index", "type": "uint128" },
-        { "name": "assignfull", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "calculateManagerLength",
-      "inputs": [
-        { "name": "index", "type": "uint128" },
-        { "name": "assignfull", "type": "uint128" },
-        { "name": "reviewfull", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "getGrant",
-      "inputs": [
-        { "name": "pubaddr", "type": "address" },
-        { "name": "typegrant", "type": "uint128" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "getGrantAssign",
-      "inputs": [{ "name": "pubaddr", "type": "address" }],
-      "outputs": []
-    },
-    {
-      "name": "getGrantReview",
-      "inputs": [{ "name": "pubaddr", "type": "address" }],
-      "outputs": []
-    },
-    {
-      "name": "getGrantManager",
-      "inputs": [{ "name": "pubaddr", "type": "address" }],
-      "outputs": []
-    },
-    {
-      "name": "grantToken",
-      "inputs": [{ "name": "value", "type": "uint128" }],
-      "outputs": []
-    },
-    {
-      "name": "destroy",
-      "inputs": [
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "destroyBig",
-      "inputs": [],
-      "outputs": []
-    },
-    {
-      "name": "getTaskIn",
-      "inputs": [],
-      "outputs": []
-    },
-    {
-      "name": "getStatus",
-      "inputs": [],
-      "outputs": [
-        { "name": "nametask", "type": "string" },
-        { "name": "repo", "type": "address" },
-        {
-          "components": [
-            { "name": "task", "type": "address" },
-            { "name": "commit", "type": "optional(address)" },
-            { "name": "number_commit", "type": "optional(uint128)" },
-            { "name": "pubaddrassign", "type": "map(address,bool)" },
-            { "name": "pubaddrreview", "type": "map(address,bool)" },
-            { "name": "pubaddrmanager", "type": "map(address,bool)" },
-            { "name": "daoMembers", "type": "map(address,string)" }
-          ],
-          "name": "candidates",
-          "type": "tuple[]"
-        },
-        {
-          "components": [
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "assign",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "review",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "manager",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                { "name": "grant", "type": "uint128" },
-                { "name": "lock", "type": "uint128" }
-              ],
-              "name": "subtask",
-              "type": "tuple[]"
-            }
-          ],
-          "name": "grant",
-          "type": "tuple"
-        },
-        { "name": "ready", "type": "bool" },
-        { "name": "indexFinal", "type": "uint128" },
-        { "name": "hashtag", "type": "string[]" },
-        { "name": "locktime", "type": "uint128" },
-        { "name": "balance", "type": "uint128" },
-        { "name": "needbalance", "type": "uint128" },
-        { "name": "bigtask", "type": "optional(string)" }
-      ]
-    },
-    {
-      "name": "getVersion",
-      "inputs": [],
-      "outputs": [
-        { "name": "value0", "type": "string" },
-        { "name": "value1", "type": "string" }
-      ]
-    },
-    {
-      "name": "_hashtag",
-      "inputs": [],
-      "outputs": [{ "name": "_hashtag", "type": "string[]" }]
-    },
-    {
-      "name": "_locktime",
-      "inputs": [],
-      "outputs": [{ "name": "_locktime", "type": "uint128" }]
-    },
-    {
-      "name": "_assignfull",
-      "inputs": [],
-      "outputs": [{ "name": "_assignfull", "type": "uint128" }]
-    },
-    {
-      "name": "_reviewfull",
-      "inputs": [],
-      "outputs": [{ "name": "_reviewfull", "type": "uint128" }]
-    },
-    {
-      "name": "_managerfull",
-      "inputs": [],
-      "outputs": [{ "name": "_managerfull", "type": "uint128" }]
-    },
-    {
-      "name": "_bigtask",
-      "inputs": [],
-      "outputs": [{ "name": "_bigtask", "type": "optional(string)" }]
-    }
-  ],
-  "data": [
-    { "key": 1, "name": "_nametask", "type": "string" },
-    { "key": 2, "name": "_goshdao", "type": "address" }
-  ],
-  "events": [],
-  "fields": [
-    { "name": "_pubkey", "type": "uint256" },
-    { "name": "_constructorFlag", "type": "bool" },
-    { "name": "messages", "type": "map(uint32,map(uint256,bool))" },
-    {
-      "components": [
-        { "name": "messageHash", "type": "uint256" },
-        { "name": "expireAt", "type": "uint32" }
-      ],
-      "name": "lastMessage",
-      "type": "tuple"
-    },
-    { "name": "__value", "type": "uint256" },
-    { "name": "_nametask", "type": "string" },
-    { "name": "_repoName", "type": "string" },
-    { "name": "_repo", "type": "address" },
-    { "name": "_ready", "type": "bool" },
-    { "name": "_systemcontract", "type": "address" },
-    { "name": "_goshdao", "type": "address" },
-    { "name": "_code", "type": "map(uint8,cell)" },
-    {
-      "components": [
-        { "name": "task", "type": "address" },
-        { "name": "commit", "type": "optional(address)" },
-        { "name": "number_commit", "type": "optional(uint128)" },
-        { "name": "pubaddrassign", "type": "map(address,bool)" },
-        { "name": "pubaddrreview", "type": "map(address,bool)" },
-        { "name": "pubaddrmanager", "type": "map(address,bool)" },
-        { "name": "daoMembers", "type": "map(address,string)" }
-      ],
-      "name": "_candidates",
-      "type": "tuple[]"
-    },
-    { "name": "_isFix", "type": "bool" },
-    {
-      "components": [
-        {
-          "components": [
-            { "name": "grant", "type": "uint128" },
-            { "name": "lock", "type": "uint128" }
-          ],
-          "name": "assign",
-          "type": "tuple[]"
-        },
-        {
-          "components": [
-            { "name": "grant", "type": "uint128" },
-            { "name": "lock", "type": "uint128" }
-          ],
-          "name": "review",
-          "type": "tuple[]"
-        },
-        {
-          "components": [
-            { "name": "grant", "type": "uint128" },
-            { "name": "lock", "type": "uint128" }
-          ],
-          "name": "manager",
-          "type": "tuple[]"
-        },
-        {
-          "components": [
-            { "name": "grant", "type": "uint128" },
-            { "name": "lock", "type": "uint128" }
-          ],
-          "name": "subtask",
-          "type": "tuple[]"
-        }
-      ],
-      "name": "_grant",
-      "type": "tuple"
-    },
-    { "name": "_hashtag", "type": "string[]" },
-    { "name": "_indexFinal", "type": "uint128" },
-    { "name": "_locktime", "type": "uint128" },
-    { "name": "_fullAssign", "type": "uint128" },
-    { "name": "_fullReview", "type": "uint128" },
-    { "name": "_fullManager", "type": "uint128" },
-    { "name": "_assigners", "type": "map(address,uint128)" },
-    { "name": "_reviewers", "type": "map(address,uint128)" },
-    { "name": "_managers", "type": "map(address,uint128)" },
-    { "name": "_assignfull", "type": "uint128" },
-    { "name": "_reviewfull", "type": "uint128" },
-    { "name": "_managerfull", "type": "uint128" },
-    { "name": "_assigncomplete", "type": "uint128" },
-    { "name": "_reviewcomplete", "type": "uint128" },
-    { "name": "_managercomplete", "type": "uint128" },
-    { "name": "_allassign", "type": "bool" },
-    { "name": "_allreview", "type": "bool" },
-    { "name": "_allmanager", "type": "bool" },
-    { "name": "_lastassign", "type": "uint128" },
-    { "name": "_lastreview", "type": "uint128" },
-    { "name": "_lastmanager", "type": "uint128" },
-    { "name": "_balance", "type": "uint128" },
-    { "name": "_needbalance", "type": "uint128" },
-    { "name": "_waitForUpdate", "type": "bool" },
-    { "name": "_previousVersionAddr", "type": "address" },
-    { "name": "_previousVersion", "type": "string" },
-    { "name": "_bigtask", "type": "optional(string)" }
-  ]
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"defaultData","type":"optional(cell)"},
+				{"name":"extraData","type":"optional(cell)"},
+				{"name":"previousVersion","type":"optional(cell)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendData",
+			"inputs": [
+				{"name":"toSend","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getUpgradeDataVersion",
+			"inputs": [
+				{"name":"data","type":"cell"},
+				{"name":"ver","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getUpgradeData",
+			"inputs": [
+				{"name":"data","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "checkdaoMember",
+			"inputs": [
+				{"name":"daoMember","type":"map(address,string)"},
+				{"name":"key","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "isReadyBig",
+			"inputs": [
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"commit","type":"tuple"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "isReady",
+			"inputs": [
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"commit","type":"tuple"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "isReadyBalance",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "calculateAssignLength",
+			"inputs": [
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "calculateReviewLength",
+			"inputs": [
+				{"name":"index","type":"uint128"},
+				{"name":"assignfull","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "calculateManagerLength",
+			"inputs": [
+				{"name":"index","type":"uint128"},
+				{"name":"assignfull","type":"uint128"},
+				{"name":"reviewfull","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getGrant",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"typegrant","type":"uint128"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getGrantAssign",
+			"inputs": [
+				{"name":"pubaddr","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getGrantReview",
+			"inputs": [
+				{"name":"pubaddr","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getGrantManager",
+			"inputs": [
+				{"name":"pubaddr","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "grantToken",
+			"inputs": [
+				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroy",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "destroyBig",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getTaskIn",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getStatus",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"nametask","type":"string"},
+				{"name":"repo","type":"address"},
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"candidates","type":"tuple[]"},
+				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
+				{"name":"ready","type":"bool"},
+				{"name":"indexFinal","type":"uint128"},
+				{"name":"hashtag","type":"string[]"},
+				{"name":"locktime","type":"uint128"},
+				{"name":"balance","type":"uint128"},
+				{"name":"needbalance","type":"uint128"},
+				{"name":"bigtask","type":"optional(string)"}
+			]
+		},
+		{
+			"name": "getVersion",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
+			]
+		},
+		{
+			"name": "_hashtag",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_hashtag","type":"string[]"}
+			]
+		},
+		{
+			"name": "_locktime",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_locktime","type":"uint128"}
+			]
+		},
+		{
+			"name": "_assignfull",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_assignfull","type":"uint128"}
+			]
+		},
+		{
+			"name": "_reviewfull",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_reviewfull","type":"uint128"}
+			]
+		},
+		{
+			"name": "_managerfull",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_managerfull","type":"uint128"}
+			]
+		},
+		{
+			"name": "_bigtask",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_bigtask","type":"optional(string)"}
+			]
+		}
+	],
+	"data": [
+		{"key":1,"name":"_nametask","type":"string"},
+		{"key":2,"name":"_goshdao","type":"address"}
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
+		{"name":"_nametask","type":"string"},
+		{"name":"_repoName","type":"string"},
+		{"name":"_repo","type":"address"},
+		{"name":"_ready","type":"bool"},
+		{"name":"_systemcontract","type":"address"},
+		{"name":"_goshdao","type":"address"},
+		{"name":"_code","type":"map(uint8,cell)"},
+		{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"_candidates","type":"tuple[]"},
+		{"name":"_isFix","type":"bool"},
+		{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"_grant","type":"tuple"},
+		{"name":"_hashtag","type":"string[]"},
+		{"name":"_indexFinal","type":"uint128"},
+		{"name":"_locktime","type":"uint128"},
+		{"name":"_fullAssign","type":"uint128"},
+		{"name":"_fullReview","type":"uint128"},
+		{"name":"_fullManager","type":"uint128"},
+		{"name":"_assigners","type":"map(address,uint128)"},
+		{"name":"_reviewers","type":"map(address,uint128)"},
+		{"name":"_managers","type":"map(address,uint128)"},
+		{"name":"_assignfull","type":"uint128"},
+		{"name":"_reviewfull","type":"uint128"},
+		{"name":"_managerfull","type":"uint128"},
+		{"name":"_assigncomplete","type":"uint128"},
+		{"name":"_reviewcomplete","type":"uint128"},
+		{"name":"_managercomplete","type":"uint128"},
+		{"name":"_allassign","type":"bool"},
+		{"name":"_allreview","type":"bool"},
+		{"name":"_allmanager","type":"bool"},
+		{"name":"_lastassign","type":"uint128"},
+		{"name":"_lastreview","type":"uint128"},
+		{"name":"_lastmanager","type":"uint128"},
+		{"name":"_balance","type":"uint128"},
+		{"name":"_needbalance","type":"uint128"},
+		{"name":"_waitForUpdate","type":"bool"},
+		{"name":"_previousVersionAddr","type":"address"},
+		{"name":"_previousVersion","type":"string"},
+		{"name":"_bigtask","type":"optional(string)"}
+	]
 }

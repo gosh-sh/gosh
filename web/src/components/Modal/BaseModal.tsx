@@ -1,25 +1,26 @@
 import { Dialog, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
-import { useRecoilValue, useResetRecoilState } from 'recoil'
+import { useRecoilState, useResetRecoilState } from 'recoil'
 import { appModalStateAtom } from '../../store/app.state'
 
-type TBaseModalProps = {
-  modal?: {
-    static?: boolean | undefined
-    isOpen: boolean
-    element: React.ReactElement | null
-  }
-  resetModal?(): void
+type TBaseModalCleanProps = {
+  is_open: boolean
+  is_static?: boolean
+  element: any
+  onClose?(): void
 }
 
-const BaseModal = (props: TBaseModalProps) => {
-  const modal = props.modal || useRecoilValue(appModalStateAtom)
-  const resetModal = props.resetModal || useResetRecoilState(appModalStateAtom)
+export const BaseModalClean = (props: TBaseModalCleanProps) => {
+  const { is_open, is_static, element } = props
+
+  const onCloseDefault = () => {}
+  const onClose = props.onClose || onCloseDefault
 
   return (
-    <Transition show={modal.isOpen} as={Fragment}>
+    <Transition show={is_open} as={Fragment}>
       <Dialog
-        onClose={() => !modal.static && resetModal()}
+        onClose={onClose}
+        static={is_static}
         className="fixed inset-0 z-50"
       >
         <Transition.Child
@@ -43,11 +44,32 @@ const BaseModal = (props: TBaseModalProps) => {
           leaveTo="opacity-0 scale-95"
         >
           <div className="fixed inset-0 flex items-start justify-center p-4 overflow-y-auto">
-            {modal.element}
+            {element}
           </div>
         </Transition.Child>
       </Dialog>
     </Transition>
+  )
+}
+
+const BaseModal = () => {
+  const [modal, setModal] = useRecoilState(appModalStateAtom)
+  const resetModal = useResetRecoilState(appModalStateAtom)
+
+  const onClose = () => {
+    if (!modal.static) {
+      setModal((state) => ({ ...state, isOpen: false }))
+      setTimeout(resetModal, 300)
+    }
+  }
+
+  return (
+    <BaseModalClean
+      is_open={modal.isOpen}
+      is_static={modal.static}
+      element={modal.element}
+      onClose={onClose}
+    />
   )
 }
 

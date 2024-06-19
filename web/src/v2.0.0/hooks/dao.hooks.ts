@@ -1,11 +1,22 @@
-import { useCallback, useEffect, useState } from 'react'
-import _ from 'lodash'
-import { useProfile, useUser } from './user.hooks'
-import { EGoshError, GoshError } from '../../errors'
-import { AppConfig } from '../../appconfig'
-import { getSystemContract } from '../blockchain/helpers'
-import { supabase } from '../../supabase'
+import { AggregationFn } from '@eversdk/core'
 import { Buffer } from 'buffer'
+import _ from 'lodash'
+import { useCallback, useEffect, useState } from 'react'
+import { GoshAdapterFactory } from 'react-gosh'
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
+import { AppConfig } from '../../appconfig'
+import { getAllAccounts, getPaginatedAccounts } from '../../blockchain/utils'
+import {
+  DISABLED_VERSIONS,
+  MAX_PARALLEL_READ,
+  MAX_PARALLEL_WRITE,
+  SYSTEM_TAG,
+} from '../../constants'
+import { EGoshError, GoshError } from '../../errors'
+import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
+import { supabase } from '../../supabase'
+import { TSystemContract } from '../../types/blockchain.types'
+import { EDaoEventType, TToastStatus } from '../../types/common.types'
 import {
   executeByChunk,
   setLockableInterval,
@@ -13,13 +24,13 @@ import {
   splitByChunk,
   whileFinite,
 } from '../../utils'
-import {
-  DISABLED_VERSIONS,
-  MAX_PARALLEL_READ,
-  MAX_PARALLEL_WRITE,
-  SYSTEM_TAG,
-} from '../../constants'
-import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
+import { Dao } from '../blockchain/dao'
+import { DaoEvent } from '../blockchain/daoevent'
+import { DaoWallet } from '../blockchain/daowallet'
+import { getSystemContract } from '../blockchain/helpers'
+import { GoshRepository } from '../blockchain/repository'
+import { Task } from '../blockchain/task'
+import { UserProfile } from '../blockchain/userprofile'
 import {
   daoDetailsSelector,
   daoEventListSelector,
@@ -42,20 +53,9 @@ import {
   TTaskGrant,
   TTaskGrantPair,
 } from '../types/dao.types'
-import { Dao } from '../blockchain/dao'
-import { UserProfile } from '../../blockchain/userprofile'
-import { DaoWallet } from '../blockchain/daowallet'
-import { EDaoEventType, TToastStatus } from '../../types/common.types'
-import { getAllAccounts, getPaginatedAccounts } from '../../blockchain/utils'
-import { DaoEvent } from '../blockchain/daoevent'
-import { GoshAdapterFactory } from 'react-gosh'
-import { TSystemContract } from '../../types/blockchain.types'
-import { TGoshCommitTag } from '../types/repository.types'
-import { GoshRepository } from '../blockchain/repository'
 import { EDaoInviteStatus } from '../types/onboarding.types'
-import { Task } from '../blockchain/task'
-import { AggregationFn } from '@eversdk/core'
-import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
+import { TGoshCommitTag } from '../types/repository.types'
+import { useProfile, useUser } from './user.hooks'
 
 export function useCreateDao() {
   const profile = useProfile()
@@ -1078,6 +1078,8 @@ export function useCreateDaoMember() {
         comment?: string
       }[],
     ) => {
+      const sc = getSystemContract()
+
       try {
         // Check total allowance against reserve
         const allowance = _.sum(items.map(({ allowance }) => allowance))
@@ -1128,9 +1130,7 @@ export function useCreateDaoMember() {
           usersUnique,
           MAX_PARALLEL_READ,
           async ({ user, allowance }) => {
-            const profile = await AppConfig.goshroot.getUserProfile({
-              username: user.name.toLowerCase(),
-            })
+            const profile = await sc.getUserProfile({ username: user.name.toLowerCase() })
             if (!(await profile.isDeployed())) {
               throw new GoshError('Profile error', {
                 message: 'Profile does not exist',
@@ -1198,6 +1198,8 @@ export function useDeleteDaoMember() {
   const [status, setStatus] = useRecoilState(appToastStatusSelector('__deletedaomember'))
 
   const deleteMember = async (username: string[], comment?: string) => {
+    const sc = getSystemContract()
+
     try {
       setMemberList((state) => ({
         ...state,
@@ -1214,9 +1216,7 @@ export function useDeleteDaoMember() {
         data: 'Resolve user profiles',
       }))
       const profiles = await executeByChunk(username, MAX_PARALLEL_READ, async (name) => {
-        const profile = await AppConfig.goshroot.getUserProfile({
-          username: name.toLowerCase(),
-        })
+        const profile = await sc.getUserProfile({ username: name.toLowerCase() })
         if (!(await profile.isDeployed())) {
           throw new GoshError('Profile error', {
             message: 'Profile does not exist',
@@ -1275,6 +1275,8 @@ export function useUpdateDaoMember() {
       }[],
       comment?: string,
     ) => {
+      const sc = getSystemContract()
+
       try {
         setStatus((state) => ({
           ...state,
@@ -1322,7 +1324,7 @@ export function useUpdateDaoMember() {
           data: 'Resolve user profiles',
         }))
         const profiles = await executeByChunk(items, MAX_PARALLEL_READ, async (item) => {
-          const profile = await AppConfig.goshroot.getUserProfile({
+          const profile = await sc.getUserProfile({
             username: item.username.toLowerCase(),
           })
           if (!(await profile.isDeployed())) {
@@ -2277,6 +2279,7 @@ export function useSendDaoTokens() {
       comment?: string
     }) => {
       const { username, amount, isVoting, comment } = params
+      const sc = getSystemContract()
 
       try {
         if (!member.isMember) {
@@ -2292,9 +2295,7 @@ export function useSendDaoTokens() {
           type: 'pending',
           data: 'Resolve username',
         }))
-        const profile = await AppConfig.goshroot.getUserProfile({
-          username: username.toLowerCase(),
-        })
+        const profile = await sc.getUserProfile({ username: username.toLowerCase() })
         if (!(await profile.isDeployed())) {
           throw new GoshError('Profile error', {
             message: 'Profile does not exist',
@@ -2397,6 +2398,7 @@ export function useSendMemberTokens() {
   const send = useCallback(
     async (params: { username: string; amount: number }) => {
       const { username, amount } = params
+      const sc = getSystemContract()
 
       try {
         // Prepare balance
@@ -2418,9 +2420,7 @@ export function useSendMemberTokens() {
             type: 'pending',
             data: 'Resolve username',
           }))
-          const profile = await AppConfig.goshroot.getUserProfile({
-            username: username.toLowerCase(),
-          })
+          const profile = await sc.getUserProfile({ username: username.toLowerCase() })
           if (!(await profile.isDeployed())) {
             throw new GoshError('Profile error', {
               message: 'Profile does not exist',

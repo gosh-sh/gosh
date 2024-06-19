@@ -1,14 +1,15 @@
 import { KeyPair, TonClient } from '@eversdk/core'
+import TIP3WalletABI from './abi/tip3wallet-flex.abi.json'
 import { BaseContract } from './contract'
-import TIP3WalletABI from './abi/tip3wallet.abi.json'
 
-export class TIP3Wallet extends BaseContract {
+export class TIP3WalletFlex extends BaseContract {
   constructor(client: TonClient, address: string, keys?: KeyPair) {
     super(client, TIP3WalletABI, address, { keys })
   }
 
   async getBalance() {
     const details = await this.runLocal('getDetails', {})
+    console.debug('tip3 details: ', details)
 
     // Trigger ask for balance
     const nativestr = await this.account.getBalance()

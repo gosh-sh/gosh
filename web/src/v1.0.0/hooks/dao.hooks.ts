@@ -1,19 +1,25 @@
-import { useCallback, useEffect, useState } from 'react'
 import _ from 'lodash'
-import { useProfile, useUser } from './user.hooks'
-import { EGoshError, GoshError } from '../../errors'
-import { validateUsername } from '../validators'
-import { AppConfig } from '../../appconfig'
-import { getSystemContract } from '../blockchain/helpers'
-import { supabase } from '../../supabase'
-import { executeByChunk, setLockableInterval, sleep, whileFinite } from '../../utils'
-import { DISABLED_VERSIONS, MAX_PARALLEL_READ } from '../../constants'
+import { useCallback, useEffect, useState } from 'react'
+import { GoshAdapterFactory } from 'react-gosh'
 import {
   useRecoilState,
   useRecoilValue,
   useResetRecoilState,
   useSetRecoilState,
 } from 'recoil'
+import { AppConfig } from '../../appconfig'
+import { getPaginatedAccounts } from '../../blockchain/utils'
+import { DISABLED_VERSIONS, MAX_PARALLEL_READ } from '../../constants'
+import { EGoshError, GoshError } from '../../errors'
+import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
+import { supabase } from '../../supabase'
+import { TToastStatus } from '../../types/common.types'
+import { executeByChunk, setLockableInterval, sleep, whileFinite } from '../../utils'
+import { Dao } from '../blockchain/dao'
+import { DaoEvent } from '../blockchain/daoevent'
+import { DaoWallet } from '../blockchain/daowallet'
+import { getSystemContract } from '../blockchain/helpers'
+import { UserProfile } from '../blockchain/userprofile'
 import {
   daoDetailsSelector,
   daoEventListSelector,
@@ -28,14 +34,8 @@ import {
   TDaoListItem,
   TDaoMemberListItem,
 } from '../types/dao.types'
-import { Dao } from '../blockchain/dao'
-import { UserProfile } from '../../blockchain/userprofile'
-import { DaoWallet } from '../blockchain/daowallet'
-import { TToastStatus } from '../../types/common.types'
-import { getPaginatedAccounts } from '../../blockchain/utils'
-import { DaoEvent } from '../blockchain/daoevent'
-import { GoshAdapterFactory } from 'react-gosh'
-import { appContextAtom, appToastStatusSelector } from '../../store/app.state'
+import { validateUsername } from '../validators'
+import { useProfile, useUser } from './user.hooks'
 
 export function useCreateDao() {
   const profile = useProfile()
@@ -43,6 +43,8 @@ export function useCreateDao() {
   const [status, setStatus] = useRecoilState(appToastStatusSelector('__createdao'))
 
   const createDao = async (name: string, members: string[]) => {
+    const sc = getSystemContract()
+
     try {
       setStatus((state) => ({ ...state, type: 'pending', data: 'Create DAO' }))
 
@@ -78,7 +80,7 @@ export function useCreateDao() {
       }
       const membersProfileList = await Promise.all(
         membersClean.map(async (username) => {
-          const account = await AppConfig.goshroot.getUserProfile({ username })
+          const account = await sc.getUserProfile({ username })
           if (!(await account.isDeployed())) {
             throw new GoshError(EGoshError.PROFILE_NOT_EXIST, {
               username,
@@ -782,6 +784,8 @@ export function useCreateDaoMember() {
   const [status, setStatus] = useRecoilState(appToastStatusSelector('__createdaomember'))
 
   const createMember = async (username: string[]) => {
+    const sc = getSystemContract()
+
     try {
       // Resolve username -> profile
       setStatus((state) => ({
@@ -790,7 +794,7 @@ export function useCreateDaoMember() {
         data: 'Resolve user profiles',
       }))
       const profiles = await executeByChunk(username, MAX_PARALLEL_READ, async (name) => {
-        const profile = await AppConfig.goshroot.getUserProfile({
+        const profile = await sc.getUserProfile({
           username: name.toLowerCase(),
         })
         if (!(await profile.isDeployed())) {
@@ -834,6 +838,8 @@ export function useDeleteDaoMember() {
   const [status, setStatus] = useRecoilState(appToastStatusSelector('__deletedaomember'))
 
   const deleteMember = async (username: string[]) => {
+    const sc = getSystemContract()
+
     try {
       setMemberList((state) => ({
         ...state,
@@ -850,7 +856,7 @@ export function useDeleteDaoMember() {
         data: 'Resolve user profiles',
       }))
       const profiles = await executeByChunk(username, MAX_PARALLEL_READ, async (name) => {
-        const profile = await AppConfig.goshroot.getUserProfile({
+        const profile = await sc.getUserProfile({
           username: name.toLowerCase(),
         })
         if (!(await profile.isDeployed())) {

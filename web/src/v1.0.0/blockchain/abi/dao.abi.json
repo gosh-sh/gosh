@@ -1,468 +1,494 @@
 {
-  "ABI version": 2,
-  "version": "2.3",
-  "header": ["pubkey", "time", "expire"],
-  "functions": [
-    {
-      "name": "constructor",
-      "inputs": [
-        { "name": "pubaddr", "type": "address" },
-        { "name": "profiledao", "type": "address" },
-        { "name": "name", "type": "string" },
-        { "name": "pubmem", "type": "address[]" },
-        { "name": "limit_wallets", "type": "uint128" },
-        { "name": "CommitCode", "type": "cell" },
-        { "name": "RepositoryCode", "type": "cell" },
-        { "name": "WalletCode", "type": "cell" },
-        { "name": "TagCode", "type": "cell" },
-        { "name": "codeSnapshot", "type": "cell" },
-        { "name": "codeTree", "type": "cell" },
-        { "name": "codeDiff", "type": "cell" },
-        { "name": "contentSignature", "type": "cell" },
-        { "name": "TokenLockerCode", "type": "cell" },
-        { "name": "SMVPlatformCode", "type": "cell" },
-        { "name": "SMVClientCode", "type": "cell" },
-        { "name": "SMVProposalCode", "type": "cell" },
-        { "name": "TokenRootCode", "type": "cell" },
-        { "name": "TokenWalletCode", "type": "cell" },
-        { "name": "previous", "type": "optional(address)" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "getPreviousInfo",
-      "inputs": [{ "name": "name", "type": "string" }],
-      "outputs": []
-    },
-    {
-      "name": "getPreviousInfo1",
-      "inputs": [
-        {
-          "components": [
-            { "name": "member", "type": "address" },
-            { "name": "count", "type": "uint128" }
-          ],
-          "name": "wallets",
-          "type": "map(uint256,tuple)"
-        },
-        { "name": "token", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "returnWallets",
-      "inputs": [
-        { "name": "key", "type": "uint256" },
-        {
-          "components": [
-            { "name": "member", "type": "address" },
-            { "name": "count", "type": "uint128" }
-          ],
-          "name": "wallets",
-          "type": "map(uint256,tuple)"
-        }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "sendMoneyDiff",
-      "inputs": [
-        { "name": "repo", "type": "address" },
-        { "name": "commit", "type": "string" },
-        { "name": "index1", "type": "uint128" },
-        { "name": "index2", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "sendMoneySnap",
-      "inputs": [
-        { "name": "branch", "type": "string" },
-        { "name": "repo", "type": "address" },
-        { "name": "name", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "volunteersnap",
-      "inputs": [
-        { "name": "snap", "type": "address[]" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "volunteerdiff",
-      "inputs": [
-        { "name": "diff", "type": "address[]" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "sendMoneyCommit",
-      "inputs": [
-        { "name": "repo", "type": "address" },
-        { "name": "commit", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "sendMoneyTree",
-      "inputs": [
-        { "name": "repo", "type": "address" },
-        { "name": "shaTree", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "upgradeDao",
-      "inputs": [
-        { "name": "newversion", "type": "string" },
-        { "name": "description", "type": "string" },
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "upgradeTokens",
-      "inputs": [
-        { "name": "newvalue", "type": "uint128" },
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "setTombstone",
-      "inputs": [
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "description", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "isAlone",
-      "inputs": [
-        { "name": "config", "type": "uint128" },
-        { "name": "pubaddr", "type": "address[]" },
-        { "name": "pub", "type": "address" },
-        { "name": "index", "type": "uint128" },
-        { "name": "typeF", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "askForTombstoneIn",
-      "inputs": [
-        { "name": "key", "type": "uint256" },
-        { "name": "description", "type": "string" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "deployWallet",
-      "inputs": [
-        { "name": "pubaddrdeploy", "type": "address[]" },
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "requestBurn",
-      "inputs": [
-        { "name": "recipient", "type": "address" },
-        { "name": "pubaddr", "type": "address" },
-        { "name": "burn_amount", "type": "uint128" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "requestMint",
-      "inputs": [
-        { "name": "recipient", "type": "address" },
-        { "name": "pubaddr", "type": "address" },
-        { "name": "mint_amount", "type": "uint128" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "deployWallets",
-      "inputs": [
-        { "name": "pubmem", "type": "address[]" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "deleteWallet",
-      "inputs": [
-        { "name": "pubmem", "type": "address[]" },
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "deleteWallets",
-      "inputs": [
-        { "name": "pubmem", "type": "address[]" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "getAddrWallet",
-      "inputs": [
-        { "name": "pubaddr", "type": "address" },
-        { "name": "index", "type": "uint128" }
-      ],
-      "outputs": [{ "name": "value0", "type": "address" }]
-    },
-    {
-      "name": "getDaoTokenConfig",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "uint128" }]
-    },
-    {
-      "name": "getWalletCode",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "cell" }]
-    },
-    {
-      "name": "getProposalCode",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "cell" }]
-    },
-    {
-      "name": "getClientCode",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "cell" }]
-    },
-    {
-      "name": "getAddrRepository",
-      "inputs": [{ "name": "name", "type": "string" }],
-      "outputs": [{ "name": "value0", "type": "address" }]
-    },
-    {
-      "name": "getTombstone",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "bool" }]
-    },
-    {
-      "name": "getWallets",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "address[]" }]
-    },
-    {
-      "name": "getWalletsToken",
-      "inputs": [],
-      "outputs": [
-        {
-          "components": [
-            { "name": "member", "type": "address" },
-            { "name": "count", "type": "uint128" }
-          ],
-          "name": "value0",
-          "type": "tuple[]"
-        }
-      ]
-    },
-    {
-      "name": "getWalletsFull",
-      "inputs": [],
-      "outputs": [
-        {
-          "components": [
-            { "name": "member", "type": "address" },
-            { "name": "count", "type": "uint128" }
-          ],
-          "name": "value0",
-          "type": "map(uint256,tuple)"
-        }
-      ]
-    },
-    {
-      "name": "isMember",
-      "inputs": [{ "name": "pubaddr", "type": "address" }],
-      "outputs": [{ "name": "value0", "type": "bool" }]
-    },
-    {
-      "name": "getNameDao",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "string" }]
-    },
-    {
-      "name": "getConfig",
-      "inputs": [],
-      "outputs": [
-        { "name": "value0", "type": "uint128" },
-        { "name": "value1", "type": "uint128" }
-      ]
-    },
-    {
-      "name": "getVersion",
-      "inputs": [],
-      "outputs": [
-        { "name": "value0", "type": "string" },
-        { "name": "value1", "type": "string" }
-      ]
-    },
-    {
-      "name": "getOwner",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "address" }]
-    },
-    {
-      "name": "getPreviousDaoAddr",
-      "inputs": [],
-      "outputs": [{ "name": "value0", "type": "optional(address)" }]
-    },
-    {
-      "name": "onAcceptTokensTransfer",
-      "inputs": [
-        { "name": "value0", "type": "address" },
-        { "name": "value1", "type": "uint128" },
-        { "name": "value2", "type": "address" },
-        { "name": "value3", "type": "address" },
-        { "name": "value4", "type": "address" },
-        { "name": "value5", "type": "cell" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "createProjectCurrencies",
-      "inputs": [],
-      "outputs": []
-    },
-    {
-      "name": "deployRoot",
-      "inputs": [
-        { "name": "initialSupplyTo", "type": "address" },
-        { "name": "initialSupply", "type": "uint128" },
-        { "name": "deployWalletValue", "type": "uint128" },
-        { "name": "mintDisabled", "type": "bool" },
-        { "name": "burnByRootDisabled", "type": "bool" },
-        { "name": "burnPaused", "type": "bool" },
-        { "name": "remainingGasTo", "type": "address" },
-        { "name": "randomNonce", "type": "uint256" }
-      ],
-      "outputs": [{ "name": "value0", "type": "address" }]
-    },
-    {
-      "name": "callback",
-      "inputs": [{ "name": "res", "type": "address" }],
-      "outputs": []
-    },
-    {
-      "name": "mint",
-      "inputs": [
-        { "name": "tokenRoot", "type": "address" },
-        { "name": "amount", "type": "uint128" },
-        { "name": "recipient", "type": "address" },
-        { "name": "deployWalletValue", "type": "uint128" },
-        { "name": "remainingGasTo", "type": "address" },
-        { "name": "notify", "type": "bool" },
-        { "name": "payload", "type": "cell" }
-      ],
-      "outputs": []
-    },
-    {
-      "name": "projectTokens",
-      "inputs": [],
-      "outputs": [
-        {
-          "components": [
-            { "name": "ProjectTokenRoot", "type": "address" },
-            { "name": "ReverueTokenRoot", "type": "address" },
-            { "name": "RevenueTokenWallet", "type": "address" }
-          ],
-          "name": "projectTokens",
-          "type": "map(address,tuple)"
-        }
-      ]
-    },
-    {
-      "name": "lastWalletDeployed",
-      "inputs": [],
-      "outputs": [{ "name": "lastWalletDeployed", "type": "address" }]
-    },
-    {
-      "name": "_rootTokenRoot",
-      "inputs": [],
-      "outputs": [{ "name": "_rootTokenRoot", "type": "address" }]
-    },
-    {
-      "name": "_lastAccountAddress",
-      "inputs": [],
-      "outputs": [{ "name": "_lastAccountAddress", "type": "address" }]
-    }
-  ],
-  "data": [
-    { "key": 1, "name": "nonce", "type": "uint256" },
-    { "key": 2, "name": "_systemcontract", "type": "address" }
-  ],
-  "events": [],
-  "fields": [
-    { "name": "_pubkey", "type": "uint256" },
-    { "name": "_constructorFlag", "type": "bool" },
-    { "name": "messages", "type": "map(uint32,map(uint256,bool))" },
-    {
-      "components": [
-        { "name": "messageHash", "type": "uint256" },
-        { "name": "expireAt", "type": "uint32" }
-      ],
-      "name": "lastMessage",
-      "type": "tuple"
-    },
-    { "name": "__value", "type": "uint256" },
-    { "name": "nonce", "type": "uint256" },
-    { "name": "m_tokenRootCode", "type": "cell" },
-    { "name": "m_tokenWalletCode", "type": "cell" },
-    { "name": "_rootpubkey", "type": "uint256" },
-    {
-      "components": [
-        { "name": "ProjectTokenRoot", "type": "address" },
-        { "name": "ReverueTokenRoot", "type": "address" },
-        { "name": "RevenueTokenWallet", "type": "address" }
-      ],
-      "name": "projectTokens",
-      "type": "map(address,tuple)"
-    },
-    { "name": "lastWalletDeployed", "type": "address" },
-    { "name": "_volunteersnap", "type": "address[]" },
-    { "name": "_volunteerdiff", "type": "address[]" },
-    { "name": "_systemcontract", "type": "address" },
-    { "name": "_pubaddr", "type": "address" },
-    { "name": "_profiledao", "type": "address" },
-    { "name": "_nameDao", "type": "string" },
-    { "name": "_previous", "type": "optional(address)" },
-    {
-      "components": [
-        { "name": "member", "type": "address" },
-        { "name": "count", "type": "uint128" }
-      ],
-      "name": "_wallets",
-      "type": "map(uint256,tuple)"
-    },
-    { "name": "_code", "type": "map(uint8,cell)" },
-    { "name": "_tokenforperson", "type": "uint128" },
-    { "name": "_limit_wallets", "type": "uint128" },
-    { "name": "m_TokenLockerCode", "type": "cell" },
-    { "name": "m_SMVPlatformCode", "type": "cell" },
-    { "name": "m_SMVClientCode", "type": "cell" },
-    { "name": "m_SMVProposalCode", "type": "cell" },
-    { "name": "_rootTokenRoot", "type": "address" },
-    { "name": "_lastAccountAddress", "type": "address" },
-    { "name": "_flag", "type": "bool" },
-    { "name": "_tombstone", "type": "bool" },
-    { "name": "timeMoney", "type": "uint128" },
-    { "name": "saveaddr", "type": "optional(address[])" },
-    { "name": "saveind", "type": "optional(uint128)" }
-  ]
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"profiledao","type":"address"},
+				{"name":"name","type":"string"},
+				{"name":"pubmem","type":"address[]"},
+				{"name":"limit_wallets","type":"uint128"},
+				{"name":"CommitCode","type":"cell"},
+				{"name":"RepositoryCode","type":"cell"},
+				{"name":"WalletCode","type":"cell"},
+				{"name":"TagCode","type":"cell"},
+				{"name":"codeSnapshot","type":"cell"},
+				{"name":"codeTree","type":"cell"},
+				{"name":"codeDiff","type":"cell"},
+				{"name":"contentSignature","type":"cell"},
+				{"name":"TokenLockerCode","type":"cell"},
+				{"name":"SMVPlatformCode","type":"cell"},
+				{"name":"SMVClientCode","type":"cell"},
+				{"name":"SMVProposalCode","type":"cell"},
+				{"name":"TokenRootCode","type":"cell"},
+				{"name":"TokenWalletCode","type":"cell"},
+				{"name":"previous","type":"optional(address)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getPreviousInfo",
+			"inputs": [
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getPreviousInfo1",
+			"inputs": [
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"},
+				{"name":"token","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "returnWallets",
+			"inputs": [
+				{"name":"key","type":"uint256"},
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"wallets","type":"map(uint256,tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendMoneyDiff",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"commit","type":"string"},
+				{"name":"index1","type":"uint128"},
+				{"name":"index2","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendMoneySnap",
+			"inputs": [
+				{"name":"branch","type":"string"},
+				{"name":"repo","type":"address"},
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "volunteersnap",
+			"inputs": [
+				{"name":"snap","type":"address[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "volunteerdiff",
+			"inputs": [
+				{"name":"diff","type":"address[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendMoneyCommit",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"commit","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendMoneyTree",
+			"inputs": [
+				{"name":"repo","type":"address"},
+				{"name":"shaTree","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "upgradeDao",
+			"inputs": [
+				{"name":"newversion","type":"string"},
+				{"name":"description","type":"string"},
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "upgradeTokens",
+			"inputs": [
+				{"name":"newvalue","type":"uint128"},
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setTombstone",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"description","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "isAlone",
+			"inputs": [
+				{"name":"config","type":"uint128"},
+				{"name":"pubaddr","type":"address[]"},
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"typeF","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "askForTombstoneIn",
+			"inputs": [
+				{"name":"key","type":"uint256"},
+				{"name":"description","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployWallet",
+			"inputs": [
+				{"name":"pubaddrdeploy","type":"address[]"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "requestBurn",
+			"inputs": [
+				{"name":"recipient","type":"address"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"burn_amount","type":"uint128"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "requestMint",
+			"inputs": [
+				{"name":"recipient","type":"address"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"mint_amount","type":"uint128"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployWallets",
+			"inputs": [
+				{"name":"pubmem","type":"address[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deleteWallet",
+			"inputs": [
+				{"name":"pubmem","type":"address[]"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deleteWallets",
+			"inputs": [
+				{"name":"pubmem","type":"address[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getAddrWallet",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getDaoTokenConfig",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"}
+			]
+		},
+		{
+			"name": "getWalletCode",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getProposalCode",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getClientCode",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getAddrRepository",
+			"inputs": [
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getTombstone",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
+			]
+		},
+		{
+			"name": "getWallets",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address[]"}
+			]
+		},
+		{
+			"name": "getWalletsToken",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"value0","type":"tuple[]"}
+			]
+		},
+		{
+			"name": "getWalletsFull",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"value0","type":"map(uint256,tuple)"}
+			]
+		},
+		{
+			"name": "isMember",
+			"inputs": [
+				{"name":"pubaddr","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"bool"}
+			]
+		},
+		{
+			"name": "getNameDao",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
+			]
+		},
+		{
+			"name": "getConfig",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"uint128"},
+				{"name":"value1","type":"uint128"}
+			]
+		},
+		{
+			"name": "getVersion",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"},
+				{"name":"value1","type":"string"}
+			]
+		},
+		{
+			"name": "getOwner",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "getPreviousDaoAddr",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"optional(address)"}
+			]
+		},
+		{
+			"name": "onAcceptTokensTransfer",
+			"inputs": [
+				{"name":"value0","type":"address"},
+				{"name":"value1","type":"uint128"},
+				{"name":"value2","type":"address"},
+				{"name":"value3","type":"address"},
+				{"name":"value4","type":"address"},
+				{"name":"value5","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "createProjectCurrencies",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "deployRoot",
+			"inputs": [
+				{"name":"initialSupplyTo","type":"address"},
+				{"name":"initialSupply","type":"uint128"},
+				{"name":"deployWalletValue","type":"uint128"},
+				{"name":"mintDisabled","type":"bool"},
+				{"name":"burnByRootDisabled","type":"bool"},
+				{"name":"burnPaused","type":"bool"},
+				{"name":"remainingGasTo","type":"address"},
+				{"name":"randomNonce","type":"uint256"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "callback",
+			"inputs": [
+				{"name":"res","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "mint",
+			"inputs": [
+				{"name":"tokenRoot","type":"address"},
+				{"name":"amount","type":"uint128"},
+				{"name":"recipient","type":"address"},
+				{"name":"deployWalletValue","type":"uint128"},
+				{"name":"remainingGasTo","type":"address"},
+				{"name":"notify","type":"bool"},
+				{"name":"payload","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "projectTokens",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"ProjectTokenRoot","type":"address"},{"name":"ReverueTokenRoot","type":"address"},{"name":"RevenueTokenWallet","type":"address"}],"name":"projectTokens","type":"map(address,tuple)"}
+			]
+		},
+		{
+			"name": "lastWalletDeployed",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"lastWalletDeployed","type":"address"}
+			]
+		},
+		{
+			"name": "_rootTokenRoot",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_rootTokenRoot","type":"address"}
+			]
+		},
+		{
+			"name": "_lastAccountAddress",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_lastAccountAddress","type":"address"}
+			]
+		}
+	],
+	"data": [
+		{"key":1,"name":"nonce","type":"uint256"},
+		{"key":2,"name":"_systemcontract","type":"address"}
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"messages","type":"map(uint32,map(uint256,bool))"},
+		{"components":[{"name":"messageHash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"lastMessage","type":"tuple"},
+		{"name":"__value","type":"uint256"},
+		{"name":"nonce","type":"uint256"},
+		{"name":"m_tokenRootCode","type":"cell"},
+		{"name":"m_tokenWalletCode","type":"cell"},
+		{"name":"_rootpubkey","type":"uint256"},
+		{"components":[{"name":"ProjectTokenRoot","type":"address"},{"name":"ReverueTokenRoot","type":"address"},{"name":"RevenueTokenWallet","type":"address"}],"name":"projectTokens","type":"map(address,tuple)"},
+		{"name":"lastWalletDeployed","type":"address"},
+		{"name":"_volunteersnap","type":"address[]"},
+		{"name":"_volunteerdiff","type":"address[]"},
+		{"name":"_systemcontract","type":"address"},
+		{"name":"_pubaddr","type":"address"},
+		{"name":"_profiledao","type":"address"},
+		{"name":"_nameDao","type":"string"},
+		{"name":"_previous","type":"optional(address)"},
+		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"}],"name":"_wallets","type":"map(uint256,tuple)"},
+		{"name":"_code","type":"map(uint8,cell)"},
+		{"name":"_tokenforperson","type":"uint128"},
+		{"name":"_limit_wallets","type":"uint128"},
+		{"name":"m_TokenLockerCode","type":"cell"},
+		{"name":"m_SMVPlatformCode","type":"cell"},
+		{"name":"m_SMVClientCode","type":"cell"},
+		{"name":"m_SMVProposalCode","type":"cell"},
+		{"name":"_rootTokenRoot","type":"address"},
+		{"name":"_lastAccountAddress","type":"address"},
+		{"name":"_flag","type":"bool"},
+		{"name":"_tombstone","type":"bool"},
+		{"name":"timeMoney","type":"uint128"},
+		{"name":"saveaddr","type":"optional(address[])"},
+		{"name":"saveind","type":"optional(uint128)"}
+	]
 }

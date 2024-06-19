@@ -6,7 +6,6 @@ import { GoshAdapterFactory } from 'react-gosh'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { NotificationsAPI } from '../../apis/notifications'
 import { AppConfig } from '../../appconfig'
-import { UserProfile } from '../../blockchain/userprofile'
 import { getAllAccounts, getPaginatedAccounts } from '../../blockchain/utils'
 import {
   DAO_TOKEN_TRANSFER_TAG,
@@ -40,6 +39,7 @@ import { Milestone } from '../blockchain/milestone'
 import { GoshRepository } from '../blockchain/repository'
 import { SystemContract } from '../blockchain/systemcontract'
 import { Task } from '../blockchain/task'
+import { UserProfile } from '../blockchain/userprofile'
 import { getGrantMapping } from '../components/Task'
 import {
   daoDetailsSelector,
@@ -1703,9 +1703,7 @@ export function useCreateDaoMember() {
             let profile
             const daonames = []
             if (user.type === EDaoMemberType.User) {
-              profile = await AppConfig.goshroot.getUserProfile({
-                username,
-              })
+              profile = await sc.getUserProfile({ username })
               daonames.push(null)
             } else if (user.type === EDaoMemberType.Dao) {
               profile = await sc.getDao({ name: username })
@@ -3394,7 +3392,7 @@ export function useSendDaoTokens() {
         if (usertype === EDaoMemberType.Dao) {
           profile = await sc.getDao({ name: username.toLowerCase() })
         } else if (usertype === EDaoMemberType.User) {
-          profile = await AppConfig.goshroot.getUserProfile({
+          profile = await sc.getUserProfile({
             username: username.toLowerCase(),
           })
         }
@@ -3532,7 +3530,7 @@ export function useSendMemberTokens() {
           if (usertype === EDaoMemberType.Dao) {
             profile = await sc.getDao({ name: username })
           } else if (usertype === EDaoMemberType.User) {
-            profile = await AppConfig.goshroot.getUserProfile({
+            profile = await sc.getUserProfile({
               username: username.toLowerCase(),
             })
           }
@@ -3940,6 +3938,7 @@ export function useCreateMilestone() {
       tags?: string[]
       comment?: string
     }) => {
+      const sc = getSystemContract()
       const month2sec = 30 * 24 * 60 * 60
       const comment = params.comment || `Create milestone ${params.taskname}`
 
@@ -3970,7 +3969,7 @@ export function useCreateMilestone() {
         }
 
         // Resolve manager username -> profile
-        const manager = await AppConfig.goshroot.getUserProfile({
+        const manager = await sc.getUserProfile({
           username: params.manager.username,
         })
         if (!(await manager.isDeployed())) {

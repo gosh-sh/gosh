@@ -17,6 +17,7 @@ type TRepository = {
     commitsIn: { branch: string; commit: TCommit }[]
     description?: string
     tags?: string[]
+    metadata?: { [key: string]: any }
 }
 
 type TRepositoryListItem = Omit<TRepository, 'branches' | 'head' | 'commitsIn'> & {

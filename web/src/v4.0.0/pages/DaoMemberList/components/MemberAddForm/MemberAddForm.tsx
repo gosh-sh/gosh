@@ -36,6 +36,8 @@ import { useCreateDaoMember, useDao } from '../../../../hooks/dao.hooks'
 import yup from '../../../../yup-extended'
 
 const getUsernameOptions = async (input: string) => {
+  const sc = getSystemContract()
+
   if (input.indexOf('@') >= 0) {
     const username = await getUsernameByEmail(input)
     if (username) {
@@ -48,7 +50,7 @@ const getUsernameOptions = async (input: string) => {
   }
 
   const options: any[] = []
-  const profileQuery = await AppConfig.goshroot.getUserProfile({
+  const profileQuery = await sc.getUserProfile({
     username: input.toLowerCase(),
   })
   if (await profileQuery.isDeployed()) {
@@ -58,7 +60,7 @@ const getUsernameOptions = async (input: string) => {
     })
   }
 
-  const daoQuery = await getSystemContract().getDao({ name: input })
+  const daoQuery = await sc.getDao({ name: input })
   if (await daoQuery.isDeployed()) {
     const next = await daoQuery.getNext()
     options.push({

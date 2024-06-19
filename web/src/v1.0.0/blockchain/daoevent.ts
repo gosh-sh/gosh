@@ -1,12 +1,12 @@
 import { TonClient } from '@eversdk/core'
 import { BaseContract } from '../../blockchain/contract'
-import SmvEventABI from './abi/smvproposal.abi.json'
 import { DaoEventType, MAX_PARALLEL_READ } from '../../constants'
-import { DaoWallet } from './daowallet'
-import { EDaoEventType } from '../../types/common.types'
 import { GoshError } from '../../errors'
+import { EDaoEventType } from '../../types/common.types'
 import { executeByChunk } from '../../utils'
-import { AppConfig } from '../../appconfig'
+import SmvEventABI from './abi/smvproposal.abi.json'
+import { DaoWallet } from './daowallet'
+import { getSystemContract } from './helpers'
 
 export class DaoEvent extends BaseContract {
   constructor(client: TonClient, address: string) {
@@ -102,11 +102,12 @@ export class DaoEvent extends BaseContract {
   }
 
   async parseDaoMemberAddEventParams(data: any) {
+    const sc = getSystemContract()
     return await executeByChunk<string, any>(
       data.pubaddr,
       MAX_PARALLEL_READ,
       async (address) => {
-        const profile = await AppConfig.goshroot.getUserProfile({ address })
+        const profile = await sc.getUserProfile({ address })
         return {
           username: await profile.getName(),
           profile: address,
@@ -117,11 +118,12 @@ export class DaoEvent extends BaseContract {
   }
 
   async parseDaoMemberDeleteEventParams(data: any) {
+    const sc = getSystemContract()
     return await executeByChunk<string, any>(
       data.pubaddr,
       MAX_PARALLEL_READ,
       async (address) => {
-        const profile = await AppConfig.goshroot.getUserProfile({ address })
+        const profile = await sc.getUserProfile({ address })
         return {
           username: await profile.getName(),
           profile: address,
