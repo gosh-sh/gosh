@@ -141,6 +141,17 @@
 			]
 		},
 		{
+			"name": "getGoshChangePrioritiesProposalParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"components":[{"name":"name","type":"string"},{"name":"priority","type":"uint128"}],"name":"priorities","type":"tuple[]"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
 			"name": "getGoshAddProtectedBranchProposalParams",
 			"inputs": [
 			],
@@ -148,6 +159,7 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
+				{"name":"tags","type":"string[]"},
 				{"name":"comment","type":"string"}
 			]
 		},
@@ -249,6 +261,7 @@
 				{"name":"tag","type":"string[]"},
 				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
 				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"},
+				{"name":"isrevert","type":"bool"},
 				{"name":"comment","type":"string"}
 			]
 		},
@@ -504,7 +517,8 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"taskname","type":"string"},
-				{"name":"repoName","type":"string"}
+				{"name":"repoName","type":"string"},
+				{"name":"isrevert","type":"bool"}
 			]
 		},
 		{
@@ -515,7 +529,8 @@
 			"outputs": [
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"taskname","type":"string"},
-				{"name":"repoName","type":"string"}
+				{"name":"repoName","type":"string"},
+				{"name":"isrevert","type":"bool"}
 			]
 		},
 		{
@@ -537,6 +552,56 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"tags","type":"string[]"},
 				{"name":"multiples","type":"uint128[]"}
+			]
+		},
+		{
+			"name": "getRepoUpdateMetadataTagParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"nameRepo","type":"string"},
+				{"name":"metadata","type":"string"}
+			]
+		},
+		{
+			"name": "getRepoUpdateMetadataTagParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"nameRepo","type":"string"},
+				{"name":"metadata","type":"string"}
+			]
+		},
+		{
+			"name": "getStartTokenParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"name":"tokendescription","type":"string"},
+				{"name":"name","type":"string"},
+				{"name":"symbol","type":"string"},
+				{"name":"decimals","type":"uint8"},
+				{"components":[{"name":"pubaddr","type":"address"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"tuple[]"}
+			]
+		},
+		{
+			"name": "getStartTokenParams",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"name":"tokendescription","type":"string"},
+				{"name":"name","type":"string"},
+				{"name":"symbol","type":"string"},
+				{"name":"decimals","type":"uint8"},
+				{"components":[{"name":"pubaddr","type":"address"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"tuple[]"}
 			]
 		},
 		{
@@ -834,6 +899,19 @@
 				{"name":"proposalKind","type":"uint256"},
 				{"name":"repoName","type":"string"},
 				{"name":"branchName","type":"string"},
+				{"name":"tags","type":"string[]"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getGoshChangeBranchPrioritiesParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"repoName","type":"string"},
+				{"components":[{"name":"name","type":"string"},{"name":"priority","type":"uint128"}],"name":"priorities","type":"tuple[]"},
 				{"name":"comment","type":"string"}
 			]
 		},
@@ -1084,6 +1162,7 @@
 				{"name":"tag","type":"string[]"},
 				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
 				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"},
+				{"name":"isrevert","type":"bool"},
 				{"name":"comment","type":"string"}
 			]
 		},
@@ -1282,6 +1361,17 @@
 		},
 		{
 			"name": "getChangeHideVotingResultProposalParamsData",
+			"inputs": [
+				{"name":"Data","type":"cell"}
+			],
+			"outputs": [
+				{"name":"proposalKind","type":"uint256"},
+				{"name":"result","type":"bool"},
+				{"name":"comment","type":"string"}
+			]
+		},
+		{
+			"name": "getChangeFreeAccessProposalParamsData",
 			"inputs": [
 				{"name":"Data","type":"cell"}
 			],

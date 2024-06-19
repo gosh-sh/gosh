@@ -12,6 +12,86 @@
 			]
 		},
 		{
+			"name": "transferFromWallet",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"namedao","type":"string"},
+				{"name":"namerepo","type":"string"},
+				{"name":"value","type":"uint128"},
+				{"name":"pubaddr","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "transferFromWalletAgain",
+			"inputs": [
+				{"name":"namedao","type":"string"},
+				{"name":"namerepo","type":"string"},
+				{"name":"pubaddr","type":"address"},
+				{"name":"from","type":"address"},
+				{"name":"to","type":"address"},
+				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendTokenToWalletForRepo",
+			"inputs": [
+				{"name":"name","type":"string"},
+				{"name":"namedao","type":"string"},
+				{"name":"namerepo","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "turnOnPubkeyFromProfile",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"namedao","type":"string"},
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "turnOffPubkeyFromProfile",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"namedao","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateCodeForProfile",
+			"inputs": [
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updateCodeForProfileExt",
+			"inputs": [
+				{"name":"name","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "sendToken",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"token","type":"uint128"},
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployNewDaoWallet",
 			"inputs": [
 				{"name":"nameDao","type":"string"}
@@ -275,6 +355,14 @@
 			]
 		},
 		{
+			"name": "deployNewCCWallet",
+			"inputs": [
+				{"name":"pubkey","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployDao",
 			"inputs": [
 				{"name":"name","type":"string"},
@@ -309,6 +397,15 @@
 			"name": "sendMoneyDao",
 			"inputs": [
 				{"name":"name","type":"string"},
+				{"name":"value","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "returnTokenToGosh",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
 				{"name":"value","type":"uint128"}
 			],
 			"outputs": [
@@ -398,6 +495,20 @@
 				{"name":"namedao","type":"string"},
 				{"name":"wallet","type":"address"},
 				{"name":"newwallet","type":"address"},
+				{"name":"grant","type":"uint128"},
+				{"name":"newversion","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "DaoTransferToken4new",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"namedao","type":"string"},
+				{"name":"newdao","type":"string"},
+				{"name":"pubaddrnew","type":"address"},
 				{"name":"grant","type":"uint128"},
 				{"name":"newversion","type":"string"}
 			],
@@ -917,7 +1028,8 @@
 		{
 			"name": "getDaoWalletCode",
 			"inputs": [
-				{"name":"pubaddr","type":"address"}
+				{"name":"pubaddr","type":"address"},
+				{"name":"goshdao","type":"address"}
 			],
 			"outputs": [
 				{"name":"value0","type":"cell"}
@@ -941,6 +1053,14 @@
 		},
 		{
 			"name": "getSMVClientCode",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
+			"name": "getTokenRootCode",
 			"inputs": [
 			],
 			"outputs": [

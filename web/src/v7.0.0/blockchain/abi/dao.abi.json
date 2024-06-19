@@ -183,6 +183,16 @@
 			]
 		},
 		{
+			"name": "changeFreeAccess",
+			"inputs": [
+				{"name":"pub","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"res","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "changeAllowDiscussion",
 			"inputs": [
 				{"name":"pub","type":"address"},
@@ -447,6 +457,22 @@
 				{"name":"pub","type":"address"},
 				{"name":"index","type":"uint128"},
 				{"name":"wallet","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "isNotProtected",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"repoName","type":"string"},
+				{"name":"branch","type":"string"},
+				{"name":"commit","type":"address"},
+				{"name":"number","type":"uint128"},
+				{"name":"numberCommits","type":"uint128"},
+				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"task","type":"optional(tuple)"},
+				{"name":"isUpgrade","type":"bool"},
+				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
 			]
@@ -970,6 +996,14 @@
 			]
 		},
 		{
+			"name": "isFree",
+			"inputs": [
+				{"name":"pubaddr","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "deployWalletsOutMember",
 			"inputs": [
 				{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"pubmem","type":"tuple[]"},
@@ -999,7 +1033,8 @@
 				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
 				{"name":"value","type":"uint128"},
 				{"name":"bigtask","type":"optional(string)"},
-				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"}
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"},
+				{"name":"isRevert","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -1014,7 +1049,8 @@
 				{"name":"hashtag","type":"string[]"},
 				{"components":[{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"assign","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"review","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"manager","type":"tuple[]"},{"components":[{"name":"grant","type":"uint128"},{"name":"lock","type":"uint128"}],"name":"subtask","type":"tuple[]"}],"name":"grant","type":"tuple"},
 				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"commit","type":"tuple"},
-				{"name":"freebalance","type":"uint128"}
+				{"name":"freebalance","type":"uint128"},
+				{"name":"isRevert","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -1034,7 +1070,8 @@
 				{"name":"num","type":"uint8"},
 				{"name":"value","type":"uint128"},
 				{"name":"bigtask","type":"optional(string)"},
-				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"}
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"},
+				{"name":"isRevert","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -1054,7 +1091,8 @@
 				{"name":"num","type":"uint8"},
 				{"name":"value","type":"uint128"},
 				{"name":"bigtask","type":"optional(string)"},
-				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"}
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"},
+				{"name":"isRevert","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -1074,7 +1112,8 @@
 				{"name":"num","type":"uint8"},
 				{"name":"value","type":"uint128"},
 				{"name":"bigtask","type":"optional(string)"},
-				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"}
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"},
+				{"name":"isRevert","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -1094,7 +1133,8 @@
 				{"name":"num","type":"uint8"},
 				{"name":"value","type":"uint128"},
 				{"name":"bigtask","type":"optional(string)"},
-				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"}
+				{"components":[{"name":"task","type":"address"},{"name":"commit","type":"optional(address)"},{"name":"number_commit","type":"optional(uint128)"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"workers","type":"optional(tuple)"},
+				{"name":"isRevert","type":"bool"}
 			],
 			"outputs": [
 			]
@@ -1587,6 +1627,14 @@
 			]
 		},
 		{
+			"name": "_isFreeAccess",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"_isFreeAccess","type":"bool"}
+			]
+		},
+		{
 			"name": "_isRepoUpgraded",
 			"inputs": [
 			],
@@ -1620,8 +1668,7 @@
 		}
 	],
 	"data": [
-		{"key":1,"name":"nonce","type":"uint256"},
-		{"key":2,"name":"_systemcontract","type":"address"}
+		{"key":1,"name":"nonce","type":"uint256"}
 	],
 	"events": [
 	],
@@ -1673,6 +1720,7 @@
 		{"name":"_allowMint","type":"bool"},
 		{"name":"_hide_voting_results","type":"bool"},
 		{"name":"_allow_discussion_on_proposals","type":"bool"},
+		{"name":"_isFreeAccess","type":"bool"},
 		{"name":"timeMoney","type":"uint128"},
 		{"components":[{"name":"member","type":"address"},{"name":"count","type":"uint128"},{"name":"expired","type":"uint128"}],"name":"saveaddr","type":"optional(tuple[])"},
 		{"name":"savedao","type":"optional(optional(string)[])"},

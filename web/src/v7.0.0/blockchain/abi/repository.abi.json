@@ -19,9 +19,43 @@
 				{"name":"codeTree","type":"cell"},
 				{"name":"codeDiff","type":"cell"},
 				{"name":"contentSignature","type":"cell"},
+				{"name":"tokenrootcode","type":"cell"},
+				{"name":"tokenwalletcode","type":"cell"},
 				{"name":"versions","type":"map(uint256,string)"},
 				{"name":"index","type":"uint128"},
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"previousversion","type":"optional(tuple)"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startToken",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"tokendescription","type":"string"},
+				{"name":"name","type":"string"},
+				{"name":"symbol","type":"string"},
+				{"name":"decimals","type":"uint8"},
+				{"components":[{"name":"pubaddr","type":"address"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"tuple[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "startGrantToken",
+			"inputs": [
+				{"components":[{"name":"pubaddr","type":"address"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"tuple[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "transferFromWallet",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"value","type":"uint128"},
+				{"name":"pubaddr2","type":"address"}
 			],
 			"outputs": [
 			]
@@ -31,17 +65,6 @@
 			"inputs": [
 				{"components":[{"name":"addr","type":"address"},{"name":"version","type":"string"}],"name":"prev","type":"tuple"},
 				{"name":"answer","type":"address"}
-			],
-			"outputs": [
-			]
-		},
-		{
-			"name": "checkUpdateRepo5",
-			"inputs": [
-				{"name":"ans","type":"bool"},
-				{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"}],"name":"Branches","type":"map(uint256,tuple)"},
-				{"name":"protectedBranch","type":"map(uint256,bool)"},
-				{"name":"head","type":"string"}
 			],
 			"outputs": [
 			]
@@ -240,10 +263,40 @@
 			]
 		},
 		{
+			"name": "updateRepoMetadata",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"name":"metadata","type":"string"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updatePriorities",
+			"inputs": [
+				{"name":"pubaddr","type":"address"},
+				{"name":"index","type":"uint128"},
+				{"components":[{"name":"name","type":"string"},{"name":"priority","type":"uint128"}],"name":"priorities","type":"tuple[]"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "updatePrioritiesIn",
+			"inputs": [
+				{"components":[{"name":"name","type":"string"},{"name":"priority","type":"uint128"}],"name":"priorities","type":"tuple[]"},
+				{"name":"index","type":"uint128"}
+			],
+			"outputs": [
+			]
+		},
+		{
 			"name": "addProtectedBranch",
 			"inputs": [
 				{"name":"pubaddr","type":"address"},
 				{"name":"branch","type":"string"},
+				{"name":"tags","type":"string[]"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -269,6 +322,7 @@
 				{"name":"numberCommits","type":"uint128"},
 				{"components":[{"name":"task","type":"address"},{"name":"pubaddrassign","type":"map(address,bool)"},{"name":"pubaddrreview","type":"map(address,bool)"},{"name":"pubaddrmanager","type":"map(address,bool)"},{"name":"daoMembers","type":"map(address,string)"}],"name":"task","type":"optional(tuple)"},
 				{"name":"isUpgrade","type":"bool"},
+				{"name":"membertag","type":"map(uint256,bool)"},
 				{"name":"index","type":"uint128"}
 			],
 			"outputs": [
@@ -310,7 +364,16 @@
 				{"name":"branch","type":"string"}
 			],
 			"outputs": [
-				{"name":"value0","type":"bool"}
+				{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"},{"name":"isProtected","type":"bool"},{"name":"tags","type":"string[]"},{"name":"priority","type":"uint128"}],"name":"value0","type":"optional(tuple)"}
+			]
+		},
+		{
+			"name": "getRepoWalletAddr",
+			"inputs": [
+				{"name":"pubaddr","type":"address"}
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
 			]
 		},
 		{
@@ -320,14 +383,6 @@
 			],
 			"outputs": [
 				{"name":"value0","type":"address"}
-			]
-		},
-		{
-			"name": "getProtectedBranch",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"value0","type":"map(uint256,bool)"}
 			]
 		},
 		{
@@ -344,7 +399,7 @@
 				{"name":"name","type":"string"}
 			],
 			"outputs": [
-				{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"}],"name":"value0","type":"tuple"}
+				{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"},{"name":"isProtected","type":"bool"},{"name":"tags","type":"string[]"},{"name":"priority","type":"uint128"}],"name":"value0","type":"tuple"}
 			]
 		},
 		{
@@ -352,7 +407,7 @@
 			"inputs": [
 			],
 			"outputs": [
-				{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"}],"name":"value0","type":"tuple[]"}
+				{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"},{"name":"isProtected","type":"bool"},{"name":"tags","type":"string[]"},{"name":"priority","type":"uint128"}],"name":"value0","type":"tuple[]"}
 			]
 		},
 		{
@@ -475,16 +530,29 @@
 			]
 		},
 		{
+			"name": "getTokenRootCode",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"cell"}
+			]
+		},
+		{
 			"name": "getDetails",
 			"inputs": [
 			],
 			"outputs": [
 				{"name":"description","type":"string"},
 				{"name":"name","type":"string"},
-				{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"}],"name":"alladress","type":"tuple[]"},
+				{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"},{"name":"isProtected","type":"bool"},{"name":"tags","type":"string[]"},{"name":"priority","type":"uint128"}],"name":"alladress","type":"tuple[]"},
 				{"name":"head","type":"string"},
 				{"name":"hashtag","type":"map(uint256,string)"},
-				{"name":"ready","type":"bool"}
+				{"name":"ready","type":"bool"},
+				{"name":"tokendescription","type":"optional(string)"},
+				{"components":[{"name":"pubaddr","type":"address"},{"name":"value","type":"uint128"}],"name":"tokengrants","type":"optional(tuple[])"},
+				{"name":"tokensupply","type":"optional(uint128)"},
+				{"name":"tokenroot","type":"optional(address)"},
+				{"name":"metadata","type":"string"}
 			]
 		},
 		{
@@ -538,8 +606,7 @@
 		{"name":"_nameDao","type":"string"},
 		{"name":"_goshdao","type":"address"},
 		{"name":"_head","type":"string"},
-		{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"}],"name":"_Branches","type":"map(uint256,tuple)"},
-		{"name":"_protectedBranch","type":"map(uint256,bool)"},
+		{"components":[{"name":"branchname","type":"string"},{"name":"commitaddr","type":"address"},{"name":"commitversion","type":"string"},{"name":"isProtected","type":"bool"},{"name":"tags","type":"string[]"},{"name":"priority","type":"uint128"}],"name":"_Branches","type":"map(uint256,tuple)"},
 		{"name":"_hashtag","type":"map(uint256,string)"},
 		{"name":"_limittag","type":"uint128"},
 		{"name":"_counttag","type":"uint128"},
@@ -547,6 +614,11 @@
 		{"name":"_limited","type":"bool"},
 		{"name":"_versions","type":"map(uint256,string)"},
 		{"name":"_description","type":"string"},
-		{"name":"_creator","type":"address"}
+		{"name":"_creator","type":"address"},
+		{"name":"_tokendescription","type":"optional(string)"},
+		{"components":[{"name":"pubaddr","type":"address"},{"name":"value","type":"uint128"}],"name":"_tokengrants","type":"optional(tuple[])"},
+		{"name":"_supply","type":"optional(uint128)"},
+		{"name":"_tokenroot","type":"optional(address)"},
+		{"name":"_metadata","type":"string"}
 	]
 }

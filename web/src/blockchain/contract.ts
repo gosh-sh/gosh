@@ -195,7 +195,7 @@ class BaseContract {
     options?: AccountRunOptions,
     settings?: { logging?: boolean; retries?: number },
   ): Promise<ResultOfProcessMessage> {
-    const { logging = false, retries = 3 } = settings ?? {}
+    const { logging = true, retries = 3 } = settings ?? {}
 
     if (logging) {
       console.debug('[Run]', { functionName, input })

@@ -177,7 +177,7 @@ export function useCreateDao() {
         data: { profile: profile.address },
         keys: user.keys,
       })) as DaoWallet
-      await profile.turnOn(wallet.address, user.keys.public)
+      await profile.turnOn(name, user.keys.public, version)
 
       // Mint tokens
       if (supply > 20) {
@@ -902,7 +902,8 @@ export function useDaoMember(
           type: 'pending',
           data: 'Activating DAO wallet',
         }))
-        await profile.turnOn(wallet.address, user.keys!.public)
+
+        await profile.turnOn(dao.name!, user.keys!.public, dao.version!)
       }
 
       setStatus0((state) => ({ ...state, type: 'dismiss' }))
@@ -1873,7 +1874,7 @@ export function useDeleteDaoMember() {
           if (usertype === EDaoMemberType.Dao) {
             profile = await sc.getDao({ name: username.toLowerCase() })
           } else if (usertype === EDaoMemberType.User) {
-            profile = await AppConfig.goshroot.getUserProfile({
+            profile = await sc.getUserProfile({
               username: username.toLowerCase(),
             })
           }

@@ -481,6 +481,7 @@ interface IGoshRepositoryAdapter {
 			branchParent?: string;
 			task?: TTaskCommitConfig;
 			callback?: IPushCallback;
+			cell?: boolean
 		},
 	): Promise<string | null>;
 	pushUpgrade(

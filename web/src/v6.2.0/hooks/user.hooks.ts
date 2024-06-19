@@ -20,7 +20,6 @@ import { appContextAtom, appToastStatusSelector } from "../../store/app.state";
 import {
 	userAtom,
 	userPersistAtom,
-	userProfileSelector,
 } from "../../store/user.state";
 import { supabase } from "../../supabase";
 import { TUserPersist } from "../../types/user.types";
@@ -235,6 +234,7 @@ export function useUserSignup(options: { initialize?: boolean } = {}) {
 		username: string;
 	}) => {
 		const email = params.email.toLowerCase();
+		const sc = getSystemContract();
 
 		try {
 			// Validate username

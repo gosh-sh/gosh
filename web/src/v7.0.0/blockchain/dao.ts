@@ -7,6 +7,7 @@ import DaoABI from './abi/dao.abi.json'
 import { DaoEvent } from './daoevent'
 import { DaoWallet } from './daowallet'
 import { getSystemContract } from './helpers'
+import { UserProfile } from '../blockchain/userprofile'
 
 export class Dao extends BaseContract {
   constructor(client: TonClient, address: string) {

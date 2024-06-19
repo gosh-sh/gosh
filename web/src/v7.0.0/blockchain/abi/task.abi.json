@@ -239,8 +239,7 @@
 		}
 	],
 	"data": [
-		{"key":1,"name":"_nametask","type":"string"},
-		{"key":2,"name":"_goshdao","type":"address"}
+		{"key":1,"name":"_nametask","type":"string"}
 	],
 	"events": [
 	],
@@ -286,6 +285,7 @@
 		{"name":"_waitForUpdate","type":"bool"},
 		{"name":"_previousVersionAddr","type":"address"},
 		{"name":"_previousVersion","type":"string"},
+		{"name":"_revert","type":"bool"},
 		{"name":"_bigtask","type":"optional(string)"}
 	]
 }
