@@ -45,7 +45,7 @@ contract Topic is Modifiers{
         _object = object;
         _author = pubaddr;
         _createdAt = block.timestamp;
-        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
+//        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
     }
     
     function acceptMessage(address pubaddr, uint128 index, optional(uint256) answer, string message) public view {

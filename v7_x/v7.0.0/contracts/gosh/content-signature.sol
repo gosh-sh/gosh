@@ -34,7 +34,7 @@ contract ContentSignature is Modifiers {
         _code[m_WalletCode] = WalletCode;
         _pubaddr = pubaddr;
 //        _action = action;
-        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
+//        require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);
 //        if (_label != "") { Action(_action).activate{value : 0.1 ton, flag: 1}(_commit, _content); }
     }
     

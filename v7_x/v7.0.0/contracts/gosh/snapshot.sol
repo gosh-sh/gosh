@@ -59,7 +59,7 @@ contract Snapshot is Modifiers {
         (uint256 codehash, address repo, uint256 hash) = abi.decode(dataSalt, (uint256, address, uint256));
         hash;
         _rootRepo = repo;
-        require(codehash == tvm.hash(WalletCode), ERR_SENDER_NO_ALLOWED);
+//        require(codehash == tvm.hash(WalletCode), ERR_SENDER_NO_ALLOWED);
         _pubaddr = pubaddr;
         _code[m_SnapshotCode] = codeSnapshot;
         _code[m_CommitCode] = codeCommit;

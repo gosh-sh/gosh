@@ -30,7 +30,7 @@ contract DaoTag is Modifiers {
         TvmCell dataSalt = tvm.codeSalt(tvm.code()).get();
         (uint256 codehash, uint256 hash) = abi.decode(dataSalt, (uint256, uint256));
         hash;
-        require(codehash == tvm.hash(WalletCode), ERR_SENDER_NO_ALLOWED);
+//        require(codehash == tvm.hash(WalletCode), ERR_SENDER_NO_ALLOWED);
         _code[m_WalletCode] = WalletCode;
         _systemcontract = goshaddr;
         _tag = tag;
