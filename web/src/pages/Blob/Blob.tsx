@@ -7,7 +7,12 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Buffer } from 'buffer'
 import { useBlob, useBranches } from 'react-gosh'
-import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
+import {
+  Link,
+  useNavigate,
+  useOutletContext,
+  useParams,
+} from 'react-router-dom'
 import { CodeComments } from '../../components/Blob/Comments'
 import BlobPreview from '../../components/Blob/Preview'
 import { BranchSelect } from '../../components/Branches'
@@ -28,7 +33,7 @@ const BlobPage = () => {
   const blob = useBlob(daoName!, repoName!, branchName, treepath)
 
   return (
-    <div className="flex flex-wrap lg:flex-nowrap">
+    <div className="grid grid-cols-1 lg:grid-cols-[75%,_1fr]">
       <div className="grow">
         <div className="flex flex-wrap items-center gap-3 mb-5">
           <BranchSelect
@@ -65,7 +70,9 @@ const BlobPage = () => {
           {!blob.isFetching && blob.content === undefined && (
             <div className="text-gray-7c8db5 text-sm p-5">File not found</div>
           )}
-          {blob.isFetching && <Loader className="text-sm p-5">Loading file...</Loader>}
+          {blob.isFetching && (
+            <Loader className="text-sm p-5">Loading file...</Loader>
+          )}
           {blob.path && !blob.isFetching && (
             <>
               <div className="flex bg-gray-100 px-3 py-1 border-b justify-end items-center">
