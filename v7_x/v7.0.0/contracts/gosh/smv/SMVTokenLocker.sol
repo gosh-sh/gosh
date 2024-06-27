@@ -72,7 +72,8 @@ function startPlatform (TvmCell platformCode, TvmCell clientCode, uint128 amount
                                      msg.value, SMVErrors.error_balance_too_low+1000);
     require(msg.value > deployFee+SMVConstants.ACTION_FEE, SMVErrors.error_balance_too_low+1001);
     require(amountToLock <= m_tokenBalance, SMVErrors.error_not_enough_votes);
-
+    _goshdao = goshdao;
+    
     TvmSlice s = staticCell.toSlice();
     ( , address locker) = s.load(uint8, address);
 
