@@ -157,9 +157,9 @@ const App = () => {
                 element={<HackathonApplicationListPage />}
               />
             </Route>
-            <Route path="/o/:daoName/r/:repoName" element={<RepoLayout />}>
-              <Route index element={<RepoPage />} />
-              <Route path="tree/:branchName/*" element={<RepoPage />} />
+            <Route path="/o/:daoName/r/:repoName" element={<StagesLayout />}>
+              <Route index element={<StagesPage />} />
+              <Route path="tree/:branchName/*" element={<StagesPage />} />
               <Route path="branches" element={<BranchesPage />} />
               <Route path="blobs">
                 <Route

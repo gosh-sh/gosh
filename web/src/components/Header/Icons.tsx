@@ -11,15 +11,16 @@ export const IconDao = (
       <feComponentTransfer in={"SourceAlpha"}>
         <feFuncA type="table" tableValues="1 0" />
       </feComponentTransfer>
-      <feGaussianBlur stdDeviation="1.2" />
+      <feGaussianBlur stdDeviation="1.2" result="blur" />
       <feOffset dx="0" dy="1" result="offsetblur" />
-      <feFlood flood-color="rgb(100, 100, 100)" result="color" />
+      <feFlood floodColor="rgb(0, 0, 0)" result="color" />
       <feComposite in2="offsetblur" operator="in" />
       <feComposite in2="SourceAlpha" operator="in" />
       <feMerge>
         <feMergeNode in="SourceGraphic" />
-        <feMergeNode />
+        <feMergeNode mode="multiply" />
       </feMerge>
+      {/* <feBlend in="SourceGraphic" mode="multiply" /> */}
     </filter>
     <path
       filter="url(#inset-shadow)"
@@ -45,7 +46,7 @@ export const IconHacksGrants = (
       </feComponentTransfer>
       <feGaussianBlur stdDeviation="1.2" />
       <feOffset dx="0" dy="1" result="offsetblur" />
-      <feFlood flood-color="rgb(100, 100, 100)" result="color" />
+      <feFlood floodColor="rgb(100, 100, 100)" result="color" />
       <feComposite in2="offsetblur" operator="in" />
       <feComposite in2="SourceAlpha" operator="in" />
       <feMerge>
@@ -56,7 +57,7 @@ export const IconHacksGrants = (
     <path
       filter="url(#inset-shadow)"
       fillRule="evenodd"
-      clip-rule="evenodd"
+      clipRule="evenodd"
       d="M12.7446 11.0195C12.6107 11.4315 12.2267 11.7105 11.7935 11.7105H4.33631C3.36759 11.7105 2.96481 12.9501 3.74853 13.5195L9.78152 17.9027C10.132 18.1574 10.2787 18.6087 10.1448 19.0208L7.84039 26.113C7.54104 27.0343 8.59552 27.8004 9.37923 27.231L15.4122 22.8478C15.7627 22.5931 16.2373 22.5931 16.5878 22.8478L22.6208 27.231C23.4045 27.8004 24.459 27.0343 24.1596 26.113L21.8552 19.0208C21.7213 18.6087 21.868 18.1574 22.2185 17.9027L28.2515 13.5195C29.0352 12.9501 28.6324 11.7105 27.6637 11.7105H20.2065C19.7733 11.7105 19.3893 11.4315 19.2555 11.0195L16.9511 3.92731C16.6517 3.006 15.3483 3.006 15.0489 3.92731L12.7446 11.0195ZM21.6596 8.7105L19.8042 3.00026C18.6068 -0.684969 13.3932 -0.684996 12.1958 3.00026L10.3404 8.7105H4.33631C0.461435 8.7105 -1.1497 13.669 1.98517 15.9466L6.84259 19.4757L4.98722 25.1859C3.78982 28.8712 8.00772 31.9357 11.1426 29.6581L16 26.1289L20.8574 29.6581C23.9923 31.9357 28.2102 28.8712 27.0128 25.1859L25.1574 19.4757L30.0148 15.9466C33.1497 13.669 31.5386 8.7105 27.6637 8.7105H21.6596Z"
     />
   </svg>
@@ -77,7 +78,7 @@ export const IconMembers = (
       </feComponentTransfer>
       <feGaussianBlur stdDeviation="1.2" />
       <feOffset dx="0" dy="1" result="offsetblur" />
-      <feFlood flood-color="rgb(100, 100, 100)" result="color" />
+      <feFlood floodColor="rgb(100, 100, 100)" result="color" />
       <feComposite in2="offsetblur" operator="in" />
       <feComposite in2="SourceAlpha" operator="in" />
       <feMerge>
@@ -111,7 +112,7 @@ export const IconEthereum = (
       </feComponentTransfer>
       <feGaussianBlur stdDeviation="1.2" />
       <feOffset dx="0" dy="1" result="offsetblur" />
-      <feFlood flood-color="rgb(100, 100, 100)" result="color" />
+      <feFlood floodColor="rgb(100, 100, 100)" result="color" />
       <feComposite in2="offsetblur" operator="in" />
       <feComposite in2="SourceAlpha" operator="in" />
       <feMerge>
@@ -141,9 +142,9 @@ export const IconFiles = (
       <feComponentTransfer in={"SourceAlpha"}>
         <feFuncA type="table" tableValues="1 0" />
       </feComponentTransfer>
-      <feGaussianBlur stdDeviation="1.2" />
+      <feGaussianBlur stdDeviation="1" />
       <feOffset dx="0" dy="1" result="offsetblur" />
-      <feFlood flood-color="rgb(100, 100, 100)" result="color" />
+      {/* <feFlood floodColor="rgb(100, 100, 100)" result="color" /> */}
       <feComposite in2="offsetblur" operator="in" />
       <feComposite in2="SourceAlpha" operator="in" />
       <feMerge>
@@ -175,7 +176,7 @@ export const IconTasks = (
       </feComponentTransfer>
       <feGaussianBlur stdDeviation="1.2" />
       <feOffset dx="0" dy="1" result="offsetblur" />
-      <feFlood flood-color="rgb(100, 100, 100)" result="color" />
+      <feFlood floodColor="rgb(100, 100, 100)" result="color" />
       <feComposite in2="offsetblur" operator="in" />
       <feComposite in2="SourceAlpha" operator="in" />
       <feMerge>
@@ -217,7 +218,7 @@ export const IconSettings = (
       </feComponentTransfer>
       <feGaussianBlur stdDeviation="1.2" />
       <feOffset dx="0" dy="1" result="offsetblur" />
-      <feFlood flood-color="rgb(100, 100, 100)" result="color" />
+      <feFlood floodColor="rgb(100, 100, 100)" result="color" />
       <feComposite in2="offsetblur" operator="in" />
       <feComposite in2="SourceAlpha" operator="in" />
       <feMerge>

@@ -17,9 +17,6 @@ import { AppConfig } from "../../appconfig";
 import { ButtonLink } from "../Form";
 import { Notifications } from "./Notifications";
 import classNames from "classnames";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Swiper as SwiperClass } from "swiper";
-import "swiper/css";
 import { useEffect, useRef, useState } from "react";
 import { useDao, useDaoMember } from "../../hooks/dao.hooks";
 import { getIdenticonAvatar } from "../../helpers";
@@ -46,20 +43,33 @@ export const Header = () => {
   const isSignup = location.pathname.search("/signup") >= 0;
   const isInnerPage = location.pathname.search("/o/") >= 0;
 
-  const swiperRef = useRef<SwiperClass | null>(null);
-  const slideMenu = (index: number) => {
-    if (swiperRef.current) {
-      swiperRef.current.slideTo(index);
-    }
-  };
-
   const items = [
-    { to: "/a/orgs", title: "Organizations", className: "text-gray-050a15" },
-    { to: "/", title: "Hacks & Grants", className: "text-gray-050a15" },
-    { to: "/", title: "Tools", className: "text-gray-050a15" },
+    {
+      to: "/a/orgs",
+      title: "Organizations",
+      className: "text-gray-050a15",
+      active: true,
+    },
+    {
+      to: "/",
+      title: "Hacks & Grants",
+      className: "text-gray-050a15",
+      active: false,
+    },
+    { to: "/", title: "Tools", className: "text-gray-050a15", active: false },
     {},
-    { to: "/a/settings", title: "Settings", className: "text-gray-050a15" },
-    { to: "/a/l2", title: "Ethereum", className: "text-gray-050a15" },
+    {
+      to: "/a/settings",
+      title: "Settings",
+      className: "text-gray-050a15",
+      active: true,
+    },
+    {
+      to: "/a/l2",
+      title: "Ethereum",
+      className: "text-gray-050a15",
+      active: true,
+    },
   ];
 
   const getTools = (daoname: string) => {
@@ -76,28 +86,28 @@ export const Header = () => {
         title: "Files",
         order: 2,
         icon: IconFiles,
-        color: "#DBB81A",
+        color: "#E8BE00",
       },
       {
         to: `/o/${daoname}/members`,
         title: "Members",
         order: 3,
         icon: IconMembers,
-        color: "#CBCDD3",
+        color: "#FF9315",
       },
       {
         to: `/o/${daoname}/hacksgrants`,
         title: "H & G",
         order: 4,
         icon: IconHacksGrants,
-        color: "#CBCDD3",
+        color: "#7575FF",
       },
       {
         to: `/o/${daoname}/tasks`,
         title: "Tasks",
         order: 5,
         icon: IconTasks,
-        color: "#CBCDD3",
+        color: "#319CFF",
       },
     ];
 
@@ -107,23 +117,19 @@ export const Header = () => {
         title: "Settings",
         order: 7,
         icon: IconSettings,
-        color: "#DBB81A",
+        color: "#838795",
       });
       tabs.push({
         to: `/o/${daoname}/l2`,
-        title: "Ethereum",
+        title: "L2",
         order: 6,
         icon: IconEthereum,
-        color: "#5E6974",
+        color: "#5CC7FF",
       });
     }
 
     return tabs.sort((a, b) => a.order - b.order);
   };
-
-  useEffect(() => {
-    slideMenu(isInnerPage ? 1 : 0);
-  }, [isInnerPage]);
 
   useEffect(() => {
     if (dao.details.name) setTools(getTools(dao.details.name));
@@ -157,23 +163,6 @@ export const Header = () => {
                 />
               </div>
             </Link>
-
-            {/* <Swiper 
-              autoHeight={true}
-              spaceBetween={50}
-              slidesPerView={1}
-              className="w-full grow pointer-events-none"
-              onSwiper={(swiper) => {
-                swiperRef.current = swiper;
-              }}
-            >
-              <SwiperSlide className="flex flex-col justify-start items-center text-center p-2">
-                Slide 1
-              </SwiperSlide>
-              <SwiperSlide className="flex flex-col justify-start items-center text-center p-2">
-                Slide 2
-              </SwiperSlide>
-            </Swiper> */}
             <div className="flex flex-col justify-start items-center gap-x-4 sm:gap-x-34px grow relative w-full overflow-hidden">
               <div
                 className={classNames(
@@ -185,11 +174,13 @@ export const Header = () => {
                   items.map((item, index) =>
                     item.to ? (
                       <NavLink
+                        key={index}
                         to={item.to}
                         className={({ isActive, isPending }) =>
                           classNames(
                             "block py-4 text-gray-53596d font-medium tracking-[-0.02rem] hover:text-black",
                             isActive ? "!text-black" : null,
+                            item.active ? "" : "pointer-events-none opacity-40",
                             item.className,
                           )
                         }
@@ -198,6 +189,7 @@ export const Header = () => {
                       </NavLink>
                     ) : (
                       <MenuSeparator
+                        key={index}
                         className={"h-[1px] bg-[#d6d6dd] my-4 w-full"}
                       />
                     ),
@@ -230,6 +222,7 @@ export const Header = () => {
                 )}
               </div>
               <div
+                id="tools-menu"
                 className={classNames(
                   "h-auto w-[72px] grow-0 overflow-hidden transition-all duration-[400ms] ease-[cubic-bezier(0.375, 0.885, 0.6, 1)] border-box absolute py-2 px-2 flex flex-col justify-start items-center",
                   isInnerPage ? "left-0" : "left-[300px]", // top-6 left-6",
@@ -296,11 +289,11 @@ export const Header = () => {
                       <>
                         <div
                           className={classNames(
-                            "w-[48px] h-[48px] border border-none rounded-lg overflow-hidden text flex flex-col justify-center items-center text-[#CBCDD3] transition-all",
+                            "w-[48px] h-[48px] border border-none rounded-lg overflow-hidden text flex flex-col justify-center items-center transition-all",
                             isActive ? `shadow-md bg-white` : "",
                           )}
                           style={{
-                            color: `text-[${isActive ? item.color : "#CBCDD3"}] !important`,
+                            color: isActive ? item.color : "#CBCDD3",
                           }}
                         >
                           {item.icon}

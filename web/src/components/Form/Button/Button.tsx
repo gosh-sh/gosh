@@ -43,7 +43,7 @@ const styles: { [key: string]: string[] } = {
     "bg-gray-fafafd text-gray-53596d",
     "!border-gray-e6edff",
     "hover:text-black",
-    "disabled:text-gray-e6edff",
+    "disabled:!text-[#D0D0D3] disabled:!bg-[#EDEDF0]",
   ],
   "link-secondary": [
     "bg-transparent text-gray-53596d !border-0 hover:text-black disabled:text-gray-e6edff",

@@ -127,7 +127,7 @@ const RepoLayout = () => {
         <h1 className="flex flex-wrap flex-row justify-start items-center">
           <Link
             to={`/o/${daoName}`}
-            className="font-semibold text-xl color flex flex-row justify-start items-center"
+            className="font-semibold text-xl color flex flex-row justify-start items-center text-[#0083E0]"
           >
             <div className="w-[40px] h-[40px] border shadow-md border-none bg-white rounded-lg overflow-hidden mr-2">
               <img

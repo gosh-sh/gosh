@@ -255,7 +255,7 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
   }, []);
 
   return (
-    <div className={classNames(className)}>
+    <div className={classNames(className, "container py-4")}>
       {initialFormikValues && (
         <Formik
           initialValues={initialFormikValues}

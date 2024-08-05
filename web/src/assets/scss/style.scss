@@ -22,7 +22,7 @@ body,
 }
 
 a {
-  color: #0083E0;
+  // color: #0083E0;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -632,4 +632,88 @@ h1, h2, h3, h4, h5, h6 {
 
 .jodit-preview {
   padding: 1rem
+}
+
+#tools-menu {
+  svg {
+    filter: drop-shadow(inset 3px 5px 2px rgb(0 0 0 / 0.4));
+  }
+}
+
+.wobbling-items {
+  &:nth-child(2n) .wobbler {
+    animation-name: keyframes1;
+    animation-iteration-count: infinite;
+    transform-origin: 50% 10%;
+    -webkit-transition: all .2s ease-in-out;
+  }
+
+  &:nth-child(2n-1) .wobbler {
+      animation-name: keyframes2;
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
+      transform-origin: 30% 50%;
+  }
+
+  &:hover .wobbler {
+    animation: none;
+  }
+  
+  @keyframes keyframes1 {
+      0% {
+          transform: rotate(-3deg);
+          animation-timing-function: ease-in;
+      }
+      50% {
+          transform: rotate(5deg) scale(1.05);
+          animation-timing-function: ease-out;
+      }
+  }
+  
+  @keyframes keyframes2 {
+      0% {
+          transform: rotate(3deg) scale(1.05);
+          animation-timing-function: ease-in;
+      }
+      50% {
+          transform: rotate(-5deg);
+          animation-timing-function: ease-out;
+      }
+  }
+
+
+  &:nth-child(9n) .wobbler {
+    animation-delay: -0.75; animation-duration: .25s
+  }
+
+  &:nth-child(9n+1) .wobbler {
+    animation-delay: -0.5; animation-duration: .3s
+  }
+
+  &:nth-child(9n+2) .wobbler {
+    animation-delay: -0.05; animation-duration: .27s
+  }
+
+  &:nth-child(9n+3) .wobbler {
+    animation-delay: -0.2; animation-duration: .33s
+  }
+
+  &:nth-child(9n+4) .wobbler {
+    animation-delay: -0.31; animation-duration: .24s
+  }
+
+  &:nth-child(9n+5) .wobbler {
+    animation-delay: -0.15; animation-duration: .25s
+  }
+  &:nth-child(9n+6) .wobbler {
+    animation-delay: -0.2; animation-duration: .22s
+  }
+
+  &:nth-child(9n+7) .wobbler {
+    animation-delay: -0.3; animation-duration: .28s
+  }
+
+  &:nth-child(9n+8) .wobbler {
+    animation-delay: -0.22; animation-duration: .3s
+  }
 }

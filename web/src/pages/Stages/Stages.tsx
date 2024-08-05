@@ -1,20 +1,17 @@
 import { faFile, faHandPaper } from "@fortawesome/free-regular-svg-icons";
 import {
   faGripLines,
+  faList,
   faLock,
   faLockOpen,
   faPlus,
-} from "@fortawesome/free-solid-svg-icons";
-import {
   faChevronDown,
-  faClockRotateLeft,
-  faCode,
-  faCodeBranch,
   faInfoCircle,
   faFolder,
   faMagnifyingGlass,
   faRightLong,
-  faTerminal,
+  faThLarge,
+  faCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -44,7 +41,7 @@ import {
 } from "react-router-dom";
 import { BranchOperateProgress, BranchSelect } from "../../components/Branches";
 import CopyClipboard from "../../components/CopyClipboard";
-import { Button, ButtonLink } from "../../components/Form";
+import { Button, Input } from "../../components/Form";
 import Loader from "../../components/Loader";
 import { onExternalLinkClick } from "../../helpers";
 import { TRepoLayoutOutletContext } from "../../pages/StagesLayout";
@@ -58,6 +55,30 @@ import { ToastError } from "../../components/Toast";
 import { useUpdateBranchConfig } from "../../hooks/repository.hooks";
 import { Form, Formik } from "formik";
 import yup from "../../yup-extended";
+import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  DropResult,
+} from "react-beautiful-dnd";
+import { Tag } from "../../components/Tag";
+
+const IconDrag = (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 16 16"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle cx="1.90476" cy="2.28562" r="1.90476" />
+    <circle cx="1.90476" cy="8.00047" r="1.90476" />
+    <circle cx="1.90476" cy="13.7134" r="1.90476" />
+    <circle cx="8.09519" cy="2.28562" r="1.90476" />
+    <circle cx="8.09519" cy="8.00047" r="1.90476" />
+    <circle cx="8.09519" cy="13.7134" r="1.90476" />
+  </svg>
+);
 
 const StagesPage = () => {
   const treepath = useParams()["*"] || "";
@@ -129,8 +150,12 @@ const StagesPage = () => {
   } = useBranchManagement(dao.details, repository.adapter);
   const { addProtection, removeProtection, updateOrder, status } =
     useUpdateBranchConfig();
+  const [branchesDragged, setBranchesDragged] = useState<TBranch[]>(branches);
+  const [fileView, setFileView] = useState<"tiles" | "list">("list");
+  const [branchesTouched, setBranchesTouched] = useState<boolean | "idle">(
+    false,
+  );
   const [search, setSearch] = useState<string>("");
-  const [filtered, setFiltered] = useState<TBranch[]>(branches);
 
   const onBranchLock = async (name: string) => {
     try {
@@ -172,18 +197,162 @@ const StagesPage = () => {
     }
   };
 
+  const getBranches = () =>
+    [...branches]
+      .concat([
+        {
+          name: "Test 1",
+          priority: 5,
+          tags: ["fag", "jizz", "cuntie"],
+          commit: branches[0].commit,
+          isProtected: false,
+        },
+        {
+          name: "Test 2",
+          priority: 2,
+          tags: ["fag", "jizz", "cuntie"],
+          commit: branches[0].commit,
+          isProtected: false,
+        },
+        {
+          name: "Test 3",
+          priority: 2,
+          tags: ["fag", "jizz", "cuntie"],
+          commit: branches[0].commit,
+          isProtected: false,
+        },
+        {
+          name: "Test 4",
+          priority: 2,
+          tags: ["fag", "jizz", "cuntie"],
+          commit: branches[0].commit,
+          isProtected: false,
+        },
+        {
+          name: "Test 5",
+          priority: 2,
+          tags: ["fag", "jizz", "cuntie"],
+          commit: branches[0].commit,
+          isProtected: false,
+        },
+      ])
+      .sort((a, b) => (a.priority && b.priority ? a.priority - b.priority : 1))
+      .map((branch, index) => ({
+        ...branch,
+        priority: index,
+      }));
+
+  const cancelReordering = () => {
+    setBranchesDragged(getBranches());
+    setBranchesTouched(false);
+  };
+
+  const submitReordering = () => {
+    setBranchesDragged(getBranches());
+    setBranchesTouched(false);
+  };
+
+  const submitProtectionUpdate = async (branch: TBranch, tags: string[]) => {
+    if (repoName) {
+      const { eventaddr } = await addProtection({
+        repo_name: repoName,
+        branch: branch.name,
+        tags,
+      });
+      if (eventaddr) {
+        navigate(`/o/${dao.details.name}/events/${eventaddr}`);
+      }
+    }
+  };
+
   useEffect(() => {
     updateBranches();
   }, [updateBranches]);
 
   useEffect(() => {
-    if (search) {
-      const pattern = new RegExp(search, "i");
-      setFiltered(branches.filter((item) => item.name.search(pattern) >= 0));
-    } else {
-      setFiltered(branches);
-    }
-  }, [branches, search]);
+    setBranchesDragged(
+      [...branches]
+        .concat([
+          {
+            name: "Test 1",
+            priority: 5,
+            tags: ["fag", "jizz", "cuntie"],
+            commit: branches[0].commit,
+            isProtected: false,
+          },
+          {
+            name: "Test 2",
+            priority: 2,
+            tags: ["fag", "jizz", "cuntie"],
+            commit: branches[0].commit,
+            isProtected: false,
+          },
+          {
+            name: "Test 3",
+            priority: 2,
+            tags: ["fag", "jizz", "cuntie"],
+            commit: branches[0].commit,
+            isProtected: false,
+          },
+          {
+            name: "Test 4",
+            priority: 2,
+            tags: ["fag", "jizz", "cuntie"],
+            commit: branches[0].commit,
+            isProtected: false,
+          },
+          {
+            name: "Test 5",
+            priority: 2,
+            tags: ["fag", "jizz", "cuntie"],
+            commit: branches[0].commit,
+            isProtected: false,
+          },
+        ])
+        .sort((a, b) =>
+          a.priority && b.priority ? a.priority - b.priority : 1,
+        )
+        .map((branch, index) => ({
+          ...branch,
+          priority: index,
+        })),
+    );
+  }, [branches]);
+
+  const onDragEnd = (result: DropResult) => {
+    if (
+      result.destination?.index !== undefined &&
+      result.destination?.index !== result.source.index
+    ) {
+      setBranchesTouched(true);
+      const [start, end, delta] =
+        result.destination?.index < result.source.index
+          ? [result.destination?.index, result.source.index, 1]
+          : [result.source.index, result.destination?.index, -1];
+
+      setBranchesDragged(
+        branchesDragged
+          .map((branch) =>
+            branch.priority !== undefined &&
+            branch.priority >= start &&
+            branch.priority < end + 1
+              ? {
+                  ...branch,
+                  priority:
+                    branch.priority === result.source.index
+                      ? result.destination?.index
+                      : branch.priority + delta,
+                }
+              : branch,
+          )
+          .sort((a, b) =>
+            a.priority !== undefined && b.priority !== undefined
+              ? a.priority - b.priority
+              : 1,
+          ),
+      );
+    } else if (branchesTouched === "idle") setBranchesTouched(false);
+  };
 
   return (
     <div className="grow flex flex-row flex-wrap lg:flex-nowrap min-h-full">
@@ -218,7 +387,7 @@ const StagesPage = () => {
                 initial={{ opacity: 0, translateY: "-0.25rem" }}
                 animate={{ opacity: 1, translateY: 0 }}
                 exit={{ opacity: 0, translateY: "0.25rem" }}
-                transition={{ duration: 0.2 }}
+                // transition={{ duration: 0.2 }}
               >
                 <div className="rounded-xl shadow-sm shadow-[#7c8db5]/5 border border-gray-e6edff bg-white p-4">
                   <StageCreate />
@@ -227,13 +396,23 @@ const StagesPage = () => {
             </Popover>
           </AnimatePresence>
         </div>
-        <div>
+        <div
+          className={classNames(
+            "text-xs text-gray-7c8db5 flex flex-row justify-between gap-x-4 px-4 pt-4",
+          )}
+        >
+          <div className={"basis.name grow basis-2 pl-7"}>
+            #&nbsp;&nbsp;&nbsp;·&nbsp;&nbsp;&nbsp;Name
+          </div>
           <div
-            className={classNames("text-xs text-gray-7c8db5 hidden lg:flex")}
+            className={
+              "basis.expert_tags grow-0 shrink-0 basis-[100px] w-[100px] text-left pl-2"
+            }
           >
-            <div className={"basis.name"}>Name</div>
-            <div className={"basis.expert_tags"}>Rules</div>
-            <div className={"basis.allowance"}>Access tags</div>
+            Rules
+          </div>
+          <div className={"basis.allowance grow basis-2 text-right"}>
+            Access tags
           </div>
         </div>
 
@@ -251,160 +430,288 @@ const StagesPage = () => {
         )}
 
         <div className="mt-5 flex flex-col gap-2">
-          {filtered.map((branch, index) => (
-            <div
-              key={index}
-              draggable="true"
-              className="flex flex-wrap gap-x-4 gap-y-2 z-0 items-center px-4 py-3 bg-white чtext-sm rounded-lg border-solid border-[#d6d9e1] border-0 border-[1px] active:rounded-lg"
-              style={{ transform: "translate(0, 0)" }}
-            >
-              <div className="grow flex flex-row items-center gap-3">
-                <FontAwesomeIcon
-                  className="mr-1 opacity-[0.2]"
-                  size="lg"
-                  icon={faGripLines}
-                />
-                <Link
-                  to={`/o/${daoName}/r/${repoName}/tree/${branch.name}`}
-                  className="hover:underline mr-2 text-[16px] font-semibold"
+          <DragDropContext
+            onBeforeCapture={() => {}}
+            onBeforeDragStart={() => {}}
+            onDragStart={() => {
+              if (!branchesTouched) setBranchesTouched("idle");
+              console.log(branchesDragged);
+            }}
+            onDragUpdate={() => {}}
+            onDragEnd={onDragEnd}
+          >
+            <Droppable droppableId="stages">
+              {(provided, snapshot) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  style={{ minHeight: `${branchesDragged.length * 74}px` }}
                 >
-                  {((branch.priority || 0) + 1)?.toLocaleString("en-US", {
-                    minimumIntegerDigits: 2,
-                    useGrouping: false,
-                  })}{" "}
-                  · {branch.name}
-                </Link>
-
-                {branch.isProtected && (
-                  <div className="inline-block rounded-2xl bg-amber-400 text-xs text-white px-2 py-1 mr-2">
-                    <FontAwesomeIcon className="mr-1" size="sm" icon={faLock} />
-                  </div>
-                )}
-
-                {/* {repository.details.head === branch.name && (
-                <div className="inline-block rounded-2xl bg-amber-400 text-xs text-white px-2 py-1 mr-2">
-                  <FontAwesomeIcon className="mr-1" size="sm" icon={faCodeBranch} />
-                  Head
-                </div>
-              )} */}
-              </div>
-              <div className="grow-0">
-                {dao.details.isAuthMember && (
-                  <div className="flex gap-x-3">
-                    <Button
-                      type="button"
-                      variant="outline-secondary"
-                      size="lg"
-                      onClick={() => {
-                        branch.isProtected
-                          ? onBranchUnlock(branch.name)
-                          : onBranchLock(branch.name);
-                      }}
-                      disabled={branchProgress.isFetching}
-                      isLoading={
-                        branchProgress.isFetching &&
-                        branchProgress.type === "(un)lock" &&
-                        branchProgress.name === branch.name
-                      }
-                      className="border-none !px-2 !w-[40px] !h-[40px]"
+                  {branchesDragged.map((branch, index) => (
+                    <Draggable
+                      key={branch.name}
+                      draggableId={branch.name}
+                      index={index}
                     >
-                      {branch.isProtected ? (
-                        <FontAwesomeIcon
-                          className="mr-1 opacity-[1]"
-                          size="lg"
-                          icon={faLock}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          className="mr-1 opacity-[0.2]"
-                          size="lg"
-                          icon={faLockOpen}
-                        />
-                      )}
-                    </Button>
+                      {(provided, snapshot) => (
+                        <div
+                          key={index}
+                          className={classNames(
+                            "flex flex-wrap gap-x-4 gap-y-2 z-0 items-center px-4 py-3 чtext-sm rounded-lg border-solid active:rounded-lg mb-2 transition-all",
+                            branchesTouched
+                              ? "bg-[#ffffff] border-[1px] border-[#d6d9e130] shadow-lg hover:scale-[1.02]"
+                              : "bg-[#fafafb] border-[1px] border-[#d6d9e160]",
+                            branchesTouched && "wobbling-items",
+                          )}
+                          style={{ transform: "translate(0, 0)" }}
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                        >
+                          <div className="grow flex flex-row items-center gap-3 basis-2">
+                            <div className={classNames("opacity-20")}>
+                              {IconDrag}
+                            </div>
+                            <Link
+                              to={`/o/${daoName}/r/${repoName}/tree/${branch.name}`}
+                              className="hover:underline mr-2 text-[16px] font-semibold"
+                            >
+                              <div className="wobbler inline-block mr-1">
+                                {((branch.priority || 0) + 1)?.toLocaleString(
+                                  "en-US",
+                                  {
+                                    minimumIntegerDigits: 2,
+                                    useGrouping: false,
+                                  },
+                                )}{" "}
+                              </div>
+                              · {branch.name}
+                            </Link>
+                          </div>
+                          <div className="grow-0 grow flex flex-row items-center gap-1 width-[100px] basis-0">
+                            {dao.details.isAuthMember && (
+                              <div className="flex gap-x-1">
+                                <Button
+                                  type="button"
+                                  variant="outline-secondary"
+                                  size="lg"
+                                  onClick={() => {
+                                    branch.isProtected
+                                      ? onBranchUnlock(branch.name)
+                                      : onBranchLock(branch.name);
+                                  }}
+                                  disabled={
+                                    branchProgress.isFetching ||
+                                    (branch.isProtected &&
+                                      !!branch.tags?.length)
+                                  }
+                                  isLoading={
+                                    branchProgress.isFetching &&
+                                    branchProgress.type === "(un)lock" &&
+                                    branchProgress.name === branch.name
+                                  }
+                                  className="border-none !px-2 !w-[40px] !h-[40px] flex justify-center items-center"
+                                >
+                                  <FontAwesomeIcon
+                                    className={classNames(
+                                      "opacity-[1]",
+                                      branch.isProtected && !branch.tags?.length
+                                        ? "text-black"
+                                        : "text-[#969DA7]",
+                                    )}
+                                    size="lg"
+                                    icon={faLock}
+                                  />
+                                </Button>
 
-                    <AnimatePresence mode="wait">
-                      <Popover as="div" className="md:relative">
-                        <PopoverButton
-                          as={Button}
-                          test-id="btn-add-stage"
-                          variant="outline-secondary"
-                          className="outline-none border-none !px-2 !w-[40px] !h-[40px]"
-                        >
-                          <FontAwesomeIcon
-                            className="mr-1 opacity-[0.2]"
-                            size="xl"
-                            icon={faHandPaper}
-                          />
-                        </PopoverButton>
-                        <PopoverPanel
-                          as={motion.div}
-                          className="absolute origin-top-right right-[0px] top-[42px] mt-2 w-[50vw] max-w-[400px] px-5 md:px-0"
-                          initial={{ opacity: 0, translateY: "-0.25rem" }}
-                          animate={{ opacity: 1, translateY: 0 }}
-                          exit={{ opacity: 0, translateY: "0.25rem" }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <Formik
-                            initialValues={{ newName: "", from: branch }}
-                            onSubmit={() => {}}
-                            validationSchema={yup.object().shape({
-                              newName: yup
-                                .string()
-                                .matches(
-                                  /^[\w-]+$/,
-                                  "Name has invalid characters",
-                                )
-                                .max(64, "Max length is 64 characters")
-                                .notOneOf(
-                                  branches.map((b) => b.name),
-                                  "Stage exists",
-                                )
-                                .required("Stage name is required"),
-                            })}
-                          >
-                            {({ isSubmitting, setFieldValue }) => (
-                              <Form className="flex flex-col items-end justify-end gap-4">
-                                <div className="rounded-xl shadow-sm shadow-[#7c8db5]/5 border border-gray-e6edff bg-white p-4  z-[10000]">
-                                  {dao.details.tags?.map((tag, index) => (
-                                    <span
-                                      key={index}
-                                      className={classNames(
-                                        "border border-gray-e6edff rounded px-2",
-                                        "text-xs text-gray-7c8db5",
-                                      )}
+                                <AnimatePresence mode="wait">
+                                  <Popover as="div" className="relative">
+                                    <PopoverButton
+                                      as={Button}
+                                      test-id="btn-add-stage"
+                                      variant="outline-secondary"
+                                      className="outline-none border-none !px-2 !w-[40px] !h-[40px]"
                                     >
-                                      #{tag}
-                                    </span>
-                                  ))}
-                                </div>
-                              </Form>
+                                      <FontAwesomeIcon
+                                        className={classNames(
+                                          "opacity-[1]",
+                                          branch.isProtected &&
+                                            branch.tags?.length
+                                            ? "text-black"
+                                            : "text-[#969DA7]",
+                                        )}
+                                        size="xl"
+                                        icon={faHandPaper}
+                                      />
+                                    </PopoverButton>
+                                    <PopoverPanel
+                                      as={motion.div}
+                                      className="absolute origin-top-right left-[0px] top-[42px] mt-2 w-auto max-w-[400px] min-w-[200px] md:px-0 z-20 cursor-default"
+                                      initial={{
+                                        opacity: 0,
+                                        translateY: "-0.25rem",
+                                      }}
+                                      animate={{ opacity: 1, translateY: 0 }}
+                                      exit={{
+                                        opacity: 0,
+                                        translateY: "0.25rem",
+                                      }}
+                                      // transition={{ duration: 0.2 }}
+                                    >
+                                      <div className="rounded-xl shadow-sm shadow-xl border-[1px] border-[#d6d9e130] bg-white p-4">
+                                        <Formik
+                                          initialValues={{
+                                            tags: branch.tags || [],
+                                          }}
+                                          onSubmit={() => {}}
+                                          validationSchema={yup.object().shape({
+                                            tags: yup
+                                              .string()
+                                              .matches(
+                                                /^[\w-]+$/,
+                                                "Name has invalid characters",
+                                              )
+                                              .max(
+                                                64,
+                                                "Max length is 64 characters",
+                                              )
+                                              .notOneOf(
+                                                branches.map((b) => b.name),
+                                                "Stage exists",
+                                              )
+                                              .required(
+                                                "Stage name is required",
+                                              ),
+                                          })}
+                                        >
+                                          {({
+                                            values,
+                                            setValues,
+                                            isSubmitting,
+                                            setFieldValue,
+                                          }) => (
+                                            <Form className="flex flex-col items-start justify-end gap-4">
+                                              <h3>Select Tags</h3>
+                                              <div className="rounded-xl bg-white ">
+                                                {dao.details.expert_tags?.map(
+                                                  (tag, index) => {
+                                                    const isChecked =
+                                                      values.tags.includes(
+                                                        tag.name,
+                                                      );
+                                                    return (
+                                                      <div
+                                                        key={index}
+                                                        className={classNames(
+                                                          "border border-gray-e6edff rounded-3xl p-2 px-4 gap-2 m-1 flex flex-row justify-start items-center min-w-min",
+                                                          "text-xs",
+                                                          isChecked
+                                                            ? "bg-[#71839C] text-white"
+                                                            : "bg-[#F4F4F5]",
+                                                        )}
+                                                        onClick={() => {
+                                                          setValues({
+                                                            tags: isChecked
+                                                              ? values.tags.filter(
+                                                                  (t) =>
+                                                                    t !==
+                                                                    tag.name,
+                                                                )
+                                                              : [
+                                                                  ...values.tags,
+                                                                  tag.name,
+                                                                ],
+                                                          });
+                                                        }}
+                                                      >
+                                                        <div
+                                                          className={classNames(
+                                                            "p-[2px] rounded-md",
+                                                            isChecked
+                                                              ? "bg-transparent border border-transparent"
+                                                              : "bg-white border border-[#dddddd] rounded-md sha",
+                                                          )}
+                                                        >
+                                                          <FontAwesomeIcon
+                                                            className={classNames(
+                                                              "mr-1 opacity-[1] text-lg",
+                                                              isChecked
+                                                                ? "text-[#30C054]"
+                                                                : "text-transparent",
+                                                            )}
+                                                            size="lg"
+                                                            icon={faCheck}
+                                                          />
+                                                        </div>
+                                                        {tag.name}
+                                                      </div>
+                                                    );
+                                                  },
+                                                )}
+                                              </div>
+                                              <Button
+                                                className="w-full"
+                                                size="lg"
+                                                onClick={() =>
+                                                  submitProtectionUpdate(
+                                                    branch,
+                                                    values.tags,
+                                                  )
+                                                }
+                                              >
+                                                Confirm
+                                              </Button>
+                                            </Form>
+                                          )}
+                                        </Formik>
+                                      </div>
+                                    </PopoverPanel>
+                                  </Popover>
+                                </AnimatePresence>
+                              </div>
                             )}
-                          </Formik>
-                        </PopoverPanel>
-                      </Popover>
-                    </AnimatePresence>
-                  </div>
-                )}
-              </div>
-              <div className="grow flex flex-row items-center gap-3">
-                {[].map((tag) => (
-                  <></>
-                ))}
-              </div>
-
-              {branchProgress.isFetching &&
-                branchProgress.type === "destroy" &&
-                branchProgress.name === branch.name && (
-                  <div className="basis-full">
-                    <BranchOperateProgress
-                      operation="Delete"
-                      progress={branchProgress.details}
-                    />
-                  </div>
-                )}
-            </div>
-          ))}
+                          </div>
+                          <div className="grow flex flex-row items-center gap-3 basis-2 justify-end">
+                            Tags
+                          </div>
+                          {branchProgress.isFetching &&
+                            branchProgress.type === "destroy" &&
+                            branchProgress.name === branch.name && (
+                              <div className="basis-full">
+                                <BranchOperateProgress
+                                  operation="Delete"
+                                  progress={branchProgress.details}
+                                />
+                              </div>
+                            )}
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+          <div
+            className={classNames(
+              "flex flex-row gap-4 justify-end items-center",
+              branchesTouched === true
+                ? "opacity-100"
+                : "opacity-0 pointer-events-none",
+            )}
+          >
+            <Button
+              className="w-[100px]"
+              variant="secondary"
+              onClick={cancelReordering}
+              size="xl"
+            >
+              Cancel
+            </Button>
+            <Button className="w-[100px]" size="xl" onClick={submitReordering}>
+              Save
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -440,6 +747,44 @@ const StagesPage = () => {
 							<span className="hidden sm:inline-block ml-1">History</span>
 						</Link>
 					</div> */}
+          <Input
+            className={classNames("bg-[#F9F9FA] rounded-lg h-[36px]")}
+            type="search"
+            placeholder="Find file"
+            autoComplete="off"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            before={
+              <FontAwesomeIcon
+                icon={faMagnifyingGlass}
+                className="text-gray-7c8db5 font-extralight py-2 pl-2"
+              />
+            }
+          />
+          <div className="flex flex-row justify-start items-center gap-0">
+            <Button
+              onClick={() => setFileView("tiles")}
+              // size="lg"
+              variant="secondary"
+              className={classNames(
+                "outline-none rounded-none rounded-tl-lg rounded-bl-lg",
+                fileView === "tiles" ? "color-black" : "text-gray-7c8db5",
+              )}
+            >
+              <FontAwesomeIcon icon={faThLarge} className="font-extralight" />
+            </Button>
+            <Button
+              onClick={() => setFileView("list")}
+              // size="lg"
+              variant="secondary"
+              className={classNames(
+                "outline-none rounded-none rounded-tr-lg rounded-br-lg",
+                fileView === "list" ? "color-black" : "text-gray-7c8db5",
+              )}
+            >
+              <FontAwesomeIcon icon={faList} className="font-extralight" />
+            </Button>
+          </div>
 
           <div className="flex grow gap-3 justify-end">
             {/* <ButtonLink
