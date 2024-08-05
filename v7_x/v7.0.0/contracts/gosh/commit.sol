@@ -76,9 +76,9 @@ contract Commit is Modifiers {
         _pubaddr = pubaddr;
         require(_nameCommit != "", ERR_NO_DATA);
         tvm.accept();
-        TvmCell dataSalt = tvm.codeSalt(tvm.code()).get();
-        (uint256 codehash, uint256 hash) = abi.decode(dataSalt, (uint256, uint256));
-        hash;
+//        TvmCell dataSalt = tvm.codeSalt(tvm.code()).get();
+//        (uint256 codehash, uint256 hash) = abi.decode(dataSalt, (uint256, uint256));
+//        hash;
 //        require(codehash == tvm.hash(WalletCode), ERR_SENDER_NO_ALLOWED);
         _code[m_WalletCode] = WalletCode;
         require(GoshLib.calculateWalletAddress(_code[m_WalletCode], _systemcontract, _goshdao, _pubaddr, index) == msg.sender, ERR_SENDER_NO_ALLOWED);

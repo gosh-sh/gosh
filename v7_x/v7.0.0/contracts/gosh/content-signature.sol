@@ -26,6 +26,7 @@ contract ContentSignature is Modifiers {
      
     constructor(address pubaddr, TvmCell WalletCode, string content, uint128 index) {
         tvm.accept();
+        index;
         TvmCell data = tvm.codeSalt(tvm.code()).get();
         (uint256 codehash, uint256 hash) = abi.decode(data, (uint256, uint256));
         hash;

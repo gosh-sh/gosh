@@ -43,6 +43,7 @@ contract Snapshot is Modifiers {
         address pubaddr,
         address rootgosh,
         address goshdao,
+        address repo,
         TvmCell codeSnapshot,
         TvmCell codeCommit,
         TvmCell codeDiff,
@@ -55,9 +56,9 @@ contract Snapshot is Modifiers {
         optional(string) ipfsdata
     ) {
         tvm.accept();
-        TvmCell dataSalt = tvm.codeSalt(tvm.code()).get();
-        (uint256 codehash, address repo, uint256 hash) = abi.decode(dataSalt, (uint256, address, uint256));
-        hash;
+//        TvmCell dataSalt = tvm.codeSalt(tvm.code()).get();
+//        (uint256 codehash, address repo, uint256 hash) = abi.decode(dataSalt, (uint256, address, uint256));
+//        hash;
         _rootRepo = repo;
 //        require(codehash == tvm.hash(WalletCode), ERR_SENDER_NO_ALLOWED);
         _pubaddr = pubaddr;

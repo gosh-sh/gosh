@@ -67,9 +67,9 @@ contract Repository is Modifiers{
         uint128 index,
         optional(AddrVersion) previousversion
         ) {
-        TvmCell data = tvm.codeSalt(tvm.code()).get();
-        (uint256 codehash, uint256 hash) = abi.decode(data, (uint256, uint256));
-        hash;
+    //    TvmCell data = tvm.codeSalt(tvm.code()).get();
+    //    (uint256 codehash, uint256 hash) = abi.decode(data, (uint256, uint256));
+    //    hash;
     //    require(codehash == tvm.hash(WalletCode), ERR_SENDER_NO_ALLOWED);
         require(_name != "", ERR_NO_DATA);
         tvm.accept();

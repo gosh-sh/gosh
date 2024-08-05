@@ -967,10 +967,10 @@ contract GoshWallet is  Modifiers, SMVAccount, IVotingResultRecipient {
     function deployNewSnapshot(string commitsha, address repo, string name, bytes snapshotdata, optional(string) snapshotipfs, bool isPin) public onlyOwnerPubkeyOptional(_access)  accept saveMsg{
         require(_tombstone == false, ERR_TOMBSTONE);
         if (isPin == true) {
-            new Snapshot{stateInit:GoshLib.composeSnapshotStateInit(_code[m_SnapshotCode], repo, "//PINTAG//" + commitsha, name, _code[m_WalletCode]), value: FEE_DEPLOY_SNAPSHOT, wid: 0, flag: 1}(_pubaddr, _systemcontract, _goshdao, _code[m_SnapshotCode], _code[m_CommitCode], _code[m_DiffCode], _code[m_WalletCode], _code[m_TreeCode], _index, snapshotdata, isPin, commitsha, snapshotipfs);
+            new Snapshot{stateInit:GoshLib.composeSnapshotStateInit(_code[m_SnapshotCode], repo, "//PINTAG//" + commitsha, name, _code[m_WalletCode]), value: FEE_DEPLOY_SNAPSHOT, wid: 0, flag: 1}(_pubaddr, _systemcontract, _goshdao, repo, _code[m_SnapshotCode], _code[m_CommitCode], _code[m_DiffCode], _code[m_WalletCode], _code[m_TreeCode], _index, snapshotdata, isPin, commitsha, snapshotipfs);
         }
         else {
-            new Snapshot{stateInit:GoshLib.composeSnapshotStateInit(_code[m_SnapshotCode], repo, commitsha, name, _code[m_WalletCode]), value: FEE_DEPLOY_SNAPSHOT, wid: 0, flag: 1}(_pubaddr, _systemcontract, _goshdao, _code[m_SnapshotCode], _code[m_CommitCode], _code[m_DiffCode], _code[m_WalletCode], _code[m_TreeCode], _index, snapshotdata, isPin, commitsha, snapshotipfs);
+            new Snapshot{stateInit:GoshLib.composeSnapshotStateInit(_code[m_SnapshotCode], repo, commitsha, name, _code[m_WalletCode]), value: FEE_DEPLOY_SNAPSHOT, wid: 0, flag: 1}(_pubaddr, _systemcontract, _goshdao, repo, _code[m_SnapshotCode], _code[m_CommitCode], _code[m_DiffCode], _code[m_WalletCode], _code[m_TreeCode], _index, snapshotdata, isPin, commitsha, snapshotipfs);
         }
         getMoney();
     }
