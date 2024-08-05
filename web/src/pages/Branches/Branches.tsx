@@ -1,31 +1,43 @@
-import { useEffect, useState } from 'react'
-import { faChevronRight, faLock, faCodeBranch } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Field, Form, Formik, FormikHelpers } from 'formik'
-import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import { FormikInput } from '../../components/Formik'
-import { useBranchManagement, useBranches } from 'react-gosh'
-import { TRepoLayoutOutletContext } from '../RepoLayout'
-import { EGoshError, GoshError } from 'react-gosh'
-import { toast } from 'react-toastify'
-import { ToastError } from '../../components/Toast'
-import { TBranch } from 'react-gosh/dist/types/repo.types'
-import { BranchOperateProgress, BranchSelect } from '../../components/Branches'
-import yup from '../../v1.0.0/yup-extended'
-import { Button, Input } from '../../components/Form'
-import CommitProgress from '../../components/Commit/CommitProgress'
+import { useEffect, useState } from "react";
+import {
+  faChevronRight,
+  faLock,
+  faCodeBranch,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Field, Form, Formik, FormikHelpers } from "formik";
+import {
+  Link,
+  useNavigate,
+  useOutletContext,
+  useParams,
+} from "react-router-dom";
+import { FormikInput } from "../../components/Formik";
+import { useBranchManagement, useBranches } from "react-gosh";
+import { TRepoLayoutOutletContext } from "../RepoLayout";
+import { EGoshError, GoshError } from "react-gosh";
+import { toast } from "react-toastify";
+import { ToastError } from "../../components/Toast";
+import { TBranch } from "react-gosh/dist/types/repo.types";
+import { BranchOperateProgress, BranchSelect } from "../../components/Branches";
+import yup from "../../yup-extended";
+import { Button, Input } from "../../components/Form";
+import CommitProgress from "../../components/Commit/CommitProgress";
 
 type TCreateBranchFormValues = {
-  newName: string
-  from?: TBranch
-}
+  newName: string;
+  from?: TBranch;
+};
 
 export const BranchesPage = () => {
-  const { daoName, repoName } = useParams()
-  const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
-  const navigate = useNavigate()
-  const [branchName, setBranchName] = useState<string>('main')
-  const { branches, branch, updateBranches } = useBranches(repository.adapter, branchName)
+  const { daoName, repoName } = useParams();
+  const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>();
+  const navigate = useNavigate();
+  const [branchName, setBranchName] = useState<string>("main");
+  const { branches, branch, updateBranches } = useBranches(
+    repository.adapter,
+    branchName,
+  );
   const {
     create: createBranch,
     destroy: deleteBranch,
@@ -34,97 +46,97 @@ export const BranchesPage = () => {
     sethead: setheadBranch,
     progress: branchProgress,
     pushProgress,
-  } = useBranchManagement(dao.details, repository.adapter)
-  const [search, setSearch] = useState<string>('')
-  const [filtered, setFiltered] = useState<TBranch[]>(branches)
+  } = useBranchManagement(dao.details, repository.adapter);
+  const [search, setSearch] = useState<string>("");
+  const [filtered, setFiltered] = useState<TBranch[]>(branches);
 
   const onBranchLock = async (name: string) => {
     try {
-      const { eventaddr } = await lockBranch(name)
-      navigate(`/o/${daoName}/events/${eventaddr || ''}`, { replace: true })
+      const { eventaddr } = await lockBranch(name);
+      navigate(`/o/${daoName}/events/${eventaddr || ""}`, { replace: true });
     } catch (e: any) {
-      console.error(e)
-      toast.error(<ToastError error={e} />)
+      console.error(e);
+      toast.error(<ToastError error={e} />);
     }
-  }
+  };
 
   const onBranchUnlock = async (name: string) => {
     try {
-      const { eventaddr } = await unlockBranch(name)
-      navigate(`/o/${daoName}/events/${eventaddr || ''}`, { replace: true })
+      const { eventaddr } = await unlockBranch(name);
+      navigate(`/o/${daoName}/events/${eventaddr || ""}`, { replace: true });
     } catch (e: any) {
-      console.error(e)
-      toast.error(<ToastError error={e} />)
+      console.error(e);
+      toast.error(<ToastError error={e} />);
     }
-  }
+  };
 
   const onBranchCreate = async (
     values: TCreateBranchFormValues,
     helpers: FormikHelpers<any>,
   ) => {
     try {
-      const { newName, from } = values
-      if (!from) throw new GoshError(EGoshError.NO_BRANCH)
+      const { newName, from } = values;
+      if (!from) throw new GoshError(EGoshError.NO_BRANCH);
 
-      await createBranch(newName, from.name)
-      helpers.resetForm()
-      helpers.setFieldValue('from', values.from)
+      await createBranch(newName, from.name);
+      helpers.resetForm();
+      helpers.setFieldValue("from", values.from);
     } catch (e: any) {
-      console.error(e)
-      toast.error(<ToastError error={e} />)
+      console.error(e);
+      toast.error(<ToastError error={e} />);
     }
-  }
+  };
 
   const onBranchDelete = async (name: string) => {
     if (window.confirm(`Delete branch '${name}'?`)) {
       try {
-        await deleteBranch(name)
+        await deleteBranch(name);
       } catch (e: any) {
-        console.error(e)
-        toast.error(<ToastError error={e} />)
+        console.error(e);
+        toast.error(<ToastError error={e} />);
       }
     }
-  }
+  };
 
   const onBranchSetHead = async (name: string) => {
     try {
-      await setheadBranch(name)
+      await setheadBranch(name);
     } catch (e: any) {
-      console.error(e)
-      toast.error(<ToastError error={e} />)
+      console.error(e);
+      toast.error(<ToastError error={e} />);
     }
-  }
+  };
 
   useEffect(() => {
-    updateBranches()
-  }, [updateBranches])
+    updateBranches();
+  }, [updateBranches]);
 
   useEffect(() => {
     if (search) {
-      const pattern = new RegExp(search, 'i')
-      setFiltered(branches.filter((item) => item.name.search(pattern) >= 0))
+      const pattern = new RegExp(search, "i");
+      setFiltered(branches.filter((item) => item.name.search(pattern) >= 0));
     } else {
-      setFiltered(branches)
+      setFiltered(branches);
     }
-  }, [branches, search])
+  }, [branches, search]);
 
   return (
     <>
       <div className="flex flex-wrap justify-between gap-4">
         {dao.details.isAuthMember && (
           <Formik
-            initialValues={{ newName: '', from: branch }}
+            initialValues={{ newName: "", from: branch }}
             onSubmit={onBranchCreate}
             validationSchema={yup.object().shape({
               newName: yup
                 .string()
-                .matches(/^[\w-]+$/, 'Name has invalid characters')
-                .max(64, 'Max length is 64 characters')
+                .matches(/^[\w-]+$/, "Name has invalid characters")
+                .max(64, "Max length is 64 characters")
                 .notOneOf(
                   branches.map((b) => b.name),
-                  'Branch exists',
+                  "Branch exists",
                 )
-                .required('Branch name is required'),
+                .required("Branch name is required"),
             })}
           >
             {({ isSubmitting, setFieldValue }) => (
@@ -135,8 +147,8 @@ export const BranchesPage = () => {
                     branches={branches}
                     onChange={(selected) => {
                       if (selected) {
-                        setBranchName(selected?.name)
-                        setFieldValue('from', selected)
+                        setBranchName(selected?.name);
+                        setFieldValue("from", selected);
                       }
                     }}
                     disabled={isSubmitting}
@@ -154,7 +166,7 @@ export const BranchesPage = () => {
                       autoComplete="off"
                       disabled={isSubmitting}
                       onChange={(e: any) => {
-                        setFieldValue('newName', e.target.value.toLowerCase())
+                        setFieldValue("newName", e.target.value.toLowerCase());
                       }}
                       test-id="input-branch-name"
                     />
@@ -184,12 +196,15 @@ export const BranchesPage = () => {
         </div>
       </div>
 
-      {branchProgress.isFetching && branchProgress.type === 'create' && (
+      {branchProgress.isFetching && branchProgress.type === "create" && (
         <div className="mt-4">
           {!pushProgress.completed ? (
             <CommitProgress {...pushProgress} />
           ) : (
-            <BranchOperateProgress operation="Deploy" progress={branchProgress.details} />
+            <BranchOperateProgress
+              operation="Deploy"
+              progress={branchProgress.details}
+            />
           )}
         </div>
       )}
@@ -217,7 +232,11 @@ export const BranchesPage = () => {
 
               {repository.details.head === branch.name && (
                 <div className="inline-block rounded-2xl bg-amber-400 text-xs text-white px-2 py-1 mr-2">
-                  <FontAwesomeIcon className="mr-1" size="sm" icon={faCodeBranch} />
+                  <FontAwesomeIcon
+                    className="mr-1"
+                    size="sm"
+                    icon={faCodeBranch}
+                  />
                   Head
                 </div>
               )}
@@ -232,16 +251,16 @@ export const BranchesPage = () => {
                     onClick={() => {
                       branch.isProtected
                         ? onBranchUnlock(branch.name)
-                        : onBranchLock(branch.name)
+                        : onBranchLock(branch.name);
                     }}
                     disabled={branchProgress.isFetching}
                     isLoading={
                       branchProgress.isFetching &&
-                      branchProgress.type === '(un)lock' &&
+                      branchProgress.type === "(un)lock" &&
                       branchProgress.name === branch.name
                     }
                   >
-                    {branch.isProtected ? 'Unprotect' : 'Protect'}
+                    {branch.isProtected ? "Unprotect" : "Protect"}
                   </Button>
                   <Button
                     type="button"
@@ -249,11 +268,12 @@ export const BranchesPage = () => {
                     size="sm"
                     onClick={() => onBranchSetHead(branch.name)}
                     disabled={
-                      branchProgress.isFetching || repository.details.head === branch.name
+                      branchProgress.isFetching ||
+                      repository.details.head === branch.name
                     }
                     isLoading={
                       branchProgress.isFetching &&
-                      branchProgress.type === 'sethead' &&
+                      branchProgress.type === "sethead" &&
                       branchProgress.name === branch.name
                     }
                   >
@@ -267,11 +287,11 @@ export const BranchesPage = () => {
                     disabled={
                       branch.isProtected ||
                       branchProgress.isFetching ||
-                      ['main', 'master'].indexOf(branch.name) >= 0
+                      ["main", "master"].indexOf(branch.name) >= 0
                     }
                     isLoading={
                       branchProgress.isFetching &&
-                      branchProgress.type === 'destroy' &&
+                      branchProgress.type === "destroy" &&
                       branchProgress.name === branch.name
                     }
                   >
@@ -282,7 +302,7 @@ export const BranchesPage = () => {
             </div>
 
             {branchProgress.isFetching &&
-              branchProgress.type === 'destroy' &&
+              branchProgress.type === "destroy" &&
               branchProgress.name === branch.name && (
                 <div className="basis-full">
                   <BranchOperateProgress
@@ -295,7 +315,7 @@ export const BranchesPage = () => {
         ))}
       </div>
     </>
-  )
-}
+  );
+};
 
-export default BranchesPage
+export default BranchesPage;

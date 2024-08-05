@@ -1,25 +1,25 @@
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Form, Formik } from 'formik'
-import { classNames, useBranches } from 'react-gosh'
-import { TBranch } from 'react-gosh/dist/types/repo.types'
-import { Button } from '../Form'
-import { BranchSelect } from './Dropdown'
-import yup from '../../v1.0.0/yup-extended'
+import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Form, Formik } from "formik";
+import { classNames, useBranches } from "react-gosh";
+import { TBranch } from "react-gosh/dist/types/repo.types";
+import { Button } from "../Form";
+import { BranchSelect } from "./Dropdown";
+import yup from "../../yup-extended";
 
 type TBranchCompareFormProps = {
-  className?: string
-  onBuild(values: TBranchFormValues): Promise<void>
-}
+  className?: string;
+  onBuild(values: TBranchFormValues): Promise<void>;
+};
 
 type TBranchFormValues = {
-  src: TBranch
-  dst: TBranch
-}
+  src: TBranch;
+  dst: TBranch;
+};
 
 const BranchCompareForm = (props: TBranchCompareFormProps) => {
-  const { className, onBuild } = props
-  const { branch, branches } = useBranches(undefined, 'main')
+  const { className, onBuild } = props;
+  const { branch, branches } = useBranches(undefined, "main");
 
   return (
     <div className={classNames(className)}>
@@ -30,8 +30,8 @@ const BranchCompareForm = (props: TBranchCompareFormProps) => {
         }}
         onSubmit={onBuild}
         validationSchema={yup.object().shape({
-          src: yup.object({ name: yup.string().required('Field is required') }),
-          dst: yup.object({ name: yup.string().required('Field is required') }),
+          src: yup.object({ name: yup.string().required("Field is required") }),
+          dst: yup.object({ name: yup.string().required("Field is required") }),
         })}
       >
         {({ isSubmitting, values, setFieldValue }) => (
@@ -40,7 +40,7 @@ const BranchCompareForm = (props: TBranchCompareFormProps) => {
               branch={values.src}
               branches={branches}
               onChange={(selected) => {
-                !!selected && setFieldValue('src', selected)
+                !!selected && setFieldValue("src", selected);
               }}
             />
             <span>
@@ -50,7 +50,7 @@ const BranchCompareForm = (props: TBranchCompareFormProps) => {
               branch={values.dst}
               branches={branches}
               onChange={(selected) => {
-                !!selected && setFieldValue('dst', selected)
+                !!selected && setFieldValue("dst", selected);
               }}
             />
             <Button
@@ -65,7 +65,7 @@ const BranchCompareForm = (props: TBranchCompareFormProps) => {
         )}
       </Formik>
     </div>
-  )
-}
+  );
+};
 
-export { BranchCompareForm }
+export { BranchCompareForm };

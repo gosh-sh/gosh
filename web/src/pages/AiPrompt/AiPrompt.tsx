@@ -164,7 +164,7 @@ const AiPromptPage = () => {
   // }
 
   // return (
-  //   <div className="container py-10 relative">
+  //   <div className="container py-4 relative">
   //     {complete.isReady && (
   //       <div className="container py-24 absolute w-full h-full left-0 top-0 bg-white z-10">
   //         <AiPromptComplete {...complete} />
@@ -300,7 +300,7 @@ const AiPromptPage = () => {
   //   </div>
   // )
 
-  return null
-}
+  return null;
+};
 
-export default AiPromptPage
+export default AiPromptPage;

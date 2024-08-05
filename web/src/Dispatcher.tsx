@@ -1,135 +1,116 @@
-import { Suspense, lazy, useEffect, useState } from 'react'
-import { useErrorBoundary, withErrorBoundary } from 'react-error-boundary'
-import { useMatch } from 'react-router-dom'
-import { useRecoilState } from 'recoil'
-import { AppConfig } from './appconfig'
-import MaintenenceImg from './assets/images/maintenance.png'
-import Alert from './components/Alert/Alert'
-import Loader from './components/Loader/Loader'
-import { appContextAtom } from './store/app.state'
+import { Suspense, lazy, useEffect, useState } from "react";
+import { useErrorBoundary, withErrorBoundary } from "react-error-boundary";
+import { useMatch } from "react-router-dom";
+import { useRecoilState } from "recoil";
+import { AppConfig } from "./appconfig";
+import MaintenenceImg from "./assets/images/maintenance.png";
+import Alert from "./components/Alert/Alert";
+import Loader from "./components/Loader/Loader";
+// import App from "./App";
+import { appContextAtom } from "./store/app.state";
 
-const App_v1 = lazy(() => import('./v1.0.0/App'))
-const App_v2 = lazy(() => import('./v2.0.0/App'))
-const App_v3 = lazy(() => import('./v3.0.0/App'))
-const App_v4 = lazy(() => import('./v4.0.0/App'))
-const App_v5 = lazy(() => import('./v5.0.0/App'))
-const App_v5_1 = lazy(() => import('./v5.1.0/App'))
-const App_v6 = lazy(() => import('./v6.0.0/App'))
-const App_v6_1 = lazy(() => import('./v6.1.0/App'))
-const App_v6_2 = lazy(() => import('./v6.2.0/App'))
-const App_v7_0 = lazy(() => import('./v7.0.0/App'))
+const App = lazy(() => import("./App"));
 
 const renderApp = (version: string) => {
-  switch (version) {
-    case '1.0.0':
-      return <App_v1 />
-    case '2.0.0':
-      return <App_v2 />
-    case '3.0.0':
-      return <App_v3 />
-    case '4.0.0':
-      return <App_v4 />
-    case '5.0.0':
-      return <App_v5 />
-    case '5.1.0':
-      return <App_v5_1 />
-    case '6.0.0':
-      return <App_v6 />
-    case '6.1.0':
-      return <App_v6_1 />
-    case '6.2.0':
-      return <App_v6_2 />
-    case '7.0.0':
-      return <App_v7_0 />
-    default:
-      return <Alert variant="danger">Version {version} is not supported</Alert>
+  // return <App />;
+  try {
+    switch (typeof version) {
+      case "string":
+        return <App />;
+      default:
+        return (
+          <Alert variant="danger">Version {version} is not supported</Alert>
+        );
+    }
+  } catch (error) {
+    return <Alert variant="danger">Failed to initialize</Alert>;
   }
-}
+};
 
 const Preloader = (props: React.HTMLAttributes<HTMLDivElement>) => {
-  const { children } = props
+  const { children } = props;
   return (
     <div className="fixed w-screen h-screen left-0 top-0">
       <div className="flex items-center justify-center w-full h-full">
         {children}
       </div>
     </div>
-  )
-}
+  );
+};
 
 const Dispatcher = () => {
-  const { showBoundary } = useErrorBoundary()
-  const routeMatch = useMatch('/o/:daoname/*')
-  const [{ version }, setAppContext] = useRecoilState(appContextAtom)
-  const [isInitialized, setIsInitialized] = useState<boolean>(false)
+  const { showBoundary } = useErrorBoundary();
+  const routeMatch = useMatch("/o/:daoname/*");
+  const [{ version }, setAppContext] = useRecoilState(appContextAtom);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
   useEffect(() => {
     const _initialize = async () => {
       try {
-        AppConfig.setup()
-        await AppConfig.goshclient.client.version()
-        setIsInitialized(true)
+        AppConfig.setup();
+        await AppConfig.goshclient.client.version();
+        setIsInitialized(true);
       } catch (e: any) {
-        console.error(e.message)
-        showBoundary(e)
+        console.error(e.message);
+        showBoundary(e);
       }
-    }
+    };
 
-    _initialize()
-  }, [])
+    _initialize();
+  }, []);
 
   useEffect(() => {
     const _setAppContext = async () => {
-      const versions = Object.keys(AppConfig.versions).reverse()
+      const versions = Object.keys(AppConfig.versions).reverse();
 
       // Search version for DAO
-      let version: string | null = null
+      let version: string | null = null;
       if (routeMatch?.params.daoname) {
         for (const ver of versions) {
-          console.debug(routeMatch.params.daoname, ver)
-          const sc = AppConfig.goshroot.getSystemContract(ver)
-          const dc = await sc.getDao({ name: routeMatch.params.daoname })
+          console.debug(routeMatch.params.daoname, ver);
+          const sc = AppConfig.goshroot.getSystemContract(ver);
+          const dc = await sc.getDao({ name: routeMatch.params.daoname });
           if (await dc.isDeployed()) {
-            version = ver
-            break
+            version = ver;
+            break;
           }
         }
       }
 
       // Fallback to default latest version
-      version = version || AppConfig.getLatestVersion()
+      version = version || AppConfig.getLatestVersion();
 
       setAppContext((state) => ({
         ...state,
         version,
         daoname: routeMatch?.params.daoname,
-      }))
-    }
+      }));
+    };
 
     if (isInitialized) {
-      _setAppContext()
+      _setAppContext();
     }
-  }, [isInitialized, routeMatch?.params.daoname])
+  }, [isInitialized, routeMatch?.params.daoname]);
 
   if (!isInitialized) {
     return (
       <Preloader>
         <Loader>App is loading</Loader>
       </Preloader>
-    )
+    );
   }
   if (!version) {
     return (
       <Preloader>
         <Loader>Search context</Loader>
       </Preloader>
-    )
+    );
   }
   return (
     <Suspense
       fallback={
         <Preloader>
-          <Loader>Render version context {version}</Loader>
+          <Loader>Render application</Loader>
         </Preloader>
       }
     >
@@ -155,11 +136,11 @@ const Dispatcher = () => {
         renderApp(version)
       )}
     </Suspense>
-  )
-}
+  );
+};
 
 export default withErrorBoundary(Dispatcher, {
   fallbackRender: ({ error }) => (
     <Alert variant="danger">{error.message}</Alert>
   ),
-})
+});
