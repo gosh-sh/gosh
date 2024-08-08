@@ -332,6 +332,9 @@ body,
   }
 }
 .jodit {
+  p {
+    display: inline;
+  }
   h1 {
     display: block;
     font-size: 2em;
@@ -416,7 +419,7 @@ body,
     margin-block-end: 1em;
     margin-inline-start: 0px;
     margin-inline-end: 0px;
-    padding-inline-start: 40px;
+    padding-inline-start: 30px;
     unicode-bidi: isolate;
 
     li {
