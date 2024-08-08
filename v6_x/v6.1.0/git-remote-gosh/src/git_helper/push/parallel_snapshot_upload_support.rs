@@ -1,33 +1,31 @@
-use crate::blockchain::snapshot::wait_snapshots_until_ready;
+use anyhow::bail;
 use crate::{
     blockchain::{
         contract::wait_contracts_deployed::wait_contracts_deployed,
-        tree::{load::check_if_tree_is_ready},
+        snapshot::wait_snapshots_until_ready,
+        tree::load::{check_if_tree_is_ready, TreeComponent},
         user_wallet::WalletError,
         AddrVersion, BlockchainContractAddress, BlockchainService,
     },
     git_helper::{
         push::{
-            push_diff::push_initial_snapshot, push_tree::inner_deploy_tree,
+            get_redeploy_attempts, wait_chunk_until_send,
+            push_diff::prepush_initial_snapshot, push_tree::inner_deploy_tree,
             utilities::retry::default_retry_strategy,
         },
         GitHelper,
     },
 };
-use anyhow::bail;
+use crate::database::GoshDB;
 use git_hash::ObjectId;
-use std::time::Duration;
-use std::{collections::HashMap, sync::Arc, vec::Vec};
-use tokio::time::sleep;
-use tokio::{sync::Semaphore, task::JoinSet};
+use std::{collections::HashMap, sync::Arc, time::{Duration, SystemTime}, vec::Vec};
+use tokio::{sync::Semaphore, task::JoinSet, time::sleep};
 use tokio_retry::RetryIf;
 use tracing::Instrument;
-use crate::blockchain::tree::load::TreeComponent;
-use crate::git_helper::push::get_redeploy_attempts;
 
 const WAIT_TREE_READY_MAX_ATTEMPTS: i32 = 4;
 const GOSH_PUSH_CHUNK: &str = "GOSH_PUSH_CHUNK";
-const DEFAULT_PUSH_CHUNK_SIZE: usize = 3000;
+const DEFAULT_PUSH_CHUNK_SIZE: usize = 150;
 const WAIT_CONTRACT_CHUNK_SIZE: usize = 50;
 
 pub fn get_push_chunk() -> usize {
@@ -41,7 +39,6 @@ pub fn get_push_chunk() -> usize {
 
 pub struct ParallelSnapshotUploadSupport {
     expecting_deployed_contacts_addresses: Vec<String>,
-    pushed_blobs: JoinSet<anyhow::Result<()>>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -84,7 +81,6 @@ impl ParallelSnapshotUploadSupport {
     pub fn new() -> Self {
         Self {
             expecting_deployed_contacts_addresses: vec![],
-            pushed_blobs: JoinSet::new(),
         }
     }
 
@@ -96,90 +92,76 @@ impl ParallelSnapshotUploadSupport {
         self.expecting_deployed_contacts_addresses.push(value);
     }
 
-    pub async fn start_push(
+    #[instrument(level = "info", skip_all)]
+    pub async fn push_snapshots_in_chunks(
         &mut self,
         context: &mut GitHelper<impl BlockchainService + 'static>,
     ) -> anyhow::Result<()> {
         let chunk_size = get_push_chunk();
         let max_attempts = get_redeploy_attempts();
+
         tracing::trace!("Start push of snapshots, chunk_size={chunk_size}, max_attempts={max_attempts}");
-        let mut exp: Vec<BlockchainContractAddress> = self.expecting_deployed_contacts_addresses.iter().map(|addr| BlockchainContractAddress::new(addr)).collect();
+        let mut exp: Vec<BlockchainContractAddress> = self
+            .expecting_deployed_contacts_addresses
+            .iter()
+            .map(|addr| BlockchainContractAddress::new(addr))
+            .collect();
+
         let mut attempt = 0;
-        let mut last_rest_cnt = 0;
         loop {
             if attempt == max_attempts {
                 anyhow::bail!("Failed to deploy snapshots. Undeployed snapshots: {exp:?}");
             }
+
             let mut rest = vec![];
             for chunk in exp.chunks(chunk_size) {
-                for addr in chunk {
-                    self.add_to_push_list(context, &String::from(addr)).await?;
-                }
-                self.finish_push().await?;
-                let mut tmp_rest = wait_snapshots_until_ready(&context.blockchain, chunk).await?;
-                rest.append(&mut tmp_rest);
+                let blockchain = context.blockchain.clone();
+                let dao_address = context.dao_addr.clone();
+                let remote_network = context.remote.network.clone();
+                let repo_addr = context.repo_addr.clone();
+                let database = context.get_db()?.clone();
+
+                let mut unsent = push_chunk(
+                    &blockchain,
+                    &repo_addr,
+                    &dao_address,
+                    &remote_network,
+                    database,
+                    chunk,
+                ).await?;
+                rest.append(&mut unsent);
             }
-            exp = rest;
-            if exp.is_empty() {
+
+            if rest.len() == 0 {
                 break;
+            } else {
+                exp = rest;
             }
-            if exp.len() != last_rest_cnt {
-                attempt = 0;
+            attempt += 1;
+        }
+
+        attempt = 0;
+        loop {
+            if attempt == max_attempts {
+                anyhow::bail!("Failed to deploy diffs. Undeployed diffs: {exp:?}");
             }
-            last_rest_cnt = exp.len();
+
+            let mut rest: Vec<BlockchainContractAddress> = vec![];
+            for chunk in exp.chunks(chunk_size) {
+                let mut undeployed =
+                    wait_snapshots_until_ready(&context.blockchain, chunk).await?;
+
+                tracing::trace!("undeployed {} diffs. iteration {}", undeployed.len(), attempt + 1);
+                rest.append(&mut undeployed);
+            }
+            if rest.len() == 0 {
+                break;
+            } else {
+                exp = rest;
+            }
 
             attempt += 1;
         }
-        Ok(())
-    }
-
-    async fn finish_push(&mut self) -> anyhow::Result<()> {
-        while let Some(finished_task) = self.pushed_blobs.join_next().await {
-            match finished_task {
-                Err(e) => {
-                    bail!("snapshots join-handler: {}", e);
-                }
-                Ok(Err(e)) => {
-                    bail!("snapshots inner: {}", e);
-                }
-                Ok(Ok(_)) => {}
-            }
-        }
-        Ok(())
-    }
-
-    #[instrument(level = "info", skip_all)]
-    pub async fn add_to_push_list(
-        &mut self,
-        context: &mut GitHelper<impl BlockchainService + 'static>,
-        snapshot_address: &String,
-    ) -> anyhow::Result<()> {
-        let snapshot_address = snapshot_address.to_owned();
-        let blockchain = context.blockchain.clone();
-        let dao_address: BlockchainContractAddress = context.dao_addr.clone();
-        let remote_network: String = context.remote.network.clone();
-        let repo_address = context.repo_addr.clone();
-
-        tracing::trace!("Start push of snapshot: address: {snapshot_address:?}");
-
-        // self.expecting_deployed_contacts_addresses
-        //     .push(snapshot_address.to_string());
-
-        let database = context.get_db()?.clone();
-        self.pushed_blobs.spawn(
-            async move {
-                push_initial_snapshot(
-                    blockchain,
-                    repo_address,
-                    dao_address,
-                    remote_network,
-                    snapshot_address,
-                    database,
-                )
-                .await
-            }
-            .instrument(info_span!("tokio::spawn::push_initial_snapshot").or_current()),
-        );
         Ok(())
     }
 }
@@ -506,4 +488,73 @@ pub async fn wait_trees_until_ready<B>(
     }
 
     Ok(not_ready_trees)
+}
+
+#[instrument(level = "info", skip_all)]
+pub async fn push_chunk<B>(
+    blockchain: &B,
+    repo_addr: &BlockchainContractAddress,
+    dao_address: &BlockchainContractAddress,
+    remote_network: &str,
+    database: Arc<GoshDB>,
+    chunk: &[BlockchainContractAddress],
+) -> anyhow::Result<Vec<BlockchainContractAddress>>
+where
+    B: BlockchainService + 'static,
+{
+    let wallet = blockchain.user_wallet(dao_address, remote_network).await?;
+
+    let mut chunk = chunk.to_vec();
+    let mut message_bocs: Vec<(String, Option<BlockchainContractAddress>)> = vec![];
+
+    let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
+    let expire = now.as_secs() as u32 + 120; // todo remove magic num
+
+    let mut bocs: JoinSet<anyhow::Result<(String, Option<BlockchainContractAddress>)>> = JoinSet::new();
+    for addr in &chunk {
+        let blockchain = blockchain.clone();
+        let repo_addr = repo_addr.clone();
+        let wallet = wallet.clone();
+        let snapshot_address = addr.clone();
+        let database = database.clone();
+
+        bocs.spawn(
+            async move {
+                let boc_pair = prepush_initial_snapshot(
+                    &blockchain,
+                    &repo_addr,
+                    &wallet,
+                    &snapshot_address,
+                    database,
+                    expire,
+                ).await;
+                boc_pair
+            }
+            .instrument(info_span!("tokio::spawn::prepush_diff").or_current())
+        );
+    }
+
+    while let Some(finished_task) = bocs.join_next().await {
+        match finished_task {
+            Err(e) => {
+                anyhow::bail!("prepush objects join-handler: {}", e);
+            }
+            Ok(Err(e)) => {
+                anyhow::bail!("prepush objects inner: {}", e);
+            }
+            Ok(Ok(boc_pair)) => message_bocs.push(boc_pair)
+        }
+    }
+
+    let wait_until = expire + 5;
+    tracing::trace!("msg expire={}, wait_until={}", expire, wait_until);
+    let queue_name = blockchain.send_messages(&message_bocs, wait_until).await?;
+
+    wait_chunk_until_send(blockchain, &mut chunk, queue_name).await?;
+
+    if chunk.len() > 0 {
+        tracing::trace!("failed to send {} messages", chunk.len());
+    }
+
+    Ok(chunk)
 }

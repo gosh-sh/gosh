@@ -1,11 +1,5 @@
-use crate::blockchain::user_wallet::{UserWallet, WalletError};
-use crate::ipfs::{build_ipfs, IpfsError};
-use std::sync::Arc;
-use std::time::Duration;
-use tokio::time::sleep;
-
-use crate::database::GoshDB;
 use crate::{
+    database::GoshDB,
     blockchain::{
         contract::{ContractRead, GoshContract},
         gosh_abi,
@@ -13,11 +7,15 @@ use crate::{
             save::{Diff, GetDiffAddrResult, GetVersionResult},
             PushDiffCoordinate,
         },
-        tvm_hash, BlockchainContractAddress, BlockchainService, EverClient, EMPTY_BLOB_SHA1,
-        EMPTY_BLOB_SHA256,
+        tvm_hash,
+        user_wallet::{UserWallet, WalletError},
+        BlockchainContractAddress, BlockchainService, EverClient,
+        EMPTY_BLOB_SHA1, EMPTY_BLOB_SHA256,
     },
-    ipfs::{service::FileSave, IpfsService},
+    ipfs::{build_ipfs, service::FileSave, IpfsError, IpfsService},
 };
+use std::{sync::Arc, time::Duration};
+use tokio::time::sleep;
 use tokio_retry::RetryIf;
 use ton_client::utils::compress_zstd;
 
@@ -213,6 +211,140 @@ pub async fn inner_push_diff(
 }
 
 #[instrument(level = "info", skip_all)]
+pub async fn prepush_diff<B>(
+    blockchain: &B,
+    repo_name: &str,
+    wallet: &UserWallet,
+    ipfs_endpoint: &str,
+    last_commit_id: &git_hash::ObjectId,
+    diff_address: &BlockchainContractAddress,
+    database: Arc<GoshDB>,
+    expire: u32,
+) -> anyhow::Result<(String, Option<BlockchainContractAddress>)>
+where
+    B: BlockchainService,
+{
+    let (parallel_diff, diff_coordinate, is_last) =
+        database.get_diff(&String::from(diff_address))?;
+
+    let commit_id = parallel_diff.commit_id.to_string();
+    let branch_name = parallel_diff.branch_name;
+    let blob_id = parallel_diff.blob_id;
+    let file_path = parallel_diff.file_path;
+    let original_snapshot_content = &parallel_diff.original_snapshot_content;
+    let diff = &parallel_diff.diff;
+    let new_snapshot_content = &parallel_diff.new_snapshot_content;
+    let snapshot_addr: BlockchainContractAddress =
+        BlockchainContractAddress::new(&parallel_diff.snapshot_address);
+
+    tracing::trace!("prepush_diff: snapshot_addr={snapshot_addr}, commit_id={commit_id}, branch_name={branch_name}, blob_id={blob_id}, file_path={file_path}, diff_coordinate={diff_coordinate:?}, last_commit_id={last_commit_id}, is_last={is_last}");
+    let diff = compress_zstd(diff, None)?;
+    tracing::trace!("prepush_diff: compressed to {} size", diff.len());
+
+    let ipfs_client = build_ipfs(ipfs_endpoint)?;
+    let is_previous_oversized = is_going_to_ipfs(original_snapshot_content);
+    let blob_dst = {
+        let is_going_to_ipfs = is_going_to_ipfs(new_snapshot_content);
+        if !is_going_to_ipfs {
+            if is_previous_oversized {
+                let compressed = compress_zstd(new_snapshot_content, None)?;
+                BlobDst::SetContent(hex::encode(compressed))
+            } else {
+                BlobDst::Patch(hex::encode(diff))
+            }
+        } else {
+            tracing::debug!("prepush_diff->save_data_to_ipfs");
+            let ipfs = save_data_to_ipfs(&ipfs_client, new_snapshot_content)
+                .await
+                .map_err(|e| {
+                    tracing::debug!("save_data_to_ipfs error: {:#?}", e);
+                    e
+                })?;
+            BlobDst::Ipfs(ipfs)
+        }
+    };
+    let content_sha256 = {
+        if let BlobDst::Ipfs(_) = blob_dst {
+            format!("0x{}", sha256::digest(&**new_snapshot_content))
+        } else {
+            format!(
+                "0x{}",
+                tvm_hash(&blockchain.client(), new_snapshot_content).await?
+            )
+        }
+    };
+
+    let sha1 = if &content_sha256 == EMPTY_BLOB_SHA256 {
+        EMPTY_BLOB_SHA1.to_owned()
+    } else {
+        blob_id.to_string()
+    };
+
+    let diff = match blob_dst {
+        BlobDst::Ipfs(ipfs) => {
+            let patch = if is_previous_oversized {
+                None
+            } else {
+                let compressed = compress_zstd(original_snapshot_content, None)?;
+                Some(hex::encode(compressed))
+            };
+            Diff {
+                snapshot_addr,
+                snapshot_file_path: file_path, // TODO: change to full path
+                commit_id,
+                patch,
+                ipfs: Some(ipfs),
+                remove_ipfs: false,
+                sha1,
+                sha256: content_sha256,
+            }
+        }
+        BlobDst::Patch(patch) => Diff {
+            snapshot_addr,
+            snapshot_file_path: file_path, // TODO: change to full path
+            commit_id,
+            patch: Some(patch),
+            ipfs: None,
+            remove_ipfs: false,
+            sha1,
+            sha256: content_sha256,
+        },
+        BlobDst::SetContent(content) => Diff {
+            snapshot_addr,
+            snapshot_file_path: file_path, // TODO: change to full path
+            commit_id,
+            patch: Some(content),
+            ipfs: None,
+            remove_ipfs: true,
+            sha1,
+            sha256: content_sha256,
+        },
+    };
+
+    if diff.ipfs.is_some() {
+        tracing::debug!("prepush_diff: {:?}", diff);
+    } else {
+        tracing::trace!("prepush_diff: {:?}", diff);
+    }
+
+    let boc = blockchain
+        .construct_deploy_diff_message(
+            wallet,
+            repo_name.to_owned(),
+            branch_name.to_string(),
+            last_commit_id.to_string(),
+            diff,
+            diff_coordinate.index_of_parallel_thread,
+            diff_coordinate.order_of_diff_in_the_parallel_thread,
+            is_last,
+            expire,
+        )
+        .await?;
+
+    Ok((boc, Some(diff_address.clone())))
+}
+
+#[instrument(level = "info", skip_all)]
 pub async fn save_data_to_ipfs(
     ipfs_client: &IpfsService,
     content: &[u8],
@@ -376,4 +508,41 @@ where
         condition,
     )
     .await
+}
+
+#[instrument(level = "info", skip_all)]
+pub async fn prepush_initial_snapshot<B>(
+    blockchain: &B,
+    repo_addr: &BlockchainContractAddress,
+    wallet: &UserWallet,
+    snapshot_address: &BlockchainContractAddress,
+    database: Arc<GoshDB>,
+    expire: u32,
+) -> anyhow::Result<(String, Option<BlockchainContractAddress>)>
+where
+    B: BlockchainService,
+{
+    let snapshot = database.get_snapshot(&String::from(snapshot_address))?;
+
+    let file_path = snapshot.file_path;
+    let upgrade = snapshot.upgrade;
+    let commit_id = snapshot.commit_id;
+    let content = snapshot.content;
+    let ipfs = snapshot.ipfs;
+
+    tracing::trace!("push_initial_snapshot: snapshot_address={snapshot_address}, repo_addr={repo_addr}, file_path={file_path}");
+
+    let boc = blockchain
+        .construct_deploy_snapshot_message(
+            &wallet,
+            repo_addr.clone(),
+            commit_id.clone(),
+            file_path.clone(),
+            content.clone(),
+            ipfs.clone(),
+            expire,
+        )
+        .await?;
+
+    Ok((boc, Some(snapshot_address.clone())))
 }

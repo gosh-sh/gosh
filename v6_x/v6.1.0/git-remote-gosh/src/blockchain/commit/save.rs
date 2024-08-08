@@ -360,8 +360,7 @@ pub async fn find_messages(
                 is_internal: true,
                 ..Default::default()
             },
-        )
-        .await;
+        );
         got_new_messages = true;
         already_processed_messages.insert(message.id.clone(), true);
 

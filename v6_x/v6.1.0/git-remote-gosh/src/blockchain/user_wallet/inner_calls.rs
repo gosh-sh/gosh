@@ -107,22 +107,19 @@ pub(super) async fn get_user_wallet(
 }
 
 #[instrument(level = "info", skip_all)]
-pub(super) async fn get_user_wallet_config_max_number_of_mirrors<B, C>(
+pub(super) async fn get_user_wallet_config_max_number_of_mirrors<B>(
     blockchain: &B,
-    user_wallet_contract: &C,
+    dao_address: &BlockchainContractAddress,
 ) -> anyhow::Result<u64>
 where
     B: BlockchainService + BlockchainCall,
-    C: ContractRead + ContractInfo + Sync,
 {
-    tracing::trace!("get_user_wallet_config_max_number_of_mirrors: user_wallet_contract={user_wallet_contract:?}");
-    let result: GetConfigResult = user_wallet_contract
+    let dao_contract = GoshContract::new(dao_address, abi::DAO);
+    tracing::trace!("get_user_wallet_config_max_number_of_mirrors: dao_contract={dao_contract:?}");
+    let result: GetConfigResult = dao_contract
         .read_state(blockchain.client(), "getConfig", None)
         .await?;
-    tracing::trace!(
-        "get_user_wallet_config_max_number_of_mirrors result: {:?}",
-        result
-    );
+    tracing::trace!("get_user_wallet_config_max_number_of_mirrors result: {:?}", result);
     let number = result.max_number_of_mirror_wallets.into();
     Ok(number)
 }

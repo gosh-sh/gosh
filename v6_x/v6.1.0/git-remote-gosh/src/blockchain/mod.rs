@@ -115,7 +115,7 @@ pub struct AddrVersion {
 }
 
 #[derive(Deserialize, Debug)]
-struct CallResult {
+pub struct CallResult {
     #[serde(rename = "id")]
     trx_id: String,
     status: u8,
@@ -126,7 +126,7 @@ struct CallResult {
 }
 
 #[derive(Deserialize, Debug)]
-struct SendMessageResult {
+pub struct SendMessageResult {
     shard_block_id: String,
     message_id: String,
     sending_endpoints: Vec<String>,
@@ -444,8 +444,7 @@ async fn run_static(
                 boc,
                 cache_type: BocCacheType::Pinned { pin: pin },
             },
-        )
-        .await?;
+        )?;
         // write lock
         {
             let mut refs = PINNED_CONTRACT_BOCREFS.write().await;
@@ -767,7 +766,7 @@ pub async fn calculate_boc_hash(context: &EverClient, code: &str) -> anyhow::Res
     let params = ParamsOfGetBocHash {
         boc: code.to_owned(),
     };
-    let ResultOfGetBocHash { hash } = get_boc_hash(Arc::clone(context), params).await?;
+    let ResultOfGetBocHash { hash } = get_boc_hash(Arc::clone(context), params)?;
     Ok(hash)
 }
 
@@ -794,7 +793,7 @@ pub async fn calculate_contract_address(
     };
 
     let ResultOfEncodeInitialData { data } =
-        encode_initial_data(Arc::clone(context), params).await?;
+        encode_initial_data(Arc::clone(context), params)?;
 
     let params = ParamsOfEncodeStateInit {
         code: Some(code.to_owned()),
@@ -803,7 +802,7 @@ pub async fn calculate_contract_address(
     };
 
     let ResultOfEncodeStateInit { state_init } =
-        encode_state_init(Arc::clone(context), params).await?;
+        encode_state_init(Arc::clone(context), params)?;
 
     let hash = calculate_boc_hash(context, &state_init).await?;
 

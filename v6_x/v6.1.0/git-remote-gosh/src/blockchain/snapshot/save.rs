@@ -109,6 +109,19 @@ pub trait DeployDiff {
         index2: u32,
         last: bool,
     ) -> anyhow::Result<()>;
+
+    async fn construct_deploy_diff_message(
+        &self,
+        wallet: &UserWallet,
+        repo_name: String,
+        branch_name: String,
+        commit_id: String,
+        diffs: Diff,
+        index1: u32,
+        index2: u32,
+        last: bool,
+        expire: u32,
+    ) -> anyhow::Result<String>;
 }
 
 #[async_trait]
@@ -125,7 +138,15 @@ impl DeployDiff for Everscale {
         index2: u32,
         last: bool,
     ) -> anyhow::Result<()> {
-        tracing::trace!("deploy_diff: repo_name={repo_name}, branch_name={branch_name}, commit_id={commit_id}, index1={index1}, index2={index2}, last={last}");
+        tracing::trace!(
+            "deploy_diff: repo_name={}, branch_name={}, commit_id={}, index1={}, index2={}, last={}",
+            repo_name,
+            branch_name,
+            commit_id,
+            index1,
+            index2,
+            last,
+        );
         let diffs = vec![diff];
         let args = DeployDiffParams {
             repo_name,
@@ -151,6 +172,54 @@ impl DeployDiff for Everscale {
         tracing::trace!("deployDiff result: {:?}", result);
         Ok(())
     }
+
+    #[instrument(level = "info", skip_all)]
+    async fn construct_deploy_diff_message(
+        &self,
+        wallet: &UserWallet,
+        repo_name: String,
+        branch_name: String,
+        commit_id: String,
+        diff: Diff,
+        index1: u32,
+        index2: u32,
+        last: bool,
+        expire: u32,
+    ) -> anyhow::Result<String> {
+        tracing::trace!(
+            "construct_deploy_diff_message: repo_name={}, branch_name={}, commit_id={}, index1={}, index2={}, last={}",
+            repo_name,
+            branch_name,
+            commit_id,
+            index1,
+            index2,
+            last,
+        );
+        let diffs = vec![diff];
+        let args = DeployDiffParams {
+            repo_name,
+            branch_name,
+            commit_id,
+            diffs,
+            index1,
+            index2,
+            last,
+        };
+
+        let wallet_contract = wallet.take_one().await?;
+        tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
+        let (message_id, boc) = self
+            .construct_boc(
+                wallet_contract.deref(),
+                "deployDiff",
+                Some(serde_json::to_value(args)?),
+                Some(expire),
+            )
+            .await?;
+        drop(wallet_contract);
+        tracing::trace!("construct_deploy_diff_message done: {message_id}");
+        Ok(boc)
+    }
 }
 
 #[async_trait]
@@ -164,6 +233,17 @@ pub trait DeployNewSnapshot {
         content: String,
         ipfs: Option<String>,
     ) -> anyhow::Result<()>;
+
+    async fn construct_deploy_snapshot_message(
+        &self,
+        wallet: &UserWallet,
+        repo_address: BlockchainContractAddress,
+        commit_id: String,
+        file_path: String,
+        content: String,
+        ipfs: Option<String>,
+        expire: u32,
+    ) -> anyhow::Result<String>;
 }
 
 #[async_trait]
@@ -203,6 +283,41 @@ impl DeployNewSnapshot for Everscale {
             tracing::trace!("deploy_branch_error: {}", e);
         }
         result
+    }
+
+    #[instrument(level = "info", skip_all)]
+    async fn construct_deploy_snapshot_message(
+        &self,
+        wallet: &UserWallet,
+        repo_address: BlockchainContractAddress,
+        commit_id: String,
+        file_path: String,
+        content: String,
+        ipfs: Option<String>,
+        expire: u32,
+    ) -> anyhow::Result<String> {
+        tracing::trace!("deploy_new_snapshot: repo_address={repo_address}, commit_id={commit_id}, file_path={file_path}");
+        let args = DeploySnapshotParams {
+            repo_address,
+            commit_sha: commit_id,
+            file_path,
+            content,
+            ipfs,
+            is_pin: false,
+        };
+        let wallet_contract = wallet.take_one().await?;
+        tracing::trace!("Acquired wallet: {}", wallet_contract.get_address());
+        let (message_id, boc) = self
+            .construct_boc(
+                wallet_contract.deref(),
+                "deployNewSnapshot",
+                Some(serde_json::to_value(args)?),
+                Some(expire),
+            )
+            .await?;
+        drop(wallet_contract);
+        tracing::trace!("construct_deploy_snapshot_message done: {message_id}");
+        Ok(boc)
     }
 }
 

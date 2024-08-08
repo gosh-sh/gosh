@@ -19,7 +19,7 @@ pub async fn tvm_hash(context: &EverClient, data: &[u8]) -> anyhow::Result<Strin
         data: serde_json::json!({ "data": hex::encode(data) }),
         boc_cache: None,
     };
-    let ResultOfAbiEncodeBoc { boc } = encode_boc(Arc::clone(context), params).await?;
+    let ResultOfAbiEncodeBoc { boc } = encode_boc(Arc::clone(context), params)?;
 
     let mut decoded = decode_boc(
         Arc::clone(context),
@@ -32,8 +32,7 @@ pub async fn tvm_hash(context: &EverClient, data: &[u8]) -> anyhow::Result<Strin
             }],
             allow_partial: false,
         },
-    )
-    .await?;
+    )?;
     let boc = decoded.data["b"].take();
     let boc = boc.as_str().unwrap();
 
@@ -42,8 +41,7 @@ pub async fn tvm_hash(context: &EverClient, data: &[u8]) -> anyhow::Result<Strin
         ParamsOfGetBocHash {
             boc: boc.to_owned(),
         },
-    )
-    .await?;
+    )?;
 
     Ok(hash)
 }

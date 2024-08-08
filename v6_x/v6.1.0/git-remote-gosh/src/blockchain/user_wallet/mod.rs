@@ -46,7 +46,8 @@ impl BlockchainUserWalletService for Everscale {
                 .await?;
         }
         if !_USER_WALLET.is_mirrors_ready().await {
-            let init_mirrors_result = _USER_WALLET.try_init_mirrors(self).await;
+            let init_mirrors_result =
+                _USER_WALLET.try_init_mirrors(self, dao_address).await;
             if let Err(e) = init_mirrors_result {
                 tracing::debug!("init mirrors error: {}", e);
             }

@@ -83,7 +83,8 @@ function wait_account_active {
     contract_addr=$1
     is_ok=0
     while [ $SECONDS -lt $stop_at ]; do
-        status=`tonos-cli -j -u $NETWORK account $contract_addr | jq -r '."'"$contract_addr"'".acc_type'`
+        # status=`tonos-cli -j -u $NETWORK account $contract_addr | jq -r '."'"$contract_addr"'".acc_type'`
+        status=`tonos-cli -j -u $NETWORK account $contract_addr | jq -r .acc_type`
         if [ "$status" = "Active" ]; then
             is_ok=1
             echo account is active
