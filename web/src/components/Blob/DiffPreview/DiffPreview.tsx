@@ -7,6 +7,7 @@ import { IGoshDaoAdapter } from 'react-gosh/dist/gosh/interfaces'
 import { Button } from '../../Form'
 import { CodeComments } from '../Comments'
 import LinesBlock from './LinesBlock'
+import classNames from 'classnames'
 
 type TBlobDiffPreviewProps = {
   dao: IGoshDaoAdapter
@@ -88,7 +89,12 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
   }, [commentsOn, isDiffLoaded])
 
   return (
-    <div className="flex flex-wrap xl:flex-nowrap items-start gap-y-4">
+    <div
+      className={classNames(
+        'grid gap-4 grid-cols-1',
+        commentsOn ? 'lg:grid-cols-[1fr_minmax(260px,_300px)]' : null,
+      )}
+    >
       <div className="grow border border-gray-e6edff rounded-xl overflow-hidden">
         <div className="flex items-center justify-between px-3 py-1 border-b border-b-gray-e6edff bg-gray-fafafd">
           <div className="text-xs">{filename}</div>
@@ -105,7 +111,9 @@ const BlobDiffPreview = (props: TBlobDiffPreviewProps) => {
           )}
         </div>
         <div className="text-xs overflow-x-scroll">
-          {isBuffer && <div className="text-center py-3">Binary data not shown</div>}
+          {isBuffer && (
+            <div className="text-center py-3">Binary data not shown</div>
+          )}
           {isDiffLoaded && !diff.length && (
             <div className="text-center py-3">File without changes</div>
           )}
