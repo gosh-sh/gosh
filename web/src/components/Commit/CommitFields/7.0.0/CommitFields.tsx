@@ -1,5 +1,5 @@
 import { ErrorMessage, Field, useFormikContext } from "formik";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   TPushProgress,
   TTaskDetails,
@@ -17,32 +17,46 @@ import {
 } from "../../../Formik";
 import { UserSelect } from "../../../UserSelect/UserSelect_";
 import CommitProgress from "../../CommitProgress";
+import { TBlobCommitFormValues } from "../../BlobCommitForm";
 
-type TCommitFieldsProps = {
+type TCommitFieldsProps<T> = {
   dao: IGoshDaoAdapter;
   repository: string;
   className?: string;
   isSubmitting: boolean;
+  isDisabled: boolean;
+  isProposal: boolean | undefined;
   urlBack?: string;
   extraButtons?: any;
   progress?: TPushProgress;
+  config?: { [key: string]: boolean };
+  onCancel?: () => void;
 };
 
-const CommitFields = (props: TCommitFieldsProps) => {
+const CommitFields = <T,>(props: TCommitFieldsProps<T>) => {
   const {
     dao,
     repository,
     className,
     isSubmitting,
+    isDisabled,
     urlBack,
     extraButtons,
     progress,
+    isProposal,
+    config,
+    onCancel,
   } = props;
-  const navigate = useNavigate();
-  const { setFieldValue, values } = useFormikContext();
+  const { setFieldValue, values } = useFormikContext<TBlobCommitFormValues>();
   const tasks = useTaskList(dao, { repository, perPage: 0 });
   const [grant, setGrant] = useState<TTaskDetails["config"] | null>(null);
   const [team, setTeam] = useState<TTaskDetails["team"] | null>(null);
+
+  useEffect(() => {
+    if (isProposal !== undefined) {
+      setFieldValue("isPullRequest", isProposal);
+    }
+  }, [isProposal]);
 
   return (
     <div
@@ -91,136 +105,138 @@ const CommitFields = (props: TCommitFieldsProps) => {
             />
           </div>
         </div>
-        <div className="basis-5/12 px-5">
-          <div>
-            <Field
-              name="task"
-              component={FormikSelect}
-              label="Select task (optional)"
-              disabled={isSubmitting || tasks.isFetching}
-              test-id="input-commit-task"
-              onChange={(e: any) => {
-                const option = e.target[e.target.options.selectedIndex];
-                setFieldValue("task", e.target.value);
-                setGrant(JSON.parse(option.getAttribute("data-grant")));
+        {(config === undefined || config.task) && (
+          <div className="basis-5/12 px-5">
+            <div>
+              <Field
+                name="task"
+                component={FormikSelect}
+                label="Select task (optional)"
+                disabled={isSubmitting || tasks.isFetching}
+                test-id="input-commit-task"
+                onChange={(e: any) => {
+                  const option = e.target[e.target.options.selectedIndex];
+                  setFieldValue("task", e.target.value);
+                  setGrant(JSON.parse(option.getAttribute("data-grant")));
 
-                const team = JSON.parse(option.getAttribute("data-team"));
-                console.debug("team", team);
-                setTeam(team);
-                if (team) {
+                  const team = JSON.parse(option.getAttribute("data-team"));
+                  console.debug("team", team);
+                  setTeam(team);
+                  if (team) {
+                    setFieldValue(
+                      "assigners",
+                      team.assigners.map((item: any) => ({
+                        name: item.username,
+                        type: "user",
+                      })),
+                    );
+                    setFieldValue(
+                      "reviewers",
+                      team.reviewers.map((item: any) => ({
+                        name: item.username,
+                        type: "user",
+                      })),
+                    );
+                    setFieldValue(
+                      "managers",
+                      team.managers.map((item: any) => ({
+                        name: item.username,
+                        type: "user",
+                      })),
+                    );
+                  }
+                }}
+              >
+                <option value="">
+                  {tasks.isFetching ? "Loading..." : "Select task"}
+                </option>
+                {tasks.items
+                  .filter(({ confirmed }) => !confirmed)
+                  .map((item, index) => (
+                    <option
+                      key={index}
+                      value={item.name}
+                      data-grant={JSON.stringify(item.config)}
+                      data-team={JSON.stringify(item.team)}
+                    >
+                      {item.name}
+                    </option>
+                  ))}
+              </Field>
+            </div>
+            <div className="mt-6">
+              <label className="block mb-2 font-medium text-gray-7c8db5">
+                Assigners
+              </label>
+              <UserSelect
+                gosh={dao.getGosh()}
+                placeholder="Assigners"
+                isMulti
+                isDisabled={isSubmitting || !grant?.assign.length || !!team}
+                value={(values as any).assigners.map((v: any) => ({
+                  label: v.name,
+                  value: v,
+                }))}
+                onChange={(selected) => {
                   setFieldValue(
                     "assigners",
-                    team.assigners.map((item: any) => ({
-                      name: item.username,
-                      type: "user",
-                    })),
+                    selected?.map((item: any) => item.value),
                   );
+                }}
+                test-id="input-commit-assigners"
+              />
+              <ErrorMessage
+                className="text-xs text-red-ff3b30 mt-1"
+                component="div"
+                name={`assigners`}
+              />
+            </div>
+            <div className="mt-6">
+              <label className="block mb-2 font-medium text-gray-7c8db5">
+                Reviewers
+              </label>
+              <UserSelect
+                gosh={dao.getGosh()}
+                placeholder="Reviewers"
+                isMulti
+                isDisabled={isSubmitting || !grant?.review.length || !!team}
+                value={(values as any).reviewers.map((v: any) => ({
+                  label: v.name,
+                  value: v,
+                }))}
+                onChange={(selected) => {
                   setFieldValue(
                     "reviewers",
-                    team.reviewers.map((item: any) => ({
-                      name: item.username,
-                      type: "user",
-                    })),
+                    selected?.map((item: any) => item.value),
                   );
+                }}
+                test-id="input-commit-reviewers"
+              />
+            </div>
+            <div className="mt-6">
+              <label className="block mb-2 font-medium text-gray-7c8db5">
+                Managers
+              </label>
+              <UserSelect
+                gosh={dao.getGosh()}
+                placeholder="Managers"
+                isMulti
+                isDisabled={isSubmitting || !grant?.manager.length || !!team}
+                value={(values as any).managers.map((v: any) => ({
+                  label: v.name,
+                  value: v,
+                }))}
+                onChange={(selected) => {
                   setFieldValue(
                     "managers",
-                    team.managers.map((item: any) => ({
-                      name: item.username,
-                      type: "user",
-                    })),
+                    selected?.map((item: any) => item.value),
                   );
-                }
-              }}
-            >
-              <option value="">
-                {tasks.isFetching ? "Loading..." : "Select task"}
-              </option>
-              {tasks.items
-                .filter(({ confirmed }) => !confirmed)
-                .map((item, index) => (
-                  <option
-                    key={index}
-                    value={item.name}
-                    data-grant={JSON.stringify(item.config)}
-                    data-team={JSON.stringify(item.team)}
-                  >
-                    {item.name}
-                  </option>
-                ))}
-            </Field>
+                }}
+                test-id="input-commit-managers"
+              />
+            </div>
           </div>
-          <div className="mt-6">
-            <label className="block mb-2 font-medium text-gray-7c8db5">
-              Assigners
-            </label>
-            <UserSelect
-              gosh={dao.getGosh()}
-              placeholder="Assigners"
-              isMulti
-              isDisabled={isSubmitting || !grant?.assign.length || !!team}
-              value={(values as any).assigners.map((v: any) => ({
-                label: v.name,
-                value: v,
-              }))}
-              onChange={(selected) => {
-                setFieldValue(
-                  "assigners",
-                  selected?.map((item: any) => item.value),
-                );
-              }}
-              test-id="input-commit-assigners"
-            />
-            <ErrorMessage
-              className="text-xs text-red-ff3b30 mt-1"
-              component="div"
-              name={`assigners`}
-            />
-          </div>
-          <div className="mt-6">
-            <label className="block mb-2 font-medium text-gray-7c8db5">
-              Reviewers
-            </label>
-            <UserSelect
-              gosh={dao.getGosh()}
-              placeholder="Reviewers"
-              isMulti
-              isDisabled={isSubmitting || !grant?.review.length || !!team}
-              value={(values as any).reviewers.map((v: any) => ({
-                label: v.name,
-                value: v,
-              }))}
-              onChange={(selected) => {
-                setFieldValue(
-                  "reviewers",
-                  selected?.map((item: any) => item.value),
-                );
-              }}
-              test-id="input-commit-reviewers"
-            />
-          </div>
-          <div className="mt-6">
-            <label className="block mb-2 font-medium text-gray-7c8db5">
-              Managers
-            </label>
-            <UserSelect
-              gosh={dao.getGosh()}
-              placeholder="Managers"
-              isMulti
-              isDisabled={isSubmitting || !grant?.manager.length || !!team}
-              value={(values as any).managers.map((v: any) => ({
-                label: v.name,
-                value: v,
-              }))}
-              onChange={(selected) => {
-                setFieldValue(
-                  "managers",
-                  selected?.map((item: any) => item.value),
-                );
-              }}
-              test-id="input-commit-managers"
-            />
-          </div>
-        </div>
+        )}
       </div>
 
       <div
@@ -233,8 +249,8 @@ const CommitFields = (props: TCommitFieldsProps) => {
           <div className="flex flex-wrap gap-3">
             <Button
               type="submit"
-              disabled={isSubmitting}
-              isLoading={isSubmitting}
+              disabled={isSubmitting || isDisabled}
+              isLoading={isSubmitting || isDisabled}
               test-id="btn-commit-submit"
             >
               Commit changes
@@ -243,7 +259,7 @@ const CommitFields = (props: TCommitFieldsProps) => {
               <Button
                 variant="outline-danger"
                 disabled={isSubmitting}
-                onClick={() => navigate(urlBack)}
+                onClick={onCancel}
                 test-id="btn-commit-discard"
               >
                 Cancel
@@ -256,10 +272,12 @@ const CommitFields = (props: TCommitFieldsProps) => {
           <Field
             name="isPullRequest"
             component={FormikCheckbox}
-            disabled={isSubmitting}
+            disabled={isSubmitting || isProposal !== undefined}
             inputProps={{
               label: "Create proposal",
+              ...(isProposal !== undefined ? { value: isProposal } : {}),
             }}
+            value={isProposal ? "yes" : values.isPullRequest}
             test-id="input-commit-proposal"
           />
         </div>

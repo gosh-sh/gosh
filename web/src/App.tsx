@@ -78,7 +78,7 @@ const App = () => {
       <main
         id="main"
         className={classNames(
-          "grow z-1 transition-all duration-500 ease-[cubic-bezier(0.375, 0.885, 0.6, 1)]",
+          "grow transition-all duration-500 ease-[cubic-bezier(0.375, 0.885, 0.6, 1)]",
           isInnerPage ? " ml-[72px]" : " ml-[250px]",
         )}
       >

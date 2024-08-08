@@ -3,32 +3,37 @@ import {
   faMagnifyingGlass,
   faPencil,
   faTrash,
-} from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Buffer } from 'buffer'
-import { useBlob, useBranches } from 'react-gosh'
-import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import { CodeComments } from '../../components/Blob/Comments'
-import BlobPreview from '../../components/Blob/Preview'
-import { BranchSelect } from '../../components/Branches'
-import CopyClipboard from '../../components/CopyClipboard'
-import FileDownload from '../../components/FileDownload'
-import { ButtonLink } from '../../components/Form'
-import Loader from '../../components/Loader'
-import RepoBreadcrumbs from '../../components/Repo/Breadcrumbs'
-import { TRepoLayoutOutletContext } from '../RepoLayout'
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Buffer } from "buffer";
+import { useBlob, useBranches } from "react-gosh";
+import {
+  Link,
+  useNavigate,
+  useOutletContext,
+  useParams,
+} from "react-router-dom";
+import { CodeComments } from "../../components/Blob/Comments";
+import BlobPreview from "../../components/Blob/Preview";
+import { BranchSelect } from "../../components/Branches";
+import CopyClipboard from "../../components/CopyClipboard";
+import FileDownload from "../../components/FileDownload";
+import { ButtonLink } from "../../components/Form";
+import Loader from "../../components/Loader";
+import RepoBreadcrumbs from "../../components/Repo/Breadcrumbs";
+import { TRepoLayoutOutletContext } from "../RepoLayout";
 
 const BlobPage = () => {
-  const treepath = useParams()['*']
+  const treepath = useParams()["*"];
 
-  const { daoName, repoName, branchName = 'main' } = useParams()
-  const navigate = useNavigate()
-  const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>()
-  const { branches, branch } = useBranches(repository.adapter, branchName)
-  const blob = useBlob(daoName!, repoName!, branchName, treepath)
+  const { daoName, repoName, branchName = "main" } = useParams();
+  const navigate = useNavigate();
+  const { dao, repository } = useOutletContext<TRepoLayoutOutletContext>();
+  const { branches, branch } = useBranches(repository.adapter, branchName);
+  const blob = useBlob(daoName!, repoName!, branchName, treepath);
 
   return (
-    <div className="flex flex-wrap lg:flex-nowrap">
+    <div className="flex flex-wrap lg:flex-nowrap p-4">
       <div className="grow">
         <div className="flex flex-wrap items-center gap-3 mb-5">
           <BranchSelect
@@ -38,7 +43,7 @@ const BlobPage = () => {
               if (selected) {
                 navigate(
                   `/o/${daoName}/r/${repoName}/blobs/view/${selected.name}/${treepath}`,
-                )
+                );
               }
             }}
           />
@@ -65,7 +70,9 @@ const BlobPage = () => {
           {!blob.isFetching && blob.content === undefined && (
             <div className="text-gray-7c8db5 text-sm p-5">File not found</div>
           )}
-          {blob.isFetching && <Loader className="text-sm p-5">Loading file...</Loader>}
+          {blob.isFetching && (
+            <Loader className="text-sm p-5">Loading file...</Loader>
+          )}
           {blob.path && !blob.isFetching && (
             <>
               <div className="flex bg-gray-100 px-3 py-1 border-b justify-end items-center">
@@ -73,11 +80,11 @@ const BlobPage = () => {
                   <>
                     <CopyClipboard
                       componentProps={{
-                        text: blob.content || '',
+                        text: blob.content || "",
                       }}
                       iconContainerClassName="text-extblack/60 hover:text-extblack p-1"
                       iconProps={{
-                        size: 'sm',
+                        size: "sm",
                       }}
                       testId="btn-blob-copy"
                     />
@@ -116,14 +123,14 @@ const BlobPage = () => {
                 filename={blob.path}
                 commit={blob.commit}
                 value={blob.content}
-                commentsOn={dao.details.version >= '5.0.0'}
+                commentsOn={dao.details.version >= "5.0.0"}
               />
             </>
           )}
         </div>
       </div>
 
-      {blob.path && !blob.isFetching && dao.details.version >= '5.0.0' && (
+      {blob.path && !blob.isFetching && dao.details.version >= "5.0.0" && (
         <div className="pl-5">
           <h3 className="text-gray-53596d text-lg mb-4">Comments</h3>
           <div className="sticky top-3 shrink-0 w-72 bg-white">
@@ -132,7 +139,7 @@ const BlobPage = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default BlobPage
+export default BlobPage;

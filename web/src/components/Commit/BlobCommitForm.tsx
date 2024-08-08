@@ -415,10 +415,12 @@ const BlobCommitForm = (props: TBlobCommitFormProps) => {
                 </Tab.Group>
               </div>
               <CommitFields
+                isProposal={initialValues.isPullRequest}
                 dao={dao.adapter}
                 repository={repository.details.name}
                 className="mt-12"
                 isSubmitting={isSubmitting}
+                onCancel={() => urlBack && navigate(urlBack)}
                 urlBack={urlBack}
                 extraButtons={extraButtons}
                 progress={progress}

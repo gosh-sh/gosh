@@ -1,0 +1,47 @@
+{
+	"ABI version": 2,
+	"version": "2.4",
+	"header": ["time", "expire"],
+	"functions": [
+		{
+			"name": "sendTransaction",
+			"inputs": [
+				{"name":"dest","type":"address"},
+				{"name":"value","type":"varuint16"},
+				{"name":"bounce","type":"bool"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "getMessages",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"hash","type":"uint256"},{"name":"expireAt","type":"uint32"}],"name":"messages","type":"tuple[]"}
+			]
+		},
+		{
+			"name": "upgrade",
+			"inputs": [
+				{"name":"newcode","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "constructor",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		}
+	],
+	"events": [
+	],
+	"fields": [
+		{"init":true,"name":"_pubkey","type":"uint256"},
+		{"init":false,"name":"_constructorFlag","type":"bool"},
+		{"init":false,"name":"m_messages","type":"map(uint256,uint32)"}
+	]
+}
