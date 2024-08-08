@@ -403,6 +403,9 @@ body,
     overflow: hidden;
     padding-left: 1em;
     padding-right: 1em;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
   }
   code {
     font-family: monospace;
@@ -434,7 +437,7 @@ body,
     & > li {
       display: list-item;
 
-      &::before { 
+      &::before {
         content: none;
       }
     }
@@ -459,27 +462,27 @@ body,
     // @apply list-square;
     list-style-type: square;
   }
-  ol { 
+  ol {
     counter-reset: item;
     list-style-position: inside;
 
     & > li {
       counter-increment: item;
 
-      &::before { 
+      &::before {
         content: counters(item, ".") ". ";
         min-width: 25px;
         padding-right: 10px;
         display: inline-block;
         font-variant-numeric: tabular-nums;
       }
-      ol { 
-    
+      ol {
+
         & > li {
-          &::marker { 
+          &::marker {
             display: none;
           }
-          &::marker { 
+          &::marker {
             min-width: 35px;
           }
         }
@@ -492,7 +495,7 @@ body,
 
     & > li {
 
-      &::marker { 
+      &::marker {
         display: none;
       }
       &::before {
@@ -504,7 +507,7 @@ body,
   ol ol ol ol {
     & > li {
 
-      &::marker { 
+      &::marker {
         display: none;
       }
       &::before {
@@ -515,7 +518,7 @@ body,
   ol ol ol ol ol {
     & > li {
 
-      &::marker { 
+      &::marker {
         display: none;
       }
 
@@ -527,7 +530,7 @@ body,
   ol[style*="list-style-type"] > li::before {
     content: none;
   }
-  
+
   ol[style*="list-style-type"] > li {
     list-style-type: inherit;
   }
