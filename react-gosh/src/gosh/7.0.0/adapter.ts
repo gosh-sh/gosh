@@ -3449,13 +3449,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
         // END TODO
 
+        const isProtected = await this._isBranchProtected(branchname);
         return {
             name: branchname,
             commit: {
                 ...(await adapter.getCommit({ address: commitaddr })),
                 version: commitversion,
             },
-            isProtected: await this._isBranchProtected(name),
+            ...isProtected
         }
     }
 
@@ -3477,13 +3478,14 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
                 }
                 // END TODO
 
+                const isProtected = await this._isBranchProtected(branchname);
                 return {
                     name: branchname,
                     commit: {
                         ...(await adapter.getCommit({ address: commitaddr })),
                         version: commitversion,
                     },
-                    isProtected: await this._isBranchProtected(branchname),
+                    ...isProtected
                 }
             },
         )
@@ -4343,7 +4345,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
         }
     }
 
-    private async _isBranchProtected(name: string): Promise<boolean> {
+    private async _isBranchProtected(name: string) {
         const { value0 } = await this.repo.runLocal('isBranchProtected', {
             branch: name,
         })
