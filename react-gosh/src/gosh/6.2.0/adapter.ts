@@ -4401,6 +4401,7 @@ class GoshRepositoryAdapter implements IGoshRepositoryAdapter {
       nameCommit: commit,
       content: `tag ${tag}\nobject ${commit}\n`,
       commit: commitContract.address,
+      isHack: false,
     })
   }
 
